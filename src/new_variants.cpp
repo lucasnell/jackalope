@@ -850,7 +850,7 @@ char VarSequence::get_char_(const uint& new_pos,
 
 /*
  ------------------
- Inner function to return an iterator to the Mutation object nearest to
+ Inner function to return an index to the Mutation object nearest to
  (without being past) an input position on the "new", variant scaffold.
  If the input position is before the first Mutation object or if `mutations` is empty,
  this function returns `mutations.end()`.
@@ -1207,11 +1207,11 @@ List see_mutations(SEXP vs_, const uint& v) {
         std::vector<uint> old_pos;
         std::vector<uint> new_pos;
         std::vector<std::string> nucleos;
-        for (auto iter = vs.mutations.begin(); iter != vs.mutations.end(); ++iter) {
-            size_mod.push_back((*iter).size_modifier);
-            old_pos.push_back((*iter).old_pos);
-            new_pos.push_back((*iter).new_pos);
-            nucleos.push_back((*iter).nucleos);
+        for (uint mut_i = 0; mut_i < vs.mutations.size(); ++mut_i) {
+            size_mod.push_back(vs.mutations[mut_i].size_modifier);
+            old_pos.push_back(vs.mutations[mut_i].old_pos);
+            new_pos.push_back(vs.mutations[mut_i].new_pos);
+            nucleos.push_back(vs.mutations[mut_i].nucleos);
         }
         DataFrame mutations_i = DataFrame::create(
             _["size_mod"] = size_mod,
@@ -1315,9 +1315,9 @@ std::string see_chunk(SEXP vs_, const uint& v,
     VarGenome& vg((*vset)[v]);
     VarSequence& vs(vg[scaff]);
     std::string out;
-    uint muti = 0;
+    uint mut_i = 0;
 
-    vs.set_seq_chunk(out, start, chunk_size, muti);
+    vs.set_seq_chunk(out, start, chunk_size, mut_i);
 
     return out;
 }
@@ -1325,8 +1325,6 @@ std::string see_chunk(SEXP vs_, const uint& v,
 
 
 
-
-// void many_mutations(const std::deque<std::string>& seqs, const uint& n_vars,
 
 
 //' Add many mutations (> 1,000) to a VarSet object from R.
@@ -1346,8 +1344,6 @@ void many_mutations(SEXP vs_,
 
     XPtr<VarSet> vs_xptr(vs_);
     VarSet& vset(*vs_xptr);
-
-    // VarSet vset(seqs, n_vars);
 
     double prev_type;
 
