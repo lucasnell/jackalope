@@ -212,7 +212,9 @@ public:
      */
     void calc_positions(bool sort_first = true);
     void calc_positions(std::deque<Mutation>::iterator iter);
+    void calc_positions(uint i);
     void calc_positions(std::deque<Mutation>::iterator iter, const sint& modifier);
+    void calc_positions(uint i, const sint& modifier);
 
 
 
