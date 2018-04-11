@@ -250,7 +250,7 @@ public:
     void set_seq_chunk(std::string& chunk_str,
                        const uint& start,
                        const uint& chunk_size,
-                       std::deque<Mutation>::iterator& mut) const;
+                       uint& mut_i) const;
 
     /*
      ------------------
@@ -312,6 +312,7 @@ private:
      */
     char get_char_(const uint& new_pos,
                    const std::deque<Mutation>::iterator& mut) const;
+    char get_char_(const uint& new_pos, const uint& mut) const;
 
     /*
      ------------------

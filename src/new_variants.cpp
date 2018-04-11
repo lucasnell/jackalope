@@ -337,12 +337,12 @@ std::string VarSequence::get_seq_start(uint out_length) const {
 void VarSequence::set_seq_chunk(std::string& chunk_str,
                                 const uint& start,
                                 const uint& chunk_size,
-                                std::deque<Mutation>::iterator& mut) const {
+                                uint& mut_i) const {
 
     uint end = start + chunk_size - 1;
 
     if (start >= seq_size) {
-        mut = mutations.end();
+        mut_i = mutations.size();
         chunk_str.clear();
         return;
     }
@@ -357,22 +357,22 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
         return;
     }
     // Move mutation to the proper spot
-    while (mut != mutations.end()) {
-        if (start < (*mut).new_pos) break;
-        ++mut;
+    while (mut_i < mutations.size()) {
+        if (start < mutations[mut_i].new_pos) break;
+        ++mut_i;
     }
-    if (mut != mutations.begin()) --mut;
+    if (mut_i != 0) --mut_i;
     // Adjust input string size if necessary
     if (chunk_str.size() != out_length) chunk_str.resize(out_length, 'x');
 
     uint pos = start;
-    std::deque<Mutation>::const_iterator next_mut = mut + 1;
+    uint next_mut_i = mut_i + 1;
 
     /*
      Picking up any nucleotides before the focal mutation (this should only happen when
      `mut == mutations.begin()` and `start` is before the first mutation)
      */
-    while (pos < (*mut).new_pos && pos <= end) {
+    while (pos < mutations[mut_i].new_pos && pos <= end) {
         chunk_str[pos - start] = ref_seq[pos];
         ++pos;
     }
@@ -382,14 +382,14 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
      Now, for each subsequent mutation except the last, add all nucleotides
      at or after its position (and `end`) but before the next mutation
      */
-    while (next_mut != mutations.end()) {
-        while (pos < (*next_mut).new_pos && pos <= end) {
-            chunk_str[pos - start] = get_char_(pos, mut);
+    while (next_mut_i < mutations.size()) {
+        while (pos < mutations[next_mut_i].new_pos && pos <= end) {
+            chunk_str[pos - start] = get_char_(pos, mut_i);
             ++pos;
         }
         if (pos > end) return;
-        ++mut;
-        ++next_mut;
+        ++mut_i;
+        ++next_mut_i;
     }
 
     /*
@@ -397,7 +397,7 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
      I've made sure that `end < seq_size`).
      */
     while (pos <= end) {
-        chunk_str[pos - start] = get_char_(pos, mut);
+        chunk_str[pos - start] = get_char_(pos, mut_i);
         ++pos;
     }
 
@@ -912,7 +912,19 @@ char VarSequence::get_char_(const uint& new_pos,
     }
     return out;
 }
-
+char VarSequence::get_char_(const uint& new_pos,
+                            const uint& mut_i) const {
+    const Mutation& m(mutations[mut_i]);
+    char out;
+    uint ind = new_pos - m.new_pos;
+    if (static_cast<sint>(ind) > m.size_modifier) {
+        ind += (m.old_pos - m.size_modifier);
+        out = ref_seq[ind];
+    } else {
+        out = m[ind];
+    }
+    return out;
+}
 
 
 
@@ -1390,9 +1402,9 @@ std::string see_chunk(SEXP vs_, const uint& v,
     VarGenome& vg((*vset)[v]);
     VarSequence& vs(vg[scaff]);
     std::string out;
-    std::deque<Mutation>::iterator mut = vs.mutations.begin();
+    uint muti = 0;
 
-    vs.set_seq_chunk(out, start, chunk_size, mut);
+    vs.set_seq_chunk(out, start, chunk_size, muti);
 
     return out;
 }
