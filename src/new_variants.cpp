@@ -856,11 +856,15 @@ char VarSequence::get_char_(const uint& new_pos,
  this function returns `mutations.end()`.
  ------------------
  */
-// std::deque<Mutation>::iterator VarSequence::get_mut_(const uint& new_pos) const {
+
+// /*
+//  THIS ONE IS NOT FUNCTIONING, BUT KEPT BC IT MIGHT HAVE USEFUL CODE FOR LATER:
+//  */
+// uint VarSequence::get_mut_(const uint& new_pos) const {
 //
-//     std::deque<Mutation>::iterator iter;
+//     uint mut_i = 0;
 //
-//     if (mutations.empty()) return mutations.end();
+//     if (mutations.empty()) return mutations.size();
 //
 //     if (new_pos >= seq_size) {
 //         stop(
@@ -870,86 +874,76 @@ char VarSequence::get_char_(const uint& new_pos,
 //     }
 //     /*
 //      If new_pos is less than the position for the first mutation, we return
-//      mutations.end():
+//      mutations.size():
 //      */
 //     if (new_pos < mutations.front().new_pos) {
-//         return mutations.end();
+//         return mutations.size();
 //     /*
 //      If the new_pos is greater than or equal to the position for the last
 //      mutation, we return the last Mutation:
 //      */
 //     } else if (new_pos >= mutations.back().new_pos) {
-//         return mutations.end() - 1;
+//         return mutations.size() - 1;
 //     }
-//     // /*
-//     //  If not either of the above, then we will first try to guess the approximate
-//     //  position to minimize how many iterations we have to perform.
-//     //  */
-//     // uint ind_guess = mutations.size() * new_pos / seq_size;
-//     // iter = mutations.begin() + ind_guess;
-//     // /*
-//     //  If the current mutation comes LATER than the input new position (`new_pos`),
-//     //  iterate BACKWARD in the mutation deque until the current mutation is
-//     //  EARLIER THAN OR EQUAL TO the new position.
-//     //  */
-//     // if (mutations[mut_i].new_pos > new_pos) {
-//     //     while (mutations[mut_i].new_pos > new_pos) --iter;
-//     //     /*
-//     //      If the current mutation comes EARLIER than the input new position (`new_pos`),
-//     //      iterate FORWARD in the mutation deque until the current mutation is
-//     //      EARLIER THAN OR EQUAL TO the new position.
-//     //
-//     //      Then, if IT REACHES THE END OF THE MUTATION VECTOR OR the current mutation is
-//     //      NOT EQUAL TO the input new position, iterate back to the previous mutation.
-//     //      I do this latter part because I want the Mutation object I use to relate
-//     //      to the positions it belongs to and the reference sequences AFTER it.
-//     //
-//     //      If the current mutation is EQUAL TO the input new position, check to make sure
-//     //      that it's not a deletion immediately followed by another mutation.
-//     //      If it is, then go to the next mutation.
-//     //      If not, then leave `out` unchanged.
-//     //      (It's assumed that there aren't two deletions right after each other bc that's
-//     //      a silly thing to do.)
-//     //      */
-//     // } else if (mutations[mut_i].new_pos < new_pos) {
-//     //     while (iter != mutations.end() && mutations[mut_i].new_pos < new_pos) ++iter;
-//     //     if (iter == mutations.end() || mutations[mut_i].new_pos != new_pos) {
-//     //         --iter;
-//     //     } else if (mutations[mut_i].new_pos == new_pos && mutations[mut_i].nucleos == "") {
-//     //         auto next = iter + 1;
-//     //         if (next != mutations.end() && (*next).new_pos == mutations[mut_i].new_pos) {
-//     //             ++iter;
-//     //         }
-//     //     }
-//     //     /*
-//     //      If the current mutation is EQUAL TO the input new position, we just need to
-//     //      check to make sure that it's not a deletion immediately followed by another
-//     //      mutation, as above.
-//     //      */
-//     // } else if (mutations[mut_i].new_pos == new_pos && mutations[mut_i].nucleos == "") {
-//     //     auto next = iter + 1;
-//     //     if (next != mutations.end() && (*next).new_pos == mutations[mut_i].new_pos) {
-//     //         ++iter;
-//     //     }
-//     // }
-//     //
-//     // // This is included for troubleshooting. It should be removed afterward.
-//     // if (mutations[mut_i].new_pos > new_pos) {
-//     //     stop(
-//     //         "Function `get_mut_` is returning a Mutation object whose "
-//     //         "new position field is greater than the input new position."
-//     //     );
-//     // }
+//     /*
+//      If not either of the above, then we will first try to guess the approximate
+//      position to minimize how many iterations we have to perform.
+//      */
+//     mut_i = static_cast<double>(mutations.size() * new_pos) /
+//         static_cast<double>(seq_size);
+//     /*
+//      If the current mutation comes LATER than the input new position (`new_pos`),
+//      iterate BACKWARD in the mutation deque until the current mutation is
+//      EARLIER THAN OR EQUAL TO the new position.
+//      */
+//     if (mutations[mut_i].new_pos > new_pos) {
+//         while (mutations[mut_i].new_pos > new_pos) --mut_i;
+//     /*
+//      If the current mutation comes EARLIER than the input new position (`new_pos`),
+//      iterate FORWARD in the mutation deque until the current mutation is
+//      EARLIER THAN OR EQUAL TO the new position.
 //
-//     // Move mutation to the proper spot
-//     while (iter != mutations.end()) {
-//         if (mutations[mut_i].new_pos > new_pos) break;
-//         ++iter;
+//      Then, if IT REACHES THE END OF THE MUTATION VECTOR OR the current mutation is
+//      NOT EQUAL TO the input new position, iterate back to the previous mutation.
+//      I do this latter part because I want the Mutation object I use to relate
+//      to the positions it belongs to and the reference sequences AFTER it.
+//
+//      If the current mutation is EQUAL TO the input new position, check to make sure
+//      that it's not a deletion immediately followed by another mutation.
+//      If it is, then go to the next mutation.
+//      If not, then leave `out` unchanged.
+//      (It's assumed that there aren't two deletions right after each other bc that's
+//      a silly thing to do.)
+//      */
+//     } else if (mutations[mut_i].new_pos < new_pos) {
+//         while (mut_i < mutations.size() && mutations[mut_i].new_pos < new_pos) {
+//             ++mut_i;
+//         }
+//         if (mut_i == mutations.size()) {
+//             --mut_i;
+//         } else if (mutations[mut_i].new_pos != new_pos) {
+//             --mut_i;
+//         } else if (mutations[mut_i].new_pos == new_pos &&
+//         mutations[mut_i].nucleos == "") {
+//             uint next = mut_i + 1;
+//             if (next < mutations.size()) {
+//                 if (mutations[next].new_pos == mutations[mut_i].new_pos) ++mut_i;
+//             }
+//         }
+//     /*
+//      If the current mutation is EQUAL TO the input new position, we just need to
+//      check to make sure that it's not a deletion immediately followed by another
+//      mutation, as above.
+//      */
+//     } else if (mutations[mut_i].new_pos == new_pos &&
+//         mutations[mut_i].nucleos == "") {
+//         uint next = mut_i + 1;
+//         if (next < mutations.size()) {
+//             if (mutations[next].new_pos == mutations[mut_i].new_pos) ++mut_i;
+//         }
 //     }
-//     --iter;
 //
-//
-//     return iter;
+//     return mut_i;
 // }
 
 uint VarSequence::get_mut_(const uint& new_pos) const {
