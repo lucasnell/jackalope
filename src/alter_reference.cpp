@@ -62,11 +62,11 @@ void merge_sequences(SEXP ref_) {
     std::string& nts(seqs.front().nucleos);
     reference->old_names.push_back(seqs.front().name);
     seqs.front().name = "MERGE";
-    std::deque<RefSequence>::iterator iter = seqs.end() - 1;
+    uint i = seqs.size() - 1;
     while (seqs.size() > 1) {
-        nts += (*iter).nucleos;
-        reference->old_names.push_back((*iter).name);
-        --iter;
+        nts += seqs[i].nucleos;
+        reference->old_names.push_back(seqs[i].name);
+        --i;
         seqs.pop_back();
     }
     // clear memory in string
@@ -131,39 +131,39 @@ void filter_sequences(SEXP ref_,
     // Sorting sequence set by size (largest first)
     std::sort(seqs.begin(), seqs.end(), std::greater<RefSequence>());
 
-    // Iterator that will point to the first sequence to be deleted
-    auto iter = seqs.begin();
+    // Index that will point to the first sequence to be deleted
+    uint i = 0;
     // Keeping track of total genome size after filtering
     double out_seq = 0;
 
     if (min_seq_size > 0) {
         if (seqs.back().size() >= min_seq_size) return;
-        if ((*iter).size() < min_seq_size) {
+        if (seqs[i].size() < min_seq_size) {
             stop("Desired minimum scaffold size is too large. None found. "
-                     "The minimum size is " + std::to_string((*iter).size())
+                     "The minimum size is " + std::to_string(seqs[i].size())
             );
         }
         // after below, `iter` points to the first sequence smaller than the minimum
-        while ((*iter).size() >= min_seq_size) {
-            out_seq += static_cast<double>((*iter).size());
-            ++iter;
+        while (seqs[i].size() >= min_seq_size) {
+            out_seq += static_cast<double>(seqs[i].size());
+            ++i;
         }
     } else {
         // Changing total_size to double so I don't have to worry about integer division
         // being a problem
         double total_seq = static_cast<double>(reference->total_size);
-        out_seq = static_cast<double>((*iter).size());
+        out_seq = static_cast<double>(seqs[i].size());
         while (out_seq / total_seq < out_seq_prop) {
-            ++iter;
-            out_seq += static_cast<double>((*iter).size());
+            ++i;
+            out_seq += static_cast<double>(seqs[i].size());
         }
-        // Getting `iter` to point to the first item to be deleted:
-        ++iter;
+        // Getting `i` to point to the first item to be deleted:
+        ++i;
     }
 
     // Erasing using `iter`
-    if (iter != seqs.end()) {
-        seqs.erase(iter, seqs.end());
+    if (i < seqs.size()) {
+        seqs.erase(seqs.begin() + i, seqs.end());
         // clear memory:
         std::deque<RefSequence>(seqs.begin(), seqs.end()).swap(seqs);
     }
