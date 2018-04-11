@@ -117,9 +117,9 @@ void VarSequence::calc_positions(bool sort_first) {
 
     sint modifier = 0;
 
-    for (auto iter = mutations.begin(); iter != mutations.end(); ++iter) {
-        (*iter).new_pos = (*iter).old_pos + modifier;
-        modifier += (*iter).size_modifier;
+    for (uint mut_i = 0; mut_i < mutations.size(); mut_i++) {
+        mutations[mut_i].new_pos = mutations[mut_i].old_pos + modifier;
+        modifier += mutations[mut_i].size_modifier;
     }
     // Updating full scaffold size
     seq_size = ref_seq.size() + modifier;
@@ -128,32 +128,17 @@ void VarSequence::calc_positions(bool sort_first) {
 }
 /*
  For all Mutation objects after a given Mutation object
- (this is for after you insert a NEW Mutation, where `iter` below points to
+ (this is for after you insert a NEW Mutation, where `mut_i` below points to
  that Mutation)
  */
-void VarSequence::calc_positions(std::deque<Mutation>::iterator iter) {
+void VarSequence::calc_positions(uint mut_i) {
 
-    sint modifier = (*iter).size_modifier;
-    ++iter;
-
-    // Updating individual Mutation objects
-    for (; iter != mutations.end(); ++iter) {
-        (*iter).new_pos += modifier;
-    }
-    // Updating full scaffold size
-    seq_size += modifier;
-
-    return;
-}
-// Variant on above to use only indices
-void VarSequence::calc_positions(uint i) {
-
-    sint modifier = mutations[i].size_modifier;
-    ++i;
+    sint modifier = mutations[mut_i].size_modifier;
+    ++mut_i;
 
     // Updating individual Mutation objects
-    for (; i < mutations.size(); i++) {
-        mutations[i].new_pos += modifier;
+    for (; mut_i < mutations.size(); mut_i++) {
+        mutations[mut_i].new_pos += modifier;
     }
     // Updating full scaffold size
     seq_size += modifier;
@@ -162,28 +147,14 @@ void VarSequence::calc_positions(uint i) {
 }
 /*
  For all Mutation objects after AND INCLUDING a given Mutation object
- (this is for after you MERGE multiple Mutations, where `iter` below points to
+ (this is for after you MERGE multiple Mutations, where `mut_i` below points to
  that merged Mutation and `modifier` refers to the net change in sequence size
  after the merge)
  */
-void VarSequence::calc_positions(std::deque<Mutation>::iterator iter,
-                                  const sint& modifier) {
-
+void VarSequence::calc_positions(uint mut_i, const sint& modifier) {
     // Updating individual Mutation objects
-    for (; iter != mutations.end(); ++iter) {
-        (*iter).new_pos += modifier;
-    }
-    // Updating full scaffold size
-    seq_size += modifier;
-
-    return;
-}
-
-// Variant on above to use only indices
-void VarSequence::calc_positions(uint i, const sint& modifier) {
-    // Updating individual Mutation objects
-    for (; i < mutations.size(); ++i) {
-        mutations[i].new_pos += modifier;
+    for (; mut_i < mutations.size(); ++mut_i) {
+        mutations[mut_i].new_pos += modifier;
     }
     // Updating full scaffold size
     seq_size += modifier;
@@ -201,23 +172,24 @@ void VarSequence::calc_positions(uint i, const sint& modifier) {
 char VarSequence::get_nt(const uint& new_pos) const {
     char out;
     /*
-     Iterator to the Mutation object nearest to (without being past)
+     Index to the Mutation object nearest to (without being past)
      an input position (see below for the `get_mut_` fxn):
      */
-    std::deque<Mutation>::iterator mut = get_mut_(new_pos);
+    uint mut_i = get_mut_(new_pos);
     /*
      If the new_pos is less than the position for the first mutation
-     (in which case `get_mut_` returns `mutations.end()`), we
-     just extract the character from the beginning of the reference string:
+     or if mutations is empty
+     (in which cases `get_mut_` returns `mutations.size()`),
+     we just extract the character from the beginning of the reference string:
      */
-    if (mut == mutations.end()) {
+    if (mut_i == mutations.size()) {
         out = ref_seq[new_pos];
-        /*
-         If not, then extract the character from the Mutation object that
-         `mut` points to (see below for `get_char_` fxn):
-         */
+    /*
+     If not, then extract the character from the Mutation object that
+     `mut` points to (see below for `get_char_` fxn):
+     */
     } else {
-        out = get_char_(new_pos, mut);
+        out = get_char_(new_pos, mut_i);
     }
 
     return out;
@@ -238,33 +210,33 @@ std::string VarSequence::get_seq_full() const {
 
     if (mutations.empty()) return ref_seq.nucleos;
 
-    // Iterator to the first Mutation object
-    std::deque<Mutation>::iterator mut = mutations.begin();
+    // Index to the first Mutation object
+    uint mut_i = 0;
 
     std::string out(seq_size, 'x');
     uint pos = 0;
 
     // Picking up any nucleotides before the first mutation
-    while (pos < (*mut).new_pos) {
+    while (pos < mutations[mut_i].new_pos) {
         out[pos] = ref_seq[pos];
         ++pos;
     }
 
     // Now, for each subsequent mutation except the last, add all nucleotides
     // at or after its position but before the next one
-    std::deque<Mutation>::const_iterator next_mut = mut + 1;
-    while (next_mut != mutations.end()) {
-        while (pos < (*next_mut).new_pos) {
-            out[pos] = get_char_(pos, mut);
+    uint next_mut_i = mut_i + 1;
+    while (next_mut_i < mutations.size()) {
+        while (pos < mutations[next_mut_i].new_pos) {
+            out[pos] = get_char_(pos, mut_i);
             ++pos;
         }
-        ++mut;
-        ++next_mut;
+        ++mut_i;
+        ++next_mut_i;
     }
 
     // Now taking care of nucleotides after the last Mutation
     while (pos < seq_size) {
-        out[pos] = get_char_(pos, mut);
+        out[pos] = get_char_(pos, mut_i);
         ++pos;
     }
 
@@ -287,12 +259,12 @@ std::string VarSequence::get_seq_start(uint out_length) const {
 
     std::string out(out_length, 'x');
 
-    std::deque<Mutation>::iterator mut = mutations.begin();
+    uint mut_i = 0;
 
     uint pos = 0;
 
     // Picking up any nucleotides before the first mutation
-    while (pos < (*mut).new_pos) {
+    while (pos < mutations[mut_i].new_pos) {
         out[pos] = ref_seq[pos];
         if (pos == out_length - 1) return out;
         ++pos;
@@ -300,20 +272,20 @@ std::string VarSequence::get_seq_start(uint out_length) const {
 
     // Now, for each subsequent mutation except the last, add all nucleotides
     // at or after its position but before the next one
-    std::deque<Mutation>::const_iterator next_mut = mut + 1;
-    while (next_mut != mutations.end()) {
-        while (pos < (*next_mut).new_pos) {
-            out[pos] = get_char_(pos, mut);
+    uint next_mut_i = mut_i + 1;
+    while (next_mut_i < mutations.size()) {
+        while (pos < mutations[next_mut_i].new_pos) {
+            out[pos] = get_char_(pos, mut_i);
             if (pos == out_length - 1) return out;
             ++pos;
         }
-        ++mut;
-        ++next_mut;
+        ++mut_i;
+        ++next_mut_i;
     }
 
     // Now taking care of nucleotides after the last Mutation
     while (pos < seq_size) {
-        out[pos] = get_char_(pos, mut);
+        out[pos] = get_char_(pos, mut_i);
         if (pos == out_length - 1) return out;
         ++pos;
     }
@@ -414,7 +386,7 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
  */
 void VarSequence::add_deletion(const uint& size_, const uint& new_pos_) {
 
-    std::deque<Mutation>::iterator iter;
+    uint mut_i;
 
     // Renaming this for a more descriptive name and to allow it to change
     uint deletion_start = new_pos_;
@@ -894,24 +866,12 @@ void VarSequence::remove_mutation_(std::deque<Mutation>::iterator& mutation1,
 /*
  ------------------
  Internal function for finding character of either mutation or reference
- given an index (in the "new", variant sequence) and a single Mutation object.
+ given an index (in the "new", variant sequence) and an index for a
+ single Mutation object.
  This only works if you've already narrowed it down to the Mutation object
  that is directly previous to the index position.
  ------------------
  */
-char VarSequence::get_char_(const uint& new_pos,
-                             const std::deque<Mutation>::iterator& mut) const {
-    const Mutation& m(*mut);
-    char out;
-    uint ind = new_pos - m.new_pos;
-    if (static_cast<sint>(ind) > m.size_modifier) {
-        ind += (m.old_pos - m.size_modifier);
-        out = ref_seq[ind];
-    } else {
-        out = m[ind];
-    }
-    return out;
-}
 char VarSequence::get_char_(const uint& new_pos,
                             const uint& mut_i) const {
     const Mutation& m(mutations[mut_i]);
@@ -936,104 +896,103 @@ char VarSequence::get_char_(const uint& new_pos,
  this function returns `mutations.end()`.
  ------------------
  */
-std::deque<Mutation>::iterator VarSequence::get_mut_(const uint& new_pos) const {
+// std::deque<Mutation>::iterator VarSequence::get_mut_(const uint& new_pos) const {
+//
+//     std::deque<Mutation>::iterator iter;
+//
+//     if (mutations.empty()) return mutations.end();
+//
+//     if (new_pos >= seq_size) {
+//         stop(
+//             "new_pos should never be >= the scaffold size. "
+//             "Either re-calculate the scaffold size or closely examine new_pos."
+//             );
+//     }
+//     /*
+//      If new_pos is less than the position for the first mutation, we return
+//      mutations.end():
+//      */
+//     if (new_pos < mutations.front().new_pos) {
+//         return mutations.end();
+//     /*
+//      If the new_pos is greater than or equal to the position for the last
+//      mutation, we return the last Mutation:
+//      */
+//     } else if (new_pos >= mutations.back().new_pos) {
+//         return mutations.end() - 1;
+//     }
+//     // /*
+//     //  If not either of the above, then we will first try to guess the approximate
+//     //  position to minimize how many iterations we have to perform.
+//     //  */
+//     // uint ind_guess = mutations.size() * new_pos / seq_size;
+//     // iter = mutations.begin() + ind_guess;
+//     // /*
+//     //  If the current mutation comes LATER than the input new position (`new_pos`),
+//     //  iterate BACKWARD in the mutation deque until the current mutation is
+//     //  EARLIER THAN OR EQUAL TO the new position.
+//     //  */
+//     // if (mutations[mut_i].new_pos > new_pos) {
+//     //     while (mutations[mut_i].new_pos > new_pos) --iter;
+//     //     /*
+//     //      If the current mutation comes EARLIER than the input new position (`new_pos`),
+//     //      iterate FORWARD in the mutation deque until the current mutation is
+//     //      EARLIER THAN OR EQUAL TO the new position.
+//     //
+//     //      Then, if IT REACHES THE END OF THE MUTATION VECTOR OR the current mutation is
+//     //      NOT EQUAL TO the input new position, iterate back to the previous mutation.
+//     //      I do this latter part because I want the Mutation object I use to relate
+//     //      to the positions it belongs to and the reference sequences AFTER it.
+//     //
+//     //      If the current mutation is EQUAL TO the input new position, check to make sure
+//     //      that it's not a deletion immediately followed by another mutation.
+//     //      If it is, then go to the next mutation.
+//     //      If not, then leave `out` unchanged.
+//     //      (It's assumed that there aren't two deletions right after each other bc that's
+//     //      a silly thing to do.)
+//     //      */
+//     // } else if (mutations[mut_i].new_pos < new_pos) {
+//     //     while (iter != mutations.end() && mutations[mut_i].new_pos < new_pos) ++iter;
+//     //     if (iter == mutations.end() || mutations[mut_i].new_pos != new_pos) {
+//     //         --iter;
+//     //     } else if (mutations[mut_i].new_pos == new_pos && mutations[mut_i].nucleos == "") {
+//     //         auto next = iter + 1;
+//     //         if (next != mutations.end() && (*next).new_pos == mutations[mut_i].new_pos) {
+//     //             ++iter;
+//     //         }
+//     //     }
+//     //     /*
+//     //      If the current mutation is EQUAL TO the input new position, we just need to
+//     //      check to make sure that it's not a deletion immediately followed by another
+//     //      mutation, as above.
+//     //      */
+//     // } else if (mutations[mut_i].new_pos == new_pos && mutations[mut_i].nucleos == "") {
+//     //     auto next = iter + 1;
+//     //     if (next != mutations.end() && (*next).new_pos == mutations[mut_i].new_pos) {
+//     //         ++iter;
+//     //     }
+//     // }
+//     //
+//     // // This is included for troubleshooting. It should be removed afterward.
+//     // if (mutations[mut_i].new_pos > new_pos) {
+//     //     stop(
+//     //         "Function `get_mut_` is returning a Mutation object whose "
+//     //         "new position field is greater than the input new position."
+//     //     );
+//     // }
+//
+//     // Move mutation to the proper spot
+//     while (iter != mutations.end()) {
+//         if (mutations[mut_i].new_pos > new_pos) break;
+//         ++iter;
+//     }
+//     --iter;
+//
+//
+//     return iter;
+// }
 
-    std::deque<Mutation>::iterator iter;
-
-    if (mutations.empty()) return mutations.end();
-
-    if (new_pos >= seq_size) {
-        stop(
-            "new_pos should never be >= the scaffold size. "
-            "Either re-calculate the scaffold size or closely examine new_pos."
-            );
-    }
-    /*
-     If new_pos is less than the position for the first mutation, we return
-     mutations.end():
-     */
-    if (new_pos < mutations.front().new_pos) {
-        return mutations.end();
-    /*
-     If the new_pos is greater than or equal to the position for the last
-     mutation, we return the last Mutation:
-     */
-    } else if (new_pos >= mutations.back().new_pos) {
-        return mutations.end() - 1;
-    }
-    // /*
-    //  If not either of the above, then we will first try to guess the approximate
-    //  position to minimize how many iterations we have to perform.
-    //  */
-    // uint ind_guess = mutations.size() * new_pos / seq_size;
-    // iter = mutations.begin() + ind_guess;
-    // /*
-    //  If the current mutation comes LATER than the input new position (`new_pos`),
-    //  iterate BACKWARD in the mutation deque until the current mutation is
-    //  EARLIER THAN OR EQUAL TO the new position.
-    //  */
-    // if ((*iter).new_pos > new_pos) {
-    //     while ((*iter).new_pos > new_pos) --iter;
-    //     /*
-    //      If the current mutation comes EARLIER than the input new position (`new_pos`),
-    //      iterate FORWARD in the mutation deque until the current mutation is
-    //      EARLIER THAN OR EQUAL TO the new position.
-    //
-    //      Then, if IT REACHES THE END OF THE MUTATION VECTOR OR the current mutation is
-    //      NOT EQUAL TO the input new position, iterate back to the previous mutation.
-    //      I do this latter part because I want the Mutation object I use to relate
-    //      to the positions it belongs to and the reference sequences AFTER it.
-    //
-    //      If the current mutation is EQUAL TO the input new position, check to make sure
-    //      that it's not a deletion immediately followed by another mutation.
-    //      If it is, then go to the next mutation.
-    //      If not, then leave `out` unchanged.
-    //      (It's assumed that there aren't two deletions right after each other bc that's
-    //      a silly thing to do.)
-    //      */
-    // } else if ((*iter).new_pos < new_pos) {
-    //     while (iter != mutations.end() && (*iter).new_pos < new_pos) ++iter;
-    //     if (iter == mutations.end() || (*iter).new_pos != new_pos) {
-    //         --iter;
-    //     } else if ((*iter).new_pos == new_pos && (*iter).nucleos == "") {
-    //         auto next = iter + 1;
-    //         if (next != mutations.end() && (*next).new_pos == (*iter).new_pos) {
-    //             ++iter;
-    //         }
-    //     }
-    //     /*
-    //      If the current mutation is EQUAL TO the input new position, we just need to
-    //      check to make sure that it's not a deletion immediately followed by another
-    //      mutation, as above.
-    //      */
-    // } else if ((*iter).new_pos == new_pos && (*iter).nucleos == "") {
-    //     auto next = iter + 1;
-    //     if (next != mutations.end() && (*next).new_pos == (*iter).new_pos) {
-    //         ++iter;
-    //     }
-    // }
-    //
-    // // This is included for troubleshooting. It should be removed afterward.
-    // if ((*iter).new_pos > new_pos) {
-    //     stop(
-    //         "Function `get_mut_` is returning a Mutation object whose "
-    //         "new position field is greater than the input new position."
-    //     );
-    // }
-
-    // Move mutation to the proper spot
-    while (iter != mutations.end()) {
-        if ((*iter).new_pos > new_pos) break;
-        ++iter;
-    }
-    --iter;
-
-
-    return iter;
-}
-
-
-uint VarSequence::get_mut_ind_(const uint& new_pos) const {
+uint VarSequence::get_mut_(const uint& new_pos) const {
 
     if (mutations.empty()) return mutations.size();
 
@@ -1057,13 +1016,13 @@ uint VarSequence::get_mut_ind_(const uint& new_pos) const {
         return mutations.size() - 1;
     }
 
-    uint i = 0;
+    uint mut_i = 0;
     // Move mutation to the proper spot
-    while (mutations[i].new_pos <= new_pos) ++i;
+    while (mutations[mut_i].new_pos <= new_pos) ++mut_i;
     // Because we want the last mutation that is <= new_pos
-    --i;
+    --mut_i;
 
-    return i;
+    return mut_i;
 }
 
 

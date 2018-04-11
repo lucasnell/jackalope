@@ -211,10 +211,8 @@ public:
      ------------------
      */
     void calc_positions(bool sort_first = true);
-    void calc_positions(std::deque<Mutation>::iterator iter);
-    void calc_positions(uint i);
-    void calc_positions(std::deque<Mutation>::iterator iter, const sint& modifier);
-    void calc_positions(uint i, const sint& modifier);
+    void calc_positions(uint mut_i);
+    void calc_positions(uint mut_i, const sint& modifier);
 
 
 
@@ -310,8 +308,6 @@ private:
      a single Mutation object.
      ------------------
      */
-    char get_char_(const uint& new_pos,
-                   const std::deque<Mutation>::iterator& mut) const;
     char get_char_(const uint& new_pos, const uint& mut) const;
 
     /*
@@ -320,8 +316,7 @@ private:
      (without being past) an input position on the "new", variant sequence.
      ------------------
      */
-    std::deque<Mutation>::iterator get_mut_(const uint& new_pos) const;
-    uint get_mut_ind_(const uint& new_pos) const;
+    uint get_mut_(const uint& new_pos) const;
 
 };
 
