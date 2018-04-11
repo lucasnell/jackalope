@@ -197,6 +197,7 @@ filter_sequences <- function(ref_, min_seq_size = 0L, out_seq_prop = 0) {
 #'     Indexing the output list would be done as such:
 #'     \code{output_list[[variant_index]][[sequence_index]][position_index]}.
 #'
+#' @noRd
 #'
 digest_var <- function(var_, bind_sites, len5s, chunk_size, n_cores) {
     .Call(`_gemino_digest_var`, var_, bind_sites, len5s, chunk_size, n_cores)

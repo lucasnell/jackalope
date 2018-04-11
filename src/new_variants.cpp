@@ -480,12 +480,11 @@ void VarSequence::add_deletion(const uint& size_, const uint& new_pos_) {
  ------------------
  */
 void VarSequence::add_insertion(const std::string& nucleos_, const uint& new_pos_) {
-    // std::deque<Mutation>::iterator iter = get_mut_(new_pos_);
-    uint i = get_mut_ind_(new_pos_);
-    // `mutations.end()` is returned above if `new_pos_` is before the
+
+    uint mut_i = get_mut_(new_pos_);
+    // `mutations.size()` is returned above if `new_pos_` is before the
     // first Mutation object or if `mutations` is empty
-    // if (iter == mutations.end()) {
-    if (i == mutations.size()) {
+    if (mut_i == mutations.size()) {
         // (below, notice that new position and old position are the same)
         Mutation new_mut(new_pos_, new_pos_, nucleos_);
         mutations.push_front(new_mut);
@@ -493,48 +492,34 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint& new_pos
         calc_positions(static_cast<uint>(0));
         return;
     }
-    // uint ind = new_pos_ - (*iter).new_pos;
-    uint ind = new_pos_ - mutations[i].new_pos;
+
+    uint ind = new_pos_ - mutations[mut_i].new_pos;
     /*
      If `new_pos_` is within the Mutation sequence, we adjust that Mutation:
      */
-    // if (ind <= (*iter).size_modifier) {
-    if (ind <= mutations[i].size_modifier) {
+    if (ind <= mutations[mut_i].size_modifier) {
         sint size_ = nucleos_.size() - 1;
         // string to store combined nucleotides
         std::string nt = "";
-        // for (uint j = 0; j < ind; j++) nt += (*iter)[j];
-        for (uint j = 0; j < ind; j++) nt += mutations[i][j];
+        for (uint j = 0; j < ind; j++) nt += mutations[mut_i][j];
         nt += nucleos_;
-        // for (uint j = ind + 1; j < (*iter).nucleos.size(); j++) nt += (*iter)[j];
-        for (uint j = ind + 1; j < mutations[i].nucleos.size(); j++) nt += mutations[i][j];
+        for (uint j = ind + 1; j < mutations[mut_i].nucleos.size(); j++) nt += mutations[mut_i][j];
         // Update nucleos and size_modifier fields:
-        // (*iter).nucleos = nt;
-        mutations[i].nucleos = nt;
-        // (*iter).size_modifier += size_;
-        mutations[i].size_modifier += size_;
+        mutations[mut_i].nucleos = nt;
+        mutations[mut_i].size_modifier += size_;
         // Adjust new positions and total scaffold size:
-        // calc_positions(iter + 1, size_);
-        calc_positions(i + 1, size_);
-        ;
+        calc_positions(mut_i + 1, size_);
     /*
      If `new_pos_` is in the reference sequence following the Mutation, we add
      a new Mutation object:
      */
     } else {
-        // uint p = iter - mutations.begin();
-        ;
-        // uint old_pos_ = ind + ((*iter).old_pos - (*iter).size_modifier);
-        uint old_pos_ = ind + (mutations[i].old_pos - mutations[i].size_modifier);
+        uint old_pos_ = ind + (mutations[mut_i].old_pos - mutations[mut_i].size_modifier);
         Mutation new_mut(old_pos_, new_pos_, nucleos_);
-        // ++iter;
-        ++i;
-        mutations.insert(mutations.begin() + i, new_mut);
+        ++mut_i;
+        mutations.insert(mutations.begin() + mut_i, new_mut);
         // Adjust new positions and total scaffold size:
-        // iter = mutations.begin() + p + 1;
-        ;
-        // calc_positions(iter);
-        calc_positions(i);
+        calc_positions(mut_i);
     }
     return;
 }
@@ -550,54 +535,29 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint& new_pos
  */
 void VarSequence::add_substitution(const char& nucleo, const uint& new_pos_) {
 
-    uint i = get_mut_ind_(new_pos_);
+    uint mut_i = get_mut_(new_pos_);
 
-    // std::deque<Mutation>::iterator iter = get_mut_(new_pos_);
-    // `mutations.end()` is returned above if `new_pos_` is before the
+    // `mutations.size()` is returned above if `new_pos_` is before the
     // first Mutation object or if `mutations` is empty
-    // if (iter == mutations.end()) {
-    if (i == mutations.size()) {
+    if (mut_i == mutations.size()) {
         std::string nucleos_(1, nucleo);
         // (below, notice that new position and old position are the same)
         Mutation new_mut(new_pos_, new_pos_, nucleos_);
         mutations.push_front(new_mut);
-        // if (!mutations.empty()) {
-        //     // mutations[0] = new_mut;
-        //     mutations.push_front(new_mut);
-        //     // iter = mutations.begin();
-        // } else {
-        //     // ;
-        //     mutations.push_back(new_mut);
-        //     // iter = mutations.begin();
-        //     // mutations.insert(iter, new_mut);
-        // }
-        // mutations.push_back(new_mut);
-        // std::sort(mutations.begin(), mutations.end());
     } else {
-        // uint ind = new_pos_ - (*iter).new_pos;
-        uint ind = new_pos_ - mutations[i].new_pos;
+        uint ind = new_pos_ - mutations[mut_i].new_pos;
         // If `new_pos_` is within the mutation sequence:
-        // if (ind <= (*iter).size_modifier) {
-        if (ind <= mutations[i].size_modifier) {
-            // (*iter).nucleos[ind] = nucleo;
-            mutations[i].nucleos[ind] = nucleo;
+        if (ind <= mutations[mut_i].size_modifier) {
+            mutations[mut_i].nucleos[ind] = nucleo;
         // If `new_pos_` is in the reference sequence following the mutation:
         } else {
-            // uint old_pos_ = ind + ((*iter).old_pos - (*iter).size_modifier);
-            uint old_pos_ = ind + (mutations[i].old_pos - mutations[i].size_modifier);
+            uint old_pos_ = ind + (mutations[mut_i].old_pos - mutations[mut_i].size_modifier);
             std::string nucleos_(1, nucleo);
             Mutation new_mut(old_pos_, new_pos_, nucleos_);
-            // ++iter;
-            ++i;
-            // mutations.insert(iter, new_mut);
-            mutations.insert(mutations.begin() + i, new_mut);
-            // iter = mutations.begin();
+            ++mut_i;
+            mutations.insert(mutations.begin() + mut_i, new_mut);
         }
     }
-
-    // std::string nucleos_(1, nucleo);
-    // Mutation new_mut(new_pos_, new_pos_, nucleos_);
-    // mutations.push_back(new_mut);
 
     return;
 }
