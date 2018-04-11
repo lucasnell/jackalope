@@ -318,6 +318,7 @@ private:
      ------------------
      */
     std::deque<Mutation>::iterator get_mut_(const uint& new_pos) const;
+    uint get_mut_ind_(const uint& new_pos) const;
 
 };
 

@@ -532,28 +532,56 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint& new_pos
  ------------------
  */
 void VarSequence::add_substitution(const char& nucleo, const uint& new_pos_) {
-    std::deque<Mutation>::iterator iter = get_mut_(new_pos_);
+
+    uint i = get_mut_ind_(new_pos_);
+
+    // std::deque<Mutation>::iterator iter = get_mut_(new_pos_);
     // `mutations.end()` is returned above if `new_pos_` is before the
     // first Mutation object or if `mutations` is empty
-    if (iter == mutations.end()) {
+    // if (iter == mutations.end()) {
+    if (i == mutations.size()) {
         std::string nucleos_(1, nucleo);
         // (below, notice that new position and old position are the same)
         Mutation new_mut(new_pos_, new_pos_, nucleos_);
         mutations.push_front(new_mut);
-        return;
-    }
-    uint ind = new_pos_ - (*iter).new_pos;
-    // If `new_pos_` is within the mutation sequence:
-    if (ind <= (*iter).size_modifier) {
-        (*iter).nucleos[ind] = nucleo;
-        // If `new_pos_` is in the reference sequence following the mutation:
+        // if (!mutations.empty()) {
+        //     // mutations[0] = new_mut;
+        //     mutations.push_front(new_mut);
+        //     // iter = mutations.begin();
+        // } else {
+        //     // ;
+        //     mutations.push_back(new_mut);
+        //     // iter = mutations.begin();
+        //     // mutations.insert(iter, new_mut);
+        // }
+        // mutations.push_back(new_mut);
+        // std::sort(mutations.begin(), mutations.end());
     } else {
-        uint old_pos_ = ind + ((*iter).old_pos - (*iter).size_modifier);
-        std::string nucleos_(1, nucleo);
-        Mutation new_mut(old_pos_, new_pos_, nucleos_);
-        ++iter;
-        mutations.insert(iter, new_mut);
+        // uint ind = new_pos_ - (*iter).new_pos;
+        uint ind = new_pos_ - mutations[i].new_pos;
+        // If `new_pos_` is within the mutation sequence:
+        // if (ind <= (*iter).size_modifier) {
+        if (ind <= mutations[i].size_modifier) {
+            // (*iter).nucleos[ind] = nucleo;
+            mutations[i].nucleos[ind] = nucleo;
+        // If `new_pos_` is in the reference sequence following the mutation:
+        } else {
+            // uint old_pos_ = ind + ((*iter).old_pos - (*iter).size_modifier);
+            uint old_pos_ = ind + (mutations[i].old_pos - mutations[i].size_modifier);
+            std::string nucleos_(1, nucleo);
+            Mutation new_mut(old_pos_, new_pos_, nucleos_);
+            // ++iter;
+            ++i;
+            // mutations.insert(iter, new_mut);
+            mutations.insert(mutations.begin() + i, new_mut);
+            // iter = mutations.begin();
+        }
     }
+
+    // std::string nucleos_(1, nucleo);
+    // Mutation new_mut(new_pos_, new_pos_, nucleos_);
+    // mutations.push_back(new_mut);
+
     return;
 }
 
@@ -948,6 +976,40 @@ std::deque<Mutation>::iterator VarSequence::get_mut_(const uint& new_pos) const 
 }
 
 
+uint VarSequence::get_mut_ind_(const uint& new_pos) const {
+
+    if (mutations.empty()) return mutations.size();
+
+    if (new_pos >= seq_size) {
+        stop(
+            "new_pos should never be >= the scaffold size. "
+            "Either re-calculate the scaffold size or closely examine new_pos."
+        );
+    }
+    /*
+    If new_pos is less than the position for the first mutation, we return
+    mutations.end():
+    */
+    if (new_pos < mutations.front().new_pos) {
+        return mutations.size();
+    /*
+    If the new_pos is greater than or equal to the position for the last
+    mutation, we return the last Mutation:
+    */
+    } else if (new_pos >= mutations.back().new_pos) {
+        return mutations.size() - 1;
+    }
+
+    uint i = 0;
+    // Move mutation to the proper spot
+    while (mutations[i].new_pos <= new_pos) ++i;
+    // Because we want the last mutation that is <= new_pos
+    --i;
+
+    return i;
+}
+
+
 
 VarSet::VarSet(const std::string& fasta_file, const uint& n_vars,
                const bool& cut_names, const bool& remove_soft_mask) {
@@ -1294,6 +1356,8 @@ std::string see_chunk(SEXP vs_, const uint& v,
 
 
 
+// void many_mutations(const std::deque<std::string>& seqs, const uint& n_vars,
+
 
 //' Add many mutations (> 1,000) to a VarSet object from R.
 //'
@@ -1307,26 +1371,34 @@ std::string see_chunk(SEXP vs_, const uint& v,
 //' @noRd
 //'
 //[[Rcpp::export]]
-void many_mutations(SEXP vs_, const double& min_muts, const double& max_muts) {
+void many_mutations(SEXP vs_,
+                    const double& min_muts, const double& max_muts) {
 
     XPtr<VarSet> vs_xptr(vs_);
     VarSet& vset(*vs_xptr);
 
+    // VarSet vset(seqs, n_vars);
+
     double prev_type;
 
     for (uint v = 0; v < vset.size(); v++) {
+        Rcout << "===== VARIANT " << v << std::endl;
         for (uint s = 0; s < vset.reference.size(); s++) {
+            Rcout << "---- SCAFFOLD " << s << std::endl;
             VarSequence& vs(vset[v][s]);
             uint n_muts = static_cast<uint>(R::runif(min_muts, max_muts+1));
+            Rcout << n_muts << std::endl;
             uint m = 0;
             while (m < n_muts) {
                 uint max_size = vs.seq_size;
                 double pos_ = R::unif_rand() * static_cast<double>(max_size);
                 uint pos = static_cast<uint>(pos_);
                 double rnd = R::unif_rand();
-                if (rnd < 0.5) {
+                // if (rnd < 0.5) {
+                if (rnd < 10) {
                     std::string str = cpp_rando_seq(1);
                     try {
+                        ;
                         vs.add_substitution(str[0], pos);
                     } catch (...) {
                         Rcout <<"substitution problem @ ";
@@ -1339,7 +1411,8 @@ void many_mutations(SEXP vs_, const double& min_muts, const double& max_muts) {
                     if (size > 10) size = 10;
                     std::string str = cpp_rando_seq(size + 1);
                     try {
-                        vs.add_insertion(str, pos);
+                        // vs.add_insertion(str, pos);
+                        ;
                     } catch (...) {
                         Rcout <<"insertion problem @ ";
                         Rcout << "v:" << v << " s:" << s << " pos:" << pos;
@@ -1347,11 +1420,11 @@ void many_mutations(SEXP vs_, const double& min_muts, const double& max_muts) {
                         return;
                     }
                 } else {
-                    ;
                     uint size = static_cast<uint>(R::rexp(2.0) + 1.0);
                     if (size > 10) size = 10;
                     try {
-                        vs.add_deletion(size, pos);
+                        // vs.add_deletion(size, pos);
+                        ;
                     } catch (...) {
                         Rcout <<"deletion problem @ ";
                         Rcout << "v: " << v << " s: " << s << " pos: " << pos;
