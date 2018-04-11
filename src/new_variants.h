@@ -270,9 +270,8 @@ private:
      entirely by the deletion, and it merges any deletions that are contiguous.
      -------------------
      */
-    void deletion_blowup_(
-            std::deque<Mutation>::iterator& iter,
-            uint& deletion_start, uint& deletion_end, sint& size_mod);
+    void deletion_blowup_(uint& mut_i, uint& deletion_start, uint& deletion_end,
+                          sint& size_mod);
 
 
 
@@ -282,7 +281,7 @@ private:
      Inner function to merge an insertion and deletion.
      -------------------
      */
-    void merge_del_ins_(std::deque<Mutation>::iterator& insertion,
+    void merge_del_ins_(uint& insert_i,
                         uint& deletion_start,
                         uint& deletion_end,
                         sint& size_mod,
@@ -296,9 +295,8 @@ private:
      Inner function to remove Mutation and keep iterator from being invalidated.
      -------------------
      */
-    void remove_mutation_(std::deque<Mutation>::iterator& mutation);
-    void remove_mutation_(std::deque<Mutation>::iterator& mutation1,
-                          std::deque<Mutation>::iterator& mutation2);
+    void remove_mutation_(uint& mut_i);
+    void remove_mutation_(uint& mut_i1, uint& mut_i2);
 
 
     /*

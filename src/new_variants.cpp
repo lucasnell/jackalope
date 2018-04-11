@@ -570,17 +570,16 @@ void VarSequence::add_substitution(const char& nucleo, const uint& new_pos_) {
  By "blowup", I mean it removes substitutions and insertions if they're covered
  entirely by the deletion, and it merges any deletions that are contiguous.
  This function is designed to be used after `get_mut_`, and the output from that
- function should be the `iter` argument for this function.
- It is also designed for `calc_positions` to be used on `iter` afterward
- (bc this function alters `iter` to point to the position after the deletion),
+ function should be the `mut_i` argument for this function.
+ It is also designed for `calc_positions` to be used on `mut_i` afterward
+ (bc this function alters `mut_i` to point to the position after the deletion),
  along with `size_mod` for the `modifier` argument
  (i.e., `calc_positions(iter, size_mod)`).
  Note that there's a check to ensure that this is never run when `mutations`
  is empty.
  */
-void VarSequence::deletion_blowup_(
-        std::deque<Mutation>::iterator& iter,
-        uint& deletion_start, uint& deletion_end, sint& size_mod) {
+void VarSequence::deletion_blowup_(uint& mut_i, uint& deletion_start, uint& deletion_end,
+                                   sint& size_mod) {
 
     /*
      Difference between first and last objects to be removed.
@@ -589,11 +588,11 @@ void VarSequence::deletion_blowup_(
     sint n_iters = 0;
 
     /*
-     `mutations.end()` is returned from the `get_mut_` function if
+     `mutations.size()` is returned from the `get_mut_` function if
      `deletion_start` is before the first Mutation object.
      */
-    if (iter == mutations.end()) {
-        iter = mutations.begin();
+    if (mut_i == mutations.size()) {
+        mut_i = 0;
     /*
      If it's a substitution and has a position < the deletion starting point,
      we can simply skip to the next one.
@@ -601,47 +600,46 @@ void VarSequence::deletion_blowup_(
      If it's > the deletion starting point, that should never happen if `get_mut_` is
      working properly, so we return an error.
      */
-    } else if ((*iter).size_modifier == 0) {
-        if ((*iter).new_pos < deletion_start) {
-            ++iter;
-        } else if ((*iter).new_pos == deletion_start) {
+    } else if (mutations[mut_i].size_modifier == 0) {
+        if (mutations[mut_i].new_pos < deletion_start) {
+            ++mut_i;
+        } else if (mutations[mut_i].new_pos == deletion_start) {
             ;
         } else {
-            stop("Iterator problem in deletion_blowup_");
+            stop("Index problem in deletion_blowup_");
         }
     /*
      If the first Mutation is an insertion, we may have to merge it with
      this deletion, and this is done with `merge_del_ins_`.
-     This function will iterate to the next Mutation (and should never cause
-     iterator invalidation even after erasing an insertion).
+     This function will iterate to the next Mutation.
      It also adjusts `size_mod` appropriately.
      (`n_iters` is used later and doesn't matter here)
      */
-    } else if ((*iter).size_modifier > 0) {
-        // merge_del_ins_(iter, deletion_start, deletion_end, size_mod, n_iters);
-        size_mod = 0;
+    } else if (mutations[mut_i].size_modifier > 0) {
+        merge_del_ins_(mut_i, deletion_start, deletion_end, size_mod, n_iters);
+        // size_mod = 0;
         return;
     /*
      If it's a deletion and next to the new deletion, we merge their information
      before removing the old mutation.
-     (`remove_mutation_` automatically moves the iterator to the location
+     (`remove_mutation_` automatically moves the index to the location
      after the original.)
 
      If it's not next to the new deletion, we just iterate to the next mutation.
      */
     } else {
-        if ((*iter).new_pos == deletion_start) {
-            deletion_start += (*iter).size_modifier;
-            size_mod += (*iter).size_modifier;
-            remove_mutation_(iter);
-        } else ++iter;
+        if (mutations[mut_i].new_pos == deletion_start) {
+            deletion_start += mutations[mut_i].size_modifier;
+            size_mod += mutations[mut_i].size_modifier;
+            remove_mutation_(mut_i);
+        } else ++mut_i;
     }
 
     /*
-     If `iter` no longer overlaps this deletion or if the deletion is gone (bc it
+     If `mut_i` no longer overlaps this deletion or if the deletion is gone (bc it
      absorbed part/all of an insertion), return now
      */
-    if ((*iter).new_pos > deletion_end || size_mod == 0) return;
+    if (mutations[mut_i].new_pos > deletion_end || size_mod == 0) return;
 
     /*
      If there is overlap, then we delete a range of Mutation objects.
@@ -650,39 +648,39 @@ void VarSequence::deletion_blowup_(
      */
     n_iters = 0;
 
-    while (iter != mutations.end()) {
-        if ((*iter).new_pos > deletion_end) break;
+    while (mut_i < mutations.size()) {
+        if (mutations[mut_i].new_pos > deletion_end) break;
         // For substitutions, do nothing before iterating
-        if ((*iter).size_modifier == 0) {
-            ++iter;
+        if (mutations[mut_i].size_modifier == 0) {
+            ++mut_i;
             ++n_iters;
         /*
          For insertions, run `merge_del_ins_` to make sure that...
              (1) any sequence not overlapping the deletion is kept
              (2) `size_mod` is adjusted properly
              (3) insertions that are entirely overlapped by the deletion are erased
-             (4) `iter` is moved to the next Mutation
+             (4) `mut_i` is moved to the next Mutation
              (5) `n_iters` is increased if the insertion isn't deleted
          */
-        } else if ((*iter).size_modifier > 0) {
-            // merge_del_ins_(iter, deletion_start, deletion_end, size_mod, n_iters);
-            // // as above, stop here if deletion is absorbed
-            // if (size_mod == 0) return;
-            size_mod = 0;
-            return;
+        } else if (mutations[mut_i].size_modifier > 0) {
+            merge_del_ins_(mut_i, deletion_start, deletion_end, size_mod, n_iters);
+            // as above, stop here if deletion is absorbed
+            if (size_mod == 0) return;
+            // size_mod = 0;
+            // return;
         // For deletions, merge them with the current one
         } else {
-            deletion_end -= (*iter).size_modifier;
+            deletion_end -= mutations[mut_i].size_modifier;
             deletion_end = std::min(deletion_end, seq_size - 1);
             size_mod = deletion_start - deletion_end - 1;
-            ++iter;
+            ++mut_i;
             ++n_iters;
         }
     }
-    if (n_iters > iter - mutations.begin()) stop("n_iters is counted wrong");
-    auto iter_begin = iter - n_iters;
+    if (n_iters > mut_i) stop("n_iters is counted wrong");
+    uint range_begin = mut_i - n_iters;
     // Remove all mutations in the specified range:
-    remove_mutation_(iter_begin, iter);
+    remove_mutation_(range_begin, mut_i);
 
     // `iter` now points to the position AFTER the erasing.
 }
@@ -693,38 +691,40 @@ void VarSequence::deletion_blowup_(
 
 /*
  Inner function to merge an insertion and deletion.
- `iter` points to the focal insertion.
+ `insert_i` points to the focal insertion.
  Deletion start and end points are for the new, variant sequence.
  `size_mod` is the size_modifier field for the Mutation object that will be
  created for the deletion. I change this value by the number of "virtual" nucleotides
  removed during this operation. Virtual nucleotides are the extra ones stored
  in an insertion's Mutation object (i.e., the ones other than the reference sequence).
  `n_iters` is how many positions were moved during this function.
- It also moves the iterator to the next Mutation object.
+ It also moves the index to the next Mutation object.
  */
-void VarSequence::merge_del_ins_(std::deque<Mutation>::iterator& insertion,
-                                  uint& deletion_start, uint& deletion_end,
-                                  sint& size_mod, sint& n_iters) {
+void VarSequence::merge_del_ins_(uint& insert_i,
+                                 uint& deletion_start, uint& deletion_end,
+                                 sint& size_mod, sint& n_iters) {
 
     // The starting and ending positions of the focal insertion
-    uint& insertion_start((*insertion).new_pos);
-    uint insertion_end = insertion_start + (*insertion).size_modifier;
+    uint& insertion_start(mutations[insert_i].new_pos);
+    uint insertion_end = insertion_start + mutations[insert_i].size_modifier;
 
     /*
      If the deletion doesn't overlap, move to the next Mutation
      */
     if (deletion_start > insertion_end || deletion_end < insertion_start) {
-        ++insertion;
+        ++insert_i;
         ++n_iters;
     /*
      Else if the entire insertion is covered by the deletion, adjust size_mod and
      remove the Mutation object for the insertion:
      */
     } else if (deletion_start <= insertion_start && deletion_end >= insertion_end) {
-        size_mod += (*insertion).size_modifier; // making it less negative
-        // `remove_mutation_` moves to the next Mutation, so no need to do it here.
-        // See its code below for more info.
-        remove_mutation_(insertion);
+        size_mod += mutations[insert_i].size_modifier; // making it less negative
+        /*
+         Because we're deleting a mutation, `insert_i` refers to the next
+         object without us doing anything here.
+         */
+        remove_mutation_(insert_i);
     /*
      Else if there is overlap, adjust the size_mod, remove that part of
      the inserted sequence, and adjust the insertion's size modifier:
@@ -739,20 +739,20 @@ void VarSequence::merge_del_ins_(std::deque<Mutation>::iterator& insertion,
         uint erase_ind1 = deletion_end - insertion_start + 1;
         erase_ind1 = std::min(
             erase_ind1,
-            static_cast<uint>((*insertion).nucleos.size())
+            static_cast<uint>(mutations[insert_i].nucleos.size())
         );
 
         // Adjust the size modifier for the eventual Mutation object
         // for the deletion (making it less negative)
         size_mod += (erase_ind1 - erase_ind0);
 
-        std::string& nts((*insertion).nucleos);
+        std::string& nts(mutations[insert_i].nucleos);
         nts.erase(nts.begin() + erase_ind0, nts.begin() + erase_ind1);
         // // clear memory:
         // std::string(nts.begin(), nts.end()).swap(nts);
 
         // Adjust the insertion's size modifier
-        (*insertion).size_modifier = (*insertion).nucleos.size() - 1;
+        mutations[insert_i].size_modifier = mutations[insert_i].nucleos.size() - 1;
 
         /*
          If this deletion removes the first part of the insertion but doesn't reach
@@ -766,9 +766,9 @@ void VarSequence::merge_del_ins_(std::deque<Mutation>::iterator& insertion,
          Also, iterating will cause this mutation to be deleted.
          */
         if (deletion_start <= insertion_start && deletion_end < insertion_end) {
-            (*insertion).new_pos += (erase_ind1 - erase_ind0);
+            mutations[insert_i].new_pos += (erase_ind1 - erase_ind0);
         } else {
-            ++insertion;
+            ++insert_i;
             ++n_iters;
         }
     }
@@ -782,40 +782,34 @@ void VarSequence::merge_del_ins_(std::deque<Mutation>::iterator& insertion,
 
 
 /*
- Inner function to remove Mutation and keep iterator from being invalidated.
- After this function, `iter` points to the next item or `mutations.end()`.
- If two iterators are provided, the range of mutations are removed and each
- iterator now points to directly outside the range that was removed.
+ Inner function to remove Mutation.
+ After this function, `mut_i` points to the next item or `mutations.size()`.
+ If two indices are provided, the range of mutations are removed and each
+ index now points to directly outside the range that was removed.
  If the removal occurs at the beginning of the mutations deque, then
- `iter1 == mutations.begin() && iter2 == mutations.begin()`
- after this function is run.
+ `mut_i == 0 && mut_i2 == 0` after this function is run.
  */
-void VarSequence::remove_mutation_(std::deque<Mutation>::iterator& mutation) {
-    if (mutation == mutations.end()) return;
-    uint p = mutation - mutations.begin();
+void VarSequence::remove_mutation_(uint& mut_i) {
+    if (mut_i == mutations.size()) return;
     // erase:
-    mutations.erase(mutation);
+    mutations.erase(mutations.begin() + mut_i);
     // // clear memory:
     // std::deque<Mutation>(mutations.begin(), mutations.end()).swap(mutations);
-    // reset iterator:
-    mutation = mutations.begin() + p;
     return;
 }
-void VarSequence::remove_mutation_(std::deque<Mutation>::iterator& mutation1,
-                                    std::deque<Mutation>::iterator& mutation2) {
+void VarSequence::remove_mutation_(uint& mut_i1, uint& mut_i2) {
 
-    uint p1 = mutation1 - mutations.begin();
     // erase range:
-    mutations.erase(mutation1, mutation2);
+    mutations.erase(mutations.begin() + mut_i1, mutations.begin() + mut_i2);
     // // clear memory:
     // std::deque<Mutation>(mutations.begin(), mutations.end()).swap(mutations);
     // reset iterators:
-    if (p1 > 0) {
-        mutation1 = mutations.begin() + p1 - 1;
-        mutation2 = mutation1 + 1;
+    if (mut_i1 > 0) {
+        mut_i2 = mut_i1;
+        mut_i1--;
     } else {
-        mutation1 = mutations.begin();
-        mutation2 = mutations.begin();
+        mut_i1 = 0;
+        mut_i2 = 0;
     }
 
     return;
