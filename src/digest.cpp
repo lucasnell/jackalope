@@ -123,8 +123,8 @@ void VarSeqDigest::digest(const DigestInfo& dinfo) {
         return;
     }
 
-    // iterator to the nearest mutation for a given chunk's starting position:
-    std::deque<Mutation>::iterator mut = var_info.mutations.begin();
+    // index to the nearest mutation for a given chunk's starting position:
+    uint mut_i = 0;
 
     // Initialize chunk sequence string
     std::string chunk_str(chunk_size, 'x');
@@ -144,7 +144,7 @@ void VarSeqDigest::digest(const DigestInfo& dinfo) {
     // Digesting each chunk:
     for (uint chunk_start = 0; chunk_start <= last_chunk; chunk_start += it) {
         // Filling new chunk string:
-        var_info.set_seq_chunk(chunk_str, chunk_start, chunk_size, mut);
+        var_info.set_seq_chunk(chunk_str, chunk_start, chunk_size, mut_i);
         // Compensating for matches at the end of the previous chunk:
         if (start > it) {
             start -= it;
@@ -186,6 +186,7 @@ void VarSeqDigest::digest(const DigestInfo& dinfo) {
 //'     Indexing the output list would be done as such:
 //'     \code{output_list[[variant_index]][[sequence_index]][position_index]}.
 //'
+//' @noRd
 //'
 // [[Rcpp::export]]
 std::vector< std::vector< std::deque<uint> > > digest_var(
