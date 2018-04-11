@@ -503,7 +503,9 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint& new_pos
         std::string nt = "";
         for (uint j = 0; j < ind; j++) nt += mutations[mut_i][j];
         nt += nucleos_;
-        for (uint j = ind + 1; j < mutations[mut_i].nucleos.size(); j++) nt += mutations[mut_i][j];
+        for (uint j = ind + 1; j < mutations[mut_i].nucleos.size(); j++) {
+            nt += mutations[mut_i][j];
+        }
         // Update nucleos and size_modifier fields:
         mutations[mut_i].nucleos = nt;
         mutations[mut_i].size_modifier += size_;
@@ -551,7 +553,8 @@ void VarSequence::add_substitution(const char& nucleo, const uint& new_pos_) {
             mutations[mut_i].nucleos[ind] = nucleo;
         // If `new_pos_` is in the reference sequence following the mutation:
         } else {
-            uint old_pos_ = ind + (mutations[mut_i].old_pos - mutations[mut_i].size_modifier);
+            uint old_pos_ = ind + (mutations[mut_i].old_pos -
+                mutations[mut_i].size_modifier);
             std::string nucleos_(1, nucleo);
             Mutation new_mut(old_pos_, new_pos_, nucleos_);
             ++mut_i;
