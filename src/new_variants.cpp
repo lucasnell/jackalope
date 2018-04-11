@@ -298,7 +298,7 @@ std::string VarSequence::get_seq_start(uint out_length) const {
  ------------------
  Set an input string object to any chunk of a sequence from the variant scaffold.
  Before anything, this function moves `mut` to the location right before this chunk's
- starting position. I keep this iterator around so I don't have to iterate through
+ starting position. I keep this index around so I don't have to iterate through
  the entire mutation deque multiple times.
  If end position is beyond the size of the sequence, it changes `chunk_str` to the
  sequence from the start to the sequence end.
@@ -423,21 +423,21 @@ void VarSequence::add_deletion(const uint& size_, const uint& new_pos_) {
          */
         const sint subseq_modifier(size_mod);
 
-        iter = get_mut_(deletion_start);
+        mut_i = get_mut_(deletion_start);
 
         /*
          This "blows up" subsequent mutations if they're destroyed/altered
          by this deletion.
          See `deletion_blowup_` below for more info.
          */
-        deletion_blowup_(iter, deletion_start, deletion_end, size_mod);
+        deletion_blowup_(mut_i, deletion_start, deletion_end, size_mod);
 
         /*
          If `size_mod` is zero, this means that an insertion/insertions absorbed all
          of the deletion, so after adjusting sizes, our business is done here.
          */
         if (size_mod == 0) {
-            calc_positions(iter, subseq_modifier);
+            calc_positions(mut_i, subseq_modifier);
             return;
         }
 
@@ -445,28 +445,28 @@ void VarSequence::add_deletion(const uint& size_, const uint& new_pos_) {
          If the deletion hasn't been absorbed, we need to calculate its
          position on the old (i.e., reference) sequence:
          */
-        if (iter != mutations.begin()) {
-            --iter;
-            old_pos_ = deletion_start - (*iter).new_pos + (*iter).old_pos -
-                (*iter).size_modifier;
-            ++iter;
+        if (mut_i != 0) {
+            --mut_i;
+            old_pos_ = deletion_start - mutations[mut_i].new_pos +
+                mutations[mut_i].old_pos - mutations[mut_i].size_modifier;
+            ++mut_i;
         } else old_pos_ = deletion_start; // (`deletion_start` may have changed)
 
-        // Adjust (1) positions of all mutations after and including `iter`, and
+        // Adjust (1) positions of all mutations after and including `mut_i`, and
         //        (2) the scaffold size
-        calc_positions(iter, subseq_modifier);
+        calc_positions(mut_i, subseq_modifier);
     /*
      If `mutations` is empty, just point to the beginning and adjust scaffold size
      */
     } else {
-        iter = mutations.begin();
+        mut_i = 0;
         seq_size += size_mod;
     }
     /*
      Now create the Mutation and insert it.
      */
     Mutation new_mut(old_pos_, deletion_start, size_mod);
-    mutations.insert(iter, new_mut);
+    mutations.insert(mutations.begin() + mut_i, new_mut);
 
     return;
 }
@@ -577,7 +577,7 @@ void VarSequence::add_substitution(const char& nucleo, const uint& new_pos_) {
  It is also designed for `calc_positions` to be used on `mut_i` afterward
  (bc this function alters `mut_i` to point to the position after the deletion),
  along with `size_mod` for the `modifier` argument
- (i.e., `calc_positions(iter, size_mod)`).
+ (i.e., `calc_positions(mut_i, size_mod)`).
  Note that there's a check to ensure that this is never run when `mutations`
  is empty.
  */
@@ -621,7 +621,7 @@ void VarSequence::deletion_blowup_(uint& mut_i, uint& deletion_start, uint& dele
     } else if (mutations[mut_i].size_modifier > 0) {
         merge_del_ins_(mut_i, deletion_start, deletion_end, size_mod, n_iters);
         // size_mod = 0;
-        return;
+        // return;
     /*
      If it's a deletion and next to the new deletion, we merge their information
      before removing the old mutation.
@@ -806,7 +806,7 @@ void VarSequence::remove_mutation_(uint& mut_i1, uint& mut_i2) {
     mutations.erase(mutations.begin() + mut_i1, mutations.begin() + mut_i2);
     // // clear memory:
     // std::deque<Mutation>(mutations.begin(), mutations.end()).swap(mutations);
-    // reset iterators:
+    // reset indices:
     if (mut_i1 > 0) {
         mut_i2 = mut_i1;
         mut_i1--;
@@ -1357,18 +1357,16 @@ void many_mutations(SEXP vs_,
                 if (rnd < 0.5) {
                     std::string str = cpp_rando_seq(1);
                     vs.add_substitution(str[0], pos);
-                // } else if (rnd < 0.75) {
-                } else {
+                } else if (rnd < 0.75) {
                     uint size = static_cast<uint>(R::rexp(2.0) + 1.0);
                     if (size > 10) size = 10;
                     std::string str = cpp_rando_seq(size + 1);
                     vs.add_insertion(str, pos);
+                } else {
+                    uint size = static_cast<uint>(R::rexp(2.0) + 1.0);
+                    if (size > 10) size = 10;
+                    vs.add_deletion(size, pos);
                 }
-                // else {
-                //     uint size = static_cast<uint>(R::rexp(2.0) + 1.0);
-                //     if (size > 10) size = 10;
-                //     // vs.add_deletion(size, pos);
-                // }
                 prev_type = rnd;
                 ++m;
             }
