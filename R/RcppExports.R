@@ -337,6 +337,18 @@ see_sizes <- function(vs_, v) {
     .Call(`_gemino_see_sizes`, vs_, v)
 }
 
+add_substitution <- function(vs_, v, scaff, nucleo, new_pos_) {
+    invisible(.Call(`_gemino_add_substitution`, vs_, v, scaff, nucleo, new_pos_))
+}
+
+add_insertion <- function(vs_, v, scaff, nucleos_, new_pos_) {
+    invisible(.Call(`_gemino_add_insertion`, vs_, v, scaff, nucleos_, new_pos_))
+}
+
+add_deletion <- function(vs_, v, scaff, size_, new_pos_) {
+    invisible(.Call(`_gemino_add_deletion`, vs_, v, scaff, size_, new_pos_))
+}
+
 #' View the starting portion of a variant sequence.
 #'
 #' Temporary function for testing.

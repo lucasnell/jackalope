@@ -479,6 +479,48 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// add_substitution
+void add_substitution(SEXP vs_, const uint& v, const uint& scaff, const char& nucleo, const uint& new_pos_);
+RcppExport SEXP _gemino_add_substitution(SEXP vs_SEXP, SEXP vSEXP, SEXP scaffSEXP, SEXP nucleoSEXP, SEXP new_pos_SEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
+    Rcpp::traits::input_parameter< const uint& >::type v(vSEXP);
+    Rcpp::traits::input_parameter< const uint& >::type scaff(scaffSEXP);
+    Rcpp::traits::input_parameter< const char& >::type nucleo(nucleoSEXP);
+    Rcpp::traits::input_parameter< const uint& >::type new_pos_(new_pos_SEXP);
+    add_substitution(vs_, v, scaff, nucleo, new_pos_);
+    return R_NilValue;
+END_RCPP
+}
+// add_insertion
+void add_insertion(SEXP vs_, const uint& v, const uint& scaff, const std::string& nucleos_, const uint& new_pos_);
+RcppExport SEXP _gemino_add_insertion(SEXP vs_SEXP, SEXP vSEXP, SEXP scaffSEXP, SEXP nucleos_SEXP, SEXP new_pos_SEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
+    Rcpp::traits::input_parameter< const uint& >::type v(vSEXP);
+    Rcpp::traits::input_parameter< const uint& >::type scaff(scaffSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type nucleos_(nucleos_SEXP);
+    Rcpp::traits::input_parameter< const uint& >::type new_pos_(new_pos_SEXP);
+    add_insertion(vs_, v, scaff, nucleos_, new_pos_);
+    return R_NilValue;
+END_RCPP
+}
+// add_deletion
+void add_deletion(SEXP vs_, const uint& v, const uint& scaff, const uint& size_, const uint& new_pos_);
+RcppExport SEXP _gemino_add_deletion(SEXP vs_SEXP, SEXP vSEXP, SEXP scaffSEXP, SEXP size_SEXP, SEXP new_pos_SEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
+    Rcpp::traits::input_parameter< const uint& >::type v(vSEXP);
+    Rcpp::traits::input_parameter< const uint& >::type scaff(scaffSEXP);
+    Rcpp::traits::input_parameter< const uint& >::type size_(size_SEXP);
+    Rcpp::traits::input_parameter< const uint& >::type new_pos_(new_pos_SEXP);
+    add_deletion(vs_, v, scaff, size_, new_pos_);
+    return R_NilValue;
+END_RCPP
+}
 // see_start
 std::string see_start(SEXP vs_, const uint& v, const uint& scaff, const uint& size_);
 RcppExport SEXP _gemino_see_start(SEXP vs_SEXP, SEXP vSEXP, SEXP scaffSEXP, SEXP size_SEXP) {
@@ -858,6 +900,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_print_vs", (DL_FUNC) &_gemino_print_vs, 1},
     {"_gemino_see_mutations", (DL_FUNC) &_gemino_see_mutations, 2},
     {"_gemino_see_sizes", (DL_FUNC) &_gemino_see_sizes, 2},
+    {"_gemino_add_substitution", (DL_FUNC) &_gemino_add_substitution, 5},
+    {"_gemino_add_insertion", (DL_FUNC) &_gemino_add_insertion, 5},
+    {"_gemino_add_deletion", (DL_FUNC) &_gemino_add_deletion, 5},
     {"_gemino_see_start", (DL_FUNC) &_gemino_see_start, 4},
     {"_gemino_see_chunk", (DL_FUNC) &_gemino_see_chunk, 5},
     {"_gemino_many_mutations", (DL_FUNC) &_gemino_many_mutations, 3},

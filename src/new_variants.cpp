@@ -1243,39 +1243,39 @@ std::vector<uint> see_sizes(SEXP vs_, const uint& v) {
     return out;
 }
 
-// //[[Rcpp::export]]
-// void add_substitution(SEXP vs_, const uint& v,
-//                       const uint& scaff,
-//                       const char& nucleo,
-//                       const uint& new_pos_) {
-//     XPtr<VarSet> vset(vs_);
-//     VarGenome& vg((*vset)[v]);
-//     VarSequence& vs(vg[scaff]);
-//     vs.add_substitution(nucleo, new_pos_);
-//     return;
-// }
-// //[[Rcpp::export]]
-// void add_insertion(SEXP vs_, const uint& v,
-//                    const uint& scaff,
-//                    const std::string& nucleos_,
-//                    const uint& new_pos_) {
-//     XPtr<VarSet> vset(vs_);
-//     VarGenome& vg((*vset)[v]);
-//     VarSequence& vs(vg[scaff]);
-//     vs.add_insertion(nucleos_, new_pos_);
-//     return;
-// }
-// //[[Rcpp::export]]
-// void add_deletion(SEXP vs_, const uint& v,
-//                   const uint& scaff,
-//                   const uint& size_,
-//                   const uint& new_pos_) {
-//     XPtr<VarSet> vset(vs_);
-//     VarGenome& vg((*vset)[v]);
-//     VarSequence& vs(vg[scaff]);
-//     vs.add_deletion(size_, new_pos_);
-//     return;
-// }
+//[[Rcpp::export]]
+void add_substitution(SEXP vs_, const uint& v,
+                      const uint& scaff,
+                      const char& nucleo,
+                      const uint& new_pos_) {
+    XPtr<VarSet> vset(vs_);
+    VarGenome& vg((*vset)[v]);
+    VarSequence& vs(vg[scaff]);
+    vs.add_substitution(nucleo, new_pos_);
+    return;
+}
+//[[Rcpp::export]]
+void add_insertion(SEXP vs_, const uint& v,
+                   const uint& scaff,
+                   const std::string& nucleos_,
+                   const uint& new_pos_) {
+    XPtr<VarSet> vset(vs_);
+    VarGenome& vg((*vset)[v]);
+    VarSequence& vs(vg[scaff]);
+    vs.add_insertion(nucleos_, new_pos_);
+    return;
+}
+//[[Rcpp::export]]
+void add_deletion(SEXP vs_, const uint& v,
+                  const uint& scaff,
+                  const uint& size_,
+                  const uint& new_pos_) {
+    XPtr<VarSet> vset(vs_);
+    VarGenome& vg((*vset)[v]);
+    VarSequence& vs(vg[scaff]);
+    vs.add_deletion(size_, new_pos_);
+    return;
+}
 
 
 //' View the starting portion of a variant sequence.
