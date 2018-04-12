@@ -629,11 +629,7 @@ void VarSequence::deletion_blowup_(uint& mut_i, uint& deletion_start, uint& dele
      If it's not next to the new deletion, we just iterate to the next mutation.
      */
     } else {
-        // Rcout << mutations[mut_i].new_pos << ' ';
-        // Rcout << deletion_start << std::endl;
         if (mutations[mut_i].new_pos == deletion_start) {
-            // Rcout << "went into if statement" << std::endl;
-            // deletion_start += mutations[mut_i].size_modifier;
             size_mod += mutations[mut_i].size_modifier;
             remove_mutation_(mut_i);
         } else ++mut_i;
@@ -676,15 +672,10 @@ void VarSequence::deletion_blowup_(uint& mut_i, uint& deletion_start, uint& dele
             merge_del_ins_(mut_i, deletion_start, deletion_end, size_mod);
             // as above, stop here if deletion is absorbed
             if (size_mod == 0) return;
-            // size_mod = 0;
-            // return;
         /*
          For deletions, merge them with the current one
          */
         } else {
-            // deletion_end -= mutations[mut_i].size_modifier;
-            // deletion_end = std::min(deletion_end, seq_size - 1);
-            // size_mod = deletion_start - deletion_end - 1;
             size_mod += mutations[mut_i].size_modifier;
             ++mut_i;
         }
@@ -1366,23 +1357,18 @@ void many_mutations(SEXP vs_,
                     static_cast<double>(max_size));
                 double rnd = R::unif_rand();
                 if (rnd < 0.5) {
-                    Rcout << "sub @ " << pos << std::endl;
                     std::string str = cpp_rando_seq(1);
                     vs.add_substitution(str[0], pos);
                 } else if (rnd < 0.75) {
                     uint size = static_cast<uint>(R::rexp(2.0) + 1.0);
                     if (size > 10) size = 10;
-                    Rcout << "ins @ " << pos << " " << size << std::endl;
                     std::string str = cpp_rando_seq(size + 1);
                     vs.add_insertion(str, pos);
                 } else {
                     uint size = static_cast<uint>(R::rexp(2.0) + 1.0);
                     if (size > 10) size = 10;
-                    if (pos + size > max_size) size = max_size - pos;
-                    if (size > 0) {
-                        Rcout << "del @ " << pos << " " << size << std::endl;
-                        vs.add_deletion(size, pos);
-                    }
+                    if (size > (max_size - pos)) size = max_size - pos;
+                    vs.add_deletion(size, pos);
                 }
                 prev_type = rnd;
                 ++m;
