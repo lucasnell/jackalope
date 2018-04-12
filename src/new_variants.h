@@ -284,8 +284,7 @@ private:
     void merge_del_ins_(uint& insert_i,
                         uint& deletion_start,
                         uint& deletion_end,
-                        sint& size_mod,
-                        sint& iterd);
+                        sint& size_mod);
 
 
 

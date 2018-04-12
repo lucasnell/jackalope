@@ -409,13 +409,20 @@ void VarSequence::add_deletion(const uint& size_, const uint& new_pos_) {
      */
     sint size_mod = deletion_start - deletion_end - 1;
 
+    /*
+     If `mutations` is empty, just add to the beginning and adjust scaffold size
+    */
+    if (mutations.empty()) {
+        Mutation new_mut(old_pos_, deletion_start, size_mod);
+        mutations.push_front(new_mut);
+        seq_size += size_mod;
 
     /*
      If the mutations deque isn't empty, we may need to edit some of the mutations
      after this deletion if they're affected by it.
      See `deletion_blowup_` below for more info.
      */
-    if (!mutations.empty()) {
+    } else {
 
         /*
          Scaffold-size modifier to be used to edit subsequent mutations.
@@ -452,22 +459,15 @@ void VarSequence::add_deletion(const uint& size_, const uint& new_pos_) {
             ++mut_i;
         } else old_pos_ = deletion_start; // (`deletion_start` may have changed)
 
+
         // Adjust (1) positions of all mutations after and including `mut_i`, and
         //        (2) the scaffold size
         calc_positions(mut_i, subseq_modifier);
-    /*
-     If `mutations` is empty, just point to the beginning and adjust scaffold size
-     */
-    } else {
-        mut_i = 0;
-        seq_size += size_mod;
-    }
-    /*
-     Now create the Mutation and insert it.
-     */
-    Mutation new_mut(old_pos_, deletion_start, size_mod);
-    mutations.insert(mutations.begin() + mut_i, new_mut);
 
+        // Now create the Mutation and insert it.
+        Mutation new_mut(old_pos_, deletion_start, size_mod);
+        mutations.insert(mutations.begin() + mut_i, new_mut);
+    }
     return;
 }
 
@@ -495,9 +495,10 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint& new_pos
 
     uint ind = new_pos_ - mutations[mut_i].new_pos;
     /*
-     If `new_pos_` is within the Mutation sequence, we adjust that Mutation:
+     If `new_pos_` is within the Mutation sequence (which is never the case for
+     deletions), then we adjust it as such:
      */
-    if (ind <= mutations[mut_i].size_modifier) {
+    if (static_cast<sint>(ind) <= mutations[mut_i].size_modifier) {
         sint size_ = nucleos_.size() - 1;
         // string to store combined nucleotides
         std::string nt = "";
@@ -549,7 +550,7 @@ void VarSequence::add_substitution(const char& nucleo, const uint& new_pos_) {
     } else {
         uint ind = new_pos_ - mutations[mut_i].new_pos;
         // If `new_pos_` is within the mutation sequence:
-        if (ind <= mutations[mut_i].size_modifier) {
+        if (static_cast<sint>(ind) <= mutations[mut_i].size_modifier) {
             mutations[mut_i].nucleos[ind] = nucleo;
         // If `new_pos_` is in the reference sequence following the mutation:
         } else {
@@ -585,10 +586,10 @@ void VarSequence::deletion_blowup_(uint& mut_i, uint& deletion_start, uint& dele
                                    sint& size_mod) {
 
     /*
-     Difference between first and last objects to be removed.
-     See the while loop below for more info.
+     ---------
+     Taking care of the initial mutation pointed to:
+     ---------
      */
-    sint n_iters = 0;
 
     /*
      `mutations.size()` is returned from the `get_mut_` function if
@@ -616,12 +617,9 @@ void VarSequence::deletion_blowup_(uint& mut_i, uint& deletion_start, uint& dele
      this deletion, and this is done with `merge_del_ins_`.
      This function will iterate to the next Mutation.
      It also adjusts `size_mod` appropriately.
-     (`n_iters` is used later and doesn't matter here)
      */
     } else if (mutations[mut_i].size_modifier > 0) {
-        merge_del_ins_(mut_i, deletion_start, deletion_end, size_mod, n_iters);
-        // size_mod = 0;
-        // return;
+        merge_del_ins_(mut_i, deletion_start, deletion_end, size_mod);
     /*
      If it's a deletion and next to the new deletion, we merge their information
      before removing the old mutation.
@@ -631,61 +629,73 @@ void VarSequence::deletion_blowup_(uint& mut_i, uint& deletion_start, uint& dele
      If it's not next to the new deletion, we just iterate to the next mutation.
      */
     } else {
+        // Rcout << mutations[mut_i].new_pos << ' ';
+        // Rcout << deletion_start << std::endl;
         if (mutations[mut_i].new_pos == deletion_start) {
-            deletion_start += mutations[mut_i].size_modifier;
+            // Rcout << "went into if statement" << std::endl;
+            // deletion_start += mutations[mut_i].size_modifier;
             size_mod += mutations[mut_i].size_modifier;
             remove_mutation_(mut_i);
         } else ++mut_i;
     }
 
+
+    /*
+     ---------
+     Taking care of subsequent mutations:
+     ---------
+     */
+
     /*
      If `mut_i` no longer overlaps this deletion or if the deletion is gone (bc it
      absorbed part/all of an insertion), return now
      */
-    if (mutations[mut_i].new_pos > deletion_end || size_mod == 0) return;
+    if (mutations[mut_i].new_pos > deletion_end || size_mod == 0) {
+        return;
+    }
 
     /*
      If there is overlap, then we delete a range of Mutation objects.
-     `iter` will point to the object after the last to be erased.
-     `iter - n_iters` will point to the first object to be erased.
+     `mut_i` will point to the object after the last to be erased.
+     `range_begin` will point to the first object to be erased.
      */
-    n_iters = 0;
-
+    uint range_begin = mut_i;
     while (mut_i < mutations.size()) {
         if (mutations[mut_i].new_pos > deletion_end) break;
         // For substitutions, do nothing before iterating
         if (mutations[mut_i].size_modifier == 0) {
             ++mut_i;
-            ++n_iters;
         /*
          For insertions, run `merge_del_ins_` to make sure that...
              (1) any sequence not overlapping the deletion is kept
              (2) `size_mod` is adjusted properly
              (3) insertions that are entirely overlapped by the deletion are erased
              (4) `mut_i` is moved to the next Mutation
-             (5) `n_iters` is increased if the insertion isn't deleted
          */
         } else if (mutations[mut_i].size_modifier > 0) {
-            merge_del_ins_(mut_i, deletion_start, deletion_end, size_mod, n_iters);
+            merge_del_ins_(mut_i, deletion_start, deletion_end, size_mod);
             // as above, stop here if deletion is absorbed
             if (size_mod == 0) return;
             // size_mod = 0;
             // return;
-        // For deletions, merge them with the current one
+        /*
+         For deletions, merge them with the current one
+         */
         } else {
-            deletion_end -= mutations[mut_i].size_modifier;
-            deletion_end = std::min(deletion_end, seq_size - 1);
-            size_mod = deletion_start - deletion_end - 1;
+            // deletion_end -= mutations[mut_i].size_modifier;
+            // deletion_end = std::min(deletion_end, seq_size - 1);
+            // size_mod = deletion_start - deletion_end - 1;
+            size_mod += mutations[mut_i].size_modifier;
             ++mut_i;
-            ++n_iters;
         }
     }
-    if (n_iters > mut_i) stop("n_iters is counted wrong");
-    uint range_begin = mut_i - n_iters;
+
     // Remove all mutations in the specified range:
     remove_mutation_(range_begin, mut_i);
 
-    // `iter` now points to the position AFTER the erasing.
+    // `mut_i` now points to the position AFTER the erasing.
+
+    return;
 }
 
 
@@ -705,7 +715,7 @@ void VarSequence::deletion_blowup_(uint& mut_i, uint& deletion_start, uint& dele
  */
 void VarSequence::merge_del_ins_(uint& insert_i,
                                  uint& deletion_start, uint& deletion_end,
-                                 sint& size_mod, sint& n_iters) {
+                                 sint& size_mod) {
 
     // The starting and ending positions of the focal insertion
     uint& insertion_start(mutations[insert_i].new_pos);
@@ -716,7 +726,6 @@ void VarSequence::merge_del_ins_(uint& insert_i,
      */
     if (deletion_start > insertion_end || deletion_end < insertion_start) {
         ++insert_i;
-        ++n_iters;
     /*
      Else if the entire insertion is covered by the deletion, adjust size_mod and
      remove the Mutation object for the insertion:
@@ -772,7 +781,6 @@ void VarSequence::merge_del_ins_(uint& insert_i,
             mutations[insert_i].new_pos += (erase_ind1 - erase_ind0);
         } else {
             ++insert_i;
-            ++n_iters;
         }
     }
 
@@ -955,7 +963,7 @@ uint VarSequence::get_mut_(const uint& new_pos) const {
     }
     /*
     If new_pos is less than the position for the first mutation, we return
-    mutations.end():
+    mutations.size():
     */
     if (new_pos < mutations.front().new_pos) {
         return mutations.size();
@@ -967,11 +975,13 @@ uint VarSequence::get_mut_(const uint& new_pos) const {
         return mutations.size() - 1;
     }
 
-    uint mut_i = 0;
-    // Move mutation to the proper spot
-    while (mutations[mut_i].new_pos <= new_pos) ++mut_i;
-    // Because we want the last mutation that is <= new_pos
-    --mut_i;
+    uint mut_i = mutations.size() - 1;
+    /*
+     Move mutation to the proper spot (the last mutation that is <= new_pos)
+     (Starting from back because we want to never include a deletion immediately
+     followed by another mutation.)
+     */
+    while (mutations[mut_i].new_pos > new_pos) --mut_i;
 
     return mut_i;
 }
@@ -1348,27 +1358,35 @@ void many_mutations(SEXP vs_,
         for (uint s = 0; s < vset.reference.size(); s++) {
             VarSequence& vs(vset[v][s]);
             uint n_muts = static_cast<uint>(R::runif(min_muts, max_muts+1));
+            if (static_cast<double>(n_muts) > max_muts) n_muts = max_muts;
             uint m = 0;
-            while (m < n_muts) {
-                uint max_size = vs.seq_size;
+            uint max_size = vs.seq_size;
+            while (m < n_muts && max_size > 0) {
                 uint pos = static_cast<uint>(R::unif_rand() *
                     static_cast<double>(max_size));
                 double rnd = R::unif_rand();
                 if (rnd < 0.5) {
+                    Rcout << "sub @ " << pos << std::endl;
                     std::string str = cpp_rando_seq(1);
                     vs.add_substitution(str[0], pos);
                 } else if (rnd < 0.75) {
                     uint size = static_cast<uint>(R::rexp(2.0) + 1.0);
                     if (size > 10) size = 10;
+                    Rcout << "ins @ " << pos << " " << size << std::endl;
                     std::string str = cpp_rando_seq(size + 1);
                     vs.add_insertion(str, pos);
                 } else {
                     uint size = static_cast<uint>(R::rexp(2.0) + 1.0);
                     if (size > 10) size = 10;
-                    vs.add_deletion(size, pos);
+                    if (pos + size > max_size) size = max_size - pos;
+                    if (size > 0) {
+                        Rcout << "del @ " << pos << " " << size << std::endl;
+                        vs.add_deletion(size, pos);
+                    }
                 }
                 prev_type = rnd;
                 ++m;
+                max_size = vs.seq_size;
             }
         }
     }
