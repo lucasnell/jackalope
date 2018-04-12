@@ -32,3 +32,5 @@ Suggests:
     ape,
     testthat
 VignetteBuilder: knitr
+URL: https://github.com/lucasnell/gemino
+BugReports: https://github.com/lucasnell/gemino/issues
