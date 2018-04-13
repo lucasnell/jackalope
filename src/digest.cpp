@@ -12,8 +12,8 @@
 #endif
 
 
-#include "gemino_types.h" // integer types, SequenceSet, VariantSet
-#include "new_variants.h" // new classes
+#include "gemino_types.h" // integer types
+#include "sequence_classes.h" // classes RefGenome and VarSet
 #include "digest.h" // DigestInfo, MultiOut,
 
 using namespace Rcpp;

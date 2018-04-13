@@ -1,113 +1,34 @@
 
 /*
- * THIS FILE SEEKS TO REPLACE THE OLD CLASSES
- */
+ ********************************************************
 
+ Methods for adding mutations to sequence classes.
+ Note that this file is for just adding the mutations, not for anything related to
+ determining where they should go.
+
+ ********************************************************
+ */
 
 #include <RcppArmadillo.h>
 #include <vector>  // vector class
 #include <string>  // string class
-#include <algorithm>  // lower_bound, sort
-#include <deque>  // deque
+#include <deque>  // deque class
+#include <algorithm>  // sort
 
 
 #include "gemino_types.h"  // integer types
-#include "new_variants.h"
-#include "read_write.h"     // reading fasta to VarSet
-#include "util.h"   // cpp_rando_seq
+#include "sequence_classes.h"  // Var* and Ref* classes
+
 using namespace Rcpp;
 
 
-/*
- Calling `base::options("width")$width`
-*/
-int get_width() {
-    // Obtain environment containing function
-    Environment base("package:base");
-    // Make function callable from C++
-    Function opt_r = base["options"];
-    // Call the function and receive its list output
-    List width_list = opt_r("width");
-    int console_width = width_list["width"];
-    return console_width;
-}
 
-
-
-
-
-// Printing reference genome info
-void RefGenome::print() const {
-
-    int console_width = get_width();
-
-    // 32 characters is the narrowest I'll allow
-    // (I'd start getting negative lengths and other problems otherwise)
-    console_width = std::max(console_width, 32);
-
-    int num_seqs = size();
-    std::vector<int> inds;
-    if (num_seqs <= 10) {
-        for (int i = 0; i < num_seqs; i++) inds.push_back(i);
-    } else {
-        for (int i = 0; i < 5; i++) inds.push_back(i);
-        inds.push_back(-1);
-        for (int i = (num_seqs - 5 + 1); i < num_seqs; i++) inds.push_back(i);
-    }
-
-    Rcout.imbue(std::locale(""));
-    Rcout << "< Set of " << num_seqs << " sequences >" << std::endl;
-    Rcout << "# Total size: " << total_size << " bp" << std::endl;
-    // Rcout << "# Sequences:" << std::endl;
-
-    int ind_i, name_width = 10, length_width = 9;
-    // Console width minus name width AND length width AND spaces between
-    int seq_print_len = console_width - name_width - length_width - 2;
-    // Number of chars print before and after elipses for a long string
-    int before_elips = std::ceil((seq_print_len - 3) / 2);
-    int after_elips = seq_print_len - 3 - before_elips;
-
-    Rprintf("%-*s %s%-*s %*s\n", name_width, "  name",
-            std::string(before_elips - 4, ' ').c_str(),
-            seq_print_len - (before_elips - 4), "sequence",
-            length_width, "length");
-
-    for (int i = 0; i < inds.size(); i++) {
-        ind_i = inds[i];
-        if (ind_i == -1) {
-            Rprintf("%-10s %-*s %9s\n", "...", seq_print_len, "...", "...");
-            continue;
-        }
-        const RefSequence& rs(sequences[ind_i]);
-        const std::string& name_i(rs.name);
-        const std::string& seq_i(rs.nucleos);
-        // Print name
-        Rprintf("%-10.10s ", name_i.c_str());
-        // Print sequence
-        if (seq_i.size() > seq_print_len){
-            for (int j = 0; j < before_elips; j++) Rcout << seq_i[j];
-            Rcout << "...";
-            for (int j = (seq_i.size() - after_elips); j < seq_i.size(); j++) {
-                Rcout << seq_i[j];
-            }
-        } else {
-            Rprintf("%-*s", seq_print_len, seq_i.c_str());
-        }
-        // Print width
-        if (rs.size() > 999999999) {
-            Rprintf(" %9.2E", rs.size());
-        } else {
-            Rprintf(" %9i", rs.size());
-        }
-        Rcout << std::endl;
-    }
-}
 
 
 
 /*
  ------------------
- Re-calculate new positions (and total scaffold size)
+ Re-calculate new positions (and total sequence size)
  ------------------
  */
 // For all Mutation objects
@@ -121,7 +42,7 @@ void VarSequence::calc_positions(bool sort_first) {
         mutations[mut_i].new_pos = mutations[mut_i].old_pos + modifier;
         modifier += mutations[mut_i].size_modifier;
     }
-    // Updating full scaffold size
+    // Updating full sequence size
     seq_size = ref_seq.size() + modifier;
 
     return;
@@ -140,7 +61,7 @@ void VarSequence::calc_positions(uint mut_i) {
     for (; mut_i < mutations.size(); mut_i++) {
         mutations[mut_i].new_pos += modifier;
     }
-    // Updating full scaffold size
+    // Updating full sequence size
     seq_size += modifier;
 
     return;
@@ -156,225 +77,19 @@ void VarSequence::calc_positions(uint mut_i, const sint& modifier) {
     for (; mut_i < mutations.size(); ++mut_i) {
         mutations[mut_i].new_pos += modifier;
     }
-    // Updating full scaffold size
+    // Updating full sequence size
     seq_size += modifier;
 
     return;
 }
 
 
-/*
- ------------------
- Retrieve a nucleotide (char type) from the variant scaffold
- based on the position in the new, variant scaffold
- ------------------
- */
-char VarSequence::get_nt(const uint& new_pos) const {
-    char out;
-    /*
-     Index to the Mutation object nearest to (without being past)
-     an input position (see below for the `get_mut_` fxn):
-     */
-    uint mut_i = get_mut_(new_pos);
-    /*
-     If the new_pos is less than the position for the first mutation
-     or if mutations is empty
-     (in which cases `get_mut_` returns `mutations.size()`),
-     we just extract the character from the beginning of the reference string:
-     */
-    if (mut_i == mutations.size()) {
-        out = ref_seq[new_pos];
-    /*
-     If not, then extract the character from the Mutation object that
-     `mut` points to (see below for `get_char_` fxn):
-     */
-    } else {
-        out = get_char_(new_pos, mut_i);
-    }
-
-    return out;
-}
 
 
 
 
 
-/*
- ------------------
- Retrieve all nucleotides (i.e., the full sequence; std::string type) from
- the variant scaffold
- ------------------
- */
 
-std::string VarSequence::get_seq_full() const {
-
-    if (mutations.empty()) return ref_seq.nucleos;
-
-    // Index to the first Mutation object
-    uint mut_i = 0;
-
-    std::string out(seq_size, 'x');
-    uint pos = 0;
-
-    // Picking up any nucleotides before the first mutation
-    while (pos < mutations[mut_i].new_pos) {
-        out[pos] = ref_seq[pos];
-        ++pos;
-    }
-
-    // Now, for each subsequent mutation except the last, add all nucleotides
-    // at or after its position but before the next one
-    uint next_mut_i = mut_i + 1;
-    while (next_mut_i < mutations.size()) {
-        while (pos < mutations[next_mut_i].new_pos) {
-            out[pos] = get_char_(pos, mut_i);
-            ++pos;
-        }
-        ++mut_i;
-        ++next_mut_i;
-    }
-
-    // Now taking care of nucleotides after the last Mutation
-    while (pos < seq_size) {
-        out[pos] = get_char_(pos, mut_i);
-        ++pos;
-    }
-
-    return out;
-}
-
-
-
-
-/*
- ------------------
- Retrieve the first part of a sequence from the variant scaffold.
- ------------------
- */
-std::string VarSequence::get_seq_start(uint out_length) const {
-
-    if (out_length > seq_size) out_length = seq_size;
-
-    if (mutations.empty()) return ref_seq.nucleos.substr(0, out_length);
-
-    std::string out(out_length, 'x');
-
-    uint mut_i = 0;
-
-    uint pos = 0;
-
-    // Picking up any nucleotides before the first mutation
-    while (pos < mutations[mut_i].new_pos) {
-        out[pos] = ref_seq[pos];
-        if (pos == out_length - 1) return out;
-        ++pos;
-    }
-
-    // Now, for each subsequent mutation except the last, add all nucleotides
-    // at or after its position but before the next one
-    uint next_mut_i = mut_i + 1;
-    while (next_mut_i < mutations.size()) {
-        while (pos < mutations[next_mut_i].new_pos) {
-            out[pos] = get_char_(pos, mut_i);
-            if (pos == out_length - 1) return out;
-            ++pos;
-        }
-        ++mut_i;
-        ++next_mut_i;
-    }
-
-    // Now taking care of nucleotides after the last Mutation
-    while (pos < seq_size) {
-        out[pos] = get_char_(pos, mut_i);
-        if (pos == out_length - 1) return out;
-        ++pos;
-    }
-
-    return out;
-}
-
-
-/*
- ------------------
- Set an input string object to any chunk of a sequence from the variant scaffold.
- Before anything, this function moves `mut` to the location right before this chunk's
- starting position. I keep this index around so I don't have to iterate through
- the entire mutation deque multiple times.
- If end position is beyond the size of the sequence, it changes `chunk_str` to the
- sequence from the start to the sequence end.
- If start position is beyond the size of the sequence, it sets `mut` to `mutations.end()`
- and clears `chunk_str`.
- ------------------
- */
-void VarSequence::set_seq_chunk(std::string& chunk_str,
-                                const uint& start,
-                                const uint& chunk_size,
-                                uint& mut_i) const {
-
-    uint end = start + chunk_size - 1;
-
-    if (start >= seq_size) {
-        mut_i = mutations.size();
-        chunk_str.clear();
-        return;
-    }
-    // Making sure end doesn't go beyond the sequence bounds
-    if (end >= seq_size) end = seq_size - 1;
-
-    uint out_length = end - start + 1;
-
-    // No need to mess around with mutations if there aren't any
-    if (mutations.empty()) {
-        chunk_str = ref_seq.nucleos.substr(start, out_length);
-        return;
-    }
-    // Move mutation to the proper spot
-    while (mut_i < mutations.size()) {
-        if (start < mutations[mut_i].new_pos) break;
-        ++mut_i;
-    }
-    if (mut_i != 0) --mut_i;
-    // Adjust input string size if necessary
-    if (chunk_str.size() != out_length) chunk_str.resize(out_length, 'x');
-
-    uint pos = start;
-    uint next_mut_i = mut_i + 1;
-
-    /*
-     Picking up any nucleotides before the focal mutation (this should only happen when
-     `mut == mutations.begin()` and `start` is before the first mutation)
-     */
-    while (pos < mutations[mut_i].new_pos && pos <= end) {
-        chunk_str[pos - start] = ref_seq[pos];
-        ++pos;
-    }
-    if (pos > end) return;
-
-    /*
-     Now, for each subsequent mutation except the last, add all nucleotides
-     at or after its position (and `end`) but before the next mutation
-     */
-    while (next_mut_i < mutations.size()) {
-        while (pos < mutations[next_mut_i].new_pos && pos <= end) {
-            chunk_str[pos - start] = get_char_(pos, mut_i);
-            ++pos;
-        }
-        if (pos > end) return;
-        ++mut_i;
-        ++next_mut_i;
-    }
-
-    /*
-     If we reach the last mutation, add nucleotides until `end` (remember that above,
-     I've made sure that `end < seq_size`).
-     */
-    while (pos <= end) {
-        chunk_str[pos - start] = get_char_(pos, mut_i);
-        ++pos;
-    }
-
-    return;
-}
 
 
 
@@ -410,7 +125,7 @@ void VarSequence::add_deletion(const uint& size_, const uint& new_pos_) {
     sint size_mod = deletion_start - deletion_end - 1;
 
     /*
-     If `mutations` is empty, just add to the beginning and adjust scaffold size
+     If `mutations` is empty, just add to the beginning and adjust sequence size
     */
     if (mutations.empty()) {
         Mutation new_mut(old_pos_, deletion_start, size_mod);
@@ -425,7 +140,7 @@ void VarSequence::add_deletion(const uint& size_, const uint& new_pos_) {
     } else {
 
         /*
-         Scaffold-size modifier to be used to edit subsequent mutations.
+         Sequence-size modifier to be used to edit subsequent mutations.
          This number does not change.
          */
         const sint subseq_modifier(size_mod);
@@ -461,7 +176,7 @@ void VarSequence::add_deletion(const uint& size_, const uint& new_pos_) {
 
 
         // Adjust (1) positions of all mutations after and including `mut_i`, and
-        //        (2) the scaffold size
+        //        (2) the sequence size
         calc_positions(mut_i, subseq_modifier);
 
         // Now create the Mutation and insert it.
@@ -488,7 +203,7 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint& new_pos
         // (below, notice that new position and old position are the same)
         Mutation new_mut(new_pos_, new_pos_, nucleos_);
         mutations.push_front(new_mut);
-        // Adjust new positions and total scaffold size:
+        // Adjust new positions and total sequence size:
         calc_positions(static_cast<uint>(0));
         return;
     }
@@ -510,7 +225,7 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint& new_pos
         // Update nucleos and size_modifier fields:
         mutations[mut_i].nucleos = nt;
         mutations[mut_i].size_modifier += size_;
-        // Adjust new positions and total scaffold size:
+        // Adjust new positions and total sequence size:
         calc_positions(mut_i + 1, size_);
     /*
      If `new_pos_` is in the reference sequence following the Mutation, we add
@@ -521,7 +236,7 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint& new_pos
         Mutation new_mut(old_pos_, new_pos_, nucleos_);
         ++mut_i;
         mutations.insert(mutations.begin() + mut_i, new_mut);
-        // Adjust new positions and total scaffold size:
+        // Adjust new positions and total sequence size:
         calc_positions(mut_i);
     }
     return;
@@ -819,35 +534,13 @@ void VarSequence::remove_mutation_(uint& mut_i1, uint& mut_i2) {
 
 
 
-/*
- ------------------
- Internal function for finding character of either mutation or reference
- given an index (in the "new", variant sequence) and an index for a
- single Mutation object.
- This only works if you've already narrowed it down to the Mutation object
- that is directly previous to the index position.
- ------------------
- */
-char VarSequence::get_char_(const uint& new_pos,
-                            const uint& mut_i) const {
-    const Mutation& m(mutations[mut_i]);
-    char out;
-    uint ind = new_pos - m.new_pos;
-    if (static_cast<sint>(ind) > m.size_modifier) {
-        ind += (m.old_pos - m.size_modifier);
-        out = ref_seq[ind];
-    } else {
-        out = m[ind];
-    }
-    return out;
-}
 
 
 
 /*
  ------------------
  Inner function to return an index to the Mutation object nearest to
- (without being past) an input position on the "new", variant scaffold.
+ (without being past) an input position on the "new", variant sequence.
  If the input position is before the first Mutation object or if `mutations` is empty,
  this function returns `mutations.end()`.
  ------------------
@@ -864,8 +557,8 @@ char VarSequence::get_char_(const uint& new_pos,
 //
 //     if (new_pos >= seq_size) {
 //         stop(
-//             "new_pos should never be >= the scaffold size. "
-//             "Either re-calculate the scaffold size or closely examine new_pos."
+//             "new_pos should never be >= the sequence size. "
+//             "Either re-calculate the sequence size or closely examine new_pos."
 //             );
 //     }
 //     /*
@@ -948,8 +641,8 @@ uint VarSequence::get_mut_(const uint& new_pos) const {
 
     if (new_pos >= seq_size) {
         stop(
-            "new_pos should never be >= the scaffold size. "
-            "Either re-calculate the scaffold size or closely examine new_pos."
+            "new_pos should never be >= the sequence size. "
+            "Either re-calculate the sequence size or closely examine new_pos."
         );
     }
     /*
@@ -979,68 +672,6 @@ uint VarSequence::get_mut_(const uint& new_pos) const {
 
 
 
-VarSet::VarSet(const std::string& fasta_file, const uint& n_vars,
-               const bool& cut_names, const bool& remove_soft_mask) {
-    RefGenome reference;
-    fill_ref_noind(reference, fasta_file, cut_names, remove_soft_mask);
-
-    VarGenome vg(reference);
-    variants = std::deque<VarGenome>(n_vars, vg);
-    for (uint i = 0; i < n_vars; i++) variants[i].name = "var" + std::to_string(i);
-
-}
-VarSet::VarSet(const std::string& fasta_file, const std::string& fai_file,
-               const uint& n_vars,
-               const bool& remove_soft_mask) {
-    RefGenome reference;
-    fill_ref_ind(reference, fasta_file, fai_file, remove_soft_mask);
-
-    VarGenome vg(reference);
-    variants = std::deque<VarGenome>(n_vars, vg);
-    for (uint i = 0; i < n_vars; i++) variants[i].name = "var" + std::to_string(i);
-}
-
-VarSet::VarSet(const std::deque<std::string>& seqs, const uint& n_vars)
-    : variants(), reference(seqs) {
-    VarGenome vg(reference);
-    variants = std::deque<VarGenome>(n_vars, vg);
-    for (uint i = 0; i < n_vars; i++) variants[i].name = "var" + std::to_string(i);
-}
-
-
-// For printing info on a set of variants
-void VarSet::print() const noexcept {
-
-    uint total_muts = 0;
-    for (const VarGenome& vg : variants) {
-        for (const VarSequence& vs : vg.var_genome) {
-            total_muts += vs.mutations.size();
-        }
-    }
-
-    int console_width = get_width();
-
-    int n_spaces = static_cast<int>(
-        std::ceil(static_cast<double>(console_width - 21) / 2)
-    );
-
-    for (int i = 0; i < n_spaces; i++) Rcout << ' ';
-    Rcout << "<< Variants object >>" << std::endl;
-
-    Rcout.imbue(std::locale(""));
-    Rcout << "# Variants: " << size() << std::endl;
-    Rcout << "# Mutations: " << total_muts << std::endl;
-    Rcout << std::endl;
-
-    n_spaces = static_cast<int>(
-        std::ceil(static_cast<double>(console_width - 28) / 2)
-    );
-
-    for (int i = 0; i < n_spaces; i++) Rcout << ' ';
-    Rcout << "<< Reference genome info: >>" << std::endl;
-    reference.print();
-}
-
 
 /*
  ========================================================================================
@@ -1055,123 +686,6 @@ void VarSet::print() const noexcept {
  ========================================================================================
  ========================================================================================
  */
-
-
-//[[Rcpp::export]]
-SEXP make_ref(std::deque<std::string> input) {
-    XPtr<RefGenome> ref(new RefGenome(input), true);
-    return ref;
-}
-
-//[[Rcpp::export]]
-void see_ref(SEXP ref_) {
-    XPtr<RefGenome> ref(ref_);
-    ref->print();
-    return;
-}
-
-//[[Rcpp::export]]
-std::string get_ref_seq(SEXP ref_, const uint& s) {
-    XPtr<RefGenome> ref_xptr(ref_);
-    RefGenome& ref(*ref_xptr);
-    std::string out(ref[s].nucleos);
-    return out;
-}
-
-//' Get a reference genome sequence's name.
-//'
-//' Temporary function for testing.
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-std::string get_ref_name(SEXP ref_, const uint& s) {
-    XPtr<RefGenome> ref_xptr(ref_);
-    RefGenome& ref(*ref_xptr);
-    std::string out(ref[s].name);
-    return out;
-}
-
-//' Get a reference genome sequence's size.
-//'
-//' Temporary function for testing.
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-uint get_ref_seq_size(SEXP ref_, const uint& s) {
-    XPtr<RefGenome> ref_xptr(ref_);
-    RefGenome& ref(*ref_xptr);
-    uint out = ref[s].nucleos.size();
-    return out;
-}
-
-//' Get number of sequences in a reference genome.
-//'
-//' Temporary function for testing.
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-uint get_ref_n_scaff(SEXP ref_) {
-    XPtr<RefGenome> ref_xptr(ref_);
-    RefGenome& ref(*ref_xptr);
-    uint out = ref.size();
-    return out;
-}
-
-
-//' Make a VarSet object from a set of sequences and # variants
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-SEXP make_vars(const std::deque<std::string>& seqs, const uint& n_vars) {
-    XPtr<VarSet> vset(new VarSet(seqs, n_vars), true);
-    return vset;
-}
-
-
-//' Function to piece together the strings for all sequences in a VarGenome.
-//'
-//' Temporary function for testing.
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-std::vector<std::string> see_vg(SEXP vs_, const uint& v) {
-
-    XPtr<VarSet> vs(vs_);
-    VarGenome& vg((*vs)[v]);
-
-    std::vector<std::string> out(vg.size(), "");
-    for (uint i = 0; i < vg.size(); i++) {
-        const VarSequence& vs(vg[i]);
-        std::string s = vs.get_seq_full();
-        out[i] = s;
-    }
-    return out;
-}
-
-
-//' Function to print info on a VarSet.
-//'
-//' Temporary function for testing.
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-void print_vs(SEXP vs_) {
-    XPtr<VarSet> vs(vs_);
-    vs->print();
-    return;
-}
 
 
 // Turn a Mutation into a List
@@ -1193,10 +707,10 @@ List conv_mut(const Mutation& mut) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-List see_mutations(SEXP vs_, const uint& v) {
+List see_mutations(SEXP vs_, const uint& var_ind) {
 
     XPtr<VarSet> vs(vs_);
-    VarGenome& vg((*vs)[v]);
+    VarGenome& vg((*vs)[var_ind]);
 
     List out(vg.size());
     for (uint i = 0; i < vg.size(); i++) {
@@ -1222,105 +736,85 @@ List see_mutations(SEXP vs_, const uint& v) {
 }
 
 
-//' See all scaffold sizes in a VarSet object.
+
+//' Add mutations manually from R.
 //'
-//' Temporary function for testing.
+//' Note that all indices are in 0-based C++ indexing. This means that the first
+//' item is indexed by `0`, and so forth.
 //'
+//' @param vs_ External pointer to a C++ `VarSet` object
+//' @param var_ind Integer index to the desired variant. Uses 0-based indexing!
+//' @param seq_ind Integer index to the desired sequence. Uses 0-based indexing!
+//' @param nucleo nucleo Character to substitute for existing one.
+//' @param new_pos_ Integer index to the desired subsitution location.
+//'     Uses 0-based indexing!
 //'
-//' @noRd
+//' @name add_mutations
+NULL_ENTRY;
+
+//' Add a substitution.
+//'
+//' @inheritParams vs_ add_mutations
+//' @inheritParams var_ind add_mutations
+//' @inheritParams seq_ind add_mutations
+//' @param nucleo nucleo Character to substitute for existing one.
+//' @inheritParams new_pos_ add_mutations
+//'
+//' @describeIn add_mutations
 //'
 //[[Rcpp::export]]
-std::vector<uint> see_sizes(SEXP vs_, const uint& v) {
-
-    XPtr<VarSet> vs(vs_);
-    VarGenome& vg((*vs)[v]);
-
-    std::vector<uint> out(vg.size());
-    for (uint i = 0; i < vg.size(); i++) {
-        const VarSequence& vs(vg.var_genome[i]);
-        out[i] = vs.seq_size;
-    }
-    return out;
-}
-
-//[[Rcpp::export]]
-void add_substitution(SEXP vs_, const uint& v,
-                      const uint& scaff,
+void add_substitution(SEXP vs_, const uint& var_ind,
+                      const uint& seq_ind,
                       const char& nucleo,
                       const uint& new_pos_) {
     XPtr<VarSet> vset(vs_);
-    VarGenome& vg((*vset)[v]);
-    VarSequence& vs(vg[scaff]);
+    VarGenome& vg((*vset)[var_ind]);
+    VarSequence& vs(vg[seq_ind]);
     vs.add_substitution(nucleo, new_pos_);
     return;
 }
+//' Add an insertion.
+//'
+//' @inheritParams vs_ add_mutations
+//' @inheritParams var_ind add_mutations
+//' @inheritParams seq_ind add_mutations
+//' @param nucleos_ Nucleotides to insert at the desired location.
+//' @inheritParams new_pos_ add_mutations
+//'
+//' @describeIn add_mutations
+//'
 //[[Rcpp::export]]
-void add_insertion(SEXP vs_, const uint& v,
-                   const uint& scaff,
+void add_insertion(SEXP vs_, const uint& var_ind,
+                   const uint& seq_ind,
                    const std::string& nucleos_,
                    const uint& new_pos_) {
     XPtr<VarSet> vset(vs_);
-    VarGenome& vg((*vset)[v]);
-    VarSequence& vs(vg[scaff]);
+    VarGenome& vg((*vset)[var_ind]);
+    VarSequence& vs(vg[seq_ind]);
     vs.add_insertion(nucleos_, new_pos_);
     return;
 }
+//' Add a deletion.
+//'
+//' @inheritParams vs_ add_mutations
+//' @inheritParams var_ind add_mutations
+//' @inheritParams seq_ind add_mutations
+//' @param size_ Size of deletion.
+//' @inheritParams new_pos_ add_mutations
+//'
+//' @describeIn add_mutations
+//'
 //[[Rcpp::export]]
-void add_deletion(SEXP vs_, const uint& v,
-                  const uint& scaff,
+void add_deletion(SEXP vs_, const uint& var_ind,
+                  const uint& seq_ind,
                   const uint& size_,
                   const uint& new_pos_) {
     XPtr<VarSet> vset(vs_);
-    VarGenome& vg((*vset)[v]);
-    VarSequence& vs(vg[scaff]);
+    VarGenome& vg((*vset)[var_ind]);
+    VarSequence& vs(vg[seq_ind]);
     vs.add_deletion(size_, new_pos_);
     return;
 }
-
-
-//' View the starting portion of a variant sequence.
-//'
-//' Temporary function for testing.
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-std::string see_start(SEXP vs_, const uint& v,
-                      const uint& scaff,
-                      const uint& size_) {
-    XPtr<VarSet> vset(vs_);
-    VarGenome& vg((*vset)[v]);
-    VarSequence& vs(vg[scaff]);
-    std::string out = vs.get_seq_start(size_);
-    return out;
-}
-
-
-//' View a chunk of a variant sequence.
-//'
-//' Temporary function for testing.
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-std::string see_chunk(SEXP vs_, const uint& v,
-                      const uint& scaff,
-                      const uint& start,
-                      const uint& chunk_size) {
-    XPtr<VarSet> vset(vs_);
-    VarGenome& vg((*vset)[v]);
-    VarSequence& vs(vg[scaff]);
-    std::string out;
-    uint mut_i = 0;
-
-    vs.set_seq_chunk(out, start, chunk_size, mut_i);
-
-    return out;
-}
-
-
 
 
 

@@ -6,7 +6,7 @@
 #include <vector> // vector class
 #include <deque> // deque class
 
-#include "new_variants.h" // new classes
+#include "sequence_classes.h" // classes RefGenome, VarSet, VarSequence
 
 
 

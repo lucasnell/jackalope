@@ -5,7 +5,7 @@
 #include <vector>
 #include <zlib.h>
 
-#include "new_variants.h"  // new classes
+#include "sequence_classes.h"  // RefGenome and RefSequence classes
 #include "str_manip.h"
 #include "read_write.h"
 

@@ -10,7 +10,7 @@
 #include <RcppArmadilloExtensions/sample.h>
 
 #include "gemino_types.h"
-#include "new_variants.h" // new classes
+#include "sequence_classes.h" // new classes
 #include "alias.h" // alias sampling
 #include "util.h"
 

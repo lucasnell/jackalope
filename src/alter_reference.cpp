@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "new_variants.h"   // new classes
+#include "sequence_classes.h"   // new classes
 #include "gemino_types.h"  // integer types
 
 

@@ -23,7 +23,6 @@
 #include <unordered_map>  // unordered_map
 
 #include "gemino_types.h" // integer types
-#include "new_variants.h" // new classes
 #include "alias.h" // alias sampling
 #include "util.h"
 

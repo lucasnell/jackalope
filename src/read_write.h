@@ -9,7 +9,7 @@
 #include <vector>
 #include <zlib.h>
 
-#include "new_variants.h"  // new classes
+#include "sequence_classes.h"  // RefGenome class
 #include "str_manip.h"
 
 
