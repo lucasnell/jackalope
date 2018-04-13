@@ -18,6 +18,8 @@
 
 #include "gemino_types.h"  // integer types
 #include "sequence_classes.h"  // Var* and Ref* classes
+#include "util.h"   // cpp_rando_seq in many_mutations function
+
 
 using namespace Rcpp;
 

@@ -18,7 +18,6 @@
 #include "gemino_types.h"  // integer types
 #include "sequence_classes.h"  // Var* and Ref* classes
 #include "read_write.h"     // reading fasta to VarSet
-#include "util.h"   // cpp_rando_seq
 
 using namespace Rcpp;
 

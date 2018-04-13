@@ -28,40 +28,7 @@ using namespace Rcpp;
  */
 
 
-// This function is used in the <NULL> in the variants.cpp file
-arma::ivec sample_ivec(arma::ivec in_vector, int size, bool replace,
-                       arma::vec prob) {
-    return RcppArmadillo::sample(in_vector, size, replace, prob);
-}
 
-// This function is used in the cpp_seq_freq  and cpp_make_segr_sites
-// in the variants.cpp file
-arma::uvec sample_uvec(arma::uvec in_vector, int size, bool replace,
-                       arma::vec prob) {
-    return RcppArmadillo::sample(in_vector, size, replace, prob);
-}
-
-// This function is used in the sample_indels in the variants.cpp file
-std::vector<uint> sample_big_ints(
-        std::vector<uint> in_vector,
-        bool replace,
-        std::vector<uint> prob
-    ) {
-    arma::vec p;
-    if (prob.size() == 0) {
-        p = arma::zeros<arma::vec>(0);
-    } else {
-        p = arma::conv_to< arma::vec >::from(prob);
-    }
-
-    return RcppArmadillo::sample(in_vector, 1, replace, p);
-}
-
-// This function is used in the sample_indels in the variants.cpp file
-int sample_int(arma::ivec in_vector, bool replace,
-               arma::vec prob) {
-    return RcppArmadillo::sample(in_vector, 1, replace, prob)[0];
-}
 
 // Returns an approximately normal distribution, except that it's discrete and cannot be
 // be less than `min_len`. Used in `rando_seqs` and `create_genome` below.
@@ -98,17 +65,18 @@ arma::ivec non_zero_norm(uint N, double mean_len, double sd_len, double min_len)
 
 std::string cpp_rando_seq(uint len) {
     std::string bases = "ACGT";
-    arma::uvec bases_inds = arma::regspace<arma::uvec>(0, 1, 3);
-    arma::uvec base_samp = sample_uvec(bases_inds, len, true);
     std::string out_str(len, 'x');
-    for (uint i = 0; i < len; i++) out_str[i] = bases[base_samp[i]];
+    for (uint i = 0; i < len; i++) {
+        uint ind = static_cast<uint>(R::unif_rand() * 4);
+        out_str[i] = bases[ind];
+    }
     return out_str;
 }
 
 
 //' Create random sequences.
 //'
-//' Function to create random sequences into character vector format for or for a new
+//' Function to create random sequences into character vector format or for a new
 //' reference genome object.
 //'
 //' Note that this function will not return sequences smaller than 10bp.
@@ -135,13 +103,13 @@ std::vector<std::string> rando_seqs(int N,
 
     std::string bases = "ACGT";
 
-    int base_index;
+    uint base_index;
     std::vector<std::string> out_vec(N, "");
 
     for (int i = 0; i < N; i++) {
         int& n_i = n_vec[i];
         for (int j = 0; j < n_i; j++) {
-            base_index = floor(R::runif(0, 4));
+            base_index = static_cast<uint>(R::unif_rand() * 4);
             out_vec[i] += bases[base_index];
         }
         Rcpp::checkUserInterrupt();
@@ -265,13 +233,15 @@ SEXP create_genome(const uint& N,
  */
 
 
-// //' GC proportion of a single string.
-// //'
-// //'
-// //' @param sequence String for a single sequence.
-// //'
-// //' @return Proportion of sequence that's a `'G'` or `'C'`.
-// //'
+//' GC proportion of a single string.
+//'
+//'
+//' @param sequence String for a single sequence.
+//'
+//' @return Proportion of sequence that's a `'G'` or `'C'`.
+//'
+//' @noRd
+//'
 double gc_prop(const std::string& sequence) {
     int total_seq = sequence.size();
     double total_gc = 0;
