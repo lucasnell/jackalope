@@ -14,6 +14,9 @@
 
 using namespace Rcpp;
 
+
+
+
 /*
  Calling `base::options("width")$width`
  */
@@ -32,7 +35,17 @@ int get_width() {
 
 
 
-// Printing reference genome info
+
+/*
+ ==========================================
+ ==========================================
+
+ Printing reference genome info
+
+ ==========================================
+ ==========================================
+ */
+
 void RefGenome::print() const {
 
     int console_width = get_width();
@@ -101,6 +114,22 @@ void RefGenome::print() const {
 
 
 
+
+
+
+
+
+
+
+/*
+ ==========================================
+ ==========================================
+
+ For printing info on a set of variants
+
+ ==========================================
+ ==========================================
+ */
 
 
 // For printing info on a set of variants
