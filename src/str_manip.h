@@ -1,5 +1,5 @@
-# ifndef _STR_MANIP_H
-# define _STR_MANIP_H
+# ifndef __GEMINO_STR_MANIP_H
+# define __GEMINO_STR_MANIP_H
 
 
 #include <RcppArmadillo.h>

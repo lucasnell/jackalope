@@ -1,5 +1,5 @@
-# ifndef _RCPP_TYPES_H
-# define _RCPP_TYPES_H
+# ifndef __GEMINO_TYPES_H
+# define __GEMINO_TYPES_H
 
 
 #include <RcppArmadillo.h>

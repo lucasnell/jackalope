@@ -1,3 +1,7 @@
+#ifndef __GEMINO_SEQUENCER_H
+#define __GEMINO_SEQUENCER_H
+
+
 /*
  ==========================================================================
                          Mason - A Read Simulator
@@ -191,3 +195,5 @@ struct seq_values
 };
 
 
+
+#endif

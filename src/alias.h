@@ -1,5 +1,5 @@
-#ifndef _ALIAS_H
-#define _ALIAS_H
+#ifndef __GEMINO_ALIAS_H
+#define __GEMINO_ALIAS_H
 
 #include <RcppArmadillo.h>
 #include <sitmo.h>    // sitmo prng

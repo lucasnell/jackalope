@@ -1,13 +1,11 @@
-# ifndef _UTIL_H
-# define _UTIL_H
+# ifndef __GEMINO_UTIL_H
+# define __GEMINO_UTIL_H
 
 #include <RcppArmadillo.h>
 #include <vector>
 #include <string>
 
-#include "gemino_types.h"
-// #include "new_variants.h" // new classes
-// #include "alias.h" // alias sampling
+#include "gemino_types.h"  // integer types
 
 
 using namespace Rcpp;

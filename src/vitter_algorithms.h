@@ -1,5 +1,5 @@
-# ifndef _VITTER_H
-# define _VITTER_H
+# ifndef __GEMINO_VITTER_ALGS_H
+# define __GEMINO_VITTER_ALGS_H
 
 #include <RcppArmadillo.h>
 #include <vector>

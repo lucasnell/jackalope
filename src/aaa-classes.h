@@ -1,5 +1,5 @@
-# ifndef _CLASSES_H
-# define _CLASSES_H
+# ifndef __GEMINO_DEFUNT_CLASSES_H
+# define __GEMINO_DEFUNT_CLASSES_H
 
 #include <RcppArmadillo.h>
 #include <fstream> // fstream

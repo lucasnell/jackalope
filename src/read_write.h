@@ -1,5 +1,5 @@
-#ifndef _READWRITE_H
-#define _READWRITE_H
+#ifndef __GEMINO_READWRITE_H
+#define __GEMINO_READWRITE_H
 
 
 #include <RcppArmadillo.h>
