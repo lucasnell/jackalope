@@ -2,6 +2,16 @@
 # define __GEMINO_TYPES_H
 
 
+/*
+ ********************************************************
+
+ Basic integer types used throughout
+
+ ********************************************************
+ */
+
+
+
 #include <RcppArmadillo.h>
 #include <cstdint>
 #include <vector>

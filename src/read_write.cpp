@@ -144,16 +144,18 @@ void fill_ref_noind(RefGenome& ref,
 
 
 
-// //' Read a non-indexed fasta file to a \code{RefGenome} object.
-// //'
-// //' @param file_name File name of the fasta file.
-// //' @param cut_names Boolean for whether to cut sequence names at the first space.
-// //'     Defaults to \code{TRUE}.
-// //' @param remove_soft_mask Boolean for whether to remove soft-masking by making
-// //'    sequences all uppercase. Defaults to \code{TRUE}.
-// //'
-// //' @return Nothing.
-// //'
+//' Read a non-indexed fasta file to a \code{RefGenome} object.
+//'
+//' @param file_name File name of the fasta file.
+//' @param cut_names Boolean for whether to cut sequence names at the first space.
+//'     Defaults to \code{TRUE}.
+//' @param remove_soft_mask Boolean for whether to remove soft-masking by making
+//'    sequences all uppercase. Defaults to \code{TRUE}.
+//'
+//' @return Nothing.
+//'
+//' @noRd
+//'
 //[[Rcpp::export]]
 SEXP read_fasta_noind(const std::string& fasta_file,
                       const bool& cut_names,
@@ -359,19 +361,21 @@ void fill_ref_ind(RefGenome& ref,
     gzclose (file);
 }
 
-// //' Read an indexed fasta file to a \code{RefGenome} object.
-// //'
-// //' @param file_name File name of the fasta file.
-// //' @param remove_soft_mask Boolean for whether to remove soft-masking by making
-// //'    sequences all uppercase. Defaults to \code{TRUE}.
-// //' @param offsets Vector of sequence offsets from the fasta index file.
-// //' @param names Vector of sequence names from the fasta index file.
-// //' @param lengths Vector of sequence lengths from the fasta index file.
-// //' @param line_lens Vector of sequence line lengths from the fasta index file.
-// //'
-// //' @return Nothing.
-// //'
-// //'
+//' Read an indexed fasta file to a \code{RefGenome} object.
+//'
+//' @param file_name File name of the fasta file.
+//' @param remove_soft_mask Boolean for whether to remove soft-masking by making
+//'    sequences all uppercase. Defaults to \code{TRUE}.
+//' @param offsets Vector of sequence offsets from the fasta index file.
+//' @param names Vector of sequence names from the fasta index file.
+//' @param lengths Vector of sequence lengths from the fasta index file.
+//' @param line_lens Vector of sequence line lengths from the fasta index file.
+//'
+//' @return Nothing.
+//'
+//' @noRd
+//'
+//'
 //[[Rcpp::export]]
 SEXP read_fasta_ind(const std::string& fasta_file,
                     const std::string& fai_file,
@@ -403,15 +407,17 @@ SEXP read_fasta_ind(const std::string& fasta_file,
 
 
 
-// //' Write \code{RefGenome} to an uncompressed fasta file.
-// //'
-// //' @param file_name File name of output fasta file.
-// //' @param ref_ An external pointer to a \code{RefGenome} C++ object.
-// //' @param text_width The number of characters per line in the output fasta file.
-// //'
-// //' @return Nothing.
-// //'
-// //'
+//' Write \code{RefGenome} to an uncompressed fasta file.
+//'
+//' @param file_name File name of output fasta file.
+//' @param ref_ An external pointer to a \code{RefGenome} C++ object.
+//' @param text_width The number of characters per line in the output fasta file.
+//'
+//' @return Nothing.
+//'
+//' @noRd
+//'
+//'
 //[[Rcpp::export]]
 void write_fasta_fa(std::string file_name,
                     SEXP ref_,
@@ -449,13 +455,14 @@ void write_fasta_fa(std::string file_name,
 
 
 
-// //' Write \code{RefGenome} to a compressed fasta file.
-// //'
-// //' @inheritParams write_fasta_fa
-// //'
-// //' @return Nothing.
-// //'
-// //'
+//' Write \code{RefGenome} to a compressed fasta file.
+//'
+//' @inheritParams write_fasta_fa
+//'
+//' @return Nothing.
+//'
+//' @noRd
+//'
 //[[Rcpp::export]]
 void write_fasta_gz(const std::string& file_name,
                     SEXP ref_,

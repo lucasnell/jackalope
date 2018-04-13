@@ -1,6 +1,9 @@
 # ifndef __GEMINO_DEFUNT_CLASSES_H
 # define __GEMINO_DEFUNT_CLASSES_H
 
+// This file is defunct
+
+
 #include <RcppArmadillo.h>
 #include <fstream> // fstream
 #include <string> // string class

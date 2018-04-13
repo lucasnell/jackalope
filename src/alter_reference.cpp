@@ -48,6 +48,7 @@ namespace alter_scaffs {
 //'
 //' @name merge_sequences
 //'
+//' @noRd
 //'
 //[[Rcpp::export]]
 void merge_sequences(SEXP ref_) {
@@ -109,6 +110,8 @@ void merge_sequences(SEXP ref_) {
 //' @return Nothing. Changes are made in place.
 //'
 //' @name filter_sequences
+//'
+//' @noRd
 //'
 //'
 //[[Rcpp::export]]

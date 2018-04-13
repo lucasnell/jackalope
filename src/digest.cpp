@@ -169,12 +169,8 @@ void VarSeqDigest::digest(const DigestInfo& dinfo) {
 //'
 //'
 //'
-//' @param reference An external pointer to a C++ \code{SequenceSet} object
-//'     representing the reference genome
-//'     (also the \code{variants} object's \code{reference} field).
-//' @param variant_set An external pointer to a C++ \code{VariantSet} object
-//'     representing the variants' deviations from the reference genome
-//'     (also the \code{variants} object's \code{variant_set} field).
+//' @param var_ An external pointer to a C++ \code{VarSet} object
+//'     representing variants from the reference genome.
 //' @param bind_sites Vector of enzyme full recognition site(s).
 //' @param len5s A vector of the numbers of characters of the prime5 sites for each
 //'     recognition site.
@@ -356,7 +352,7 @@ void RefSeqChunk::merge_seam(const RefSeqChunk& prev, const DigestInfo& dinfo) {
 //'     Indexing the output list would be done as such:
 //'     \code{output_list[[sequence_index]][position_index]}.
 //'
-//' @export
+//' @noRd
 //'
 //[[Rcpp::export]]
 std::vector< std::deque<uint> > digest_ref(
