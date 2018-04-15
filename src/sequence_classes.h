@@ -263,7 +263,6 @@ public:
      Re-calculate new positions (and total sequence size)
      ------------------
      */
-    void calc_positions(bool sort_first = true);
     void calc_positions(uint mut_i);
     void calc_positions(uint mut_i, const sint& modifier);
 

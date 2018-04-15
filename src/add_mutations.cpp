@@ -33,22 +33,6 @@ using namespace Rcpp;
  Re-calculate new positions (and total sequence size)
  ------------------
  */
-// For all Mutation objects
-void VarSequence::calc_positions(bool sort_first) {
-
-    if (sort_first) std::sort(mutations.begin(), mutations.end());
-
-    sint modifier = 0;
-
-    for (uint mut_i = 0; mut_i < mutations.size(); mut_i++) {
-        mutations[mut_i].new_pos = mutations[mut_i].old_pos + modifier;
-        modifier += mutations[mut_i].size_modifier;
-    }
-    // Updating full sequence size
-    seq_size = ref_seq.size() + modifier;
-
-    return;
-}
 /*
  For all Mutation objects after a given Mutation object
  (this is for after you insert a NEW Mutation, where `mut_i` below points to
@@ -202,8 +186,9 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint& new_pos
     // `mutations.size()` is returned above if `new_pos_` is before the
     // first Mutation object or if `mutations` is empty
     if (mut_i == mutations.size()) {
+        std::string nt = ref_seq[new_pos_] + nucleos_;
         // (below, notice that new position and old position are the same)
-        Mutation new_mut(new_pos_, new_pos_, nucleos_);
+        Mutation new_mut(new_pos_, new_pos_, nt);
         mutations.push_front(new_mut);
         // Adjust new positions and total sequence size:
         calc_positions(static_cast<uint>(0));
@@ -235,8 +220,8 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint& new_pos
      */
     } else {
         uint old_pos_ = ind + (mutations[mut_i].old_pos - mutations[mut_i].size_modifier);
-        std::string new_nucleos_ = ref_seq[old_pos_] + nucleos_;
-        Mutation new_mut(old_pos_, new_pos_, new_nucleos_);
+        std::string nt = ref_seq[old_pos_] + nucleos_;
+        Mutation new_mut(old_pos_, new_pos_, nt);
         ++mut_i;
         mutations.insert(mutations.begin() + mut_i, new_mut);
         // Adjust new positions and total sequence size:

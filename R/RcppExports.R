@@ -117,6 +117,7 @@ filter_sequences <- function(ref_, min_seq_size = 0L, out_seq_prop = 0) {
 #' @param n_seqs Number of sequences.
 #' @param len_mean Mean for the gamma distribution for sequence sizes.
 #' @param len_sd Standard deviation for the gamma distribution for sequence sizes.
+#'     If set to `<= 0`, all sequences will be the same length. Defaults to `0`.
 #' @param equil_freqs Vector of nucleotide equilibrium frequencies for
 #'     "A", "C", "G", and "T", respectively. Defaults to `rep(0.25, 4)`.
 #' @param n_cores Number of cores to use via OpenMP.
@@ -128,31 +129,27 @@ filter_sequences <- function(ref_, min_seq_size = 0L, out_seq_prop = 0) {
 #'
 #' @examples
 #'
-#' genome <- create_genome(10, 100e6, 10e6, pis = c(0.1, 0.2, 0.3, 0.4))
+#' genome <- create_genome(10, 100e6, 10e6, equil_freqs = c(0.1, 0.2, 0.3, 0.4))
 #'
-create_genome <- function(n_seqs, len_mean, len_sd, equil_freqs = numeric(0), n_cores = 1L) {
+create_genome <- function(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0), n_cores = 1L) {
     .Call(`_gemino_create_genome`, n_seqs, len_mean, len_sd, equil_freqs, n_cores)
 }
 
-#' Create random sequences.
+#' `rando_seqs` creates random sequences as a character vector.
 #'
-#' Function to create random sequences into character vector format or for a new
-#' reference genome object.
-#'
-#' Note that this function will not return empty sequences.
 #'
 #' @inheritParams create_genome
 #'
 #' @return Character vector of sequence strings.
 #'
-#' @noRd
+#' @describeIn create_genome
 #'
 #' @export
 #'
 #' @examples
 #' randos <- rando_seqs(10, 1000, 10)
 #'
-rando_seqs <- function(n_seqs, len_mean, len_sd, equil_freqs = numeric(0), n_cores = 1L) {
+rando_seqs <- function(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0), n_cores = 1L) {
     .Call(`_gemino_rando_seqs`, n_seqs, len_mean, len_sd, equil_freqs, n_cores)
 }
 

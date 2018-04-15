@@ -45,23 +45,18 @@ using namespace Rcpp;
 
 /*
  Template that does most of the work for creating new sequences for the following two
- functions.
- Classes `OuterClass` and `InnerClass` can be `std::vector<std::string>` and `std::string` or
- `RefGenome` and `RefSequence`. No other combinations are guaranteed to work.
+ functions when `len_sd > 0`.
+ Classes `OuterClass` and `InnerClass` can be `std::vector<std::string>` and
+ `std::string` or `RefGenome` and `RefSequence`.
+ No other combinations are guaranteed to work.
  */
 
 template <typename OuterClass, typename InnerClass>
 OuterClass create_sequences_(const uint& n_seqs,
-                    const double& len_mean,
-                    const double& len_sd,
-                    NumericVector equil_freqs = NumericVector(0),
-                    const uint& n_cores = 1) {
-
-    if (len_sd <= 0) {
-        stop("`len_sd` must be > 0, otherwise the function `create_genome` hangs. "
-             "If you want it to have a standard deviation of functionally zero, "
-             "set `len_sd = 1e-3`.");
-    }
+                             const double& len_mean,
+                             const double& len_sd,
+                             NumericVector equil_freqs,
+                             const uint& n_cores) {
 
     if (equil_freqs.size() == 0) equil_freqs = NumericVector(4, 0.25);
 
@@ -100,7 +95,10 @@ OuterClass create_sequences_(const uint& n_seqs,
 
     sitmo::prng_engine engine(active_seed);
     // Gamma distribution to be used for size selection (doi: 10.1093/molbev/msr011):
-    std::gamma_distribution<double> distr(gamma_shape, gamma_scale);
+    std::gamma_distribution<double> distr;
+    if (len_sd > 0) {
+        distr = std::gamma_distribution<double>(gamma_shape, gamma_scale);
+    }
 
     // Parallelize the Loop
     #ifdef _OPENMP
@@ -110,8 +108,11 @@ OuterClass create_sequences_(const uint& n_seqs,
         InnerClass& seq(seqs_out[i]);
 
         // Get length of output sequence:
-        uint len = static_cast<uint>(distr(engine));
-        if (len < 1) len = 1;
+        uint len;
+        if (len_sd > 0) {
+            len = static_cast<uint>(distr(engine));
+            if (len < 1) len = 1;
+        } else len = len_mean;
         // Sample sequence:
         seq.resize(len, 'x');
         alias_sample_str<InnerClass>(seq, fl, engine);
@@ -137,6 +138,7 @@ OuterClass create_sequences_(const uint& n_seqs,
 //' @param n_seqs Number of sequences.
 //' @param len_mean Mean for the gamma distribution for sequence sizes.
 //' @param len_sd Standard deviation for the gamma distribution for sequence sizes.
+//'     If set to `<= 0`, all sequences will be the same length. Defaults to `0`.
 //' @param equil_freqs Vector of nucleotide equilibrium frequencies for
 //'     "A", "C", "G", and "T", respectively. Defaults to `rep(0.25, 4)`.
 //' @param n_cores Number of cores to use via OpenMP.
@@ -148,17 +150,19 @@ OuterClass create_sequences_(const uint& n_seqs,
 //'
 //' @examples
 //'
-//' genome <- create_genome(10, 100e6, 10e6, pis = c(0.1, 0.2, 0.3, 0.4))
+//' genome <- create_genome(10, 100e6, 10e6, equil_freqs = c(0.1, 0.2, 0.3, 0.4))
 //'
 //[[Rcpp::export]]
 SEXP create_genome(const uint& n_seqs,
                    const double& len_mean,
-                   const double& len_sd,
+                   const double& len_sd = 0,
                    NumericVector equil_freqs = NumericVector(0),
                    const uint& n_cores = 1) {
 
-    RefGenome ref = create_sequences_<RefGenome, RefSequence>(n_seqs, len_mean, len_sd,
-                                                              equil_freqs, n_cores);
+    RefGenome ref;
+
+    ref = create_sequences_<RefGenome, RefSequence>(
+        n_seqs, len_mean, len_sd, equil_freqs, n_cores);
 
     for (uint i = 0; i < n_seqs; i++) {
         ref.total_size += ref[i].size();
@@ -173,18 +177,14 @@ SEXP create_genome(const uint& n_seqs,
 
 
 
-//' Create random sequences.
+//' `rando_seqs` creates random sequences as a character vector.
 //'
-//' Function to create random sequences into character vector format or for a new
-//' reference genome object.
-//'
-//' Note that this function will not return empty sequences.
 //'
 //' @inheritParams create_genome
 //'
 //' @return Character vector of sequence strings.
 //'
-//' @noRd
+//' @describeIn create_genome
 //'
 //' @export
 //'
@@ -194,7 +194,7 @@ SEXP create_genome(const uint& n_seqs,
 //[[Rcpp::export]]
 std::vector<std::string> rando_seqs(const uint& n_seqs,
                                     const double& len_mean,
-                                    const double& len_sd,
+                                    const double& len_sd = 0,
                                     NumericVector equil_freqs = NumericVector(0),
                                     const uint& n_cores = 1) {
 
