@@ -17,6 +17,30 @@
 
 using namespace Rcpp;
 
+
+/*
+ ============================
+ Algorithm D_1
+ (when n^2 / N <= the n2N parameter (default = 50))
+ ============================
+ */
+uint algorithm_d1_S(const sint& n, const uint& N, sitmo::prng_engine& engine,
+                    const double alpha);
+
+/*
+ ============================
+ Algorithm D_2
+ (when n^2 / N > the n2N parameter (default = 50))
+ ============================
+ */
+uint algorithm_d2_S(const sint& n, const uint& N, sitmo::prng_engine& engine,
+                    const double& alpha);
+
+/*
+ ============================
+ Full algorithm
+ ============================
+*/
 template <class T>
 void vitter_d(T& input_vec, uint N, sitmo::prng_engine& engine,
               const double n2N = 50, const double alpha = 0.8);

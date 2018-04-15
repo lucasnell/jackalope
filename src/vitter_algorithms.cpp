@@ -148,10 +148,12 @@ uint vitter_a_S(double n, double N, sitmo::prng_engine& engine) {
 
 
 
-// ============================
-// Algorithm D_1
-// (when n^2 / N <= the n2N parameter (default = 50))
-// ============================
+/*
+ ============================
+ Algorithm D_1
+ (when n^2 / N <= the n2N parameter (default = 50))
+ ============================
+ */
 
 // --------
 // Inline functions for Algorithm D_1
@@ -204,10 +206,12 @@ uint algorithm_d1_S(const sint& n, const uint& N, sitmo::prng_engine& engine,
 
 
 
-// ============================
-// Algorithm D_2
-// (when n^2 / N > the n2N parameter (default = 50))
-// ============================
+/*
+ ============================
+ Algorithm D_2
+ (when n^2 / N > the n2N parameter (default = 50))
+  ============================
+ */
 
 
 // --------
@@ -262,15 +266,15 @@ uint algorithm_d2_S(const sint& n, const uint& N, sitmo::prng_engine& engine,
 
 
 
+/*
+ ========================================================
+ ========================================================
 
-// ========================================================
-// ========================================================
+ Full Algorithm D
 
-// Full Algorithm D
-
-// ========================================================
-// ========================================================
-
+ ========================================================
+ ========================================================
+ */
 
 
 
@@ -297,7 +301,7 @@ uint algorithm_d2_S(const sint& n, const uint& N, sitmo::prng_engine& engine,
 //' @noRd
 //'
 //'
-template <class T>
+template <typename T>
 void vitter_d(T& samples, uint N, sitmo::prng_engine& engine,
               const double n2N = 50, const double alpha = 0.8) {
 
