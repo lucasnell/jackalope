@@ -59,6 +59,22 @@ struct RefSequence {
         }
         return nucleos[idx];
     }
+    // To resize this sequence
+    void reserve(const uint& n) {
+        nucleos.reserve(n);
+        return;
+    }
+    // To resize this sequence
+    void resize(const uint& n, const char& x) {
+        // nucleos.resize(n, x); // the below way should be faster based on testing
+        nucleos = std::string(n, x);
+        return;
+    }
+    // To add character to sequence
+    void operator+=(const char& nt) {
+        nucleos += nt;
+        return;
+    }
     // To return the size of this sequence
     uint size() const noexcept {
         return nucleos.size();
@@ -105,8 +121,8 @@ struct RefGenome {
         }
     }
     // Overloaded operator so sequences can be easily extracted
-    // It returns a const reference so no copying is done and no changes can be made
-    const RefSequence& operator[](const uint& idx) const {
+    // It returns a reference so no copying is done and so changes can be made
+    RefSequence& operator[](const uint& idx) {
         if (idx >= sequences.size()) {
             stop("Trying to extract sequence that doesn't exist");
         }
