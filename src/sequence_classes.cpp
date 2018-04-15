@@ -382,6 +382,7 @@ uint get_ref_n_scaff(SEXP ref_) {
 
 //' Make a VarSet object from a set of sequences and # variants
 //'
+//' Used for testing in `tests/testthat/test_mutations.R`.
 //'
 //' @noRd
 //'
@@ -394,7 +395,7 @@ SEXP make_vars(const std::deque<std::string>& seqs, const uint& n_vars) {
 
 //' Function to piece together the strings for all sequences in a VarGenome.
 //'
-//' Temporary function for testing.
+//' Used for testing in `tests/testthat/test_mutations.R`.
 //'
 //'
 //' @noRd
@@ -417,7 +418,6 @@ std::vector<std::string> see_vg(SEXP vs_, const uint& v) {
 
 //' Function to print info on a VarSet.
 //'
-//' Temporary function for testing.
 //'
 //'
 //' @noRd
@@ -433,7 +433,7 @@ void print_vs(SEXP vs_) {
 
 //' See all scaffold sizes in a VarSet object.
 //'
-//' Temporary function for testing.
+//' Used for testing in `tests/testthat/test_mutations.R`.
 //'
 //'
 //' @noRd
@@ -451,6 +451,8 @@ std::vector<uint> see_sizes(SEXP vs_, const uint& v) {
     }
     return out;
 }
+
+
 
 
 

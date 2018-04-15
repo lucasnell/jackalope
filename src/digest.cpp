@@ -324,7 +324,6 @@ void RefSeqChunk::merge_seam(const RefSeqChunk& prev, const DigestInfo& dinfo) {
 
 //' Internal C++ function to digest all sequences in a reference genome.
 //'
-//' This function shouldn't be exported after testing is finished.
 //'
 //'
 //' @param ref_ An external pointer to a C++ \code{RefGenome} object
