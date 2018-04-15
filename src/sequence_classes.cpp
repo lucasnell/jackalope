@@ -25,8 +25,8 @@ using namespace Rcpp;
 
 /*
  ------------------
- Retrieve a nucleotide (char type) from the variant scaffold
- based on the position in the new, variant scaffold
+ Retrieve a nucleotide (char type) from the variant sequence
+ based on the position in the new, variant sequence
  ------------------
  */
 char VarSequence::get_nt(const uint& new_pos) const {
@@ -60,7 +60,7 @@ char VarSequence::get_nt(const uint& new_pos) const {
 /*
  ------------------
  Retrieve all nucleotides (i.e., the full sequence; std::string type) from
- the variant scaffold
+ the variant sequence
  ------------------
  */
 
@@ -106,7 +106,7 @@ std::string VarSequence::get_seq_full() const {
 
 /*
  ------------------
- Retrieve the first part of a sequence from the variant scaffold.
+ Retrieve the first part of a sequence from the variant sequence.
  ------------------
  */
 std::string VarSequence::get_seq_start(uint out_length) const {
@@ -154,7 +154,7 @@ std::string VarSequence::get_seq_start(uint out_length) const {
 
 /*
  ------------------
- Set an input string object to any chunk of a sequence from the variant scaffold.
+ Set an input string object to any chunk of a sequence from the variant sequence.
  Before anything, this function moves `mut` to the location right before this chunk's
  starting position. I keep this index around so I don't have to iterate through
  the entire mutation deque multiple times.
@@ -340,7 +340,7 @@ std::vector<std::string> see_vg(SEXP vs_, const uint& v) {
     return out;
 }
 
-//' See all scaffold sizes in a VarSet object.
+//' See all sequence sizes in a VarSet object.
 //'
 //' @noRd
 //[[Rcpp::export]]
@@ -431,7 +431,7 @@ uint see_ref_seq_size(SEXP ref_, const uint& s) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-uint see_ref_n_scaff(SEXP ref_) {
+uint see_ref_n_seq(SEXP ref_) {
     XPtr<RefGenome> ref_xptr(ref_);
     RefGenome& ref(*ref_xptr);
     uint out = ref.size();

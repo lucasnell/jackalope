@@ -46,12 +46,12 @@ using namespace Rcpp;
 /*
  Template that does most of the work for creating new sequences for the following two
  functions.
- Classes `T` and `U` can be `std::vector<std::string>` and `std::string` or
+ Classes `OuterClass` and `InnerClass` can be `std::vector<std::string>` and `std::string` or
  `RefGenome` and `RefSequence`. No other combinations are guaranteed to work.
  */
 
-template <class T, class U>
-T create_sequences_(const uint& n_seqs,
+template <typename OuterClass, typename InnerClass>
+OuterClass create_sequences_(const uint& n_seqs,
                     const double& len_mean,
                     const double& len_sd,
                     NumericVector equil_freqs = NumericVector(0),
@@ -59,7 +59,7 @@ T create_sequences_(const uint& n_seqs,
 
     if (len_sd <= 0) {
         stop("`len_sd` must be > 0, otherwise the function `create_genome` hangs. ",
-             "If you want it to have a standard deviation of essentially zero, ",
+             "If you want it to have a standard deviation of functionally zero, ",
              "set `len_sd = 1e-3`.");
     }
 
@@ -76,7 +76,7 @@ T create_sequences_(const uint& n_seqs,
     const alias_FL fl(pis);
 
     // Creating output object
-    T seqs_out(n_seqs);
+    OuterClass seqs_out(n_seqs);
 
     // parameters for creating the gamma distribution
     const double gamma_shape = (len_mean * len_mean) / (len_sd * len_sd);
@@ -107,14 +107,14 @@ T create_sequences_(const uint& n_seqs,
     #pragma omp for schedule(static)
     #endif
     for (uint i = 0; i < n_seqs; i++) {
-        U& seq(seqs_out[i]);
+        InnerClass& seq(seqs_out[i]);
 
         // Get length of output sequence:
         uint len = static_cast<uint>(distr(engine));
         if (len < 1) len = 1;
         // Sample sequence:
         seq.resize(len, 'x');
-        alias_sample_str<U>(seq, fl, engine);
+        alias_sample_str<InnerClass>(seq, fl, engine);
     }
 
     #ifdef _OPENMP
