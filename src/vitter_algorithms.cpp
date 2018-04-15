@@ -37,12 +37,6 @@ using namespace Rcpp;
 
 
 
-// Needed for multiple functions below (it's faster than using std::pow(a, b))
-// a^b
-inline double fast_pow(double a, double b) {
-    return std::exp(b * std::log(a));
-}
-
 
 namespace vitter {
     // Adding +1 to this so that when sampling, `engine() / seq_var::sitmo_max` is always
@@ -66,31 +60,26 @@ namespace vitter {
 
 
 
-// Pr(S = s)
-// (This is the same as `f` below, but vectorized and exported to R.
-// I'm keeping them separate so I can keep `f` inline.)
-//[[Rcpp::export]]
-std::vector<double> f_s(const std::vector<double>& s_vec, const double& n, const double& N) {
-    std::vector<double> out(s_vec.size());
-    double out_i, s;
-    for (uint i = 0; i < s_vec.size(); i++) {
-        s = s_vec[i];
-        if (s < 0 || s > (N - n)) {
-            out[i] = 0;
-            continue;
-        }
-        out_i = (n / N);
-        for (int j = 0; j < s; j++) {
-            out_i *= ((N - n - (double) j) / (N - 1 - (double) j));
-        }
-        out[i] = out_i;
+//' Pr(S == s).
+//'
+//'
+//' @noRd
+inline double f(const double& s, const double& n, const double& N) {
+    if (s < 0 || s > (N - n)) return 0;
+    double out = (n / N);
+    for (int i = 0; i < s; i++) {
+        out *= ((N - n - (double) i) / (N - 1 - (double) i));
     }
     return out;
 }
 
-// This is Pr(S <= s)
-//[[Rcpp::export]]
-std::vector<double> F_s(const std::vector<double>& s_vec, const double& n, const double& N) {
+
+//' Pr(S <= s)
+//'
+//' @noRd
+//'
+std::vector<double> F_s(const std::vector<double>& s_vec, const double& n,
+                        const double& N) {
     std::vector<double> out(s_vec.size());
     double out_i, s;
     for (uint i = 0; i < s_vec.size(); i++) {
@@ -112,34 +101,28 @@ std::vector<double> F_s(const std::vector<double>& s_vec, const double& n, const
 
 
 
-// var(S)
-//[[Rcpp::export]]
+//' var(S).
+//'
+//' @noRd
+//'
 double variance_s(double n, double N) {
-    return ((N + 1) * (N - n) * n) / ((n + 2) * fast_pow(n + 1, 2));
+    return ((N + 1) * (N - n) * n) / ((n + 2) * ((n + 1) * (n + 1)));
 }
 
-
-// If comparing distances to S, remember that S in Vitter's paper is the number of
-// positions to skip _before_ taking the next one, so it should be 1 less than the
-// distance.
-// So just add 1 to this function to get expected distances.
-
-// Expected value of S
-//[[Rcpp::export]]
+//' Expected value of S.
+//'
+//' If comparing distances to S, remember that S in Vitter's paper is the number of
+//' positions to skip _before_ taking the next one, so it should be 1 less than the
+//' distance.
+//' So just add 1 to this function to get expected distances.
+//'
+//' @noRd
+//'
 double expected_s(double n, double N) {
     return (N - n) / (n + 1);
 }
 
 
-// Pr(S == s)
-inline double f(const double& s, const double& n, const double& N) {
-    if (s < 0 || s > (N - n)) return 0;
-    double out = (n / N);
-    for (int i = 0; i < s; i++) {
-        out *= ((N - n - (double) i) / (N - 1 - (double) i));
-    }
-    return out;
-}
 
 
 
@@ -174,17 +157,17 @@ uint vitter_a_S(double n, double N, sitmo::prng_engine& engine) {
 // --------
 inline double g1(const double& x, const double& n, const double& N) {
     if (x < 0 || x > N) return 0;
-    return (n / N) * fast_pow(1 - x/N, n - 1);
+    return (n / N) * std::pow(1 - x/N, n - 1);
 }
 inline double c1(const double& n, const double& N) {
     return N / (N - n + 1);
 }
 inline double h1(const double& s, const double& n, const double& N) {
     if (s < 0 || s > (N - n)) return 0;
-    return (n / N) * fast_pow(1 - (s / (N - n + 1)), n - 1);
+    return (n / N) * std::pow(1 - (s / (N - n + 1)), n - 1);
 }
 inline double x1(const double& U, const double& n, const double& N) {
-    return N * (1 - fast_pow(U, 1/n));
+    return N * (1 - std::pow(U, 1/n));
 }
 // --------
 // One S value for Algorithm D_1
@@ -231,14 +214,14 @@ uint algorithm_d1_S(const sint& n, const uint& N, sitmo::prng_engine& engine,
 // --------
 inline double g2(const double& s, const double& n, const double& N) {
     if (s < 0) stop("Computational error. s cannot < 0 in g2.");
-    return ((n - 1) / (N - 1)) * fast_pow(1 - ((n - 1) / (N - 1)), s);
+    return ((n - 1) / (N - 1)) * std::pow(1 - ((n - 1) / (N - 1)), s);
 }
 inline double c2(const double& n, const double& N) {
     return (n / (n - 1)) * ((N - 1) / N);
 }
 inline double h2(const double& s, const double& n, const double& N) {
     if (s < 0 || s > (N - n)) return 0;
-    return (n / N) * fast_pow(1 - ((n - 1) / (N - s)), s);
+    return (n / N) * std::pow(1 - ((n - 1) / (N - s)), s);
 }
 inline double x2(const double& U, const double& n, const double& N) {
     return std::floor(std::log(U) / std::log(1 - ((n - 1) / (N - 1))));
@@ -248,7 +231,7 @@ inline double x2(const double& U, const double& n, const double& N) {
 // One S value for Algorithm D_2
 // --------
 uint algorithm_d2_S(const sint& n, const uint& N, sitmo::prng_engine& engine,
-                    const double alpha) {
+                    const double& alpha) {
 
     double U, X, c, comp_denom;
     uint S;
@@ -288,11 +271,33 @@ uint algorithm_d2_S(const sint& n, const uint& N, sitmo::prng_engine& engine,
 // ========================================================
 
 
-// From testing, alpha = 0.8 and n2N = 50 have fastest times
-// this will return 0-->(N-1)
 
 std::vector<uint> vitter_d(sint n, uint N, sitmo::prng_engine& engine,
                    double n2N = 50, double alpha = 0.8) {
+
+//' "Algorithm D" for fast sampling without replacement.
+//'
+//' This algorithm is from the following paper:
+//' Vitter, Jeffrey Scott. 1984. Faster methods for random sampling. Communications of
+//'     the ACM 27:703–718.
+//'
+//' @param input_vec A vector of unsigned integers (class `arma::uvec` or
+//'     `std::vector<uint>`) of length `n`.
+//'     Sampling will generate `n` random numbers. `n` should always be <= N.
+//' @param N The population size. The sampling will generate numbers from
+//'     `0` to `(N - 1)`.
+//' @param engine A sitmo PRNG engine.
+//' @param n2N A numeric threshold placed on the algorithm used to find new locations.
+//'     This is not recommended to be changed. Defaults to 50.
+//' @param alpha A numeric threshold placed on the algorithm used to find new locations.
+//'     This is not recommended to be changed. Defaults to 0.8.
+//'
+//'
+//'
+//'
+//' @noRd
+//'
+//'
 
     // Commented this out bc this will crash R if run in parallel and stop happens.
     // if (alpha > 1 || alpha < 0) stop("Invalid alpha. It must be (0,1).");
