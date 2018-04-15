@@ -17,8 +17,9 @@
 
 using namespace Rcpp;
 
+template <class T>
+void vitter_d(T& input_vec, uint N, sitmo::prng_engine& engine,
+              const double n2N = 50, const double alpha = 0.8);
 
 
-std::vector<uint> vitter_d(sint n, uint N, sitmo::prng_engine& engine,
-                           double n2N = 50, double alpha = 0.8);
 #endif

@@ -28,7 +28,8 @@
 #include <omp.h>
 #endif
 
-#include "gemino_types.h"
+#include "gemino_types.h"  // integer types
+#include "util.h"  // uints_get_size
 
 
 using namespace Rcpp;
@@ -272,8 +273,6 @@ uint algorithm_d2_S(const sint& n, const uint& N, sitmo::prng_engine& engine,
 
 
 
-std::vector<uint> vitter_d(sint n, uint N, sitmo::prng_engine& engine,
-                   double n2N = 50, double alpha = 0.8) {
 
 //' "Algorithm D" for fast sampling without replacement.
 //'
@@ -298,18 +297,23 @@ std::vector<uint> vitter_d(sint n, uint N, sitmo::prng_engine& engine,
 //' @noRd
 //'
 //'
+template <class T>
+void vitter_d(T& samples, uint N, sitmo::prng_engine& engine,
+              const double n2N = 50, const double alpha = 0.8) {
 
     // Commented this out bc this will crash R if run in parallel and stop happens.
     // if (alpha > 1 || alpha < 0) stop("Invalid alpha. It must be (0,1).");
 
-    std::vector<uint> samples;
-    uint S;
-    int_fast64_t current_pos = -1;
-    if ((fast_pow(n, 2) / N) > n2N) {
+    sint n = static_cast<sint>(uints_get_size(samples));
+
+    uint S, ind = 0;
+    sint64 current_pos = -1;
+    if (((n * n) / N) > n2N) {
         while (n > 1) {
             S = algorithm_d2_S(n, N, engine, alpha);
             current_pos += S + 1;
-            samples.push_back(current_pos);
+            samples[ind] = current_pos;
+            ind++;
             n--;
             N -= (S + 1);
         }
@@ -317,27 +321,30 @@ std::vector<uint> vitter_d(sint n, uint N, sitmo::prng_engine& engine,
         if (n == 1) {
             S = ((double) engine() / vitter::sitmo_max) * N;
             current_pos += S + 1;
-            samples.push_back(current_pos);
+            samples[ind] = current_pos;
+            ind++;
         }
     } else {
         while (n > 0) {
             S = algorithm_d1_S(n, N, engine, alpha);
             current_pos += S + 1;
-            samples.push_back(current_pos);
-            n --;
+            samples[ind] = current_pos;
+            ind++;
+            n--;
             N -= (S + 1);
         }
     }
 
-    return samples;
+    return;
 }
 
 
 //[[Rcpp::export]]
-arma::Mat<uint> test_vitter_d(const uint reps, uint n, uint N, const std::vector<uint> seeds,
+arma::Mat<uint> test_vitter_d(const uint reps, uint n, uint N,
+                              const std::vector<uint> seeds,
                               const double n2N = 50, const double alpha = 0.8) {
 
-    arma::Mat<uint> out(reps, n);
+    arma::Mat<uint> out(n, reps);
     if (alpha > 1 || alpha < 0) stop("Invalid alpha. It must be (0,1).");
     if (n > N) stop("n must be <= N.");
 
@@ -364,11 +371,9 @@ arma::Mat<uint> test_vitter_d(const uint reps, uint n, uint N, const std::vector
     #pragma omp for schedule(static)
     #endif
     for (uint i = 0; i < reps; i++) {
-        std::vector<uint> point_positions = vitter_d(n, N, engine, n2N, alpha);
-        if (point_positions.size() != n) stop("Inappropriate output.");
-        for (uint j = 0; j < n; j++) {
-            out(i,j) = point_positions[j];
-        }
+        arma::uvec point_positions(n);
+        vitter_d<arma::uvec>(point_positions, N, engine, n2N, alpha);
+        out.col(i) = point_positions;
         // Rcpp::checkUserInterrupt(); // <-- Causes crash when in parallel
     }
     #ifdef _OPENMP
