@@ -58,8 +58,8 @@ OuterClass create_sequences_(const uint& n_seqs,
                     const uint& n_cores = 1) {
 
     if (len_sd <= 0) {
-        stop("`len_sd` must be > 0, otherwise the function `create_genome` hangs. ",
-             "If you want it to have a standard deviation of functionally zero, ",
+        stop("`len_sd` must be > 0, otherwise the function `create_genome` hangs. "
+             "If you want it to have a standard deviation of functionally zero, "
              "set `len_sd = 1e-3`.");
     }
 

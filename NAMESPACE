@@ -2,12 +2,9 @@
 
 export(create_genome)
 export(digest)
-export(digest_ref)
 export(dna_set)
-export(make_variants)
 export(rando_seqs)
 export(read_fasta)
-export(size_filter)
 export(variants)
 export(write_fasta)
 importFrom(R6,R6Class)

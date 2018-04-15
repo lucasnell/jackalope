@@ -14,9 +14,6 @@ using namespace Rcpp;
 
 
 
-
-
-
 //' GC proportion of a single string.
 //'
 //'
@@ -27,9 +24,9 @@ using namespace Rcpp;
 //' @noRd
 //'
 double gc_prop(const std::string& sequence) {
-    int total_seq = sequence.size();
+    double total_seq = sequence.size();
     double total_gc = 0;
-    for (int i = 0; i < total_seq; i++) {
+    for (uint i = 0; i < total_seq; i++) {
         if (sequence[i] == 'G' || sequence[i] == 'C') {
             total_gc += 1;
         }
@@ -39,9 +36,9 @@ double gc_prop(const std::string& sequence) {
 }
 // ... overloaded for portion of a string
 double gc_prop(const std::string& sequence, const uint& start, const uint& stop) {
-    int total_seq = stop - start + 1;
+    double total_seq = stop - start + 1;
     double total_gc = 0;
-    for (int i = start; i <= stop; i++) {
+    for (uint i = start; i <= stop; i++) {
         if (sequence[i] == 'G' || sequence[i] == 'C') {
             total_gc += 1;
         }

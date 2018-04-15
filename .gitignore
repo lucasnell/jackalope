@@ -13,7 +13,7 @@ src/*.dll
 gfiles
 Gac
 man
-safepug_*.tgz
+gemino_*.tgz
 *.pdf
 under_constr
 methods

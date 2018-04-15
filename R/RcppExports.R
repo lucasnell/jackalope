@@ -296,16 +296,33 @@ write_fasta_gz <- function(file_name, ref_, text_width) {
     invisible(.Call(`_gemino_write_fasta_gz`, file_name, ref_, text_width))
 }
 
+#' Make a VarSet object from a set of sequences and # variants
+#'
+#' @noRd
+make_vars <- function(seqs, n_vars) {
+    .Call(`_gemino_make_vars`, seqs, n_vars)
+}
+
+#' Function to piece together the strings for all sequences in a VarGenome.
+#'
+#' @noRd
+see_vg <- function(vs_, v) {
+    .Call(`_gemino_see_vg`, vs_, v)
+}
+
+#' See all sequence sizes in a VarSet object.
+#'
+#' @noRd
+see_sizes <- function(vs_, v) {
+    .Call(`_gemino_see_sizes`, vs_, v)
+}
+
 make_ref <- function(input) {
     .Call(`_gemino_make_ref`, input)
 }
 
-see_ref <- function(ref_) {
-    invisible(.Call(`_gemino_see_ref`, ref_))
-}
-
-get_ref_seq <- function(ref_, s) {
-    .Call(`_gemino_get_ref_seq`, ref_, s)
+see_ref_seq <- function(ref_, s) {
+    .Call(`_gemino_see_ref_seq`, ref_, s)
 }
 
 #' Get a reference genome sequence's name.
@@ -315,8 +332,8 @@ get_ref_seq <- function(ref_, s) {
 #'
 #' @noRd
 #'
-get_ref_name <- function(ref_, s) {
-    .Call(`_gemino_get_ref_name`, ref_, s)
+see_ref_name <- function(ref_, s) {
+    .Call(`_gemino_see_ref_name`, ref_, s)
 }
 
 #' Get a reference genome sequence's size.
@@ -326,8 +343,8 @@ get_ref_name <- function(ref_, s) {
 #'
 #' @noRd
 #'
-get_ref_seq_size <- function(ref_, s) {
-    .Call(`_gemino_get_ref_seq_size`, ref_, s)
+see_ref_seq_size <- function(ref_, s) {
+    .Call(`_gemino_see_ref_seq_size`, ref_, s)
 }
 
 #' Get number of sequences in a reference genome.
@@ -337,62 +354,8 @@ get_ref_seq_size <- function(ref_, s) {
 #'
 #' @noRd
 #'
-get_ref_n_scaff <- function(ref_) {
-    .Call(`_gemino_get_ref_n_scaff`, ref_)
-}
-
-#' Make a VarSet object from a set of sequences and # variants
-#'
-#' Used for testing in `tests/testthat/test_mutations.R`.
-#'
-#' @noRd
-#'
-make_vars <- function(seqs, n_vars) {
-    .Call(`_gemino_make_vars`, seqs, n_vars)
-}
-
-#' Function to piece together the strings for all sequences in a VarGenome.
-#'
-#' Used for testing in `tests/testthat/test_mutations.R`.
-#'
-#'
-#' @noRd
-#'
-see_vg <- function(vs_, v) {
-    .Call(`_gemino_see_vg`, vs_, v)
-}
-
-#' See all scaffold sizes in a VarSet object.
-#'
-#' Used for testing in `tests/testthat/test_mutations.R`.
-#'
-#'
-#' @noRd
-#'
-see_sizes <- function(vs_, v) {
-    .Call(`_gemino_see_sizes`, vs_, v)
-}
-
-#' View the starting portion of a variant sequence.
-#'
-#' Temporary function for testing.
-#'
-#'
-#' @noRd
-#'
-see_start <- function(vs_, v, scaff, size_) {
-    .Call(`_gemino_see_start`, vs_, v, scaff, size_)
-}
-
-#' View a chunk of a variant sequence.
-#'
-#' Temporary function for testing.
-#'
-#'
-#' @noRd
-#'
-see_chunk <- function(vs_, v, scaff, start, chunk_size) {
-    .Call(`_gemino_see_chunk`, vs_, v, scaff, start, chunk_size)
+see_ref_n_seq <- function(ref_) {
+    .Call(`_gemino_see_ref_n_seq`, ref_)
 }
 
 #' Make a string uppercase in place.
@@ -431,81 +394,6 @@ cpp_merge_str <- function(in_strings) {
 #'
 cpp_str_split_delim <- function(in_string, split) {
     .Call(`_gemino_cpp_str_split_delim`, in_string, split)
-}
-
-optim_prob <- function(v, mean_pws_, dens_, seg_div_) {
-    .Call(`_gemino_optim_prob`, v, mean_pws_, dens_, seg_div_)
-}
-
-#' Randomly choose scaffolds for segregating sites, weighted based on scaffold length.
-#'
-#' This function is used separately for indels and SNPs.
-#'
-#' The indices of the output matrix coincide with the order of scaffolds in the
-#' \code{dna_set} input to \code{make_variants}.
-#'
-#' This function does NOT return an error if a scaffold is chosen more times
-#' than its length.
-#'
-#' @param total_mutations The total number of mutations (SNPs and indels).
-#' @param scaff_lens A vector of cumulative sums of scaffold lengths.
-#'
-#'
-#' @return A numeric vector containing the number of mutations per scaffold.
-#'
-sample_scaffs <- function(total_mutations, scaff_lens_cumsum, seeds) {
-    .Call(`_gemino_sample_scaffs`, total_mutations, scaff_lens_cumsum, seeds)
-}
-
-#' Get possible nucleotide distributions and their pairwise differences.
-#'
-#' Retrieve all combinations (with replacement) of nucleotide distributions that sum
-#' to \code{N}, and, for each, calculate \eqn{\pi_{ji}}.
-#'
-#'
-#' @param N Total number of individuals the frequencies must add to.
-#'
-#' @return List consisting of a matrix and a vector.
-#'     The matrix (\code{List$combos}) contains all nucleotide frequencies that add
-#'     to \code{N} (by row).
-#'     The vector (\code{List$mean_pws}) contains the mean pairwise differences
-#'     for a segregating site comprised of nucleotide frequencies present in each row
-#'     of the matrix.
-#'     For example, a segregating site for 10 haploid samples containing 3 As, 3 Cs,
-#'     2 Gs, and 2 Ts would have a mean pairwise difference of 0.8222222.
-#'
-cpp_nt_freq <- function(N) {
-    .Call(`_gemino_cpp_nt_freq`, N)
-}
-
-#' Inner function to create a C++ \code{VariantSet} object
-#'
-#' A \code{VariantSet} object constitutes the majority of information in a
-#' \code{variants} object (other than the reference genome) and is located in
-#' the \code{variant_set} field.
-#'
-#' @param n_mutations Integer vector of the total number of mutations (SNPs or indels)
-#'     for each scaffold.
-#' @param reference External pointer to a C++ \code{SequenceSet} object that
-#'     represents the reference genome.
-#' @param snp_combo_mat Matrix of all possible nucleotide combinations among all
-#'     variants per SNP.
-#' @param snp_probs_cumsum Vector of sampling probabilities for each row in
-#'     \code{snp_combo_mat}.
-#' @param seeds Vector of seeds, the length of which dictates how many cores will be
-#'     used.
-#' @param snp_p Proportion of mutations that are SNPs. Defaults to 0.9.
-#' @param insertion_p Proportion of \emph{indels} that are insertions. Defaults to 0.5.
-#' @param n2N A numeric threshold placed on the algorithm used to find new locations.
-#'     This is not recommended to be changed. Defaults to 50.
-#' @param alpha A numeric threshold placed on the algorithm used to find new locations.
-#'     This is not recommended to be changed. Defaults to 0.8.
-#'
-#'
-#' @return An external pointer to a \code{VariantSet} object in C++.
-#'
-make_variant_set <- function(n_mutations, reference, snp_combo_mat, snp_probs_cumsum, seeds, snp_p = 0.9, insertion_p = 0.5, n2N = 50, alpha = 0.8) {
-    .Call(`_gemino_make_variant_set`, n_mutations, reference, snp_combo_mat, snp_probs_cumsum, seeds, snp_p, insertion_p, n2N, alpha)
 }
 
 #' Pr(S == s).
