@@ -25,6 +25,9 @@ using namespace Rcpp;
 template <class U>
 void clear_memory(U& x);
 
+inline uint uints_get_size(std::vector<uint>& uints);
+inline uint uints_get_size(arma::uvec& uints);
+
 double gc_prop(const std::string& sequence);
 double gc_prop(const std::string& sequence, const uint& start, const uint& stop);
 

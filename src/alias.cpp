@@ -98,12 +98,7 @@ inline uint alias_sample(const uint& n, const alias_FL& FL,
 
 
 
-inline uint uints_get_size(std::vector<uint>& uints) {
-    return uints.size();
-}
-inline uint uints_get_size(arma::uvec& uints) {
-    return uints.n_elem;
-}
+
 
 /*
  Alias sampling for indices.

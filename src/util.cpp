@@ -24,6 +24,18 @@ void clear_memory(U& x) {
 
 
 
+/*
+ Get a size from either an arma::uvec or std::vector<uint>.
+ This is used in template functions that work for either class.
+ */
+inline uint uints_get_size(std::vector<uint>& uints) {
+    return uints.size();
+}
+inline uint uints_get_size(arma::uvec& uints) {
+    return uints.n_elem;
+}
+
+
 
 //' GC proportion of a single string.
 //'
