@@ -416,18 +416,6 @@ std::vector<std::string> see_vg(SEXP vs_, const uint& v) {
 }
 
 
-//' Function to print info on a VarSet.
-//'
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-void print_vs(SEXP vs_) {
-    XPtr<VarSet> vs(vs_);
-    vs->print();
-    return;
-}
 
 
 

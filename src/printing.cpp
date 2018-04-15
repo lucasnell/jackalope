@@ -115,6 +115,18 @@ void RefGenome::print() const {
 
 
 
+//' Function to print info on a `RefGenome`.
+//'
+//' Access `RefGenome` class's print method from R.
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+void print_rg(SEXP rg_) {
+    XPtr<RefGenome> rg(rg_);
+    rg->print();
+    return;
+}
 
 
 
@@ -165,3 +177,19 @@ void VarSet::print() const noexcept {
     reference.print();
 }
 
+
+
+
+
+//' Function to print info on a VarSet.
+//'
+//' Access `VarSet` class's print method from R.
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+void print_vs(SEXP vs_) {
+    XPtr<VarSet> vs(vs_);
+    vs->print();
+    return;
+}
