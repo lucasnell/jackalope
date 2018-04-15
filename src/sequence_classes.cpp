@@ -296,6 +296,72 @@ VarSet::VarSet(const std::deque<std::string>& seqs, const uint& n_vars)
 
 
 
+
+
+/*
+ ========================================================================================
+ ========================================================================================
+ ========================================================================================
+ ========================================================================================
+
+ Used for testing in `tests/testthat/test_mutations.R`.
+
+ ========================================================================================
+ ========================================================================================
+ ========================================================================================
+ ========================================================================================
+ */
+
+
+//' Make a VarSet object from a set of sequences and # variants
+//'
+//' @noRd
+//[[Rcpp::export]]
+SEXP make_vars(const std::deque<std::string>& seqs, const uint& n_vars) {
+    XPtr<VarSet> vset(new VarSet(seqs, n_vars), true);
+    return vset;
+}
+
+//' Function to piece together the strings for all sequences in a VarGenome.
+//'
+//' @noRd
+//[[Rcpp::export]]
+std::vector<std::string> see_vg(SEXP vs_, const uint& v) {
+
+    XPtr<VarSet> vs(vs_);
+    VarGenome& vg((*vs)[v]);
+
+    std::vector<std::string> out(vg.size(), "");
+    for (uint i = 0; i < vg.size(); i++) {
+        const VarSequence& vs(vg[i]);
+        std::string s = vs.get_seq_full();
+        out[i] = s;
+    }
+    return out;
+}
+
+//' See all scaffold sizes in a VarSet object.
+//'
+//' @noRd
+//[[Rcpp::export]]
+std::vector<uint> see_sizes(SEXP vs_, const uint& v) {
+
+    XPtr<VarSet> vs(vs_);
+    VarGenome& vg((*vs)[v]);
+
+    std::vector<uint> out(vg.size());
+    for (uint i = 0; i < vg.size(); i++) {
+        const VarSequence& vs(vg.var_genome[i]);
+        out[i] = vs.seq_size;
+    }
+    return out;
+}
+
+
+
+
+
+
 /*
  ========================================================================================
  ========================================================================================
@@ -320,14 +386,7 @@ SEXP make_ref(std::deque<std::string> input) {
 }
 
 //[[Rcpp::export]]
-void see_ref(SEXP ref_) {
-    XPtr<RefGenome> ref(ref_);
-    ref->print();
-    return;
-}
-
-//[[Rcpp::export]]
-std::string get_ref_seq(SEXP ref_, const uint& s) {
+std::string see_ref_seq(SEXP ref_, const uint& s) {
     XPtr<RefGenome> ref_xptr(ref_);
     RefGenome& ref(*ref_xptr);
     std::string out(ref[s].nucleos);
@@ -342,7 +401,7 @@ std::string get_ref_seq(SEXP ref_, const uint& s) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-std::string get_ref_name(SEXP ref_, const uint& s) {
+std::string see_ref_name(SEXP ref_, const uint& s) {
     XPtr<RefGenome> ref_xptr(ref_);
     RefGenome& ref(*ref_xptr);
     std::string out(ref[s].name);
@@ -357,7 +416,7 @@ std::string get_ref_name(SEXP ref_, const uint& s) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-uint get_ref_seq_size(SEXP ref_, const uint& s) {
+uint see_ref_seq_size(SEXP ref_, const uint& s) {
     XPtr<RefGenome> ref_xptr(ref_);
     RefGenome& ref(*ref_xptr);
     uint out = ref[s].nucleos.size();
@@ -372,118 +431,10 @@ uint get_ref_seq_size(SEXP ref_, const uint& s) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-uint get_ref_n_scaff(SEXP ref_) {
+uint see_ref_n_scaff(SEXP ref_) {
     XPtr<RefGenome> ref_xptr(ref_);
     RefGenome& ref(*ref_xptr);
     uint out = ref.size();
-    return out;
-}
-
-
-//' Make a VarSet object from a set of sequences and # variants
-//'
-//' Used for testing in `tests/testthat/test_mutations.R`.
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-SEXP make_vars(const std::deque<std::string>& seqs, const uint& n_vars) {
-    XPtr<VarSet> vset(new VarSet(seqs, n_vars), true);
-    return vset;
-}
-
-
-//' Function to piece together the strings for all sequences in a VarGenome.
-//'
-//' Used for testing in `tests/testthat/test_mutations.R`.
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-std::vector<std::string> see_vg(SEXP vs_, const uint& v) {
-
-    XPtr<VarSet> vs(vs_);
-    VarGenome& vg((*vs)[v]);
-
-    std::vector<std::string> out(vg.size(), "");
-    for (uint i = 0; i < vg.size(); i++) {
-        const VarSequence& vs(vg[i]);
-        std::string s = vs.get_seq_full();
-        out[i] = s;
-    }
-    return out;
-}
-
-
-
-
-
-//' See all scaffold sizes in a VarSet object.
-//'
-//' Used for testing in `tests/testthat/test_mutations.R`.
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-std::vector<uint> see_sizes(SEXP vs_, const uint& v) {
-
-    XPtr<VarSet> vs(vs_);
-    VarGenome& vg((*vs)[v]);
-
-    std::vector<uint> out(vg.size());
-    for (uint i = 0; i < vg.size(); i++) {
-        const VarSequence& vs(vg.var_genome[i]);
-        out[i] = vs.seq_size;
-    }
-    return out;
-}
-
-
-
-
-
-
-//' View the starting portion of a variant sequence.
-//'
-//' Temporary function for testing.
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-std::string see_start(SEXP vs_, const uint& v,
-                      const uint& scaff,
-                      const uint& size_) {
-    XPtr<VarSet> vset(vs_);
-    VarGenome& vg((*vset)[v]);
-    VarSequence& vs(vg[scaff]);
-    std::string out = vs.get_seq_start(size_);
-    return out;
-}
-
-
-//' View a chunk of a variant sequence.
-//'
-//' Temporary function for testing.
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-std::string see_chunk(SEXP vs_, const uint& v,
-                      const uint& scaff,
-                      const uint& start,
-                      const uint& chunk_size) {
-    XPtr<VarSet> vset(vs_);
-    VarGenome& vg((*vset)[v]);
-    VarSequence& vs(vg[scaff]);
-    std::string out;
-    uint mut_i = 0;
-
-    vs.set_seq_chunk(out, start, chunk_size, mut_i);
-
     return out;
 }
 
