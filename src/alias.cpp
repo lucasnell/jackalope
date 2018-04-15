@@ -84,46 +84,62 @@ alias_FL::alias_FL(const std::vector<double>& probs, const double& tol) {
 
 
 
-// Alias sampling for indices
-std::vector<uint> alias_sample_uint(const uint& N,
-                                    const alias_FL& FL,
-                                    sitmo::prng_engine& eng) {
+// Actual alias sampling
+inline uint alias_sample(const uint& n, const alias_FL& FL,
+                         sitmo::prng_engine& eng) {
+    // uniform in range [0,1)
+    double u = static_cast<double>(eng()) / alias::alias_sitmo_max;
+    // Not doing +1 [as is done in Yang (2006)] to keep it in 0-based indexing
+    uint k = n * u;
+    double r = n * u - k;
+    if (r >= FL.F[k]) k = FL.L[k];
+    return k;
+}
 
-    std::vector<uint> out(N);
+
+
+inline uint uints_get_size(std::vector<uint>& uints) {
+    return uints.size();
+}
+inline uint uints_get_size(arma::uvec& uints) {
+    return uints.n_elem;
+}
+
+/*
+ Alias sampling for indices.
+ `U` can be `std::vector<uint>` or `arma::uvec`.
+ It's assumed that the vector has been set to the desired size, and indexing
+ will be used to add values.
+ */
+template <class U>
+void alias_sample_uint(U& uints, const alias_FL& FL, sitmo::prng_engine& eng) {
 
     uint n = FL.size();
 
-    for (uint i = 0; i < N; i++) {
-        // uniform in range [0,1)
-        double u = static_cast<double>(eng()) / alias::alias_sitmo_max;
-        // Not doing +1 [as is done in Yang (2006)] to keep it in 0-based indexing
-        uint k = n * u;
-        double r = n * u - k;
-        if (r >= FL.F[k]) k = FL.L[k];
-        out[i] = k;
+    uint len = uints_get_size(uints);
+
+    for (uint i = 0; i < len; i++) {
+        uint k = alias_sample(n, FL, eng);
+        uints[i] = k;
     }
 
-    return out;
+    return;
 }
 
-// Alias sampling for nucleotides in a string
-// `nucleos` should already be allocated for the desired size
-void alias_sample_str(std::string& nucleos,
-                      const alias_FL& FL,
-                      sitmo::prng_engine& eng) {
-
-    uint N = nucleos.size();
+/*
+ Alias sampling for nucleotides in a string
+ `nucleos` should already be set to the desired size using `nucleos = U(len, 'x')`
+ or `nucleos.resize(len, 'x')`.
+ `U` can be `std::string` or `RefSequence`.
+ */
+template <class U>
+void alias_sample_str(U& nucleos, const alias_FL& FL, sitmo::prng_engine& eng) {
 
     uint n = FL.size();
     if (n != 4) stop("Function alias_sample_str only uses alias_FL objects of size 4.");
 
-    for (uint i = 0; i < N; i++) {
-        // uniform in range [0,1)
-        double u = static_cast<double>(eng()) / alias::alias_sitmo_max;
-        // Not doing +1 [as is done in Yang (2006)] to keep it in 0-based indexing
-        uint k = n * u;
-        double r = n * u - k;
-        if (r >= FL.F[k]) k = FL.L[k];
+    for (uint i = 0; i < nucleos.size(); i++) {
+        uint k = alias_sample(n, FL, eng);
         nucleos[i] = alias::nt_bases[k];
     }
 

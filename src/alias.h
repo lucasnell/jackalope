@@ -5,7 +5,6 @@
 #include <sitmo.h>    // sitmo prng
 #include <vector>  // vector class
 #include <string>  // string class
-#include <unordered_map>  // unordered_map
 
 #include "gemino_types.h" // integer types
 
@@ -33,13 +32,21 @@ public:
 };
 
 
-// Alias sampling for indices
-std::vector<uint> alias_sample_uint(const uint& N, const alias_FL& FL,
-                                    sitmo::prng_engine& eng);
+/*
+ Alias sampling for indices.
+ `U` can be `std::vector<uint>` or `arma::uvec`
+ */
+template <class U>
+void alias_sample_uint(U& uints, const alias_FL& FL, sitmo::prng_engine& eng);
 
-// Alias sampling for nucleotides in a string
-void alias_sample_str(std::string& nucleos, const alias_FL& FL,
-                      sitmo::prng_engine& eng);
+/*
+ Alias sampling for nucleotides in a string
+ `nucleos` should already be set to the desired size using `nucleos = U(len, 'x')`
+ or `nucleos.resize(len, 'x')`.
+ `U` can be `std::string` or `RefSequence`.
+ */
+template <class U>
+void alias_sample_str(U& nucleos, const alias_FL& FL, sitmo::prng_engine& eng);
 
 
 #endif
