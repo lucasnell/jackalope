@@ -59,6 +59,12 @@ struct RefSequence {
         }
         return nucleos[idx];
     }
+    char& operator[](const uint& idx) {
+        if (idx >= nucleos.size()) {
+            stop("Trying to extract nucleotide that doesn't exist");
+        }
+        return nucleos[idx];
+    }
     // To resize this sequence
     void reserve(const uint& n) {
         nucleos.reserve(n);
@@ -123,6 +129,12 @@ struct RefGenome {
     // Overloaded operator so sequences can be easily extracted
     // It returns a reference so no copying is done and so changes can be made
     RefSequence& operator[](const uint& idx) {
+        if (idx >= sequences.size()) {
+            stop("Trying to extract sequence that doesn't exist");
+        }
+        return sequences[idx];
+    }
+    const RefSequence& operator[](const uint& idx) const {
         if (idx >= sequences.size()) {
             stop("Trying to extract sequence that doesn't exist");
         }
