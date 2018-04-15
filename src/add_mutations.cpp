@@ -216,10 +216,10 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint& new_pos
      deletions), then we adjust it as such:
      */
     if (static_cast<sint>(ind) <= mutations[mut_i].size_modifier) {
-        sint size_ = nucleos_.size() - 1;
+        sint size_ = nucleos_.size();
         // string to store combined nucleotides
         std::string nt = "";
-        for (uint j = 0; j < ind; j++) nt += mutations[mut_i][j];
+        for (uint j = 0; j <= ind; j++) nt += mutations[mut_i][j];
         nt += nucleos_;
         for (uint j = ind + 1; j < mutations[mut_i].nucleos.size(); j++) {
             nt += mutations[mut_i][j];
@@ -235,7 +235,8 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint& new_pos
      */
     } else {
         uint old_pos_ = ind + (mutations[mut_i].old_pos - mutations[mut_i].size_modifier);
-        Mutation new_mut(old_pos_, new_pos_, nucleos_);
+        std::string new_nucleos_ = ref_seq[old_pos_] + nucleos_;
+        Mutation new_mut(old_pos_, new_pos_, new_nucleos_);
         ++mut_i;
         mutations.insert(mutations.begin() + mut_i, new_mut);
         // Adjust new positions and total sequence size:
