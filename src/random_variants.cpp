@@ -1,6 +1,10 @@
-//
-// This file creates variants sequentially across scaffolds.
-//
+/*
+ ********************************************************
+
+ This file creates variants randomly across sequences.
+
+ ********************************************************
+ */
 
 #include <RcppArmadillo.h>
 #include <vector>  // begin, end
@@ -15,8 +19,10 @@
 
 
 
-#include "gemino_types.h"  // integer types, SequenceSet, VariantSet
+#include "gemino_types.h"  // integer types
+#include "sequence_classes.h"  // Ref* and Var* classes
 #include "vitter_algorithms.h"  // vitter_d
+#include "alias.h" // alias sampling
 
 
 using namespace Rcpp;
@@ -24,11 +30,6 @@ using namespace Rcpp;
 
 
 
-// (this is faster than using std::pow(a, b))
-// equivalent to a^b
-inline double fast_pow(double a, double b) {
-    return std::exp(b * std::log(a));
-}
 
 // Constants in use below
 namespace variants {
@@ -53,17 +54,16 @@ namespace variants {
 
 
 
+/*
+ ======================================================================================
+ ======================================================================================
 
-// ======================================================================================
-// ======================================================================================
+ Pre-iteration
+ These functions are used for various computations before iterating through sequences.
 
-//      Pre-iteration
-
-// ======================================================================================
-// ======================================================================================
-
-
-// These functions are used for various computations before iterating through scaffolds.
+ ======================================================================================
+ ======================================================================================
+ */
 
 
 
@@ -83,32 +83,35 @@ double optim_prob(NumericVector v, NumericVector mean_pws_, NumericVector dens_,
 }
 
 
-//' Randomly choose scaffolds for segregating sites, weighted based on scaffold length.
+//' Randomly choose sequences for segregating sites, weighted based on sequence length.
 //'
 //' This function is used separately for indels and SNPs.
 //'
-//' The indices of the output matrix coincide with the order of scaffolds in the
+//' The indices of the output matrix coincide with the order of sequences in the
 //' \code{dna_set} input to \code{make_variants}.
 //'
-//' This function does NOT return an error if a scaffold is chosen more times
+//' This function does NOT return an error if a sequence is chosen more times
 //' than its length.
 //'
 //' @param total_mutations The total number of mutations (SNPs and indels).
-//' @param scaff_lens A vector of cumulative sums of scaffold lengths.
+//' @param seq_lens A vector of the sequence lengths.
+//' @param seeds A vector seeds for the prng.
 //'
 //'
-//' @return A numeric vector containing the number of mutations per scaffold.
+//' @return A numeric vector containing the number of mutations per sequence.
+//'
+//' @noRd
 //'
 // [[Rcpp::export]]
-std::vector<uint> sample_scaffs(const uint& total_mutations,
-                         const std::vector<double>& scaff_lens_cumsum,
-                         const std::vector<uint>& seeds) {
+std::vector<uint> sample_seqs(const uint& total_mutations,
+                              const std::vector<double>& seq_lens,
+                              const std::vector<uint>& seeds) {
 
-    const uint n_scaffs = scaff_lens_cumsum.size();
-    const double sum_of_lens = scaff_lens_cumsum.back();
+    const uint n_seqs = seq_lens.size();
     const uint n_cores = seeds.size();
+
     // Creating output vector
-    std::vector<uint> out_vec(n_scaffs, 0);
+    std::vector<uint> out_vec(n_seqs, 0);
 
     #ifdef _OPENMP
     #pragma omp parallel default(shared) num_threads(n_cores) if(n_cores > 1)
@@ -125,16 +128,17 @@ std::vector<uint> sample_scaffs(const uint& total_mutations,
     active_seed = seeds[0];
     #endif
 
-    sitmo::prng_engine engine(active_seed);
+    // Alias-sampling object
+    const alias_FL FL(seq_lens);
+    // sitmo prng
+    sitmo::prng_engine eng(active_seed);
 
     // Parallelize the Loop
     #ifdef _OPENMP
     #pragma omp for schedule(static)
     #endif
-    for (unsigned int i = 0; i < total_mutations; i++){
-        double rnd = ((double) engine() / variants::sitmo_max) * sum_of_lens;
-        auto iter = lower_bound(scaff_lens_cumsum.begin(), scaff_lens_cumsum.end(), rnd);
-        uint ind = distance(scaff_lens_cumsum.begin(), iter);
+    for (uint i = 0; i < total_mutations; i++){
+        uint ind = alias_sample(n_seqs, FL, eng);
         #ifdef _OPENMP
         #pragma omp atomic
         #endif
@@ -153,18 +157,18 @@ std::vector<uint> sample_scaffs(const uint& total_mutations,
 
 
 
-// C++ equivalent of R's \code{choose} function.
-//
-// \emph{Note}: This function is not exported to R.
-//
-// @param n Integer value.
-// @param k Integer value.
-//
-// @return Binomial coefficient (also integer).
-//
-// @name cpp_choose
-//
-inline unsigned cpp_choose(unsigned n, unsigned k) {
+//' C++ equivalent of R's \code{choose} function.
+//'
+//' \emph{Note}: This function is not exported to R.
+//'
+//' @param n Integer value.
+//' @param k Integer value.
+//'
+//' @return Binomial coefficient (also integer).
+//'
+//' @noRd
+//'
+inline uint cpp_choose(uint n, uint k) {
     if (k > n) {
         return 0;
     }
@@ -186,16 +190,17 @@ inline unsigned cpp_choose(unsigned n, unsigned k) {
 
 
 
-// Calculate mean pairwise differences between samples using a vector of nucleotide
-//     frequencies.
-//
-//
-// @param sample_segr Vector of nucleotide frequencies at a given segregating site for
-//     all samples.
-//
-// @return Mean of the pairwise differences.
-//
-//
+//' Calculate mean pairwise differences between samples using a vector of nucleotide
+//'     frequencies.
+//'
+//'
+//' @param sample_segr Vector of nucleotide frequencies at a given segregating site for
+//'     all samples.
+//'
+//' @return Mean of the pairwise differences.
+//'
+//' @noRd
+//'
 double cpp_mean_pairwise_freqs(const std::vector<int>& sample_segr) {
 
     int N_nt = sample_segr.size();
@@ -236,6 +241,8 @@ double cpp_mean_pairwise_freqs(const std::vector<int>& sample_segr) {
 //'     of the matrix.
 //'     For example, a segregating site for 10 haploid samples containing 3 As, 3 Cs,
 //'     2 Gs, and 2 Ts would have a mean pairwise difference of 0.8222222.
+//'
+//' @noRd
 //'
 // [[Rcpp::export]]
 List cpp_nt_freq(int N) {
@@ -294,7 +301,7 @@ List cpp_nt_freq(int N) {
 // ======================================================================================
 
 
-// These functions are used for iterating through scaffolds, ultimately creating a
+// These functions are used for iterating through sequences, ultimately creating a
 // VariantSet object.
 
 
@@ -332,11 +339,11 @@ uint indel_lengths(uint positions_left, sitmo::prng_engine& engine) {
 // Insertion nucleotides
 inline std::vector<char> insertion_nucleos(const uint& length,
                                       const XPtr<SequenceSet>& reference,
-                                      const uint& scaff_index,
+                                      const uint& seq_index,
                                       const uint& position,
                                       sitmo::prng_engine& engine) {
 
-    std::vector<char> new_nucleos(1, reference->sequences[scaff_index][position]);
+    std::vector<char> new_nucleos(1, reference->sequences[seq_index][position]);
     // std::vector<char> new_nucleos(1, 'x');
     uint ind;
     for (uint i = 0; i < length; i++) {
@@ -427,7 +434,7 @@ inline std::vector<char> snp_nucleos(const arma::umat& snp_combo_mat,
 uint one_site(
         XPtr <VariantSet>& variant_set,
         const sint& n, const uint& N, const uint& S, const uint& current_pos,
-        const uint& n_vars, const uint& scaff_len, const uint& scaff_index,
+        const uint& n_vars, const uint& seq_len, const uint& seq_index,
         const XPtr<SequenceSet>& reference,
         sitmo::prng_engine& engine,
         const arma::umat& snp_combo_mat,
@@ -442,10 +449,10 @@ uint one_site(
     uint n_vars_w_ins;
     std::vector<uint> vars_w_ins;
 
-    // Storing nucleos, sites, and scaffold modifier
+    // Storing nucleos, sites, and sequence modifier
     std::vector<char> nucleos;
     std::vector<uint> sites;
-    sint scaff_mod;
+    sint seq_mod;
 
     // Random number (0,1) indicating which type of segregating site (SNP, insertion,
     // or deletion) a site will be
@@ -456,8 +463,8 @@ uint one_site(
         length = 1;
         nucleos = snp_nucleos(snp_combo_mat, snp_probs_cumsum, engine);
         for (uint v = 0; v < n_vars; v++) {
-            variant_set->variant_info[v].nucleos[scaff_index].push_back(nucleos[v]);
-            variant_set->variant_info[v].sites[scaff_index].push_back(current_pos);
+            variant_set->variant_info[v].nucleos[seq_index].push_back(nucleos[v]);
+            variant_set->variant_info[v].sites[seq_index].push_back(current_pos);
         }
     /* ~~~ InDel ~~~ */
     } else {
@@ -465,30 +472,30 @@ uint one_site(
         if (type_rnd < (snp_p + (1 - snp_p) * insertion_p)) {
             // Insertions do not need to be length-limited
             length = indel_lengths(999, engine);
-            nucleos = insertion_nucleos(length, reference, scaff_index,
+            nucleos = insertion_nucleos(length, reference, seq_index,
                                         current_pos, engine);
             sites = insertion_sites(current_pos, length);
-            scaff_mod = length;
+            seq_mod = length;
             // Changing back to 1 bc insertions don't need to be skipped over like
             // deletions bc they don't take up existing nucleotides
             length = 1;
         /* --- Deletion --- */
         } else {
-            // Deletions need to be length-limited, else we may run out of scaffold
+            // Deletions need to be length-limited, else we may run out of sequence
             length = indel_lengths(N - S - n + 1, engine);
             nucleos = deletion_nucleos(length);
             sites = deletion_sites(current_pos, length);
-            scaff_mod = -1 * length;
+            seq_mod = -1 * length;
         }
         n_vars_w_ins = ((double) engine() / variants::sitmo_max) * (n_vars - 1);
         n_vars_w_ins++;
         vars_w_ins = vitter_d(n_vars_w_ins, n_vars, engine);
         for (uint v : vars_w_ins) {
             for (uint i = 0; i < nucleos.size(); i++) {
-                variant_set->variant_info[v].nucleos[scaff_index].push_back(nucleos[i]);
-                variant_set->variant_info[v].sites[scaff_index].push_back(sites[i]);
+                variant_set->variant_info[v].nucleos[seq_index].push_back(nucleos[i]);
+                variant_set->variant_info[v].sites[seq_index].push_back(sites[i]);
             }
-            variant_set->variant_info[v].scaffold_lengths[scaff_index] += scaff_mod;
+            variant_set->variant_info[v].seqold_lengths[seq_index] += seq_mod;
         }
     }
     return length;
@@ -496,14 +503,14 @@ uint one_site(
 
 
 
-// Iterate through one scaffold, changing segregating each segregating site with
+// Iterate through one sequence, changing segregating each segregating site with
 // `one_site`
 
-void one_scaff(
+void one_seq(
         XPtr <VariantSet>& variant_set,
         const uint& n_segr,
-        const uint& scaff_len,
-        const uint& scaff_index,
+        const uint& seq_len,
+        const uint& seq_index,
         const XPtr<SequenceSet>& reference,
         sitmo::prng_engine& engine,
         const arma::umat& snp_combo_mat,
@@ -518,7 +525,7 @@ void one_scaff(
 
     // These values are copied bc n and N will be changing
     sint n = n_segr;
-    uint N = scaff_len;
+    uint N = seq_len;
 
     // Commented this out bc this will crash R if run in parallel and stop happens.
     // if (alpha > 1 || alpha < 0) stop("Invalid alpha. It must be (0,1).");
@@ -534,7 +541,7 @@ void one_scaff(
     std::function<uint(const sint&, const uint&, sitmo::prng_engine&,
                        const double)> algorithm;
 
-    if ((fast_pow(n, 2) / N) > n2N) {
+    if (((n * n) / N) > n2N) {
         algorithm = algorithm_d2_S;
     } else {
         algorithm = algorithm_d1_S;
@@ -547,8 +554,8 @@ void one_scaff(
         }
         current_pos += S + 1;
         // This function returns the length, but modifies variant_set
-        length = one_site(variant_set, n, N, S, current_pos, n_vars, scaff_len,
-                          scaff_index, reference, engine, snp_combo_mat, snp_probs_cumsum,
+        length = one_site(variant_set, n, N, S, current_pos, n_vars, seq_len,
+                          seq_index, reference, engine, snp_combo_mat, snp_probs_cumsum,
                           snp_p, insertion_p);
         current_pos += (length - 1);
         n--;
@@ -569,7 +576,7 @@ void one_scaff(
 //' the \code{variant_set} field.
 //'
 //' @param n_mutations Integer vector of the total number of mutations (SNPs or indels)
-//'     for each scaffold.
+//'     for each sequence.
 //' @param reference External pointer to a C++ \code{SequenceSet} object that
 //'     represents the reference genome.
 //' @param snp_combo_mat Matrix of all possible nucleotide combinations among all
@@ -588,10 +595,12 @@ void one_scaff(
 //'
 //' @return An external pointer to a \code{VariantSet} object in C++.
 //'
+//' @noRd
+//'
 //[[Rcpp::export]]
-XPtr<VariantSet> make_variant_set(
+XPtr<VarSet> make_variants_(
         const std::vector<uint>& n_mutations,
-        const XPtr<SequenceSet>& reference,
+        const XPtr<RefGenome>& reference,
         const arma::umat& snp_combo_mat,
         const std::vector<double>& snp_probs_cumsum,
         std::vector<uint> seeds,
@@ -601,12 +610,12 @@ XPtr<VariantSet> make_variant_set(
         double alpha = 0.8
     ) {
 
-    const std::vector<uint> scaff_lens = reference->seq_sizes;
-    const uint n_scaffs = scaff_lens.size();
+    const std::vector<uint> seq_lens = reference->seq_sizes;
+    const uint n_seqs = seq_lens.size();
     const uint n_cores = seeds.size();
     const uint n_vars = arma::sum(snp_combo_mat.row(0));
 
-    if (n_mutations.size() != n_scaffs) stop("n_mutations is incorrect length.");
+    if (n_mutations.size() != n_seqs) stop("n_mutations is incorrect length.");
     if (alpha > 1 || alpha < 0) stop("Invalid alpha. It must be [0,1].");
     if (snp_p > 1 || snp_p < 0) stop("Invalid snp_p. It must be [0,1].");
     if (insertion_p > 1 || insertion_p < 0) {
@@ -615,7 +624,7 @@ XPtr<VariantSet> make_variant_set(
 
     uint total_segrs = accumulate(n_mutations.begin(), n_mutations.end(), 0.0);
 
-    XPtr<VariantSet> variant_set(new VariantSet(n_vars, total_segrs, scaff_lens), true);
+    XPtr<VariantSet> variant_set(new VariantSet(n_vars, total_segrs, seq_lens), true);
 
     #ifdef _OPENMP
     #pragma omp parallel shared(variant_set) num_threads(n_cores) if (n_cores > 1)
@@ -637,8 +646,8 @@ XPtr<VariantSet> make_variant_set(
     #ifdef _OPENMP
     #pragma omp for schedule(static)
     #endif
-    for (uint s = 0; s < n_scaffs; s++) {
-        one_scaff(variant_set, n_mutations[s], scaff_lens[s], s, reference,
+    for (uint s = 0; s < n_seqs; s++) {
+        one_seq(variant_set, n_mutations[s], seq_lens[s], s, reference,
                   engine, snp_combo_mat, snp_probs_cumsum,
                   snp_p, insertion_p, n2N, alpha);
     }

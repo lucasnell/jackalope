@@ -102,10 +102,8 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop) {
     # These probs were designed to, on average, get the desired SNP
     # segregating site divergence (`snp_div`).
     nt_probs <- freq_probs(nt_freq$mean_pws, snp_div);
-    # My weighted-sampling algorithm uses cumulative sums of weights
-    nt_probs <- cumsum(nt_probs)
 
-    return(list(combo_mat = nt_freq$combos, probs_cumsum = nt_probs));
+    return(list(combo_mat = nt_freq$combos, probs = nt_probs));
 }
 
 
@@ -126,13 +124,24 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop) {
 #' @param dna_set_in A \code{dna_set} object of sequences representing the reference
 #'     genome.
 #' @param n_vars The number of variants to create.
-#' @param seg_prop The proportion of sites in the genome that are segregating. Defaults
-#'     to 0.01414.
-#' @param seg_div The mean pairwise divergence at segregating sites. Defaults to 0.7072.
+#' @param theta_w Watterson's estimator for the focal population.
+#' @param theta_pi Average nucleotide diversity for the focal population.
+#' @param snp_probs Relative probabilities of substitution types:
+#'     "A", "C", "G", and "T" respectively. Defaults to `rep(0.25, 4)`.
+#' @param indel_probs Relative probabilities of indel types and sizes.
+#'     If insertions and deletions have the same probabilities, this is simply
+#'     a numeric vector where the value in location `i` indicates the relative
+#'     probability of an indel of size `i`.
+#'     If insertions and deletions do not have the same probabilities, then
+#'     this argument should be a list where the `insertion` and `deletion` fields are
+#'     numeric vectors specifying relative probabilities for insertions and deletions,
+#'     respectively.
+#'     Note that if specifying a list, the proportion of insertions to deletions will
+#'     be `sum(indel_probs$insertions) / sum(indel_probs$deletions)`.
+#'     Defaults to `exp(-1:-10)`.
+#' @param snp_proportion The proportion of mutations (not sites) that are SNPs.
+#'     Defaults to `0.9`.
 #' @param n_cores Number of cores to use. Defaults to 1.
-#' @param snp_prop The proportion of mutations (not sites) that are SNPs. Defaults to 0.9.
-#' @param insertion_prop The proportion of mutations (not sites) that are indels.
-#'     Defaults to 0.5.
 #' @param n2N A numeric threshold placed on the algorithm used to find new locations.
 #'     This is not recommended to be changed. Defaults to 50.
 #' @param alpha A numeric threshold placed on the algorithm used to find new locations.
@@ -142,18 +151,19 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop) {
 #'
 #' @seealso \code{\link{variants}}
 #'
-#' @export
 #'
 #'
 #' @examples
 #' n_vars <- 10
 #' dna_set_in <- dna_set$new(rando_seqs(100, 100))
 #' set.seed(1)
-#' varseq_out <- make_variants(dna_set_in, n_vars)
+#' varseq_out <- random_variants(dna_set_in, n_vars)
 #'
-make_variants <- function(dna_set_in, n_vars, theta_w = 0.0050, theta_pi = 0.0045,
-                          n_cores = 1, snp_prop = 0.9, insertion_prop = 0.5,
-                          n2N = 50, alpha = 0.8) {
+random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
+                            indel_probs = exp(-1:-10),
+                            snp_probs = rep(0.25, 4),
+                            snp_proportion = 0.9,
+                            n_cores = 1, n2N = 50, alpha = 0.8) {
 
     # Proportion of sites that are segregating
     seg_prop = theta_w * sum(1 / 1:(n_vars-1))
@@ -162,16 +172,41 @@ make_variants <- function(dna_set_in, n_vars, theta_w = 0.0050, theta_pi = 0.004
 
 
     # Useful info from the input dna_set
-    scaff_lens <- seq_sizes_SequenceSet(dna_set_in$sequence_set)
-    total_seg <- round(sum(scaff_lens) * seg_prop)
-    n_scaffs <- length(scaff_lens)
+    n_seqs <- see_ref_n_seq(dna_set_in$sequence_set)
+    seq_lens <- sapply(0:(n_seqs-1), see_ref_seq_size, ref_ = dna_set_in$sequence_set)
+    total_seg <- round(sum(seq_lens) * seg_prop)
 
-    # Proportions of segregating sites represented by SNPs and indels
-    # (Accounts for the fact that the average indel length (1.581523) is > 1bp)
-    snp_site_prop <- snp_prop / ((1 - snp_prop) * 1.581523 + snp_prop)
+    if (inherits(indel_probs, "numeric")) {
+        indel_probs <- indel_probs / (2 * sum(indel_probs))
+        indel_probs <- list(insertions = indel_probs, deletions = indel_probs)
+    } else if (inherits(indel_probs, "list")) {
+        if (!all(names(indel_probs) %in% c("insertions", "deletions")) |
+            length(indel_probs) != 2) {
+            stop("\nindel_probs argument to random_variants function must be a list ",
+                 "of length two with names \"insertions\", \"deletions\".",
+                 call. = FALSE)
+        }
+        ip_sum <- indel_probs$deletions + indel_probs$insertions
+        indel_probs$deletions <- indel_probs$deletions / ip_sum
+        indel_probs$insertions <- indel_probs$insertions / ip_sum
+    } else {
+        stop("\nindel_probs argument to random_variants function must be a ",
+             "numeric vector or list", call. = FALSE)
+    }
+    # Average indel size:
+    avg_indel <- sum(sapply(indel_probs, function(x) 1:length(x) * x))
+
+    if (length(snp_probs) != 4) {
+        stop("\nsnp_probs argument to random_variants must be of length 4", call. = FALSE)
+    }
+    snp_probs <- snp_probs / sum(snp_probs)
+
+    # Proportions of segregating sites represented by SNPs (versus indels)
+    # (Accounts for the fact that the average indel length `avg_indel` is > 1bp)
+    snp_site_prop <- snp_proportion / ((1 - snp_proportion) * avg_indel + snp_prop)
 
     # Total number of mutations (SNPs and indels; not on a site basis)
-    # for all scaffolds
+    # for all sequences
     total_mutations <- round((snp_site_prop / snp_prop) * total_seg)
 
     # SNP nucleotide combinations and their sampling weights.
@@ -180,8 +215,8 @@ make_variants <- function(dna_set_in, n_vars, theta_w = 0.0050, theta_pi = 0.004
     # Setting seeds for thread-safe C++ pseudo-random number generators (1 per core)
     seeds <- sample.int(2^31 - 1, n_cores)
 
-    # Sampling the number of mutations per scaffold
-    n_mutations <- sample_scaffs(total_mutations, cumsum(scaff_lens), seeds)
+    # Sampling the number of mutations per sequence
+    n_mutations <- sample_seqs(total_mutations, seq_lens, seeds)
 
     # Setting new seeds for the next step
     seeds <- sample.int(2^31 - 1, n_cores)
@@ -189,7 +224,8 @@ make_variants <- function(dna_set_in, n_vars, theta_w = 0.0050, theta_pi = 0.004
     variant_set <- make_variant_set(
         n_mutations,
         dna_set_in$sequence_set,
-        snp_combos_weights$combo_mat, snp_combos_weights$probs_cumsum,
+        snp_combos_weights$combo_mat,
+        snp_combos_weights$probs,
         seeds, snp_prop, insertion_prop, n2N, alpha)
 
 
