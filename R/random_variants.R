@@ -24,8 +24,12 @@
 #'     probabilities for each row in the \code{combo_mat} field matrix.}
 #' }
 #'
+#' @noRd
 #'
-get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop) {
+#'
+get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
+                                   threshold = 0.0001, make_converge = TRUE,
+                                   optim_opts = list()) {
 
     indel_site_prop <- 1 - snp_site_prop
 
@@ -99,9 +103,9 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop) {
 
 
 
-#' Construct a \code{variants} object from a reference genome and summary statistics.
+#' Construct a \code{VarSet} object from a reference genome and summary statistics.
 #'
-#' This function creates a \code{\link{variants}} object, which is designed to be a
+#' This function creates a \code{\link{VarSet}} object, which is designed to be a
 #' low-memory way to store variants.
 #' (The variants class also prevents what might otherwise be an annoyingly long list
 #' from ever printing in the console.)
@@ -142,13 +146,15 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop) {
 #' n_vars <- 10
 #' dna_set_in <- dna_set$new(rando_seqs(100, 100))
 #' set.seed(1)
-#' varseq_out <- random_variants(dna_set_in, n_vars)
+#' varseq_out <- random_variants(dna_set_in, n_vars,
+#'                               theta_w = 0.0045, theta_pi = 0.005)
 #'
 random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
                             indel_probs = exp(-1:-10),
                             snp_probs = rep(0.25, 4),
                             snp_proportion = 0.9,
                             n_cores = 1, n2N = 50, alpha = 0.8) {
+
 
     # Proportion of sites that are segregating
     seg_prop = theta_w * sum(1 / 1:(n_vars-1))
@@ -161,6 +167,7 @@ random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
     seq_lens <- sapply(0:(n_seqs-1), see_ref_seq_size, ref_ = dna_set_in$sequence_set)
     total_seg <- round(sum(seq_lens) * seg_prop)
 
+    # Standardize and get info from `indel_props`
     if (inherits(indel_probs, "numeric")) {
         indel_probs <- indel_probs / (2 * sum(indel_probs))
         indel_probs <- list(insertions = indel_probs, deletions = indel_probs)
@@ -171,31 +178,52 @@ random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
                  "of length two with names \"insertions\", \"deletions\".",
                  call. = FALSE)
         }
-        ip_sum <- indel_probs$deletions + indel_probs$insertions
-        indel_probs$deletions <- indel_probs$deletions / ip_sum
+        ip_sum <- sum(indel_probs$insertions + indel_probs$deletions)
         indel_probs$insertions <- indel_probs$insertions / ip_sum
+        indel_probs$deletions <- indel_probs$deletions / ip_sum
     } else {
         stop("\nindel_probs argument to random_variants function must be a ",
              "numeric vector or list", call. = FALSE)
     }
     # Average indel size:
     avg_indel <- sum(sapply(indel_probs, function(x) 1:length(x) * x))
+    # Now make these into the probabilities that will be used alongside `snp_proportion`
+    indel_probs <- lapply(indel_probs, function(x) x * (1 - snp_proportion))
 
+    # Standardize `snp_props`
     if (length(snp_probs) != 4) {
         stop("\nsnp_probs argument to random_variants must be of length 4", call. = FALSE)
     }
     snp_probs <- snp_probs / sum(snp_probs)
 
-    # Proportions of segregating sites represented by SNPs (versus indels)
+    # Average mutation size
     # (Accounts for the fact that the average indel length `avg_indel` is > 1bp)
-    snp_site_prop <- snp_proportion / ((1 - snp_proportion) * avg_indel + snp_prop)
+    avg_mutation <- avg_indel * (1 - snp_proportion) + snp_proportion
 
     # Total number of mutations (SNPs and indels; not on a site basis)
     # for all sequences
-    total_mutations <- round((snp_site_prop / snp_prop) * total_seg)
+    total_mutations <- round(total_seg / avg_mutation)
+
+    # Proportions of segregating sites represented by SNPs (versus indels)
+    snp_site_prop <- snp_proportion / ((1 - snp_proportion) * avg_indel + snp_proportion)
 
     # SNP nucleotide combinations and their sampling weights.
-    snp_combos_weights <- get_snp_combos_weights(n_vars, seg_div, snp_site_prop)
+    snp_combos_weights <- get_snp_combos_weights(n_vars, seg_div, snp_site_prop,
+                                                 threshold = 40)
+
+    snp_combo_list <- split(snp_combos_weights$combo_mat, row(snp_combos_weights$combo_mat))
+
+    # Column 1 is sampling weight, column 2 is type of mutation
+    sampling_weights <- c(
+        list(cbind(snp_combos_weights$probs * snp_proportion, 0)),
+        lapply(c("insertions", "deletions"), function(x) {
+            cbind(indel_probs[[x]], ifelse(x == "insertions", 1, 2))
+        }))
+    sampling_weights <- do.call(rbind, sampling_weights)
+
+    mutation_sizes <- c(rep(0, sum(sampling_weights[,2] == 0)),
+                        1:sum(sampling_weights[,2] == 1),
+                        1:sum(sampling_weights[,2] == 2))
 
     # Setting seeds for thread-safe C++ pseudo-random number generators (1 per core)
     seeds <- sample.int(2^31 - 1, n_cores)
@@ -206,15 +234,15 @@ random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
     # Setting new seeds for the next step
     seeds <- sample.int(2^31 - 1, n_cores)
 
-    variant_set <- make_variant_set(
-        n_mutations,
-        dna_set_in$sequence_set,
-        snp_combos_weights$combo_mat,
-        snp_combos_weights$probs,
-        seeds, snp_prop, insertion_prop, n2N, alpha)
 
+    var_set <- make_variants_(n_mutations, dna_set_in$sequence_set, snp_combo_list,
+                              mutation_probs = sampling_weights[,1],
+                              mutation_types = sampling_weights[,2],
+                              mutation_sizes = mutation_sizes, seeds = seeds,
+                              n2N = 50, alpha = 0.8)
 
-    var_obj <- variants$new(dna_set_in$sequence_set, variant_set)
+    # var_obj <- variants$new(dna_set_in$sequence_set, variant_set)
+    var_obj <- var_set
 
     return(var_obj)
 }
