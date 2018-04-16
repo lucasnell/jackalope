@@ -209,7 +209,7 @@ double cpp_mean_pairwise_freqs(const std::vector<int>& sample_segr) {
         stop("Vector input to cpp_mean_pairwise_freqs must be of length 4.");
     }
 
-    int N = accumulate(sample_segr.begin(), sample_segr.end(), 0.0);
+    int N = std::accumulate(sample_segr.begin(), sample_segr.end(), 0.0);
 
     int total_pairs = cpp_choose(N, 2);
     double same_pairs = 0;
@@ -302,200 +302,91 @@ List cpp_nt_freq(int N) {
 
 
 // These functions are used for iterating through sequences, ultimately creating a
-// VariantSet object.
+// VarSet object.
 
-
-
-
-
-
-/*
- --------------------------
-
- InDels
-
- --------------------------
-*/
-
-// Sample indel lengths
-uint indel_lengths(uint positions_left, sitmo::prng_engine& engine) {
-
-    uint max_len = 10;
-    if (positions_left < max_len) max_len = positions_left;
-    const double sum_of_weight = variants::indel_probs_cumsum[(max_len - 1)];
-
-    double rnd = ((double) engine() / variants::sitmo_max) * sum_of_weight;
-    std::vector<double>::const_iterator iter = lower_bound(
-        variants::indel_probs_cumsum.begin(),
-        variants::indel_probs_cumsum.end(), rnd);
-    // Here, `out` is from 0 --> (max_len - 1)
-    uint out = distance(variants::indel_probs_cumsum.begin(), iter);
-    out++; // Now `out` goes from 1-->max_len
-
-    return out;
-}
-
-
-// Insertion nucleotides
-inline std::vector<char> insertion_nucleos(const uint& length,
-                                      const XPtr<SequenceSet>& reference,
-                                      const uint& seq_index,
-                                      const uint& position,
-                                      sitmo::prng_engine& engine) {
-
-    std::vector<char> new_nucleos(1, reference->sequences[seq_index][position]);
-    // std::vector<char> new_nucleos(1, 'x');
-    uint ind;
-    for (uint i = 0; i < length; i++) {
-        ind = ((double) engine() / variants::sitmo_max) * 4;
-        new_nucleos.push_back(variants::bases[ind]);
-    }
-
-    return new_nucleos;
-}
-
-inline std::vector<char> deletion_nucleos(const uint& length) {
-    std::vector<char> new_nucleos(length, '\0');
-    return new_nucleos;
-}
-
-
-
-// Positions for insertions
-inline std::vector<uint> insertion_sites(uint start_pos, uint length) {
-    std::vector<uint> out(length + 1, start_pos);
-    return out;
-}
-
-
-// Positions for deletions
-inline std::vector<uint> deletion_sites(uint start_pos, uint length) {
-
-    std::vector<uint> out(length);
-    for (uint j = 0; j < length; j++) out[j] = start_pos + j;
-
-    return out;
-}
-
-
-
-
-
-/*
- --------------------------
-
- SNPs
-
- --------------------------
-*/
-
-
-// Make snp output char vector
-inline std::vector<char> snp_nucleos(const arma::umat& snp_combo_mat,
-                                const std::vector<double>& snp_probs_cumsum,
-                                sitmo::prng_engine& engine) {
-
-    const double sum_of_weight = snp_probs_cumsum.back();
-
-    double rnd = ((double) engine() / variants::sitmo_max) * sum_of_weight;
-    std::vector<double>::const_iterator iter = lower_bound(snp_probs_cumsum.begin(),
-                                                      snp_probs_cumsum.end(), rnd);
-    uint ind = distance(snp_probs_cumsum.begin(), iter);
-    std::vector<uint> combo = arma::conv_to<std::vector<uint>>::from(snp_combo_mat.row(ind));
-    shuffle(combo.begin(), combo.end(), engine);
-
-    std::vector<char> seq_out;
-
-    for (uint i = 0; i < 4; i++) {
-        for (uint j = 0; j < combo[i]; j++) {
-            seq_out.push_back(variants::bases[i]);
-        }
-    }
-    shuffle(seq_out.begin(), seq_out.end(), engine);
-
-    return seq_out;
-
-}
-
-
-
-
-
-
-/*
- --------------------------
-
- Putting it together
-
- --------------------------
-*/
 
 // Change variant_set and return length for one segregating site
-uint one_site(
-        XPtr <VariantSet>& variant_set,
-        const sint& n, const uint& N, const uint& S, const uint& current_pos,
-        const uint& n_vars, const uint& seq_len, const uint& seq_index,
-        const XPtr<SequenceSet>& reference,
+
+uint one_mutation(
+        VarSet& var_set, const uint& seq_index,
+        const sint& n, const uint& N, const uint& S, const sint64& current_pos,
+        const uint& n_vars, const uint& seq_len,
+        const std::vector<std::vector<uint>>& snp_combo_list,
+        const std::vector<uint>& mutation_types,
+        const std::vector<uint>& mutation_sizes,
+        const alias_FL& fl, const uint& alias_n,
         sitmo::prng_engine& engine,
-        const arma::umat& snp_combo_mat,
-        const std::vector<double>& snp_probs_cumsum,
-        const double& snp_p,
-        const double& insertion_p
-    ) {
+        const double& n2N = 50,
+        const double& alpha = 0.8) {
 
     uint length;
 
-    // Number of variants to get the indel, and random indices of that # of variants
-    uint n_vars_w_ins;
-    std::vector<uint> vars_w_ins;
-
     // Storing nucleos, sites, and sequence modifier
-    std::vector<char> nucleos;
+    std::string nucleos;
     std::vector<uint> sites;
     sint seq_mod;
 
-    // Random number (0,1) indicating which type of segregating site (SNP, insertion,
-    // or deletion) a site will be
-    double type_rnd = (double) engine() / variants::sitmo_max;
+    // Sampling for which type of mutation (SNP, insertion, deletion)
+    uint mut_ind = alias_sample(alias_n, fl, engine);
+    uint mut_type = mutation_types[mut_ind];
 
-    /* ~~~ SNP ~~~ */
-    if (type_rnd < snp_p) {
-        length = 1;
-        nucleos = snp_nucleos(snp_combo_mat, snp_probs_cumsum, engine);
-        for (uint v = 0; v < n_vars; v++) {
-            variant_set->variant_info[v].nucleos[seq_index].push_back(nucleos[v]);
-            variant_set->variant_info[v].sites[seq_index].push_back(current_pos);
+    // SNP
+    if (mut_type == 0) {
+        length = 0;
+        std::vector<uint> combo = snp_combo_list[mut_ind];
+        std::shuffle(combo.begin(), combo.end(), engine);
+        // Creating and filling string
+        nucleos = std::string(n_vars, 'x');
+        for (uint j = 0, k = 0; j < 4; j++) {
+            while (combo[j] > 0) {
+                nucleos[k] = variants::bases[j];
+                combo[j]--;
+                k++;
+            }
         }
-    /* ~~~ InDel ~~~ */
+        std::shuffle(nucleos.begin(), nucleos.end(), engine);
+        for (uint v = 0; v < n_vars; v++) {
+            VarSequence& vs(var_set[v][seq_index]);
+            uint pos = static_cast<uint>(current_pos);
+            if (pos >= vs.size()) pos = vs.size() - 1;
+            vs.add_substitution(nucleos[v], pos);
+        }
+    // InDel: Insertion or Deletion
     } else {
-        /* --- Insertion --- */
-        if (type_rnd < (snp_p + (1 - snp_p) * insertion_p)) {
-            // Insertions do not need to be length-limited
-            length = indel_lengths(999, engine);
-            nucleos = insertion_nucleos(length, reference, seq_index,
-                                        current_pos, engine);
-            sites = insertion_sites(current_pos, length);
-            seq_mod = length;
+        // Make vector of the variants that have this indel:
+        uint n_w_indel = ((double) engine() / variants::sitmo_max) * (n_vars - 1);
+        std::vector<uint> w_indel(n_w_indel);
+        vitter_d<std::vector<uint>>(w_indel, n_vars, engine, n2N, alpha);
+        // Insertion
+        if (mut_type == 1) {
+            length = mutation_sizes[mut_ind];
+            // Creating and filling string
+            nucleos = std::string(length, 'x');
+            for (uint j = 0; j < length; j++) {
+                uint rnd = static_cast<double>(engine()) / variants::sitmo_max * 4;
+                nucleos[j] = variants::bases[rnd];
+            }
+            for (uint v : w_indel) {
+                VarSequence& vs(var_set[v][seq_index]);
+                uint pos = static_cast<uint>(current_pos);
+                if (pos >= vs.size()) pos = vs.size() - 1;
+                vs.add_insertion(nucleos, pos);
+            }
             // Changing back to 1 bc insertions don't need to be skipped over like
             // deletions bc they don't take up existing nucleotides
-            length = 1;
-        /* --- Deletion --- */
+            length = 0;
+        // Deletion
         } else {
-            // Deletions need to be length-limited, else we may run out of sequence
-            length = indel_lengths(N - S - n + 1, engine);
-            nucleos = deletion_nucleos(length);
-            sites = deletion_sites(current_pos, length);
-            seq_mod = -1 * length;
-        }
-        n_vars_w_ins = ((double) engine() / variants::sitmo_max) * (n_vars - 1);
-        n_vars_w_ins++;
-        vars_w_ins = vitter_d(n_vars_w_ins, n_vars, engine);
-        for (uint v : vars_w_ins) {
-            for (uint i = 0; i < nucleos.size(); i++) {
-                variant_set->variant_info[v].nucleos[seq_index].push_back(nucleos[i]);
-                variant_set->variant_info[v].sites[seq_index].push_back(sites[i]);
+            length = mutation_sizes[mut_ind];
+            // Make sure it doesn't span over the # positions left
+            if (length > N - S - n + 1) length = N - S - n + 1;
+            for (uint v : w_indel) {
+                VarSequence& vs(var_set[v][seq_index]);
+                uint pos = static_cast<uint>(current_pos);
+                if (pos >= vs.size()) pos = vs.size() - 1;
+                vs.add_deletion(length, pos);
             }
-            variant_set->variant_info[v].seqold_lengths[seq_index] += seq_mod;
+            length--;
         }
     }
     return length;
@@ -503,32 +394,30 @@ uint one_site(
 
 
 
-// Iterate through one sequence, changing segregating each segregating site with
-// `one_site`
-
+//' Iterate and mutate one sequence.
+//'
+//' @noRd
+//'
 void one_seq(
-        XPtr <VariantSet>& variant_set,
-        const uint& n_segr,
-        const uint& seq_len,
-        const uint& seq_index,
-        const XPtr<SequenceSet>& reference,
+        VarSet& var_set,
+        const uint& seq_ind,
+        const uint& n_muts,
+        const uint& n_vars,
+        const std::vector<std::vector<uint>>& snp_combo_list,
+        const std::vector<uint> mutation_types,
+        const std::vector<uint>& mutation_sizes,
+        const alias_FL& fl,
         sitmo::prng_engine& engine,
-        const arma::umat& snp_combo_mat,
-        const std::vector<double>& snp_probs_cumsum,
-        double snp_p = 0.9,
-        double insertion_p = 0.5,
-        double n2N = 50,
-        double alpha = 0.8
+        const double& n2N = 50,
+        const double& alpha = 0.8
     ) {
 
-    uint n_vars = arma::sum(snp_combo_mat.row(0));
+    uint alias_n = fl.size();
 
     // These values are copied bc n and N will be changing
-    sint n = n_segr;
+    sint n = n_muts;
+    uint seq_len = var_set.reference[seq_ind].size();
     uint N = seq_len;
-
-    // Commented this out bc this will crash R if run in parallel and stop happens.
-    // if (alpha > 1 || alpha < 0) stop("Invalid alpha. It must be (0,1).");
 
     // The # positions to skip before taking the next one (0 to (N - n - 1))
     uint S;
@@ -554,10 +443,10 @@ void one_seq(
         }
         current_pos += S + 1;
         // This function returns the length, but modifies variant_set
-        length = one_site(variant_set, n, N, S, current_pos, n_vars, seq_len,
-                          seq_index, reference, engine, snp_combo_mat, snp_probs_cumsum,
-                          snp_p, insertion_p);
-        current_pos += (length - 1);
+        length = one_mutation(var_set, seq_ind, n, N, S, current_pos, n_vars, seq_len,
+                              snp_combo_list, mutation_types, mutation_sizes,
+                              fl, alias_n, engine, n2N, alpha);
+        current_pos += length;
         n--;
         N -= (S + length);
     }
@@ -579,10 +468,10 @@ void one_seq(
 //'     for each sequence.
 //' @param reference External pointer to a C++ \code{SequenceSet} object that
 //'     represents the reference genome.
-//' @param snp_combo_mat Matrix of all possible nucleotide combinations among all
+//' @param snp_combo_list Matrix of all possible nucleotide combinations among all
 //'     variants per SNP.
 //' @param snp_probs_cumsum Vector of sampling probabilities for each row in
-//'     \code{snp_combo_mat}.
+//'     \code{snp_combo_list}.
 //' @param seeds Vector of seeds, the length of which dictates how many cores will be
 //'     used.
 //' @param snp_p Proportion of mutations that are SNPs. Defaults to 0.9.
@@ -598,40 +487,41 @@ void one_seq(
 //' @noRd
 //'
 //[[Rcpp::export]]
-XPtr<VarSet> make_variants_(
+SEXP make_variants_(
         const std::vector<uint>& n_mutations,
-        const XPtr<RefGenome>& reference,
-        const arma::umat& snp_combo_mat,
-        const std::vector<double>& snp_probs_cumsum,
+        const SEXP& ref_xptr,
+        const std::vector<std::vector<uint>>& snp_combo_list,
+        const std::vector<double>& mutation_probs,
+        const std::vector<uint>& mutation_types,
+        const std::vector<uint>& mutation_sizes,
         std::vector<uint> seeds,
-        double snp_p = 0.9,
-        double insertion_p = 0.5,
         double n2N = 50,
         double alpha = 0.8
     ) {
 
-    const std::vector<uint> seq_lens = reference->seq_sizes;
-    const uint n_seqs = seq_lens.size();
+    const XPtr<RefGenome> reference(ref_xptr);
+
+    const std::vector<uint> seq_lens = reference->seq_sizes();
+    const uint n_seqs = reference->size();
     const uint n_cores = seeds.size();
-    const uint n_vars = arma::sum(snp_combo_mat.row(0));
+    const uint n_vars = std::accumulate(snp_combo_list[0].begin(),
+                                        snp_combo_list[0].end(), 0.0);
 
     if (n_mutations.size() != n_seqs) stop("n_mutations is incorrect length.");
     if (alpha > 1 || alpha < 0) stop("Invalid alpha. It must be [0,1].");
-    if (snp_p > 1 || snp_p < 0) stop("Invalid snp_p. It must be [0,1].");
-    if (insertion_p > 1 || insertion_p < 0) {
-        stop("Invalid insertion_p. It must be [0,1].");
-    }
 
-    uint total_segrs = accumulate(n_mutations.begin(), n_mutations.end(), 0.0);
-
-    XPtr<VariantSet> variant_set(new VariantSet(n_vars, total_segrs, seq_lens), true);
+    XPtr<VarSet> var_set_xptr(new VarSet((*reference), n_vars), true);
+    VarSet& var_set(*var_set_xptr);
 
     #ifdef _OPENMP
-    #pragma omp parallel shared(variant_set) num_threads(n_cores) if (n_cores > 1)
+    #pragma omp parallel shared(var_set) num_threads(n_cores) if (n_cores > 1)
     {
     #endif
 
     uint active_seed;
+
+    // Alias-sampling object
+    const alias_FL fl(mutation_probs);
 
     // Write the active seed per core or just write one of the seeds.
     #ifdef _OPENMP
@@ -647,15 +537,16 @@ XPtr<VarSet> make_variants_(
     #pragma omp for schedule(static)
     #endif
     for (uint s = 0; s < n_seqs; s++) {
-        one_seq(variant_set, n_mutations[s], seq_lens[s], s, reference,
-                  engine, snp_combo_mat, snp_probs_cumsum,
-                  snp_p, insertion_p, n2N, alpha);
+        one_seq(var_set, s, n_mutations[s], n_vars,
+                snp_combo_list, mutation_types, mutation_sizes, fl, engine,
+                n2N, alpha);
     }
     #ifdef _OPENMP
     }
     #endif
 
-    return variant_set;
+
+    return var_set_xptr;
 }
 
 

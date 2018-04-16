@@ -231,6 +231,120 @@ print_vs <- function(vs_) {
     invisible(.Call(`_gemino_print_vs`, vs_))
 }
 
+#' C++ equivalent of R's \code{choose} function.
+#'
+#' \emph{Note}: This function is not exported to R.
+#'
+#' @param n Integer value.
+#' @param k Integer value.
+#'
+#' @return Binomial coefficient (also integer).
+#'
+#' @noRd
+#'
+NULL
+
+#' Calculate mean pairwise differences between samples using a vector of nucleotide
+#'     frequencies.
+#'
+#'
+#' @param sample_segr Vector of nucleotide frequencies at a given segregating site for
+#'     all samples.
+#'
+#' @return Mean of the pairwise differences.
+#'
+#' @noRd
+#'
+NULL
+
+#' Iterate and mutate one sequence.
+#'
+#' @noRd
+#'
+NULL
+
+optim_prob <- function(v, mean_pws_, dens_, seg_div_) {
+    .Call(`_gemino_optim_prob`, v, mean_pws_, dens_, seg_div_)
+}
+
+#' Randomly choose sequences for segregating sites, weighted based on sequence length.
+#'
+#' This function is used separately for indels and SNPs.
+#'
+#' The indices of the output matrix coincide with the order of sequences in the
+#' \code{dna_set} input to \code{make_variants}.
+#'
+#' This function does NOT return an error if a sequence is chosen more times
+#' than its length.
+#'
+#' @param total_mutations The total number of mutations (SNPs and indels).
+#' @param seq_lens A vector of the sequence lengths.
+#' @param seeds A vector seeds for the prng.
+#'
+#'
+#' @return A numeric vector containing the number of mutations per sequence.
+#'
+#' @noRd
+#'
+sample_seqs <- function(total_mutations, seq_lens, seeds) {
+    .Call(`_gemino_sample_seqs`, total_mutations, seq_lens, seeds)
+}
+
+#' Get possible nucleotide distributions and their pairwise differences.
+#'
+#' Retrieve all combinations (with replacement) of nucleotide distributions that sum
+#' to \code{N}, and, for each, calculate \eqn{\pi_{ji}}.
+#'
+#'
+#' @param N Total number of individuals the frequencies must add to.
+#'
+#' @return List consisting of a matrix and a vector.
+#'     The matrix (\code{List$combos}) contains all nucleotide frequencies that add
+#'     to \code{N} (by row).
+#'     The vector (\code{List$mean_pws}) contains the mean pairwise differences
+#'     for a segregating site comprised of nucleotide frequencies present in each row
+#'     of the matrix.
+#'     For example, a segregating site for 10 haploid samples containing 3 As, 3 Cs,
+#'     2 Gs, and 2 Ts would have a mean pairwise difference of 0.8222222.
+#'
+#' @noRd
+#'
+cpp_nt_freq <- function(N) {
+    .Call(`_gemino_cpp_nt_freq`, N)
+}
+
+#' Inner function to create a C++ \code{VariantSet} object
+#'
+#' A \code{VariantSet} object constitutes the majority of information in a
+#' \code{variants} object (other than the reference genome) and is located in
+#' the \code{variant_set} field.
+#'
+#' @param n_mutations Integer vector of the total number of mutations (SNPs or indels)
+#'     for each sequence.
+#' @param reference External pointer to a C++ \code{SequenceSet} object that
+#'     represents the reference genome.
+#' @param snp_combo_list Matrix of all possible nucleotide combinations among all
+#'     variants per SNP.
+#' @param snp_probs_cumsum Vector of sampling probabilities for each row in
+#'     \code{snp_combo_list}.
+#' @param seeds Vector of seeds, the length of which dictates how many cores will be
+#'     used.
+#' @param snp_p Proportion of mutations that are SNPs. Defaults to 0.9.
+#' @param insertion_p Proportion of \emph{indels} that are insertions. Defaults to 0.5.
+#' @param n2N A numeric threshold placed on the algorithm used to find new locations.
+#'     This is not recommended to be changed. Defaults to 50.
+#' @param alpha A numeric threshold placed on the algorithm used to find new locations.
+#'     This is not recommended to be changed. Defaults to 0.8.
+#'
+#'
+#' @return An external pointer to a \code{VariantSet} object in C++.
+#'
+#' @noRd
+#'
+make_variants_ <- function(n_mutations, ref_xptr, snp_combo_list, mutation_probs, mutation_types, mutation_sizes, seeds, n2N = 50, alpha = 0.8) {
+    .Call(`_gemino_make_variants_`, n_mutations, ref_xptr, snp_combo_list, mutation_probs, mutation_types, mutation_sizes, seeds, n2N, alpha)
+}
+
 #' Read a non-indexed fasta file to a \code{RefGenome} object.
 #'
 #' @param file_name File name of the fasta file.
@@ -419,31 +533,6 @@ NULL
 #' So just add 1 to this function to get expected distances.
 #'
 #' @noRd
-#'
-NULL
-
-#' "Algorithm D" for fast sampling without replacement.
-#'
-#' This algorithm is from the following paper:
-#' Vitter, Jeffrey Scott. 1984. Faster methods for random sampling. Communications of
-#'     the ACM 27:703–718.
-#'
-#' @param input_vec A vector of unsigned integers (class `arma::uvec` or
-#'     `std::vector<uint>`) of length `n`.
-#'     Sampling will generate `n` random numbers. `n` should always be <= N.
-#' @param N The population size. The sampling will generate numbers from
-#'     `0` to `(N - 1)`.
-#' @param engine A sitmo PRNG engine.
-#' @param n2N A numeric threshold placed on the algorithm used to find new locations.
-#'     This is not recommended to be changed. Defaults to 50.
-#' @param alpha A numeric threshold placed on the algorithm used to find new locations.
-#'     This is not recommended to be changed. Defaults to 0.8.
-#'
-#'
-#'
-#'
-#' @noRd
-#'
 #'
 NULL
 

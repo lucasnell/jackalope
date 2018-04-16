@@ -164,6 +164,63 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// optim_prob
+double optim_prob(NumericVector v, NumericVector mean_pws_, NumericVector dens_, double seg_div_);
+RcppExport SEXP _gemino_optim_prob(SEXP vSEXP, SEXP mean_pws_SEXP, SEXP dens_SEXP, SEXP seg_div_SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type v(vSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type mean_pws_(mean_pws_SEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type dens_(dens_SEXP);
+    Rcpp::traits::input_parameter< double >::type seg_div_(seg_div_SEXP);
+    rcpp_result_gen = Rcpp::wrap(optim_prob(v, mean_pws_, dens_, seg_div_));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sample_seqs
+std::vector<uint> sample_seqs(const uint& total_mutations, const std::vector<double>& seq_lens, const std::vector<uint>& seeds);
+RcppExport SEXP _gemino_sample_seqs(SEXP total_mutationsSEXP, SEXP seq_lensSEXP, SEXP seedsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const uint& >::type total_mutations(total_mutationsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type seq_lens(seq_lensSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint>& >::type seeds(seedsSEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_seqs(total_mutations, seq_lens, seeds));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_nt_freq
+List cpp_nt_freq(int N);
+RcppExport SEXP _gemino_cpp_nt_freq(SEXP NSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_nt_freq(N));
+    return rcpp_result_gen;
+END_RCPP
+}
+// make_variants_
+SEXP make_variants_(const std::vector<uint>& n_mutations, const SEXP& ref_xptr, const std::vector<std::vector<uint>>& snp_combo_list, const std::vector<double>& mutation_probs, const std::vector<uint>& mutation_types, const std::vector<uint>& mutation_sizes, std::vector<uint> seeds, double n2N, double alpha);
+RcppExport SEXP _gemino_make_variants_(SEXP n_mutationsSEXP, SEXP ref_xptrSEXP, SEXP snp_combo_listSEXP, SEXP mutation_probsSEXP, SEXP mutation_typesSEXP, SEXP mutation_sizesSEXP, SEXP seedsSEXP, SEXP n2NSEXP, SEXP alphaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<uint>& >::type n_mutations(n_mutationsSEXP);
+    Rcpp::traits::input_parameter< const SEXP& >::type ref_xptr(ref_xptrSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::vector<uint>>& >::type snp_combo_list(snp_combo_listSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type mutation_probs(mutation_probsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint>& >::type mutation_types(mutation_typesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint>& >::type mutation_sizes(mutation_sizesSEXP);
+    Rcpp::traits::input_parameter< std::vector<uint> >::type seeds(seedsSEXP);
+    Rcpp::traits::input_parameter< double >::type n2N(n2NSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_variants_(n_mutations, ref_xptr, snp_combo_list, mutation_probs, mutation_types, mutation_sizes, seeds, n2N, alpha));
+    return rcpp_result_gen;
+END_RCPP
+}
 // read_fasta_noind
 SEXP read_fasta_noind(const std::string& fasta_file, const bool& cut_names, const bool& remove_soft_mask);
 RcppExport SEXP _gemino_read_fasta_noind(SEXP fasta_fileSEXP, SEXP cut_namesSEXP, SEXP remove_soft_maskSEXP) {
@@ -361,6 +418,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_digest_ref", (DL_FUNC) &_gemino_digest_ref, 5},
     {"_gemino_print_rg", (DL_FUNC) &_gemino_print_rg, 1},
     {"_gemino_print_vs", (DL_FUNC) &_gemino_print_vs, 1},
+    {"_gemino_optim_prob", (DL_FUNC) &_gemino_optim_prob, 4},
+    {"_gemino_sample_seqs", (DL_FUNC) &_gemino_sample_seqs, 3},
+    {"_gemino_cpp_nt_freq", (DL_FUNC) &_gemino_cpp_nt_freq, 1},
+    {"_gemino_make_variants_", (DL_FUNC) &_gemino_make_variants_, 9},
     {"_gemino_read_fasta_noind", (DL_FUNC) &_gemino_read_fasta_noind, 3},
     {"_gemino_read_fasta_ind", (DL_FUNC) &_gemino_read_fasta_ind, 3},
     {"_gemino_write_fasta_fa", (DL_FUNC) &_gemino_write_fasta_fa, 3},
