@@ -185,6 +185,11 @@ random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
         stop("\nindel_probs argument to random_variants function must be a ",
              "numeric vector or list", call. = FALSE)
     }
+    if (max(sapply(indel_probs, length)) >= 100) {
+        warning("`random_variants` is not designed for large indels. ",
+                "I recommend another of the variant-creation methods.",
+                call. = FALSE)
+    }
     # Average indel size:
     avg_indel <- sum(sapply(indel_probs, function(x) 1:length(x) * x))
     # Now make these into the probabilities that will be used alongside `snp_proportion`
