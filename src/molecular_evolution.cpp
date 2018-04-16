@@ -3,7 +3,7 @@
 #include <vector>  // vector class
 #include <string>  // string class
 #include <algorithm>  // lower_bound, random_shuffle
-#include <cmath>  // std::exp, std::log
+#include <cmath>  // std::pow
 #include <numeric>  // accumulate
 #include <unordered_map>  // unordered_map
 #include <queue>  // priority_queue
@@ -22,6 +22,9 @@ using namespace Rcpp;
 
 
 
+
+
+
 // Get a sequence's overall event rate
 //[[Rcpp::export]]
 double seq_rate(std::string seq_, const XPtr<QMaps> qm) {
@@ -35,31 +38,6 @@ double seq_rate(std::string seq_, const XPtr<QMaps> qm) {
 
 
 
-
-// Generate a string to test sampling characters from a string
-//[[Rcpp::export]]
-std::string gen_test_str(uint len) {
-
-    std::string out = "";
-    uint n_each = len / 4;
-
-    for (char c : mevo::bases) {
-        for (uint i = 0; i < n_each; i++) {
-            out += c;
-        }
-    }
-
-    // std::random_shuffle(out.begin(), out.end());
-
-    return out;
-}
-
-
-
-// equivalent to a^b (this way is faster than using std::pow(a, b))
-inline double fast_pow(double a, double b) {
-    return std::exp(b * std::log(a));
-}
 
 // uniform in range (0,1)
 inline double runif_01(sitmo::prng_engine& eng) {
@@ -115,9 +93,9 @@ uint event_location(const std::string& S,
         pq.pos = i;
 
         w = qm->w[S[i]];
-        t = fast_pow(pq.key, w);
+        t = std::pow(pq.key, w);
         r = runif_ab(eng, t, 1.0);
-        key = fast_pow(r, 1 / w);
+        key = std::pow(r, 1 / w);
         pq.key = key;
 
         c = i;
@@ -270,9 +248,9 @@ uint event_location2(const std::string& S,
         pq.pos = i;
 
         w = qm->w[S[i]];
-        t = fast_pow(pq.key, w);
+        t = std::pow(pq.key, w);
         r = runif_ab(eng, t, 1.0);
-        key = fast_pow(r, 1 / w);
+        key = std::pow(r, 1 / w);
         pq.key = key;
 
         c = i;

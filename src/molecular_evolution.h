@@ -6,6 +6,7 @@
 #include <sitmo.h>    // sitmo
 #include <vector>  // vector class
 #include <string>  // string class
+#include <random>  // gamma_distribution
 #include <algorithm>  // lower_bound, random_shuffle
 #include <cmath>  // std::exp, std::log
 #include <numeric>  // accumulate
@@ -17,7 +18,8 @@
 
 
 
-#include "gemino_types.h"
+#include "gemino_types.h"  // integer types
+#include "sequence_classes.h"  // Var* and Ref* classes
 #include "alias.h"    // Alias sampling
 
 
@@ -28,6 +30,36 @@ namespace mevo {
     std::unordered_map<char, uint> base_inds = {{'A', 0}, {'C', 1}, {'G', 2}, {'T', 3}};
     const double sitmo_max = static_cast<double>(sitmo::prng_engine::max()) + 1.0;
 }
+
+
+/*
+ One sequence's Gamma values
+ THIS IS TOO SIMPLE: INDELS CHANGE RATES OF SEQUENCES OUTSIDE THE INITIAL RANGE
+ */
+struct SeqGammas {
+    std::vector<double> gamma_vals;  // values from a Gamma distribution
+    uint k;                          // number of bp per value
+
+    SeqGammas(const uint& k_, const RefSequence& rs,
+              sitmo::prng_engine& eng, const double& alpha) : gamma_vals(), k(k_) {
+        // Now fill gammas vector
+        uint n_gammas = static_cast<uint>(std::ceil(
+            static_cast<double>(rs.size()) / static_cast<double>(k_)));
+        gamma_vals = std::vector<double>(n_gammas);
+        std::gamma_distribution<double> distr(alpha, alpha);
+        for (uint i = 0; i < n_gammas; i++) {
+            gamma_vals[i] = distr(eng);
+        }
+    }
+
+    double get_gamma(const uint& pos) {
+        uint ind = pos / k;
+        if (ind >= gamma_vals.size()) stop("ind too high for this SeqGammas object");
+        return gamma_vals[ind];
+    }
+};
+
+
 
 
 struct QMaps {
