@@ -12,11 +12,11 @@ using namespace Rcpp;
 
 
 
-// Construct the L and F vectors in a alias_FL object
+// Construct the L and F vectors in a AliasUInts object
 
-alias_FL::alias_FL(const std::vector<double>& probs, const double& tol) {
+AliasUInts::AliasUInts(const std::vector<double>& probs, const double& tol) {
 
-    uint n = probs.size();
+    n = probs.size();
 
     // F_ and L_ are temporary vectors in arma formats to make the math easier
     arma::vec p(probs);

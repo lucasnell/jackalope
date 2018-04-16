@@ -68,7 +68,7 @@ OuterClass create_sequences_(const uint& n_seqs,
         Rcpp::runif(n_cores, 0, static_cast<double>(sitmo::prng_engine::max())));
 
     // Alias-sampling object
-    const alias_FL fl(pis);
+    const AliasUInts sampler(pis);
 
     // Creating output object
     OuterClass seqs_out(n_seqs);
@@ -115,7 +115,7 @@ OuterClass create_sequences_(const uint& n_seqs,
         } else len = len_mean;
         // Sample sequence:
         seq.resize(len, 'x');
-        alias_sample_str<InnerClass>(seq, fl, engine);
+        alias_sample_str<InnerClass>(seq, sampler, engine);
     }
 
     #ifdef _OPENMP
