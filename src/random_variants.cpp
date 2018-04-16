@@ -348,7 +348,7 @@ uint one_mutation(
         for (uint v = 0; v < n_vars; v++) {
             VarSequence& vs(var_set[v][seq_index]);
             uint pos = static_cast<uint>(current_pos);
-            if (pos >= vs.size()) pos = vs.size() - 1;
+            if (pos >= vs.size()) continue;
             vs.add_substitution(nucleos[v], pos);
         }
     // InDel: Insertion or Deletion
@@ -369,10 +369,10 @@ uint one_mutation(
             for (uint v : w_indel) {
                 VarSequence& vs(var_set[v][seq_index]);
                 uint pos = static_cast<uint>(current_pos);
-                if (pos >= vs.size()) pos = vs.size() - 1;
+                if (pos >= vs.size()) continue;
                 vs.add_insertion(nucleos, pos);
             }
-            // Changing back to 1 bc insertions don't need to be skipped over like
+            // Changing back to 0 bc insertions don't need to be skipped over like
             // deletions bc they don't take up existing nucleotides
             length = 0;
         // Deletion
@@ -383,7 +383,7 @@ uint one_mutation(
             for (uint v : w_indel) {
                 VarSequence& vs(var_set[v][seq_index]);
                 uint pos = static_cast<uint>(current_pos);
-                if (pos >= vs.size()) pos = vs.size() - 1;
+                if (pos >= vs.size()) continue;
                 vs.add_deletion(length, pos);
             }
             length--;
@@ -424,7 +424,7 @@ void one_seq(
     // Keeping track of the current position
     sint64 current_pos = -1;  // (starts at -1 so it can reach 0 on the first skip)
 
-    uint length; // Length of segtregating sites (SNPs are obviously always 1)
+    uint length; // Length of segregating sites
 
     // Stores function to sequentially find `S`
     std::function<uint(const sint&, const uint&, sitmo::prng_engine&,
