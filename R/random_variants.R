@@ -129,7 +129,8 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
 #'     be `sum(indel_probs$insertions) / sum(indel_probs$deletions)`.
 #'     Defaults to `exp(-1:-10)`.
 #' @param snp_proportion The proportion of mutations (not sites) that are SNPs.
-#'     Defaults to `0.9`.
+#'     Defaults to the proportion calculated using the average ratio of indels
+#'     to substitutions in eukaryotes from Sung et al. (2016).
 #' @param n_cores Number of cores to use. Defaults to 1.
 #' @param n2N A numeric threshold placed on the algorithm used to find new locations.
 #'     This is not recommended to be changed. Defaults to 50.
@@ -140,7 +141,11 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
 #'
 #' @seealso \code{\link{variants}}
 #'
-#'
+#' @references
+#' Sung, W., M. S. Ackerman, M. M. Dillon, T. G. Platt, C. Fuqua, V. S. Cooper, and M.
+#' Lynch. 2016.
+#' Evolution of the insertion-deletion mutation rate across the tree of life.
+#' *G3: Genes|Genomes|Genetics* __6__:2583–2591.
 #'
 #' @examples
 #' n_vars <- 10
@@ -152,9 +157,16 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
 random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
                             indel_probs = exp(-1:-10),
                             snp_probs = rep(0.25, 4),
-                            snp_proportion = 0.9,
+                            snp_proportion = NULL,
                             n_cores = 1, n2N = 50, alpha = 0.8) {
 
+    # If nothing provided, use data from Sung et al. (2016):
+    if (is.null(snp_proportion)) {
+        snp_proportion <- gemino::evo_rates$subs[evo_rates$domain == 'Eukarya'] /
+            gemino::evo_rates$indels[evo_rates$domain == 'Eukarya']
+        snp_proportion <- mean(snp_proportion)
+        snp_proportion <- snp_proportion / (1 + snp_proportion)
+    }
 
     # Proportion of sites that are segregating
     seg_prop = theta_w * sum(1 / 1:(n_vars-1))
