@@ -324,7 +324,6 @@ uint one_mutation(
     // Storing nucleos, sites, and sequence modifier
     std::string nucleos;
     std::vector<uint> sites;
-    sint seq_mod;
 
     // Sampling for which type of mutation (SNP, insertion, deletion)
     uint mut_ind = alias_sample(alias_n, fl, engine);

@@ -159,7 +159,8 @@ SEXP create_genome(const uint& n_seqs,
                    NumericVector equil_freqs = NumericVector(0),
                    const uint& n_cores = 1) {
 
-    RefGenome ref;
+    XPtr<RefGenome> ref_xptr(new RefGenome(), true);
+    RefGenome& ref(*ref_xptr);
 
     ref = create_sequences_<RefGenome, RefSequence>(
         n_seqs, len_mean, len_sd, equil_freqs, n_cores);
@@ -169,7 +170,6 @@ SEXP create_genome(const uint& n_seqs,
         ref[i].name = "seq" + std::to_string(i);
     }
 
-    XPtr<RefGenome> ref_xptr(&ref);
 
     return ref_xptr;
 }
