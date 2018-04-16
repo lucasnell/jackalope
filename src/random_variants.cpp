@@ -248,7 +248,7 @@ double cpp_mean_pairwise_freqs(const std::vector<int>& sample_segr) {
 List cpp_nt_freq(int N) {
 
     int a;
-    std::vector<std::vector<int> > combos;
+    std::vector<std::vector<int>> combos;
     std::vector<int> tmp_combos(4);
     std::vector<std::string> seq;
     std::vector<int> segr_bases(N);
@@ -259,6 +259,7 @@ List cpp_nt_freq(int N) {
         for (int c = d; c <= floor((N - d) / 3); c++) {
             for (int b = c; b <= floor((N - c - d) / 2); b++) {
                 a = N - b - c - d;
+                if (a == N) continue;  // no reason to have all the same nucleotides
                 tmp_combos[0] = a;
                 tmp_combos[1] = b;
                 tmp_combos[2] = c;
