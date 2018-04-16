@@ -144,6 +144,12 @@ struct RefGenome {
     uint size() const noexcept {
         return sequences.size();
     }
+    // To return the sequence sizes
+    std::vector<uint> seq_sizes() const {
+        std::vector<uint> out(size());
+        for (uint i = 0; i < out.size(); i++) out[i] = sequences[i].size();
+        return out;
+    }
     // For printing reference genome info
     void print() const;
 };
