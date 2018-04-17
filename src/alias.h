@@ -13,6 +13,9 @@
 using namespace Rcpp;
 
 
+#define SMALL_TOLERANCE 0.00000001490116119385
+
+
 namespace alias {
     const std::string nt_bases = "ACGT";
     const double sitmo_max = static_cast<double>(sitmo::prng_engine::max()) + 1;
@@ -23,7 +26,7 @@ namespace alias {
 class AliasUInts {
 public:
     AliasUInts() : F(), L(), n(0) {};
-    AliasUInts(const std::vector<double>& p, const double& tol = 0.00000001490116119385);
+    AliasUInts(const std::vector<double>& p, const double& tol = SMALL_TOLERANCE);
     // To get the length of F (and L bc they should always be the same)
     uint size() const noexcept {
         return n;
@@ -99,7 +102,7 @@ public:
     T characters;
 
     AliasString(const T& chars_in, const std::vector<double>& p,
-                const double& tol = 0.00000001490116119385)
+                const double& tol = SMALL_TOLERANCE)
         : characters(chars_in), uint_sampler(p, tol), n(p.size()) {
         if (p.size() != chars_in.size()) {
             stop("For an AliasString construction, arguments p and chars_in ",
@@ -107,7 +110,7 @@ public:
         }
     }
     AliasString(const T& chars_in,
-                const double& tol = 0.00000001490116119385)
+                const double& tol = SMALL_TOLERANCE)
         : characters(chars_in), uint_sampler(), n(chars_in.size()) {
         std::vector<double> p(n, 1 / static_cast<double>(n));
         uint_sampler(p, tol);

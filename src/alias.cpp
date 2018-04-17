@@ -1,4 +1,5 @@
 #include <RcppArmadillo.h>
+#include <cmath>  // std::abs
 #include <sitmo.h>    // sitmo prng
 #include <vector>  // vector class
 #include <string>  // string class
