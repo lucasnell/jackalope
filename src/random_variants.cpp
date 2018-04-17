@@ -129,7 +129,7 @@ std::vector<uint> sample_seqs(const uint& total_mutations,
     #endif
 
     // Alias-sampling object
-    const alias_FL FL(seq_lens);
+    const AliasUInts sampler(seq_lens);
     // sitmo prng
     sitmo::prng_engine eng(active_seed);
 
@@ -138,7 +138,7 @@ std::vector<uint> sample_seqs(const uint& total_mutations,
     #pragma omp for schedule(static)
     #endif
     for (uint i = 0; i < total_mutations; i++){
-        uint ind = alias_sample(n_seqs, FL, eng);
+        uint ind = sampler.sample(eng);
         #ifdef _OPENMP
         #pragma omp atomic
         #endif
@@ -315,7 +315,7 @@ uint one_mutation(
         const std::vector<std::vector<uint>>& snp_combo_list,
         const std::vector<uint>& mutation_types,
         const std::vector<uint>& mutation_sizes,
-        const alias_FL& fl, const uint& alias_n,
+        const AliasUInts& sampler,
         sitmo::prng_engine& engine,
         const double& n2N = 50,
         const double& alpha = 0.8) {
@@ -327,7 +327,7 @@ uint one_mutation(
     std::vector<uint> sites;
 
     // Sampling for which type of mutation (SNP, insertion, deletion)
-    uint mut_ind = alias_sample(alias_n, fl, engine);
+    uint mut_ind = sampler.sample(engine);
     uint mut_type = mutation_types[mut_ind];
 
     // SNP
@@ -406,13 +406,11 @@ void one_seq(
         const std::vector<std::vector<uint>>& snp_combo_list,
         const std::vector<uint> mutation_types,
         const std::vector<uint>& mutation_sizes,
-        const alias_FL& fl,
+        const AliasUInts& sampler,
         sitmo::prng_engine& engine,
         const double& n2N = 50,
         const double& alpha = 0.8
     ) {
-
-    uint alias_n = fl.size();
 
     // These values are copied bc n and N will be changing
     sint n = n_muts;
@@ -445,7 +443,7 @@ void one_seq(
         // This function returns the length, but modifies variant_set
         length = one_mutation(var_set, seq_ind, n, N, S, current_pos, n_vars, seq_len,
                               snp_combo_list, mutation_types, mutation_sizes,
-                              fl, alias_n, engine, n2N, alpha);
+                              sampler, engine, n2N, alpha);
         current_pos += length;
         n--;
         N -= (S + length);
@@ -521,7 +519,7 @@ SEXP make_variants_(
     uint active_seed;
 
     // Alias-sampling object
-    const alias_FL fl(mutation_probs);
+    const AliasUInts sampler(mutation_probs);
 
     // Write the active seed per core or just write one of the seeds.
     #ifdef _OPENMP
@@ -538,7 +536,7 @@ SEXP make_variants_(
     #endif
     for (uint s = 0; s < n_seqs; s++) {
         one_seq(var_set, s, n_mutations[s], n_vars,
-                snp_combo_list, mutation_types, mutation_sizes, fl, engine,
+                snp_combo_list, mutation_types, mutation_sizes, sampler, engine,
                 n2N, alpha);
     }
     #ifdef _OPENMP

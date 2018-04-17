@@ -115,7 +115,9 @@ struct NucleoKeyPos {
      is ignored, but a filler value should be provided so the event_lengths
      and event_types vectors are the same length.
  */
-struct EventAliasTables {
+struct EventSampler {
+
+    // AliasUInts
 
     std::unordered_map<char, std::vector<double>> F;
     std::unordered_map<char, std::vector<uint>> L;
@@ -140,27 +142,17 @@ struct EventAliasTables {
     }
 };
 
-// For alias-sampling nucleotides for new sequences (e.g. insertions)
-struct NucleoAliasTables {
 
-    std::vector<double> F;
-    std::vector<uint> L;
 
-    NucleoAliasTables() {
-        F = std::vector<double>(4);
-        L = std::vector<uint>(4);
-    };
-};
+// MevoSampler combined objects for alias-sampling event types and new nucleotides
+struct MevoSampler {
+    EventAliasTables event_sampler;
+    AliasString<std::string> nt_sampler;
 
-// Alias tables for both event types and nucleotide types
-struct Alias {
-    EventAliasTables event;
-    NucleoAliasTables nucleo;
-
-    Alias(EventAliasTables event_, NucleoAliasTables nucleo_)
-        : event(event_), nucleo(nucleo_) {};
-    Alias(uint N) : event(N), nucleo() {};
-    Alias() : event(), nucleo() {};
+    MevoSampler(const EventAliasTables& event_, const AliasString<std::string>& nucleo_)
+        : event_sampler(event_), nt_sampler(nucleo_) {};
+    // MevoSampler(uint N) : event(N), nucleo() {};
+    // MevoSampler() : event(), nucleo() {};
 
 };
 
