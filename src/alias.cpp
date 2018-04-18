@@ -1,3 +1,10 @@
+/*
+ ********************************************************
+
+ Alias sampling
+
+ ********************************************************
+ */
 #include <RcppArmadillo.h>
 #include <cmath>  // std::abs
 #include <sitmo.h>    // sitmo prng

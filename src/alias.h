@@ -1,6 +1,14 @@
 #ifndef __GEMINO_ALIAS_H
 #define __GEMINO_ALIAS_H
 
+/*
+ ********************************************************
+
+ Alias sampling
+
+ ********************************************************
+ */
+
 #include <RcppArmadillo.h>
 #include <sitmo.h>    // sitmo prng
 #include <vector>  // vector class
