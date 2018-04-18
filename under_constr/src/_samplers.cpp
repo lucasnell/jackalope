@@ -75,6 +75,67 @@ uint sample_rare_(SEXP xptr_sexp, const uint64& N, const uint& rare) {
  ========================================================================================
  */
 
+
+/*
+ Converts a `p` vector of probabilities to a `ints` vector of integers, where each
+ integer represents the approximate expected value of "successes" from 2^32 runs.
+ If the sum of `ints` is != 2^32, this randomly chooses values to change based on
+ probabilities in `p`.
+ I did it this way because larger probabilities should be less affected by changing
+ their respective values in `ints`.
+ */
+void fill_ints(const std::vector<double>& p, std::vector<uint>& ints) {
+
+    // Vector holding the transitory values that will eventually be inserted into `int`
+    arma::vec pp(p);
+    pp /= arma::accu(pp);
+    pp *= static_cast<double>(1L<<32);
+    pp = arma::round(pp);
+
+    // Converting to `ints`
+    ints = arma::conv_to<std::vector<uint>>::from(pp);
+
+    double d = static_cast<double>(1L<<32) - arma::accu(pp);
+
+    // Vector for weighted sampling from vector of probabilities
+    arma::vec p2(p);
+    p2 /= arma::accu(p2);
+    /*
+     I'm not going to sample rare probabilities so anything < 2^-8 is set to zero
+     for this sampling
+     */
+    double z = 1 / std::pow(2, 8);
+    arma::uvec iv = arma::find(p2 < z);
+    /*
+     If there aren't any *above* this threshold, keep adding 8 to `x` in the expression
+     `2^-x` until we would no longer be setting all probabilities to zero
+     */
+    while (iv.n_elem == p2.n_elem) {
+        for (uint zz = 0; zz < 8; zz++) z /= 2;
+        iv = arma::find(p2 < z);
+    }
+    p2(iv).fill(0);
+    p2 /= arma::accu(p2);
+    p2 = arma::cumsum(p2);
+
+    // We need to remove from `ints`
+    while (d < 0) {
+        double u = R::unif_rand();
+        iv = arma::find(p2 >= u, 1);
+        ints[iv(0)]--;
+        d++;
+    }
+    // We need to add to `ints`
+    while (d > 0) {
+        double u = R::unif_rand();
+        iv = arma::find(p2 >= u, 1);
+        ints[iv(0)]++;
+        d--;
+    }
+
+    return;
+}
+
 class TableTable {
 public:
     // Stores vectors of each category's Pr(sampled):
@@ -88,28 +149,31 @@ public:
 
         uint n = probs.size();
         std::vector<uint> ints(n);
+        // Filling the `ints` vector based on `probs`
+        fill_ints(probs, ints);
+
         std::vector<uint> sizes(n_tables, 0);
+        // Adding up sizes of `T` vectors:
         for (uint i = 0; i < n; i++) {
-            double tmp = std::round(probs[i] * 4294967296);
-            if (tmp > MAX_UINT) tmp = MAX_UINT;
-            ints[i] = static_cast<uint>(tmp);
             for (uint k = 1; k <= n_tables; k++) {
                 sizes[k-1] += dg(ints[i], k);
             }
         }
+        // Adding up thresholds in the `t` vector
         for (uint k = 0; k < (n_tables - 1); k++) {
-            // t[k] = sizes[k]<<(30-6*(1+k));
             t[k] = sizes[k]<<(32-8*(1+k));
             if (k > 0) t[k] += t[k-1];
         }
+        // Re-sizing `T` vectors:
         for (uint i = 0; i < n_tables; i++) T[i].resize(sizes[i]);
-        std::vector<uint> inds(n_tables, 0);
-        for (uint i = 0; i < n; i++){
-            uint& m = ints[i];
-            for (uint k = 1; k <= n_tables; k++) {
-                uint z = dg(m,k);
-                for (uint j = 0; j < z; j++) T[k-1][inds[k-1] + j] = i;
-                inds[k-1] += z;
+
+        // Filling `T` vectors
+        for (uint k = 1; k <= n_tables; k++) {
+            uint ind = 0; // index inside `T[k-1]`
+            for (uint i = 0; i < n; i++) {
+                uint z = dg(ints[i], k);
+                for (uint j = 0; j < z; j++) T[k-1][ind + j] = i;
+                ind += z;
             }
         }
     }
@@ -117,10 +181,12 @@ public:
     uint sample(pcg32& eng) {
         uint j = eng();
         if (j<t[0]) return T[0][j>>24];
-        for (uint i = 1; i < (T.size() - 1); i++) {
-            if (j<t[i]) return T[i][(j-t[i-1])>>(32-8*(i+1))];
-        }
-        return T[T.size()-1][j-t[T.size()-2]];
+        if (j<t[1]) return T[1][(j-t[0])>>(32-8*2)];
+        if (j<t[2]) return T[2][(j-t[1])>>(32-8*3)];
+        // for (uint i = 1; i < (T.size() - 1); i++) {
+        //     if (j<t[i]) return T[i][(j-t[i-1])>>(32-8*(i+1))];
+        // }
+        return T[3][j-t[2]];
     }
 
     void print() const {
