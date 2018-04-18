@@ -1,12 +1,13 @@
 # Compression library
-PKG_LIBS += -lz
+PKG_LIBS = -lz
 
-# C++11 syntax used throughout src files
+# C++11 syntax used throughout
 CXX_STD = CXX11
 
-PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS)
-PKG_CFLAGS = $(SHLIB_OPENMP_CFLAGS)
-PKG_LIBS = $(SHLIB_OPENMP_CFLAGS)
+## Add these to your global Makevars if you want to build with OpenMP
+## The global Makevars is located inside the home directory at `.R/Makevars`
+# PKG_CXXFLAGS += $(SHLIB_OPENMP_CXXFLAGS)
+# PKG_CFLAGS += $(SHLIB_OPENMP_CFLAGS)
+# PKG_LIBS += $(SHLIB_OPENMP_CFLAGS)
 
 PKG_LIBS += $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
-## PKG_LIBS += -lboost_iostreams
