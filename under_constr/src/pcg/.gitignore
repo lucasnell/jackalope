@@ -1,0 +1,37 @@
+# Files in this folder are not necessary
+# They include samples and other files not used in gemino
+other
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Debug Information
+*.dSYM
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Actual Project Executables
