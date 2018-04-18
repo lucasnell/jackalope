@@ -27,14 +27,14 @@ using namespace Rcpp;
 
 
 
-class TableTable {
+class TableSampler {
 public:
     // Stores vectors of each category's Pr(sampled):
     std::vector<std::vector<uint>> T;
     // Stores values at which to transitiion between vectors of `T`:
     std::vector<uint> t;
 
-    TableTable(const std::vector<double>& probs, pcg32& eng);
+    TableSampler(const std::vector<double>& probs, pcg32& eng);
 
     uint sample(pcg32& eng) const;
 
@@ -54,7 +54,7 @@ private:
 
 uint sample_rare_(SEXP xptr_sexp, const uint64& N, const uint& rare) {
 
-    XPtr<TableTable> xptr(xptr_sexp);
+    XPtr<TableSampler> xptr(xptr_sexp);
 
     uint rares = 0;
 

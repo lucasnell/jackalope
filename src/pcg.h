@@ -19,6 +19,14 @@ namespace pcg {
 
 
 
+/*
+ ========================
+
+ Seeding
+
+ ========================
+ */
+
 
 // To sample for seeds before multi-core operations
 inline std::vector<std::vector<uint>> mc_seeds(const uint& n_cores) {
@@ -63,6 +71,40 @@ inline pcg32 seeded_pcg(const std::vector<uint>& sub_seeds) {
     pcg32 out(seed1, seed2);
     return out;
 }
+
+
+
+/*
+ ========================
+
+ Number generation
+
+ ========================
+ */
+
+// uniform in range [0,1]
+inline double runif_0011(pcg32& eng) {
+    return static_cast<double>(eng()) / pcg::max;
+}
+// uniform in range [0,1)
+inline double runif_001(pcg32& eng) {
+    return static_cast<double>(eng()) / (pcg::max + 1);
+}
+// uniform in range (0,1)
+inline double runif_01(pcg32& eng) {
+    return (static_cast<double>(eng()) + 1) / (pcg::max + 2);
+}
+// uniform in range (a,b)
+inline double runif_ab(pcg32& eng, const double& a, const double& b) {
+    return a + runif_01(eng) * (b - a);
+}
+// uniform in range [a,b]
+inline uint runif_aabb(pcg32& eng, const uint& a, const uint& b) {
+    return a + runif_01(eng) * (b - a + 1);
+}
+
+
+
 
 
 #endif

@@ -24,11 +24,11 @@ using namespace Rcpp;
 
 
 /*
- EXAMPLE USAGE: Sampling for a "rare" (low p) integer
+ EXAMPLE USAGE: Sampling for a "rare" (low p) integer named `rare`
 
 uint sample_rare_(SEXP xptr_sexp, const uint64& N, const uint& rare) {
 
-    XPtr<TableTable> xptr(xptr_sexp);
+    XPtr<TableSampler> xptr(xptr_sexp);
 
     uint rares = 0;
 
@@ -112,7 +112,7 @@ inline void fill_ints(const std::vector<double>& p, std::vector<uint>& ints,
 
 
 
-TableTable::TableTable(const std::vector<double>& probs, pcg32& eng) : T(4), t(3, 0) {
+TableSampler::TableSampler(const std::vector<double>& probs, pcg32& eng) : T(4), t(3, 0) {
 
     uint n_tables = T.size();
 
@@ -148,7 +148,7 @@ TableTable::TableTable(const std::vector<double>& probs, pcg32& eng) : T(4), t(3
 }
 
 
-uint TableTable::sample(pcg32& eng) const {
+uint TableSampler::sample(pcg32& eng) const {
     uint j = eng();
     if (j<t[0]) return T[0][j>>24];
     if (j<t[1]) return T[1][(j-t[0])>>(32-8*2)];
@@ -156,7 +156,7 @@ uint TableTable::sample(pcg32& eng) const {
     return T[3][j-t[2]];
 }
 
-void TableTable::print() const {
+void TableSampler::print() const {
     // names coincide with names from Marsaglia (2004)
     std::vector<std::string> names = {"AA", "BB", "CC", "DD"};
     for (uint i = 0; i < T.size(); i++) {
