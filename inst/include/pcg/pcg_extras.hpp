@@ -584,26 +584,33 @@ public:
     }
 };
 
+
+
 /*
- * Sometimes you might want a distinct seed based on when the program
- * was compiled.  That way, a particular instance of the program will
- * behave the same way, but when recompiled it'll produce a different
- * value.
+ I commented this next chunk out bc I'm not using it, and it gives annoying warnings
+ in RStudio:
  */
 
-template <typename IntType>
-struct static_arbitrary_seed {
-private:
-    static constexpr IntType fnv(IntType hash, const char* pos) {
-        return *pos == '\0'
-             ? hash
-             : fnv((hash * IntType(16777619U)) ^ *pos, (pos+1));
-    }
-
-public:
-    static constexpr IntType value = fnv(IntType(2166136261U ^ sizeof(IntType)),
-                        __DATE__ __TIME__ __FILE__);
-};
+// /*
+//  * Sometimes you might want a distinct seed based on when the program
+//  * was compiled.  That way, a particular instance of the program will
+//  * behave the same way, but when recompiled it'll produce a different
+//  * value.
+//  */
+//
+// template <typename IntType>
+// struct static_arbitrary_seed {
+// private:
+//     static constexpr IntType fnv(IntType hash, const char* pos) {
+//         return *pos == '\0'
+//              ? hash
+//              : fnv((hash * IntType(16777619U)) ^ *pos, (pos+1));
+//     }
+//
+// public:
+//     static constexpr IntType value = fnv(IntType(2166136261U ^ sizeof(IntType)),
+//                         __DATE__ __TIME__ __FILE__);
+// };
 
 // Sometimes, when debugging or testing, it's handy to be able print the name
 // of a (in human-readable form).  This code allows the idiom:
