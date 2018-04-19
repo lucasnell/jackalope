@@ -71,5 +71,41 @@ uint sample_rare_(SEXP xptr_sexp, const uint64& N, const uint& rare) {
 */
 
 
+/*
+ Class template for table sampling a string, using an underlying TableSampler object.
+ `chars_in` should be the characters to sample from, `probs` the probabilities of
+ sampling those characters, and `pcg32` is a PCG, 32-bit random number generator.
+ `T` can be `std::string` or `RefSequence`. Others may work, but are not guaranteed.
+ */
+template <typename T>
+class TableStringSampler {
+public:
+
+    T characters;
+
+    TableStringSampler(const T& chars_in, const std::vector<double>& probs, pcg32& eng)
+        : characters(chars_in), uint_sampler(probs, eng), n(probs.size()) {
+        if (probs.size() != chars_in.size()) {
+            stop("For a TableStringSampler construction, arguments probs and chars_in ",
+                 "must be same length.");
+        }
+    }
+    TableStringSampler() {}
+
+    std::string sample(const uint& N, pcg32& eng) const {
+        std::string out(N, 'x');
+        for (uint i = 0; i < N; i++) {
+            uint k = uint_sampler.sample(eng);
+            out[i] = characters[k];
+        }
+        return out;
+    }
+
+private:
+    TableSampler uint_sampler;
+    uint n;
+};
+
+
 
 #endif
