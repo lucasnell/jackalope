@@ -1,7 +1,9 @@
 #include <RcppArmadillo.h>
 #include <vector>
 #include <string>
+#include <algorithm>  // lower_bound
 
+#include "pcg/pcg_extras.hpp" // pcg prng
 #include "pcg/pcg_random.hpp" // pcg prng
 
 
@@ -14,16 +16,65 @@ using namespace Rcpp;
 #define SMALL_TOLERANCE 0.000000000001
 #define MAX_UINT 4294967295
 
+typedef uint_fast16_t uint16;
 typedef uint_fast32_t uint;
 typedef uint_fast64_t uint64;
+typedef pcg_extras::pcg128_t uint128;
 
 namespace samplers {
     double pcg_max = static_cast<double>(pcg32::max());
+    long double pcg_max64 = static_cast<double>(pcg64::max());
+    long double max64 = 18446744073709551616.0L;
 }
 
 
-typedef uint_fast64_t uint64;
+/*
+ THIS VERSION HAS WORKING 64-BIT SAMPLERS, BUT THE `pcg64_fast` DOESN'T WORK FOR SOME
+ REASON. TESTING USING THE FIRST TWO FUNCTIONS HERE SHOW THAT THIS RNG DOES WORK, BUT
+ I'M NOT IMPLEMENTING IT CORRECTLY IN SOME WAY.
+ THE `pcg64_fast` DOESN'T APPEAR TO BE FASTER ANYWAY, SO I'M ABANDONDING IT.
+ */
 
+
+
+//[[Rcpp::export]]
+std::vector<long double> test_fast64(const uint64& n, const std::vector<long double>& seeds) {
+
+    std::vector<double> out(n);
+
+    uint128 seed1 = samplers::pcg_max64 * seeds[0];
+    uint128 seed2 = samplers::pcg_max64 * seeds[1];
+    uint128 seed = (seed1<<64) + seed2;
+
+    pcg64_fast eng(seed);
+
+    std::vector<long double> rnd(n);
+
+    for (uint64 i = 0; i < n; i++) {
+        rnd[i] = static_cast<long double>(eng()) / samplers::pcg_max64;
+    }
+
+    return rnd;
+}
+
+
+//[[Rcpp::export]]
+std::vector<long double> test_pcg64(const uint64& n, const std::vector<long double>& seeds) {
+
+    uint128 seed1 = samplers::pcg_max64 * seeds[0];
+    uint128 seed2 = samplers::pcg_max64 * seeds[1];
+    uint128 seed = (seed1<<64) + seed2;
+
+    pcg64 eng(seed);
+
+    std::vector<long double> rnd(n);
+
+    for (uint64 i = 0; i < n; i++) {
+        rnd[i] = static_cast<long double>(eng()) / samplers::pcg_max64;
+    }
+
+    return rnd;
+}
 
 
 // Uses 4 calls to R::unif_rand to make two 64-bit seeds for a pcg32 RNG
@@ -54,6 +105,35 @@ uint sample_rare_(SEXP xptr_sexp, const uint64& N, const uint& rare) {
 
     return rares;
 }
+
+
+
+/*
+ -----------
+ 64-bit versions
+ -----------
+ */
+
+// Uses 8 calls to R::unif_rand to make two 128-bit seeds for a pcg64 RNG
+template <typename RNG>
+RNG seeded_pcg64() {
+
+    // 32-bit seeds from unif_rand
+    std::vector<uint64> sub_seeds = as<std::vector<uint64>>(Rcpp::runif(8,0,4294967296));
+    uint64 seed64_1 = (sub_seeds[0]<<32) + sub_seeds[1];
+    uint64 seed64_2 = (sub_seeds[2]<<32) + sub_seeds[3];
+    // Commented these out so I can try this template with pcg64_fast, which only uses
+    // one seed
+    // uint64 seed64_3 = (sub_seeds[4]<<32) + sub_seeds[5];
+    // uint64 seed64_4 = (sub_seeds[6]<<32) + sub_seeds[7];
+
+    uint128 seed1 = (static_cast<uint128>(seed64_1)<<64) + static_cast<uint128>(seed64_2);
+    // uint128 seed2 = (static_cast<uint128>(seed64_3)<<64) + static_cast<uint128>(seed64_4);
+
+    RNG out(seed1);
+    return out;
+}
+
 
 
 
@@ -111,7 +191,7 @@ void fill_ints(const std::vector<double>& p, std::vector<uint>& ints) {
      `2^-x` until we would no longer be setting all probabilities to zero
      */
     while (iv.n_elem == p2.n_elem) {
-        for (uint zz = 0; zz < 8; zz++) z /= 2;
+        for (uint zz = 0; zz < 8; zz++) z *= 0.5;
         iv = arma::find(p2 < z);
     }
     p2(iv).fill(0);
@@ -206,6 +286,205 @@ private:
         return x;
     }
 };
+
+
+
+/*
+ ---------------------------------------------------------------------------
+ ---------------------------------------------------------------------------
+ 64-bit version
+ ---------------------------------------------------------------------------
+ ---------------------------------------------------------------------------
+ */
+// Check for less than in a long double vector
+inline std::vector<uint> ld_lessthan(const std::vector<long double>& v,
+                                     const long double& x) {
+    std::vector<uint> out;
+    for (uint i = 0; i < v.size(); i++) {
+        if (v[i] < x) out.push_back(i);
+    }
+    return out;
+}
+
+template <typename RNG>
+void fill_ints64(const std::vector<long double>& p, std::vector<uint64>& ints,
+                 RNG& eng) {
+
+    // Vector holding the transitory values that will eventually be inserted into `int`
+    std::vector<long double> pp(p);
+    ints.resize(pp.size());
+    long double pp_sum = std::accumulate(pp.begin(), pp.end(), 0.0L);
+    for (uint i = 0; i < pp.size(); i++) {
+        pp[i] /= pp_sum;
+        pp[i] *= samplers::max64;
+        pp[i] = std::round(pp[i]);
+        ints[i] = static_cast<uint64>(pp[i]);
+    }
+    pp_sum = std::accumulate(pp.begin(), pp.end(), 0.0L);
+
+    long double d = samplers::max64 - pp_sum;
+
+    // Vector for weighted sampling from vector of probabilities
+    std::vector<long double> p2(p);
+    long double p2_sum = std::accumulate(p2.begin(), p2.end(), 0.0L);
+    for (uint i = 0; i < p2.size(); i++) p2[i] /= p2_sum;
+    /*
+    I'm not going to sample rare probabilities so anything < 2^-8 is set to zero
+    for this sampling
+    */
+    long double z = 1 / std::pow(2, 8);
+    std::vector<uint> iv = ld_lessthan(p2, z);
+    /*
+    If there aren't any *above* this threshold, keep adding 8 to `x` in the expression
+    `2^-x` until we would no longer be setting all probabilities to zero
+    */
+    while (iv.size() == p2.size()) {
+        for (uint zz = 0; zz < 8; zz++) z *= 0.5L;
+        iv = ld_lessthan(p2, z);
+    }
+    for (uint i : iv) p2[i] = 0.0L;
+    p2_sum = std::accumulate(p2.begin(), p2.end(), 0.0L);
+    for (uint i = 0; i < p2.size(); i++) p2[i] /= p2_sum;
+    for (uint i = 1; i < p2.size(); i++) p2[i] += p2[i-1];  // cumulative sum
+
+    // We need to remove from `ints`
+    while (d < 0) {
+        long double u = static_cast<long double>(eng()) / samplers::pcg_max64;
+        uint ind = std::lower_bound(p2.begin(), p2.end(), u) - p2.begin();
+        ints[ind]--;
+        d++;
+    }
+    // We need to add to `ints`
+    while (d > 0) {
+        long double u = static_cast<long double>(eng()) / samplers::pcg_max64;
+        uint ind = std::lower_bound(p2.begin(), p2.end(), u) - p2.begin();
+        ints[ind]++;
+        d--;
+    }
+
+    return;
+}
+
+
+template<typename RNG>
+class TableTable64 {
+public:
+    // Stores vectors of each category's Pr(sampled):
+    std::vector<std::vector<uint>> T;
+    // Stores values at which to transition between vectors of `T`:
+    std::vector<uint64> t;
+
+    TableTable64(const std::vector<long double>& probs, RNG& eng) : T(4), t(3, 0) {
+
+        uint n_tables = T.size();
+
+        uint n = probs.size();
+        std::vector<uint64> ints(n);
+        // Filling the `ints` vector based on `probs`
+        fill_ints64<RNG>(probs, ints, eng);
+
+        std::vector<uint> sizes(n_tables, 0);
+        // Adding up sizes of `T` vectors:
+        for (uint i = 0; i < n; i++) {
+            for (uint k = 1; k <= n_tables; k++) {
+                sizes[k-1] += dg64(ints[i], k);
+            }
+        }
+
+        // Adding up thresholds in the `t` vector
+        for (uint64 k = 0; k < (n_tables - 1); k++) {
+            t[k] = static_cast<uint64>(sizes[k]);
+            uint64 kk = 64 - 16 * (1 + k);
+            t[k]<<=kk;
+            if (k > 0) t[k] += t[k-1];
+        }
+        // Re-sizing `T` vectors:
+        for (uint i = 0; i < n_tables; i++) T[i].resize(sizes[i]);
+
+        // Filling `T` vectors
+        for (uint k = 1; k <= n_tables; k++) {
+            uint ind = 0; // index inside `T[k-1]`
+            for (uint i = 0; i < n; i++) {
+                uint z = dg64(ints[i], k);
+                for (uint j = 0; j < z; j++) T[k-1][ind + j] = i;
+                ind += z;
+            }
+        }
+    }
+
+    uint sample(RNG& eng) {
+        uint64 j = eng();
+        if (j<t[0]) return T[0][j>>(64-16*1)];
+        if (j<t[1]) return T[1][(j-t[0])>>(64-16*2)];
+        if (j<t[2]) return T[2][(j-t[1])>>(64-16*3)];
+        return T[3][j-t[2]];
+    }
+
+private:
+    static uint dg64(const uint64& m, const uint& k) {
+        uint64 x = ((m>>(64ULL-16ULL*static_cast<uint64>(k)))&65535ULL);
+        uint y = static_cast<uint>(x);
+        return y;
+    }
+};
+
+
+//[[Rcpp::export]]
+SEXP make_table64(const std::vector<long double>& probs) {
+
+    pcg64 eng = seeded_pcg64<pcg64>();
+
+    XPtr<TableTable64<pcg64>> tt(new TableTable64<pcg64>(probs, eng), true);
+
+    return tt;
+
+}
+
+//[[Rcpp::export]]
+SEXP make_table64_fast(const std::vector<long double>& probs) {
+
+    pcg64_fast eng = seeded_pcg64<pcg64_fast>();
+
+    XPtr<TableTable64<pcg64_fast>> tt(new TableTable64<pcg64_fast>(probs, eng), true);
+
+    return tt;
+}
+
+
+template <typename RNG>
+uint sample_table_rare64_(SEXP xptr_sexp, const uint64& N, const uint& rare) {
+
+    XPtr<TableTable64<RNG>> xptr(xptr_sexp);
+
+    uint rares = 0;
+
+    RNG eng = seeded_pcg64<RNG>();
+
+    for (uint64 i = 0; i < N; i++) {
+        uint k = xptr->sample(eng);
+        if (k == rare) rares++;
+    }
+
+    return rares;
+}
+
+
+//[[Rcpp::export]]
+uint sample_table_rare64(SEXP tt_, const uint64& N, const uint& rare) {
+
+    uint rares = sample_table_rare64_<pcg64>(tt_, N, rare);
+
+    return rares;
+}
+
+//[[Rcpp::export]]
+uint sample_table_rare64_fast(SEXP tt_, const uint64& N, const uint& rare) {
+
+    uint rares = sample_table_rare64_<pcg64_fast>(tt_, N, rare);
+
+    return rares;
+}
+
 
 
 
