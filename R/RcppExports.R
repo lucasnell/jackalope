@@ -9,7 +9,6 @@
 #' @param vs_ External pointer to a C++ `VarSet` object
 #' @param var_ind Integer index to the desired variant. Uses 0-based indexing!
 #' @param seq_ind Integer index to the desired sequence. Uses 0-based indexing!
-#' @param nucleo nucleo Character to substitute for existing one.
 #' @param new_pos_ Integer index to the desired subsitution location.
 #'     Uses 0-based indexing!
 #'
@@ -27,21 +26,20 @@ see_mutations <- function(vs_, var_ind) {
     .Call(`_gemino_see_mutations`, vs_, var_ind)
 }
 
-#' Add a substitution.
+#' @describeIn add_mutations Add a substitution.
 #'
 #' @inheritParams vs_ add_mutations
 #' @inheritParams var_ind add_mutations
 #' @inheritParams seq_ind add_mutations
-#' @param nucleo nucleo Character to substitute for existing one.
+#' @param nucleo_ Character to substitute for existing one.
 #' @inheritParams new_pos_ add_mutations
 #'
-#' @describeIn add_mutations
 #'
-add_substitution <- function(vs_, var_ind, seq_ind, nucleo, new_pos_) {
-    invisible(.Call(`_gemino_add_substitution`, vs_, var_ind, seq_ind, nucleo, new_pos_))
+add_substitution <- function(vs_, var_ind, seq_ind, nucleo_, new_pos_) {
+    invisible(.Call(`_gemino_add_substitution`, vs_, var_ind, seq_ind, nucleo_, new_pos_))
 }
 
-#' Add an insertion.
+#' @describeIn add_mutations Add an insertion.
 #'
 #' @inheritParams vs_ add_mutations
 #' @inheritParams var_ind add_mutations
@@ -49,13 +47,12 @@ add_substitution <- function(vs_, var_ind, seq_ind, nucleo, new_pos_) {
 #' @param nucleos_ Nucleotides to insert at the desired location.
 #' @inheritParams new_pos_ add_mutations
 #'
-#' @describeIn add_mutations
 #'
 add_insertion <- function(vs_, var_ind, seq_ind, nucleos_, new_pos_) {
     invisible(.Call(`_gemino_add_insertion`, vs_, var_ind, seq_ind, nucleos_, new_pos_))
 }
 
-#' Add a deletion.
+#' @describeIn add_mutations Add a deletion.
 #'
 #' @inheritParams vs_ add_mutations
 #' @inheritParams var_ind add_mutations
@@ -63,7 +60,6 @@ add_insertion <- function(vs_, var_ind, seq_ind, nucleos_, new_pos_) {
 #' @param size_ Size of deletion.
 #' @inheritParams new_pos_ add_mutations
 #'
-#' @describeIn add_mutations
 #'
 add_deletion <- function(vs_, var_ind, seq_ind, size_, new_pos_) {
     invisible(.Call(`_gemino_add_deletion`, vs_, var_ind, seq_ind, size_, new_pos_))
@@ -135,14 +131,13 @@ create_genome <- function(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0)
     .Call(`_gemino_create_genome`, n_seqs, len_mean, len_sd, equil_freqs, n_cores)
 }
 
-#' `rando_seqs` creates random sequences as a character vector.
+#' @describeIn create_genome create random sequences as a character vector.
 #'
 #'
 #' @inheritParams create_genome
 #'
 #' @return Character vector of sequence strings.
 #'
-#' @describeIn create_genome
 #'
 #' @export
 #'

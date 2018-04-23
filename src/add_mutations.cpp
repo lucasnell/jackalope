@@ -733,35 +733,33 @@ List see_mutations(SEXP vs_, const uint& var_ind) {
 //' @param vs_ External pointer to a C++ `VarSet` object
 //' @param var_ind Integer index to the desired variant. Uses 0-based indexing!
 //' @param seq_ind Integer index to the desired sequence. Uses 0-based indexing!
-//' @param nucleo nucleo Character to substitute for existing one.
 //' @param new_pos_ Integer index to the desired subsitution location.
 //'     Uses 0-based indexing!
 //'
 //' @name add_mutations
 NULL_ENTRY;
 
-//' Add a substitution.
+//' @describeIn add_mutations Add a substitution.
 //'
 //' @inheritParams vs_ add_mutations
 //' @inheritParams var_ind add_mutations
 //' @inheritParams seq_ind add_mutations
-//' @param nucleo nucleo Character to substitute for existing one.
+//' @param nucleo_ Character to substitute for existing one.
 //' @inheritParams new_pos_ add_mutations
 //'
-//' @describeIn add_mutations
 //'
 //[[Rcpp::export]]
 void add_substitution(SEXP vs_, const uint& var_ind,
                       const uint& seq_ind,
-                      const char& nucleo,
+                      const char& nucleo_,
                       const uint& new_pos_) {
     XPtr<VarSet> vset(vs_);
     VarGenome& vg((*vset)[var_ind]);
     VarSequence& vs(vg[seq_ind]);
-    vs.add_substitution(nucleo, new_pos_);
+    vs.add_substitution(nucleo_, new_pos_);
     return;
 }
-//' Add an insertion.
+//' @describeIn add_mutations Add an insertion.
 //'
 //' @inheritParams vs_ add_mutations
 //' @inheritParams var_ind add_mutations
@@ -769,7 +767,6 @@ void add_substitution(SEXP vs_, const uint& var_ind,
 //' @param nucleos_ Nucleotides to insert at the desired location.
 //' @inheritParams new_pos_ add_mutations
 //'
-//' @describeIn add_mutations
 //'
 //[[Rcpp::export]]
 void add_insertion(SEXP vs_, const uint& var_ind,
@@ -782,7 +779,7 @@ void add_insertion(SEXP vs_, const uint& var_ind,
     vs.add_insertion(nucleos_, new_pos_);
     return;
 }
-//' Add a deletion.
+//' @describeIn add_mutations Add a deletion.
 //'
 //' @inheritParams vs_ add_mutations
 //' @inheritParams var_ind add_mutations
@@ -790,7 +787,6 @@ void add_insertion(SEXP vs_, const uint& var_ind,
 //' @param size_ Size of deletion.
 //' @inheritParams new_pos_ add_mutations
 //'
-//' @describeIn add_mutations
 //'
 //[[Rcpp::export]]
 void add_deletion(SEXP vs_, const uint& var_ind,

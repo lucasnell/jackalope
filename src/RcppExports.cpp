@@ -3,7 +3,6 @@
 
 #include "gemino_types.h"
 #include <RcppArmadillo.h>
-#include <sitmo.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -21,16 +20,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // add_substitution
-void add_substitution(SEXP vs_, const uint& var_ind, const uint& seq_ind, const char& nucleo, const uint& new_pos_);
-RcppExport SEXP _gemino_add_substitution(SEXP vs_SEXP, SEXP var_indSEXP, SEXP seq_indSEXP, SEXP nucleoSEXP, SEXP new_pos_SEXP) {
+void add_substitution(SEXP vs_, const uint& var_ind, const uint& seq_ind, const char& nucleo_, const uint& new_pos_);
+RcppExport SEXP _gemino_add_substitution(SEXP vs_SEXP, SEXP var_indSEXP, SEXP seq_indSEXP, SEXP nucleo_SEXP, SEXP new_pos_SEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
     Rcpp::traits::input_parameter< const uint& >::type var_ind(var_indSEXP);
     Rcpp::traits::input_parameter< const uint& >::type seq_ind(seq_indSEXP);
-    Rcpp::traits::input_parameter< const char& >::type nucleo(nucleoSEXP);
+    Rcpp::traits::input_parameter< const char& >::type nucleo_(nucleo_SEXP);
     Rcpp::traits::input_parameter< const uint& >::type new_pos_(new_pos_SEXP);
-    add_substitution(vs_, var_ind, seq_ind, nucleo, new_pos_);
+    add_substitution(vs_, var_ind, seq_ind, nucleo_, new_pos_);
     return R_NilValue;
 END_RCPP
 }

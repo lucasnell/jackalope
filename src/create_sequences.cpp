@@ -178,14 +178,13 @@ SEXP create_genome(const uint& n_seqs,
 
 
 
-//' `rando_seqs` creates random sequences as a character vector.
+//' @describeIn create_genome create random sequences as a character vector.
 //'
 //'
 //' @inheritParams create_genome
 //'
 //' @return Character vector of sequence strings.
 //'
-//' @describeIn create_genome
 //'
 //' @export
 //'
