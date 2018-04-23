@@ -36,6 +36,7 @@ public:
     // Stores values at which to transitiion between vectors of `T`:
     std::vector<uint> t;
 
+    TableSampler();
     TableSampler(const std::vector<double>& probs);
     // Copy constructor
     TableSampler(const TableSampler& other) : T(other.T), t(other.t) {}

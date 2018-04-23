@@ -10,11 +10,11 @@
 #include <unordered_map>  // unordered_map
 
 
-
-#include "gemino_types.h"  // integer types
+#include "gemino_types.h" // integer types
 #include "sequence_classes.h"  // Var* and Ref* classes
-#include "alias.h"    // Alias sampling
 #include "pcg.h"  // pcg seeding
+#include "table_sampler.h"  // table method of sampling
+
 
 
 using namespace Rcpp;
@@ -56,28 +56,28 @@ struct SeqGammas {
 
 
 
-struct QMaps {
+/*
+ Stores info on the overall mutation rates for each nucleotide.
+ */
+class MutationRates {
+public:
 
-    std::unordered_map<char, std::vector<double>> Q;
-    std::unordered_map<char, std::vector<double>> M;
-    std::unordered_map<char, double> q;
+    std::unordered_map<char, double> q;  // rates for a given nucleotide
     std::unordered_map<char, double> w;  // same as above, but sums to 1
 
-    QMaps() {
-        Q = {{'A', std::vector<double>(0)}, {'C', std::vector<double>(0)},
-             {'G', std::vector<double>(0)}, {'T', std::vector<double>(0)}};
-        M = {{'A', std::vector<double>(0)}, {'C', std::vector<double>(0)},
-             {'G', std::vector<double>(0)}, {'T', std::vector<double>(0)}};
+    MutationRates() {
         q = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}};
         w = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}};
     };
-    QMaps(uint N) {
-        Q = {{'A', std::vector<double>(N, 0.0)}, {'C', std::vector<double>(N, 0.0)},
-             {'G', std::vector<double>(N, 0.0)}, {'T', std::vector<double>(N, 0.0)}};
-        M = {{'A', std::vector<double>(N, 0.0)}, {'C', std::vector<double>(N, 0.0)},
-             {'G', std::vector<double>(N, 0.0)}, {'T', std::vector<double>(N, 0.0)}};
+    MutationRates(const std::vector<double>& rates) {
+        if (rates.size() != 4) {
+            stop("Making a MutationRates object requires a vector of size 4");
+        }
         q = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}};
         w = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}};
+        for (uint i = 0; i < 4; i++) q[mevo::bases[i]] = rates[i];
+        double rate_sum = std::accumulate(rates.begin(), rates.end(), 0.0);
+        for (uint i = 0; i < 4; i++) w[mevo::bases[i]] = rates[i] / rate_sum;
     };
 
 };
@@ -98,7 +98,16 @@ struct NucleoKeyPos {
 
 
 /*
- For alias-sampling events depending on which nucleotide you start with
+ Perhaps for a single mutation's info?
+ */
+struct MutationInfo {
+    uint type;
+    uint length;
+};
+
+
+/*
+ For table-sampling events depending on which nucleotide you start with
  The event_types vector indicates which type of event a location in one of
      the unordered_map vectors is: 0:3 for substitution to A, C, G, and T,
      respectively, 4 for insertion, and 5 for deletion.
@@ -109,45 +118,42 @@ struct NucleoKeyPos {
      is ignored, but a filler value should be provided so the event_lengths
      and event_types vectors are the same length.
  */
-struct EventSampler {
+class EventSampler {
+public:
 
-    // AliasUInts
+    std::unordered_map<char, TableSampler> sampler;
+    std::vector<sint> event_lengths;
 
-    std::unordered_map<char, std::vector<double>> F;
-    std::unordered_map<char, std::vector<uint>> L;
-    std::vector<uint> event_types;
-    std::vector<uint> event_lengths;
-
-    EventAliasTables() {
-        F = {{'A', std::vector<double>(0)}, {'C', std::vector<double>(0)},
-             {'G', std::vector<double>(0)}, {'T', std::vector<double>(0)}};
-        L = {{'A', std::vector<uint>(0)}, {'C', std::vector<uint>(0)},
-             {'G', std::vector<uint>(0)}, {'T', std::vector<uint>(0)}};
-        event_types = std::vector<uint>(0);
-        event_lengths = std::vector<uint>(0);
-    };
-    EventAliasTables(uint N) {
-        F = {{'A', std::vector<double>(N, 0.0)}, {'C', std::vector<double>(N, 0.0)},
-             {'G', std::vector<double>(N, 0.0)}, {'T', std::vector<double>(N, 0.0)}};
-        L = {{'A', std::vector<uint>(N, 0)}, {'C', std::vector<uint>(N, 0)},
-             {'G', std::vector<uint>(N, 0)}, {'T', std::vector<uint>(N, 0)}};
-        event_types = std::vector<uint>(N, 0);
-        event_lengths = std::vector<uint>(N, 0);
+    EventSampler() {
+        sampler = {{'A', TableSampler()},
+                   {'C', TableSampler()},
+                   {'G', TableSampler()},
+                   {'T', TableSampler()}};
     }
+    EventSampler(const uint& N) : sampler(), event_lengths(N, 0) {
+        sampler = {{'A', TableSampler()},
+                   {'C', TableSampler()},
+                   {'G', TableSampler()},
+                   {'T', TableSampler()}};
+    }
+    // copy constructor
+    EventSampler(const EventSampler& other)
+        : sampler(other.sampler), event_lengths(other.event_lengths) {}
 };
 
 
 
-// MevoSampler combined objects for alias-sampling event types and new nucleotides
-struct MevoSampler {
-    EventAliasTables event_sampler;
-    AliasString<std::string> nt_sampler;
+// MevoSampler combined objects for table-sampling event types and new nucleotides
+class MevoSampler {
+public:
 
-    MevoSampler(const EventAliasTables& event_, const AliasString<std::string>& nucleo_)
+    MevoSampler(const EventSampler& event_, const TableStringSampler<std::string>& nucleo_)
         : event_sampler(event_), nt_sampler(nucleo_) {};
     // MevoSampler(uint N) : event(N), nucleo() {};
     // MevoSampler() : event(), nucleo() {};
-
+private:
+    EventSampler event_sampler;
+    TableStringSampler<std::string> nt_sampler;
 };
 
 
