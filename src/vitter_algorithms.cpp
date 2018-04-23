@@ -22,7 +22,7 @@
 #include <vector>
 #include <numeric>
 #include <cmath>
-#include <sitmo.h>
+#include <pcg/pcg_random.hpp> // pcg prng
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -31,6 +31,7 @@
 #include "gemino_types.h"  // integer types
 #include "util.h"  // uints_get_size
 #include "vitter_algorithms.h"  // vitter namespace
+#include "pcg.h"
 
 
 using namespace Rcpp;
@@ -60,7 +61,7 @@ inline double f(const double& s, const double& n, const double& N) {
     if (s < 0 || s > (N - n)) return 0;
     double out = (n / N);
     for (int i = 0; i < s; i++) {
-        out *= ((N - n - (double) i) / (N - 1 - (double) i));
+        out *= ((N - n - static_cast<double>(i)) / (N - 1 - static_cast<double>(i)));
     }
     return out;
 }
@@ -82,7 +83,7 @@ std::vector<double> F_s(const std::vector<double>& s_vec, const double& n,
         }
         out_i = (N - n) / N;
         for (int j = 1; j <= s; j++) {
-            out_i *= ((N - n - (double) j) / (N - (double) j));
+            out_i *= ((N - n - static_cast<double>(j)) / (N - static_cast<double>(j)));
         }
         out[i] = 1 - out_i;
     }
@@ -124,8 +125,8 @@ double expected_s(double n, double N) {
 // --------
 // One S value using Algorithm A (used in Algorithm D if n >= alpha * N)
 // --------
-uint vitter_a_S(double n, double N, sitmo::prng_engine& engine) {
-    double V = (double) engine() / vitter::sitmo_max;
+uint vitter_a_S(double n, double N, pcg32& engine) {
+    double V = runif_01(engine);
     uint s = 0;
     double lhs = N - n;
     double rhs = V * N;
@@ -166,21 +167,23 @@ inline double x1(const double& U, const double& n, const double& N) {
 // --------
 // One S value for Algorithm D_1
 // --------
-uint algorithm_d1_S(const sint& n, const uint& N, sitmo::prng_engine& engine,
+uint algorithm_d1_S(const sint& n, const uint& N, pcg32& engine,
                     const double alpha) {
 
     double U, X, c, comp_denom;
     uint S;
     if (n < (alpha * N)) {
         while (true) {
-            U = (double) engine() / vitter::sitmo_max;
-            X = x1((double) engine() / vitter::sitmo_max, (double) n, (double) N);
-            c = c1((double) n, (double) N);
-            comp_denom = c * g1(X, (double) n, (double) N);
-            if (U <= h1(std::floor(X), (double) n, (double) N) / comp_denom) {
+            U = runif_01(engine);
+            X = x1(runif_01(engine), static_cast<double>(n), static_cast<double>(N));
+            c = c1(static_cast<double>(n), static_cast<double>(N));
+            comp_denom = c * g1(X, static_cast<double>(n), static_cast<double>(N));
+            if (U <= h1(std::floor(X), static_cast<double>(n),
+                        static_cast<double>(N)) / comp_denom) {
                 S = std::floor(X);
                 break;
-            } else if (U <= f(std::floor(X), (double) n, (double) N) / comp_denom) {
+            } else if (U <= f(std::floor(X), static_cast<double>(n),
+                              static_cast<double>(N)) / comp_denom) {
                 S = std::floor(X);
                 break;
             } else {
@@ -188,7 +191,7 @@ uint algorithm_d1_S(const sint& n, const uint& N, sitmo::prng_engine& engine,
             }
         }
     } else {
-        S = vitter_a_S((double) n, (double) N, engine);
+        S = vitter_a_S(static_cast<double>(n), static_cast<double>(N), engine);
     }
     return S;
 }
@@ -226,21 +229,23 @@ inline double x2(const double& U, const double& n, const double& N) {
 // --------
 // One S value for Algorithm D_2
 // --------
-uint algorithm_d2_S(const sint& n, const uint& N, sitmo::prng_engine& engine,
+uint algorithm_d2_S(const sint& n, const uint& N, pcg32& engine,
                     const double& alpha) {
 
     double U, X, c, comp_denom;
     uint S;
     if (n < (alpha * N)) {
         while (true) {
-            U = (double) engine() / vitter::sitmo_max;
-            X = x2((double) engine() / vitter::sitmo_max, (double) n, (double) N);
-            c = c2((double) n, (double) N);
-            comp_denom = c * g2(X, (double) n, (double) N);
-            if (U <= h2(std::floor(X), (double) n, (double) N) / comp_denom) {
+            U = runif_01(engine);
+            X = x2(runif_01(engine), static_cast<double>(n), static_cast<double>(N));
+            c = c2(static_cast<double>(n), static_cast<double>(N));
+            comp_denom = c * g2(X, static_cast<double>(n), static_cast<double>(N));
+            if (U <= h2(std::floor(X), static_cast<double>(n),
+                        static_cast<double>(N)) / comp_denom) {
                 S = std::floor(X);
                 break;
-            } else if (U <= f(std::floor(X), (double) n, (double) N) / comp_denom) {
+            } else if (U <= f(std::floor(X), static_cast<double>(n),
+                              static_cast<double>(N)) / comp_denom) {
                 S = std::floor(X);
                 break;
             } else {
@@ -248,7 +253,7 @@ uint algorithm_d2_S(const sint& n, const uint& N, sitmo::prng_engine& engine,
             }
         }
     } else {
-        S = vitter_a_S((double) n, (double) N, engine);
+        S = vitter_a_S(static_cast<double>(n), static_cast<double>(N), engine);
     }
     return S;
 }
@@ -273,30 +278,30 @@ uint algorithm_d2_S(const sint& n, const uint& N, sitmo::prng_engine& engine,
 
 //[[Rcpp::export]]
 arma::Mat<uint> test_vitter_d(const uint reps, uint n, uint N,
-                              const std::vector<uint> seeds,
+                              const uint& n_cores,
                               const double n2N = 50, const double alpha = 0.8) {
 
     arma::Mat<uint> out(n, reps);
     if (alpha > 1 || alpha < 0) stop("Invalid alpha. It must be (0,1).");
     if (n > N) stop("n must be <= N.");
 
-    const uint n_cores = seeds.size();
+    const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
 
     #ifdef _OPENMP
     #pragma omp parallel num_threads(n_cores) if (n_cores > 1)
     {
     #endif
 
-    uint active_seed;
+    std::vector<uint64> active_seeds;
 
     // Write the active seed per core or just write one of the seeds.
     #ifdef _OPENMP
-    active_seed = seeds[omp_get_thread_num()];
+    active_seeds = seeds[omp_get_thread_num()];
     #else
-    active_seed = seeds[0];
+    active_seeds = seeds[0];
     #endif
 
-    sitmo::prng_engine engine(active_seed);
+    pcg32 engine = seeded_pcg(active_seeds);
 
     // Parallelize the Loop
     #ifdef _OPENMP

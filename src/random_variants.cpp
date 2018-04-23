@@ -12,7 +12,7 @@
 #include <numeric>  // accumulate
 #include <cmath>  // std::exp, std::log
 #include <functional>  // std::function
-#include <sitmo.h>  // sitmo::engine
+#include <pcg/pcg_random.hpp> // pcg prng
 #ifdef _OPENMP
 #include <omp.h>  // omp
 #endif
@@ -23,31 +23,11 @@
 #include "sequence_classes.h"  // Ref* and Var* classes
 #include "vitter_algorithms.h"  // vitter_d
 #include "alias.h" // alias sampling
+#include "pcg.h" // pcg sampler types
 
 
 using namespace Rcpp;
 
-
-
-
-
-// Constants in use below
-namespace variants {
-
-    const std::string bases = "ACGT";
-
-    // Cumulative probabilities of sampling an indel length from 1 to 10
-    const std::vector<double> indel_probs_cumsum = {0.6321493, 0.864704, 0.9502561,
-                                               0.9817289, 0.9933071, 0.9975665,
-                                               0.9991335, 0.9997099, 0.999922,
-                                               1};
-
-    // Adding +1 to this so that when sampling, `engine() / variants::sitmo_max` is always
-    // < 1. This is useful for discrete sampling bc I don't want there to be a number
-    // that has a 1/2^32 chance of being sampled like what would happen if engine()
-    // produced a number == `sitmo::prng_engine::max()`.
-    const double sitmo_max = (double) sitmo::prng_engine::max() + 1.0;
-}
 
 
 
@@ -105,33 +85,35 @@ double optim_prob(NumericVector v, NumericVector mean_pws_, NumericVector dens_,
 // [[Rcpp::export]]
 std::vector<uint> sample_seqs(const uint& total_mutations,
                               const std::vector<double>& seq_lens,
-                              const std::vector<uint>& seeds) {
+                              const uint& n_cores) {
 
     const uint n_seqs = seq_lens.size();
-    const uint n_cores = seeds.size();
 
     // Creating output vector
     std::vector<uint> out_vec(n_seqs, 0);
+
+    // Seeds
+    const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
 
     #ifdef _OPENMP
     #pragma omp parallel default(shared) num_threads(n_cores) if(n_cores > 1)
     {
     #endif
 
-    uint active_seed;
+    std::vector<uint64> active_seeds;
 
     // Write the active seed per core or just write one of the seeds.
     #ifdef _OPENMP
     uint active_thread = omp_get_thread_num();
-    active_seed = seeds[active_thread];
+    active_seeds = seeds[active_thread];
     #else
-    active_seed = seeds[0];
+    active_seeds = seeds[0];
     #endif
 
     // Alias-sampling object
     const AliasUInts sampler(seq_lens);
-    // sitmo prng
-    sitmo::prng_engine eng(active_seed);
+    // pcg prng
+    pcg32 eng = seeded_pcg(active_seeds);
 
     // Parallelize the Loop
     #ifdef _OPENMP
@@ -316,7 +298,7 @@ uint one_mutation(
         const std::vector<uint>& mutation_types,
         const std::vector<uint>& mutation_sizes,
         const AliasUInts& sampler,
-        sitmo::prng_engine& engine,
+        pcg32& engine,
         const double& n2N = 50,
         const double& alpha = 0.8) {
 
@@ -339,7 +321,7 @@ uint one_mutation(
         nucleos = std::string(n_vars, 'x');
         for (uint j = 0, k = 0; j < 4; j++) {
             while (combo[j] > 0) {
-                nucleos[k] = variants::bases[j];
+                nucleos[k] = alias::bases[j];
                 combo[j]--;
                 k++;
             }
@@ -354,7 +336,7 @@ uint one_mutation(
     // InDel: Insertion or Deletion
     } else {
         // Make vector of the variants that have this indel:
-        uint n_w_indel = ((double) engine() / variants::sitmo_max) * (n_vars - 1);
+        uint n_w_indel = runif_01(engine) * (n_vars - 1);
         std::vector<uint> w_indel(n_w_indel);
         vitter_d<std::vector<uint>>(w_indel, n_vars, engine, n2N, alpha);
         // Insertion
@@ -363,8 +345,8 @@ uint one_mutation(
             // Creating and filling string
             nucleos = std::string(length, 'x');
             for (uint j = 0; j < length; j++) {
-                uint rnd = static_cast<double>(engine()) / variants::sitmo_max * 4;
-                nucleos[j] = variants::bases[rnd];
+                uint rnd = runif_01(engine) * 4;
+                nucleos[j] = alias::bases[rnd];
             }
             for (uint v : w_indel) {
                 VarSequence& vs(var_set[v][seq_index]);
@@ -407,7 +389,7 @@ void one_seq(
         const std::vector<uint> mutation_types,
         const std::vector<uint>& mutation_sizes,
         const AliasUInts& sampler,
-        sitmo::prng_engine& engine,
+        pcg32& engine,
         const double& n2N = 50,
         const double& alpha = 0.8
     ) {
@@ -425,7 +407,7 @@ void one_seq(
     uint length; // Length of segregating sites
 
     // Stores function to sequentially find `S`
-    std::function<uint(const sint&, const uint&, sitmo::prng_engine&,
+    std::function<uint(const sint&, const uint&, pcg32&,
                        const double)> algorithm;
 
     if (((n * n) / N) > n2N) {
@@ -437,7 +419,7 @@ void one_seq(
         if (n > 1) {
             S = algorithm(n, N, engine, alpha);
         } else { // At n = 1, D2 divides by zero, but below works just fine
-            S = ((double) engine() / variants::sitmo_max) * N;
+            S = runif_01(engine) * N;
         }
         current_pos += S + 1;
         // This function returns the length, but modifies variant_set
@@ -492,7 +474,7 @@ SEXP make_variants_(
         const std::vector<double>& mutation_probs,
         const std::vector<uint>& mutation_types,
         const std::vector<uint>& mutation_sizes,
-        std::vector<uint> seeds,
+        const uint& n_cores,
         double n2N = 50,
         double alpha = 0.8
     ) {
@@ -501,7 +483,7 @@ SEXP make_variants_(
 
     const std::vector<uint> seq_lens = reference->seq_sizes();
     const uint n_seqs = reference->size();
-    const uint n_cores = seeds.size();
+    const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
     const uint n_vars = std::accumulate(snp_combo_list[0].begin(),
                                         snp_combo_list[0].end(), 0.0);
 
@@ -516,19 +498,18 @@ SEXP make_variants_(
     {
     #endif
 
-    uint active_seed;
-
     // Alias-sampling object
     const AliasUInts sampler(mutation_probs);
+    std::vector<uint64> active_seeds;
 
     // Write the active seed per core or just write one of the seeds.
     #ifdef _OPENMP
-    active_seed = seeds[omp_get_thread_num()];
+    active_seeds = seeds[omp_get_thread_num()];
     #else
-    active_seed = seeds[0];
+    active_seeds = seeds[0];
     #endif
 
-    sitmo::prng_engine engine(active_seed);
+    pcg32 engine = seeded_pcg(active_seeds);
 
     // Parallelize the Loop
     #ifdef _OPENMP

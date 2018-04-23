@@ -44,7 +44,7 @@
 #include <RcppArmadillo.h>
 #include <algorithm> // lower_bound
 #include <vector>  // vector class
-#include <sitmo.h>  // prng
+#include <pcg/pcg_random.hpp> // pcg prng
 #include <unordered_map> // unordered_map
 #include <string>  // string class
 

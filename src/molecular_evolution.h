@@ -3,24 +3,18 @@
 
 
 #include <RcppArmadillo.h>
-#include <sitmo.h>    // sitmo
+#include <pcg/pcg_random.hpp> // pcg prng
 #include <vector>  // vector class
 #include <string>  // string class
 #include <random>  // gamma_distribution
-#include <algorithm>  // lower_bound, random_shuffle
-#include <cmath>  // std::exp, std::log
-#include <numeric>  // accumulate
 #include <unordered_map>  // unordered_map
-#include <queue>  // priority_queue
-#ifdef _OPENMP
-#include <omp.h>  // omp
-#endif
 
 
 
 #include "gemino_types.h"  // integer types
 #include "sequence_classes.h"  // Var* and Ref* classes
 #include "alias.h"    // Alias sampling
+#include "pcg.h"  // pcg seeding
 
 
 using namespace Rcpp;
@@ -28,20 +22,20 @@ using namespace Rcpp;
 namespace mevo {
     const std::string bases = "ACGT";
     std::unordered_map<char, uint> base_inds = {{'A', 0}, {'C', 1}, {'G', 2}, {'T', 3}};
-    const double sitmo_max = static_cast<double>(sitmo::prng_engine::max()) + 1.0;
 }
 
 
 /*
  One sequence's Gamma values
  THIS IS TOO SIMPLE: INDELS CHANGE RATES OF SEQUENCES OUTSIDE THE INITIAL RANGE
+ ... perhaps unless you use old positions rather than new ones to find Gamma values
  */
 struct SeqGammas {
     std::vector<double> gamma_vals;  // values from a Gamma distribution
     uint k;                          // number of bp per value
 
     SeqGammas(const uint& k_, const RefSequence& rs,
-              sitmo::prng_engine& eng, const double& alpha) : gamma_vals(), k(k_) {
+              pcg32& eng, const double& alpha) : gamma_vals(), k(k_) {
         // Now fill gammas vector
         uint n_gammas = static_cast<uint>(std::ceil(
             static_cast<double>(rs.size()) / static_cast<double>(k_)));

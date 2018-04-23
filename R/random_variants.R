@@ -242,20 +242,14 @@ random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
                         1:sum(sampling_weights[,2] == 1),
                         1:sum(sampling_weights[,2] == 2))
 
-    # Setting seeds for thread-safe C++ pseudo-random number generators (1 per core)
-    seeds <- sample.int(2^31 - 1, n_cores)
-
     # Sampling the number of mutations per sequence
-    n_mutations <- sample_seqs(total_mutations, seq_lens, seeds)
-
-    # Setting new seeds for the next step
-    seeds <- sample.int(2^31 - 1, n_cores)
+    n_mutations <- sample_seqs(total_mutations, seq_lens, n_cores)
 
 
     var_set <- make_variants_(n_mutations, dna_set_in$sequence_set, snp_combo_list,
                               mutation_probs = sampling_weights[,1],
                               mutation_types = sampling_weights[,2],
-                              mutation_sizes = mutation_sizes, seeds = seeds,
+                              mutation_sizes = mutation_sizes, n_cores = n_cores,
                               n2N = 50, alpha = 0.8)
 
     # var_obj <- variants$new(dna_set_in$sequence_set, variant_set)

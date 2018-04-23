@@ -10,13 +10,14 @@
  */
 
 #include <RcppArmadillo.h>
-#include <sitmo.h>    // sitmo prng
+#include <pcg/pcg_random.hpp> // pcg prng
 #include <vector>  // vector class
 #include <string>  // string class
 
 #include "gemino_types.h" // integer types
 #include "sequence_classes.h" // RefSequence class
 #include "util.h"
+#include "pcg.h"
 
 using namespace Rcpp;
 
@@ -25,8 +26,7 @@ using namespace Rcpp;
 
 
 namespace alias {
-    const std::string nt_bases = "ACGT";
-    const double sitmo_max = static_cast<double>(sitmo::prng_engine::max()) + 1;
+    static const std::string bases = "ACGT";
 }
 
 
@@ -40,9 +40,9 @@ public:
         return n;
     }
     // Actual alias sampling
-    inline uint sample(sitmo::prng_engine& eng) const {
+    inline uint sample(pcg32& eng) const {
         // uniform in range [0,1)
-        double u = static_cast<double>(eng()) / alias::sitmo_max;
+        double u = runif_01(eng);
         // Not doing +1 [as is done in Yang (2006)] to keep it in 0-based indexing
         uint k = n * u;
         double r = n * u - k;
@@ -65,7 +65,7 @@ private:
  is used to add values.
  */
 template <typename T>
-void alias_sample_uint(T& uints, const AliasUInts& sampler, sitmo::prng_engine& eng) {
+void alias_sample_uint(T& uints, const AliasUInts& sampler, pcg32& eng) {
 
     uint len = uints_get_size(uints);
 
@@ -85,11 +85,11 @@ void alias_sample_uint(T& uints, const AliasUInts& sampler, sitmo::prng_engine& 
  `T` can be `std::string` or `RefSequence`.
  */
 template <typename T>
-void alias_sample_str(T& nucleos, const AliasUInts& sampler, sitmo::prng_engine& eng) {
+void alias_sample_str(T& nucleos, const AliasUInts& sampler, pcg32& eng) {
 
     for (uint i = 0; i < nucleos.size(); i++) {
         uint k = sampler.sample(eng);
-        nucleos[i] = alias::nt_bases[k];
+        nucleos[i] = alias::bases[k];
     }
 
     return;
@@ -125,7 +125,7 @@ public:
     }
     AliasString() {}
 
-    std::string sample(const uint& N, sitmo::prng_engine& eng) const {
+    std::string sample(const uint& N, pcg32& eng) const {
         std::string out(N, 'x');
         for (uint i = 0; i < N; i++) {
             uint k = uint_sampler.sample(eng);

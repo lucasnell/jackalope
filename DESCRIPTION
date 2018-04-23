@@ -23,7 +23,7 @@ Imports:
     RcppArmadillo,
     R6,
     RcppProgress (>= 0.1)
-LinkingTo: Rcpp, RcppArmadillo, sitmo, RcppProgress
+LinkingTo: Rcpp, RcppArmadillo, RcppProgress
 SystemRequirements: C++11, GNU make
 RoxygenNote: 6.0.1
 Suggests:

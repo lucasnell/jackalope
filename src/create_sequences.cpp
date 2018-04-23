@@ -13,6 +13,7 @@
 #include <vector>
 #include <string>
 #include <random> // C++11 sampling distributions
+#include <pcg/pcg_random.hpp> // pcg prng
 #ifdef _OPENMP
 #include <omp.h>  // omp
 #endif
@@ -20,6 +21,7 @@
 #include "gemino_types.h"  // integer types
 #include "sequence_classes.h" // RefGenome, RefSequence classes
 #include "alias.h" // alias sampling
+#include "pcg.h" // pcg::max, mc_seeds, seeded_pcg
 
 using namespace Rcpp;
 
@@ -63,9 +65,8 @@ OuterClass create_sequences_(const uint& n_seqs,
     // Converting to STL format
     std::vector<double> pis = as<std::vector<double>>(equil_freqs);
 
-    // Generate seeds for random number generators (1 per core)
-    const std::vector<uint> seeds = as<std::vector<uint>>(
-        Rcpp::runif(n_cores, 0, static_cast<double>(sitmo::prng_engine::max())));
+    // Generate seeds for random number generators (1 RNG per core)
+    const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
 
     // Alias-sampling object
     const AliasUInts sampler(pis);
@@ -83,17 +84,17 @@ OuterClass create_sequences_(const uint& n_seqs,
     {
     #endif
 
-    uint active_seed;
+    std::vector<uint64> active_seeds;
 
     // Write the active seed per core or just write one of the seeds.
     #ifdef _OPENMP
     uint active_thread = omp_get_thread_num();
-    active_seed = seeds[active_thread];
+    active_seeds = seeds[active_thread];
     #else
-    active_seed = seeds[0];
+    active_seeds = seeds[0];
     #endif
 
-    sitmo::prng_engine engine(active_seed);
+    pcg32 engine = seeded_pcg(active_seeds);
     // Gamma distribution to be used for size selection (doi: 10.1093/molbev/msr011):
     std::gamma_distribution<double> distr;
     if (len_sd > 0) {
