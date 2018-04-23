@@ -112,7 +112,9 @@ inline void fill_ints(const std::vector<double>& p, std::vector<uint>& ints,
 
 
 
-TableSampler::TableSampler(const std::vector<double>& probs, pcg32& eng) : T(4), t(3, 0) {
+TableSampler::TableSampler(const std::vector<double>& probs) : T(4), t(3, 0) {
+
+    pcg32 eng = seeded_pcg();
 
     uint n_tables = T.size();
 

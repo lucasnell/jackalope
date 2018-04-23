@@ -23,7 +23,9 @@
 
 using namespace Rcpp;
 
-
+namespace table_sampler {
+    static const std::string bases = "ACGT";
+}
 
 
 
@@ -34,7 +36,9 @@ public:
     // Stores values at which to transitiion between vectors of `T`:
     std::vector<uint> t;
 
-    TableSampler(const std::vector<double>& probs, pcg32& eng);
+    TableSampler(const std::vector<double>& probs);
+    // Copy constructor
+    TableSampler(const TableSampler& other) : T(other.T), t(other.t) {}
 
     uint sample(pcg32& eng) const;
 
@@ -74,7 +78,7 @@ uint sample_rare_(SEXP xptr_sexp, const uint64& N, const uint& rare) {
 /*
  Class template for table sampling a string, using an underlying TableSampler object.
  `chars_in` should be the characters to sample from, `probs` the probabilities of
- sampling those characters, and `pcg32` is a PCG, 32-bit random number generator.
+ sampling those characters.
  `T` can be `std::string` or `RefSequence`. Others may work, but are not guaranteed.
  */
 template <typename T>
@@ -83,14 +87,18 @@ public:
 
     T characters;
 
-    TableStringSampler(const T& chars_in, const std::vector<double>& probs, pcg32& eng)
-        : characters(chars_in), uint_sampler(probs, eng), n(probs.size()) {
+    TableStringSampler(const T& chars_in, const std::vector<double>& probs)
+        : characters(chars_in), uint_sampler(probs), n(probs.size()) {
         if (probs.size() != chars_in.size()) {
             stop("For a TableStringSampler construction, arguments probs and chars_in ",
                  "must be same length.");
         }
     }
     TableStringSampler() {}
+    // copy constructor
+    TableStringSampler(const TableStringSampler& other)
+        : characters(other.characters), uint_sampler(other.uint_sampler),
+          n(other.n) {}
 
     std::string sample(const uint& N, pcg32& eng) const {
         std::string out(N, 'x');
