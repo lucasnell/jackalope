@@ -20,7 +20,7 @@
 
 #include "gemino_types.h"  // integer types
 #include "sequence_classes.h" // RefGenome, RefSequence classes
-#include "alias.h" // alias sampling
+#include "table_sampler.h" // table sampling
 #include "pcg.h" // pcg::max, mc_seeds, seeded_pcg
 
 using namespace Rcpp;
@@ -68,8 +68,8 @@ OuterClass create_sequences_(const uint& n_seqs,
     // Generate seeds for random number generators (1 RNG per core)
     const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
 
-    // Alias-sampling object
-    const AliasUInts sampler(pis);
+    // Table-sampling object
+    const TableSampler sampler(pis);
 
     // Creating output object
     OuterClass seqs_out(n_seqs);
@@ -116,7 +116,10 @@ OuterClass create_sequences_(const uint& n_seqs,
         } else len = len_mean;
         // Sample sequence:
         seq.resize(len, 'x');
-        alias_sample_str<InnerClass>(seq, sampler, engine);
+        for (uint j = 0; j < len; j++) {
+            uint k = sampler.sample(engine);
+            seq[j] = table_sampler::bases[k];
+        }
     }
 
     #ifdef _OPENMP

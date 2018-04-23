@@ -22,7 +22,7 @@
 #include "gemino_types.h"  // integer types
 #include "sequence_classes.h"  // Ref* and Var* classes
 #include "vitter_algorithms.h"  // vitter_d
-#include "alias.h" // alias sampling
+#include "table_sampler.h" // table sampling
 #include "pcg.h" // pcg sampler types
 
 
@@ -95,6 +95,9 @@ std::vector<uint> sample_seqs(const uint& total_mutations,
     // Seeds
     const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
 
+    // Table-sampling object
+    const TableSampler sampler(seq_lens);
+
     #ifdef _OPENMP
     #pragma omp parallel default(shared) num_threads(n_cores) if(n_cores > 1)
     {
@@ -110,8 +113,6 @@ std::vector<uint> sample_seqs(const uint& total_mutations,
     active_seeds = seeds[0];
     #endif
 
-    // Alias-sampling object
-    const AliasUInts sampler(seq_lens);
     // pcg prng
     pcg32 eng = seeded_pcg(active_seeds);
 
@@ -297,7 +298,7 @@ uint one_mutation(
         const std::vector<std::vector<uint>>& snp_combo_list,
         const std::vector<uint>& mutation_types,
         const std::vector<uint>& mutation_sizes,
-        const AliasUInts& sampler,
+        const TableSampler& sampler,
         pcg32& engine,
         const double& n2N = 50,
         const double& alpha = 0.8) {
@@ -321,7 +322,7 @@ uint one_mutation(
         nucleos = std::string(n_vars, 'x');
         for (uint j = 0, k = 0; j < 4; j++) {
             while (combo[j] > 0) {
-                nucleos[k] = alias::bases[j];
+                nucleos[k] = table_sampler::bases[j];
                 combo[j]--;
                 k++;
             }
@@ -346,7 +347,7 @@ uint one_mutation(
             nucleos = std::string(length, 'x');
             for (uint j = 0; j < length; j++) {
                 uint rnd = runif_01(engine) * 4;
-                nucleos[j] = alias::bases[rnd];
+                nucleos[j] = table_sampler::bases[rnd];
             }
             for (uint v : w_indel) {
                 VarSequence& vs(var_set[v][seq_index]);
@@ -388,7 +389,7 @@ void one_seq(
         const std::vector<std::vector<uint>>& snp_combo_list,
         const std::vector<uint> mutation_types,
         const std::vector<uint>& mutation_sizes,
-        const AliasUInts& sampler,
+        const TableSampler& sampler,
         pcg32& engine,
         const double& n2N = 50,
         const double& alpha = 0.8
@@ -493,13 +494,14 @@ SEXP make_variants_(
     XPtr<VarSet> var_set_xptr(new VarSet((*reference), n_vars), true);
     VarSet& var_set(*var_set_xptr);
 
+    // Table-sampling object
+    const TableSampler sampler(mutation_probs);
+
     #ifdef _OPENMP
     #pragma omp parallel shared(var_set) num_threads(n_cores) if (n_cores > 1)
     {
     #endif
 
-    // Alias-sampling object
-    const AliasUInts sampler(mutation_probs);
     std::vector<uint64> active_seeds;
 
     // Write the active seed per core or just write one of the seeds.
