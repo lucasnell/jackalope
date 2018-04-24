@@ -266,29 +266,26 @@ std::unordered_map<char, std::vector<double>> TN93_rate_matrix(
      need to be retained in their own class.)
     */
     std::unordered_map<char, std::vector<double>> Q;
-    Q = {{'T', std::vector<double>(4, 0.0)},
-         {'C', std::vector<double>(4, 0.0)},
-         {'A', std::vector<double>(4, 0.0)},
-         {'G', std::vector<double>(4, 0.0)}};
-    Q['T'][3] = -(alpha_1 * pi_c + beta * pi_r + xi);
-    Q['T'][1] = alpha_1 * pi_c;
-    Q['T'][0] = beta * pi_a;
-    Q['T'][2] = beta * pi_g;
 
-    Q['C'][3] = alpha_1 * pi_t;
-    Q['C'][1] = -(alpha_1 * pi_t + beta * pi_r + xi);
-    Q['C'][0] = beta * pi_a;
-    Q['C'][2] = beta * pi_g;
+    Q['T'] = {-(alpha_1 * pi_c + beta * pi_r + xi),
+              alpha_1 * pi_c,
+              beta * pi_a,
+              beta * pi_g};
 
-    Q['A'][3] = beta * pi_t;
-    Q['A'][1] = beta * pi_c;
-    Q['A'][0] = -(alpha_2 * pi_g + beta * pi_y + xi);
-    Q['A'][2] = alpha_2 * pi_g;
+    Q['C'] = {alpha_1 * pi_t,
+              -(alpha_1 * pi_t + beta * pi_r + xi),
+              beta * pi_a,
+              beta * pi_g};
 
-    Q['G'][3] = beta * pi_t;
-    Q['G'][1] = beta * pi_c;
-    Q['G'][0] = alpha_2 * pi_a;
-    Q['G'][2] = -(alpha_2 * pi_a + beta * pi_y + xi);
+    Q['A'] = {beta * pi_t,
+              beta * pi_c,
+              -(alpha_2 * pi_g + beta * pi_y + xi),
+              alpha_2 * pi_g};
+
+    Q['G'] = {beta * pi_t,
+              beta * pi_c,
+              alpha_2 * pi_a,
+              -(alpha_2 * pi_a + beta * pi_y + xi)};
 
     return Q;
 }

@@ -81,13 +81,23 @@ public:
         for (uint i = 0; i < 4; i++) w[mevo::bases[i]] = rates[i] / rate_sum;
     };
 
+    // Rate for an entire sequence:
+    double seq_rate(const std::string& seq) const {
+        double rate = 0;
+        for (const char& c : seq) {
+            rate += q.at(c);
+        }
+        return rate;
+    }
+
 };
 
 
 
 
 // struct to store info on a nucleotide's key value and position for weighted sampling
-struct NucleoKeyPos {
+class NucleoKeyPos {
+public:
 
     double key;
     uint pos;
@@ -168,6 +178,26 @@ public:
                 const TableStringSampler<std::string>& nucleo_,
                 const MutationRates& rates_)
         : muts(event_), nts(nucleo_), rates(rates_) {};
+
+    double rate(const char& c) const {
+        return rates.w.at(c);
+    }
+
+    double seq_rate(const std::string& seq) const {
+        double rate_ = rates.seq_rate(seq);
+        return rate_;
+    }
+
+    MutationInfo sample_muts(const char& c, pcg32& eng) const {
+        MutationInfo mut = muts.sample(c, eng);
+        return mut;
+    }
+
+    std::string sample_nts(const uint& len, pcg32& eng) const {
+        std::string str(len, 'x');
+        nts.sample(str, eng);
+        return str;
+    }
 
 private:
     // For sampling the type of mutation:
