@@ -24,7 +24,7 @@
 using namespace Rcpp;
 
 namespace table_sampler {
-    static const std::string bases = "ACGT";
+    static const std::string bases = "TCAG";
 }
 
 

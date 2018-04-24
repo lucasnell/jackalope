@@ -144,7 +144,7 @@ OuterClass create_sequences_(const uint& n_seqs,
 //' @param len_sd Standard deviation for the gamma distribution for sequence sizes.
 //'     If set to `<= 0`, all sequences will be the same length. Defaults to `0`.
 //' @param equil_freqs Vector of nucleotide equilibrium frequencies for
-//'     "A", "C", "G", and "T", respectively. Defaults to `rep(0.25, 4)`.
+//'     "T", "C", "A", and "G", respectively. Defaults to `rep(0.25, 4)`.
 //' @param n_cores Number of cores to use via OpenMP.
 //'
 //'

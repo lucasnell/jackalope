@@ -20,7 +20,7 @@
 using namespace Rcpp;
 
 namespace mevo {
-    const std::string bases = "ACGT";
+    const std::string bases = "TCAG";
     std::unordered_map<char, uint> base_inds = {{'A', 0}, {'C', 1}, {'G', 2}, {'T', 3}};
 }
 

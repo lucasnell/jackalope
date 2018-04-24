@@ -26,7 +26,7 @@ using namespace Rcpp;
 
 
 namespace alias {
-    static const std::string bases = "ACGT";
+    static const std::string bases = "TCAG";
 }
 
 

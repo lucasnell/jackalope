@@ -55,10 +55,10 @@ using namespace Rcpp;
 
 namespace sequencer
 {
-    std::string bases = "ACGTN";
+    std::string bases = "TCAGN";
     // For choosing a base for a mismatch:
     std::unordered_map<char,std::string> pick_mismatch = {
-        {'A', "CGTN"}, {'C', "AGTN"}, {'G', "ACTN"}, {'T', "ACGN"}, {'N', "ACGT"}
+        {'A', "TCGN"}, {'C', "TAGN"}, {'G', "TCAN"}, {'T', "CAGN"}, {'N', "TCAG"}
     };
 }
 

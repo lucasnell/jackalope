@@ -266,29 +266,29 @@ std::unordered_map<char, std::vector<double>> TN93_rate_matrix(
      need to be retained in their own class.)
     */
     std::unordered_map<char, std::vector<double>> Q;
-    Q = {{'A', std::vector<double>(4, 0.0)},
+    Q = {{'T', std::vector<double>(4, 0.0)},
          {'C', std::vector<double>(4, 0.0)},
-         {'G', std::vector<double>(4, 0.0)},
-         {'T', std::vector<double>(4, 0.0)}};
-    Q['A'][0] = -(alpha_2 * pi_g + beta * pi_y + xi);
-    Q['A'][1] = beta * pi_c;
-    Q['A'][2] = alpha_2 * pi_g;
-    Q['A'][3] = beta * pi_t;
-
-    Q['C'][0] = beta * pi_a;
-    Q['C'][1] = -(alpha_1 * pi_t + beta * pi_r + xi);
-    Q['C'][2] = beta * pi_g;
-    Q['C'][3] = alpha_1 * pi_t;
-
-    Q['G'][0] = alpha_2 * pi_a;
-    Q['G'][1] = beta * pi_c;
-    Q['G'][2] = -(alpha_2 * pi_a + beta * pi_y + xi);
-    Q['G'][3] = beta * pi_t;
-
-    Q['T'][0] = beta * pi_a;
-    Q['T'][1] = alpha_1 * pi_c;
-    Q['T'][2] = beta * pi_g;
+         {'A', std::vector<double>(4, 0.0)},
+         {'G', std::vector<double>(4, 0.0)}};
     Q['T'][3] = -(alpha_1 * pi_c + beta * pi_r + xi);
+    Q['T'][1] = alpha_1 * pi_c;
+    Q['T'][0] = beta * pi_a;
+    Q['T'][2] = beta * pi_g;
+
+    Q['C'][3] = alpha_1 * pi_t;
+    Q['C'][1] = -(alpha_1 * pi_t + beta * pi_r + xi);
+    Q['C'][0] = beta * pi_a;
+    Q['C'][2] = beta * pi_g;
+
+    Q['A'][3] = beta * pi_t;
+    Q['A'][1] = beta * pi_c;
+    Q['A'][0] = -(alpha_2 * pi_g + beta * pi_y + xi);
+    Q['A'][2] = alpha_2 * pi_g;
+
+    Q['G'][3] = beta * pi_t;
+    Q['G'][1] = beta * pi_c;
+    Q['G'][0] = alpha_2 * pi_a;
+    Q['G'][2] = -(alpha_2 * pi_a + beta * pi_y + xi);
 
     return Q;
 }
@@ -298,7 +298,7 @@ std::unordered_map<char, std::vector<double>> TN93_rate_matrix(
 //'
 //' @param Q An `unordered_map` of substitution rates for each nucleotide.
 //' @param pis Vector of nucleotide equilibrium frequencies for
-//'     "A", "C", "G", and "T", respectively.
+//'     "T", "C", "A", and "G", respectively.
 //' @param xi Overall rate of indels.
 //' @param psi Proportion of insertions to deletions.
 //' @param rel_insertion_rates Relative insertion rates.
