@@ -18,8 +18,8 @@ typedef pcg_extras::pcg128_t uint128;
 
 
 namespace pcg {
-    static const double max = static_cast<double>(pcg32::max());
-    static long double max64 = static_cast<long double>(pcg64::max());
+    const double max = static_cast<double>(pcg32::max());
+    const long double max64 = static_cast<long double>(pcg64::max());
 }
 
 

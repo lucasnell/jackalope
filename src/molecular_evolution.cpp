@@ -20,228 +20,8 @@ using namespace Rcpp;
 
 
 
-// // Get a sequence's overall event rate
-// //[[Rcpp::export]]
-// double seq_rate(std::string seq_, const XPtr<QMaps> qm) {
-//     double rate = 0;
-//     for (char c : seq_) {
-//         rate += qm->q[c];
-//     }
-//     return rate;
-// }
-//
-//
-//
-//
-// /*
-//  At a time when an event occurs, this samples nucleotides based on their rates
-//  and returns a random location where the event will occur
-//
-//  Reservoir sampling used from...
-//  Efraimidis, P. S., and P. G. Spirakis. 2006. Weighted random sampling with a
-//  reservoir. Information Processing Letters 97:181–185.
-//  */
-// //[[Rcpp::export]]
-// uint event_location(const std::string& S,
-//                     XPtr<QMaps> qm, uint seed) {
-//
-//     if (S.size() == 0) stop("Empty string sent to event_location.");
-//     if (S.size() == 1) return 0;
-//
-//     pcg32 eng(seed);
-//
-//     double r, key, X, w, t;
-//     uint N = S.size();
-//
-//     // Create a NucleoKeys object to store position and key
-//     r = runif_01(eng);
-//     key = std::log(r) / qm->w[S[0]];
-//     key = std::exp(key);
-//     NucleoKeyPos pq(key, 0);
-//
-//     uint c = 0;
-//     while (c < (N-1)) {
-//         r = runif_01(eng);
-//         X = std::log(r) / std::log(pq.key);
-//         uint i = c + 1;
-//         double wt_sum0 = qm->w[S[c]];
-//         double wt_sum1 = qm->w[S[c]] + qm->w[S[i]];
-//         while (X > wt_sum1 && i < (N-1)) {
-//             i++;
-//             wt_sum0 += qm->w[S[(i-1)]];
-//             wt_sum1 += qm->w[S[i]];
-//         }
-//         if (X > wt_sum1) break;
-//         if (wt_sum0 >= X) continue;
-//
-//         pq.pos = i;
-//
-//         w = qm->w[S[i]];
-//         t = std::pow(pq.key, w);
-//         r = runif_ab(eng, t, 1.0);
-//         key = std::pow(r, 1 / w);
-//         pq.key = key;
-//
-//         c = i;
-//     }
-//
-//     return pq.pos;
-// }
-//
-//
-//
-//
-// /*
-//  Get weight when you have a reference sequence and variant sites/nucleos
-//  This version also takes care of "iterating": `++` for indices and `.pop_front()` for
-//  deque objects.
-//  NEVER TESTED --> NOT GUARANTEED TO WORK
-//  */
-// double variant_event_wt(const std::string& S,
-//                         std::deque<uint>& sites,
-//                         std::deque<std::string>& nucleos,
-//                         uint& ind, uint& ni,
-//                         const XPtr<QMaps> qm) {
-//
-//     double wt;
-//
-//     if (sites.empty()) {
-//         wt = qm->w[S[ind]];
-//         ind++;
-//     } else if (sites.front() == ind) {
-//         while (nucleos.front().size() == 0 && sites.front() == ind) {
-//             sites.pop_front();
-//             nucleos.pop_front();
-//             ind++;
-//         }
-//         if (sites.front() != ind) {
-//             wt = qm->w[S[ind]];
-//             ind++;
-//         } else {
-//             wt = qm->w[nucleos.front()[ni]];
-//             if (ni == (nucleos.front().size() - 1)) {
-//                 sites.pop_front();
-//                 nucleos.pop_front();
-//                 ni = 0;
-//                 ind++;
-//             } else {
-//                 ni++;
-//             }
-//         }
-//     } else {
-//         wt = qm->w[S[ind]];
-//         ind++;
-//     }
-//     return wt;
-// }
-//
-// /*
-//  This is another version of above for when you don't want indices or deque objects
-//  to be "iterated": `++` for indices and `pop_front` for deque objects.
-//  NEVER TESTED --> NOT GUARANTEED TO WORK
-//  */
-// double variant_event_wt_noit(const std::string& S,
-//                              const std::deque<uint>& sites,
-//                              const std::deque<std::string>& nucleos,
-//                              const uint& ind, const uint& ni,
-//                              const XPtr<QMaps> qm) {
-//
-//     double wt;
-//     // Internal copies of indices that can be iterated:
-//     uint indi = ind, nii = ni;
-//     // Index for nucleos and sites objects to use instead of `.front()`
-//     uint ii = 0;
-//
-//     if (sites.empty()) {
-//         wt = qm->w[S[ind]];
-//     } else if (sites[ii] == ind) {
-//         while (nucleos[ii].size() == 0 && sites[ii] == ind) {
-//             ii++;
-//             indi++;
-//             if (ii >= sites.size()) {
-//                 wt = qm->w[S[ind]];
-//             }
-//         }
-//         if (sites[ii] != ind) {
-//             wt = qm->w[S[ind]];
-//             indi++;
-//         } else {
-//             wt = qm->w[nucleos[ii][ni]];
-//             if (ni == (nucleos[ii].size() - 1)) {
-//                 ii++;
-//                 nii = 0;
-//                 indi++;
-//             } else {
-//                 nii++;
-//             }
-//         }
-//     } else {
-//         wt = qm->w[S[ind]];
-//         indi++;
-//     }
-//     return wt;
-// }
-//
-//
-// /*
-//  This is the same as above, but uses variant info
-//  */
-// //[[Rcpp::export]]
-// uint event_location2(const std::string& S,
-//                      std::deque<uint> sites,
-//                      std::deque<std::string> nucleos,
-//                      XPtr<QMaps> qm, uint seed) {
-//
-//     if (S.size() == 0 && nucleos.size() == 0) {
-//         stop("Empty string sent to event_location.");
-//     }
-//     if (S.size() == 1) return 0;
-//
-//     if (nucleos.size() != sites.size()) stop("sites and nucleos aren't same length");
-//
-//     pcg32 eng(seed);
-//
-//     double r, key, X, w, t;
-//     uint N = S.size();
-//
-//     // `c` is for the position in `S`
-//     // `ni` is for the position within a single, multi-character `nucleos` string
-//     uint c = 0, ni = 0;
-//     // Create a NucleoKeys object to store position and key
-//     w = variant_event_wt(S, sites, nucleos, c, ni, qm);
-//     r = runif_01(eng);
-//     key = std::log(r) / w;
-//     key = std::exp(key);
-//     NucleoKeyPos pq(key, c);
-//
-//     while (c < (N-1)) {
-//         r = runif_01(eng);
-//         X = std::log(r) / std::log(pq.key);
-//         uint i = c + 1;
-//         double wt_sum0 = variant_event_wt(S, sites, nucleos, c, ni, qm);
-//         double wt_sum1 = wt_sum0 + variant_event_wt(S, sites, nucleos, i, ni, qm);
-//         while (X > wt_sum1 && i < (N-1)) {
-//             i++;
-//             // LEFT OFF BELOW --> HOW TO GET i-1 WORKING WITH FXN ABOVE??
-//             wt_sum0 += variant_event_wt(S, sites, nucleos, i-1, ni, qm);
-//             wt_sum1 += qm->w[S[i]];
-//         }
-//         if (X > wt_sum1) break;
-//         if (wt_sum0 >= X) continue;
-//
-//         pq.pos = i;
-//
-//         w = qm->w[S[i]];
-//         t = std::pow(pq.key, w);
-//         r = runif_ab(eng, t, 1.0);
-//         key = std::pow(r, 1 / w);
-//         pq.key = key;
-//
-//         c = i;
-//     }
-//
-//     return pq.pos;
-// }
+
+
 
 
 
@@ -548,6 +328,109 @@ MevoSampler::MevoSampler(const std::unordered_map<char, std::vector<double>>& Q,
     return;
 }
 
+
+
+
+
+
+
+/*
+ At a time when an event occurs, this samples nucleotides based on their rates
+and returns a random location where the event will occur
+
+Reservoir sampling used from...
+Efraimidis, P. S., and P. G. Spirakis. 2006. Weighted random sampling with a
+reservoir. Information Processing Letters 97:181–185.
+*/
+uint event_location(const std::string& S,
+                    const MevoSampler& ms,
+                    pcg32& eng) {
+
+    if (S.size() == 0) stop("Empty string sent to event_location.");
+    if (S.size() == 1) return 0;
+
+    double r, key, X, w, t;
+    uint N = S.size();
+
+    // Create a NucleoKeys object to store position and key
+    r = runif_01(eng);
+    key = std::log(r) / ms.rate(S[0]);
+    key = std::exp(key);
+    NucleoKeyPos pq(key, 0);
+
+    uint c = 0;
+    while (c < (N-1)) {
+        r = runif_01(eng);
+        X = std::log(r) / std::log(pq.key);
+        uint i = c + 1;
+        double wt_sum0 = ms.rate(S[c]);
+        double wt_sum1 = ms.rate(S[c]) + ms.rate(S[i]);
+        while (X > wt_sum1 && i < (N-1)) {
+            i++;
+            wt_sum0 += ms.rate(S[(i-1)]);
+            wt_sum1 += ms.rate(S[i]);
+        }
+        if (X > wt_sum1) break;
+        if (wt_sum0 >= X) continue;
+
+        pq.pos = i;
+
+        w = ms.rate(S[i]);
+        t = std::pow(pq.key, w);
+        r = runif_ab(eng, t, 1.0);
+        key = std::pow(r, 1 / w);
+        pq.key = key;
+
+        c = i;
+    }
+
+    return pq.pos;
+}
+
+
+
+
+
+
+
+
+
+
+//[[Rcpp::export]]
+std::vector<uint> test_sampling(const std::string& seq, const uint& N,
+                                const double& pi_t, const double& pi_c,
+                                const double& pi_a, const double& pi_g,
+                                const double& alpha_1, const double& alpha_2,
+                                const double& beta,
+                                const double& xi, const double& psi,
+                                const arma::vec& rel_insertion_rates,
+                                const arma::vec& rel_deletion_rates,
+                                const uint& print_every = 1000) {
+
+    std::unordered_map<char, std::vector<double>> Q;
+    Q = TN93_rate_matrix(pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi);
+
+    for (const char& c : mevo::bases) {
+        for (const double& x : Q.at(c)) Rcout << x << ' ';
+        Rcout << std::endl;
+    }
+
+    std::vector<double> pis = {pi_t, pi_c, pi_a, pi_g};
+
+    MevoSampler ms(Q, xi, psi, pis, rel_insertion_rates, rel_deletion_rates);
+
+    pcg32 eng = seeded_pcg();
+
+    std::vector<uint> out(N);
+
+    for (uint i = 0; i < N; i++) {
+        Rcpp::checkUserInterrupt();
+        out[i] = event_location(seq, ms, eng);
+        if (i % print_every == 0) Rcout << i << std::endl;
+    }
+
+    return out;
+}
 
 
 

@@ -115,7 +115,7 @@ filter_sequences <- function(ref_, min_seq_size = 0L, out_seq_prop = 0) {
 #' @param len_sd Standard deviation for the gamma distribution for sequence sizes.
 #'     If set to `<= 0`, all sequences will be the same length. Defaults to `0`.
 #' @param equil_freqs Vector of nucleotide equilibrium frequencies for
-#'     "A", "C", "G", and "T", respectively. Defaults to `rep(0.25, 4)`.
+#'     "T", "C", "A", and "G", respectively. Defaults to `rep(0.25, 4)`.
 #' @param n_cores Number of cores to use via OpenMP.
 #'
 #'
@@ -206,6 +206,86 @@ digest_ref <- function(ref_, bind_sites, len5s, n_cores = 1L, chunk_size = 0L) {
     .Call(`_gemino_digest_ref`, ref_, bind_sites, len5s, n_cores, chunk_size)
 }
 
+#' Q matrix for rates for a given nucleotide using the TN93 substitution model.
+#'
+#' @noRd
+#'
+NULL
+
+#' Q matrix for rates for a given nucleotide using the JC69 substitution model.
+#'
+#' JC69 is a special case of TN93.
+#'
+#' @noRd
+#'
+NULL
+
+#' Q matrix for rates for a given nucleotide using the K80 substitution model.
+#'
+#' K80 is a special case of TN93.
+#'
+#' @noRd
+#'
+NULL
+
+#' Q matrix for rates for a given nucleotide using the F81 substitution model.
+#'
+#' F81 is a special case of TN93.
+#'
+#' @noRd
+#'
+NULL
+
+#' Q matrix for rates for a given nucleotide using the HKY85 substitution model.
+#'
+#' HKY85 is a special case of TN93.
+#'
+#' @noRd
+#'
+NULL
+
+#' Q matrix for rates for a given nucleotide using the F84 substitution model.
+#'
+#' F84 is a special case of TN93.
+#'
+#' @noRd
+#'
+NULL
+
+#' Q matrix for rates for a given nucleotide using the GTR substitution model.
+#'
+#' @noRd
+#'
+NULL
+
+#' Q matrix for rates for a given nucleotide using the UNREST substitution model.
+#'
+#' @param Qmat Matrix of rates for "T", "C", "A", and "G", respectively.
+#'     Diagonals are ignored.
+#' @param xi Overall rate of indels.
+#'
+#' @noRd
+#'
+NULL
+
+#' Initialize a MevoSampler object.
+#'
+#' @param Q An `unordered_map` of substitution rates for each nucleotide.
+#' @param pis Vector of nucleotide equilibrium frequencies for
+#'     "T", "C", "A", and "G", respectively.
+#' @param xi Overall rate of indels.
+#' @param psi Proportion of insertions to deletions.
+#' @param rel_insertion_rates Relative insertion rates.
+#' @param rel_deletion_rates Relative deletion rates.
+#'
+#' @noRd
+#'
+NULL
+
+test_sampling <- function(seq, N, pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, print_every = 1000L) {
+    .Call(`_gemino_test_sampling`, seq, N, pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, print_every)
+}
+
 #' Function to print info on a `RefGenome`.
 #'
 #' Access `RefGenome` class's print method from R.
@@ -281,8 +361,8 @@ optim_prob <- function(v, mean_pws_, dens_, seg_div_) {
 #'
 #' @noRd
 #'
-sample_seqs <- function(total_mutations, seq_lens, seeds) {
-    .Call(`_gemino_sample_seqs`, total_mutations, seq_lens, seeds)
+sample_seqs <- function(total_mutations, seq_lens, n_cores) {
+    .Call(`_gemino_sample_seqs`, total_mutations, seq_lens, n_cores)
 }
 
 #' Get possible nucleotide distributions and their pairwise differences.
@@ -336,8 +416,8 @@ cpp_nt_freq <- function(N) {
 #'
 #' @noRd
 #'
-make_variants_ <- function(n_mutations, ref_xptr, snp_combo_list, mutation_probs, mutation_types, mutation_sizes, seeds, n2N = 50, alpha = 0.8) {
-    .Call(`_gemino_make_variants_`, n_mutations, ref_xptr, snp_combo_list, mutation_probs, mutation_types, mutation_sizes, seeds, n2N, alpha)
+make_variants_ <- function(n_mutations, ref_xptr, snp_combo_list, mutation_probs, mutation_types, mutation_sizes, n_cores, n2N = 50, alpha = 0.8) {
+    .Call(`_gemino_make_variants_`, n_mutations, ref_xptr, snp_combo_list, mutation_probs, mutation_types, mutation_sizes, n_cores, n2N, alpha)
 }
 
 #' Read a non-indexed fasta file to a \code{RefGenome} object.
@@ -531,7 +611,7 @@ NULL
 #'
 NULL
 
-test_vitter_d <- function(reps, n, N, seeds, n2N = 50, alpha = 0.8) {
-    .Call(`_gemino_test_vitter_d`, reps, n, N, seeds, n2N, alpha)
+test_vitter_d <- function(reps, n, N, n_cores, n2N = 50, alpha = 0.8) {
+    .Call(`_gemino_test_vitter_d`, reps, n, N, n_cores, n2N, alpha)
 }
 
