@@ -294,6 +294,103 @@ std::unordered_map<char, std::vector<double>> TN93_rate_matrix(
 }
 
 
+
+//' Q matrix for rates for a given nucleotide using the JC69 substitution model.
+//'
+//' JC69 is a special case of TN93.
+//'
+//' @noRd
+//'
+std::unordered_map<char, std::vector<double>> JC69_rate_matrix(
+        const double& lambda, const double& xi) {
+
+    std::unordered_map<char, std::vector<double>> Q;
+    Q = TN93_rate_matrix(1, 1, 1, 1, lambda, lambda, lambda, xi);
+
+    return Q;
+}
+
+
+//' Q matrix for rates for a given nucleotide using the K80 substitution model.
+//'
+//' K80 is a special case of TN93.
+//'
+//' @noRd
+//'
+std::unordered_map<char, std::vector<double>> K80_rate_matrix(
+        const double& alpha, const double& beta,
+        const double& xi) {
+
+    std::unordered_map<char, std::vector<double>> Q;
+    Q = TN93_rate_matrix(1, 1, 1, 1, alpha, alpha, beta, xi);
+
+    return Q;
+}
+
+
+//' Q matrix for rates for a given nucleotide using the F81 substitution model.
+//'
+//' F81 is a special case of TN93.
+//'
+//' @noRd
+//'
+std::unordered_map<char, std::vector<double>> F81_rate_matrix(
+        const double& pi_a, const double& pi_c,
+        const double& pi_g, const double& pi_t,
+        const double& xi) {
+
+    std::unordered_map<char, std::vector<double>> Q;
+    Q = TN93_rate_matrix(pi_a, pi_c, pi_g, pi_t, 1, 1, 1, xi);
+
+    return Q;
+}
+
+
+//' Q matrix for rates for a given nucleotide using the HKY85 substitution model.
+//'
+//' HKY85 is a special case of TN93.
+//'
+//' @noRd
+//'
+std::unordered_map<char, std::vector<double>> HKY85_rate_matrix(
+        const double& pi_a, const double& pi_c,
+        const double& pi_g, const double& pi_t,
+        const double& alpha, const double& beta,
+        const double& xi) {
+
+    std::unordered_map<char, std::vector<double>> Q;
+    Q = TN93_rate_matrix(pi_a, pi_c, pi_g, pi_t, alpha, alpha, beta, xi);
+
+
+    return Q;
+}
+
+
+//' Q matrix for rates for a given nucleotide using the F84 substitution model.
+//'
+//' F84 is a special case of TN93.
+//'
+//' @noRd
+//'
+std::unordered_map<char, std::vector<double>> F84_rate_matrix(
+        const double& pi_a, const double& pi_c,
+        const double& pi_g, const double& pi_t,
+        const double& beta, const double& kappa,
+        const double& xi) {
+
+    double pi_y = pi_t + pi_c;
+    double pi_r = pi_a + pi_g;
+
+    double alpha_1 = 1 + kappa / pi_y;
+    double alpha_2 = 1 + kappa / pi_r;
+
+    std::unordered_map<char, std::vector<double>> Q;
+    Q = TN93_rate_matrix(pi_a, pi_c, pi_g, pi_t, alpha_1, alpha_2, beta, xi);
+
+    return Q;
+}
+
+
 //' Initialize a MevoSampler object.
 //'
 //' @param Q An `unordered_map` of substitution rates for each nucleotide.
