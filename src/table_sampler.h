@@ -101,13 +101,12 @@ public:
         : characters(other.characters), uint_sampler(other.uint_sampler),
           n(other.n) {}
 
-    std::string sample(const uint& N, pcg32& eng) const {
-        std::string out(N, 'x');
-        for (uint i = 0; i < N; i++) {
+    void sample(std::string& str, pcg32& eng) const {
+        for (uint i = 0; i < str.size(); i++) {
             uint k = uint_sampler.sample(eng);
-            out[i] = characters[k];
+            str[i] = characters[k];
         }
-        return out;
+        return;
     }
 
 private:
