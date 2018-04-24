@@ -393,6 +393,83 @@ std::unordered_map<char, std::vector<double>> F84_rate_matrix(
 
 
 
+//' Q matrix for rates for a given nucleotide using the GTR substitution model.
+//'
+//' @noRd
+//'
+std::unordered_map<char, std::vector<double>> GTR_rate_matrix(
+        const double& pi_t, const double& pi_c,
+        const double& pi_a, const double& pi_g,
+        const double& a, const double& b, const double& c,
+        const double& d, const double& e, const double& f,
+        const double& xi) {
+
+    arma::mat Qmat(4, 4, arma::fill::zeros);
+
+    // Filling in non-diagonals
+    arma::vec letters = {a, b, c, d, e, f};
+    uint k = 0;
+    for (uint i = 0; i < 3; i++) {
+        for (uint j = i+1; j < 4; j++) {
+            Qmat(i,j) = letters(k);
+            Qmat(j,i) = letters(k);
+            k++;
+        }
+    }
+    Qmat.col(0) *= pi_t;
+    Qmat.col(1) *= pi_c;
+    Qmat.col(2) *= pi_a;
+    Qmat.col(3) *= pi_g;
+
+    // Filling in diagonals
+    arma::vec rowsums = arma::sum(Qmat, 1);
+    rowsums += xi;
+    rowsums *= -1;
+    Qmat.diag() = rowsums;
+
+    // Converting to unordered_map
+    std::unordered_map<char, std::vector<double>> Q;
+    Q = {{'T', arma::conv_to<std::vector<double>>::from(Qmat.row(0))},
+         {'C', arma::conv_to<std::vector<double>>::from(Qmat.row(1))},
+         {'A', arma::conv_to<std::vector<double>>::from(Qmat.row(2))},
+         {'G', arma::conv_to<std::vector<double>>::from(Qmat.row(3))}};
+
+    return Q;
+
+}
+
+
+//' Q matrix for rates for a given nucleotide using the UNREST substitution model.
+//'
+//' @param Qmat Matrix of rates for "T", "C", "A", and "G", respectively.
+//'     Diagonals are ignored.
+//' @param xi Overall rate of indels.
+//'
+//' @noRd
+//'
+std::unordered_map<char, std::vector<double>> UNREST_rate_matrix(
+        arma::mat Qmat, const double& xi) {
+
+    // Filling in diagonals
+    arma::vec rowsums = arma::sum(Qmat, 1);
+    rowsums += xi;
+    rowsums *= -1;
+    Qmat.diag() = rowsums;
+
+    // Converting to unordered_map
+    std::unordered_map<char, std::vector<double>> Q;
+    Q = {{'T', arma::conv_to<std::vector<double>>::from(Qmat.row(0))},
+    {'C', arma::conv_to<std::vector<double>>::from(Qmat.row(1))},
+    {'A', arma::conv_to<std::vector<double>>::from(Qmat.row(2))},
+    {'G', arma::conv_to<std::vector<double>>::from(Qmat.row(3))}};
+
+    return Q;
+
+}
+
+
+
+
 
 //' Initialize a MevoSampler object.
 //'
