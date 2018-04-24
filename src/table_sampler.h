@@ -24,7 +24,7 @@
 using namespace Rcpp;
 
 namespace table_sampler {
-    static const std::string bases = "TCAG";
+    const std::string bases = "TCAG";
 }
 
 
@@ -33,10 +33,10 @@ class TableSampler {
 public:
     // Stores vectors of each category's Pr(sampled):
     std::vector<std::vector<uint>> T;
-    // Stores values at which to transitiion between vectors of `T`:
-    std::vector<uint> t;
+    // Stores values at which to transition between vectors of `T`:
+    std::vector<uint64> t;
 
-    TableSampler();
+    TableSampler() {};
     TableSampler(const std::vector<double>& probs);
     // Copy constructor
     TableSampler(const TableSampler& other) : T(other.T), t(other.t) {}
@@ -46,8 +46,8 @@ public:
     void print() const;
 
 private:
-    static uint dg(const uint& m, const uint& k) {
-        uint x = ((m>>(32-8*k))&255);
+    uint dg(const uint64& m, const uint& k) {
+        uint64 x = ((m>>(32-8*k))&255);
         return x;
     }
 };
