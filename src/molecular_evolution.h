@@ -58,6 +58,7 @@ struct SeqGammas {
 
 /*
  Stores info on the overall mutation rates for each nucleotide.
+ Ns are set to 0 bc we don't want to process these.
  */
 class MutationRates {
 public:
@@ -66,15 +67,15 @@ public:
     std::unordered_map<char, double> w;  // same as above, but sums to 1
 
     MutationRates() {
-        q = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}};
-        w = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}};
+        q = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}, {'N', 0}};
+        w = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}, {'N', 0}};
     };
     MutationRates(const std::vector<double>& rates) {
         if (rates.size() != 4) {
             stop("Making a MutationRates object requires a vector of size 4");
         }
-        q = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}};
-        w = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}};
+        q = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}, {'N', 0}};
+        w = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}, {'N', 0}};
         for (uint i = 0; i < 4; i++) q[mevo::bases[i]] = rates[i];
         double rate_sum = std::accumulate(rates.begin(), rates.end(), 0.0);
         for (uint i = 0; i < 4; i++) w[mevo::bases[i]] = rates[i] / rate_sum;
@@ -98,47 +99,60 @@ struct NucleoKeyPos {
 
 
 /*
- Perhaps for a single mutation's info?
+ For a single mutation's info
  */
 struct MutationInfo {
-    uint type;
-    uint length;
+    char nucleo;
+    sint length;
+    // Initialize from an index and event-lengths vector
+    MutationInfo (const uint& ind, const std::vector<sint>& event_lengths)
+        : nucleo('\0'), length(0) {
+        if (ind < 4) {
+            nucleo = mevo::bases[ind];
+        } else {
+            length = event_lengths[ind];
+        }
+    }
 };
 
 
 /*
- For table-sampling events depending on which nucleotide you start with
- The event_types vector indicates which type of event a location in one of
-     the unordered_map vectors is: 0:3 for substitution to A, C, G, and T,
-     respectively, 4 for insertion, and 5 for deletion.
-     It should be the same length as each vector for a given nucleotide in the
-     `F` or `L` fields.
- The event_lengths vector should be the coincide with items in the event_types
-     vector, but it tells how long each event is. For substitutions, this field
-     is ignored, but a filler value should be provided so the event_lengths
-     and event_types vectors are the same length.
+ For table-sampling events depending on which nucleotide you start with.
+ The event_lengths vector tells how long each event is.
+ This field is 0 for substitions, < 0 for deletions, and > 0 for insertions.
  */
-class EventSampler {
+class MutationSampler {
 public:
 
     std::unordered_map<char, TableSampler> sampler;
     std::vector<sint> event_lengths;
 
-    EventSampler() {
+    MutationSampler() {
         sampler = {{'A', TableSampler()},
                    {'C', TableSampler()},
                    {'G', TableSampler()},
                    {'T', TableSampler()}};
     }
-    EventSampler(const uint& N) : sampler(), event_lengths(N, 0) {
+    MutationSampler(const uint& N) : sampler(), event_lengths(N, 0) {
         sampler = {{'A', TableSampler()},
                    {'C', TableSampler()},
                    {'G', TableSampler()},
                    {'T', TableSampler()}};
     }
     // copy constructor
-    EventSampler(const EventSampler& other)
+    MutationSampler(const MutationSampler& other)
         : sampler(other.sampler), event_lengths(other.event_lengths) {}
+
+    /*
+     Sample an event based on an input nucleotide.
+     Will return error if `c` is not one of 'A', 'C', 'G', or 'T'
+     So make sure no 'N's get input here!
+     */
+    MutationInfo sample(const char& c, pcg32& eng) const {
+        uint ind = sampler.at(c).sample(eng);
+        MutationInfo mi(ind, event_lengths);
+        return mi;
+    }
 };
 
 
@@ -147,13 +161,21 @@ public:
 class MevoSampler {
 public:
 
-    MevoSampler(const EventSampler& event_, const TableStringSampler<std::string>& nucleo_)
-        : event_sampler(event_), nt_sampler(nucleo_) {};
-    // MevoSampler(uint N) : event(N), nucleo() {};
-    // MevoSampler() : event(), nucleo() {};
+    MevoSampler(const std::unordered_map<char, std::vector<double>>& Q,
+                const double& xi, const double& psi, const std::vector<double>& pis,
+                arma::vec rel_insertion_rates, arma::vec rel_deletion_rates);
+    MevoSampler(const MutationSampler& event_,
+                const TableStringSampler<std::string>& nucleo_,
+                const MutationRates& rates_)
+        : muts(event_), nts(nucleo_), rates(rates_) {};
+
 private:
-    EventSampler event_sampler;
-    TableStringSampler<std::string> nt_sampler;
+    // For sampling the type of mutation:
+    MutationSampler muts;
+    // For insertion sequences:
+    TableStringSampler<std::string> nts;
+    // For overall mutation rates by nucleotide:
+    MutationRates rates;
 };
 
 
