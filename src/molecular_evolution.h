@@ -21,7 +21,7 @@ using namespace Rcpp;
 
 namespace mevo {
     const std::string bases = "TCAG";
-    std::unordered_map<char, uint> base_inds = {{'A', 0}, {'C', 1}, {'G', 2}, {'T', 3}};
+    std::unordered_map<char, uint> base_inds = {{'T', 0}, {'C', 1}, {'A', 2}, {'G', 3}};
 }
 
 
@@ -67,15 +67,15 @@ public:
     std::unordered_map<char, double> w;  // same as above, but sums to 1
 
     MutationRates() {
-        q = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}, {'N', 0}};
-        w = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}, {'N', 0}};
+        q = {{'T', 0}, {'C', 0}, {'A', 0}, {'G', 0}, {'N', 0}};
+        w = {{'T', 0}, {'C', 0}, {'A', 0}, {'G', 0}, {'N', 0}};
     };
     MutationRates(const std::vector<double>& rates) {
         if (rates.size() != 4) {
             stop("Making a MutationRates object requires a vector of size 4");
         }
-        q = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}, {'N', 0}};
-        w = {{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}, {'N', 0}};
+        q = {{'T', 0}, {'C', 0}, {'A', 0}, {'G', 0}, {'N', 0}};
+        w = {{'T', 0}, {'C', 0}, {'A', 0}, {'G', 0}, {'N', 0}};
         for (uint i = 0; i < 4; i++) q[mevo::bases[i]] = rates[i];
         double rate_sum = std::accumulate(rates.begin(), rates.end(), 0.0);
         for (uint i = 0; i < 4; i++) w[mevo::bases[i]] = rates[i] / rate_sum;

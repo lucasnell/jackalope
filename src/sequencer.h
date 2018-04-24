@@ -58,7 +58,7 @@ namespace sequencer
     std::string bases = "TCAGN";
     // For choosing a base for a mismatch:
     std::unordered_map<char,std::string> pick_mismatch = {
-        {'A', "TCGN"}, {'C', "TAGN"}, {'G', "TCAN"}, {'T', "CAGN"}, {'N', "TCAG"}
+        {'T', "CAGN"}, {'C', "TAGN"}, {'A', "TCGN"}, {'G', "TCAN"}, {'N', "TCAG"}
     };
 }
 

@@ -252,8 +252,8 @@ using namespace Rcpp;
 //' @noRd
 //'
 std::unordered_map<char, std::vector<double>> TN93_rate_matrix(
-        const double& pi_a, const double& pi_c,
-        const double& pi_g, const double& pi_t,
+        const double& pi_t, const double& pi_c,
+        const double& pi_a, const double& pi_g,
         const double& alpha_1, const double& alpha_2, const double& beta,
         const double& xi) {
 
@@ -335,8 +335,8 @@ std::unordered_map<char, std::vector<double>> K80_rate_matrix(
 //' @noRd
 //'
 std::unordered_map<char, std::vector<double>> F81_rate_matrix(
-        const double& pi_a, const double& pi_c,
-        const double& pi_g, const double& pi_t,
+        const double& pi_t, const double& pi_c,
+        const double& pi_a, const double& pi_g,
         const double& xi) {
 
     std::unordered_map<char, std::vector<double>> Q;
@@ -353,8 +353,8 @@ std::unordered_map<char, std::vector<double>> F81_rate_matrix(
 //' @noRd
 //'
 std::unordered_map<char, std::vector<double>> HKY85_rate_matrix(
-        const double& pi_a, const double& pi_c,
-        const double& pi_g, const double& pi_t,
+        const double& pi_t, const double& pi_c,
+        const double& pi_a, const double& pi_g,
         const double& alpha, const double& beta,
         const double& xi) {
 
@@ -373,8 +373,8 @@ std::unordered_map<char, std::vector<double>> HKY85_rate_matrix(
 //' @noRd
 //'
 std::unordered_map<char, std::vector<double>> F84_rate_matrix(
-        const double& pi_a, const double& pi_c,
-        const double& pi_g, const double& pi_t,
+        const double& pi_t, const double& pi_c,
+        const double& pi_a, const double& pi_g,
         const double& beta, const double& kappa,
         const double& xi) {
 
@@ -389,6 +389,9 @@ std::unordered_map<char, std::vector<double>> F84_rate_matrix(
 
     return Q;
 }
+
+
+
 
 
 //' Initialize a MevoSampler object.
