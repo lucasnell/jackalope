@@ -307,7 +307,7 @@ inline std::vector<uint> ld_lessthan(const std::vector<long double>& v,
 }
 
 template <typename RNG>
-void fill_ints64(const std::vector<long double>& p, std::vector<uint64>& ints,
+void fill_ints64(const std::vector<long double>& p, std::vector<uint128>& ints,
                  RNG& eng) {
 
     // Vector holding the transitory values that will eventually be inserted into `int`
@@ -318,11 +318,11 @@ void fill_ints64(const std::vector<long double>& p, std::vector<uint64>& ints,
         pp[i] /= pp_sum;
         pp[i] *= samplers::max64;
         pp[i] = std::round(pp[i]);
-        ints[i] = static_cast<uint64>(pp[i]);
+        ints[i] = static_cast<uint128>(pp[i]);
     }
     pp_sum = std::accumulate(pp.begin(), pp.end(), 0.0L);
 
-    long double d = samplers::max64 - pp_sum;
+    long double d = samplers::max64 + 1 - pp_sum;
 
     // Vector for weighted sampling from vector of probabilities
     std::vector<long double> p2(p);
@@ -342,7 +342,7 @@ void fill_ints64(const std::vector<long double>& p, std::vector<uint64>& ints,
         for (uint zz = 0; zz < 8; zz++) z *= 0.5L;
         iv = ld_lessthan(p2, z);
     }
-    for (uint i : iv) p2[i] = 0.0L;
+    for (uint& i : iv) p2[i] = 0.0L;
     p2_sum = std::accumulate(p2.begin(), p2.end(), 0.0L);
     for (uint i = 0; i < p2.size(); i++) p2[i] /= p2_sum;
     for (uint i = 1; i < p2.size(); i++) p2[i] += p2[i-1];  // cumulative sum
@@ -372,14 +372,14 @@ public:
     // Stores vectors of each category's Pr(sampled):
     std::vector<std::vector<uint>> T;
     // Stores values at which to transition between vectors of `T`:
-    std::vector<uint64> t;
+    std::vector<uint128> t;
 
     TableTable64(const std::vector<long double>& probs, RNG& eng) : T(4), t(3, 0) {
 
         uint n_tables = T.size();
 
         uint n = probs.size();
-        std::vector<uint64> ints(n);
+        std::vector<uint128> ints(n);
         // Filling the `ints` vector based on `probs`
         fill_ints64<RNG>(probs, ints, eng);
 
@@ -393,9 +393,8 @@ public:
 
         // Adding up thresholds in the `t` vector
         for (uint64 k = 0; k < (n_tables - 1); k++) {
-            t[k] = static_cast<uint64>(sizes[k]);
-            uint64 kk = 64 - 16 * (1 + k);
-            t[k]<<=kk;
+            t[k] = sizes[k];
+            t[k] <<= (64 - 16 * (1 + k));
             if (k > 0) t[k] += t[k-1];
         }
         // Re-sizing `T` vectors:
@@ -421,8 +420,8 @@ public:
     }
 
 private:
-    static uint dg64(const uint64& m, const uint& k) {
-        uint64 x = ((m>>(64ULL-16ULL*static_cast<uint64>(k)))&65535ULL);
+    static uint dg64(const uint128& m, const uint& k) {
+        uint128 x = ((m>>(64ULL-16ULL*static_cast<uint128>(k)))&65535ULL);
         uint y = static_cast<uint>(x);
         return y;
     }

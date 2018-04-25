@@ -176,17 +176,17 @@ inline long double runif_01(pcg64& eng) {
 }
 // uniform in range (a,b)
 inline double runif_ab(pcg32& eng, const double& a, const double& b) {
-    return a + runif_01(eng) * (b - a);
+    return a + ((static_cast<double>(eng()) + 1) / (pcg::max + 2)) * (b - a);
 }
 inline long double runif_ab(pcg64& eng, const long double& a, const long double& b) {
-    return a + runif_01(eng) * (b - a);
+    return a + ((static_cast<long double>(eng()) + 1) / (pcg::max64 + 2)) * (b - a);
 }
 // uniform in range [a,b]
 inline uint runif_aabb(pcg32& eng, const uint& a, const uint& b) {
-    return a + runif_01(eng) * (b - a + 1);
+    return a + ((static_cast<double>(eng()) + 1) / (pcg::max + 2)) * (b - a + 1);
 }
 inline uint64 runif_aabb(pcg64& eng, const uint64& a, const uint64& b) {
-    return a + runif_01(eng) * (b - a + 1);
+    return a + ((static_cast<long double>(eng()) + 1) / (pcg::max64 + 2)) * (b - a + 1);
 }
 
 
