@@ -282,8 +282,8 @@ NULL
 #'
 NULL
 
-test_sampling <- function(seq, N, pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, print_every = 1000L) {
-    .Call(`_gemino_test_sampling`, seq, N, pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, print_every)
+test_sampling <- function(seq, N, pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates) {
+    .Call(`_gemino_test_sampling`, seq, N, pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates)
 }
 
 #' Function to print info on a `RefGenome`.

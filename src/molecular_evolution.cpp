@@ -1,12 +1,11 @@
+
 #include <RcppArmadillo.h>
+#include <cmath>  // pow, log, exp
 #include <pcg/pcg_random.hpp> // pcg prng
 #include <vector>  // vector class
 #include <string>  // string class
 #include <unordered_map>  // unordered_map
-#include <deque>  // deque
-#ifdef _OPENMP
-#include <omp.h>  // omp
-#endif
+
 
 
 #include "gemino_types.h"
@@ -265,7 +264,8 @@ MevoSampler::MevoSampler(const std::unordered_map<char, std::vector<double>>& Q,
                          const double& psi,
                          const std::vector<double>& pis,
                          arma::vec rel_insertion_rates,
-                         arma::vec rel_deletion_rates) {
+                         arma::vec rel_deletion_rates)
+    : muts(), nts(), rates() {
 
     uint n_events = 4 + rel_insertion_rates.n_elem + rel_deletion_rates.n_elem;
 
@@ -278,38 +278,39 @@ MevoSampler::MevoSampler(const std::unordered_map<char, std::vector<double>>& Q,
     rel_insertion_rates *= xi_i;
     rel_deletion_rates *= xi_d;
 
+
     /*
      (1) Combine substitution, insertion, and deletion rates into a single vector
      (2) Create TableSampler for each nucleotide
      (3) Fill the `rates` field with mutation rates for each nucleotide
      */
-    double total_rate = 0;
-    for (char c : mevo::bases) {
+    for (uint i = 0; i < 4; i++) {
+
+        char c = mevo::bases[i];
+
         std::vector<double> qc = Q.at(c);
         // Get the rate of change for this nucleotide
-        double qi = -1.0 * qc[mevo::base_inds[c]];
-        total_rate += qi;
-        rates.q[c] = qi;
+        double qi = -1.0 * qc[i];
+        rates.rates[c] = qi;
         /*
          Now that cell needs to be manually converted to zero so it's not sampled.
          (Remember, we want the probability of each, *given that a mutation occurs*.
           Mutating into itself doesn't count.)
          */
-        qc[mevo::base_inds[c]] = 0;
+        qc[i] = 0;
         // Add insertions, then deletions
         qc.reserve(n_events);
-        for (uint i = 0; i < rel_insertion_rates.n_elem; i++) {
-            qc.push_back(rel_insertion_rates(i));
+        for (uint j = 0; j < rel_insertion_rates.n_elem; j++) {
+            qc.push_back(rel_insertion_rates(j));
         }
-        for (uint i = 0; i < rel_deletion_rates.n_elem; i++) {
-            qc.push_back(rel_deletion_rates(i));
+        for (uint j = 0; j < rel_deletion_rates.n_elem; j++) {
+            qc.push_back(rel_deletion_rates(j));
         }
         // Divide all by qi to make them probabilities
-        for (uint i = 0; i < n_events; i++) qc[i] /= qi;
+        for (uint j = 0; j < n_events; j++) qc[j] /= qi;
         // Fill TableSampler
-        muts.sampler[c] = TableSampler(qc);
+        muts.sampler[i] = TableSampler(qc);
     }
-    for (char c : mevo::bases) rates.w[c] = rates.q[c] / total_rate;
 
     // Now filling in event_lengths field of MutationSampler
     muts.event_lengths = std::vector<sint>(n_events, 0);
@@ -323,7 +324,7 @@ MevoSampler::MevoSampler(const std::unordered_map<char, std::vector<double>>& Q,
     }
 
     // Now fill in the insertion-sequence sampler:
-    nts = TableStringSampler<std::string>(table_sampler::bases, pis);
+    nts = TableStringSampler<std::string>(mevo::bases, pis);
 
     return;
 }
@@ -346,22 +347,23 @@ uint event_location(const std::string& S,
                     const MevoSampler& ms,
                     pcg32& eng) {
 
-    if (S.size() == 0) stop("Empty string sent to event_location.");
-    if (S.size() == 1) return 0;
+    // if (S.size() == 0) stop("Empty string sent to event_location.");
+    // if (S.size() == 1) return 0;
 
     double r, key, X, w, t;
     uint N = S.size();
 
     // Create a NucleoKeys object to store position and key
     r = runif_01(eng);
-    key = std::log(r) / ms.rate(S[0]);
-    key = std::exp(key);
-    NucleoKeyPos pq(key, 0);
+    key = std::pow(r, 1 / ms.rate(S[0]));
+    double largest_key = key; // largest key (the one we're going to keep)
+    uint largest_pos = 0;     // position where largest key was found
 
     uint c = 0;
     while (c < (N-1)) {
-        r = runif_01(eng);
-        X = std::log(r) / std::log(pq.key);
+        // r = runif_01(eng);
+        r = (static_cast<double>(eng()) + 1.0) / (pcg::max + 2.0);
+        X = std::log(r) / std::log(largest_key);
         uint i = c + 1;
         double wt_sum0 = ms.rate(S[c]);
         double wt_sum1 = ms.rate(S[c]) + ms.rate(S[i]);
@@ -373,19 +375,21 @@ uint event_location(const std::string& S,
         if (X > wt_sum1) break;
         if (wt_sum0 >= X) continue;
 
-        pq.pos = i;
+        largest_pos = i;
 
         w = ms.rate(S[i]);
-        t = std::pow(pq.key, w);
-        r = runif_ab(eng, t, 1.0);
+        t = std::pow(largest_key, w);
+        // r = runif_ab(eng, t, 1.0);
+        r = t + ((static_cast<double>(eng()) + 1.0) / (pcg::max + 2.0)) * (1.0 - t);
         key = std::pow(r, 1 / w);
-        pq.key = key;
+        largest_key = key;
 
         c = i;
     }
 
-    return pq.pos;
+    return largest_pos;
 }
+
 
 
 
@@ -404,16 +408,10 @@ std::vector<uint> test_sampling(const std::string& seq, const uint& N,
                                 const double& beta,
                                 const double& xi, const double& psi,
                                 const arma::vec& rel_insertion_rates,
-                                const arma::vec& rel_deletion_rates,
-                                const uint& print_every = 1000) {
+                                const arma::vec& rel_deletion_rates) {
 
     std::unordered_map<char, std::vector<double>> Q;
     Q = TN93_rate_matrix(pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi);
-
-    for (const char& c : mevo::bases) {
-        for (const double& x : Q.at(c)) Rcout << x << ' ';
-        Rcout << std::endl;
-    }
 
     std::vector<double> pis = {pi_t, pi_c, pi_a, pi_g};
 
@@ -426,7 +424,6 @@ std::vector<uint> test_sampling(const std::string& seq, const uint& N,
     for (uint i = 0; i < N; i++) {
         Rcpp::checkUserInterrupt();
         out[i] = event_location(seq, ms, eng);
-        if (i % print_every == 0) Rcout << i << std::endl;
     }
 
     return out;

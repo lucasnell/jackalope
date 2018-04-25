@@ -21,7 +21,6 @@ using namespace Rcpp;
 
 namespace mevo {
     const std::string bases = "TCAG";
-    std::unordered_map<char, uint> base_inds = {{'T', 0}, {'C', 1}, {'A', 2}, {'G', 3}};
 }
 
 
@@ -59,53 +58,39 @@ struct SeqGammas {
 /*
  Stores info on the overall mutation rates for each nucleotide.
  Ns are set to 0 bc we don't want to process these.
+ Input char objects are cast to uint which provide the indices.
+ T, C, A, G, and N should never be higher than 84, so will be safe.
+ If you're worried about other characters accidentally being input to it, you can
+ set `rates` to size 256.
  */
 class MutationRates {
 public:
 
-    std::unordered_map<char, double> q;  // rates for a given nucleotide
-    std::unordered_map<char, double> w;  // same as above, but sums to 1
+    std::vector<double> rates;
 
-    MutationRates() {
-        q = {{'T', 0}, {'C', 0}, {'A', 0}, {'G', 0}, {'N', 0}};
-        w = {{'T', 0}, {'C', 0}, {'A', 0}, {'G', 0}, {'N', 0}};
-    };
-    MutationRates(const std::vector<double>& rates) {
-        if (rates.size() != 4) {
-            stop("Making a MutationRates object requires a vector of size 4");
-        }
-        q = {{'T', 0}, {'C', 0}, {'A', 0}, {'G', 0}, {'N', 0}};
-        w = {{'T', 0}, {'C', 0}, {'A', 0}, {'G', 0}, {'N', 0}};
-        for (uint i = 0; i < 4; i++) q[mevo::bases[i]] = rates[i];
-        double rate_sum = std::accumulate(rates.begin(), rates.end(), 0.0);
-        for (uint i = 0; i < 4; i++) w[mevo::bases[i]] = rates[i] / rate_sum;
-    };
+    MutationRates() : rates(85, 0.0) {}
 
-    // Rate for an entire sequence:
-    double seq_rate(const std::string& seq) const {
-        double rate = 0;
-        for (const char& c : seq) {
-            rate += q.at(c);
+    MutationRates(const std::vector<double>& rates_) : rates(85, 0.0) {
+        for (uint i = 0; i < 4; i++) {
+            uint j = mevo::bases[i];
+            rates[j] = rates_[i];
         }
-        return rate;
     }
 
+    inline double rate(const uint& i) const {
+        return rates[i];
+    }
+
+    double operator[](const uint& i) const {
+        return rates[i];
+    }
+    double& operator[](const uint& i) {
+        return rates[i];
+    }
 };
 
 
 
-
-// struct to store info on a nucleotide's key value and position for weighted sampling
-class NucleoKeyPos {
-public:
-
-    double key;
-    uint pos;
-
-    NucleoKeyPos() : key(0.0), pos(0) {};
-    NucleoKeyPos(const double& _key, const uint& _pos) : key(_key), pos(_pos) {};
-
-};
 
 
 /*
@@ -126,43 +111,56 @@ struct MutationInfo {
 };
 
 
+
+/*
+ For constructors, this creates a vector of indices for each char in "TCAG" (0 to 3).
+ Because char objects can be easily cast to uints, I can input a char from a sequence
+ and get out an index to which TableSampler object to sample from.
+ This way is much faster than using an unordered_map.
+ Using 8-bit uints bc the char should never be >= 256.
+ */
+inline std::vector<uint8> make_base_inds() {
+    std::vector<uint8> base_inds(85);
+    uint8 i = 0;
+    for (const char& c : mevo::bases) {
+        base_inds[c] = i;
+        i++;
+    }
+    return base_inds;
+}
+
 /*
  For table-sampling events depending on which nucleotide you start with.
- The event_lengths vector tells how long each event is.
+ The `event_lengths` vector tells how long each event is.
  This field is 0 for substitions, < 0 for deletions, and > 0 for insertions.
  */
 class MutationSampler {
 public:
 
-    std::unordered_map<char, TableSampler> sampler;
+    std::vector<TableSampler> sampler;
     std::vector<sint> event_lengths;
 
-    MutationSampler() {
-        sampler = {{'A', TableSampler()},
-                   {'C', TableSampler()},
-                   {'G', TableSampler()},
-                   {'T', TableSampler()}};
-    }
-    MutationSampler(const uint& N) : sampler(), event_lengths(N, 0) {
-        sampler = {{'A', TableSampler()},
-                   {'C', TableSampler()},
-                   {'G', TableSampler()},
-                   {'T', TableSampler()}};
+    MutationSampler() : sampler(4), event_lengths() {
+        base_inds = make_base_inds();
     }
     // copy constructor
     MutationSampler(const MutationSampler& other)
-        : sampler(other.sampler), event_lengths(other.event_lengths) {}
+        : sampler(other.sampler), event_lengths(other.event_lengths),
+          base_inds(other.base_inds) {}
 
     /*
      Sample an event based on an input nucleotide.
-     Will return error if `c` is not one of 'A', 'C', 'G', or 'T'
-     So make sure no 'N's get input here!
+     `c` gets cast to an uint, which is then input to `base_inds` to get the index
+     from 0 to 3.
      */
     MutationInfo sample(const char& c, pcg32& eng) const {
-        uint ind = sampler.at(c).sample(eng);
+        uint ind = sampler[base_inds[c]].sample(eng);
         MutationInfo mi(ind, event_lengths);
         return mi;
     }
+
+private:
+    std::vector<uint8> base_inds;
 };
 
 
@@ -179,21 +177,15 @@ public:
                 const MutationRates& rates_)
         : muts(event_), nts(nucleo_), rates(rates_) {};
 
-    double rate(const char& c) const {
-        return rates.w.at(c);
+    inline double rate(const char& c) const {
+        return rates.rate(c);
     }
 
-    double seq_rate(const std::string& seq) const {
-        double rate_ = rates.seq_rate(seq);
-        return rate_;
+    inline MutationInfo sample_muts(const char& c, pcg32& eng) const {
+        return muts.sample(c, eng);
     }
 
-    MutationInfo sample_muts(const char& c, pcg32& eng) const {
-        MutationInfo mut = muts.sample(c, eng);
-        return mut;
-    }
-
-    std::string sample_nts(const uint& len, pcg32& eng) const {
+    inline std::string sample_nts(const uint& len, pcg32& eng) const {
         std::string str(len, 'x');
         nts.sample(str, eng);
         return str;
