@@ -4,7 +4,6 @@
 #include <pcg/pcg_random.hpp> // pcg prng
 #include <vector>  // vector class
 #include <string>  // string class
-#include <unordered_map>  // unordered_map
 
 
 
@@ -25,41 +24,26 @@ using namespace Rcpp;
 //'
 //' @noRd
 //'
-std::unordered_map<char, std::vector<double>> TN93_rate_matrix(
+arma::mat TN93_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& alpha_1, const double& alpha_2, const double& beta,
         const double& xi) {
 
-    double pi_y = pi_t + pi_c;
-    double pi_r = pi_a + pi_g;
+    arma::vec pis = {pi_t, pi_c, pi_a, pi_g};
 
-    /*
-     Rate vectors ("Q" matrix in Yang (2006)).
-     (These vectors are only used in the construction of the final object, so they don't
-     need to be retained in their own class.)
-    */
-    std::unordered_map<char, std::vector<double>> Q;
+    arma::mat Q(4,4);
+    Q.fill(beta);
+    Q.submat(arma::span(0,1), arma::span(0,1)).fill(alpha_1);
+    Q.submat(arma::span(2,3), arma::span(2,3)).fill(alpha_2);
+    for (uint i = 0; i < 4; i++) Q.col(i) *= pis(i);
 
-    Q['T'] = {-(alpha_1 * pi_c + beta * pi_r + xi),
-              alpha_1 * pi_c,
-              beta * pi_a,
-              beta * pi_g};
-
-    Q['C'] = {alpha_1 * pi_t,
-              -(alpha_1 * pi_t + beta * pi_r + xi),
-              beta * pi_a,
-              beta * pi_g};
-
-    Q['A'] = {beta * pi_t,
-              beta * pi_c,
-              -(alpha_2 * pi_g + beta * pi_y + xi),
-              alpha_2 * pi_g};
-
-    Q['G'] = {beta * pi_t,
-              beta * pi_c,
-              alpha_2 * pi_a,
-              -(alpha_2 * pi_a + beta * pi_y + xi)};
+    // Filling in diagonals
+    Q.diag().fill(0.0);  // reset to zero so summing by row works
+    arma::vec rowsums = arma::sum(Q, 1);
+    rowsums += xi;
+    rowsums *= -1;
+    Q.diag() = rowsums;
 
     return Q;
 }
@@ -72,11 +56,10 @@ std::unordered_map<char, std::vector<double>> TN93_rate_matrix(
 //'
 //' @noRd
 //'
-std::unordered_map<char, std::vector<double>> JC69_rate_matrix(
+arma::mat JC69_rate_matrix(
         const double& lambda, const double& xi) {
 
-    std::unordered_map<char, std::vector<double>> Q;
-    Q = TN93_rate_matrix(1, 1, 1, 1, lambda, lambda, lambda, xi);
+    arma::mat Q = TN93_rate_matrix(1, 1, 1, 1, lambda, lambda, lambda, xi);
 
     return Q;
 }
@@ -88,12 +71,11 @@ std::unordered_map<char, std::vector<double>> JC69_rate_matrix(
 //'
 //' @noRd
 //'
-std::unordered_map<char, std::vector<double>> K80_rate_matrix(
+arma::mat K80_rate_matrix(
         const double& alpha, const double& beta,
         const double& xi) {
 
-    std::unordered_map<char, std::vector<double>> Q;
-    Q = TN93_rate_matrix(1, 1, 1, 1, alpha, alpha, beta, xi);
+    arma::mat Q = TN93_rate_matrix(1, 1, 1, 1, alpha, alpha, beta, xi);
 
     return Q;
 }
@@ -105,13 +87,12 @@ std::unordered_map<char, std::vector<double>> K80_rate_matrix(
 //'
 //' @noRd
 //'
-std::unordered_map<char, std::vector<double>> F81_rate_matrix(
+arma::mat F81_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& xi) {
 
-    std::unordered_map<char, std::vector<double>> Q;
-    Q = TN93_rate_matrix(pi_a, pi_c, pi_g, pi_t, 1, 1, 1, xi);
+    arma::mat Q = TN93_rate_matrix(pi_a, pi_c, pi_g, pi_t, 1, 1, 1, xi);
 
     return Q;
 }
@@ -123,14 +104,13 @@ std::unordered_map<char, std::vector<double>> F81_rate_matrix(
 //'
 //' @noRd
 //'
-std::unordered_map<char, std::vector<double>> HKY85_rate_matrix(
+arma::mat HKY85_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& alpha, const double& beta,
         const double& xi) {
 
-    std::unordered_map<char, std::vector<double>> Q;
-    Q = TN93_rate_matrix(pi_a, pi_c, pi_g, pi_t, alpha, alpha, beta, xi);
+    arma::mat Q = TN93_rate_matrix(pi_a, pi_c, pi_g, pi_t, alpha, alpha, beta, xi);
 
 
     return Q;
@@ -143,7 +123,7 @@ std::unordered_map<char, std::vector<double>> HKY85_rate_matrix(
 //'
 //' @noRd
 //'
-std::unordered_map<char, std::vector<double>> F84_rate_matrix(
+arma::mat F84_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& beta, const double& kappa,
@@ -155,8 +135,7 @@ std::unordered_map<char, std::vector<double>> F84_rate_matrix(
     double alpha_1 = 1 + kappa / pi_y;
     double alpha_2 = 1 + kappa / pi_r;
 
-    std::unordered_map<char, std::vector<double>> Q;
-    Q = TN93_rate_matrix(pi_a, pi_c, pi_g, pi_t, alpha_1, alpha_2, beta, xi);
+    arma::mat Q = TN93_rate_matrix(pi_a, pi_c, pi_g, pi_t, alpha_1, alpha_2, beta, xi);
 
     return Q;
 }
@@ -168,42 +147,34 @@ std::unordered_map<char, std::vector<double>> F84_rate_matrix(
 //'
 //' @noRd
 //'
-std::unordered_map<char, std::vector<double>> GTR_rate_matrix(
+arma::mat GTR_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& a, const double& b, const double& c,
         const double& d, const double& e, const double& f,
         const double& xi) {
 
-    arma::mat Qmat(4, 4, arma::fill::zeros);
+    arma::vec pis = {pi_t, pi_c, pi_a, pi_g};
+
+    arma::mat Q(4, 4, arma::fill::zeros);
 
     // Filling in non-diagonals
     arma::vec letters = {a, b, c, d, e, f};
     uint k = 0;
     for (uint i = 0; i < 3; i++) {
         for (uint j = i+1; j < 4; j++) {
-            Qmat(i,j) = letters(k);
-            Qmat(j,i) = letters(k);
+            Q(i,j) = letters(k);
+            Q(j,i) = letters(k);
             k++;
         }
     }
-    Qmat.col(0) *= pi_t;
-    Qmat.col(1) *= pi_c;
-    Qmat.col(2) *= pi_a;
-    Qmat.col(3) *= pi_g;
+    for (uint i = 0; i < 4; i++) Q.col(i) *= pis(i);
 
     // Filling in diagonals
-    arma::vec rowsums = arma::sum(Qmat, 1);
+    arma::vec rowsums = arma::sum(Q, 1);
     rowsums += xi;
     rowsums *= -1;
-    Qmat.diag() = rowsums;
-
-    // Converting to unordered_map
-    std::unordered_map<char, std::vector<double>> Q;
-    Q = {{'T', arma::conv_to<std::vector<double>>::from(Qmat.row(0))},
-         {'C', arma::conv_to<std::vector<double>>::from(Qmat.row(1))},
-         {'A', arma::conv_to<std::vector<double>>::from(Qmat.row(2))},
-         {'G', arma::conv_to<std::vector<double>>::from(Qmat.row(3))}};
+    Q.diag() = rowsums;
 
     return Q;
 
@@ -212,29 +183,22 @@ std::unordered_map<char, std::vector<double>> GTR_rate_matrix(
 
 //' Q matrix for rates for a given nucleotide using the UNREST substitution model.
 //'
-//' @param Qmat Matrix of rates for "T", "C", "A", and "G", respectively.
+//' @param Q Matrix of rates for "T", "C", "A", and "G", respectively.
 //'     Diagonal values are ignored.
 //' @param xi Overall rate of indels.
 //'
 //' @noRd
 //'
-std::unordered_map<char, std::vector<double>> UNREST_rate_matrix(
-        arma::mat Qmat, const double& xi) {
+arma::mat UNREST_rate_matrix(
+        arma::mat Q, const double& xi) {
 
-    // Forcing diagonals to be zero
-    Qmat.diag() *= 0;
+    // reset to zero so summing by row works
+    Q.diag().fill(0.0);
     // Filling in diagonals
-    arma::vec rowsums = arma::sum(Qmat, 1);
+    arma::vec rowsums = arma::sum(Q, 1);
     rowsums += xi;
     rowsums *= -1;
-    Qmat.diag() = rowsums;
-
-    // Converting to unordered_map
-    std::unordered_map<char, std::vector<double>> Q;
-    Q = {{'T', arma::conv_to<std::vector<double>>::from(Qmat.row(0))},
-    {'C', arma::conv_to<std::vector<double>>::from(Qmat.row(1))},
-    {'A', arma::conv_to<std::vector<double>>::from(Qmat.row(2))},
-    {'G', arma::conv_to<std::vector<double>>::from(Qmat.row(3))}};
+    Q.diag() = rowsums;
 
     return Q;
 
@@ -246,7 +210,7 @@ std::unordered_map<char, std::vector<double>> UNREST_rate_matrix(
 
 //' Initialize a MevoSampler object.
 //'
-//' @param Q An `unordered_map` of substitution rates for each nucleotide.
+//' @param Q A matrix of substitution rates for each nucleotide.
 //' @param pis Vector of nucleotide equilibrium frequencies for
 //'     "T", "C", "A", and "G", respectively.
 //' @param xi Overall rate of indels.
@@ -256,7 +220,7 @@ std::unordered_map<char, std::vector<double>> UNREST_rate_matrix(
 //'
 //' @noRd
 //'
-MevoSampler::MevoSampler(const std::unordered_map<char, std::vector<double>>& Q,
+MevoSampler::MevoSampler(const arma::mat& Q,
                          const double& xi,
                          const double& psi,
                          const std::vector<double>& pis,
@@ -285,12 +249,12 @@ MevoSampler::MevoSampler(const std::unordered_map<char, std::vector<double>>& Q,
 
         char c = mevo::bases[i];
 
-        std::vector<double> qc = Q.at(c);
+        std::vector<double> qc = arma::conv_to<std::vector<double>>::from(Q.col(i));
         // Get the rate of change for this nucleotide
         double qi = -1.0 * qc[i];
         rates.rates[c] = qi;
         /*
-         Now that cell needs to be manually converted to zero so it's not sampled.
+         Now cell `i` in `qc` needs to be manually converted to zero so it's not sampled.
          (Remember, we want the probability of each, *given that a mutation occurs*.
           Mutating into itself doesn't count.)
          */
@@ -419,8 +383,7 @@ std::vector<uint> test_sampling(const std::string& seq, const uint& N,
                                 const arma::vec& rel_deletion_rates,
                                 const uint& chunk_size) {
 
-    std::unordered_map<char, std::vector<double>> Q;
-    Q = TN93_rate_matrix(pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi);
+    arma::mat Q = TN93_rate_matrix(pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi);
 
     std::vector<double> pis = {pi_t, pi_c, pi_a, pi_g};
 

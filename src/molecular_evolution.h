@@ -7,7 +7,6 @@
 #include <vector>  // vector class
 #include <string>  // string class
 #include <random>  // gamma_distribution
-#include <unordered_map>  // unordered_map
 
 
 #include "gemino_types.h" // integer types
@@ -169,7 +168,7 @@ private:
 class MevoSampler {
 public:
 
-    MevoSampler(const std::unordered_map<char, std::vector<double>>& Q,
+    MevoSampler(const arma::mat& Q,
                 const double& xi, const double& psi, const std::vector<double>& pis,
                 arma::vec rel_insertion_rates, arma::vec rel_deletion_rates);
     MevoSampler(const MutationSampler& event_,
