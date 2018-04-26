@@ -21,11 +21,6 @@ using namespace Rcpp;
 
 
 
-
-
-
-
-
 //' Q matrix for rates for a given nucleotide using the TN93 substitution model.
 //'
 //' @noRd
@@ -218,7 +213,7 @@ std::unordered_map<char, std::vector<double>> GTR_rate_matrix(
 //' Q matrix for rates for a given nucleotide using the UNREST substitution model.
 //'
 //' @param Qmat Matrix of rates for "T", "C", "A", and "G", respectively.
-//'     Diagonals are ignored.
+//'     Diagonal values are ignored.
 //' @param xi Overall rate of indels.
 //'
 //' @noRd
@@ -226,6 +221,8 @@ std::unordered_map<char, std::vector<double>> GTR_rate_matrix(
 std::unordered_map<char, std::vector<double>> UNREST_rate_matrix(
         arma::mat Qmat, const double& xi) {
 
+    // Forcing diagonals to be zero
+    Qmat.diag() *= 0;
     // Filling in diagonals
     arma::vec rowsums = arma::sum(Qmat, 1);
     rowsums += xi;
@@ -344,24 +341,35 @@ Efraimidis, P. S., and P. G. Spirakis. 2006. Weighted random sampling with a
 reservoir. Information Processing Letters 97:181–185.
 */
 uint event_location(const std::string& S,
+                    const uint& chunk_size,
                     const MevoSampler& ms,
                     pcg32& eng) {
 
     // if (S.size() == 0) stop("Empty string sent to event_location.");
     // if (S.size() == 1) return 0;
 
+    // Where should we start? Choose random location. (or 0 if chunk_size >= S.size())
+    uint start;
+    if (chunk_size < S.size()) {
+        start = (static_cast<double>(eng()) / pcg::max) * (S.size() - chunk_size);
+    } else start = 0;
+
+
     double r, key, X, w, t;
-    uint N = S.size();
+    // uint N = S.size();
+    uint N = start + chunk_size;
+
 
     // Create a NucleoKeys object to store position and key
     r = runif_01(eng);
-    key = std::pow(r, 1 / ms.rate(S[0]));
+    key = std::pow(r, 1 / ms.rate(S[start]));
     double largest_key = key; // largest key (the one we're going to keep)
-    uint largest_pos = 0;     // position where largest key was found
+    // uint largest_pos = 0;     // position where largest key was found
+    uint largest_pos = start;     // position where largest key was found
 
-    uint c = 0;
+    // uint c = 0;
+    uint c = start;
     while (c < (N-1)) {
-        // r = runif_01(eng);
         r = (static_cast<double>(eng()) + 1.0) / (pcg::max + 2.0);
         X = std::log(r) / std::log(largest_key);
         uint i = c + 1;
@@ -408,7 +416,8 @@ std::vector<uint> test_sampling(const std::string& seq, const uint& N,
                                 const double& beta,
                                 const double& xi, const double& psi,
                                 const arma::vec& rel_insertion_rates,
-                                const arma::vec& rel_deletion_rates) {
+                                const arma::vec& rel_deletion_rates,
+                                const uint& chunk_size) {
 
     std::unordered_map<char, std::vector<double>> Q;
     Q = TN93_rate_matrix(pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi);
@@ -423,7 +432,7 @@ std::vector<uint> test_sampling(const std::string& seq, const uint& N,
 
     for (uint i = 0; i < N; i++) {
         Rcpp::checkUserInterrupt();
-        out[i] = event_location(seq, ms, eng);
+        out[i] = event_location(seq, chunk_size, ms, eng);
     }
 
     return out;
