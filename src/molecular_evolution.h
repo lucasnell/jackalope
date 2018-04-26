@@ -7,6 +7,7 @@
 #include <vector>  // vector class
 #include <string>  // string class
 #include <random>  // gamma_distribution
+#include <memory>  // smart pointers
 
 
 #include "gemino_types.h" // integer types
@@ -76,10 +77,10 @@ public:
         }
     }
 
-    inline double rate(const uint& i) const {
-        return rates[i];
-    }
-
+    /*
+     Return rates when square brackets are used
+     `c` is intended to be a char converted to an integer.
+     */
     double operator[](const uint& i) const {
         return rates[i];
     }
@@ -164,9 +165,33 @@ private:
 
 
 
+
+class RateGetter {
+public:
+    RateGetter(const std::string& S_, const MutationRates& rates_)
+    : S(S_), rates(rates_) {};
+    inline double operator[](const uint& c) const {
+        return rates[S[c]];
+    }
+    // Assignment operator
+    RateGetter(const RateGetter& rhs) : S(rhs.S), rates(rhs.rates) {}
+
+private:
+    const std::string& S;
+    const MutationRates& rates;
+};
+
+
+
+
+
+
 // MevoSampler combined objects for table-sampling event types and new nucleotides
 class MevoSampler {
 public:
+
+    // For overall mutation rates by nucleotide:
+    MutationRates rates;
 
     MevoSampler(const arma::mat& Q,
                 const double& xi, const double& psi, const std::vector<double>& pis,
@@ -174,17 +199,20 @@ public:
     MevoSampler(const MutationSampler& event_,
                 const TableStringSampler<std::string>& nucleo_,
                 const MutationRates& rates_)
-        : muts(event_), nts(nucleo_), rates(rates_) {};
+        : rates(rates_), muts(event_), nts(nucleo_) {};
 
-    inline double rate(const char& c) const {
-        return rates.rate(c);
-    }
-
+    /*
+     Sample for mutation type based on nucleotide and rng engine
+     */
     inline MutationInfo sample_muts(const char& c, pcg32& eng) const {
         return muts.sample(c, eng);
     }
 
-    inline std::string sample_nts(const uint& len, pcg32& eng) const {
+    /*
+     Create a new string of nucleotides (for insertions) of a given length and using
+     an input rng engine
+    */
+    inline std::string new_nts(const uint& len, pcg32& eng) const {
         std::string str(len, 'x');
         nts.sample(str, eng);
         return str;
@@ -195,8 +223,6 @@ private:
     MutationSampler muts;
     // For insertion sequences:
     TableStringSampler<std::string> nts;
-    // For overall mutation rates by nucleotide:
-    MutationRates rates;
 };
 
 

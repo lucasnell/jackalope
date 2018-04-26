@@ -226,7 +226,7 @@ MevoSampler::MevoSampler(const arma::mat& Q,
                          const std::vector<double>& pis,
                          arma::vec rel_insertion_rates,
                          arma::vec rel_deletion_rates)
-    : muts(), nts(), rates() {
+    : rates(), muts(), nts() {
 
     uint n_events = 4 + rel_insertion_rates.n_elem + rel_deletion_rates.n_elem;
 
@@ -252,7 +252,7 @@ MevoSampler::MevoSampler(const arma::mat& Q,
         std::vector<double> qc = arma::conv_to<std::vector<double>>::from(Q.col(i));
         // Get the rate of change for this nucleotide
         double qi = -1.0 * qc[i];
-        rates.rates[c] = qi;
+        rates[c] = qi;
         /*
          Now cell `i` in `qc` needs to be manually converted to zero so it's not sampled.
          (Remember, we want the probability of each, *given that a mutation occurs*.
@@ -295,64 +295,44 @@ MevoSampler::MevoSampler(const arma::mat& Q,
 
 
 
-
 /*
- At a time when an event occurs, this samples nucleotides based on their rates
-and returns a random location where the event will occur
-
-Reservoir sampling used from...
-Efraimidis, P. S., and P. G. Spirakis. 2006. Weighted random sampling with a
-reservoir. Information Processing Letters 97:181–185.
-*/
-uint event_location(const std::string& S,
-                    const uint& chunk_size,
-                    const MevoSampler& ms,
-                    pcg32& eng) {
-
-    // if (S.size() == 0) stop("Empty string sent to event_location.");
-    // if (S.size() == 1) return 0;
-
-    // Where should we start? Choose random location. (or 0 if chunk_size >= S.size())
-    uint start;
-    if (chunk_size < S.size()) {
-        start = (static_cast<double>(eng()) / pcg::max) * (S.size() - chunk_size);
-    } else start = 0;
-
+ Template that does most of the work for the next two functions.
+ It uses weighted reservoir sampling from...
+    Efraimidis, P. S., and P. G. Spirakis. 2006. Weighted random sampling with a
+        reservoir. Information Processing Letters 97:181–185.
+ */
+template <typename T>
+inline uint weighted_reservoir_(const uint& start, const uint& end,
+                                const T& rates, pcg32& eng) {
 
     double r, key, X, w, t;
-    // uint N = S.size();
-    uint N = start + chunk_size;
 
-
-    // Create a NucleoKeys object to store position and key
+    // Create objects to store currently-selected position and key
     r = runif_01(eng);
-    key = std::pow(r, 1 / ms.rate(S[start]));
-    double largest_key = key; // largest key (the one we're going to keep)
-    // uint largest_pos = 0;     // position where largest key was found
-    uint largest_pos = start;     // position where largest key was found
+    key = std::pow(r, 1 / rates[start]);
+    double largest_key = key;  // largest key (the one we're going to keep)
+    uint largest_pos = start;  // position where largest key was found
 
-    // uint c = 0;
     uint c = start;
-    while (c < (N-1)) {
-        r = (static_cast<double>(eng()) + 1.0) / (pcg::max + 2.0);
+    while (c < end) {
+        r = runif_01(eng);
         X = std::log(r) / std::log(largest_key);
         uint i = c + 1;
-        double wt_sum0 = ms.rate(S[c]);
-        double wt_sum1 = ms.rate(S[c]) + ms.rate(S[i]);
-        while (X > wt_sum1 && i < (N-1)) {
+        double wt_sum0 = rates[c];
+        double wt_sum1 = wt_sum0 + rates[i];
+        while (X > wt_sum1 && i < end) {
             i++;
-            wt_sum0 += ms.rate(S[(i-1)]);
-            wt_sum1 += ms.rate(S[i]);
+            wt_sum0 += rates[(i-1)];
+            wt_sum1 += rates[i];
         }
         if (X > wt_sum1) break;
         if (wt_sum0 >= X) continue;
 
         largest_pos = i;
 
-        w = ms.rate(S[i]);
+        w = rates[i];
         t = std::pow(largest_key, w);
-        // r = runif_ab(eng, t, 1.0);
-        r = t + ((static_cast<double>(eng()) + 1.0) / (pcg::max + 2.0)) * (1.0 - t);
+        r = runif_ab(eng, t, 1.0);
         key = std::pow(r, 1 / w);
         largest_key = key;
 
@@ -362,6 +342,56 @@ uint event_location(const std::string& S,
     return largest_pos;
 }
 
+
+
+
+/*
+ At a time when an event occurs, this samples nucleotides based on their rates
+ and returns a random location where the event will occur
+ */
+uint event_location(const std::string& S,
+                    const uint& chunk_size,
+                    const MutationRates& mr,
+                    pcg32& eng) {
+
+    if (S.size() == 1) return 0;
+
+    /*
+     Where should we start and end?
+     If `chunk_size < S.size()`, then choose random location for start.
+     Else, start at 0.
+     */
+    uint start, end;
+    if (chunk_size < S.size()) {
+        start = runif_01(eng) * (S.size() - chunk_size + 1);
+        end = start + chunk_size - 1;
+    } else {
+        start = 0;
+        end = S.size() - 1;
+    }
+
+    RateGetter rg(S, mr);
+
+    uint largest_pos = weighted_reservoir_<RateGetter>(start, end, rg, eng);
+
+    return largest_pos;
+}
+
+
+
+// Sampling for a particular chunk based on gamma values using the same method as above
+uint chunk_location(const std::vector<double>& gammas,
+                    pcg32& eng) {
+
+    if (gammas.size() == 1) return 0;
+
+    uint start = 0;
+    uint end = gammas.size() - 1;
+
+    uint largest_pos = weighted_reservoir_<std::vector<double>>(start, end, gammas, eng);
+
+    return largest_pos;
+}
 
 
 
@@ -395,7 +425,7 @@ std::vector<uint> test_sampling(const std::string& seq, const uint& N,
 
     for (uint i = 0; i < N; i++) {
         Rcpp::checkUserInterrupt();
-        out[i] = event_location(seq, chunk_size, ms, eng);
+        out[i] = event_location(seq, chunk_size, ms.rates, eng);
     }
 
     return out;
