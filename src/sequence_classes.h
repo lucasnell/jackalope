@@ -248,7 +248,7 @@ class VarSequence {
 public:
 
     const RefSequence& ref_seq;
-    mutable std::deque<Mutation> mutations;
+    std::deque<Mutation> mutations;
     uint seq_size;
 
     // Constructor
