@@ -61,6 +61,18 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// many_mutations
+void many_mutations(SEXP vs_, const double& min_muts, const double& max_muts);
+RcppExport SEXP _gemino_many_mutations(SEXP vs_SEXP, SEXP min_mutsSEXP, SEXP max_mutsSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
+    Rcpp::traits::input_parameter< const double& >::type min_muts(min_mutsSEXP);
+    Rcpp::traits::input_parameter< const double& >::type max_muts(max_mutsSEXP);
+    many_mutations(vs_, min_muts, max_muts);
+    return R_NilValue;
+END_RCPP
+}
 // merge_sequences
 void merge_sequences(SEXP ref_);
 RcppExport SEXP _gemino_merge_sequences(SEXP ref_SEXP) {
@@ -433,6 +445,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_add_substitution", (DL_FUNC) &_gemino_add_substitution, 5},
     {"_gemino_add_insertion", (DL_FUNC) &_gemino_add_insertion, 5},
     {"_gemino_add_deletion", (DL_FUNC) &_gemino_add_deletion, 5},
+    {"_gemino_many_mutations", (DL_FUNC) &_gemino_many_mutations, 3},
     {"_gemino_merge_sequences", (DL_FUNC) &_gemino_merge_sequences, 1},
     {"_gemino_filter_sequences", (DL_FUNC) &_gemino_filter_sequences, 3},
     {"_gemino_create_genome", (DL_FUNC) &_gemino_create_genome, 5},

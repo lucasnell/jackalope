@@ -18,7 +18,6 @@
 
 #include "gemino_types.h"  // integer types
 #include "sequence_classes.h"  // Var* and Ref* classes
-#include "util.h"   // cpp_rando_seq in many_mutations function
 
 
 using namespace Rcpp;
@@ -534,96 +533,9 @@ void VarSequence::remove_mutation_(uint& mut_i1, uint& mut_i2) {
  ------------------
  */
 
-// /*
-//  THIS ONE IS NOT FUNCTIONING, BUT KEPT BC IT MIGHT HAVE USEFUL CODE FOR LATER:
-//  */
-// uint VarSequence::get_mut_(const uint& new_pos) const {
-//
-//     uint mut_i = 0;
-//
-//     if (mutations.empty()) return mutations.size();
-//
-//     if (new_pos >= seq_size) {
-//         stop(
-//             "new_pos should never be >= the sequence size. "
-//             "Either re-calculate the sequence size or closely examine new_pos."
-//             );
-//     }
-//     /*
-//      If new_pos is less than the position for the first mutation, we return
-//      mutations.size():
-//      */
-//     if (new_pos < mutations.front().new_pos) {
-//         return mutations.size();
-//     /*
-//      If the new_pos is greater than or equal to the position for the last
-//      mutation, we return the last Mutation:
-//      */
-//     } else if (new_pos >= mutations.back().new_pos) {
-//         return mutations.size() - 1;
-//     }
-//     /*
-//      If not either of the above, then we will first try to guess the approximate
-//      position to minimize how many iterations we have to perform.
-//      */
-//     mut_i = static_cast<double>(mutations.size() * new_pos) /
-//         static_cast<double>(seq_size);
-//     /*
-//      If the current mutation comes LATER than the input new position (`new_pos`),
-//      iterate BACKWARD in the mutation deque until the current mutation is
-//      EARLIER THAN OR EQUAL TO the new position.
-//      */
-//     if (mutations[mut_i].new_pos > new_pos) {
-//         while (mutations[mut_i].new_pos > new_pos) --mut_i;
-//     /*
-//      If the current mutation comes EARLIER than the input new position (`new_pos`),
-//      iterate FORWARD in the mutation deque until the current mutation is
-//      EARLIER THAN OR EQUAL TO the new position.
-//
-//      Then, if IT REACHES THE END OF THE MUTATION VECTOR OR the current mutation is
-//      NOT EQUAL TO the input new position, iterate back to the previous mutation.
-//      I do this latter part because I want the Mutation object I use to relate
-//      to the positions it belongs to and the reference sequences AFTER it.
-//
-//      If the current mutation is EQUAL TO the input new position, check to make sure
-//      that it's not a deletion immediately followed by another mutation.
-//      If it is, then go to the next mutation.
-//      If not, then leave `out` unchanged.
-//      (It's assumed that there aren't two deletions right after each other bc that's
-//      a silly thing to do.)
-//      */
-//     } else if (mutations[mut_i].new_pos < new_pos) {
-//         while (mut_i < mutations.size() && mutations[mut_i].new_pos < new_pos) {
-//             ++mut_i;
-//         }
-//         if (mut_i == mutations.size()) {
-//             --mut_i;
-//         } else if (mutations[mut_i].new_pos != new_pos) {
-//             --mut_i;
-//         } else if (mutations[mut_i].new_pos == new_pos &&
-//         mutations[mut_i].nucleos == "") {
-//             uint next = mut_i + 1;
-//             if (next < mutations.size()) {
-//                 if (mutations[next].new_pos == mutations[mut_i].new_pos) ++mut_i;
-//             }
-//         }
-//     /*
-//      If the current mutation is EQUAL TO the input new position, we just need to
-//      check to make sure that it's not a deletion immediately followed by another
-//      mutation, as above.
-//      */
-//     } else if (mutations[mut_i].new_pos == new_pos &&
-//         mutations[mut_i].nucleos == "") {
-//         uint next = mut_i + 1;
-//         if (next < mutations.size()) {
-//             if (mutations[next].new_pos == mutations[mut_i].new_pos) ++mut_i;
-//         }
-//     }
-//
-//     return mut_i;
-// }
-
 uint VarSequence::get_mut_(const uint& new_pos) const {
+
+    uint mut_i = 0;
 
     if (mutations.empty()) return mutations.size();
 
@@ -631,32 +543,42 @@ uint VarSequence::get_mut_(const uint& new_pos) const {
         stop(
             "new_pos should never be >= the sequence size. "
             "Either re-calculate the sequence size or closely examine new_pos."
-        );
+            );
     }
     /*
-    If new_pos is less than the position for the first mutation, we return
-    mutations.size():
-    */
-    if (new_pos < mutations.front().new_pos) {
-        return mutations.size();
-    /*
-    If the new_pos is greater than or equal to the position for the last
-    mutation, we return the last Mutation:
-    */
-    } else if (new_pos >= mutations.back().new_pos) {
-        return mutations.size() - 1;
-    }
+     If new_pos is less than the position for the first mutation, we return
+     mutations.size():
+     */
+    if (new_pos < mutations.front().new_pos) return mutations.size();
 
-    uint mut_i = mutations.size() - 1;
     /*
-     Move mutation to the proper spot (the last mutation that is <= new_pos)
-     (Starting from back because we want to never include a deletion immediately
-     followed by another mutation.)
+     If the new_pos is greater than or equal to the position for the last
+     mutation, we return the last Mutation:
+     */
+    if (new_pos >= mutations.back().new_pos) return mutations.size() - 1;
+
+    /*
+     If not either of the above, then we will first try to guess the approximate
+     position to minimize how many iterations we have to perform.
+     */
+    mut_i = static_cast<double>(mutations.size() * new_pos) /
+        static_cast<double>(seq_size);
+    /*
+     If the current mutation is not past `new_pos`, iterate until it is.
+     I'm intentionally going past the mutation to make sure we're not getting a deletion
+     immediately followed by another mutation.
+     (We don't need to check for `mut_i` getting to the last index
+     (`mutations.size() - 1`) because we've already checked for that situation above.)
+     */
+    while (mutations[mut_i].new_pos <= new_pos) ++mut_i;
+    /*
+     Now move mutation to the proper spot: the last mutation that is <= `new_pos`.
      */
     while (mutations[mut_i].new_pos > new_pos) --mut_i;
 
     return mut_i;
 }
+
 
 
 
@@ -801,3 +723,63 @@ void add_deletion(SEXP vs_, const uint& var_ind,
 }
 
 
+
+
+//' Add many mutations (> 1,000) to a VarSet object from R.
+//'
+//' `min_muts` and `max_muts` give range of # mutations per variant sequence.
+//'
+//' Inner function used for testing.
+//'
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+void many_mutations(SEXP vs_,
+                    const double& min_muts,
+                    const double& max_muts) {
+
+    XPtr<VarSet> vs_xptr(vs_);
+    VarSet& vset(*vs_xptr);
+
+    std::string bases = "TCAG";
+
+    double prev_type;
+
+    for (uint v = 0; v < vset.size(); v++) {
+        for (uint s = 0; s < vset.reference.size(); s++) {
+            VarSequence& vs(vset[v][s]);
+            uint n_muts = static_cast<uint>(R::runif(min_muts, max_muts+1));
+            if (static_cast<double>(n_muts) > max_muts) n_muts = max_muts;
+            uint m = 0;
+            uint max_size = vs.seq_size;
+            while (m < n_muts && max_size > 0) {
+                uint pos = static_cast<uint>(R::unif_rand() *
+                    static_cast<double>(max_size));
+                double rnd = R::unif_rand();
+                if (rnd < 0.5) {
+                    char str = bases[static_cast<uint>(R::runif(0,4))];
+                    vs.add_substitution(str, pos);
+                } else if (rnd < 0.75) {
+                    uint size = static_cast<uint>(R::rexp(2.0) + 1.0);
+                    if (size > 10) size = 10;
+                    std::string str(size + 1, 'x');
+                    for (uint i = 0; i < str.size(); i++) {
+                        str[i] = bases[static_cast<uint>(R::runif(0,4))];
+                    }
+                    vs.add_insertion(str, pos);
+                } else {
+                    uint size = static_cast<uint>(R::rexp(2.0) + 1.0);
+                    if (size > 10) size = 10;
+                    if (size > (max_size - pos)) size = max_size - pos;
+                    vs.add_deletion(size, pos);
+                }
+                prev_type = rnd;
+                ++m;
+                max_size = vs.seq_size;
+            }
+        }
+    }
+
+    return;
+}

@@ -65,6 +65,19 @@ add_deletion <- function(vs_, var_ind, seq_ind, size_, new_pos_) {
     invisible(.Call(`_gemino_add_deletion`, vs_, var_ind, seq_ind, size_, new_pos_))
 }
 
+#' Add many mutations (> 1,000) to a VarSet object from R.
+#'
+#' `min_muts` and `max_muts` give range of # mutations per variant sequence.
+#'
+#' Inner function used for testing.
+#'
+#'
+#' @noRd
+#'
+many_mutations <- function(vs_, min_muts, max_muts) {
+    invisible(.Call(`_gemino_many_mutations`, vs_, min_muts, max_muts))
+}
+
 #' Merge a reference genome into a single sequence.
 #'
 #'
@@ -260,17 +273,17 @@ NULL
 
 #' Q matrix for rates for a given nucleotide using the UNREST substitution model.
 #'
-#' @param Qmat Matrix of rates for "T", "C", "A", and "G", respectively.
-#'     Diagonals are ignored.
+#' @param Q Matrix of rates for "T", "C", "A", and "G", respectively.
+#'     Diagonal values are ignored.
 #' @param xi Overall rate of indels.
 #'
 #' @noRd
 #'
 NULL
 
-#' Initialize a MevoSampler object.
+#' Initialize a MutationSampler object.
 #'
-#' @param Q An `unordered_map` of substitution rates for each nucleotide.
+#' @param Q A matrix of substitution rates for each nucleotide.
 #' @param pis Vector of nucleotide equilibrium frequencies for
 #'     "T", "C", "A", and "G", respectively.
 #' @param xi Overall rate of indels.
