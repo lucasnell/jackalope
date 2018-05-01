@@ -22,21 +22,64 @@ using namespace Rcpp;
 
 
 /*
-For a sequence, stores all "Gamma regions": regions with the same Gamma modifier to
-their overall mutation rate.
-Square brackets return a rate of choosing this region: the Gamma value multiplied by its
-size. The size was included to account for regions getting larger or smaller due
-to indels.
-*/
+ For a sequence, stores all "Gamma regions": regions with the same Gamma modifier to
+ their overall mutation rate.
+ Square brackets return a rate of choosing this region: the Gamma value multiplied by its
+ size. The size was included to account for regions getting larger or smaller due
+ to indels.
+ */
 
 
-struct GammaRegion {
+class GammaRegion {
+public:
     double gamma;
     uint start;
     uint end;
     GammaRegion() {}
     GammaRegion(const double& gamma_, const uint& start_, const uint& end_)
         : gamma(gamma_), start(start_), end(end_) {}
+
+    /*
+     Adjust for a deletion.
+     `ind` is the index to the current region in the vector of regions.
+     `erase_inds` stores indices for region(s) to be erased if the deletion
+     entirely spans one or more region(s).
+     Adding to this variable will result in the current region being erased.
+     */
+    void deletion_adjust(const uint& ind, std::vector<uint>& erase_inds,
+                         const uint& del_start, const uint& del_end,
+                         const sint& del_size) {
+
+        // Total overlap
+        if (del_start <= start & del_end >= end) {
+            erase_inds.push_back(ind);
+            return;
+        }
+        // Deletion is totally inside this region but doesn't entirely overlap it
+        if (del_start > start & del_end < end) {
+            end += del_size;
+            return;
+        }
+        // No overlap and deletion starts after it
+        if (del_start > end) return;
+        // No overlap and deletion starts before it
+        if (del_end < start) {
+            start += del_size;
+            end += del_size;
+            return;
+        }
+        // Partial overlap at the start
+        if (del_end >= start & del_start < start) {
+            start = del_start;
+            end += del_size;
+            return;
+        }
+        // Partial overlap at the end
+        if (del_start <= end & del_end > end) {
+            end = del_start - 1;
+        }
+        return;
+    }
 };
 
 
@@ -47,28 +90,13 @@ private:
     double seq_size;
 
     inline uint get_idx(const uint& new_pos) const {
-        if (new_pos > regions.back().end) stop("new_pos too large");
-        if (new_pos < regions.front().start) stop("new_pos too small");
         uint idx = new_pos * (static_cast<double>(regions.size()) / seq_size);
         if (idx >= regions.size()) idx = regions.size() - 1;
         while (regions[idx].end < new_pos) idx++;
         while (regions[idx].start > new_pos) idx--;
-        // uint idx = 0;
-        // while (regions[idx].end < new_pos) idx++;
         return idx;
     }
 
-    /*
-    Inner function to update sizes after a given index.
-    */
-    inline void update_ranges_after_idx_(uint& idx, const sint& size_change) {
-        while (idx < regions.size()) {
-            regions[idx].end += size_change;
-            regions[idx].start += size_change;
-            idx++;
-        }
-        return;
-    }
 
 public:
 
@@ -111,8 +139,8 @@ public:
     }
 
     /*
-    Get Gamma value based on the position on the chromosome.
-    */
+     Get Gamma value based on the position on the chromosome.
+     */
     double get_gamma(const uint& new_pos) const {
         uint idx = get_idx(new_pos);
         return regions[idx].gamma;
@@ -124,10 +152,10 @@ public:
 
 
     /*
-    Get relative rate of change compared to other Gamma regions: the Gamma value
-    multiplied by the size of the region.
-    This index is the position in the `gammas` vector.
-    */
+     Get relative rate of change compared to other Gamma regions: the Gamma value
+     multiplied by the size of the region.
+     This index is the position in the `gammas` vector.
+     */
     inline double operator[](const uint& idx) const {
         return regions[idx].gamma * (regions[idx].end - regions[idx].start + 1);
     }
@@ -135,118 +163,60 @@ public:
     void update_sizes(const uint& new_pos, sint size_change) {
 
         /*
-        -----------
-        Do nothing for substitutions
-        -----------
-        */
+         -----------
+         Do nothing for substitutions
+         -----------
+         */
         if (size_change == 0) return;
 
         seq_size += static_cast<double>(size_change);
 
-        // Rcout << "getting index";
         uint idx = get_idx(new_pos);
-        // Rcout << " ...done" << std::endl;
+
         /*
-        -----------
-        Insertions are also quite simple:
-        -----------
-        */
+         -----------
+         Insertions are also quite simple:
+         -----------
+         */
         if (size_change > 0) {
             regions[idx].end += size_change;
             idx++;
-            update_ranges_after_idx_(idx, size_change); // update all following ranges
+            // update all following ranges:
+            while (idx < regions.size()) {
+                regions[idx].end += size_change;
+                regions[idx].start += size_change;
+                idx++;
+            }
             return;
         }
 
         /*
-        -----------
-        Deletions... not so much.
-        -----------
-        */
+         -----------
+         Deletions... not so much.
+         -----------
+         */
         const uint& del_start(new_pos);
         uint del_end = new_pos;
         del_end -= (size_change + 1);
 
-        /*
-        The simplest (and probably most common) scenario: the deletion is entirely
-        within this region but doesn't entirely overlap it.
-        */
-        if ((del_end <= regions[idx].end && del_start > regions[idx].start) ||
-            (del_end < regions[idx].end && del_start >= regions[idx].start)) {
-            // Rcout << "simple" << ' ';
-            // Rcout << del_end << ' ' << del_start << ", ";
-            // Rcout << regions[idx].end << ' ' << regions[idx].start;
-            regions[idx].end += size_change;
-            idx++;
-            update_ranges_after_idx_(idx, size_change); // update all following ranges
-            // Rcout << "... done" << std::endl;
-            return;
-        }
-
-        /*
-        Although it shouldn't be common, the scenario where the deletion happens in
-        the last region needs to be taken care of now.
-        */
-        if (idx == regions.size() - 1) {
-            // Rcout << "ending" << std::endl;
-            // If the deletion overlaps this entire region...
-            if (del_end >= regions[idx].end && del_start <= regions[idx].start) {
-                regions.erase(regions.begin() + idx);
-                return;
-            }
-            // Else, just adjust the ending position
-            regions[idx].end += size_change;
-            return;
-        }
-
-        /*
-        Probably another common scenario: the deletion spans an intersect
-        between two regions but doesn't entirely overlap any whole regions
-        */
-        if (del_end > regions[idx].end && del_end < regions[idx+1].end &&
-            del_start > regions[idx].start) {
-            // Rcout << "intersection" << std::endl;
-            uint overlap = regions[idx].end - del_start + 1;
-            regions[idx].end -= overlap;
-            regions[idx+1].start -= overlap;
-            regions[idx+1].end += size_change;
-            idx += 2;
-            update_ranges_after_idx_(idx, size_change); // update all following ranges
-            return;
-        }
-
-        /*
-         The last two scenarios should be rare, unless large deletion probabilities
-         or sizes are included in simulations.
-         Both scenarios involve deletions removing entire region(s).
-         */
-        // Rcout << "deleting" << std::endl;
-        /*
-         If deletion doesn't overlap this entire region, take care of its ending
-         position, then iterate.
-         */
-        if (del_start > regions[idx].start) {
-            regions[idx].end = del_start - 1;
+        std::vector<uint> erase_inds;
+        while (idx < regions.size()) {
+            regions[idx].deletion_adjust(idx, erase_inds, del_start, del_end,
+                                         size_change);
             idx++;
         }
-        // Now erase all regions that this deletion overlaps
-        uint start = idx;  // first region to get deleted
-        while (del_end >= regions[idx].end) {
-            idx++;
-            if (idx == regions.size()) break;
+
+        // If any regions need erasing, their indices will be stored in erase_inds
+        if (erase_inds.size() == 1) {
+            regions.erase(regions.begin() + erase_inds.front());
+        } else if (erase_inds.size() > 1) {
+            regions.erase(regions.begin() + erase_inds.front(),
+                          regions.begin() + erase_inds.back() + 1);
         }
-        regions.erase(regions.begin() + start, regions.begin() + idx);
-
-        // `start` now points to the point after erased regions
-
-        update_ranges_after_idx_(start, size_change); // update all following ranges
 
     }
 
-
-
 };
-
 
 
 
