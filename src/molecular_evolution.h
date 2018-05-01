@@ -7,7 +7,6 @@
 #include <vector>  // vector class
 #include <string>  // string class
 #include <random>  // gamma_distribution
-#include <memory>  // smart pointers
 
 
 #include "gemino_types.h" // integer types
@@ -25,32 +24,82 @@ namespace mevo {
 
 
 /*
- One sequence's Gamma values
- THIS IS TOO SIMPLE: INDELS CHANGE RATES OF SEQUENCES OUTSIDE THE INITIAL RANGE
- ... perhaps unless you use old positions rather than new ones to find Gamma values
- */
-struct SeqGammas {
-    std::vector<double> gamma_vals;  // values from a Gamma distribution
-    uint k;                          // number of bp per value
+ =========================================================================================
+ =========================================================================================
+ =========================================================================================
+ =========================================================================================
 
-    SeqGammas(const uint& k_, const RefSequence& rs,
-              pcg32& eng, const double& alpha) : gamma_vals(), k(k_) {
-        // Now fill gammas vector
-        uint n_gammas = static_cast<uint>(std::ceil(
-            static_cast<double>(rs.size()) / static_cast<double>(k_)));
-        gamma_vals = std::vector<double>(n_gammas);
-        std::gamma_distribution<double> distr(alpha, alpha);
-        for (uint i = 0; i < n_gammas; i++) {
-            gamma_vals[i] = distr(eng);
-        }
+ Choosing mutation locations based on overall mutation rates that vary by
+ (i) nucleotide and (ii) sequence region
+
+ =========================================================================================
+ =========================================================================================
+ =========================================================================================
+ =========================================================================================
+ */
+
+
+
+
+
+
+/*
+ Chooses a chunk while controlling for the last chunk's size being < `chunk_size`.
+ */
+class ChunkChooser {
+
+private:
+
+    uint n_chunks;    // Number of chunks to choose from
+    uint chunk_size;  // Size of each chunk
+    double p_retain;  // Pr(retaining last chunk | last chunk was sampled initially):
+
+public:
+
+    ChunkChooser(const uint& chunk_size_, const uint& overall_size)
+        : n_chunks(), chunk_size(chunk_size_), p_retain(overall_size) {
+
+        n_chunks = std::ceil(static_cast<double>(overall_size) /
+            static_cast<double>(chunk_size));
+
+        p_retain -= static_cast<double>((n_chunks - 1) * chunk_size);
+        p_retain /= overall_size;
+        p_retain *= static_cast<double>(n_chunks);
+
     }
 
-    double get_gamma(const uint& pos) {
-        uint ind = pos / k;
-        if (ind >= gamma_vals.size()) stop("ind too high for this SeqGammas object");
-        return gamma_vals[ind];
+    uint choose(pcg32& eng) {
+
+        if (n_chunks == 1) return 0;
+
+        double u = runif_01(eng);
+        uint chunk = u * n_chunks;
+        if (chunk == n_chunks - 1) {
+            u = runif_01(eng);
+            if (u > p_retain) {
+                u = runif_01(eng);
+                chunk = u * (n_chunks - 1);
+            }
+        }
+        return chunk;
+    }
+
+    /*
+     Reset sizes after you add an insertion or deletion
+     */
+    void reset_size(const uint& new_size) {
+
+        n_chunks = std::ceil(static_cast<double>(new_size) /
+            static_cast<double>(chunk_size));
+
+        p_retain = static_cast<double>(new_size);
+        p_retain -= static_cast<double>((n_chunks - 1) * chunk_size);
+        p_retain /= static_cast<double>(new_size);
+        p_retain *= static_cast<double>(n_chunks);
     }
 };
+
+
 
 
 
@@ -64,6 +113,7 @@ struct SeqGammas {
  set `rates` to size 256.
  */
 class MutationRates {
+
 public:
 
     std::vector<double> rates;
@@ -90,6 +140,83 @@ public:
 };
 
 
+
+
+/*
+ This class allows me to use a template in `molecular_evolution.cpp` to
+ do weighted reservoir sampling.
+ RateGetter combines references to a string and to a MutationRates object, and
+ ultimately allows you to use a bracket operator to get a rate for a given location
+ in a sequence.
+ */
+class RateGetter {
+
+private:
+    const std::string& S;
+    const MutationRates& rates;
+
+public:
+    RateGetter(const std::string& S_, const MutationRates& rates_)
+        : S(S_), rates(rates_) {};
+    inline double operator[](const uint& idx) const {
+        return rates[S[idx]];
+    }
+    // Assignment operator
+    RateGetter(const RateGetter& rhs) : S(rhs.S), rates(rhs.rates) {}
+
+};
+
+
+
+// /*
+//  This class allows me to use a template in `molecular_evolution.cpp` to
+//  do weighted reservoir sampling.
+//  RateGetter combines references to a string and to a MutationRates object, and
+//  ultimately allows you to use a bracket operator to get a rate for a given location
+//  in a sequence.
+//  */
+// class GammaGetter {
+//
+// private:
+//     const MutationRates& rates;
+//     const std::vector<double>& gammas;
+//
+// public:
+//     RateGetter(const std::string& S_, const MutationRates& rates_)
+//         : S(S_), rates(rates_) {};
+//     inline double operator[](const uint& idx) const {
+//         return rates[S[idx]];
+//     }
+//     // Assignment operator
+//     RateGetter(const RateGetter& rhs) : S(rhs.S), rates(rhs.rates) {}
+//
+// };
+
+
+
+
+// VarSequence
+
+
+
+
+
+
+
+
+/*
+ =========================================================================================
+ =========================================================================================
+ =========================================================================================
+ =========================================================================================
+
+ Choosing mutation type based on the starting nucleotide
+
+ =========================================================================================
+ =========================================================================================
+ =========================================================================================
+ =========================================================================================
+ */
 
 
 
@@ -130,21 +257,28 @@ inline std::vector<uint8> make_base_inds() {
 }
 
 /*
- For table-sampling events depending on which nucleotide you start with.
+ For table-sampling mutation types depending on which nucleotide you start with.
  The `event_lengths` vector tells how long each event is.
  This field is 0 for substitions, < 0 for deletions, and > 0 for insertions.
+ The `base_inds` field allows me to convert the characters 'T', 'C', 'A', 'G', or 'N'
+ (cast to uints) into uints from 0 to 3.
  */
-class MutationSampler {
+class MutationTypeSampler {
+
+private:
+
+    std::vector<uint8> base_inds;
+
 public:
 
     std::vector<TableSampler> sampler;
     std::vector<sint> event_lengths;
 
-    MutationSampler() : sampler(4), event_lengths() {
+    MutationTypeSampler() : sampler(4), event_lengths() {
         base_inds = make_base_inds();
     }
     // copy constructor
-    MutationSampler(const MutationSampler& other)
+    MutationTypeSampler(const MutationTypeSampler& other)
         : sampler(other.sampler), event_lengths(other.event_lengths),
           base_inds(other.base_inds) {}
 
@@ -159,26 +293,6 @@ public:
         return mi;
     }
 
-private:
-    std::vector<uint8> base_inds;
-};
-
-
-
-
-class RateGetter {
-public:
-    RateGetter(const std::string& S_, const MutationRates& rates_)
-    : S(S_), rates(rates_) {};
-    inline double operator[](const uint& c) const {
-        return rates[S[c]];
-    }
-    // Assignment operator
-    RateGetter(const RateGetter& rhs) : S(rhs.S), rates(rhs.rates) {}
-
-private:
-    const std::string& S;
-    const MutationRates& rates;
 };
 
 
@@ -186,43 +300,49 @@ private:
 
 
 
-// MevoSampler combined objects for table-sampling event types and new nucleotides
-class MevoSampler {
+/*
+ MutationSampler combines objects for sampling event types and new nucleotides for
+ insertions.
+ */
+class MutationSampler {
+
+private:
+
+    // For sampling the type of mutation:
+    MutationTypeSampler types;
+    // For insertion sequences:
+    TableStringSampler<std::string> nucleos;
+
 public:
 
     // For overall mutation rates by nucleotide:
     MutationRates rates;
 
-    MevoSampler(const arma::mat& Q,
+    MutationSampler(const arma::mat& Q,
                 const double& xi, const double& psi, const std::vector<double>& pis,
                 arma::vec rel_insertion_rates, arma::vec rel_deletion_rates);
-    MevoSampler(const MutationSampler& event_,
+    MutationSampler(const MutationTypeSampler& event_,
                 const TableStringSampler<std::string>& nucleo_,
                 const MutationRates& rates_)
-        : rates(rates_), muts(event_), nts(nucleo_) {};
+        : rates(rates_), types(event_), nucleos(nucleo_) {};
 
     /*
      Sample for mutation type based on nucleotide and rng engine
      */
-    inline MutationInfo sample_muts(const char& c, pcg32& eng) const {
-        return muts.sample(c, eng);
+    inline MutationInfo sample_types(const char& c, pcg32& eng) const {
+        return types.sample(c, eng);
     }
 
     /*
      Create a new string of nucleotides (for insertions) of a given length and using
      an input rng engine
     */
-    inline std::string new_nts(const uint& len, pcg32& eng) const {
+    inline std::string new_nucleos(const uint& len, pcg32& eng) const {
         std::string str(len, 'x');
-        nts.sample(str, eng);
+        nucleos.sample(str, eng);
         return str;
     }
 
-private:
-    // For sampling the type of mutation:
-    MutationSampler muts;
-    // For insertion sequences:
-    TableStringSampler<std::string> nts;
 };
 
 

@@ -208,7 +208,7 @@ arma::mat UNREST_rate_matrix(
 
 
 
-//' Initialize a MevoSampler object.
+//' Initialize a MutationSampler object.
 //'
 //' @param Q A matrix of substitution rates for each nucleotide.
 //' @param pis Vector of nucleotide equilibrium frequencies for
@@ -220,13 +220,13 @@ arma::mat UNREST_rate_matrix(
 //'
 //' @noRd
 //'
-MevoSampler::MevoSampler(const arma::mat& Q,
-                         const double& xi,
-                         const double& psi,
-                         const std::vector<double>& pis,
-                         arma::vec rel_insertion_rates,
-                         arma::vec rel_deletion_rates)
-    : rates(), muts(), nts() {
+MutationSampler::MutationSampler(const arma::mat& Q,
+                                 const double& xi,
+                                 const double& psi,
+                                 const std::vector<double>& pis,
+                                 arma::vec rel_insertion_rates,
+                                 arma::vec rel_deletion_rates)
+    : rates(), types(), nucleos() {
 
     uint n_events = 4 + rel_insertion_rates.n_elem + rel_deletion_rates.n_elem;
 
@@ -270,22 +270,22 @@ MevoSampler::MevoSampler(const arma::mat& Q,
         // Divide all by qi to make them probabilities
         for (uint j = 0; j < n_events; j++) qc[j] /= qi;
         // Fill TableSampler
-        muts.sampler[i] = TableSampler(qc);
+        types.sampler[i] = TableSampler(qc);
     }
 
-    // Now filling in event_lengths field of MutationSampler
-    muts.event_lengths = std::vector<sint>(n_events, 0);
+    // Now filling in event_lengths field of MutationTypeSampler
+    types.event_lengths = std::vector<sint>(n_events, 0);
     for (uint i = 0; i < rel_insertion_rates.n_elem; i++) {
-        muts.event_lengths[i + 4] = static_cast<sint>(i+1);
+        types.event_lengths[i + 4] = static_cast<sint>(i+1);
     }
     for (uint i = 0; i < rel_deletion_rates.n_elem; i++) {
         sint ds = static_cast<sint>(i + 1);
         ds *= -1;
-        muts.event_lengths[i + 4 + rel_insertion_rates.n_elem] = ds;
+        types.event_lengths[i + 4 + rel_insertion_rates.n_elem] = ds;
     }
 
     // Now fill in the insertion-sequence sampler:
-    nts = TableStringSampler<std::string>(mevo::bases, pis);
+    nucleos = TableStringSampler<std::string>(mevo::bases, pis);
 
     return;
 }
@@ -299,7 +299,7 @@ MevoSampler::MevoSampler(const arma::mat& Q,
  Template that does most of the work for the next two functions.
  It uses weighted reservoir sampling from...
     Efraimidis, P. S., and P. G. Spirakis. 2006. Weighted random sampling with a
-        reservoir. Information Processing Letters 97:181–185.
+    reservoir. Information Processing Letters 97:181–185.
  */
 template <typename T>
 inline uint weighted_reservoir_(const uint& start, const uint& end,
@@ -417,7 +417,7 @@ std::vector<uint> test_sampling(const std::string& seq, const uint& N,
 
     std::vector<double> pis = {pi_t, pi_c, pi_a, pi_g};
 
-    MevoSampler ms(Q, xi, psi, pis, rel_insertion_rates, rel_deletion_rates);
+    MutationSampler ms(Q, xi, psi, pis, rel_insertion_rates, rel_deletion_rates);
 
     pcg32 eng = seeded_pcg();
 
