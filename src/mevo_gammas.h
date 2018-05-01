@@ -100,13 +100,18 @@ private:
 
 public:
 
+    SequenceGammas(const VarSequence& vs) : regions(1), seq_size(vs.size()) {
+        regions[0].start = 0;
+        regions[0].end = seq_size;
+        regions.[0].gamma = 1;
+    }
 
-    SequenceGammas(const uint& gamma_size_, const RefSequence& rs,
+    SequenceGammas(const uint& gamma_size_, const VarSequence& vs,
                    pcg32& eng, const double& alpha)
-        : regions(), seq_size(rs.size()) {
+        : regions(), seq_size(vs.size()) {
         // Number of gamma values needed:
         uint n_gammas = static_cast<uint>(std::ceil(
-            static_cast<double>(rs.size()) / static_cast<double>(gamma_size_)));
+            static_cast<double>(vs.size()) / static_cast<double>(gamma_size_)));
         // Resize gamma-region vector
         regions = std::vector<GammaRegion>(n_gammas);
 
@@ -115,7 +120,7 @@ public:
         for (uint i = 0, start_ = 0; i < n_gammas; i++, start_ += gamma_size_) {
             double gamma_ = distr(eng);
             uint end_ = start_ + gamma_size_ - 1;
-            if (i == n_gammas - 1) end_ = rs.size() - 1;
+            if (i == n_gammas - 1) end_ = vs.size() - 1;
             regions[i] = GammaRegion(gamma_, start_, end_);
         }
     }

@@ -107,63 +107,62 @@ public:
 
 /*
  Stores info on the overall mutation rates for each nucleotide.
- Ns are set to 0 bc we don't want to process these.
+
+ For `rates`, Ns are set to 0 bc we don't want to process these.
  Input char objects are cast to uint which provide the indices.
  T, C, A, G, and N should never be higher than 84, so will be safe.
  If you're worried about other characters accidentally being input to it, you can
  set `rates` to size 256.
+
+ This class is used in `molecular_evolution.cpp` to do weighted reservoir sampling.
+ MutationRates combines a reference to a `VarSet` object with a vector of rates by
+ nucleotide and a `SequenceGammas` object that handles the Gamma values.
+ Ultimately this class allows you to use a bracket operator to get a rate for a
+ given location in the variant genome.
  */
 class MutationRates {
 
+private:
+    const VarSequence& vs;
+    const std::vector<double> rates;
+    SequenceGammas gammas;
+
 public:
+    MutationRates(const VarSequence& vs_, const std::vector<double>& rates_,
+               const uint& gamma_size_,
+               pcg32& eng, const double& alpha)
+        : vs(vs_), rates(85, 0.0), gammas(gamma_size_, vs_, eng, alpha) {
+        for (uint i = 0; i < 4; i++) {
+            uint j = mevo::bases[i];
+            rates[j] = rates_[i];
 
-    std::vector<double> rates;
-
-    MutationRates() : rates(85, 0.0) {}
-
-    MutationRates(const std::vector<double>& rates_) : rates(85, 0.0) {
+        }
+    }
+    MutationRates(const VarSequence& vs_, const std::vector<double>& rates_,
+               const arma::mat& gamma_mat)
+        : vs(vs_), rates(85, 0.0), gammas(gamma_mat) {
+        for (uint i = 0; i < 4; i++) {
+            uint j = mevo::bases[i];
+            rates[j] = rates_[i];
+        }
+    }
+    MutationRates(const VarSequence& vs_, const std::vector<double>& rates_)
+        : vs(vs_), rates(85, 0.0), gammas(vs_) {
         for (uint i = 0; i < 4; i++) {
             uint j = mevo::bases[i];
             rates[j] = rates_[i];
         }
     }
 
-    /*
-     Return rates when square brackets are used
-     `c` is intended to be a char converted to an integer.
-     */
-    double operator[](const uint& i) const {
-        return rates[i];
-    }
-    double& operator[](const uint& i) {
-        return rates[i];
-    }
-};
-
-
-
-
-/*
- This class allows me to use a template in `molecular_evolution.cpp` to
- do weighted reservoir sampling.
- RateGetter combines references to a string and to a MutationRates object, and
- ultimately allows you to use a bracket operator to get a rate for a given location
- in a sequence.
- */
-class RateGetter {
-
-private:
-    const std::string& S;
-    const MutationRates& rates;
-
-public:
-    RateGetter(const std::string& S_, const MutationRates& rates_)
-        : S(S_), rates(rates_) {};
-    inline double operator[](const uint& idx) const {
-        return rates[S[idx]];
-    }
     // Assignment operator
-    RateGetter(const RateGetter& rhs) : S(rhs.S), rates(rhs.rates) {}
+    MutationRates(const MutationRates& rhs)
+        : vs(rhs.vs), rates(rhs.rates), gammas(rhs.gammas) {}
+    //
+    inline double operator[](const uint& new_pos) const {
+        char c = vs.get_nt(new_pos);
+        double g = gammas.get_gamma(new_pos);
+        return rates[c] * g;
+    }
 
 };
 
