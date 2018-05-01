@@ -100,34 +100,25 @@ private:
 
 public:
 
-    arma::mat to_mat() {
-        arma::mat out(regions.size(), 3);
-        for (uint i = 0; i < regions.size(); i++) {
-            out(i,0) = regions[i].start;
-            out(i,1) = regions[i].end;
-            out(i,2) = regions[i].gamma;
-        }
-        return out;
-    }
 
-    // SequenceGammas(const uint& gamma_size_, const RefSequence& rs,
-    //                pcg32& eng, const double& alpha)
-    //     : regions(), seq_size(rs.size()) {
-    //     // Number of gamma values needed:
-    //     uint n_gammas = static_cast<uint>(std::ceil(
-    //         static_cast<double>(rs.size()) / static_cast<double>(gamma_size_)));
-    //     // Resize gammas and sizes vectors
-    //     regions = std::vector<GammaRegion>(n_gammas);
-    //
-    //     // Fill vectors:
-    //     std::gamma_distribution<double> distr(alpha, alpha);
-    //     for (uint i = 0, j = 0; i < n_gammas; i++, j+= gamma_size_) {
-    //         double gamma_ = distr(eng);
-    //         uint end_ = j + gamma_size_ - 1;
-    //         if (i == n_gammas - 1) end_ = rs.size() - 1;
-    //         regions[i] = GammaRegion(gamma_, j, end_);
-    //     }
-    // }
+    SequenceGammas(const uint& gamma_size_, const RefSequence& rs,
+                   pcg32& eng, const double& alpha)
+        : regions(), seq_size(rs.size()) {
+        // Number of gamma values needed:
+        uint n_gammas = static_cast<uint>(std::ceil(
+            static_cast<double>(rs.size()) / static_cast<double>(gamma_size_)));
+        // Resize gamma-region vector
+        regions = std::vector<GammaRegion>(n_gammas);
+
+        // Fill vector:
+        std::gamma_distribution<double> distr(alpha, alpha);
+        for (uint i = 0, start_ = 0; i < n_gammas; i++, start_ += gamma_size_) {
+            double gamma_ = distr(eng);
+            uint end_ = start_ + gamma_size_ - 1;
+            if (i == n_gammas - 1) end_ = rs.size() - 1;
+            regions[i] = GammaRegion(gamma_, start_, end_);
+        }
+    }
     SequenceGammas(const arma::mat& gamma_mat) {
         regions = std::vector<GammaRegion>(gamma_mat.n_rows);
         for (uint i = 0; i < gamma_mat.n_rows; i++) {
@@ -164,19 +155,23 @@ public:
 
         /*
          -----------
-         Do nothing for substitutions
+         Substitutions
          -----------
          */
         if (size_change == 0) return;
 
-        seq_size += static_cast<double>(size_change);
-
-        uint idx = get_idx(new_pos);
 
         /*
          -----------
-         Insertions are also quite simple:
+         InDels
          -----------
+         */
+
+        seq_size += static_cast<double>(size_change);
+        uint idx = get_idx(new_pos);
+
+        /*
+         Insertions
          */
         if (size_change > 0) {
             regions[idx].end += size_change;
@@ -191,14 +186,13 @@ public:
         }
 
         /*
-         -----------
-         Deletions... not so much.
-         -----------
+         Deletions
          */
         const uint& del_start(new_pos);
         uint del_end = new_pos;
         del_end -= (size_change + 1);
 
+        // Iterate through and adjust all regions including and following the deletion:
         std::vector<uint> erase_inds;
         while (idx < regions.size()) {
             regions[idx].deletion_adjust(idx, erase_inds, del_start, del_end,
@@ -214,6 +208,7 @@ public:
                           regions.begin() + erase_inds.back() + 1);
         }
 
+        return;
     }
 
 };
