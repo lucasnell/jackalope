@@ -49,6 +49,10 @@ public:
     void deletion_adjust(const uint& ind, std::vector<uint>& erase_inds,
                          const uint& del_start, const uint& del_end,
                          const sint& del_size);
+
+    inline double size() const {
+        return static_cast<double>(end - start + 1);
+    }
 };
 
 
@@ -57,6 +61,12 @@ private:
 
     std::vector<GammaRegion> regions;
     double seq_size;
+    /*
+     This method runs into numeric issues when weights are very small, so the
+     multiplier below keeps the minimum weight at 0.1, which is quite safe.
+     All weights are multiplied by this value, so this shouldn't bias anything.
+     */
+    double mult;
 
     inline uint get_idx(const uint& new_pos) const {
         uint idx = new_pos * (static_cast<double>(regions.size()) / seq_size);
@@ -80,13 +90,17 @@ public:
 
         // Fill vector:
         std::gamma_distribution<double> distr(alpha, alpha);
+        double min_gamma = 1000000.0;  // set to arbitrary large value
         for (uint i = 0, start_ = 0; i < n_gammas; i++, start_ += gamma_size_) {
             double gamma_ = distr(eng);
+            if (gamma_ < min_gamma) min_gamma = gamma_;
             uint end_ = start_ + gamma_size_ - 1;
             if (i == n_gammas - 1) end_ = vs.size() - 1;
             regions[i] = GammaRegion(gamma_, start_, end_);
         }
+        mult = 0.1 / min_gamma;
     }
+
     SequenceGammas(const arma::mat& gamma_mat) {
         regions = std::vector<GammaRegion>(gamma_mat.n_rows);
         for (uint i = 0; i < gamma_mat.n_rows; i++) {
@@ -95,10 +109,15 @@ public:
             regions[i].gamma = gamma_mat(i,2);
         }
         seq_size = gamma_mat(gamma_mat.n_rows-1, 1) + 1;
+
+        double min_gamma = gamma_mat.col(2).min();
+        mult = 0.1 / min_gamma;
     }
 
     /*
      Get Gamma value based on the position on the chromosome.
+     Notice that this does NOT incorporate the multiplier or size, so this should
+     not be used for sampling.
      */
     double get_gamma(const uint& new_pos) const {
         uint idx = get_idx(new_pos);
@@ -108,16 +127,19 @@ public:
     uint size() const noexcept {
         return static_cast<uint>(seq_size);
     }
+    inline double size(const uint& idx) const {
+        return regions[idx].size();
+    }
 
 
     /*
      Get relative rate of change compared to other Gamma regions: the Gamma value
-     multiplied by the size of the region.
+     multiplied by the size of the region (and by the multiplier to avoid numerical
+     issues).
      This index is the position in the `gammas` vector.
      */
     inline double operator[](const uint& idx) const {
-        return regions[idx].gamma * static_cast<double>(regions[idx].end -
-                                                        regions[idx].start + 1);
+        return mult * regions[idx].gamma * size(idx);
     }
 
     void update_sizes(const uint& new_pos, sint size_change);
