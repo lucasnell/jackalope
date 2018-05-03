@@ -19,7 +19,6 @@
 #include "gemino_types.h" // integer types
 #include "sequence_classes.h"  // Var* and Ref* classes
 #include "pcg.h"  // pcg seeding
-#include "table_sampler.h"  // table method of sampling
 #include "mevo_gammas.h"  // Gamma* classes
 
 
@@ -27,15 +26,6 @@
 using namespace Rcpp;
 
 
-
-
-/*
- For a sequence, stores all "Gamma regions": regions with the same Gamma modifier to
- their overall mutation rate.
- Square brackets return a rate of choosing this region: the Gamma value multiplied by its
- size. The size was included to account for regions getting larger or smaller due
- to indels.
- */
 
 
 
