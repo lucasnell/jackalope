@@ -106,7 +106,10 @@ public:
 
 
 /*
- Stores info on the overall mutation rates for each nucleotide.
+ Stores info on the overall mutation rates (NOT including Gammas) for each nucleotide.
+ This doesn't include Gamma values because it's meant to be used for sampling within
+ a region with all the same Gamma value.
+ Because they all share one Gamma value, Gamma factors out in calculating weights anyway.
 
  For `rates`, Ns are set to 0 bc we don't want to process these.
  Input char objects are cast to uint which provide the indices.
@@ -115,8 +118,8 @@ public:
  set `rates` to size 256.
 
  This class is used in `molecular_evolution.cpp` to do weighted reservoir sampling.
- MutationRates combines a reference to a `VarSet` object with a vector of rates by
- nucleotide and a `SequenceGammas` object that handles the Gamma values.
+ MutationRates combines a reference to a `VarSequence` object with a vector of rates by
+ nucleotide.
  Ultimately this class allows you to use a bracket operator to get a rate for a
  given location in the variant genome.
  */
@@ -125,43 +128,24 @@ class MutationRates {
 private:
     const VarSequence& vs;
     const std::vector<double> rates;
-    SequenceGammas gammas;
 
 public:
-    MutationRates(const VarSequence& vs_, const std::vector<double>& rates_,
-               const uint& gamma_size_,
-               pcg32& eng, const double& alpha)
-        : vs(vs_), rates(85, 0.0), gammas(gamma_size_, vs_, eng, alpha) {
+    MutationRates(const VarSequence& vs_, const std::vector<double>& rates_)
+        : vs(vs_), rates(85, 0.0) {
         for (uint i = 0; i < 4; i++) {
             uint j = mevo::bases[i];
             rates[j] = rates_[i];
 
-        }
-    }
-    MutationRates(const VarSequence& vs_, const std::vector<double>& rates_,
-               const arma::mat& gamma_mat)
-        : vs(vs_), rates(85, 0.0), gammas(gamma_mat) {
-        for (uint i = 0; i < 4; i++) {
-            uint j = mevo::bases[i];
-            rates[j] = rates_[i];
-        }
-    }
-    MutationRates(const VarSequence& vs_, const std::vector<double>& rates_)
-        : vs(vs_), rates(85, 0.0), gammas(vs_) {
-        for (uint i = 0; i < 4; i++) {
-            uint j = mevo::bases[i];
-            rates[j] = rates_[i];
         }
     }
 
     // Assignment operator
     MutationRates(const MutationRates& rhs)
-        : vs(rhs.vs), rates(rhs.rates), gammas(rhs.gammas) {}
-    //
+        : vs(rhs.vs), rates(rhs.rates) {}
+    // Using bracket operator to get the rate
     inline double operator[](const uint& new_pos) const {
         char c = vs.get_nt(new_pos);
-        double g = gammas.get_gamma(new_pos);
-        return rates[c] * g;
+        return rates[c];
     }
 
 };

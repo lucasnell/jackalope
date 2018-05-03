@@ -41,7 +41,13 @@ public:
     // Copy constructor
     TableSampler(const TableSampler& other) : T(other.T), t(other.t) {}
 
-    uint sample(pcg32& eng) const;
+    inline uint sample(pcg32& eng) const {
+        uint j = eng();
+        if (j<t[0]) return T[0][j>>24];
+        if (j<t[1]) return T[1][(j-t[0])>>(32-8*2)];
+        if (j<t[2]) return T[2][(j-t[1])>>(32-8*3)];
+        return T[3][j-t[2]];
+    }
 
     void print() const;
 

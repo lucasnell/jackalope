@@ -162,13 +162,7 @@ TableSampler::TableSampler(const std::vector<double>& probs) : T(4), t(3, 0) {
 }
 
 
-uint TableSampler::sample(pcg32& eng) const {
-    uint j = eng();
-    if (j<t[0]) return T[0][j>>24];
-    if (j<t[1]) return T[1][(j-t[0])>>(32-8*2)];
-    if (j<t[2]) return T[2][(j-t[1])>>(32-8*3)];
-    return T[3][j-t[2]];
-}
+
 
 void TableSampler::print() const {
     // names coincide with names from Marsaglia (2004)
