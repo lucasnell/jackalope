@@ -15,11 +15,9 @@
 #include <RcppArmadillo.h>
 
 #include "gemino_types.h" // integer types
+#include "mevo_rate_matrices.h"
 
 using namespace Rcpp;
-
-
-
 
 
 
@@ -27,7 +25,7 @@ using namespace Rcpp;
 //'
 //' @noRd
 //'
-arma::mat TN93_rate_matrix(
+inline arma::mat TN93_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& alpha_1, const double& alpha_2, const double& beta,
@@ -59,7 +57,7 @@ arma::mat TN93_rate_matrix(
 //'
 //' @noRd
 //'
-arma::mat JC69_rate_matrix(
+inline arma::mat JC69_rate_matrix(
         const double& lambda, const double& xi) {
 
     arma::mat Q = TN93_rate_matrix(1, 1, 1, 1, lambda, lambda, lambda, xi);
@@ -74,7 +72,7 @@ arma::mat JC69_rate_matrix(
 //'
 //' @noRd
 //'
-arma::mat K80_rate_matrix(
+inline arma::mat K80_rate_matrix(
         const double& alpha, const double& beta,
         const double& xi) {
 
@@ -90,7 +88,7 @@ arma::mat K80_rate_matrix(
 //'
 //' @noRd
 //'
-arma::mat F81_rate_matrix(
+inline arma::mat F81_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& xi) {
@@ -107,7 +105,7 @@ arma::mat F81_rate_matrix(
 //'
 //' @noRd
 //'
-arma::mat HKY85_rate_matrix(
+inline arma::mat HKY85_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& alpha, const double& beta,
@@ -126,7 +124,7 @@ arma::mat HKY85_rate_matrix(
 //'
 //' @noRd
 //'
-arma::mat F84_rate_matrix(
+inline arma::mat F84_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& beta, const double& kappa,
@@ -150,7 +148,7 @@ arma::mat F84_rate_matrix(
 //'
 //' @noRd
 //'
-arma::mat GTR_rate_matrix(
+inline arma::mat GTR_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& a, const double& b, const double& c,
@@ -192,7 +190,7 @@ arma::mat GTR_rate_matrix(
 //'
 //' @noRd
 //'
-arma::mat UNREST_rate_matrix(
+inline arma::mat UNREST_rate_matrix(
         arma::mat Q, const double& xi) {
 
     // reset to zero so summing by row works

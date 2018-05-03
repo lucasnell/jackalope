@@ -13,7 +13,7 @@
 #include "sequence_classes.h"  // Var* and Ref* classes
 #include "pcg.h"  // pcg seeding
 #include "table_sampler.h"  // table method of sampling
-#include "gammas.h"  // SequenceGammas class
+#include "mevo_gammas.h"  // SequenceGammas class
 
 
 

@@ -12,6 +12,8 @@
 #include "sequence_classes.h"  // Var* and Ref* classes
 #include "pcg.h"  // pcg seeding
 #include "table_sampler.h"  // table method of sampling
+#include "mevo_gammas.h"  // SequenceGammas class
+#include "mevo_rate_matrices.h"  // rate matrix functions
 
 using namespace Rcpp;
 
