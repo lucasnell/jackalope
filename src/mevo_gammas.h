@@ -48,38 +48,7 @@ public:
      */
     void deletion_adjust(const uint& ind, std::vector<uint>& erase_inds,
                          const uint& del_start, const uint& del_end,
-                         const sint& del_size) {
-
-        // Total overlap
-        if (del_start <= start & del_end >= end) {
-            erase_inds.push_back(ind);
-            return;
-        }
-        // Deletion is totally inside this region but doesn't entirely overlap it
-        if (del_start > start & del_end < end) {
-            end += del_size;
-            return;
-        }
-        // No overlap and deletion starts after it
-        if (del_start > end) return;
-        // No overlap and deletion starts before it
-        if (del_end < start) {
-            start += del_size;
-            end += del_size;
-            return;
-        }
-        // Partial overlap at the start
-        if (del_end >= start & del_start < start) {
-            start = del_start;
-            end += del_size;
-            return;
-        }
-        // Partial overlap at the end
-        if (del_start <= end & del_end > end) {
-            end = del_start - 1;
-        }
-        return;
-    }
+                         const sint& del_size);
 };
 
 
@@ -99,12 +68,6 @@ private:
 
 
 public:
-
-    SequenceGammas(const VarSequence& vs) : regions(1), seq_size(vs.size()) {
-        regions[0].start = 0;
-        regions[0].end = seq_size;
-        regions.[0].gamma = 1;
-    }
 
     SequenceGammas(const uint& gamma_size_, const VarSequence& vs,
                    pcg32& eng, const double& alpha)
@@ -153,68 +116,11 @@ public:
      This index is the position in the `gammas` vector.
      */
     inline double operator[](const uint& idx) const {
-        return regions[idx].gamma * (regions[idx].end - regions[idx].start + 1);
+        return regions[idx].gamma * static_cast<double>(regions[idx].end -
+                                                        regions[idx].start + 1);
     }
 
-    void update_sizes(const uint& new_pos, sint size_change) {
-
-        /*
-         -----------
-         Substitutions
-         -----------
-         */
-        if (size_change == 0) return;
-
-
-        /*
-         -----------
-         InDels
-         -----------
-         */
-
-        seq_size += static_cast<double>(size_change);
-        uint idx = get_idx(new_pos);
-
-        /*
-         Insertions
-         */
-        if (size_change > 0) {
-            regions[idx].end += size_change;
-            idx++;
-            // update all following ranges:
-            while (idx < regions.size()) {
-                regions[idx].end += size_change;
-                regions[idx].start += size_change;
-                idx++;
-            }
-            return;
-        }
-
-        /*
-         Deletions
-         */
-        const uint& del_start(new_pos);
-        uint del_end = new_pos;
-        del_end -= (size_change + 1);
-
-        // Iterate through and adjust all regions including and following the deletion:
-        std::vector<uint> erase_inds;
-        while (idx < regions.size()) {
-            regions[idx].deletion_adjust(idx, erase_inds, del_start, del_end,
-                                         size_change);
-            idx++;
-        }
-
-        // If any regions need erasing, their indices will be stored in erase_inds
-        if (erase_inds.size() == 1) {
-            regions.erase(regions.begin() + erase_inds.front());
-        } else if (erase_inds.size() > 1) {
-            regions.erase(regions.begin() + erase_inds.front(),
-                          regions.begin() + erase_inds.back() + 1);
-        }
-
-        return;
-    }
+    void update_sizes(const uint& new_pos, sint size_change);
 
 };
 
