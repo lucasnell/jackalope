@@ -11,6 +11,34 @@
 using namespace Rcpp;
 
 
+//' C++ equivalent of R's \code{choose} function.
+//'
+//'
+//' @param n Unsigned integer value. Make sure this isn't negative!
+//' @param k Unsigned integer value. Make sure this isn't negative!
+//'
+//' @return Binomial coefficient (also integer).
+//'
+//' @noRd
+//'
+inline uint cpp_choose(const uint& n, uint k) {
+    if (k > n) {
+        return 0;
+    }
+    if (k * 2 > n) {
+        k = n - k;
+    }
+    if (k == 0) {
+        return 1;
+    }
+
+    uint result = n;
+    for (uint i = 2; i <= k; ++i) {
+        result *= (n - i + 1);
+        result /= i;
+    }
+    return result;
+}
 
 
 

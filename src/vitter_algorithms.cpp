@@ -32,6 +32,7 @@
 #include "util.h"  // uints_get_size
 #include "vitter_algorithms.h"  // vitter namespace
 #include "pcg.h"
+#include "util.h"  // cpp_choose
 
 
 using namespace Rcpp;
@@ -57,12 +58,10 @@ using namespace Rcpp;
 //'
 //'
 //' @noRd
-inline double f(const double& s, const double& n, const double& N) {
+inline double f(const double& s, const uint& n, const uint& N) {
     if (s < 0 || s > (N - n)) return 0;
-    double out = (n / N);
-    for (int i = 0; i < s; i++) {
-        out *= ((N - n - static_cast<double>(i)) / (N - 1 - static_cast<double>(i)));
-    }
+    double out = cpp_choose(N - s - 1, n - 1);
+    out /= static_cast<double>(cpp_choose(N, n));
     return out;
 }
 
@@ -182,8 +181,7 @@ uint algorithm_d1_S(const sint& n, const uint& N, pcg32& engine,
                         static_cast<double>(N)) / comp_denom) {
                 S = std::floor(X);
                 break;
-            } else if (U <= f(std::floor(X), static_cast<double>(n),
-                              static_cast<double>(N)) / comp_denom) {
+            } else if (U <= f(std::floor(X), n, N) / comp_denom) {
                 S = std::floor(X);
                 break;
             } else {
@@ -244,8 +242,7 @@ uint algorithm_d2_S(const sint& n, const uint& N, pcg32& engine,
                         static_cast<double>(N)) / comp_denom) {
                 S = std::floor(X);
                 break;
-            } else if (U <= f(std::floor(X), static_cast<double>(n),
-                              static_cast<double>(N)) / comp_denom) {
+            } else if (U <= f(std::floor(X), n, N) / comp_denom) {
                 S = std::floor(X);
                 break;
             } else {

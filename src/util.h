@@ -33,6 +33,9 @@ void clear_memory(U& x) {
 }
 
 
+// C++ version of R's choose function
+inline uint cpp_choose(const uint& n, uint k);
+
 /*
  Get a size from either an arma::uvec or std::vector<uint>.
  This is used in template functions that work for either class.

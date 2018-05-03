@@ -24,6 +24,7 @@
 #include "vitter_algorithms.h"  // vitter_d
 #include "table_sampler.h" // table sampling
 #include "pcg.h" // pcg sampler types
+#include "util.h" // cpp_choose
 
 
 using namespace Rcpp;
@@ -139,36 +140,6 @@ std::vector<uint> sample_seqs(const uint& total_mutations,
 
 
 
-
-//' C++ equivalent of R's \code{choose} function.
-//'
-//' \emph{Note}: This function is not exported to R.
-//'
-//' @param n Integer value.
-//' @param k Integer value.
-//'
-//' @return Binomial coefficient (also integer).
-//'
-//' @noRd
-//'
-inline uint cpp_choose(uint n, uint k) {
-    if (k > n) {
-        return 0;
-    }
-    if (k * 2 > n) {
-        k = n - k;
-    }
-    if (k == 0) {
-        return 1;
-    }
-
-    int result = n;
-    for(int i = 2; i <= k; ++i) {
-        result *= (n - i + 1);
-        result /= i;
-    }
-    return result;
-}
 
 
 
