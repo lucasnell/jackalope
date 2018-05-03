@@ -1,4 +1,15 @@
 
+/*
+ ****************************
+ ****************************
+
+ Gamma regions
+
+ ****************************
+ ****************************
+ */
+
+
 #include <RcppArmadillo.h>
 #include <pcg/pcg_random.hpp> // pcg prng
 #include <vector>  // vector class

@@ -50,13 +50,6 @@
  that returns the rate for a given index.
  They also both require that `end` is <= the maximum index for `rates`.
 
-
- ** IMPORTANT NOTE: **
- You can have numerical issues that result in these functions hanging if you have
- rates that are very small.
- The `SequenceGammas` class (in file `src/mevo_gammas.h`) keeps all rates >= 0.1,
- which I recommend doing for any other uses of these functions.
-
  */
 
 
@@ -70,7 +63,7 @@ inline uint weighted_reservoir_chunk_(const uint& start, const uint& end,
 
     // Create objects to store currently-selected position and key
     r = runif_01(eng);
-    key = std::pow(r, 1 / rates[start]);
+    key = std::log(r) / rates[start]; // log(key)
     double largest_key = key;  // largest key (the one we're going to keep)
     uint largest_pos = start;  // position where largest key was found
 
@@ -78,7 +71,7 @@ inline uint weighted_reservoir_chunk_(const uint& start, const uint& end,
     uint n_bp = rates.size(c);
     while (n_bp < chunk_size) {
         r = runif_01(eng);
-        X = std::log(r) / std::log(largest_key);
+        X = std::log(r) / largest_key;  // largest_key is already logged
         uint i = c + 1;
         if (i > end) i = 0;
         double wt_sum0 = rates[c];
@@ -97,9 +90,9 @@ inline uint weighted_reservoir_chunk_(const uint& start, const uint& end,
         largest_pos = i;
 
         w = rates[i];
-        t = std::pow(largest_key, w);
+        t = std::exp(w * largest_key); // key is log(key)
         r = runif_ab(eng, t, 1.0);
-        key = std::pow(r, 1 / w);
+        key = std::log(r) / w; // log(key)
         largest_key = key;
 
         c = i;
@@ -115,16 +108,17 @@ inline uint weighted_reservoir_(const uint& start, const uint& end,
 
     double r, key, X, w, t;
 
+
     // Create objects to store currently-selected position and key
     r = runif_01(eng);
-    key = std::pow(r, 1 / rates[start]);
+    key = std::log(r) / rates[start]; // log(key)  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     double largest_key = key;  // largest key (the one we're going to keep)
     uint largest_pos = start;  // position where largest key was found
 
     uint c = start;
     while (c < end) {
         r = runif_01(eng);
-        X = std::log(r) / std::log(largest_key);
+        X = std::log(r) / largest_key;  // log(key)  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         uint i = c + 1;
         double wt_sum0 = rates[c];
         double wt_sum1 = wt_sum0 + rates[i];
@@ -139,9 +133,9 @@ inline uint weighted_reservoir_(const uint& start, const uint& end,
         largest_pos = i;
 
         w = rates[i];
-        t = std::pow(largest_key, w);
+        t = std::exp(w * largest_key); // key is log(key)  // <<<<<<<<<<<<<<<<<<<<<<<<<<<
         r = runif_ab(eng, t, 1.0);
-        key = std::pow(r, 1 / w);
+        key = std::log(r) / w; // log(key)  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         largest_key = key;
 
         c = i;
