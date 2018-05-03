@@ -12,6 +12,7 @@
 #include "sequence_classes.h"  // Var* and Ref* classes
 #include "pcg.h"  // pcg seeding
 #include "table_sampler.h"  // table method of sampling
+#include "weighted_reservoir.h"  // weighted reservoir sampling
 #include "mevo_gammas.h"  // SequenceGammas class
 #include "mevo_rate_matrices.h"  // rate matrix functions
 
@@ -103,57 +104,6 @@ MutationSampler::MutationSampler(const arma::mat& Q,
     return;
 }
 
-
-
-
-
-
-/*
- Template that does most of the work for the next two functions.
- It uses weighted reservoir sampling from...
-    Efraimidis, P. S., and P. G. Spirakis. 2006. Weighted random sampling with a
-    reservoir. Information Processing Letters 97:181–185.
- */
-template <typename T>
-inline uint weighted_reservoir_(const uint& start, const uint& end,
-                                const T& rates, pcg32& eng) {
-
-    double r, key, X, w, t;
-
-    // Create objects to store currently-selected position and key
-    r = runif_01(eng);
-    key = std::pow(r, 1 / rates[start]);
-    double largest_key = key;  // largest key (the one we're going to keep)
-    uint largest_pos = start;  // position where largest key was found
-
-    uint c = start;
-    while (c < end) {
-        r = runif_01(eng);
-        X = std::log(r) / std::log(largest_key);
-        uint i = c + 1;
-        double wt_sum0 = rates[c];
-        double wt_sum1 = wt_sum0 + rates[i];
-        while (X > wt_sum1 && i < end) {
-            i++;
-            wt_sum0 += rates[(i-1)];
-            wt_sum1 += rates[i];
-        }
-        if (X > wt_sum1) break;
-        if (wt_sum0 >= X) continue;
-
-        largest_pos = i;
-
-        w = rates[i];
-        t = std::pow(largest_key, w);
-        r = runif_ab(eng, t, 1.0);
-        key = std::pow(r, 1 / w);
-        largest_key = key;
-
-        c = i;
-    }
-
-    return largest_pos;
-}
 
 
 
