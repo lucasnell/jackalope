@@ -26,7 +26,6 @@ using namespace Rcpp;
 
 
 
-
 /*
  ============================
  Algorithm D_1

@@ -58,10 +58,10 @@ using namespace Rcpp;
 //'
 //'
 //' @noRd
-inline double f(const double& s, const uint& n, const uint& N) {
+inline double f(const double& s, const double& n, const double& N) {
     if (s < 0 || s > (N - n)) return 0;
     double out = cpp_choose(N - s - 1, n - 1);
-    out /= static_cast<double>(cpp_choose(N, n));
+    out /= cpp_choose(N, n);
     return out;
 }
 
@@ -151,14 +151,14 @@ uint vitter_a_S(double n, double N, pcg32& engine) {
 // --------
 inline double g1(const double& x, const double& n, const double& N) {
     if (x < 0 || x > N) return 0;
-    return (n / N) * std::pow(1 - x/N, n - 1);
+    return (n / N) * std::pow(1 - x/N, static_cast<uint>(n - 1));
 }
 inline double c1(const double& n, const double& N) {
     return N / (N - n + 1);
 }
 inline double h1(const double& s, const double& n, const double& N) {
     if (s < 0 || s > (N - n)) return 0;
-    return (n / N) * std::pow(1 - (s / (N - n + 1)), n - 1);
+    return (n / N) * std::pow(1 - (s / (N - n + 1)), static_cast<uint>(n - 1));
 }
 inline double x1(const double& U, const double& n, const double& N) {
     return N * (1 - std::pow(U, 1/n));
@@ -181,7 +181,8 @@ uint algorithm_d1_S(const sint& n, const uint& N, pcg32& engine,
                         static_cast<double>(N)) / comp_denom) {
                 S = std::floor(X);
                 break;
-            } else if (U <= f(std::floor(X), n, N) / comp_denom) {
+            } else if (U <= f(std::floor(X), static_cast<double>(n),
+                              static_cast<double>(N)) / comp_denom) {
                 S = std::floor(X);
                 break;
             } else {
@@ -211,14 +212,14 @@ uint algorithm_d1_S(const sint& n, const uint& N, pcg32& engine,
 // --------
 inline double g2(const double& s, const double& n, const double& N) {
     if (s < 0) stop("Computational error. s cannot < 0 in g2.");
-    return ((n - 1) / (N - 1)) * std::pow(1 - ((n - 1) / (N - 1)), s);
+    return ((n - 1) / (N - 1)) * std::pow(1 - ((n - 1) / (N - 1)), static_cast<uint>(s));
 }
 inline double c2(const double& n, const double& N) {
     return (n / (n - 1)) * ((N - 1) / N);
 }
 inline double h2(const double& s, const double& n, const double& N) {
     if (s < 0 || s > (N - n)) return 0;
-    return (n / N) * std::pow(1 - ((n - 1) / (N - s)), s);
+    return (n / N) * std::pow(1 - ((n - 1) / (N - s)), static_cast<uint>(s));
 }
 inline double x2(const double& U, const double& n, const double& N) {
     return std::floor(std::log(U) / std::log(1 - ((n - 1) / (N - 1))));
@@ -242,7 +243,8 @@ uint algorithm_d2_S(const sint& n, const uint& N, pcg32& engine,
                         static_cast<double>(N)) / comp_denom) {
                 S = std::floor(X);
                 break;
-            } else if (U <= f(std::floor(X), n, N) / comp_denom) {
+            } else if (U <= f(std::floor(X), static_cast<double>(n),
+                              static_cast<double>(N)) / comp_denom) {
                 S = std::floor(X);
                 break;
             } else {
