@@ -33,8 +33,41 @@ void clear_memory(U& x) {
 }
 
 
-// C++ version of R's choose function
-inline uint cpp_choose(const uint& n, uint k);
+//' C++ equivalent of R's \code{choose} function.
+//'
+//'
+//' @param n Unsigned integer value. Make sure this isn't negative!
+//' @param k Unsigned integer value. Make sure this isn't negative!
+//'
+//' @return Binomial coefficient (also integer).
+//'
+//' @noRd
+//'
+inline uint cpp_choose(const uint& n, uint k) {
+    if (k > n) return 0;
+    if (k * 2 > n) k = n - k;
+    if (k == 0) return 1;
+
+    uint result = n;
+    for (uint i = 2; i <= k; ++i) {
+        result *= (n - i + 1);
+        result /= i;
+    }
+    return result;
+}
+// Same as above, but for doubles (even as doubles, they should be input as whole numbers)
+inline double cpp_choose(const double& n, double k) {
+    if (k > n) return 0;
+    if (k * 2 > n) k = n - k;
+    if (k == 0) return 1;
+
+    double result = n;
+    for (uint i = 2; i <= k; ++i) {
+        result *= (n - i + 1);
+        result /= i;
+    }
+    return result;
+}
 
 /*
  Get a size from either an arma::uvec or std::vector<uint>.
