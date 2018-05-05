@@ -14,6 +14,7 @@
 #include "pcg.h"  // pcg seeding
 #include "table_sampler.h"  // table method of sampling
 #include "mevo_gammas.h"  // SequenceGammas class
+#include "weighted_reservoir.h"  // weighted_reservoir_* functions
 
 
 
@@ -45,142 +46,119 @@ namespace mevo {
 
 
 /*
- Chooses a chunk while controlling for the last chunk's size being < `chunk_size`.
- */
-class ChunkChooser {
+ Stores info on the overall mutation rates (including Gammas) for each nucleotide.
 
-private:
-
-    uint n_chunks;    // Number of chunks to choose from
-    uint chunk_size;  // Size of each chunk
-    double p_retain;  // Pr(retaining last chunk | last chunk was sampled initially):
-
-public:
-
-    ChunkChooser(const uint& chunk_size_, const uint& overall_size)
-        : n_chunks(), chunk_size(chunk_size_), p_retain(overall_size) {
-
-        n_chunks = std::ceil(static_cast<double>(overall_size) /
-            static_cast<double>(chunk_size));
-
-        p_retain -= static_cast<double>((n_chunks - 1) * chunk_size);
-        p_retain /= overall_size;
-        p_retain *= static_cast<double>(n_chunks);
-
-    }
-
-    uint choose(pcg32& eng) {
-
-        if (n_chunks == 1) return 0;
-
-        double u = runif_01(eng);
-        uint chunk = u * n_chunks;
-        if (chunk == n_chunks - 1) {
-            u = runif_01(eng);
-            if (u > p_retain) {
-                u = runif_01(eng);
-                chunk = u * (n_chunks - 1);
-            }
-        }
-        return chunk;
-    }
-
-    /*
-     Reset sizes after you add an insertion or deletion
-     */
-    void reset_size(const uint& new_size) {
-
-        n_chunks = std::ceil(static_cast<double>(new_size) /
-            static_cast<double>(chunk_size));
-
-        p_retain = static_cast<double>(new_size);
-        p_retain -= static_cast<double>((n_chunks - 1) * chunk_size);
-        p_retain /= static_cast<double>(new_size);
-        p_retain *= static_cast<double>(n_chunks);
-    }
-};
-
-
-
-
-
-
-/*
- Stores info on the overall mutation rates (NOT including Gammas) for each nucleotide.
- This doesn't include Gamma values because it's meant to be used for sampling within
- a region with all the same Gamma value.
- Because they all share one Gamma value, Gamma factors out in calculating weights anyway.
-
- For `rates`, Ns are set to 0 bc we don't want to process these.
- Input char objects are cast to uint which provide the indices.
- T, C, A, G, and N should never be higher than 84, so will be safe.
- If you're worried about other characters accidentally being input to it, you can
- set `rates` to size 256.
-
- This class is used in `molecular_evolution.cpp` to do weighted reservoir sampling.
- MutationRates combines a reference to a `VarSequence` object with a vector of rates by
- nucleotide.
+ This class is used to do weighted reservoir sampling for where a mutation should occur.
  Ultimately this class allows you to use a bracket operator to get a rate for a
  given location in the variant genome.
+
+ For nucleotide rates (not including Gammas), Ns are set to 0 bc we don't want to
+ process these.
+ Input char objects are cast to uint which provide the indices.
+ T, C, A, G, and N should never be higher than 84, so will be safe.
+ In case someone inputs other characters accidentally, I've set the length to 256,
+ which should work for all 8-bit character values.
+ The memory overhead should be pretty minimal.
  */
+
 class MutationRates {
 
 private:
     const VarSequence& vs;
-    const std::vector<double> rates;
+    std::vector<double> nt_rates;
+    SequenceGammas gammas;
 
 public:
-    MutationRates(const VarSequence& vs_, const std::vector<double>& rates_)
-        : vs(vs_), rates(85, 0.0) {
+    MutationRates(const VarSequence& vs_, const std::vector<double>& rates_,
+                  const uint& gamma_size_,
+                  pcg32& eng, const double& alpha)
+        : vs(vs_), nt_rates(256, 0.0), gammas(vs_, gamma_size_, eng, alpha) {
         for (uint i = 0; i < 4; i++) {
             uint j = mevo::bases[i];
-            rates[j] = rates_[i];
-
+            nt_rates[j] = rates_[i];
         }
     }
-
+    MutationRates(const VarSequence& vs_, const std::vector<double>& rates_,
+                  arma::mat gamma_mat)
+        : vs(vs_), nt_rates(256, 0.0), gammas(gamma_mat) {
+        for (uint i = 0; i < 4; i++) {
+            uint j = mevo::bases[i];
+            nt_rates[j] = rates_[i];
+        }
+    }
     // Assignment operator
     MutationRates(const MutationRates& rhs)
-        : vs(rhs.vs), rates(rhs.rates) {}
-    // Using bracket operator to get the rate
+        : vs(rhs.vs), nt_rates(rhs.nt_rates), gammas(rhs.gammas) {}
+
+    // Using bracket operator to get the overall mutation rate at a location
     inline double operator[](const uint& new_pos) const {
         char c = vs.get_nt(new_pos);
-        return rates[c];
+        double r = nt_rates[c];
+        r *= gammas[new_pos];
+        return r;
+    }
+    // To get size of the variant sequence
+    inline uint size() const noexcept {
+        return vs.size();
     }
 
 };
 
 
+/*
+ This class uses the info above, plus a class and fxn from `weighted_reservoir.h` to
+ do weighted reservoir sampling for a single location at which to put a mutation.
+ This sampling is done using the entire sequence, which can be inefficient for large
+ sequences.
+ The weights are based on the nucleotide and sequence region.
+ */
+class LocationSampler {
 
-// /*
-//  This class allows me to use a template in `molecular_evolution.cpp` to
-//  do weighted reservoir sampling.
-//  RateGetter combines references to a string and to a MutationRates object, and
-//  ultimately allows you to use a bracket operator to get a rate for a given location
-//  in a sequence.
-//  */
-// class GammaGetter {
-//
-// private:
-//     const MutationRates& rates;
-//     const std::vector<double>& gammas;
-//
-// public:
-//     RateGetter(const std::string& S_, const MutationRates& rates_)
-//         : S(S_), rates(rates_) {};
-//     inline double operator[](const uint& idx) const {
-//         return rates[S[idx]];
-//     }
-//     // Assignment operator
-//     RateGetter(const RateGetter& rhs) : S(rhs.S), rates(rhs.rates) {}
-//
-// };
+    ReservoirRates<MutationRates> rates;
 
+    LocationSampler(const VarSequence& vs_, const std::vector<double>& rates_,
+                    arma::mat gamma_mat)
+        : rates(MutationRates(vs_, rates_, gamma_mat)) {}
+    LocationSampler(const VarSequence& vs_, const std::vector<double>& rates_,
+                    const uint& gamma_size_,
+                    pcg32& eng, const double& alpha)
+        : rates(MutationRates(vs_, rates_, gamma_size_, eng, alpha)) {}
 
+    inline uint sample(pcg32& eng) {
+        return weighted_reservoir_<MutationRates>(rates, eng);
+    }
+
+};
 
 
-// VarSequence
+/*
+ This is the same as above, but it only does weighted sampling on a set number of
+ sequence locations at a time.
+ It extracts a "chunk" for weighted sampling by using non-weighted sampling without
+ replacement.
+ For large sequences, this is much more efficient and, from my testing, produces
+ similar results.
+ */
+class ChunkLocationSampler {
 
+    ChunkReservoirRates<MutationRates> rates;
+
+    ChunkLocationSampler(const uint& chunk_size,
+                         const VarSequence& vs_, const std::vector<double>& rates_,
+                         arma::mat gamma_mat)
+        : rates(MutationRates(vs_, rates_, gamma_mat), chunk_size) {}
+
+    ChunkLocationSampler(const uint& chunk_size,
+                         const VarSequence& vs_, const std::vector<double>& rates_,
+                         const uint& gamma_size_,
+                         pcg32& eng, const double& alpha)
+        : rates(MutationRates(vs_, rates_, gamma_size_, eng, alpha), chunk_size) {}
+
+    inline uint sample(pcg32& eng) {
+        return weighted_reservoir_chunk_<MutationRates>(rates, eng);
+    }
+
+};
 
 
 
@@ -229,6 +207,8 @@ struct MutationInfo {
  and get out an index to which TableSampler object to sample from.
  This way is much faster than using an unordered_map.
  Using 8-bit uints bc the char should never be >= 256.
+ It's only of length 85 (versus 256 in MutationRates class) because characters other
+ than T, C, A, or G have rates hard-coded to zero and should never be chosen.
  */
 inline std::vector<uint8> make_base_inds() {
     std::vector<uint8> base_inds(85);
@@ -249,14 +229,11 @@ inline std::vector<uint8> make_base_inds() {
  */
 class MutationTypeSampler {
 
-private:
-
     std::vector<uint8> base_inds;
-
-public:
-
     std::vector<TableSampler> sampler;
     std::vector<sint> event_lengths;
+
+public:
 
     MutationTypeSampler() : sampler(4), event_lengths() {
         base_inds = make_base_inds();

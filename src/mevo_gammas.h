@@ -89,7 +89,10 @@ private:
 
 public:
 
-    SequenceGammas(const uint& gamma_size_, const VarSequence& vs,
+    SequenceGammas(const SequenceGammas& other)
+        : regions(other.regions), seq_size(other.seq_size) {}
+
+    SequenceGammas(const VarSequence& vs, const uint& gamma_size_,
                    pcg32& eng, const double& alpha)
         : regions(), seq_size(vs.size()) {
         // Number of gamma values needed:
