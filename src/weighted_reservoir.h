@@ -121,25 +121,16 @@ inline uint weighted_reservoir_(const uint& start, const uint& end,
 
 
     // Create objects to store currently-selected position and key
-    r = -1 * distr(eng);  // ~ log(U(0,1))
-    key = r / rates[start]; // log(key)
-    double largest_key = key;  // largest key (the one we're going to keep)
-    uint largest_pos = start;  // position where largest key was found
+    r = -1 * distr(eng);        // ~ log(U(0,1))
+    key = r / rates[start];     // log(key)
+    double largest_key = key;   // largest key (the one we're going to keep)
+    uint largest_pos = start;   // position where largest key was found
 
     uint c = start;
     while (c < end) {
-        r = -1 * distr(eng);  // ~ log(U(0,1))
-        X = r / largest_key;  // log(key)
+        r = -1 * distr(eng);    // ~ log(U(0,1))
+        X = r / largest_key;    // log(key)
         uint i = c + 1;
-        // double wt_sum0 = rates[c];
-        // double wt_sum1 = wt_sum0 + rates[i];
-        // while (X > wt_sum1 && i < end) {
-        //     i++;
-        //     wt_sum0 += rates[(i-1)];
-        //     wt_sum1 += rates[i];
-        // }
-        // if (X > wt_sum1) break;
-        // if (wt_sum0 >= X) continue;
         X -= rates[c];
         w = rates[i];
         while (X > w && i < end) {
@@ -152,10 +143,9 @@ inline uint weighted_reservoir_(const uint& start, const uint& end,
 
         largest_pos = i;
 
-        // w = rates[i];
-        t = std::exp(w * largest_key); // key is log(key)
+        t = std::exp(w * largest_key);  // key is log(key)
         r = runif_ab(eng, t, 1.0);
-        key = std::log(r) / w; // log(key)
+        key = std::log(r) / w;          // log(key)
         largest_key = key;
 
         c = i;
@@ -168,80 +158,73 @@ inline uint weighted_reservoir_(const uint& start, const uint& end,
 
 
 /*
- Simple class wrap around a vector of rates and a vector of indices for a subsample of
- rates.
+ Simple class to wrap around (1) a vector of rates and (2) a vector of indices
+ for a subsample of rates.
  Ultimately, this class allows you to iterate through indices for the indices vector
  using simply a bracket operator.
  For instance, if the rates vector is length 1e6 and we first subsample 1000 indices,
- we can do weighted sampling for just the 1000 indices and use this class to retrieve
- the rates based on indices from 0 to 999.
+ we can do weighted sampling for just rates the 1000 indices refer to.
+ This class is used to retrieve the rates based on indices from 0 to 999 instead of
+ having to mess around with indices from 0 to 999999.
  */
 template <typename T>
-struct RateGetter {
+class RateGetter {
+public:
 
     const T& rates;
-    const std::vector<uint>& inds;
+    std::vector<uint> inds;
 
-    RateGetter(const T& r, const std::vector<uint>& i) : rates(r), inds(i) {};
+    RateGetter(const T& r, const uint& chunk_size)
+        : rates(r), inds(chunk_size), distr(1.0) {};
 
     inline double operator[](const uint& idx) const {
         return rates[inds[idx]];
     }
+    inline uint size() const noexcept {
+        return inds.size();
+    }
 
+    inline void reset(pcg32& eng) {
+        vitter_d<std::vector<uint>>(inds, rates.size(), eng);
+    }
+
+    inline double exp(pcg32& eng) {
+        return distr(eng);
+    }
+
+private:
+    std::exponential_distribution<double> distr;
 };
 
 
 template <typename T>
-inline uint weighted_reservoir2_(const uint& start, const uint& end,
-                                 const uint& chunk_size,
-                                 const T& rates_,
-                                 pcg32& eng,
-                                 std::exponential_distribution<double>& distr) {
+inline uint weighted_reservoir2_(RateGetter<T>& rates,
+                                 pcg32& eng) {
 
 
-    std::vector<uint> inds(chunk_size);
-    // std::vector<double> rates(chunk_size);
+    uint chunk = rates.size();
 
-
-    vitter_d<std::vector<uint>>(inds, end - start + 1, eng);
-    if (start > 0) {
-        for (uint j = 0; j < chunk_size; j++) {
-            inds[j] += start;
-            // // rates[j] = rates_[inds[j]];
-        }
-    }
-    RateGetter<T> rates(rates_, inds);
-
-    // uint ii = 0; // index for `inds`
+    rates.reset(eng);
 
     double r, key, X, w, t;
 
 
     // Create objects to store currently-selected position and key
-    r = -1 * distr(eng);  // ~ log(U(0,1))
-    // key = r / rates[inds[ii]]; // log(key)
-    key = r / rates[0]; // log(key)
-    double largest_key = key;  // largest key (the one we're going to keep)
-    // uint largest_pos = inds[ii];  // position where largest key was found
-    uint largest_pos = 0;  // position where largest key was found
+    r = -1 * rates.exp(eng);    // ~ log(U(0,1))
+    key = r / rates[0];         // log(key)
+    double largest_key = key;   // largest key (the one we're going to keep)
+    uint largest_pos = 0;       // position where largest key was found
 
 
-    // uint c = inds[ii];
     uint c = 0;
-    // while (ii < (chunk_size-1)) {
-    while (c < (chunk_size-1)) {
-        r = -1 * distr(eng);  // ~ log(U(0,1))
-        X = r / largest_key;  // log(key)
-        // ii++;
-        // uint i = inds[ii];
+    while (c < (chunk-1)) {
+        r = -1 * rates.exp(eng);    // ~ log(U(0,1))
+        X = r / largest_key;        // log(key)
         uint i = c + 1;
         X -= rates[c];
         w = rates[i];
-        // while (X > w && ii < (chunk_size-1)) {
-        while (X > w && i < (chunk_size-1)) {
+        while (X > w && i < (chunk-1)) {
             X -= rates[i];
-            // ii++;
-            // i = inds[ii];
             i++;
             w = rates[i];
         }
@@ -250,40 +233,15 @@ inline uint weighted_reservoir2_(const uint& start, const uint& end,
 
         largest_pos = i;
 
-        t = std::exp(w * largest_key); // key is log(key)
+        t = std::exp(w * largest_key);  // key is log(key)
         r = runif_ab(eng, t, 1.0);
-        key = std::log(r) / w; // log(key)
+        key = std::log(r) / w;          // log(key)
         largest_key = key;
 
         c = i;
-        /*
-         r = -1 * distr(eng);  // ~ log(U(0,1))
-         X = r / largest_key;  // log(key)
-        uint i = c + 1;
-        double wt_sum0 = rates[c];
-        double wt_sum1 = wt_sum0 + rates[i];
-        while (X > wt_sum1 && i < end) {
-        i++;
-        wt_sum0 += rates[(i-1)];
-        wt_sum1 += rates[i];
-        }
-        if (X > wt_sum1) break;
-        if (wt_sum0 >= X) continue;
-
-        largest_pos = i;
-
-        w = rates[i];
-        t = std::exp(w * largest_key); // key is log(key)
-        r = runif_ab(eng, t, 1.0);
-        key = std::log(r) / w; // log(key)
-        largest_key = key;
-
-        c = i;
-         */
     }
 
-    // return largest_pos;
-    return inds[largest_pos];
+    return rates.inds[largest_pos];
 }
 
 #endif
