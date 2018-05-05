@@ -3,7 +3,8 @@
  ****************************
  ****************************
 
- Gamma regions
+ Methods for classes related to Gamma regions: sequence regions with the same Gamma
+ modifier to the overall mutation rate.
 
  ****************************
  ****************************
@@ -11,15 +12,15 @@
 
 
 #include <RcppArmadillo.h>
-#include <pcg/pcg_random.hpp> // pcg prng
-#include <vector>  // vector class
-#include <string>  // string class
-#include <random>  // gamma_distribution
+#include <pcg/pcg_random.hpp>   // pcg prng
+#include <vector>               // vector class
+#include <string>               // string class
+#include <random>               // gamma_distribution
 
-#include "gemino_types.h" // integer types
-#include "sequence_classes.h"  // Var* and Ref* classes
-#include "pcg.h"  // pcg seeding
-#include "mevo_gammas.h"  // Gamma* classes
+#include "gemino_types.h"       // integer types
+#include "sequence_classes.h"   // Var* and Ref* classes
+#include "pcg.h"                // pcg seeding
+#include "mevo_gammas.h"        // Gamma* classes
 
 
 
@@ -122,7 +123,10 @@ void SequenceGammas::update_sizes(const uint& new_pos, sint size_change) {
         idx++;
     }
 
-    // If any regions need erasing, their indices will be stored in erase_inds
+    /*
+     If any regions need erasing, their indices will be stored in erase_inds.
+     They will be consecutive indices, so we only need to access the front and back.
+     */
     if (erase_inds.size() == 1) {
         regions.erase(regions.begin() + erase_inds.front());
     } else if (erase_inds.size() > 1) {

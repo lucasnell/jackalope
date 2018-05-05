@@ -2,15 +2,26 @@
 #define __GEMINO_GAMMAS_H
 
 
-#include <RcppArmadillo.h>
-#include <pcg/pcg_random.hpp> // pcg prng
-#include <vector>  // vector class
-#include <string>  // string class
-#include <random>  // gamma_distribution
+/*
+ ****************************
+ ****************************
 
-#include "gemino_types.h" // integer types
-#include "sequence_classes.h"  // Var* and Ref* classes
-#include "pcg.h"  // pcg seeding
+ Classes related to Gamma regions: sequence regions with the same Gamma modifier to
+ the overall mutation rate.
+
+ ****************************
+ ****************************
+ */
+
+#include <RcppArmadillo.h>
+#include <pcg/pcg_random.hpp>   // pcg prng
+#include <vector>               // vector class
+#include <string>               // string class
+#include <random>               // gamma_distribution
+
+#include "gemino_types.h"       // integer types
+#include "sequence_classes.h"   // Var* and Ref* classes
+#include "pcg.h"                // pcg seeding
 
 
 
@@ -19,8 +30,7 @@ using namespace Rcpp;
 
 
 /*
- Stores info for a single "Gamma region": a region with the same Gamma modifier to
- the overall mutation rate.
+ Stores info for a single Gamma region.
  */
 
 class GammaRegion {
@@ -65,6 +75,9 @@ private:
     std::vector<GammaRegion> regions;
     double seq_size;
 
+    /*
+     Based on a sequence position, return an index to the Gamma region it's inside.
+     */
     inline uint get_idx(const uint& new_pos) const {
         uint idx = new_pos * (static_cast<double>(regions.size()) / seq_size);
         if (idx >= regions.size()) idx = regions.size() - 1;
@@ -95,7 +108,19 @@ public:
         }
     }
 
-    SequenceGammas(const arma::mat& gamma_mat) {
+    SequenceGammas(arma::mat gamma_mat) {
+        // Sort from first to last region
+        arma::uvec sort_inds = arma::sort_index(gamma_mat.col(0));
+        gamma_mat = gamma_mat.rows(sort_inds);
+        // Check that matrix regions are appropriately labelled
+        std::string err = "input Gamma matrix needs to use 0-based, inclusive indexing, ";
+        err += "have the starting points in the first column, ";
+        err += "and have the ending points in the second column.";
+        if (gamma_mat(0,0) != 0) stop(err);
+        for (uint i = 1; i < gamma_mat.n_rows; i++) {
+            if ((gamma_mat(i,1) - gamma_mat(i-1,1)) != 1) stop(err);
+        }
+        // Now fill in the regions vector
         regions = std::vector<GammaRegion>(gamma_mat.n_rows);
         for (uint i = 0; i < gamma_mat.n_rows; i++) {
             regions[i].start = static_cast<uint>(gamma_mat(i,0));
@@ -107,29 +132,10 @@ public:
 
     /*
      Get Gamma value based on the position on the chromosome.
-     Notice that this does NOT incorporate the size, so this should
-     not be used for sampling.
      */
-    double get_gamma(const uint& new_pos) const {
+    inline double operator[](const uint& new_pos) const {
         uint idx = get_idx(new_pos);
         return regions[idx].gamma;
-    }
-
-    uint size() const noexcept {
-        return static_cast<uint>(seq_size);
-    }
-    inline double size(const uint& idx) const {
-        return regions[idx].size();
-    }
-
-
-    /*
-     Get relative rate of change compared to other Gamma regions: the Gamma value
-     multiplied by the size of the region.
-     This index is the position in the `gammas` vector.
-     */
-    inline double operator[](const uint& idx) const {
-        return regions[idx].gamma * size(idx);
     }
 
     void update_sizes(const uint& new_pos, sint size_change);
