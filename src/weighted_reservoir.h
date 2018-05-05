@@ -35,7 +35,7 @@
  */
 
 /*
- Templates that do weighted reservoir sampling for a section of a vector, returning
+ Templates that do weighted reservoir sampling for a vector, returning
  one unsigned integer index to the sampled location in the `rates` vector.
 
  The first version keeps track of the number of basepairs that are being surveyed
@@ -48,8 +48,7 @@
  region the index points to.
 
  Both versions require that class `T` has a bracket operator (`operator[]`) defined
- that returns the rate for a given index.
- They also both require that `end` is <= the maximum index for `rates`.
+ that returns the rate (type `double`) for a given index.
 
  NOTE: Make sure `distr` is constructed with rate = 1, like the following:
     `std::exponential_distribution<double> distr(1.0);`
@@ -112,23 +111,54 @@ inline uint weighted_reservoir_chunk_(const uint& start, const uint& end,
 
 
 
+/*
+ A class for weighted reservoir sampling.
+ This is just a wrapper for a reference to a vector of rates plus an exponential
+ distribution object.
+ I made this class to make sure the exponential distribution isn't messed with, plus
+ to be consistent with the "chunked" version below.
+ Class `T` needs to return a double with square brackets and have a `size()` method.
+ */
 template <typename T>
-inline uint weighted_reservoir_(const uint& start, const uint& end,
-                                const T& rates, pcg32& eng,
-                                std::exponential_distribution<double>& distr) {
+class ReservoirRates {
+public:
+
+    const T& rates;
+
+    ReservoirRates(const T& r) : rates(r), distr(1.0) {};
+
+    inline double operator[](const uint& idx) const {
+        return rates[idx];
+    }
+    inline uint size() const noexcept {
+        return rates.size();
+    }
+
+    inline double exp(pcg32& eng) {
+        return distr(eng);
+    }
+
+private:
+    std::exponential_distribution<double> distr;
+};
+
+
+template <typename T>
+inline uint weighted_reservoir_(ReservoirRates<T>& rates, pcg32& eng) {
 
     double r, key, X, w, t;
 
+    uint end = rates.size();
 
     // Create objects to store currently-selected position and key
-    r = -1 * distr(eng);        // ~ log(U(0,1))
-    key = r / rates[start];     // log(key)
+    r = -1 * rates.exp(eng);        // ~ log(U(0,1))
+    key = r / rates[0];     // log(key)
     double largest_key = key;   // largest key (the one we're going to keep)
-    uint largest_pos = start;   // position where largest key was found
+    uint largest_pos = 0;   // position where largest key was found
 
-    uint c = start;
+    uint c = 0;
     while (c < end) {
-        r = -1 * distr(eng);    // ~ log(U(0,1))
+        r = -1 * rates.exp(eng);    // ~ log(U(0,1))
         X = r / largest_key;    // log(key)
         uint i = c + 1;
         X -= rates[c];
@@ -158,23 +188,26 @@ inline uint weighted_reservoir_(const uint& start, const uint& end,
 
 
 /*
+ A class for "chunked" weighted reservoir sampling.
  Simple class to wrap around (1) a vector of rates and (2) a vector of indices
- for a subsample of rates.
+ for a subsample of rates. (The former is a reference to prevent unnecessary copying.)
  Ultimately, this class allows you to iterate through indices for the indices vector
  using simply a bracket operator.
  For instance, if the rates vector is length 1e6 and we first subsample 1000 indices,
  we can do weighted sampling for just rates the 1000 indices refer to.
  This class is used to retrieve the rates based on indices from 0 to 999 instead of
  having to mess around with indices from 0 to 999999.
+
+ Class `T` needs to return a double with square brackets and have a `size()` method.
  */
 template <typename T>
-class RateGetter {
+class ChunkReservoirRates {
 public:
 
     const T& rates;
     std::vector<uint> inds;
 
-    RateGetter(const T& r, const uint& chunk_size)
+    ChunkReservoirRates(const T& r, const uint& chunk_size)
         : rates(r), inds(chunk_size), distr(1.0) {};
 
     inline double operator[](const uint& idx) const {
@@ -198,7 +231,7 @@ private:
 
 
 template <typename T>
-inline uint weighted_reservoir2_(RateGetter<T>& rates,
+inline uint weighted_reservoir2_(ChunkReservoirRates<T>& rates,
                                  pcg32& eng) {
 
 
