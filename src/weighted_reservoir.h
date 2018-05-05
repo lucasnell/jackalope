@@ -38,74 +38,26 @@
  Templates that do weighted reservoir sampling for a vector, returning
  one unsigned integer index to the sampled location in the `rates` vector.
 
- The first version keeps track of the number of basepairs that are being surveyed
- as it passes along the `rates` vector.
- It stops when the number of basepairs passed is greater than the `chunk_size` argument.
- This version also starts from the beginning of `rates` if it reaches the end but
- hasn't reached the `chunk_size` threshold.
- The number of basepairs is determined using the `size` method in class `T`,
- which takes an integer index as an argument and returns the size (in basepairs) of the
- region the index points to.
+ The first version simply samples along the entire vector.
 
- Both versions require that class `T` has a bracket operator (`operator[]`) defined
- that returns the rate (type `double`) for a given index.
+ The second, "chunk" version first sub-samples (*not* weighted) a set number of
+ indices, then only does weighted sampling on rates with those indices.
+ This can improve performance pretty significantly, depending on the number of
+ sub-samples compared to the whole vector's size.
 
- NOTE: Make sure `distr` is constructed with rate = 1, like the following:
-    `std::exponential_distribution<double> distr(1.0);`
-    It should never have a different rate!
+ Both versions require that class `T` has...
+ (1) a bracket-operator method (`operator[]`) that returns the rate (type `double`)
+     for a given index
+ (2) a `size()` method that returns the max index to sample + 1.
+
+ Both versions also require that you pre-construct an object to retrieve the rates
+ from. The classes you need to construct are different for the first and second
+ sampling functions below, and they are templates with the same requirements for
+ class `T` as listed above.
+ See the classes `ReservoirRates` and `ChunkReservoirRates` below for more info.
+
  */
 
-
-
-
-template <typename T>
-inline uint weighted_reservoir_chunk_(const uint& start, const uint& end,
-                                      const uint& chunk_size,
-                                      const T& rates,
-                                      pcg32& eng,
-                                      std::exponential_distribution<double>& distr) {
-
-    double r, key, X, w, t;
-
-    // Create objects to store currently-selected position and key
-    r = -1 * distr(eng);  // ~ log(U(0,1))
-    key = r / rates[start]; // log(key)
-    double largest_key = key;  // largest key (the one we're going to keep)
-    uint largest_pos = start;  // position where largest key was found
-
-    uint c = start;
-    uint n_bp = rates.size(c);
-    while (n_bp < chunk_size) {
-        r = -1 * distr(eng);  // ~ log(U(0,1))
-        X = r / largest_key;  // largest_key is already logged
-        uint i = c + 1;
-        if (i > end) i = 0;
-        double wt_sum0 = rates[c];
-        double wt_sum1 = wt_sum0 + rates[i];
-        n_bp += rates.size(i);
-        while (X > wt_sum1 && n_bp < chunk_size) {
-            i++;
-            wt_sum0 += rates[(i-1)];
-            if (i > end) i = 0;
-            n_bp += rates.size(i);
-            wt_sum1 += rates[i];
-        }
-        if (X > wt_sum1) break;
-        if (wt_sum0 >= X) continue;
-
-        largest_pos = i;
-
-        w = rates[i];
-        t = std::exp(w * largest_key); // key is log(key)
-        r = runif_ab(eng, t, 1.0);
-        key = std::log(r) / w; // log(key)
-        largest_key = key;
-
-        c = i;
-    }
-
-    return largest_pos;
-}
 
 
 
@@ -142,6 +94,12 @@ private:
     std::exponential_distribution<double> distr;
 };
 
+
+
+
+/*
+ Regular weighted reservoir sampling.
+ */
 
 template <typename T>
 inline uint weighted_reservoir_(ReservoirRates<T>& rates, pcg32& eng) {
@@ -184,6 +142,11 @@ inline uint weighted_reservoir_(ReservoirRates<T>& rates, pcg32& eng) {
 
     return largest_pos;
 }
+
+
+
+
+
 
 
 
@@ -230,9 +193,14 @@ private:
 };
 
 
+
+
+
+/*
+ Chunked weighted reservoir sampling
+ */
 template <typename T>
-inline uint weighted_reservoir2_(ChunkReservoirRates<T>& rates,
-                                 pcg32& eng) {
+inline uint weighted_reservoir_chunk_(ChunkReservoirRates<T>& rates, pcg32& eng) {
 
 
     uint chunk = rates.size();
