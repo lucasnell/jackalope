@@ -73,11 +73,19 @@
  */
 template <typename T>
 class ReservoirRates {
+
+    const T rates;
+    std::exponential_distribution<double> distr;
+
 public:
 
-    const T& rates;
 
+    ReservoirRates() : rates(), distr(1.0) {};
     ReservoirRates(const T& r) : rates(r), distr(1.0) {};
+    // Assignment operator
+    ReservoirRates& operator=(const ReservoirRates& other) {
+        rates = other.rates;
+    }
 
     inline double operator[](const uint& idx) const {
         return rates[idx];
@@ -90,8 +98,6 @@ public:
         return distr(eng);
     }
 
-private:
-    std::exponential_distribution<double> distr;
 };
 
 
@@ -165,13 +171,23 @@ inline uint weighted_reservoir_(ReservoirRates<T>& rates, pcg32& eng) {
  */
 template <typename T>
 class ChunkReservoirRates {
+
+    T rates;
+    std::vector<uint> inds;
+    std::exponential_distribution<double> distr;
+
 public:
 
-    const T& rates;
-    std::vector<uint> inds;
 
+    ChunkReservoirRates() : rates(), inds(), distr(1.0) {};
     ChunkReservoirRates(const T& r, const uint& chunk_size)
         : rates(r), inds(chunk_size), distr(1.0) {};
+    // Assignment operator
+    ChunkReservoirRates& operator=(const ChunkReservoirRates& other) {
+        rates = other.rates;
+        inds = other.inds;
+        distr = std::exponential_distribution<double>(1.0);
+    }
 
     inline double operator[](const uint& idx) const {
         return rates[inds[idx]];
@@ -188,8 +204,15 @@ public:
         return distr(eng);
     }
 
-private:
-    std::exponential_distribution<double> distr;
+    /*
+     Return index referring to a position in `rates` using an index for `inds`.
+     For example, if `rates` is length 200 and `inds` is length 100, the input
+     index here should never been >= 100, but the output index could be up to 199.
+     */
+    inline uint operator()(const uint& idx) const {
+        return inds[idx];
+    }
+
 };
 
 
@@ -242,7 +265,7 @@ inline uint weighted_reservoir_chunk_(ChunkReservoirRates<T>& rates, pcg32& eng)
         c = i;
     }
 
-    return rates.inds[largest_pos];
+    return rates(largest_pos);
 }
 
 #endif
