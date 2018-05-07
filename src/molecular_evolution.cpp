@@ -108,56 +108,6 @@ MutationSampler::MutationSampler(const arma::mat& Q,
 
 
 
-/*
- At a time when an event occurs, this samples nucleotides based on their rates
- and returns a random location where the event will occur
- */
-uint event_location(const std::string& S,
-                    const uint& chunk_size,
-                    const MutationRates& mr,
-                    pcg32& eng) {
-
-    if (S.size() == 1) return 0;
-
-    /*
-     Where should we start and end?
-     If `chunk_size < S.size()`, then choose random location for start.
-     Else, start at 0.
-     */
-    uint start, end;
-    if (chunk_size < S.size()) {
-        start = runif_01(eng) * (S.size() - chunk_size + 1);
-        end = start + chunk_size - 1;
-    } else {
-        start = 0;
-        end = S.size() - 1;
-    }
-
-    RateGetter rg(S, mr);
-
-    uint largest_pos = weighted_reservoir_<RateGetter>(start, end, rg, eng);
-
-    return largest_pos;
-}
-
-
-
-// Sampling for a particular chunk based on gamma values using the same method as above
-uint chunk_location(const std::vector<double>& gammas,
-                    pcg32& eng) {
-
-    if (gammas.size() == 1) return 0;
-
-    uint start = 0;
-    uint end = gammas.size() - 1;
-
-    uint largest_pos = weighted_reservoir_<std::vector<double>>(start, end, gammas, eng);
-
-    return largest_pos;
-}
-
-
-
 
 
 
