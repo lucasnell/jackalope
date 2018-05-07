@@ -61,76 +61,36 @@
 
 
 
-
-
-/*
- A class for weighted reservoir sampling.
- This is just a wrapper for a reference to a vector of rates plus an exponential
- distribution object.
- I made this class to make sure the exponential distribution isn't messed with, plus
- to be consistent with the "chunked" version below.
- Class `T` needs to return a double with square brackets and have a `size()` method.
- */
-template <typename T>
-class ReservoirRates {
-
-    const T rates;
-    std::exponential_distribution<double> distr;
-
-public:
-
-
-    ReservoirRates() : rates(), distr(1.0) {};
-    ReservoirRates(const T& r) : rates(r), distr(1.0) {};
-    // Assignment operator
-    ReservoirRates& operator=(const ReservoirRates& other) {
-        rates = other.rates;
-    }
-
-    inline double operator[](const uint& idx) const {
-        return rates[idx];
-    }
-    inline uint size() const noexcept {
-        return rates.size();
-    }
-
-    inline double exp(pcg32& eng) {
-        return distr(eng);
-    }
-
-};
-
-
-
-
 /*
  Regular weighted reservoir sampling.
+ This template does most of the work for the two `sample` methods for the two classes
+ in this file.
  */
 
-template <typename T>
-inline uint weighted_reservoir_(ReservoirRates<T>& rates, pcg32& eng) {
+template <typename R>
+inline uint weighted_reservoir_(R& obj, pcg32& eng) {
 
     double r, key, X, w, t;
 
-    uint end = rates.size();
+    uint end = obj.rates.size() - 1;
 
     // Create objects to store currently-selected position and key
-    r = -1 * rates.exp(eng);        // ~ log(U(0,1))
-    key = r / rates[0];     // log(key)
+    r = -1 * obj.rexp_(eng);        // ~ log(U(0,1))
+    key = r / obj.rates[0];     // log(key)
     double largest_key = key;   // largest key (the one we're going to keep)
     uint largest_pos = 0;   // position where largest key was found
 
     uint c = 0;
     while (c < end) {
-        r = -1 * rates.exp(eng);    // ~ log(U(0,1))
-        X = r / largest_key;    // log(key)
+        r = -1 * obj.rexp_(eng);    // ~ log(U(0,1))
+        X = r / largest_key;        // log(key)
         uint i = c + 1;
-        X -= rates[c];
-        w = rates[i];
+        X -= obj.rates[c];
+        w = obj.rates[i];
         while (X > w && i < end) {
-            X -= rates[i];
+            X -= obj.rates[i];
             i++;
-            w = rates[i];
+            w = obj.rates[i];
         }
         if (X > w) break;
         if (X <= 0) continue;
@@ -152,6 +112,49 @@ inline uint weighted_reservoir_(ReservoirRates<T>& rates, pcg32& eng) {
 
 
 
+/*
+ A class for weighted reservoir sampling.
+ This is just a wrapper for a reference to a vector of rates plus an exponential
+ distribution object.
+ I made this class to make sure the exponential distribution isn't messed with, plus
+ to be consistent with the "chunked" version below.
+ Class `T` needs to return a double with square brackets and have a `size()` method.
+ */
+template <typename T>
+class ReservoirRates {
+
+public:
+
+    T rates;
+
+    ReservoirRates() : rates(), distr(1.0) {};
+    ReservoirRates(const T& r) : rates(r), distr(1.0) {};
+    /*
+     `cs` is ignored here, and this constructor is only to allow for template use along
+     with chunked version:
+     */
+    ReservoirRates(const T& r, const uint& cs) : rates(r), distr(1.0) {};
+    // Assignment operator
+    ReservoirRates& operator=(const ReservoirRates& other) {
+        rates = other.rates;
+    }
+
+    inline double rexp_(pcg32& eng) {
+        return distr(eng);
+    }
+
+    // Sample for one location
+    inline uint sample(pcg32& eng) {
+        return weighted_reservoir_<ReservoirRates, T>(*this, eng);
+    }
+
+private:
+    std::exponential_distribution<double> distr;
+
+};
+
+
+
 
 
 
@@ -169,103 +172,77 @@ inline uint weighted_reservoir_(ReservoirRates<T>& rates, pcg32& eng) {
 
  Class `T` needs to return a double with square brackets and have a `size()` method.
  */
+
 template <typename T>
-class ChunkReservoirRates {
+struct ChunkRateGetter {
 
-    T rates;
+    T all_rates;
     std::vector<uint> inds;
-    std::exponential_distribution<double> distr;
 
-public:
-
-
-    ChunkReservoirRates() : rates(), inds(), distr(1.0) {};
-    ChunkReservoirRates(const T& r, const uint& chunk_size)
-        : rates(r), inds(chunk_size), distr(1.0) {};
+    ChunkRateGetter() : all_rates(), inds() {};
+    ChunkRateGetter(const T& r, const uint& chunk)
+        : all_rates(r), inds(chunk) {};
     // Assignment operator
-    ChunkReservoirRates& operator=(const ChunkReservoirRates& other) {
-        rates = other.rates;
+    ChunkRateGetter& operator=(const ChunkRateGetter& other) {
+        all_rates = other.all_rates;
         inds = other.inds;
-        distr = std::exponential_distribution<double>(1.0);
     }
 
     inline double operator[](const uint& idx) const {
-        return rates[inds[idx]];
+        return all_rates[inds[idx]];
     }
     inline uint size() const noexcept {
         return inds.size();
     }
-
     inline void reset(pcg32& eng) {
-        vitter_d<std::vector<uint>>(inds, rates.size(), eng);
-    }
-
-    inline double exp(pcg32& eng) {
-        return distr(eng);
+        vitter_d<std::vector<uint>>(inds, all_rates.size(), eng);
     }
 
     /*
-     Return index referring to a position in `rates` using an index for `inds`.
-     For example, if `rates` is length 200 and `inds` is length 100, the input
-     index here should never been >= 100, but the output index could be up to 199.
+     Return index referring to a position in `all_rates` using an index for `inds`.
+     For example, if `all_rates` is length 200 and `inds` is length 100, the input
+     index here should never be > 99, but the output index could be up to 199.
      */
     inline uint operator()(const uint& idx) const {
         return inds[idx];
     }
+};
+
+template <typename T>
+class ChunkReservoirRates {
+
+public:
+
+    ChunkRateGetter<T> rates;
+
+    ChunkReservoirRates() : rates(), distr(1.0) {};
+    ChunkReservoirRates(const T& r, const uint& chunk)
+        : rates(r, chunk), distr(1.0) {};
+    // Assignment operator
+    ChunkReservoirRates<T>& operator=(const ChunkReservoirRates<T>& other) {
+        rates = other.rates;
+        distr = std::exponential_distribution<double>(1.0);
+    }
+
+    inline double rexp_(pcg32& eng) {
+        return distr(eng);
+    }
+
+    // Sample for one location
+    inline uint sample(pcg32& eng) {
+        rates.reset(eng);
+        uint i = weighted_reservoir_<ChunkReservoirRates, T>(*this, eng);
+        return rates(i);
+    }
+
+
+private:
+
+    std::exponential_distribution<double> distr;
 
 };
 
 
 
-
-
-/*
- Chunked weighted reservoir sampling
- */
-template <typename T>
-inline uint weighted_reservoir_chunk_(ChunkReservoirRates<T>& rates, pcg32& eng) {
-
-
-    uint chunk = rates.size();
-
-    rates.reset(eng);
-
-    double r, key, X, w, t;
-
-
-    // Create objects to store currently-selected position and key
-    r = -1 * rates.exp(eng);    // ~ log(U(0,1))
-    key = r / rates[0];         // log(key)
-    double largest_key = key;   // largest key (the one we're going to keep)
-    uint largest_pos = 0;       // position where largest key was found
-
-
-    uint c = 0;
-    while (c < (chunk-1)) {
-        r = -1 * rates.exp(eng);    // ~ log(U(0,1))
-        X = r / largest_key;        // log(key)
-        uint i = c + 1;
-        X -= rates[c];
-        w = rates[i];
-        while (X > w && i < (chunk-1)) {
-            X -= rates[i];
-            i++;
-            w = rates[i];
-        }
-        if (X > w) break;
-        if (X <= 0) continue;
-
-        largest_pos = i;
-
-        t = std::exp(w * largest_key);  // key is log(key)
-        r = runif_ab(eng, t, 1.0);
-        key = std::log(r) / w;          // log(key)
-        largest_key = key;
-
-        c = i;
-    }
-
-    return rates(largest_pos);
-}
 
 #endif
