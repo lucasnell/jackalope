@@ -74,7 +74,7 @@ void GammaRegion::deletion_adjust(const uint& ind, std::vector<uint>& erase_inds
 
 
 
-void SequenceGammas::update_sizes(const uint& new_pos, sint size_change) {
+void SequenceGammas::update_sizes(const uint& pos, const sint& size_change) {
 
     /*
      -----------
@@ -91,7 +91,7 @@ void SequenceGammas::update_sizes(const uint& new_pos, sint size_change) {
      */
 
     seq_size += static_cast<double>(size_change);
-    uint idx = get_idx(new_pos);
+    uint idx = get_idx(pos);
 
     /*
      Insertions
@@ -111,8 +111,8 @@ void SequenceGammas::update_sizes(const uint& new_pos, sint size_change) {
     /*
      Deletions
      */
-    const uint& del_start(new_pos);
-    uint del_end = new_pos;
+    const uint& del_start(pos);
+    uint del_end = pos;
     del_end -= (size_change + 1);
 
     // Iterate through and adjust all regions including and following the deletion:

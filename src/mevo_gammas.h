@@ -33,14 +33,21 @@ using namespace Rcpp;
  Stores info for a single Gamma region.
  */
 
-class GammaRegion {
-public:
+struct GammaRegion {
+
     double gamma;
     uint start;
     uint end;
+
     GammaRegion() {}
     GammaRegion(const double& gamma_, const uint& start_, const uint& end_)
         : gamma(gamma_), start(start_), end(end_) {}
+    // Assignment operator
+    GammaRegion& operator=(const GammaRegion& other) {
+        gamma = other.gamma;
+        start = other.start;
+        end = other.end;
+    }
 
     /*
      Adjust for a deletion.
@@ -63,14 +70,11 @@ public:
 /*
  For a sequence, stores all "Gamma regions": regions with the same Gamma modifier to
  their overall mutation rate.
- Square brackets return a rate of choosing this region: the Gamma value multiplied by its
- size. The size was included to account for regions getting larger or smaller due
- to indels.
+ Square brackets return the Gamma value for a given sequence position.
  */
 
 
 class SequenceGammas {
-private:
 
     std::vector<GammaRegion> regions;
     double seq_size;
@@ -78,26 +82,25 @@ private:
     /*
      Based on a sequence position, return an index to the Gamma region it's inside.
      */
-    inline uint get_idx(const uint& new_pos) const {
-        uint idx = new_pos * (static_cast<double>(regions.size()) / seq_size);
+    inline uint get_idx(const uint& pos) const {
+        uint idx = pos * (static_cast<double>(regions.size()) / seq_size);
         if (idx >= regions.size()) idx = regions.size() - 1;
-        while (regions[idx].end < new_pos) idx++;
-        while (regions[idx].start > new_pos) idx--;
+        while (regions[idx].end < pos) idx++;
+        while (regions[idx].start > pos) idx--;
         return idx;
     }
-
 
 public:
 
     SequenceGammas(const SequenceGammas& other)
         : regions(other.regions), seq_size(other.seq_size) {}
 
-    SequenceGammas(const VarSequence& vs, const uint& gamma_size_,
+    SequenceGammas(const uint& seq_size_, const uint& gamma_size_,
                    pcg32& eng, const double& alpha)
-        : regions(), seq_size(vs.size()) {
+        : regions(), seq_size(seq_size_) {
         // Number of gamma values needed:
         uint n_gammas = static_cast<uint>(std::ceil(
-            static_cast<double>(vs.size()) / static_cast<double>(gamma_size_)));
+            static_cast<double>(seq_size) / static_cast<double>(gamma_size_)));
         // Resize gamma-region vector
         regions = std::vector<GammaRegion>(n_gammas);
 
@@ -106,42 +109,53 @@ public:
         for (uint i = 0, start_ = 0; i < n_gammas; i++, start_ += gamma_size_) {
             double gamma_ = distr(eng);
             uint end_ = start_ + gamma_size_ - 1;
-            if (i == n_gammas - 1) end_ = vs.size() - 1;
+            if (i == n_gammas - 1) end_ = seq_size - 1;
             regions[i] = GammaRegion(gamma_, start_, end_);
         }
     }
 
     SequenceGammas(arma::mat gamma_mat) {
+        if (gamma_mat.n_cols != 3) stop("input Gamma matrix must have 2 columns, "
+                                            "one for end positions, one for gammas.");
         // Sort from first to last region
         arma::uvec sort_inds = arma::sort_index(gamma_mat.col(0));
         gamma_mat = gamma_mat.rows(sort_inds);
-        // Check that matrix regions are appropriately labelled
-        std::string err = "input Gamma matrix needs to use 0-based, inclusive indexing, ";
-        err += "have the starting points in the first column, ";
-        err += "and have the ending points in the second column.";
-        if (gamma_mat(0,0) != 0) stop(err);
-        for (uint i = 1; i < gamma_mat.n_rows; i++) {
-            if ((gamma_mat(i,1) - gamma_mat(i-1,1)) != 1) stop(err);
+        // Since the input matrix should be 1-based indexing, make sure there are no 0s:
+        if (arma::any(gamma_mat.col(0) <= 0)) {
+            stop("A value <= 0 was detected in the first column of the Gamma matrix, "
+                     "which is where the end points should be. "
+                     "Please use 1-based indexing instead of 0-based.");
         }
+        // Make sure there are no repeat ends points
+        arma::vec diffs = arma::diff(gamma_mat.col(0));
+        if (arma::any(diffs == 0)) stop("All Gamma matrix end points must be unique");
         // Now fill in the regions vector
         regions = std::vector<GammaRegion>(gamma_mat.n_rows);
         for (uint i = 0; i < gamma_mat.n_rows; i++) {
-            regions[i].start = static_cast<uint>(gamma_mat(i,0));
-            regions[i].end = static_cast<uint>(gamma_mat(i,1));
-            regions[i].gamma = gamma_mat(i,2);
+            // Below, I'm subtracting 1 to go back to 0-based indexing
+            regions[i].end = static_cast<uint>(gamma_mat(i,0)) - 1;
+            if (i > 0) {
+                regions[i].start = static_cast<uint>(gamma_mat(i-1,0));
+            } else regions[i].start = 0;
+            regions[i].gamma = gamma_mat(i,1);
         }
-        seq_size = gamma_mat(gamma_mat.n_rows-1, 1) + 1;
+        seq_size = gamma_mat(gamma_mat.n_rows-1, 0);
+    }
+    // Assignment operator
+    SequenceGammas& operator=(const SequenceGammas& other) {
+        regions = other.regions;
+        seq_size = other.seq_size;
     }
 
     /*
      Get Gamma value based on the position on the chromosome.
      */
-    inline double operator[](const uint& new_pos) const {
-        uint idx = get_idx(new_pos);
+    inline double operator[](const uint& pos) const {
+        uint idx = get_idx(pos);
         return regions[idx].gamma;
     }
 
-    void update_sizes(const uint& new_pos, sint size_change);
+    void update_sizes(const uint& pos, const sint& size_change);
 
 };
 
