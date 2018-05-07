@@ -69,37 +69,34 @@ private:
     SequenceGammas gammas;
 
 public:
-    MutationRates(const VarSequence& vs_, const std::vector<double>& rates_,
-                  const uint& gamma_size_,
-                  pcg32& eng, const double& alpha)
-        : vs(vs_), nt_rates(256, 0.0), gammas(vs_, gamma_size_, eng, alpha) {
+
+    // Below `pis` is a length-4 vector of pi values, for T, C, A, and G, respectively
+    MutationRates(const VarSequence& vs_, const std::vector<double>& pis,
+                  const SequenceGammas& gammas_)
+        : vs(vs_), nt_rates(256, 0.0), gammas(gammas_) {
         for (uint i = 0; i < 4; i++) {
             uint j = mevo::bases[i];
-            nt_rates[j] = rates_[i];
+            nt_rates[j] = pis[i];
         }
     }
-    MutationRates(const VarSequence& vs_, const std::vector<double>& rates_,
-                  arma::mat gamma_mat)
-        : vs(vs_), nt_rates(256, 0.0), gammas(gamma_mat) {
-        for (uint i = 0; i < 4; i++) {
-            uint j = mevo::bases[i];
-            nt_rates[j] = rates_[i];
-        }
-    }
-    // Assignment operator
-    MutationRates(const MutationRates& rhs)
-        : vs(rhs.vs), nt_rates(rhs.nt_rates), gammas(rhs.gammas) {}
+    MutationRates(const MutationRates& other)
+        : vs(other.vs), nt_rates(other.nt_rates), gammas(other.gammas) {}
 
     // Using bracket operator to get the overall mutation rate at a location
-    inline double operator[](const uint& new_pos) const {
-        char c = vs.get_nt(new_pos);
+    inline double operator[](const uint& pos) const {
+        char c = vs.get_nt(pos);
         double r = nt_rates[c];
-        r *= gammas[new_pos];
+        r *= gammas[pos];
         return r;
     }
     // To get size of the variant sequence
     inline uint size() const noexcept {
         return vs.size();
+    }
+
+    inline void update_gamma_regions(const uint& pos, const sint& size_change) {
+        gammas.update_gamma_regions(pos, size_change);
+        return;
     }
 
 };
@@ -108,57 +105,49 @@ public:
 /*
  This class uses the info above, plus a class and fxn from `weighted_reservoir.h` to
  do weighted reservoir sampling for a single location at which to put a mutation.
- This sampling is done using the entire sequence, which can be inefficient for large
- sequences.
  The weights are based on the nucleotide and sequence region.
- */
-class LocationSampler {
 
-    ReservoirRates<MutationRates> rates;
+ Class `C` should be `ReservoirRates` or `ChunkReservoirRates`.
 
-    LocationSampler(const VarSequence& vs_, const std::vector<double>& rates_,
-                    arma::mat gamma_mat)
-        : rates(MutationRates(vs_, rates_, gamma_mat)) {}
-    LocationSampler(const VarSequence& vs_, const std::vector<double>& rates_,
-                    const uint& gamma_size_,
-                    pcg32& eng, const double& alpha)
-        : rates(MutationRates(vs_, rates_, gamma_size_, eng, alpha)) {}
+ If using `ReservoirRates`, this samples the entire sequence, which can be
+ inefficient for large sequences.
 
-    inline uint sample(pcg32& eng) {
-        return weighted_reservoir_<MutationRates>(rates, eng);
-    }
-
-};
-
-
-/*
- This is the same as above, but it only does weighted sampling on a set number of
- sequence locations at a time.
+ If using `ChunkReservoirRates`, this samples a set number of sequence locations
+ at a time instead of the whole thing.
  It extracts a "chunk" for weighted sampling by using non-weighted sampling without
  replacement.
  For large sequences, this is much more efficient and, from my testing, produces
  similar results.
  */
-class ChunkLocationSampler {
+template <template <typename> class C>
+class OneSeqLocationSampler {
 
-    ChunkReservoirRates<MutationRates> rates;
+    C<MutationRates> rates;
 
-    ChunkLocationSampler(const uint& chunk_size,
-                         const VarSequence& vs_, const std::vector<double>& rates_,
-                         arma::mat gamma_mat)
-        : rates(MutationRates(vs_, rates_, gamma_mat), chunk_size) {}
+public:
 
-    ChunkLocationSampler(const uint& chunk_size,
-                         const VarSequence& vs_, const std::vector<double>& rates_,
-                         const uint& gamma_size_,
-                         pcg32& eng, const double& alpha)
-        : rates(MutationRates(vs_, rates_, gamma_size_, eng, alpha), chunk_size) {}
+    OneSeqLocationSampler(const OneSeqLocationSampler<C>& other)
+        : rates(other.rates) {}
+    OneSeqLocationSampler(const MutationRates& mr, const uint chunk = 0)
+        : rates(mr, chunk) {}
 
     inline uint sample(pcg32& eng) {
-        return weighted_reservoir_chunk_<MutationRates>(rates, eng);
+        return rates.sample(eng);
+    }
+
+    inline void update_gamma_regions(const uint& pos, const sint& size_change) {
+        rates.update_gamma_regions(pos, size_change);
+        return;
     }
 
 };
+
+// The two situations in which I'll use this:
+typedef OneSeqLocationSampler<ReservoirRates> LocationSampler;
+typedef OneSeqLocationSampler<ChunkReservoirRates> ChunkLocationSampler;
+
+
+
 
 
 
@@ -188,13 +177,13 @@ class ChunkLocationSampler {
 struct MutationInfo {
     char nucleo;
     sint length;
-    // Initialize from an index and event-lengths vector
-    MutationInfo (const uint& ind, const std::vector<sint>& event_lengths)
+    // Initialize from an index and mut-lengths vector
+    MutationInfo (const uint& ind, const std::vector<sint>& mut_lengths)
         : nucleo('\0'), length(0) {
         if (ind < 4) {
             nucleo = mevo::bases[ind];
         } else {
-            length = event_lengths[ind];
+            length = mut_lengths[ind];
         }
     }
 };
@@ -220,37 +209,64 @@ inline std::vector<uint8> make_base_inds() {
     return base_inds;
 }
 
+
+
 /*
  For table-sampling mutation types depending on which nucleotide you start with.
- The `event_lengths` vector tells how long each event is.
+ The `mut_lengths` vector tells how long each mutation is.
  This field is 0 for substitions, < 0 for deletions, and > 0 for insertions.
- The `base_inds` field allows me to convert the characters 'T', 'C', 'A', 'G', or 'N'
+ The `base_inds` field allows me to convert the characters 'T', 'C', 'A', or 'G'
  (cast to uints) into uints from 0 to 3.
  */
 class MutationTypeSampler {
 
-    std::vector<uint8> base_inds;
     std::vector<TableSampler> sampler;
-    std::vector<sint> event_lengths;
+    std::vector<sint> mut_lengths;
+    std::vector<uint8> base_inds;
 
 public:
 
-    MutationTypeSampler() : sampler(4), event_lengths() {
+    MutationTypeSampler() : sampler(4), mut_lengths(), base_inds() {
         base_inds = make_base_inds();
+    }
+    MutationTypeSampler(const std::vector<std::vector<double>>& probs,
+                        const std::vector<sint>& mut_lengths_)
+    : sampler(4), mut_lengths(mut_lengths_), base_inds() {
+        base_inds = make_base_inds();
+        if (probs.size() != 4) stop("probs must be size 4.");
+        for (uint i = 0; i < 4; i++) {
+            std::vector<double> probs_i = probs[i];
+            /*
+             Item `i` in `probs_i` needs to be manually converted to zero so
+             it's not sampled.
+             (Remember, we want the probability of each, *given that a mutation occurs*.
+             Mutating into itself doesn't count.)
+            */
+            probs_i[i] = 0;
+            // Now create and fill the `TableSampler`:
+            sampler[i] = TableSampler(probs_i);
+        }
     }
     // copy constructor
     MutationTypeSampler(const MutationTypeSampler& other)
-        : sampler(other.sampler), event_lengths(other.event_lengths),
+        : sampler(other.sampler), mut_lengths(other.mut_lengths),
           base_inds(other.base_inds) {}
+    // Assignment operator
+    MutationTypeSampler& operator=(const MutationTypeSampler& other) {
+        sampler = other.sampler;
+        mut_lengths = other.mut_lengths;
+        base_inds = other.base_inds;
+        return *this;
+    }
 
     /*
-     Sample an event based on an input nucleotide.
+     Sample a mutation based on an input nucleotide.
      `c` gets cast to an uint, which is then input to `base_inds` to get the index
      from 0 to 3.
      */
     MutationInfo sample(const char& c, pcg32& eng) const {
         uint ind = sampler[base_inds[c]].sample(eng);
-        MutationInfo mi(ind, event_lengths);
+        MutationInfo mi(ind, mut_lengths);
         return mi;
     }
 
@@ -261,50 +277,104 @@ public:
 
 
 
+
+
+
 /*
- MutationSampler combines objects for sampling event types and new nucleotides for
- insertions.
+ =========================================================================================
+ =========================================================================================
+ =========================================================================================
+ =========================================================================================
+
+ Combining samplers for location and for mutation type into a mutation sampler for
+ a single sequence.
+
+ =========================================================================================
+ =========================================================================================
+ =========================================================================================
+ =========================================================================================
  */
-class MutationSampler {
 
-private:
 
+
+/*
+ OneSeqMutationSampler combines objects for sampling mutation types and new nucleotides for
+ insertions.
+
+ Class `C` should be `LocationSampler` or `ChunkLocationSampler`.
+ */
+template <class C>
+class OneSeqMutationSampler {
+
+    // VarSequence object reference to be manipulated
+    VarSequence& vs;
+    // For sampling the mutation location:
+    C location;
     // For sampling the type of mutation:
-    MutationTypeSampler types;
-    // For insertion sequences:
-    TableStringSampler<std::string> nucleos;
-
-public:
-
-    // For overall mutation rates by nucleotide:
-    MutationRates rates;
-
-    MutationSampler(const arma::mat& Q,
-                const double& xi, const double& psi, const std::vector<double>& pis,
-                arma::vec rel_insertion_rates, arma::vec rel_deletion_rates);
-    MutationSampler(const MutationTypeSampler& event_,
-                const TableStringSampler<std::string>& nucleo_,
-                const MutationRates& rates_)
-        : rates(rates_), types(event_), nucleos(nucleo_) {};
+    MutationTypeSampler type;
+    // For new insertion sequences:
+    TableStringSampler<std::string> insert;
 
     /*
-     Sample for mutation type based on nucleotide and rng engine
+     Sample for mutation location based on rates by sequence region and nucleotide.
      */
-    inline MutationInfo sample_types(const char& c, pcg32& eng) const {
-        return types.sample(c, eng);
+    inline uint sample_location(pcg32& eng) {
+        return location.sample(eng);
     }
 
     /*
-     Create a new string of nucleotides (for insertions) of a given length and using
-     an input rng engine
+    Sample for mutation type based on nucleotide and rng engine
+    */
+    inline MutationInfo sample_type(const char& c, pcg32& eng) const {
+        return type.sample(c, eng);
+    }
+
+    /*
+    Create a new string of nucleotides (for insertions) of a given length and using
+    an input rng engine
     */
     inline std::string new_nucleos(const uint& len, pcg32& eng) const {
         std::string str(len, 'x');
-        nucleos.sample(str, eng);
+        insert.sample(str, eng);
         return str;
     }
 
+public:
+
+    // OneSeqMutationSampler(VarSequence& vs_) : vs(vs_) {}
+
+    OneSeqMutationSampler(VarSequence& vs_,
+                    const C& location_,
+                    const MutationTypeSampler& type_,
+                    const TableStringSampler<std::string>& insert_)
+        : vs(vs_), location(location_),type(type_), insert(insert_) {}
+
+
+    void mutate(pcg32& eng) {
+        uint pos = sample_location(eng);
+        char c = vs.get_nt(pos);
+        MutationInfo m = sample_type(c, eng);
+        if (m.length == 0) {
+            vs.add_substitution(m.nucleo, pos);
+        } else {
+            if (m.length > 0) {
+                std::string nts = new_nucleos(m.length, eng);
+                vs.add_insertion(nts, pos);
+            } else {
+                vs.add_deletion(m.length, pos);
+            }
+            // Update Gamma region bounds:
+            location.update_gamma_regions(pos, m.length);
+        }
+        return;
+    }
 };
+
+
+// Shortening these names
+typedef OneSeqMutationSampler<LocationSampler> MutationSampler;
+typedef OneSeqMutationSampler<ChunkLocationSampler> ChunkMutationSampler;
+
 
 
 #endif
