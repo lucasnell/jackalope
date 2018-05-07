@@ -47,6 +47,7 @@ struct GammaRegion {
         gamma = other.gamma;
         start = other.start;
         end = other.end;
+        return *this;
     }
 
     /*
@@ -95,25 +96,6 @@ public:
     SequenceGammas(const SequenceGammas& other)
         : regions(other.regions), seq_size(other.seq_size) {}
 
-    SequenceGammas(const uint& seq_size_, const uint& gamma_size_,
-                   pcg32& eng, const double& alpha)
-        : regions(), seq_size(seq_size_) {
-        // Number of gamma values needed:
-        uint n_gammas = static_cast<uint>(std::ceil(
-            static_cast<double>(seq_size) / static_cast<double>(gamma_size_)));
-        // Resize gamma-region vector
-        regions = std::vector<GammaRegion>(n_gammas);
-
-        // Fill vector:
-        std::gamma_distribution<double> distr(alpha, alpha);
-        for (uint i = 0, start_ = 0; i < n_gammas; i++, start_ += gamma_size_) {
-            double gamma_ = distr(eng);
-            uint end_ = start_ + gamma_size_ - 1;
-            if (i == n_gammas - 1) end_ = seq_size - 1;
-            regions[i] = GammaRegion(gamma_, start_, end_);
-        }
-    }
-
     SequenceGammas(arma::mat gamma_mat) {
         if (gamma_mat.n_cols != 3) stop("input Gamma matrix must have 2 columns, "
                                             "one for end positions, one for gammas.");
@@ -145,6 +127,7 @@ public:
     SequenceGammas& operator=(const SequenceGammas& other) {
         regions = other.regions;
         seq_size = other.seq_size;
+        return *this;
     }
 
     /*
@@ -155,11 +138,14 @@ public:
         return regions[idx].gamma;
     }
 
-    void update_sizes(const uint& pos, const sint& size_change);
+    void update_gamma_regions(const uint& pos, const sint& size_change);
 
 };
 
 
+
+arma::mat make_gamma_mat(const uint& seq_size_, const uint& gamma_size_,
+                         const double& alpha, pcg32& eng);
 
 
 #endif

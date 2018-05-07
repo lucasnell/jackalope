@@ -74,7 +74,7 @@ void GammaRegion::deletion_adjust(const uint& ind, std::vector<uint>& erase_inds
 
 
 
-void SequenceGammas::update_sizes(const uint& pos, const sint& size_change) {
+void SequenceGammas::update_gamma_regions(const uint& pos, const sint& size_change) {
 
     /*
      -----------
@@ -138,5 +138,56 @@ void SequenceGammas::update_sizes(const uint& pos, const sint& size_change) {
 }
 
 
+
+
+//' Make matrix of Gamma-region end points and Gamma values.
+//'
+//' @param seq_size_ Length of the focal sequence.
+//' @param gamma_size_ Size of each Gamma region.
+//' @param alpha The alpha (shape) parameter for the Gamma distribution from which
+//'     Gamma values will be derived.
+//' @param eng A random number generator.
+//'
+//'
+//' @noRd
+//'
+arma::mat make_gamma_mat(const uint& seq_size_, const uint& gamma_size_,
+                         const double& alpha, pcg32& eng) {
+
+    // If gamma_size_ is set to zero, then we'll assume everything's the same
+    if (gamma_size_ == 0) {
+        arma::mat out(1, 2, arma::fill::zeros);
+        out(0,0) = seq_size_;
+        out(0,1) = 1;
+        return out;
+    }
+
+    // Number of gamma values needed:
+    uint n_gammas = static_cast<uint>(std::ceil(
+        static_cast<double>(seq_size_) / static_cast<double>(gamma_size_)));
+
+    // Initialize output matrix
+    arma::mat out(n_gammas, 2, arma::fill::zeros);
+
+    // Initialize Gamma distribution
+    std::gamma_distribution<double> distr(alpha, alpha);
+
+    /*
+     Fill matrix.
+     Note that I'm not subtracting 1 bc the SequenceGammas constructor assumes
+     1-based indexing.
+     I'm doing it this way to make it more straightforward if someone wants to pass
+     their own matrix directly from R (since R obviously uses 1-based).
+     */
+    for (uint i = 0, start_ = 0; i < n_gammas; i++, start_ += gamma_size_) {
+        double gamma_ = distr(eng);
+        uint end_ = start_ + gamma_size_;
+        if (i == n_gammas - 1) end_ = seq_size_;
+        out(i,0) = end_;
+        out(i,1) = gamma_;
+    }
+
+    return out;
+}
 
 
