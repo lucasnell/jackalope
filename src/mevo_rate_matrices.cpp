@@ -25,7 +25,7 @@ using namespace Rcpp;
 //'
 //' @noRd
 //'
-inline arma::mat TN93_rate_matrix(
+arma::mat TN93_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& alpha_1, const double& alpha_2, const double& beta,
@@ -57,7 +57,7 @@ inline arma::mat TN93_rate_matrix(
 //'
 //' @noRd
 //'
-inline arma::mat JC69_rate_matrix(
+arma::mat JC69_rate_matrix(
         const double& lambda, const double& xi) {
 
     arma::mat Q = TN93_rate_matrix(1, 1, 1, 1, lambda, lambda, lambda, xi);
@@ -72,7 +72,7 @@ inline arma::mat JC69_rate_matrix(
 //'
 //' @noRd
 //'
-inline arma::mat K80_rate_matrix(
+arma::mat K80_rate_matrix(
         const double& alpha, const double& beta,
         const double& xi) {
 
@@ -88,7 +88,7 @@ inline arma::mat K80_rate_matrix(
 //'
 //' @noRd
 //'
-inline arma::mat F81_rate_matrix(
+arma::mat F81_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& xi) {
@@ -105,7 +105,7 @@ inline arma::mat F81_rate_matrix(
 //'
 //' @noRd
 //'
-inline arma::mat HKY85_rate_matrix(
+arma::mat HKY85_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& alpha, const double& beta,
@@ -124,7 +124,7 @@ inline arma::mat HKY85_rate_matrix(
 //'
 //' @noRd
 //'
-inline arma::mat F84_rate_matrix(
+arma::mat F84_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& beta, const double& kappa,
@@ -148,7 +148,7 @@ inline arma::mat F84_rate_matrix(
 //'
 //' @noRd
 //'
-inline arma::mat GTR_rate_matrix(
+arma::mat GTR_rate_matrix(
         const double& pi_t, const double& pi_c,
         const double& pi_a, const double& pi_g,
         const double& a, const double& b, const double& c,
@@ -190,7 +190,7 @@ inline arma::mat GTR_rate_matrix(
 //'
 //' @noRd
 //'
-inline arma::mat UNREST_rate_matrix(
+arma::mat UNREST_rate_matrix(
         arma::mat Q, const double& xi) {
 
     // reset to zero so summing by row works

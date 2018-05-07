@@ -165,10 +165,10 @@ double cpp_mean_pairwise_freqs(const std::vector<int>& sample_segr) {
 
     int N = std::accumulate(sample_segr.begin(), sample_segr.end(), 0.0);
 
-    int total_pairs = cpp_choose(N, 2);
+    int total_pairs = cpp_choose(N, 2U);
     double same_pairs = 0;
     for (int i = 0; i < N_nt; i++) {
-        same_pairs += cpp_choose(sample_segr[i], 2);
+        same_pairs += cpp_choose(sample_segr[i], 2U);
     }
 
     double mean_pw = (total_pairs - same_pairs) / total_pairs;
