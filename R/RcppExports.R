@@ -219,75 +219,16 @@ digest_ref <- function(ref_, bind_sites, len5s, n_cores = 1L, chunk_size = 0L) {
     .Call(`_gemino_digest_ref`, ref_, bind_sites, len5s, n_cores, chunk_size)
 }
 
-#' Q matrix for rates for a given nucleotide using the TN93 substitution model.
+#' Fill in vectors of mutation probabilities and lengths.
 #'
-#' @noRd
+#' These vectors should be initialized already, but there's no need to resize them.
 #'
-NULL
-
-#' Q matrix for rates for a given nucleotide using the JC69 substitution model.
-#'
-#' JC69 is a special case of TN93.
-#'
-#' @noRd
-#'
-NULL
-
-#' Q matrix for rates for a given nucleotide using the K80 substitution model.
-#'
-#' K80 is a special case of TN93.
-#'
-#' @noRd
-#'
-NULL
-
-#' Q matrix for rates for a given nucleotide using the F81 substitution model.
-#'
-#' F81 is a special case of TN93.
-#'
-#' @noRd
-#'
-NULL
-
-#' Q matrix for rates for a given nucleotide using the HKY85 substitution model.
-#'
-#' HKY85 is a special case of TN93.
-#'
-#' @noRd
-#'
-NULL
-
-#' Q matrix for rates for a given nucleotide using the F84 substitution model.
-#'
-#' F84 is a special case of TN93.
-#'
-#' @noRd
-#'
-NULL
-
-#' Q matrix for rates for a given nucleotide using the GTR substitution model.
-#'
-#' @noRd
-#'
-NULL
-
-#' Q matrix for rates for a given nucleotide using the UNREST substitution model.
-#'
-#' @param Q Matrix of rates for "T", "C", "A", and "G", respectively.
-#'     Diagonal values are ignored.
-#' @param xi Overall rate of indels.
-#'
-#' @noRd
-#'
-NULL
-
-#' Initialize a MutationSampler object.
 #'
 #' @param Q A matrix of substitution rates for each nucleotide.
-#' @param pis Vector of nucleotide equilibrium frequencies for
-#'     "T", "C", "A", and "G", respectively.
 #' @param xi Overall rate of indels.
 #' @param psi Proportion of insertions to deletions.
+#' @param pis Vector of nucleotide equilibrium frequencies for
+#'     "T", "C", "A", and "G", respectively.
 #' @param rel_insertion_rates Relative insertion rates.
 #' @param rel_deletion_rates Relative deletion rates.
 #'
@@ -295,8 +236,8 @@ NULL
 #'
 NULL
 
-test_sampling <- function(seq, N, pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, chunk_size) {
-    .Call(`_gemino_test_sampling`, seq, N, pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, chunk_size)
+test_sampling <- function(vs_sexp, N, pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_size, gamma_alpha, chunk_size) {
+    invisible(.Call(`_gemino_test_sampling`, vs_sexp, N, pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_size, gamma_alpha, chunk_size))
 }
 
 #' Function to print info on a `RefGenome`.
@@ -318,19 +259,6 @@ print_rg <- function(rg_) {
 print_vs <- function(vs_) {
     invisible(.Call(`_gemino_print_vs`, vs_))
 }
-
-#' C++ equivalent of R's \code{choose} function.
-#'
-#' \emph{Note}: This function is not exported to R.
-#'
-#' @param n Integer value.
-#' @param k Integer value.
-#'
-#' @return Binomial coefficient (also integer).
-#'
-#' @noRd
-#'
-NULL
 
 #' Calculate mean pairwise differences between samples using a vector of nucleotide
 #'     frequencies.
