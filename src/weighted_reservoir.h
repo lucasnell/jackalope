@@ -48,7 +48,8 @@
  Both versions require that class `T` has...
  (1) a bracket-operator method (`operator[]`) that returns the rate (type `double`)
      for a given index
- (2) a `size()` method that returns the max index to sample + 1.
+ (2) a `size()` method that returns the max index to sample + 1
+ (3) `update_gamma_regions(const uint&, const sint&)` method that returns nothing
 
  Both versions also require that you pre-construct an object to retrieve the rates
  from. The classes you need to construct are different for the first and second
@@ -72,11 +73,11 @@ inline uint weighted_reservoir_(R& obj, pcg32& eng) {
 
     double r, key, X, w, t;
 
-    uint end = obj.rates.size() - 1;
+    uint end = obj.res_rates.size() - 1;
 
     // Create objects to store currently-selected position and key
     r = -1 * obj.rexp_(eng);        // ~ log(U(0,1))
-    key = r / obj.rates[0];     // log(key)
+    key = r / obj.res_rates[0];     // log(key)
     double largest_key = key;   // largest key (the one we're going to keep)
     uint largest_pos = 0;   // position where largest key was found
 
@@ -85,12 +86,12 @@ inline uint weighted_reservoir_(R& obj, pcg32& eng) {
         r = -1 * obj.rexp_(eng);    // ~ log(U(0,1))
         X = r / largest_key;        // log(key)
         uint i = c + 1;
-        X -= obj.rates[c];
-        w = obj.rates[i];
+        X -= obj.res_rates[c];
+        w = obj.res_rates[i];
         while (X > w && i < end) {
-            X -= obj.rates[i];
+            X -= obj.res_rates[i];
             i++;
-            w = obj.rates[i];
+            w = obj.res_rates[i];
         }
         if (X > w) break;
         if (X <= 0) continue;
@@ -125,18 +126,20 @@ class ReservoirRates {
 
 public:
 
-    T rates;
+    T res_rates;
 
-    ReservoirRates() : rates(), distr(1.0) {};
-    ReservoirRates(const T& r) : rates(r), distr(1.0) {};
+    ReservoirRates() : res_rates(), distr(1.0) {};
+    ReservoirRates(const T& r) : res_rates(r), distr(1.0) {};
+    ReservoirRates(const ReservoirRates<T>& other)
+        : res_rates(other.res_rates), distr(1.0) {}
     /*
      `cs` is ignored here, and this constructor is only to allow for template use along
      with chunked version:
      */
-    ReservoirRates(const T& r, const uint& cs) : rates(r), distr(1.0) {};
+    ReservoirRates(const T& r, const uint& cs) : res_rates(r), distr(1.0) {};
     // Assignment operator
-    ReservoirRates& operator=(const ReservoirRates& other) {
-        rates = other.rates;
+    ReservoirRates<T>& operator=(const ReservoirRates<T>& other) {
+        res_rates = other.res_rates;
     }
 
     inline double rexp_(pcg32& eng) {
@@ -145,7 +148,12 @@ public:
 
     // Sample for one location
     inline uint sample(pcg32& eng) {
-        return weighted_reservoir_<ReservoirRates, T>(*this, eng);
+        return weighted_reservoir_<ReservoirRates<T>>(*this, eng);
+    }
+
+    inline void update_gamma_regions(const uint& pos, const sint& size_change) {
+        res_rates.update_gamma_regions(pos, size_change);
+        return;
     }
 
 private:
@@ -182,8 +190,10 @@ struct ChunkRateGetter {
     ChunkRateGetter() : all_rates(), inds() {};
     ChunkRateGetter(const T& r, const uint& chunk)
         : all_rates(r), inds(chunk) {};
+    ChunkRateGetter(const ChunkRateGetter<T>& other)
+        : all_rates(other.all_rates), inds(other.inds) {}
     // Assignment operator
-    ChunkRateGetter& operator=(const ChunkRateGetter& other) {
+    ChunkRateGetter<T>& operator=(const ChunkRateGetter<T>& other) {
         all_rates = other.all_rates;
         inds = other.inds;
     }
@@ -198,6 +208,7 @@ struct ChunkRateGetter {
         vitter_d<std::vector<uint>>(inds, all_rates.size(), eng);
     }
 
+
     /*
      Return index referring to a position in `all_rates` using an index for `inds`.
      For example, if `all_rates` is length 200 and `inds` is length 100, the input
@@ -206,6 +217,11 @@ struct ChunkRateGetter {
     inline uint operator()(const uint& idx) const {
         return inds[idx];
     }
+
+    inline void update_gamma_regions(const uint& pos, const sint& size_change) {
+        all_rates.update_gamma_regions(pos, size_change);
+        return;
+    }
 };
 
 template <typename T>
@@ -213,14 +229,16 @@ class ChunkReservoirRates {
 
 public:
 
-    ChunkRateGetter<T> rates;
+    ChunkRateGetter<T> res_rates;
 
-    ChunkReservoirRates() : rates(), distr(1.0) {};
+    ChunkReservoirRates() : res_rates(), distr(1.0) {};
     ChunkReservoirRates(const T& r, const uint& chunk)
-        : rates(r, chunk), distr(1.0) {};
+        : res_rates(r, chunk), distr(1.0) {};
+    ChunkReservoirRates(const ChunkReservoirRates<T>& other)
+        : res_rates(other.res_rates) {}
     // Assignment operator
     ChunkReservoirRates<T>& operator=(const ChunkReservoirRates<T>& other) {
-        rates = other.rates;
+        res_rates = other.res_rates;
         distr = std::exponential_distribution<double>(1.0);
     }
 
@@ -230,9 +248,14 @@ public:
 
     // Sample for one location
     inline uint sample(pcg32& eng) {
-        rates.reset(eng);
-        uint i = weighted_reservoir_<ChunkReservoirRates, T>(*this, eng);
-        return rates(i);
+        res_rates.reset(eng);
+        uint i = weighted_reservoir_<ChunkReservoirRates<T>>(*this, eng);
+        return res_rates(i);
+    }
+
+    inline void update_gamma_regions(const uint& pos, const sint& size_change) {
+        res_rates.update_gamma_regions(pos, size_change);
+        return;
     }
 
 
