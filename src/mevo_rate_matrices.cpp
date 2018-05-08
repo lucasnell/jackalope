@@ -25,19 +25,15 @@ using namespace Rcpp;
 //'
 //' @noRd
 //'
-arma::mat TN93_rate_matrix(
-        const double& pi_t, const double& pi_c,
-        const double& pi_a, const double& pi_g,
-        const double& alpha_1, const double& alpha_2, const double& beta,
-        const double& xi) {
-
-    arma::vec pis = {pi_t, pi_c, pi_a, pi_g};
+arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag,
+                           const double& alpha_1, const double& alpha_2,
+                           const double& beta, const double& xi) {
 
     arma::mat Q(4,4);
     Q.fill(beta);
     Q.submat(arma::span(0,1), arma::span(0,1)).fill(alpha_1);
     Q.submat(arma::span(2,3), arma::span(2,3)).fill(alpha_2);
-    for (uint i = 0; i < 4; i++) Q.col(i) *= pis(i);
+    for (uint i = 0; i < 4; i++) Q.col(i) *= pi_tcag[i];
 
     // Filling in diagonals
     Q.diag().fill(0.0);  // reset to zero so summing by row works
@@ -57,10 +53,11 @@ arma::mat TN93_rate_matrix(
 //'
 //' @noRd
 //'
-arma::mat JC69_rate_matrix(
-        const double& lambda, const double& xi) {
+arma::mat JC69_rate_matrix(const double& lambda, const double& xi) {
 
-    arma::mat Q = TN93_rate_matrix(1, 1, 1, 1, lambda, lambda, lambda, xi);
+    std::vector<double> pi_tcag = {1, 1, 1, 1};
+
+    arma::mat Q = TN93_rate_matrix(pi_tcag, lambda, lambda, lambda, xi);
 
     return Q;
 }
@@ -72,11 +69,12 @@ arma::mat JC69_rate_matrix(
 //'
 //' @noRd
 //'
-arma::mat K80_rate_matrix(
-        const double& alpha, const double& beta,
-        const double& xi) {
+arma::mat K80_rate_matrix(const double& alpha, const double& beta,
+                          const double& xi) {
 
-    arma::mat Q = TN93_rate_matrix(1, 1, 1, 1, alpha, alpha, beta, xi);
+    std::vector<double> pi_tcag = {1, 1, 1, 1};
+
+    arma::mat Q = TN93_rate_matrix(pi_tcag, alpha, alpha, beta, xi);
 
     return Q;
 }
@@ -88,12 +86,9 @@ arma::mat K80_rate_matrix(
 //'
 //' @noRd
 //'
-arma::mat F81_rate_matrix(
-        const double& pi_t, const double& pi_c,
-        const double& pi_a, const double& pi_g,
-        const double& xi) {
+arma::mat F81_rate_matrix(const std::vector<double>& pi_tcag, const double& xi) {
 
-    arma::mat Q = TN93_rate_matrix(pi_a, pi_c, pi_g, pi_t, 1, 1, 1, xi);
+    arma::mat Q = TN93_rate_matrix(pi_tcag, 1, 1, 1, xi);
 
     return Q;
 }
@@ -105,14 +100,11 @@ arma::mat F81_rate_matrix(
 //'
 //' @noRd
 //'
-arma::mat HKY85_rate_matrix(
-        const double& pi_t, const double& pi_c,
-        const double& pi_a, const double& pi_g,
-        const double& alpha, const double& beta,
-        const double& xi) {
+arma::mat HKY85_rate_matrix(const std::vector<double>& pi_tcag,
+                            const double& alpha, const double& beta,
+                            const double& xi) {
 
-    arma::mat Q = TN93_rate_matrix(pi_a, pi_c, pi_g, pi_t, alpha, alpha, beta, xi);
-
+    arma::mat Q = TN93_rate_matrix(pi_tcag, alpha, alpha, beta, xi);
 
     return Q;
 }
@@ -124,19 +116,17 @@ arma::mat HKY85_rate_matrix(
 //'
 //' @noRd
 //'
-arma::mat F84_rate_matrix(
-        const double& pi_t, const double& pi_c,
-        const double& pi_a, const double& pi_g,
-        const double& beta, const double& kappa,
-        const double& xi) {
+arma::mat F84_rate_matrix(const std::vector<double>& pi_tcag,
+                          const double& beta, const double& kappa,
+                          const double& xi) {
 
-    double pi_y = pi_t + pi_c;
-    double pi_r = pi_a + pi_g;
+    double pi_y = pi_tcag[0] + pi_tcag[1];
+    double pi_r = pi_tcag[2] + pi_tcag[3];
 
     double alpha_1 = 1 + kappa / pi_y;
     double alpha_2 = 1 + kappa / pi_r;
 
-    arma::mat Q = TN93_rate_matrix(pi_a, pi_c, pi_g, pi_t, alpha_1, alpha_2, beta, xi);
+    arma::mat Q = TN93_rate_matrix(pi_tcag, alpha_1, alpha_2, beta, xi);
 
     return Q;
 }
@@ -148,28 +138,22 @@ arma::mat F84_rate_matrix(
 //'
 //' @noRd
 //'
-arma::mat GTR_rate_matrix(
-        const double& pi_t, const double& pi_c,
-        const double& pi_a, const double& pi_g,
-        const double& a, const double& b, const double& c,
-        const double& d, const double& e, const double& f,
-        const double& xi) {
-
-    arma::vec pis = {pi_t, pi_c, pi_a, pi_g};
+arma::mat GTR_rate_matrix(const std::vector<double>& pi_tcag,
+                          const std::vector<double>& abcdef,
+                          const double& xi) {
 
     arma::mat Q(4, 4, arma::fill::zeros);
 
     // Filling in non-diagonals
-    arma::vec letters = {a, b, c, d, e, f};
     uint k = 0;
     for (uint i = 0; i < 3; i++) {
         for (uint j = i+1; j < 4; j++) {
-            Q(i,j) = letters(k);
-            Q(j,i) = letters(k);
+            Q(i,j) = abcdef[k];
+            Q(j,i) = abcdef[k];
             k++;
         }
     }
-    for (uint i = 0; i < 4; i++) Q.col(i) *= pis(i);
+    for (uint i = 0; i < 4; i++) Q.col(i) *= pi_tcag[i];
 
     // Filling in diagonals
     arma::vec rowsums = arma::sum(Q, 1);
@@ -182,27 +166,76 @@ arma::mat GTR_rate_matrix(
 }
 
 
+
+
+
+
+/*
+ Estimates equilibrium nucleotide frequencies from an input rate matrix.
+ It does this by solving for πQ = 0 by finding the left eigenvector of Q that corresponds
+ to the eigenvalue closest to zero.
+ This is only needed for the UNREST model.
+ */
+
+inline void est_pi_tcag(const arma::mat& Q, std::vector<double>& pi_tcag) {
+
+    arma::cx_vec eigvals;
+    arma::cx_mat eigvecs;
+
+    arma::eig_gen(eigvals, eigvecs, Q.t());
+
+    arma::vec vals = arma::abs(arma::real(eigvals));
+    arma::mat vecs = arma::real(eigvecs);
+
+    uint i = arma::as_scalar(arma::find(vals == arma::min(vals), 1));
+
+    arma::vec left_vec = vecs.col(i);
+    double sumlv = arma::accu(left_vec);
+
+    pi_tcag.resize(4);
+    for (uint i = 0; i < 4; i++) pi_tcag[i] = left_vec(i) / sumlv;
+
+    return;
+}
+
+
+
+
+
 //' Q matrix for rates for a given nucleotide using the UNREST substitution model.
+//'
+//' This function also fills in a vector of equilibrium frequencies for each nucleotide.
+//' This calculation has to be done for this model only because it uses separate
+//' values for each non-diagonal cell and doesn't use equilibrium frequencies for
+//' creating the matrix.
+//'
 //'
 //' @param Q Matrix of rates for "T", "C", "A", and "G", respectively.
 //'     Diagonal values are ignored.
+//' @param pi_tcag Empty vector of equilibrium frequencies for for "T", "C", "A", and "G",
+//'     respectively. This vector will be filled in by this function.
 //' @param xi Overall rate of indels.
 //'
 //' @noRd
 //'
-arma::mat UNREST_rate_matrix(
-        arma::mat Q, const double& xi) {
+void UNREST_rate_matrix(arma::mat& Q, std::vector<double>& pi_tcag, const double& xi) {
+
+    if (Q.n_rows != 4 || Q.n_cols != 4) stop("Q matrix should be 4 x 4");
 
     // reset to zero so summing by row works
     Q.diag().fill(0.0);
     // Filling in diagonals
     arma::vec rowsums = arma::sum(Q, 1);
-    rowsums += xi;
     rowsums *= -1;
     Q.diag() = rowsums;
 
-    return Q;
+    // Estimate pi_tcag before incorporating indels:
+    est_pi_tcag(Q, pi_tcag);
 
+    // Now include indel rates
+    Q.diag() -= xi;
+
+    return;
 }
 
 
