@@ -30,7 +30,7 @@ using namespace Rcpp;
 //' @param Q A matrix of substitution rates for each nucleotide.
 //' @param xi Overall rate of indels.
 //' @param psi Proportion of insertions to deletions.
-//' @param pis Vector of nucleotide equilibrium frequencies for
+//' @param pi_tcag Vector of nucleotide equilibrium frequencies for
 //'     "T", "C", "A", and "G", respectively.
 //' @param rel_insertion_rates Relative insertion rates.
 //' @param rel_deletion_rates Relative deletion rates.
@@ -43,7 +43,7 @@ void fill_mut_prob_length_vectors(
         const arma::mat& Q,
         const double& xi,
         const double& psi,
-        const std::vector<double>& pis,
+        const std::vector<double>& pi_tcag,
         arma::vec rel_insertion_rates,
         arma::vec rel_deletion_rates) {
 
@@ -113,14 +113,14 @@ void fill_mut_prob_length_vectors(
 MutationSampler make_mutation_sampler(VarSequence& vs,
                                       const std::vector<std::vector<double>>& probs,
                                       const std::vector<sint>& mut_lengths,
-                                      const std::vector<double>& pis,
+                                      const std::vector<double>& pi_tcag,
                                       const arma::mat& gamma_mat) {
 
     MutationTypeSampler mts(probs, mut_lengths);
-    TableStringSampler<std::string> tss(mevo::bases, pis);
+    TableStringSampler<std::string> tss(mevo::bases, pi_tcag);
 
     SequenceGammas gammas(gamma_mat);
-    MutationRates mr(vs, pis, gammas);
+    MutationRates mr(vs, pi_tcag, gammas);
     LocationSampler ls(mr);
 
     MutationSampler ms(vs, ls, mts, tss);
@@ -132,15 +132,15 @@ MutationSampler make_mutation_sampler(VarSequence& vs,
 ChunkMutationSampler make_mutation_sampler(VarSequence& vs,
                                            const std::vector<std::vector<double>>& probs,
                                            const std::vector<sint>& mut_lengths,
-                                           const std::vector<double>& pis,
+                                           const std::vector<double>& pi_tcag,
                                            const arma::mat& gamma_mat,
                                            const uint& chunk_size) {
 
     MutationTypeSampler mts(probs, mut_lengths);
-    TableStringSampler<std::string> tss(mevo::bases, pis);
+    TableStringSampler<std::string> tss(mevo::bases, pi_tcag);
 
     SequenceGammas gammas(gamma_mat);
-    MutationRates mr(vs, pis, gammas);
+    MutationRates mr(vs, pi_tcag, gammas);
     ChunkLocationSampler ls(mr, chunk_size);
 
     ChunkMutationSampler ms(vs, ls, mts, tss);
@@ -155,9 +155,8 @@ ChunkMutationSampler make_mutation_sampler(VarSequence& vs,
 
 
 //[[Rcpp::export]]
-void test_sampling(const SEXP& vs_sexp, const uint& N,
-                   const double& pi_t, const double& pi_c,
-                   const double& pi_a, const double& pi_g,
+void test_sampling(SEXP& vs_sexp, const uint& N,
+                   const std::vector<double>& pi_tcag,
                    const double& alpha_1, const double& alpha_2,
                    const double& beta,
                    const double& xi, const double& psi,
@@ -171,21 +170,19 @@ void test_sampling(const SEXP& vs_sexp, const uint& N,
     VarSet& vs_(*vs_xptr);
     VarSequence& vs(vs_[0][0]);
 
-    arma::mat Q = TN93_rate_matrix(pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi);
-
-    std::vector<double> pis = {pi_t, pi_c, pi_a, pi_g};
+    arma::mat Q = TN93_rate_matrix(pi_tcag, alpha_1, alpha_2, beta, xi);
 
     std::vector<std::vector<double>> probs;
     std::vector<sint> mut_lengths;
 
-    fill_mut_prob_length_vectors(probs, mut_lengths, Q, xi, psi, pis,
+    fill_mut_prob_length_vectors(probs, mut_lengths, Q, xi, psi, pi_tcag,
                                  rel_insertion_rates, rel_deletion_rates);
 
     pcg32 eng = seeded_pcg();
 
     arma::mat gamma_mat = make_gamma_mat(vs.size(), gamma_size, gamma_alpha, eng);
 
-    ChunkMutationSampler ms = make_mutation_sampler(vs, probs, mut_lengths, pis,
+    ChunkMutationSampler ms = make_mutation_sampler(vs, probs, mut_lengths, pi_tcag,
                                                     gamma_mat, chunk_size);
 
     for (uint i = 0; i < N; i++) {

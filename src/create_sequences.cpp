@@ -63,13 +63,13 @@ OuterClass create_sequences_(const uint& n_seqs,
     if (equil_freqs.size() == 0) equil_freqs = NumericVector(4, 0.25);
 
     // Converting to STL format
-    std::vector<double> pis = as<std::vector<double>>(equil_freqs);
+    std::vector<double> pi_tcag = as<std::vector<double>>(equil_freqs);
 
     // Generate seeds for random number generators (1 RNG per core)
     const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
 
     // Table-sampling object
-    const TableSampler sampler(pis);
+    const TableSampler sampler(pi_tcag);
 
     // Creating output object
     OuterClass seqs_out(n_seqs);
