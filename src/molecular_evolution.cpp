@@ -4,6 +4,7 @@
 #include <pcg/pcg_random.hpp> // pcg prng
 #include <vector>  // vector class
 #include <string>  // string class
+#include <progress.hpp>  // for the progress bar
 
 
 
@@ -47,7 +48,14 @@ void fill_mut_prob_length_vectors(
         arma::vec rel_insertion_rates,
         arma::vec rel_deletion_rates) {
 
-    uint n_muts = 4 + rel_insertion_rates.n_elem + rel_deletion_rates.n_elem;
+    // If overall rate of indels is zero, remove all elements from these vectors:
+    if (xi <= 0) {
+        rel_insertion_rates.reset();
+        rel_deletion_rates.reset();
+    }
+    uint n_ins = rel_insertion_rates.n_elem;
+    uint n_del = rel_deletion_rates.n_elem;
+    uint n_muts = 4 + n_ins + n_del;
 
     if (n_muts == 4 && xi > 0) {
         stop("If indel rate > 0, vectors of the relative rates of insertions and "
@@ -57,14 +65,19 @@ void fill_mut_prob_length_vectors(
     // 1 vector of probabilities for each nucleotide: T, C, A, then G
     probs.resize(4);
 
-    // make relative rates sum to 1:
-    rel_insertion_rates /= arma::accu(rel_insertion_rates);
-    rel_deletion_rates /= arma::accu(rel_deletion_rates);
-    // Now make them sum to the overall insertion/deletion rate:
-    double xi_i = xi / (1 + 1/psi);  // overall insertion rate
-    double xi_d = xi / (1 + psi);    // overall deletion rate
-    rel_insertion_rates *= xi_i;
-    rel_deletion_rates *= xi_d;
+    if (n_ins > 0) {
+        // make relative rates sum to 1:
+        rel_insertion_rates /= arma::accu(rel_insertion_rates);
+        // Now make them sum to the overall insertion rate:
+        double xi_i = xi / (1 + 1/psi);  // overall insertion rate
+        rel_insertion_rates *= xi_i;
+    }
+    // Same for deletions
+    if (n_del > 0) {
+        rel_deletion_rates /= arma::accu(rel_deletion_rates);
+        double xi_d = xi / (1 + psi);    // overall deletion rate
+        rel_deletion_rates *= xi_d;
+    }
 
 
     /*
@@ -76,7 +89,7 @@ void fill_mut_prob_length_vectors(
 
         std::vector<double>& qc(probs[i]);
 
-        qc = arma::conv_to<std::vector<double>>::from(Q.col(i));
+        qc = arma::conv_to<std::vector<double>>::from(Q.row(i));
         // Get the overall mutation rate for this nucleotide
         double qi = -1 * qc[i];
         // Add insertions, then deletions
@@ -94,7 +107,7 @@ void fill_mut_prob_length_vectors(
         qc[i] = qi;
     }
 
-    // Now filling in mut_lengths field of MutationTypeSampler
+    // Now filling in mut_lengths vector
     mut_lengths = std::vector<sint>(n_muts, 0);
     for (uint i = 0; i < rel_insertion_rates.n_elem; i++) {
         mut_lengths[i + 4] = static_cast<sint>(i+1);
@@ -164,7 +177,8 @@ void test_sampling(SEXP& vs_sexp, const uint& N,
                    const arma::vec& rel_deletion_rates,
                    const uint& gamma_size,
                    const double& gamma_alpha,
-                   const uint& chunk_size) {
+                   const uint& chunk_size,
+                   bool display_progress = true) {
 
     XPtr<VarSet> vs_xptr(vs_sexp);
     VarSet& vs_(*vs_xptr);
@@ -185,8 +199,12 @@ void test_sampling(SEXP& vs_sexp, const uint& N,
     ChunkMutationSampler ms = make_mutation_sampler(vs, probs, mut_lengths, pi_tcag,
                                                     gamma_mat, chunk_size);
 
+    Progress p(N, display_progress);
+
     for (uint i = 0; i < N; i++) {
-        Rcpp::checkUserInterrupt();
+        if (Progress::check_abort()) return;
+        p.increment(); // update progress
+        if (vs.size() == 0) return;
         ms.mutate(eng);
     }
 

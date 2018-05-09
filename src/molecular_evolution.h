@@ -361,7 +361,11 @@ public:
                 std::string nts = new_nucleos(m.length, eng);
                 vs.add_insertion(nts, pos);
             } else {
-                vs.add_deletion(m.length, pos);
+                if ((static_cast<sint>(pos) - m.length) > static_cast<sint>(vs.size())) {
+                    m.length = static_cast<sint>(pos) - static_cast<sint>(vs.size());
+                }
+                uint del_size = std::abs(m.length);
+                vs.add_deletion(del_size, pos);
             }
             // Update Gamma region bounds:
             location.update_gamma_regions(pos, m.length);

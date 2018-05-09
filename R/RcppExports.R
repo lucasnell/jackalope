@@ -227,7 +227,7 @@ digest_ref <- function(ref_, bind_sites, len5s, n_cores = 1L, chunk_size = 0L) {
 #' @param Q A matrix of substitution rates for each nucleotide.
 #' @param xi Overall rate of indels.
 #' @param psi Proportion of insertions to deletions.
-#' @param pis Vector of nucleotide equilibrium frequencies for
+#' @param pi_tcag Vector of nucleotide equilibrium frequencies for
 #'     "T", "C", "A", and "G", respectively.
 #' @param rel_insertion_rates Relative insertion rates.
 #' @param rel_deletion_rates Relative deletion rates.
@@ -236,8 +236,8 @@ digest_ref <- function(ref_, bind_sites, len5s, n_cores = 1L, chunk_size = 0L) {
 #'
 NULL
 
-test_sampling <- function(vs_sexp, N, pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_size, gamma_alpha, chunk_size) {
-    invisible(.Call(`_gemino_test_sampling`, vs_sexp, N, pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_size, gamma_alpha, chunk_size))
+test_sampling <- function(vs_sexp, N, pi_tcag, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_size, gamma_alpha, chunk_size, display_progress = TRUE) {
+    invisible(.Call(`_gemino_test_sampling`, vs_sexp, N, pi_tcag, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_size, gamma_alpha, chunk_size, display_progress))
 }
 
 #' Function to print info on a `RefGenome`.

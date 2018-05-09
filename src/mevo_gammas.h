@@ -97,7 +97,7 @@ public:
         : regions(other.regions), seq_size(other.seq_size) {}
 
     SequenceGammas(arma::mat gamma_mat) {
-        if (gamma_mat.n_cols != 3) stop("input Gamma matrix must have 2 columns, "
+        if (gamma_mat.n_cols != 2) stop("input Gamma matrix must have 2 columns, "
                                             "one for end positions, one for gammas.");
         // Sort from first to last region
         arma::uvec sort_inds = arma::sort_index(gamma_mat.col(0));

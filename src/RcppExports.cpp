@@ -156,16 +156,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // test_sampling
-void test_sampling(const SEXP& vs_sexp, const uint& N, const double& pi_t, const double& pi_c, const double& pi_a, const double& pi_g, const double& alpha_1, const double& alpha_2, const double& beta, const double& xi, const double& psi, const arma::vec& rel_insertion_rates, const arma::vec& rel_deletion_rates, const uint& gamma_size, const double& gamma_alpha, const uint& chunk_size);
-RcppExport SEXP _gemino_test_sampling(SEXP vs_sexpSEXP, SEXP NSEXP, SEXP pi_tSEXP, SEXP pi_cSEXP, SEXP pi_aSEXP, SEXP pi_gSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP, SEXP xiSEXP, SEXP psiSEXP, SEXP rel_insertion_ratesSEXP, SEXP rel_deletion_ratesSEXP, SEXP gamma_sizeSEXP, SEXP gamma_alphaSEXP, SEXP chunk_sizeSEXP) {
+void test_sampling(SEXP& vs_sexp, const uint& N, const std::vector<double>& pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta, const double& xi, const double& psi, const arma::vec& rel_insertion_rates, const arma::vec& rel_deletion_rates, const uint& gamma_size, const double& gamma_alpha, const uint& chunk_size, bool display_progress);
+RcppExport SEXP _gemino_test_sampling(SEXP vs_sexpSEXP, SEXP NSEXP, SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP, SEXP xiSEXP, SEXP psiSEXP, SEXP rel_insertion_ratesSEXP, SEXP rel_deletion_ratesSEXP, SEXP gamma_sizeSEXP, SEXP gamma_alphaSEXP, SEXP chunk_sizeSEXP, SEXP display_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const SEXP& >::type vs_sexp(vs_sexpSEXP);
+    Rcpp::traits::input_parameter< SEXP& >::type vs_sexp(vs_sexpSEXP);
     Rcpp::traits::input_parameter< const uint& >::type N(NSEXP);
-    Rcpp::traits::input_parameter< const double& >::type pi_t(pi_tSEXP);
-    Rcpp::traits::input_parameter< const double& >::type pi_c(pi_cSEXP);
-    Rcpp::traits::input_parameter< const double& >::type pi_a(pi_aSEXP);
-    Rcpp::traits::input_parameter< const double& >::type pi_g(pi_gSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
     Rcpp::traits::input_parameter< const double& >::type alpha_1(alpha_1SEXP);
     Rcpp::traits::input_parameter< const double& >::type alpha_2(alpha_2SEXP);
     Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
@@ -176,7 +173,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const uint& >::type gamma_size(gamma_sizeSEXP);
     Rcpp::traits::input_parameter< const double& >::type gamma_alpha(gamma_alphaSEXP);
     Rcpp::traits::input_parameter< const uint& >::type chunk_size(chunk_sizeSEXP);
-    test_sampling(vs_sexp, N, pi_t, pi_c, pi_a, pi_g, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_size, gamma_alpha, chunk_size);
+    Rcpp::traits::input_parameter< bool >::type display_progress(display_progressSEXP);
+    test_sampling(vs_sexp, N, pi_tcag, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_size, gamma_alpha, chunk_size, display_progress);
     return R_NilValue;
 END_RCPP
 }
@@ -453,7 +451,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_rando_seqs", (DL_FUNC) &_gemino_rando_seqs, 5},
     {"_gemino_digest_var", (DL_FUNC) &_gemino_digest_var, 5},
     {"_gemino_digest_ref", (DL_FUNC) &_gemino_digest_ref, 5},
-    {"_gemino_test_sampling", (DL_FUNC) &_gemino_test_sampling, 16},
+    {"_gemino_test_sampling", (DL_FUNC) &_gemino_test_sampling, 14},
     {"_gemino_print_rg", (DL_FUNC) &_gemino_print_rg, 1},
     {"_gemino_print_vs", (DL_FUNC) &_gemino_print_vs, 1},
     {"_gemino_optim_prob", (DL_FUNC) &_gemino_optim_prob, 4},
