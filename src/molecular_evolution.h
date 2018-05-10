@@ -70,13 +70,16 @@ private:
 
 public:
 
-    // Below `pi_tcag` is a length-4 vector of pi values, for T, C, A, and G, respectively
-    MutationRates(const VarSequence& vs_, const std::vector<double>& pi_tcag,
+    /*
+     Below `q_tcag` is a length-4 vector of rates (q_i from Yang (2006)), for
+     T, C, A, and G, respectively
+     */
+    MutationRates(const VarSequence& vs_, const std::vector<double>& q_tcag,
                   const SequenceGammas& gammas_)
         : vs(vs_), nt_rates(256, 0.0), gammas(gammas_) {
         for (uint i = 0; i < 4; i++) {
             uint j = mevo::bases[i];
-            nt_rates[j] = pi_tcag[i];
+            nt_rates[j] = q_tcag[i];
         }
     }
     MutationRates(const MutationRates& other)
