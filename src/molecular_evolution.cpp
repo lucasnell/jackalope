@@ -168,6 +168,8 @@ ChunkMutationSampler make_mutation_sampler(VarSequence& vs,
 
 
 
+                   // const uint& gamma_size,
+                   // const double& gamma_alpha,
 
 //[[Rcpp::export]]
 void test_sampling(SEXP& vs_sexp, const uint& N,
@@ -177,8 +179,7 @@ void test_sampling(SEXP& vs_sexp, const uint& N,
                    const double& xi, const double& psi,
                    const arma::vec& rel_insertion_rates,
                    const arma::vec& rel_deletion_rates,
-                   const uint& gamma_size,
-                   const double& gamma_alpha,
+                   arma::mat gamma_mat,
                    const uint& chunk_size,
                    bool display_progress = true) {
 
@@ -196,7 +197,7 @@ void test_sampling(SEXP& vs_sexp, const uint& N,
 
     pcg32 eng = seeded_pcg();
 
-    arma::mat gamma_mat = make_gamma_mat(vs.size(), gamma_size, gamma_alpha, eng);
+    // arma::mat gamma_mat = make_gamma_mat(vs.size(), gamma_size, gamma_alpha, eng);
 
     ChunkMutationSampler ms = make_mutation_sampler(vs, probs, mut_lengths, pi_tcag,
                                                     gamma_mat, chunk_size);

@@ -195,11 +195,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double& >::type psi(psiSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type rel_insertion_rates(rel_insertion_ratesSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type rel_deletion_rates(rel_deletion_ratesSEXP);
-    Rcpp::traits::input_parameter< const uint& >::type gamma_size(gamma_sizeSEXP);
-    Rcpp::traits::input_parameter< const double& >::type gamma_alpha(gamma_alphaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type gamma_mat(gamma_matSEXP);
     Rcpp::traits::input_parameter< const uint& >::type chunk_size(chunk_sizeSEXP);
     Rcpp::traits::input_parameter< bool >::type display_progress(display_progressSEXP);
-    test_sampling(vs_sexp, N, pi_tcag, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_size, gamma_alpha, chunk_size, display_progress);
+    test_sampling(vs_sexp, N, pi_tcag, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_mat, chunk_size, display_progress);
     return R_NilValue;
 END_RCPP
 }
@@ -478,7 +477,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_rando_seqs", (DL_FUNC) &_gemino_rando_seqs, 5},
     {"_gemino_digest_var", (DL_FUNC) &_gemino_digest_var, 5},
     {"_gemino_digest_ref", (DL_FUNC) &_gemino_digest_ref, 5},
-    {"_gemino_test_sampling", (DL_FUNC) &_gemino_test_sampling, 14},
+    {"_gemino_test_sampling", (DL_FUNC) &_gemino_test_sampling, 13},
     {"_gemino_print_rg", (DL_FUNC) &_gemino_print_rg, 1},
     {"_gemino_print_vs", (DL_FUNC) &_gemino_print_vs, 1},
     {"_gemino_optim_prob", (DL_FUNC) &_gemino_optim_prob, 4},
