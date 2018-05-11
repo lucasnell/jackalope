@@ -26,6 +26,25 @@ see_mutations <- function(vs_, var_ind) {
     .Call(`_gemino_see_mutations`, vs_, var_ind)
 }
 
+#' Turns a VarGenome's mutations into a list of data frames.
+#'
+#' Temporary function for testing.
+#'
+#'
+#' @noRd
+#'
+examine_mutations <- function(var_set_sexp, var_ind, seq_ind) {
+    .Call(`_gemino_examine_mutations`, var_set_sexp, var_ind, seq_ind)
+}
+
+#' Faster version of table function to count the number of mutations in Gamma regions.
+#'
+#'
+#'
+table_gammas <- function(gamma_ends, positions) {
+    .Call(`_gemino_table_gammas`, gamma_ends, positions)
+}
+
 #' @describeIn add_mutations Add a substitution.
 #'
 #' @inheritParams vs_ add_mutations

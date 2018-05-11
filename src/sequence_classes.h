@@ -407,6 +407,10 @@ public:
     };
 
     // For easily outputting a reference to a VarSequence
+    VarSequence operator[](const uint& idx) const {
+        return var_genome[idx];
+    }
+    // For easily outputting a reference to a VarSequence
     VarSequence& operator[](const uint& idx) {
         VarSequence& vs(var_genome[idx]);
         return vs;

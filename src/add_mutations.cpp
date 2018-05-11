@@ -646,6 +646,94 @@ List see_mutations(SEXP vs_, const uint& var_ind) {
 }
 
 
+//' Turns a VarGenome's mutations into a list of data frames.
+//'
+//' Temporary function for testing.
+//'
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+List examine_mutations(SEXP var_set_sexp, const uint& var_ind, const uint& seq_ind) {
+
+    XPtr<VarSet> var_set_xptr(var_set_sexp);
+    const VarGenome& vg((*var_set_xptr)[var_ind]);
+    const VarSequence& vs(vg[seq_ind]);
+
+    std::string bases = "TCAG";
+    std::vector<uint> base_inds(85);
+    uint j = 0;
+    for (const char& c : bases) {
+        base_inds[static_cast<uint>(c)] = j;
+        j++;
+    }
+
+    uint n_muts = vs.mutations.size();
+    arma::mat sub_mat(4, 4, arma::fill::zeros);
+    uint max_ins = 0;
+    uint max_del = 0;
+    for (uint i = 0; i < n_muts; i++) {
+        sint mi = vs.mutations[i].size_modifier;
+        if (mi == 0) continue;
+        if (mi > 0) {
+            if (mi > max_ins) max_ins = mi;
+        } else {
+            uint mid = static_cast<uint>(std::abs(mi));
+            if (mid > max_del) max_del = mid;
+        }
+    }
+    arma::mat ins_mat(4, max_ins, arma::fill::zeros);
+    arma::mat del_mat(4, max_del, arma::fill::zeros);
+    std::vector<uint> pos_vec(n_muts);
+
+    for (uint mut_i = 0; mut_i < n_muts; mut_i++) {
+
+        const Mutation& m(vs.mutations[mut_i]);
+
+        char c = vs.ref_seq[m.old_pos];
+        uint i = base_inds[static_cast<uint>(c)];
+        sint smod = m.size_modifier;
+        if (smod == 0) {
+            uint j = base_inds[static_cast<uint>(m.nucleos[0])];
+            sub_mat(i, j)++;
+        } else if (smod > 0) {
+            uint j = static_cast<uint>(smod - 1);
+            ins_mat(i, j)++;
+        } else {
+            uint j = static_cast<uint>(std::abs(smod + 1));
+            del_mat(i, j)++;
+        }
+
+        pos_vec[mut_i] = vs.mutations[mut_i].old_pos;
+    }
+
+    List out = List::create(
+        _["sub"] = wrap(sub_mat),
+        _["ins"] = wrap(ins_mat),
+        _["del"] = wrap(del_mat),
+        _["pos"] = pos_vec);
+
+    return out;
+}
+
+
+//' Faster version of table function to count the number of mutations in Gamma regions.
+//'
+//'
+//'
+//[[Rcpp::export]]
+std::vector<uint> table_gammas(const std::vector<uint>& gamma_ends,
+                               const std::vector<uint>& positions) {
+    std::vector<uint> out(gamma_ends.size(), 0U);
+    for (uint i = 0; i < positions.size(); i++) {
+        uint j = std::lower_bound(gamma_ends.begin(), gamma_ends.end(),
+                                  positions[i]) - gamma_ends.begin();
+        out[j]++;
+    }
+    return out;
+}
+
+
 
 //' Add mutations manually from R.
 //'
