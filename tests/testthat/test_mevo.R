@@ -2,6 +2,7 @@ context("Testing molecular evolution accuracy")
 
 library(gemino)
 
+set.seed(1087437799)
 # Construct sequence with known number of each nucleotide
 seq <- c(rep("T", 0.25e6), rep("C", 0.25e6), rep("A", 0.25e6), rep("G", 0.25e6))
 seq <- sample(seq)
@@ -60,6 +61,7 @@ test_samp <- function() {
 
 nreps <- 100
 
+set.seed(1255574685)
 muts <- lapply(1:nreps, function(i) test_samp())
 
 
@@ -77,13 +79,16 @@ indel_p <- function(ss) (N_ * 4 * xi_ * 0.5 / sum(q)) * (exp(-ss) / sum(exp(-1:-
 test_that("molecular evolution produces correct proportion of indel sizes", {
     expect_true(t.test(rowSums(all_ins) / rowSums(all_del), mu = 1)$p.value > 0.05)
     for (i in 1:10) {
+        # If it sums to > 0, then we'll do simple t.test
         if (sum(all_ins[,i]) > 0) {
             p <- t.test(all_ins[,i], mu = indel_p(i))$p.value
+        # If none were sampled, do binomial test for probability
         } else {
             p <- binom.test(0, N_ * nreps, p = indel_p(i) / N_)$p.value
         }
         expect_true(p > 0.05)
     }
+    # Same for deletions
     for (i in 1:10) {
         if (sum(all_del[,i]) > 0) {
             p <- t.test(all_del[,i], mu = indel_p(i))$p.value
@@ -99,51 +104,80 @@ test_that("molecular evolution produces correct proportion of indel sizes", {
 # Checking the substition accuracy:
 
 
-sub_df <- map_dfr(1:nreps, ~ data_frame(r = .x,
-                                        t = muts[[.x]]$sub[1,],
-                                        c = muts[[.x]]$sub[2,],
-                                        a = muts[[.x]]$sub[3,],
-                                        g = muts[[.x]]$sub[4,],
-                                        to = c('t', 'c', 'a', 'g'))) %>%
-    gather('from', 'count', t:g) %>%
-    mutate(to = factor(to, levels = c('t', 'c', 'a', 'g')),
-           from = factor(from, levels = c('t', 'c', 'a', 'g'),
-                         labels = paste("from:", c('t', 'c', 'a', 'g'))))
+sub_df <- lapply(1:nreps,
+                 function(i) {
+                     data.frame(r = i,
+                                count = as.integer(muts[[i]]$sub),
+                                from = rep(1:4, 4),
+                                to = rep(1:4, each = 4))
+                 })
+sub_df <- do.call(rbind, sub_df)
+sub_df <- sub_df[sub_df$from != sub_df$to,]
 
-sub_df <- sub_df %>%
-    filter(!((from == "from: t" & to == "t") |
-                 (from == "from: c" & to == "c") |
-                 (from == "from: a" & to == "a") |
-                 (from == "from: g" & to == "g")))
+expected_sub <- function(i, j) {
+    N_ * ((q[i] - xi_) / sum(q)) * (Q[i, j] / sum(Q[i,]))
+}
 
-sub_df %>%
-    ggplot(aes(to, count, color = to)) +
-    geom_point(position = position_jitter(width = 0.25, height = 0), shape = 1) +
-    theme_classic() +
-    facet_wrap(~ from, nrow = 2, scales = "free") +
-    scale_color_brewer(palette = "Dark2", guide = FALSE) +
-    geom_point(data = sub_df %>%
-                   distinct(to, from) %>%
-                   arrange(to, from) %>%
-                   mutate(count = map2_dbl(from, to,
-                                           function(ii,jj) {
-                                               i <- as.integer(ii)
-                                               j <- as.integer(jj)
-                                               e <- N_ * ((q[i] - xi_) / sum(q)) *
-                                                   (Q[i, j] / sum(Q[i,]))
-                                               return(e)
-                                           })),
-               color = 'black', shape = 19, size = 3)
+# Observed mean counts per run
+Q_obs <- matrix(0, 4, 4)
+for (i in 1:4) {
+    for (j in 1:4) {
+        if (i == j) next
+        Q_obs[i, j] <- mean(sub_df$count[sub_df$from == i & sub_df$to == j])
+    }
+}
+# Expected
+Q_exp <- t(sapply(1:4, function(i) sapply(1:4, function(j) expected_sub(i, j))))
+
+pvals <- numeric(12)
+k <- 0
+for (i in 1:4) {
+    for (j in 1:4) {
+        if (i == j) next
+        k <- k + 1
+        pvals[k] <- t.test(sub_df$count[sub_df$from == i & sub_df$to == j],
+                           mu = Q_exp[i,j])$p.value
+    }
+}
+
+# Combined P value for all items in matrix (using Fisher's method):
+p <- 2 * pchisq(-2 * sum(log(pvals)), df = 2 * k, lower.tail = FALSE)
+
+
+test_that("molecular evolution produces correct substitution matrix", {
+    # I'm not just using alpha in case there's positive correlation
+    threshold <- 0.05 * (k+1) / (2*k)
+    expect_true(p > threshold)
+})
+
 
 
 
 # Now looking at positions
 
-pos_df <- map_dfr(1:nreps, function(i) {
-    data_frame(rep = i,
-               gamma = gm[,2],
-               pos = gm[,1],
-               count = gemino:::table_gammas(gm[,1], muts[[i]]$pos))
+pos_df <- lapply(1:nreps,
+                 function(i) {
+                     data.frame(rep = i,
+                                gamma = gm[,2],
+                                pos = gm[,1],
+                                count = gemino:::table_gammas(gm[,1], muts[[i]]$pos))
+                 })
+pos_df <- do.call(rbind, pos_df)
+
+pos_df <- lapply(1:nrow(gm), function(i) {
+    pos_ <- gm[i,1]
+    gamma_ <- gm[i,2]
+    count_ <- mean(pos_df$count[pos_df$pos == pos_])
+    data.frame(pos = pos_, gamma = gamma_, count = count_)
 })
+pos_df <- do.call(rbind, pos_df)
+
+
+# This regression coefficient should approximately correspond to one
+test_that("molecular evolution selects mutation regions according to Gamma values", {
+    gamma_coef <- coef(lm(count ~ gamma, data = pos_df))[['gamma']]
+    expect_true(gamma_coef > 0.9 & gamma_coef < 1.1)
+})
+
 
 
