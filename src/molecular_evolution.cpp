@@ -69,13 +69,13 @@ void fill_mut_prob_length_vectors(
         // make relative rates sum to 1:
         rel_insertion_rates /= arma::accu(rel_insertion_rates);
         // Now make them sum to the overall insertion rate:
-        double xi_i = xi / (1 + 1/psi);  // overall insertion rate
+        double xi_i = (0.25 * xi) / (1 + 1/psi);  // overall insertion rate
         rel_insertion_rates *= xi_i;
     }
     // Same for deletions
     if (n_del > 0) {
         rel_deletion_rates /= arma::accu(rel_deletion_rates);
-        double xi_d = xi / (1 + psi);    // overall deletion rate
+        double xi_d = (0.25 * xi) / (1 + psi);    // overall deletion rate
         rel_deletion_rates *= xi_d;
     }
 

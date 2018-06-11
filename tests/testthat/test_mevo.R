@@ -14,7 +14,7 @@ pi_tcag_ = 0.1*1:4
 alpha_1_ = 1
 alpha_2_ = 2
 beta_ = 0.5
-xi_ = 0.25
+xi_ = 0.5
 psi_ = 1
 
 Q <- matrix(beta_, 4, 4)
@@ -23,7 +23,7 @@ Q[4,3] <- Q[3,4] <- alpha_2_
 for (i in 1:4) Q[,i] <- Q[,i] * pi_tcag_[i]
 diag(Q) <- 0
 
-q <- rowSums(Q) + xi_
+q <- rowSums(Q) + 0.25 * xi_
 
 gm <- matrix(1L, 1e3, 2)
 gm[,1] <- seq(1e3, 1e6, 1e3)
@@ -73,12 +73,13 @@ all_ins <- do.call(rbind, lapply(1:nreps, function(i) setNames(colSums(muts[[i]]
 all_del <- do.call(rbind, lapply(1:nreps, function(i) setNames(colSums(muts[[i]]$del),
                                                                1:10)))
 # Function to calculate the expected number of insertions or deletions of a given size:
-indel_p <- function(ss) (N_ * 4 * xi_ * 0.5 / sum(q)) * (exp(-ss) / sum(exp(-1:-10)))
+indel_p <- function(ss) (N_ * 0.5 * xi_ / sum(q)) * (exp(-ss) / sum(exp(-1:-10)))
+
 
 
 test_that("molecular evolution produces correct proportion of indel sizes", {
-    expect_true(t.test(rowSums(all_ins) / rowSums(all_del), mu = 1)$p.value > 0.05)
-    for (i in 1:10) {
+    expect_true(t.test(rowSums(all_ins) / rowSums(all_del), mu = psi_)$p.value > 0.05)
+    ins_pvals <- sapply(1:10, function(i) {
         # If it sums to > 0, then we'll do simple t.test
         if (sum(all_ins[,i]) > 0) {
             p <- t.test(all_ins[,i], mu = indel_p(i))$p.value
@@ -86,18 +87,28 @@ test_that("molecular evolution produces correct proportion of indel sizes", {
         } else {
             p <- binom.test(0, N_ * nreps, p = indel_p(i) / N_)$p.value
         }
-        expect_true(p > 0.05)
-    }
+        return(p)
+    })
+    # Combined P value for all items in matrix (using Fisher's method):
+    p <- pchisq(-2 * sum(log(ins_pvals)), df = 2 * 10)
+    expect_true(p > 0.05, info = sprintf("insertion size: %i", i))
+
     # Same for deletions
-    for (i in 1:10) {
+    del_pvals <- sapply(1:10, function(i) {
+        # If it sums to > 0, then we'll do simple t.test
         if (sum(all_del[,i]) > 0) {
             p <- t.test(all_del[,i], mu = indel_p(i))$p.value
+            # If none were sampled, do binomial test for probability
         } else {
             p <- binom.test(0, N_ * nreps, p = indel_p(i) / N_)$p.value
         }
-        expect_true(p > 0.05)
-    }
+        return(p)
+    })
+    # Combined P value for all items in matrix (using Fisher's method):
+    p <- pchisq(-2 * sum(log(del_pvals)), df = 2 * 10)
+    expect_true(p > 0.05, info = sprintf("deletion size: %i", i))
 })
+
 
 
 
@@ -115,7 +126,7 @@ sub_df <- do.call(rbind, sub_df)
 sub_df <- sub_df[sub_df$from != sub_df$to,]
 
 expected_sub <- function(i, j) {
-    N_ * ((q[i] - xi_) / sum(q)) * (Q[i, j] / sum(Q[i,]))
+    N_ * ((q[i] - 0.25 * xi_) / sum(q)) * (Q[i, j] / sum(Q[i,]))
 }
 
 # Observed mean counts per run
@@ -141,7 +152,7 @@ for (i in 1:4) {
 }
 
 # Combined P value for all items in matrix (using Fisher's method):
-p <- 2 * pchisq(-2 * sum(log(pvals)), df = 2 * k, lower.tail = FALSE)
+p <- pchisq(-2 * sum(log(pvals)), df = 2 * k)
 
 
 test_that("molecular evolution produces correct substitution matrix", {
@@ -178,6 +189,7 @@ test_that("molecular evolution selects mutation regions according to Gamma value
     gamma_coef <- coef(lm(count ~ gamma, data = pos_df))[['gamma']]
     expect_true(gamma_coef > 0.9 & gamma_coef < 1.1)
 })
+
 
 
 
