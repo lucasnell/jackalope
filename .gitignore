@@ -16,3 +16,4 @@ man
 gemino_*.tgz
 *.pdf
 methods
+_crash_test.R

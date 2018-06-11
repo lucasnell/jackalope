@@ -38,7 +38,7 @@ arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag,
     // Filling in diagonals
     Q.diag().fill(0.0);  // reset to zero so summing by row works
     arma::vec rowsums = arma::sum(Q, 1);
-    rowsums += xi;
+    rowsums += xi * 0.25;
     rowsums *= -1;
     Q.diag() = rowsums;
 
@@ -157,7 +157,7 @@ arma::mat GTR_rate_matrix(const std::vector<double>& pi_tcag,
 
     // Filling in diagonals
     arma::vec rowsums = arma::sum(Q, 1);
-    rowsums += xi;
+    rowsums += xi * 0.25;
     rowsums *= -1;
     Q.diag() = rowsums;
 
@@ -170,13 +170,18 @@ arma::mat GTR_rate_matrix(const std::vector<double>& pi_tcag,
 
 
 
-/*
- Estimates equilibrium nucleotide frequencies from an input rate matrix.
- It does this by solving for πQ = 0 by finding the left eigenvector of Q that corresponds
- to the eigenvalue closest to zero.
- This is only needed for the UNREST model.
- */
 
+//' Estimates equilibrium nucleotide frequencies from an input rate matrix.
+//'
+//' It does this by solving for πQ = 0 by finding the left eigenvector of Q that
+//' corresponds to the eigenvalue closest to zero.
+//' This is only needed for the UNREST model.
+//'
+//' @inheritParams Q UNREST_rate_matrix
+//' @inheritParams pi_tcag UNREST_rate_matrix
+//'
+//' @noRd
+//'
 inline void est_pi_tcag(const arma::mat& Q, std::vector<double>& pi_tcag) {
 
     arma::cx_vec eigvals;
@@ -210,8 +215,8 @@ inline void est_pi_tcag(const arma::mat& Q, std::vector<double>& pi_tcag) {
 //' creating the matrix.
 //'
 //'
-//' @param Q Matrix of rates for "T", "C", "A", and "G", respectively.
-//'     Diagonal values are ignored.
+//' @param Q Matrix of substitution rates for "T", "C", "A", and "G", respectively.
+//'     Do not include indel rates here! Diagonal values are ignored.
 //' @param pi_tcag Empty vector of equilibrium frequencies for for "T", "C", "A", and "G",
 //'     respectively. This vector will be filled in by this function.
 //' @param xi Overall rate of indels.
@@ -232,8 +237,12 @@ void UNREST_rate_matrix(arma::mat& Q, std::vector<double>& pi_tcag, const double
     // Estimate pi_tcag before incorporating indels:
     est_pi_tcag(Q, pi_tcag);
 
-    // Now include indel rates
-    Q.diag() -= xi;
+    /*
+     Now include indel rates
+     (I'm subtracting bc diagonals are negative)
+     (Also, I'm doing this here so it doesn't affect pi_tcag estimates)
+     */
+    Q.diag() -= xi * 0.25;
 
     return;
 }

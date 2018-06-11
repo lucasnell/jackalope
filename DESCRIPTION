@@ -26,6 +26,7 @@ Imports:
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress
 SystemRequirements: C++11, GNU make
 RoxygenNote: 6.0.1
+Roxygen: list(markdown = TRUE)
 Suggests:
     knitr,
     vcfR,
