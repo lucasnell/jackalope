@@ -19,6 +19,7 @@
 #include <deque>  // deque class
 
 #include "gemino_types.h"  // integer types
+#include "util.h"  // clear_memory
 
 using namespace Rcpp;
 
@@ -418,6 +419,14 @@ public:
     // To return the number of sequences
     uint size() const noexcept {
         return var_genome.size();
+    }
+    // Clear all info and restore RAM
+    void clear() {
+        var_genome.clear();
+        clear_memory<std::deque<VarSequence>>(var_genome);
+        name.clear();
+        clear_memory<std::string>(name);
+        return;
     }
 
 private:
