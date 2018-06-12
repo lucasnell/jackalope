@@ -77,9 +77,6 @@ struct GammaRegion {
 
 class SequenceGammas {
 
-    std::vector<GammaRegion> regions;
-    double seq_size;
-
     /*
      Based on a sequence position, return an index to the Gamma region it's inside.
      */
@@ -92,6 +89,9 @@ class SequenceGammas {
     }
 
 public:
+
+    std::vector<GammaRegion> regions;
+    double seq_size;
 
     SequenceGammas(const SequenceGammas& other)
         : regions(other.regions), seq_size(other.seq_size) {}
@@ -137,6 +137,28 @@ public:
         uint idx = get_idx(pos);
         return regions[idx].gamma;
     }
+
+    /*
+     The same thing as above, except for across a range.
+     */
+    inline std::vector<double> operator()(const uint& start, const uint& end) const {
+
+        std::vector<double> out(end - start + 1);
+
+        uint idx = get_idx(start);
+
+        for (uint i = start; i <= end;) {
+            double gamma = regions[idx].gamma;
+            uint length = regions[idx].end - i + 1;
+            if (i + length - 1 > end) length = end - i + 1;
+            std::fill(out.begin() + i - start, out.begin() + i - start + length, gamma);
+            idx++;
+            i += length;
+        }
+
+        return out;
+    }
+
 
     void update_gamma_regions(const uint& pos, const sint& size_change);
 

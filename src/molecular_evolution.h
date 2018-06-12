@@ -92,11 +92,137 @@ public:
         r *= gammas[pos];
         return r;
     }
+
+    /*
+     The same as above, but for a range of positions.
+     */
+    inline double operator()(const uint& start, const uint& end) const {
+
+        std::string seq;
+        uint mut_;
+        vs.set_seq_chunk(seq, start, end - start + 1, mut_);
+
+        std::vector<double> gamma_vals = gammas(start, end);
+        if (gamma_vals.size() != seq.size()) {
+            stop("seq and gamma_vals sizes not matching in MutationRates::().");
+        }
+
+        double out = 0;
+        for (uint i = 0; i < gamma_vals.size(); i++) {
+            double r = nt_rates[seq[i]];
+            out += r * gamma_vals[i];
+        }
+
+        return out;
+    }
+
+    // Return a single gamma value
+    inline double gamma(const uint& pos) const {
+        return gammas[pos];
+    }
+
+
     // To get size of the variant sequence
     inline uint size() const noexcept {
         return vs.size();
     }
 
+    // To return the overall rate for an entire sequence:
+    double total_rate() const {
+
+        double out = 0;
+
+        if ((vs.size() - 1) != gammas.regions.back().end) {
+            stop("gammas and vs sizes don't match inside MutationRates");
+        }
+
+        // If there are no mutations, this is pretty easy:
+        if (vs.mutations.empty()) {
+
+            uint end = vs.ref_seq.nucleos.size();
+            if ((end - 1) != gammas.regions.back().end) {
+                stop("gammas and vs ref sizes don't match inside MutationRates");
+            }
+
+            for (uint i = 0, idx = 0; idx < gammas.regions.size(); idx++) {
+                double gamma = gammas.regions[idx].gamma;
+                double tmp = 0;
+                while (gammas.regions[idx].end >= i) {
+                    tmp += nt_rates[vs.ref_seq.nucleos[i]];
+                    i++;
+                }
+                out += (tmp * gamma);
+            }
+
+            return out;
+        }
+
+        /*
+         std::vector<double> nt_rates;
+         SequenceGammas gammas;
+         const VarSequence& vs;
+         */
+
+        // Index to the first Mutation object
+        uint mut_i = 0;
+        // Index to the first gamma region
+        uint gam_i = 0;
+        double gamma = gammas.regions[gam_i].gamma;
+        uint gamma_end = gammas.regions[gam_i].end;
+
+        // Current position
+        uint pos = 0;
+
+        // Picking up any nucleotides before the first mutation
+        for (; pos < vs.mutations[mut_i].new_pos; pos++) {
+            if (pos > gamma_end) {
+                gam_i++;
+                gamma = gammas.regions[gam_i].gamma;
+                gamma_end = gammas.regions[gam_i].end;
+            }
+            out += (nt_rates[vs.ref_seq[pos]] * gamma);
+        }
+        if (pos > gamma_end) {
+            gam_i++;
+            gamma = gammas.regions[gam_i].gamma;
+            gamma_end = gammas.regions[gam_i].end;
+        }
+
+
+        // Now, for each subsequent mutation except the last, add all nucleotides
+        // at or after its position but before the next one
+        uint next_mut_i = mut_i + 1;
+        while (next_mut_i < vs.mutations.size()) {
+            while (pos < vs.mutations[next_mut_i].new_pos) {
+                char c = vs.get_char_(pos, mut_i);
+                out += nt_rates[c] * gamma;
+                ++pos;
+                if (pos > gamma_end) {
+                    gam_i++;
+                    gamma = gammas.regions[gam_i].gamma;
+                    gamma_end = gammas.regions[gam_i].end;
+                }
+            }
+            ++mut_i;
+            ++next_mut_i;
+        }
+
+        // Now taking care of nucleotides after the last Mutation
+        while (pos < vs.seq_size) {
+            char c = vs.get_char_(pos, mut_i);
+            out += nt_rates[c] * gamma;
+            ++pos;
+            if (pos > gamma_end) {
+                gam_i++;
+                gamma = gammas.regions[gam_i].gamma;
+                gamma_end = gammas.regions[gam_i].end;
+            }
+        }
+
+        return out;
+    }
+
+    // To update gamma boundaries when indels occur:
     inline void update_gamma_regions(const uint& pos, const sint& size_change) {
         gammas.update_gamma_regions(pos, size_change);
         return;
@@ -125,6 +251,8 @@ public:
 template <template <typename> class C>
 class OneSeqLocationSampler {
 
+protected:
+
     C<MutationRates> rates;
 
 public:
@@ -145,10 +273,72 @@ public:
 
 };
 
-// The two situations in which I'll use this:
-typedef OneSeqLocationSampler<ReservoirRates> LocationSampler;
-typedef OneSeqLocationSampler<ChunkReservoirRates> ChunkLocationSampler;
 
+
+/*
+ Simplifying names and adding the following functionality:
+ - return rate when using parentheses and a single uint argument
+ - return a std::vector<double> of rates when using parentheses and two uint arguments
+ - return a gamma value if using the `gamma()` method
+ - return rate of the whole sequence with `total_rate()` method
+ */
+class LocationSampler: public OneSeqLocationSampler<ReservoirRates> {
+public:
+    /*
+     Return a rate based on the actual indexing, rather than from `inds`.
+     This was created to allow it to output a rate when you're adjusting the overall
+     sequence rate during jumps across a phylogeny.
+    */
+    inline double operator()(const uint& pos) const {
+        const MutationRates& mr(rates.res_rates);
+        return mr[pos];
+    }
+    /*
+    The same as above, but for a range of positions.
+    */
+    inline double operator()(const uint& start, const uint& end) const {
+        const MutationRates& mr(rates.res_rates);
+        return mr(start, end);
+    }
+    /*
+     Return a single gamma value
+     */
+    inline double gamma(const uint& pos) const {
+        const MutationRates& mr(rates.res_rates);
+        return mr.gamma(pos);
+    }
+    /*
+     Return the total rate for a VarSequence object
+    */
+    inline double total_rate() const {
+        const MutationRates& mr(rates.res_rates);
+        return mr.total_rate();
+    }
+};
+
+class ChunkLocationSampler: public OneSeqLocationSampler<ChunkReservoirRates> {
+public:
+
+    inline double operator()(const uint& pos) const {
+        const MutationRates& mr(rates.res_rates.all_rates);
+        return mr[pos];
+    }
+
+    inline double operator()(const uint& start, const uint& end) const {
+        const MutationRates& mr(rates.res_rates.all_rates);
+        return mr(start, end);
+    }
+
+    inline double gamma(const uint& pos) const {
+        const MutationRates& mr(rates.res_rates.all_rates);
+        return mr.gamma(pos);
+    }
+
+    inline double total_rate() const {
+        const MutationRates& mr(rates.res_rates.all_rates);
+        return mr.total_rate();
+    }
+};
 
 
 
@@ -375,14 +565,36 @@ public:
         }
         return;
     }
+
+    // // Same as above, but it returns the change in the sequence rate that results
+    // double mutate_rate_change(pcg32& eng) {
+    //     uint pos = sample_location(eng);
+    //     char c = vs.get_nt(pos);
+    //     MutationInfo m = sample_type(c, eng);
+    //     if (m.length == 0) {
+    //         vs.add_substitution(m.nucleo, pos);
+    //     } else {
+    //         if (m.length > 0) {
+    //             std::string nts = new_nucleos(m.length, eng);
+    //             vs.add_insertion(nts, pos);
+    //         } else {
+    //             if ((static_cast<sint>(pos) - m.length) > static_cast<sint>(vs.size())) {
+    //                 m.length = static_cast<sint>(pos) - static_cast<sint>(vs.size());
+    //             }
+    //             uint del_size = std::abs(m.length);
+    //             vs.add_deletion(del_size, pos);
+    //         }
+    //         // Update Gamma region bounds:
+    //         location.update_gamma_regions(pos, m.length);
+    //     }
+    //     return;
+    // }
 };
 
 
 // Shortening these names
 typedef OneSeqMutationSampler<LocationSampler> MutationSampler;
 typedef OneSeqMutationSampler<ChunkLocationSampler> ChunkMutationSampler;
-
-
 
 
 

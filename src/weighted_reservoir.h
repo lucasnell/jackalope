@@ -156,7 +156,7 @@ public:
         return;
     }
 
-private:
+protected:
     std::exponential_distribution<double> distr;
 
 };
@@ -209,15 +209,6 @@ struct ChunkRateGetter {
     }
 
 
-    /*
-     Return index referring to a position in `all_rates` using an index for `inds`.
-     For example, if `all_rates` is length 200 and `inds` is length 100, the input
-     index here should never be > 99, but the output index could be up to 199.
-     */
-    inline uint operator()(const uint& idx) const {
-        return inds[idx];
-    }
-
     inline void update_gamma_regions(const uint& pos, const sint& size_change) {
         all_rates.update_gamma_regions(pos, size_change);
         return;
@@ -250,7 +241,7 @@ public:
     inline uint sample(pcg32& eng) {
         res_rates.reset(eng);
         uint i = weighted_reservoir_<ChunkReservoirRates<T>>(*this, eng);
-        return res_rates(i);
+        return res_rates.inds[i];
     }
 
     inline void update_gamma_regions(const uint& pos, const sint& size_change) {
@@ -259,7 +250,7 @@ public:
     }
 
 
-private:
+protected:
 
     std::exponential_distribution<double> distr;
 

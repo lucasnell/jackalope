@@ -245,7 +245,14 @@ struct Mutation {
  =========================================
  */
 
+// (This class will later need access to private members of VarSequence.)
+class MutationRates;
+
+
 class VarSequence {
+
+    friend class MutationRates;
+
 public:
 
     const RefSequence& ref_seq;
@@ -264,6 +271,12 @@ public:
         return seq_size;
     }
 
+    // Clear mutation info and restore RAM
+    void clear() {
+        mutations.clear();
+        clear_memory<std::deque<Mutation>>(mutations);
+        return;
+    }
 
     /*
      ------------------
@@ -419,14 +432,6 @@ public:
     // To return the number of sequences
     uint size() const noexcept {
         return var_genome.size();
-    }
-    // Clear all info and restore RAM
-    void clear() {
-        var_genome.clear();
-        clear_memory<std::deque<VarSequence>>(var_genome);
-        name.clear();
-        clear_memory<std::string>(name);
-        return;
     }
 
 private:
