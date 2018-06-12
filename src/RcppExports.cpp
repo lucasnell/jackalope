@@ -7,97 +7,6 @@
 
 using namespace Rcpp;
 
-// see_mutations
-List see_mutations(SEXP vs_, const uint& var_ind);
-RcppExport SEXP _gemino_see_mutations(SEXP vs_SEXP, SEXP var_indSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
-    Rcpp::traits::input_parameter< const uint& >::type var_ind(var_indSEXP);
-    rcpp_result_gen = Rcpp::wrap(see_mutations(vs_, var_ind));
-    return rcpp_result_gen;
-END_RCPP
-}
-// examine_mutations
-List examine_mutations(SEXP var_set_sexp, const uint& var_ind, const uint& seq_ind);
-RcppExport SEXP _gemino_examine_mutations(SEXP var_set_sexpSEXP, SEXP var_indSEXP, SEXP seq_indSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type var_set_sexp(var_set_sexpSEXP);
-    Rcpp::traits::input_parameter< const uint& >::type var_ind(var_indSEXP);
-    Rcpp::traits::input_parameter< const uint& >::type seq_ind(seq_indSEXP);
-    rcpp_result_gen = Rcpp::wrap(examine_mutations(var_set_sexp, var_ind, seq_ind));
-    return rcpp_result_gen;
-END_RCPP
-}
-// table_gammas
-std::vector<uint> table_gammas(const std::vector<uint>& gamma_ends, const std::vector<uint>& positions);
-RcppExport SEXP _gemino_table_gammas(SEXP gamma_endsSEXP, SEXP positionsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<uint>& >::type gamma_ends(gamma_endsSEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint>& >::type positions(positionsSEXP);
-    rcpp_result_gen = Rcpp::wrap(table_gammas(gamma_ends, positions));
-    return rcpp_result_gen;
-END_RCPP
-}
-// add_substitution
-void add_substitution(SEXP vs_, const uint& var_ind, const uint& seq_ind, const char& nucleo_, const uint& new_pos_);
-RcppExport SEXP _gemino_add_substitution(SEXP vs_SEXP, SEXP var_indSEXP, SEXP seq_indSEXP, SEXP nucleo_SEXP, SEXP new_pos_SEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
-    Rcpp::traits::input_parameter< const uint& >::type var_ind(var_indSEXP);
-    Rcpp::traits::input_parameter< const uint& >::type seq_ind(seq_indSEXP);
-    Rcpp::traits::input_parameter< const char& >::type nucleo_(nucleo_SEXP);
-    Rcpp::traits::input_parameter< const uint& >::type new_pos_(new_pos_SEXP);
-    add_substitution(vs_, var_ind, seq_ind, nucleo_, new_pos_);
-    return R_NilValue;
-END_RCPP
-}
-// add_insertion
-void add_insertion(SEXP vs_, const uint& var_ind, const uint& seq_ind, const std::string& nucleos_, const uint& new_pos_);
-RcppExport SEXP _gemino_add_insertion(SEXP vs_SEXP, SEXP var_indSEXP, SEXP seq_indSEXP, SEXP nucleos_SEXP, SEXP new_pos_SEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
-    Rcpp::traits::input_parameter< const uint& >::type var_ind(var_indSEXP);
-    Rcpp::traits::input_parameter< const uint& >::type seq_ind(seq_indSEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type nucleos_(nucleos_SEXP);
-    Rcpp::traits::input_parameter< const uint& >::type new_pos_(new_pos_SEXP);
-    add_insertion(vs_, var_ind, seq_ind, nucleos_, new_pos_);
-    return R_NilValue;
-END_RCPP
-}
-// add_deletion
-void add_deletion(SEXP vs_, const uint& var_ind, const uint& seq_ind, const uint& size_, const uint& new_pos_);
-RcppExport SEXP _gemino_add_deletion(SEXP vs_SEXP, SEXP var_indSEXP, SEXP seq_indSEXP, SEXP size_SEXP, SEXP new_pos_SEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
-    Rcpp::traits::input_parameter< const uint& >::type var_ind(var_indSEXP);
-    Rcpp::traits::input_parameter< const uint& >::type seq_ind(seq_indSEXP);
-    Rcpp::traits::input_parameter< const uint& >::type size_(size_SEXP);
-    Rcpp::traits::input_parameter< const uint& >::type new_pos_(new_pos_SEXP);
-    add_deletion(vs_, var_ind, seq_ind, size_, new_pos_);
-    return R_NilValue;
-END_RCPP
-}
-// many_mutations
-void many_mutations(SEXP vs_, const double& min_muts, const double& max_muts);
-RcppExport SEXP _gemino_many_mutations(SEXP vs_SEXP, SEXP min_mutsSEXP, SEXP max_mutsSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
-    Rcpp::traits::input_parameter< const double& >::type min_muts(min_mutsSEXP);
-    Rcpp::traits::input_parameter< const double& >::type max_muts(max_mutsSEXP);
-    many_mutations(vs_, min_muts, max_muts);
-    return R_NilValue;
-END_RCPP
-}
 // merge_sequences
 void merge_sequences(SEXP ref_);
 RcppExport SEXP _gemino_merge_sequences(SEXP ref_SEXP) {
@@ -199,6 +108,97 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const uint& >::type chunk_size(chunk_sizeSEXP);
     Rcpp::traits::input_parameter< bool >::type display_progress(display_progressSEXP);
     test_sampling(vs_sexp, N, pi_tcag, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_mat, chunk_size, display_progress);
+    return R_NilValue;
+END_RCPP
+}
+// see_mutations
+List see_mutations(SEXP vs_, const uint& var_ind);
+RcppExport SEXP _gemino_see_mutations(SEXP vs_SEXP, SEXP var_indSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
+    Rcpp::traits::input_parameter< const uint& >::type var_ind(var_indSEXP);
+    rcpp_result_gen = Rcpp::wrap(see_mutations(vs_, var_ind));
+    return rcpp_result_gen;
+END_RCPP
+}
+// examine_mutations
+List examine_mutations(SEXP var_set_sexp, const uint& var_ind, const uint& seq_ind);
+RcppExport SEXP _gemino_examine_mutations(SEXP var_set_sexpSEXP, SEXP var_indSEXP, SEXP seq_indSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type var_set_sexp(var_set_sexpSEXP);
+    Rcpp::traits::input_parameter< const uint& >::type var_ind(var_indSEXP);
+    Rcpp::traits::input_parameter< const uint& >::type seq_ind(seq_indSEXP);
+    rcpp_result_gen = Rcpp::wrap(examine_mutations(var_set_sexp, var_ind, seq_ind));
+    return rcpp_result_gen;
+END_RCPP
+}
+// table_gammas
+std::vector<uint> table_gammas(const std::vector<uint>& gamma_ends, const std::vector<uint>& positions);
+RcppExport SEXP _gemino_table_gammas(SEXP gamma_endsSEXP, SEXP positionsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<uint>& >::type gamma_ends(gamma_endsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint>& >::type positions(positionsSEXP);
+    rcpp_result_gen = Rcpp::wrap(table_gammas(gamma_ends, positions));
+    return rcpp_result_gen;
+END_RCPP
+}
+// add_substitution
+void add_substitution(SEXP vs_, const uint& var_ind, const uint& seq_ind, const char& nucleo_, const uint& new_pos_);
+RcppExport SEXP _gemino_add_substitution(SEXP vs_SEXP, SEXP var_indSEXP, SEXP seq_indSEXP, SEXP nucleo_SEXP, SEXP new_pos_SEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
+    Rcpp::traits::input_parameter< const uint& >::type var_ind(var_indSEXP);
+    Rcpp::traits::input_parameter< const uint& >::type seq_ind(seq_indSEXP);
+    Rcpp::traits::input_parameter< const char& >::type nucleo_(nucleo_SEXP);
+    Rcpp::traits::input_parameter< const uint& >::type new_pos_(new_pos_SEXP);
+    add_substitution(vs_, var_ind, seq_ind, nucleo_, new_pos_);
+    return R_NilValue;
+END_RCPP
+}
+// add_insertion
+void add_insertion(SEXP vs_, const uint& var_ind, const uint& seq_ind, const std::string& nucleos_, const uint& new_pos_);
+RcppExport SEXP _gemino_add_insertion(SEXP vs_SEXP, SEXP var_indSEXP, SEXP seq_indSEXP, SEXP nucleos_SEXP, SEXP new_pos_SEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
+    Rcpp::traits::input_parameter< const uint& >::type var_ind(var_indSEXP);
+    Rcpp::traits::input_parameter< const uint& >::type seq_ind(seq_indSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type nucleos_(nucleos_SEXP);
+    Rcpp::traits::input_parameter< const uint& >::type new_pos_(new_pos_SEXP);
+    add_insertion(vs_, var_ind, seq_ind, nucleos_, new_pos_);
+    return R_NilValue;
+END_RCPP
+}
+// add_deletion
+void add_deletion(SEXP vs_, const uint& var_ind, const uint& seq_ind, const uint& size_, const uint& new_pos_);
+RcppExport SEXP _gemino_add_deletion(SEXP vs_SEXP, SEXP var_indSEXP, SEXP seq_indSEXP, SEXP size_SEXP, SEXP new_pos_SEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
+    Rcpp::traits::input_parameter< const uint& >::type var_ind(var_indSEXP);
+    Rcpp::traits::input_parameter< const uint& >::type seq_ind(seq_indSEXP);
+    Rcpp::traits::input_parameter< const uint& >::type size_(size_SEXP);
+    Rcpp::traits::input_parameter< const uint& >::type new_pos_(new_pos_SEXP);
+    add_deletion(vs_, var_ind, seq_ind, size_, new_pos_);
+    return R_NilValue;
+END_RCPP
+}
+// many_mutations
+void many_mutations(SEXP vs_, const double& min_muts, const double& max_muts);
+RcppExport SEXP _gemino_many_mutations(SEXP vs_SEXP, SEXP min_mutsSEXP, SEXP max_mutsSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
+    Rcpp::traits::input_parameter< const double& >::type min_muts(min_mutsSEXP);
+    Rcpp::traits::input_parameter< const double& >::type max_muts(max_mutsSEXP);
+    many_mutations(vs_, min_muts, max_muts);
     return R_NilValue;
 END_RCPP
 }
@@ -464,13 +464,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_gemino_see_mutations", (DL_FUNC) &_gemino_see_mutations, 2},
-    {"_gemino_examine_mutations", (DL_FUNC) &_gemino_examine_mutations, 3},
-    {"_gemino_table_gammas", (DL_FUNC) &_gemino_table_gammas, 2},
-    {"_gemino_add_substitution", (DL_FUNC) &_gemino_add_substitution, 5},
-    {"_gemino_add_insertion", (DL_FUNC) &_gemino_add_insertion, 5},
-    {"_gemino_add_deletion", (DL_FUNC) &_gemino_add_deletion, 5},
-    {"_gemino_many_mutations", (DL_FUNC) &_gemino_many_mutations, 3},
     {"_gemino_merge_sequences", (DL_FUNC) &_gemino_merge_sequences, 1},
     {"_gemino_filter_sequences", (DL_FUNC) &_gemino_filter_sequences, 3},
     {"_gemino_create_genome", (DL_FUNC) &_gemino_create_genome, 5},
@@ -478,6 +471,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_digest_var", (DL_FUNC) &_gemino_digest_var, 5},
     {"_gemino_digest_ref", (DL_FUNC) &_gemino_digest_ref, 5},
     {"_gemino_test_sampling", (DL_FUNC) &_gemino_test_sampling, 13},
+    {"_gemino_see_mutations", (DL_FUNC) &_gemino_see_mutations, 2},
+    {"_gemino_examine_mutations", (DL_FUNC) &_gemino_examine_mutations, 3},
+    {"_gemino_table_gammas", (DL_FUNC) &_gemino_table_gammas, 2},
+    {"_gemino_add_substitution", (DL_FUNC) &_gemino_add_substitution, 5},
+    {"_gemino_add_insertion", (DL_FUNC) &_gemino_add_insertion, 5},
+    {"_gemino_add_deletion", (DL_FUNC) &_gemino_add_deletion, 5},
+    {"_gemino_many_mutations", (DL_FUNC) &_gemino_many_mutations, 3},
     {"_gemino_print_rg", (DL_FUNC) &_gemino_print_rg, 1},
     {"_gemino_print_vs", (DL_FUNC) &_gemino_print_vs, 1},
     {"_gemino_optim_prob", (DL_FUNC) &_gemino_optim_prob, 4},

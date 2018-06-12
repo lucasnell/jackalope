@@ -384,4 +384,34 @@ typedef OneSeqMutationSampler<ChunkLocationSampler> ChunkMutationSampler;
 
 
 
+
+
+
+void fill_mut_prob_length_vectors(
+        std::vector<std::vector<double>>& probs,
+        std::vector<sint>& mut_lengths,
+        const arma::mat& Q,
+        const double& xi,
+        const double& psi,
+        const std::vector<double>& pi_tcag,
+        arma::vec rel_insertion_rates,
+        arma::vec rel_deletion_rates);
+
+
+MutationSampler make_mutation_sampler(VarSequence& vs,
+                                      const std::vector<std::vector<double>>& probs,
+                                      const std::vector<sint>& mut_lengths,
+                                      const std::vector<double>& pi_tcag,
+                                      const arma::mat& gamma_mat);
+
+
+ChunkMutationSampler make_mutation_sampler(VarSequence& vs,
+                                           const std::vector<std::vector<double>>& probs,
+                                           const std::vector<sint>& mut_lengths,
+                                           const std::vector<double>& pi_tcag,
+                                           const arma::mat& gamma_mat,
+                                           const uint& chunk_size);
+
+
+
 #endif
