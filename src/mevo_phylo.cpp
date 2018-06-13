@@ -30,6 +30,7 @@
 #include "molecular_evolution.h"  // samplers
 #include "table_sampler.h" // table sampling
 #include "pcg.h" // pcg sampler types
+#include "mevo_phylo.h"
 
 
 using namespace Rcpp;
@@ -37,94 +38,69 @@ using namespace Rcpp;
 
 
 
-//' Process one phylogenetic tree for a single sequence with no recombination.
-//'
-//' @noRd
-//'
-void one_tree_no_recomb(const VarSet& vars,
+/*
+ `spp_order` should be a vector of which indices in the phylogeny tips should go first.
+ This effectively ensures that the tip labels line up with the output from this function.
+ */
+
+
+void one_tree_no_recomb(VarSet& vars,
                         const uint& seq_ind,
-                        double& seq_rate,
-                        const std::vector<std::string>& labels,
                         const std::vector<double>& branch_lens,
-                        const arma::mat& edges) {
+                        const arma::mat& edges_,
+                        const std::vector<uint>& spp_order,
+                        const std::vector<std::vector<double>>& probs,
+                        const std::vector<sint>& mut_lengths,
+                        const std::vector<double>& pi_tcag,
+                        const arma::mat& gamma_mat) {
+
+    arma::Mat<uint> edges = arma::conv_to<arma::Mat<uint>>::from(edges_);
 
     uint n_tips = vars.size();
-    if (labels.size() != n_tips) stop("labels must have the same length as # variants.");
-    if (edges.n_rows != n_tips) stop("edges must have the same nrows as # variants.");
-    if (branch_lens.size() != n_tips) {
-        stop("branch_lens must have the same length as # variants.");
+    if (spp_order.size() != n_tips) stop("spp_order must have the same length as # variants.");
+
+    uint n_edges = edges.n_rows;
+    if (branch_lens.size() != n_edges) {
+        stop("branch_lens must have the same length as the # rows in edges.");
     }
+    if (edges.n_cols != 2) stop("edges must have exactly two columns.");
+
+    uint tree_size = edges.max();
+
 
     /*
-     Create tree of VarSequence objects
-     */
-    ;
+    Create tree of empty VarSequence objects
+    */
+    std::vector<VarSequence> var_seqs(tree_size, VarSequence(vars.reference[seq_ind]));
+
     /*
      Create corresponding tree of MutationSampler or ChunkMutationSampler objects
      */
-    ;
+    std::vector<MutationSampler> samplers;
+    for (uint i = 0; i < tree_size; i++) {
+        MutationSampler ms = make_mutation_sampler(var_seqs[i], probs, mut_lengths,
+                                                   pi_tcag, gamma_mat);
+        samplers.push_back(ms);
+    }
 
+    // RNG
+    pcg32 eng = seeded_pcg();
 
     /*
-     Now iterate through phylogeny:
+     Does most of the work for this function:
+     */
+    one_tree_no_recomb_<MutationSampler>(var_seqs, samplers, branch_lens, edges, eng);
+
+    /*
+     Update final VarSequence objects in VarSet at sequence index `seq_ind`:
      */
     for (uint i = 0; i < n_tips; i++) {
-        uint b1 = static_cast<uint>(edges(i,1)) - 1;
-        uint b2 = static_cast<uint>(edges(i,2)) - 1;
-        uint muts = 0;
-        double time_left = branch_lens[i];
-        double t_jump = R::rexp(seq_rate);
-        while (t_jump <= time_left) {
-            /*
-             Add mutation here
-             */
-            muts++;
-            /*
-             Adjust `seq_rate`
-             */
-            t_jump += R::rexp(seq_rate);
-        }
-        bool clear_b1;
-        if (i < (n_tips - 1)) {
-            clear_b1 = arma::any(edges(arma::span(i+1, edges.n_rows - 1), 0) == b1);
-        } else clear_b1 = true;
-        if (clear_b1) {
-            /*
-             Erase VarSequence object at `b1`
-             */
-            ;
-        }
-        if (b2 < n_tips) {
-            /*
-             Add final VarSequence object to VarSet at index `b2`
-             */
-            ;
-        }
+        uint j = spp_order[i];
+        vars[i][seq_ind].mutations = var_seqs[j].mutations;
+        vars[i][seq_ind].seq_size = var_seqs[j].seq_size;
     }
 
-
-    /*
-# Will be creating tree of VarGenome objects, NOT VarSet objects, so don't worry about
-# copying RefGenome objects. This won't be a problem.
-
-    for (i in 1:nrow(edges)) {
-    b1 <- edges[i,1]
-    b2 <- edges[i,2]
-    muts <- 0
-    time_left <- branch_lens[i]
-    t_jump <- rexp(1, rate = seq_rate)
-    while (t_jump < time_left) {
-    muts <- muts+1
-    t_jump = t_jump + rexp(1, rate = seq_rate)
-    }
-    cat(sprintf("%i mutations from %i to %i\n", muts, b1, b2))
-    if (i < nrow(edges)) {
-    if (!b1 %in% edges[(i+1):(nrow(edges)),1]) cat(sprintf("remove %i at %i\n", b1, i))
-    } else cat(sprintf("remove %i at %i\n", b1, i))
-    if (b2 <= n_tips) cat(sprintf("%i added at %i\n", b2, i))
-    }
-
-     */
+    return;
 
 }
 
