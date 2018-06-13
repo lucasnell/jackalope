@@ -284,6 +284,11 @@ public:
  */
 class LocationSampler: public OneSeqLocationSampler<ReservoirRates> {
 public:
+
+    // Constructor:
+    LocationSampler(const MutationRates& mr) :
+        OneSeqLocationSampler<ReservoirRates>(mr) {};
+
     /*
      Return a rate based on the actual indexing, rather than from `inds`.
      This was created to allow it to output a rate when you're adjusting the overall
@@ -318,6 +323,11 @@ public:
 
 class ChunkLocationSampler: public OneSeqLocationSampler<ChunkReservoirRates> {
 public:
+
+    // Constructor:
+    ChunkLocationSampler(const MutationRates& mr, const uint chunk = 0)
+        : OneSeqLocationSampler<ChunkReservoirRates>(mr, chunk) {}
+
 
     inline double operator()(const uint& pos) const {
         const MutationRates& mr(rates.res_rates.all_rates);
