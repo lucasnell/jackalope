@@ -1,7 +1,3 @@
-// Below is added to entirely prevent this from compiling for now
-#define __GEMINO_MEVO_PHYLO_H
-
-
 #ifndef __GEMINO_MEVO_PHYLO_H
 #define __GEMINO_MEVO_PHYLO_H
 
@@ -49,16 +45,19 @@ using namespace Rcpp;
  In other words, the vector of VarSequence objects is indexed by tip numbers.
  */
 template <typename T>
-inline void one_tree_no_recomb_(std::vector<VarSequence>& var_seqs,
-                                std::vector<T>& samplers,
+inline void one_tree_no_recomb_(std::vector<T>& samplers,
                                 const std::vector<double>& branch_lens,
                                 const arma::Mat<uint>& edges,
+                                const uint& n_tips,
                                 pcg32& eng) {
 
-    // Tree size is the number of tips plus nodes in the tree:
+    // Tree size is the number of tips and nodes in the tree:
     uint tree_size = edges.max() + 1;
-    // Number of tips = number of variants
-    uint n_tips = var_seqs.size();
+    if (samplers.size() != tree_size) {
+        stop("samplers and tree_size don't match in `one_tree_no_recomb_`.");
+    }
+    // Number of edges = the number of connections between nodes/tips
+    uint n_edges = edges.n_rows;
 
     std::exponential_distribution<double> distr;
 
@@ -71,21 +70,27 @@ inline void one_tree_no_recomb_(std::vector<VarSequence>& var_seqs,
     /*
      Now iterate through the phylogeny:
      */
-    for (uint i = 0; i < tree_size; i++) {
-        // Indices for nodes/tips that this branch length in `branch_lens` refers to
+    for (uint i = 0; i < n_edges; i++) {
+        // Indices for nodes/tips that the branch length in `branch_lens` refers to
         uint b1 = edges(i,0);
         uint b2 = edges(i,1);
         /*
-         Copy existing mutation information from VarSequence at `b1` to the one at `b2`
+         Replace existing mutation information in VarSequence at `b1` with info in the
+         one at `b2`
          */
-        var_seqs[b2].mutations = var_seqs[b1].mutations;
-        var_seqs[b2].seq_size = var_seqs[b1].seq_size;
+        samplers[b2].vs->replace(*samplers[b1].vs);
+        /*
+         Update overall sequence rate:
+         */
         double& rate(seq_rates[b2]);
         rate = seq_rates[b1];
 
-        // Set exponential distribution to include this sequence's rate:
+        // Set exponential distribution to use this sequence's rate:
         distr.param(std::exponential_distribution<double>::param_type(rate));
 
+        /*
+         Now do exponential jumps and mutate until you exceed the branch length.
+         */
         double amt_time = branch_lens[i];
         double time_jumped = distr(eng);
         while (time_jumped <= amt_time) {
@@ -105,13 +110,15 @@ inline void one_tree_no_recomb_(std::vector<VarSequence>& var_seqs,
             time_jumped += distr(eng);
         }
         /*
-         Remove info from VarSequence object at `b1` if it's no longer needed:
+         Remove info from VarSequence object at `b1` if it's no longer needed.
+         (If it's the last branch length, `b1` will always be a node and thus no longer
+          needed.)
          */
         bool clear_b1;
         if (i < (n_tips - 1)) {
             clear_b1 = arma::any(edges(arma::span(i+1, edges.n_rows - 1), 0) == b1);
         } else clear_b1 = true;
-        if (clear_b1) var_seqs[b1].clear();
+        if (clear_b1) samplers[b1].vs->clear();
     }
 
     return;
