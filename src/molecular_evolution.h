@@ -349,6 +349,14 @@ public:
         const MutationRates& mr(rates.res_rates);
         return mr.total_rate();
     }
+    /*
+     To update gamma boundaries when indels occur:
+     */
+    inline void update_gamma_regions(const uint& pos, const sint& size_change) {
+        MutationRates& mr(rates.res_rates);
+        mr.update_gamma_regions(pos, size_change);
+        return;
+    }
 };
 
 class ChunkLocationSampler: public OneSeqLocationSampler<ChunkReservoirRates> {
@@ -382,6 +390,12 @@ public:
     inline double total_rate() const {
         const MutationRates& mr(rates.res_rates.all_rates);
         return mr.total_rate();
+    }
+
+    inline void update_gamma_regions(const uint& pos, const sint& size_change) {
+        MutationRates& mr(rates.res_rates.all_rates);
+        mr.update_gamma_regions(pos, size_change);
+        return;
     }
 };
 

@@ -140,6 +140,7 @@ public:
     // Assignment operator
     ReservoirRates<T>& operator=(const ReservoirRates<T>& other) {
         res_rates = other.res_rates;
+        return *this;
     }
 
     inline double rexp_(pcg32& eng) {
@@ -189,13 +190,16 @@ struct ChunkRateGetter {
 
     ChunkRateGetter() : all_rates(), inds() {};
     ChunkRateGetter(const T& r, const uint& chunk)
-        : all_rates(r), inds(chunk) {};
+        : all_rates(r), inds(chunk) {
+        if (chunk > r.size()) inds = std::vector<uint>(r.size());
+    };
     ChunkRateGetter(const ChunkRateGetter<T>& other)
         : all_rates(other.all_rates), inds(other.inds) {}
     // Assignment operator
     ChunkRateGetter<T>& operator=(const ChunkRateGetter<T>& other) {
         all_rates = other.all_rates;
         inds = other.inds;
+        return *this;
     }
 
     inline double operator[](const uint& idx) const {
@@ -208,11 +212,6 @@ struct ChunkRateGetter {
         vitter_d<std::vector<uint>>(inds, all_rates.size(), eng);
     }
 
-
-    inline void update_gamma_regions(const uint& pos, const sint& size_change) {
-        all_rates.update_gamma_regions(pos, size_change);
-        return;
-    }
 };
 
 template <typename T>
@@ -230,7 +229,7 @@ public:
     // Assignment operator
     ChunkReservoirRates<T>& operator=(const ChunkReservoirRates<T>& other) {
         res_rates = other.res_rates;
-        distr = std::exponential_distribution<double>(1.0);
+        return *this;
     }
 
     inline double rexp_(pcg32& eng) {
@@ -243,12 +242,6 @@ public:
         uint i = weighted_reservoir_<ChunkReservoirRates<T>>(*this, eng);
         return res_rates.inds[i];
     }
-
-    inline void update_gamma_regions(const uint& pos, const sint& size_change) {
-        res_rates.update_gamma_regions(pos, size_change);
-        return;
-    }
-
 
 protected:
 
