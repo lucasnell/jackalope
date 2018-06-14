@@ -47,7 +47,9 @@ arma::mat GTR_rate_matrix(const std::vector<double>& pi_tcag,
                           const std::vector<double>& abcdef,
                           const double& xi);
 
-void UNREST_rate_matrix(arma::mat& Q, std::vector<double>& pi_tcag, const double& xi);
+inline void est_pi_tcag(const arma::mat& Q, std::vector<double>& pi_tcag);
+
+void UNREST_rate_matrix_(arma::mat& Q, std::vector<double>& pi_tcag, const double& xi);
 
 
 

@@ -25,6 +25,7 @@ using namespace Rcpp;
 //'
 //' @noRd
 //'
+//[[Rcpp::export]]
 arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag,
                            const double& alpha_1, const double& alpha_2,
                            const double& beta, const double& xi) {
@@ -53,6 +54,7 @@ arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag,
 //'
 //' @noRd
 //'
+//[[Rcpp::export]]
 arma::mat JC69_rate_matrix(const double& lambda, const double& xi) {
 
     std::vector<double> pi_tcag = {1, 1, 1, 1};
@@ -69,6 +71,7 @@ arma::mat JC69_rate_matrix(const double& lambda, const double& xi) {
 //'
 //' @noRd
 //'
+//[[Rcpp::export]]
 arma::mat K80_rate_matrix(const double& alpha, const double& beta,
                           const double& xi) {
 
@@ -86,6 +89,7 @@ arma::mat K80_rate_matrix(const double& alpha, const double& beta,
 //'
 //' @noRd
 //'
+//[[Rcpp::export]]
 arma::mat F81_rate_matrix(const std::vector<double>& pi_tcag, const double& xi) {
 
     arma::mat Q = TN93_rate_matrix(pi_tcag, 1, 1, 1, xi);
@@ -100,6 +104,7 @@ arma::mat F81_rate_matrix(const std::vector<double>& pi_tcag, const double& xi) 
 //'
 //' @noRd
 //'
+//[[Rcpp::export]]
 arma::mat HKY85_rate_matrix(const std::vector<double>& pi_tcag,
                             const double& alpha, const double& beta,
                             const double& xi) {
@@ -116,6 +121,7 @@ arma::mat HKY85_rate_matrix(const std::vector<double>& pi_tcag,
 //'
 //' @noRd
 //'
+//[[Rcpp::export]]
 arma::mat F84_rate_matrix(const std::vector<double>& pi_tcag,
                           const double& beta, const double& kappa,
                           const double& xi) {
@@ -138,6 +144,7 @@ arma::mat F84_rate_matrix(const std::vector<double>& pi_tcag,
 //'
 //' @noRd
 //'
+//[[Rcpp::export]]
 arma::mat GTR_rate_matrix(const std::vector<double>& pi_tcag,
                           const std::vector<double>& abcdef,
                           const double& xi) {
@@ -177,8 +184,8 @@ arma::mat GTR_rate_matrix(const std::vector<double>& pi_tcag,
 //' corresponds to the eigenvalue closest to zero.
 //' This is only needed for the UNREST model.
 //'
-//' @inheritParams Q UNREST_rate_matrix
-//' @inheritParams pi_tcag UNREST_rate_matrix
+//' @inheritParams Q UNREST_rate_matrix_
+//' @inheritParams pi_tcag UNREST_rate_matrix_
 //'
 //' @noRd
 //'
@@ -223,7 +230,7 @@ inline void est_pi_tcag(const arma::mat& Q, std::vector<double>& pi_tcag) {
 //'
 //' @noRd
 //'
-void UNREST_rate_matrix(arma::mat& Q, std::vector<double>& pi_tcag, const double& xi) {
+void UNREST_rate_matrix_(arma::mat& Q, std::vector<double>& pi_tcag, const double& xi) {
 
     if (Q.n_rows != 4 || Q.n_cols != 4) stop("Q matrix should be 4 x 4");
 
@@ -247,4 +254,27 @@ void UNREST_rate_matrix(arma::mat& Q, std::vector<double>& pi_tcag, const double
     return;
 }
 
+
+//' Same as above, but it only takes a matrix and indel rate, and outputs a list.
+//'
+//' The list is of the standardized `Q` and the calculated `pi_tcag`.
+//' This is for use in R.
+//'
+//' @inheritParams Q UNREST_rate_matrix
+//' @inheritParams xi UNREST_rate_matrix
+//'
+//' @noRd
+//'
+//'
+//[[Rcpp::export]]
+List UNREST_rate_matrix(arma::mat Q, const double& xi) {
+
+    std::vector<double> pi_tcag;
+
+    UNREST_rate_matrix_(Q, pi_tcag, xi);
+
+    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag);
+
+    return out;
+}
 
