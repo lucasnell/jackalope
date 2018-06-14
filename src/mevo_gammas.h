@@ -93,6 +93,8 @@ public:
     std::vector<GammaRegion> regions;
     double seq_size;
 
+    SequenceGammas() : regions(), seq_size() {}
+
     SequenceGammas(const SequenceGammas& other)
         : regions(other.regions), seq_size(other.seq_size) {}
 
