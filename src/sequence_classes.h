@@ -278,6 +278,13 @@ public:
         return;
     }
 
+    // Replace existing mutation information in this VarSequence with another
+    void replace(const VarSequence& other) {
+        mutations = other.mutations;
+        seq_size = other.seq_size;
+        return;
+    }
+
     /*
      ------------------
      Re-calculate new positions (and total sequence size)

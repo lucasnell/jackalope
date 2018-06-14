@@ -133,7 +133,9 @@ MutationSampler make_mutation_sampler(VarSequence& vs,
     TableStringSampler<std::string> tss(mevo::bases, pi_tcag);
 
     SequenceGammas gammas(gamma_mat);
-    MutationRates mr(vs, pi_tcag, gammas);
+    std::vector<double> q_tcag(4);
+    for (uint i = 0; i < 4; i++) q_tcag[i] = probs[i][i];
+    MutationRates mr(vs, q_tcag, gammas);
     LocationSampler ls(mr);
 
     MutationSampler ms(vs, ls, mts, tss);
