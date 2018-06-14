@@ -165,5 +165,83 @@ ChunkMutationSampler make_mutation_sampler(VarSequence& vs,
     return ms;
 }
 
+//' Creates MutationSampler without any of the pointers.
+//'
+//' `T` should be MutationSampler or ChunkMutationSampler
+//' `T` should be LocationSampler or ChunkLocationSampler
+//' MutationSampler should always go with LocationSampler, and
+//' ChunkMutationSampler with ChunkLocationSampler
+//'
+//' Before actually using the object output from this function, make sure to...
+//' * use `[Chunk]MutationSampler.fill_ptrs(VarSequence& vs)` to fill pointers.
+//' * use `[Chunk]MutationSampler.fill_gamma(const arma::mat& gamma_mat)` to fill
+//'   the gamma matrix.
+//'
+//' @noRd
+//'
+template <typename T, typename U>
+XPtr<T> make_mutation_sampler_base_(const arma::mat& Q,
+                                    const double& xi,
+                                    const double& psi,
+                                    const std::vector<double>& pi_tcag,
+                                    const arma::vec& rel_insertion_rates,
+                                    const arma::vec& rel_deletion_rates) {
 
+    std::vector<std::vector<double>> probs;
+    std::vector<sint> mut_lengths;
 
+    fill_mut_prob_length_vectors(probs, mut_lengths, Q, xi, psi, pi_tcag,
+                                 rel_insertion_rates, rel_deletion_rates);
+
+    XPtr<T> out(new T());
+
+    out->type = MutationTypeSampler(probs, mut_lengths);
+    out->insert = TableStringSampler<std::string>(mevo::bases, pi_tcag);
+
+    std::vector<double> q_tcag(4);
+    for (uint i = 0; i < 4; i++) q_tcag[i] = probs[i][i];
+    MutationRates mr;
+    mr.nt_rates = q_tcag;
+    U ls(mr);
+
+    out->location = ls;
+
+    return out;
+}
+
+// Wrapper to make non-chunked version available from R
+
+//[[Rcpp::export]]
+SEXP make_mutation_sampler_base(const arma::mat& Q,
+                                const double& xi,
+                                const double& psi,
+                                const std::vector<double>& pi_tcag,
+                                const arma::vec& rel_insertion_rates,
+                                const arma::vec& rel_deletion_rates) {
+
+    XPtr<MutationSampler> out =
+        make_mutation_sampler_base_<MutationSampler,LocationSampler>(
+                Q, xi, psi, pi_tcag, rel_insertion_rates, rel_deletion_rates);
+
+    return out;
+}
+
+// Same thing, but with chunks
+
+//[[Rcpp::export]]
+SEXP make_mutation_sampler_chunk_base(const arma::mat& Q,
+                                      const double& xi,
+                                      const double& psi,
+                                      const std::vector<double>& pi_tcag,
+                                      const arma::vec& rel_insertion_rates,
+                                      const arma::vec& rel_deletion_rates,
+                                      const uint& chunk_size) {
+
+    XPtr<ChunkMutationSampler> out =
+        make_mutation_sampler_base_<ChunkMutationSampler,ChunkLocationSampler>(
+                Q, xi, psi, pi_tcag, rel_insertion_rates, rel_deletion_rates);
+
+    out->location.change_chunk(chunk_size);
+
+    return out;
+}

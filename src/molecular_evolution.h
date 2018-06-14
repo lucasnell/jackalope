@@ -63,12 +63,12 @@ namespace mevo {
 
 class MutationRates {
 
-private:
+public:
+
     const VarSequence * vs;  // pointer to const VarSequence
     std::vector<double> nt_rates;
     SequenceGammas gammas;
 
-public:
 
     MutationRates() : vs(), nt_rates(), gammas() {}
 
@@ -271,11 +271,9 @@ public:
 template <template <typename> class C>
 class OneSeqLocationSampler {
 
-protected:
+public:
 
     C<MutationRates> rates;
-
-public:
 
     OneSeqLocationSampler() : rates() {};
     OneSeqLocationSampler(const OneSeqLocationSampler<C>& other)
@@ -355,6 +353,12 @@ public:
         mr.update_gamma_regions(pos, size_change);
         return;
     }
+    /*
+     Return reference to inner MutationRates field.
+     */
+    MutationRates& mr() {
+        return rates.res_rates;
+    }
 };
 
 class ChunkLocationSampler: public OneSeqLocationSampler<ChunkReservoirRates> {
@@ -397,6 +401,15 @@ public:
         MutationRates& mr(rates.res_rates.all_rates);
         mr.update_gamma_regions(pos, size_change);
         return;
+    }
+
+    MutationRates& mr() {
+        return rates.res_rates.all_rates;
+    }
+
+    // Resize chunk size; this method is obviously not available for non-chunked version
+    void change_chunk(const uint& chunk_size) {
+        rates.res_rates.inds.resize(chunk_size);
     }
 };
 
@@ -562,13 +575,6 @@ public:
 template <class C>
 class OneSeqMutationSampler {
 
-    // For sampling the mutation location:
-    C location;
-    // For sampling the type of mutation:
-    MutationTypeSampler type;
-    // For new insertion sequences:
-    TableStringSampler<std::string> insert;
-
     /*
      Sample for mutation location based on rates by sequence region and nucleotide.
      */
@@ -597,6 +603,12 @@ public:
 
     // VarSequence object pointer to be manipulated
     VarSequence* vs;
+    // For sampling the mutation location:
+    C location;
+    // For sampling the type of mutation:
+    MutationTypeSampler type;
+    // For new insertion sequences:
+    TableStringSampler<std::string> insert;
 
     OneSeqMutationSampler() : location(), type(), insert(), vs() {}
 
@@ -606,6 +618,17 @@ public:
                           const TableStringSampler<std::string>& insert_)
         : location(location_), type(type_), insert(insert_), vs(&vs_) {}
 
+
+    void fill_ptrs(VarSequence& vs_) {
+        vs = &vs_;
+        location.mr().vs = &vs_;
+        return;
+    }
+
+    void fill_gamma(const arma::mat& gamma_mat) {
+        location.mr().gammas = SequenceGammas(gamma_mat);
+        return;
+    }
 
     void mutate(pcg32& eng) {
         uint pos = sample_location(eng);
