@@ -45,20 +45,41 @@ using namespace Rcpp;
  In other words, the vector of VarSequence objects is indexed by tip numbers.
  */
 template <typename T>
-inline void one_tree_no_recomb_(std::vector<T>& samplers,
+inline void one_tree_no_recomb_(VarSet& vars,
+                                const T& sampler_base,
+                                const uint& seq_ind,
                                 const std::vector<double>& branch_lens,
                                 const arma::Mat<uint>& edges,
-                                const uint& n_tips,
+                                const std::vector<uint>& spp_order,
+                                const arma::mat& gamma_mat,
                                 pcg32& eng) {
 
-    // Tree size is the number of tips and nodes in the tree:
+    // # tips = # variants
+    uint n_tips = vars.size();
+    // tree size is # tips plus # nodes
     uint tree_size = edges.max() + 1;
-    if (samplers.size() != tree_size) {
-        stop("samplers and tree_size don't match in `one_tree_no_recomb_`.");
-    }
     // Number of edges = the number of connections between nodes/tips
     uint n_edges = edges.n_rows;
 
+    /*
+     Create tree of the same VarSequence objects
+     */
+    std::vector<VarSequence> var_seqs(tree_size, VarSequence(vars.reference[seq_ind]));
+
+    /*
+     Create corresponding tree of MutationSampler objects
+     First fill with the base sampler, then fill in pointers to the corresponding
+     VarSequence object, then fill in the gamma matrix.
+     */
+    std::vector<T> samplers(tree_size, sampler_base);
+    for (uint i = 0; i < tree_size; i++) {
+        samplers[i].fill_ptrs(var_seqs[i]);
+        samplers[i].fill_gamma(gamma_mat);
+    }
+
+    /*
+     Exponential distribution to do the time-jumps along the branch lengths:
+     */
     std::exponential_distribution<double> distr;
 
     /*
@@ -110,9 +131,10 @@ inline void one_tree_no_recomb_(std::vector<T>& samplers,
             time_jumped += distr(eng);
         }
         /*
-         Remove info from VarSequence object at `b1` if it's no longer needed.
+         Clear info from VarSequence object at `b1` if it's no longer needed to
+         free up some memory.
          (If it's the last branch length, `b1` will always be a node and thus no longer
-          needed.)
+         needed.)
          */
         bool clear_b1;
         if (i < (n_tips - 1)) {
@@ -121,8 +143,20 @@ inline void one_tree_no_recomb_(std::vector<T>& samplers,
         if (clear_b1) samplers[b1].vs->clear();
     }
 
+    /*
+     Update final `VarSequence` objects using the index vector `spp_order`:
+     */
+    for (uint i = 0; i < n_tips; i++) {
+        uint j = spp_order[i];
+        vars[i][seq_ind].replace(var_seqs[j]);
+    }
+
     return;
+
 }
+
+
+
 
 
 

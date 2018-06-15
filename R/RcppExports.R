@@ -142,6 +142,132 @@ digest_ref <- function(ref_, bind_sites, len5s, n_cores = 1L, chunk_size = 0L) {
     .Call(`_gemino_digest_ref`, ref_, bind_sites, len5s, n_cores, chunk_size)
 }
 
+#' Test sampling based on a evolutionary model.
+#'
+#' Make SURE `sampler_base_sexp` is a `ChunkMutationSampler`, not a `MutationSampler`!
+#'
+#' @param tip_labels Character vector of the actual phylogeny's tip labels.
+#' @param ordered_tip_labels Character vector of the tip labels in the order
+#'     you want them.
+#'
+#' @noRd
+#'
+test_phylo <- function(vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat) {
+    invisible(.Call(`_gemino_test_phylo`, vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat))
+}
+
+#' Estimates equilibrium nucleotide frequencies from an input rate matrix.
+#'
+#' It does this by solving for πQ = 0 by finding the left eigenvector of Q that
+#' corresponds to the eigenvalue closest to zero.
+#' This is only needed for the UNREST model.
+#'
+#' @inheritParams Q UNREST_rate_matrix_
+#' @inheritParams pi_tcag UNREST_rate_matrix_
+#'
+#' @noRd
+#'
+NULL
+
+#' Q matrix for rates for a given nucleotide using the UNREST substitution model.
+#'
+#' This function also fills in a vector of equilibrium frequencies for each nucleotide.
+#' This calculation has to be done for this model only because it uses separate
+#' values for each non-diagonal cell and doesn't use equilibrium frequencies for
+#' creating the matrix.
+#'
+#'
+#' @param Q Matrix of substitution rates for "T", "C", "A", and "G", respectively.
+#'     Do not include indel rates here! Diagonal values are ignored.
+#' @param pi_tcag Empty vector of equilibrium frequencies for for "T", "C", "A", and "G",
+#'     respectively. This vector will be filled in by this function.
+#' @param xi Overall rate of indels.
+#'
+#' @noRd
+#'
+NULL
+
+#' Q matrix for rates for a given nucleotide using the TN93 substitution model.
+#'
+#' @noRd
+#'
+TN93_rate_matrix <- function(pi_tcag, alpha_1, alpha_2, beta, xi) {
+    .Call(`_gemino_TN93_rate_matrix`, pi_tcag, alpha_1, alpha_2, beta, xi)
+}
+
+#' Q matrix for rates for a given nucleotide using the JC69 substitution model.
+#'
+#' JC69 is a special case of TN93.
+#'
+#' @noRd
+#'
+JC69_rate_matrix <- function(lambda, xi) {
+    .Call(`_gemino_JC69_rate_matrix`, lambda, xi)
+}
+
+#' Q matrix for rates for a given nucleotide using the K80 substitution model.
+#'
+#' K80 is a special case of TN93.
+#'
+#' @noRd
+#'
+K80_rate_matrix <- function(alpha, beta, xi) {
+    .Call(`_gemino_K80_rate_matrix`, alpha, beta, xi)
+}
+
+#' Q matrix for rates for a given nucleotide using the F81 substitution model.
+#'
+#' F81 is a special case of TN93.
+#'
+#' @noRd
+#'
+F81_rate_matrix <- function(pi_tcag, xi) {
+    .Call(`_gemino_F81_rate_matrix`, pi_tcag, xi)
+}
+
+#' Q matrix for rates for a given nucleotide using the HKY85 substitution model.
+#'
+#' HKY85 is a special case of TN93.
+#'
+#' @noRd
+#'
+HKY85_rate_matrix <- function(pi_tcag, alpha, beta, xi) {
+    .Call(`_gemino_HKY85_rate_matrix`, pi_tcag, alpha, beta, xi)
+}
+
+#' Q matrix for rates for a given nucleotide using the F84 substitution model.
+#'
+#' F84 is a special case of TN93.
+#'
+#' @noRd
+#'
+F84_rate_matrix <- function(pi_tcag, beta, kappa, xi) {
+    .Call(`_gemino_F84_rate_matrix`, pi_tcag, beta, kappa, xi)
+}
+
+#' Q matrix for rates for a given nucleotide using the GTR substitution model.
+#'
+#' @noRd
+#'
+GTR_rate_matrix <- function(pi_tcag, abcdef, xi) {
+    .Call(`_gemino_GTR_rate_matrix`, pi_tcag, abcdef, xi)
+}
+
+#' Same as above, but it only takes a matrix and indel rate, and outputs a list.
+#'
+#' The list is of the standardized `Q` and the calculated `pi_tcag`.
+#' This is for use in R.
+#'
+#' @inheritParams Q UNREST_rate_matrix
+#' @inheritParams xi UNREST_rate_matrix
+#'
+#' @noRd
+#'
+#'
+UNREST_rate_matrix <- function(Q, xi) {
+    .Call(`_gemino_UNREST_rate_matrix`, Q, xi)
+}
+
 #' Add mutations manually from R.
 #'
 #' Note that all indices are in 0-based C++ indexing. This means that the first
@@ -244,6 +370,47 @@ add_deletion <- function(vs_, var_ind, seq_ind, size_, new_pos_) {
 #'
 many_mutations <- function(vs_, min_muts, max_muts) {
     invisible(.Call(`_gemino_many_mutations`, vs_, min_muts, max_muts))
+}
+
+#' Fill in vectors of mutation probabilities and lengths.
+#'
+#' These vectors should be initialized already, but there's no need to resize them.
+#'
+#'
+#' @param Q A matrix of substitution rates for each nucleotide.
+#' @param xi Overall rate of indels.
+#' @param psi Proportion of insertions to deletions.
+#' @param pi_tcag Vector of nucleotide equilibrium frequencies for
+#'     "T", "C", "A", and "G", respectively.
+#' @param rel_insertion_rates Relative insertion rates.
+#' @param rel_deletion_rates Relative deletion rates.
+#'
+#' @noRd
+#'
+NULL
+
+#' Creates MutationSampler without any of the pointers.
+#'
+#' `T` should be MutationSampler or ChunkMutationSampler
+#' `T` should be LocationSampler or ChunkLocationSampler
+#' MutationSampler should always go with LocationSampler, and
+#' ChunkMutationSampler with ChunkLocationSampler
+#'
+#' Before actually using the object output from this function, make sure to...
+#' * use `[Chunk]MutationSampler.fill_ptrs(VarSequence& vs)` to fill pointers.
+#' * use `[Chunk]MutationSampler.fill_gamma(const arma::mat& gamma_mat)` to fill
+#'   the gamma matrix.
+#'
+#' @noRd
+#'
+NULL
+
+make_mutation_sampler_base <- function(Q, xi, psi, pi_tcag, rel_insertion_rates, rel_deletion_rates) {
+    .Call(`_gemino_make_mutation_sampler_base`, Q, xi, psi, pi_tcag, rel_insertion_rates, rel_deletion_rates)
+}
+
+make_mutation_sampler_chunk_base <- function(Q, xi, psi, pi_tcag, rel_insertion_rates, rel_deletion_rates, chunk_size) {
+    .Call(`_gemino_make_mutation_sampler_chunk_base`, Q, xi, psi, pi_tcag, rel_insertion_rates, rel_deletion_rates, chunk_size)
 }
 
 #' Function to print info on a `RefGenome`.

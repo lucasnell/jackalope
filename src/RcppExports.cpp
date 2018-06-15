@@ -89,6 +89,128 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// test_phylo
+void test_phylo(SEXP& vs_sexp, SEXP& sampler_base_sexp, const uint& seq_ind, const std::vector<double>& branch_lens, const arma::Mat<uint>& edges, const std::vector<std::string>& tip_labels, const std::vector<std::string>& ordered_tip_labels, const arma::mat& gamma_mat);
+RcppExport SEXP _gemino_test_phylo(SEXP vs_sexpSEXP, SEXP sampler_base_sexpSEXP, SEXP seq_indSEXP, SEXP branch_lensSEXP, SEXP edgesSEXP, SEXP tip_labelsSEXP, SEXP ordered_tip_labelsSEXP, SEXP gamma_matSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP& >::type vs_sexp(vs_sexpSEXP);
+    Rcpp::traits::input_parameter< SEXP& >::type sampler_base_sexp(sampler_base_sexpSEXP);
+    Rcpp::traits::input_parameter< const uint& >::type seq_ind(seq_indSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type branch_lens(branch_lensSEXP);
+    Rcpp::traits::input_parameter< const arma::Mat<uint>& >::type edges(edgesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type tip_labels(tip_labelsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type ordered_tip_labels(ordered_tip_labelsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type gamma_mat(gamma_matSEXP);
+    test_phylo(vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat);
+    return R_NilValue;
+END_RCPP
+}
+// TN93_rate_matrix
+arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta, const double& xi);
+RcppExport SEXP _gemino_TN93_rate_matrix(SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP, SEXP xiSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const double& >::type alpha_1(alpha_1SEXP);
+    Rcpp::traits::input_parameter< const double& >::type alpha_2(alpha_2SEXP);
+    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type xi(xiSEXP);
+    rcpp_result_gen = Rcpp::wrap(TN93_rate_matrix(pi_tcag, alpha_1, alpha_2, beta, xi));
+    return rcpp_result_gen;
+END_RCPP
+}
+// JC69_rate_matrix
+arma::mat JC69_rate_matrix(const double& lambda, const double& xi);
+RcppExport SEXP _gemino_JC69_rate_matrix(SEXP lambdaSEXP, SEXP xiSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const double& >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type xi(xiSEXP);
+    rcpp_result_gen = Rcpp::wrap(JC69_rate_matrix(lambda, xi));
+    return rcpp_result_gen;
+END_RCPP
+}
+// K80_rate_matrix
+arma::mat K80_rate_matrix(const double& alpha, const double& beta, const double& xi);
+RcppExport SEXP _gemino_K80_rate_matrix(SEXP alphaSEXP, SEXP betaSEXP, SEXP xiSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type xi(xiSEXP);
+    rcpp_result_gen = Rcpp::wrap(K80_rate_matrix(alpha, beta, xi));
+    return rcpp_result_gen;
+END_RCPP
+}
+// F81_rate_matrix
+arma::mat F81_rate_matrix(const std::vector<double>& pi_tcag, const double& xi);
+RcppExport SEXP _gemino_F81_rate_matrix(SEXP pi_tcagSEXP, SEXP xiSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const double& >::type xi(xiSEXP);
+    rcpp_result_gen = Rcpp::wrap(F81_rate_matrix(pi_tcag, xi));
+    return rcpp_result_gen;
+END_RCPP
+}
+// HKY85_rate_matrix
+arma::mat HKY85_rate_matrix(const std::vector<double>& pi_tcag, const double& alpha, const double& beta, const double& xi);
+RcppExport SEXP _gemino_HKY85_rate_matrix(SEXP pi_tcagSEXP, SEXP alphaSEXP, SEXP betaSEXP, SEXP xiSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type xi(xiSEXP);
+    rcpp_result_gen = Rcpp::wrap(HKY85_rate_matrix(pi_tcag, alpha, beta, xi));
+    return rcpp_result_gen;
+END_RCPP
+}
+// F84_rate_matrix
+arma::mat F84_rate_matrix(const std::vector<double>& pi_tcag, const double& beta, const double& kappa, const double& xi);
+RcppExport SEXP _gemino_F84_rate_matrix(SEXP pi_tcagSEXP, SEXP betaSEXP, SEXP kappaSEXP, SEXP xiSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type kappa(kappaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type xi(xiSEXP);
+    rcpp_result_gen = Rcpp::wrap(F84_rate_matrix(pi_tcag, beta, kappa, xi));
+    return rcpp_result_gen;
+END_RCPP
+}
+// GTR_rate_matrix
+arma::mat GTR_rate_matrix(const std::vector<double>& pi_tcag, const std::vector<double>& abcdef, const double& xi);
+RcppExport SEXP _gemino_GTR_rate_matrix(SEXP pi_tcagSEXP, SEXP abcdefSEXP, SEXP xiSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type abcdef(abcdefSEXP);
+    Rcpp::traits::input_parameter< const double& >::type xi(xiSEXP);
+    rcpp_result_gen = Rcpp::wrap(GTR_rate_matrix(pi_tcag, abcdef, xi));
+    return rcpp_result_gen;
+END_RCPP
+}
+// UNREST_rate_matrix
+List UNREST_rate_matrix(arma::mat Q, const double& xi);
+RcppExport SEXP _gemino_UNREST_rate_matrix(SEXP QSEXP, SEXP xiSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< const double& >::type xi(xiSEXP);
+    rcpp_result_gen = Rcpp::wrap(UNREST_rate_matrix(Q, xi));
+    return rcpp_result_gen;
+END_RCPP
+}
 // test_sampling
 void test_sampling(SEXP& vs_sexp, const uint& N, const std::vector<double>& pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta, const double& xi, const double& psi, const arma::vec& rel_insertion_rates, const arma::vec& rel_deletion_rates, arma::mat gamma_mat, const uint& chunk_size, bool display_progress);
 RcppExport SEXP _gemino_test_sampling(SEXP vs_sexpSEXP, SEXP NSEXP, SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP, SEXP xiSEXP, SEXP psiSEXP, SEXP rel_insertion_ratesSEXP, SEXP rel_deletion_ratesSEXP, SEXP gamma_matSEXP, SEXP chunk_sizeSEXP, SEXP display_progressSEXP) {
@@ -200,6 +322,39 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double& >::type max_muts(max_mutsSEXP);
     many_mutations(vs_, min_muts, max_muts);
     return R_NilValue;
+END_RCPP
+}
+// make_mutation_sampler_base
+SEXP make_mutation_sampler_base(const arma::mat& Q, const double& xi, const double& psi, const std::vector<double>& pi_tcag, const arma::vec& rel_insertion_rates, const arma::vec& rel_deletion_rates);
+RcppExport SEXP _gemino_make_mutation_sampler_base(SEXP QSEXP, SEXP xiSEXP, SEXP psiSEXP, SEXP pi_tcagSEXP, SEXP rel_insertion_ratesSEXP, SEXP rel_deletion_ratesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< const double& >::type xi(xiSEXP);
+    Rcpp::traits::input_parameter< const double& >::type psi(psiSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type rel_insertion_rates(rel_insertion_ratesSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type rel_deletion_rates(rel_deletion_ratesSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_base(Q, xi, psi, pi_tcag, rel_insertion_rates, rel_deletion_rates));
+    return rcpp_result_gen;
+END_RCPP
+}
+// make_mutation_sampler_chunk_base
+SEXP make_mutation_sampler_chunk_base(const arma::mat& Q, const double& xi, const double& psi, const std::vector<double>& pi_tcag, const arma::vec& rel_insertion_rates, const arma::vec& rel_deletion_rates, const uint& chunk_size);
+RcppExport SEXP _gemino_make_mutation_sampler_chunk_base(SEXP QSEXP, SEXP xiSEXP, SEXP psiSEXP, SEXP pi_tcagSEXP, SEXP rel_insertion_ratesSEXP, SEXP rel_deletion_ratesSEXP, SEXP chunk_sizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< const double& >::type xi(xiSEXP);
+    Rcpp::traits::input_parameter< const double& >::type psi(psiSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type rel_insertion_rates(rel_insertion_ratesSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type rel_deletion_rates(rel_deletion_ratesSEXP);
+    Rcpp::traits::input_parameter< const uint& >::type chunk_size(chunk_sizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_chunk_base(Q, xi, psi, pi_tcag, rel_insertion_rates, rel_deletion_rates, chunk_size));
+    return rcpp_result_gen;
 END_RCPP
 }
 // print_rg
@@ -470,6 +625,15 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_rando_seqs", (DL_FUNC) &_gemino_rando_seqs, 5},
     {"_gemino_digest_var", (DL_FUNC) &_gemino_digest_var, 5},
     {"_gemino_digest_ref", (DL_FUNC) &_gemino_digest_ref, 5},
+    {"_gemino_test_phylo", (DL_FUNC) &_gemino_test_phylo, 8},
+    {"_gemino_TN93_rate_matrix", (DL_FUNC) &_gemino_TN93_rate_matrix, 5},
+    {"_gemino_JC69_rate_matrix", (DL_FUNC) &_gemino_JC69_rate_matrix, 2},
+    {"_gemino_K80_rate_matrix", (DL_FUNC) &_gemino_K80_rate_matrix, 3},
+    {"_gemino_F81_rate_matrix", (DL_FUNC) &_gemino_F81_rate_matrix, 2},
+    {"_gemino_HKY85_rate_matrix", (DL_FUNC) &_gemino_HKY85_rate_matrix, 4},
+    {"_gemino_F84_rate_matrix", (DL_FUNC) &_gemino_F84_rate_matrix, 4},
+    {"_gemino_GTR_rate_matrix", (DL_FUNC) &_gemino_GTR_rate_matrix, 3},
+    {"_gemino_UNREST_rate_matrix", (DL_FUNC) &_gemino_UNREST_rate_matrix, 2},
     {"_gemino_test_sampling", (DL_FUNC) &_gemino_test_sampling, 13},
     {"_gemino_see_mutations", (DL_FUNC) &_gemino_see_mutations, 2},
     {"_gemino_examine_mutations", (DL_FUNC) &_gemino_examine_mutations, 3},
@@ -478,6 +642,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_add_insertion", (DL_FUNC) &_gemino_add_insertion, 5},
     {"_gemino_add_deletion", (DL_FUNC) &_gemino_add_deletion, 5},
     {"_gemino_many_mutations", (DL_FUNC) &_gemino_many_mutations, 3},
+    {"_gemino_make_mutation_sampler_base", (DL_FUNC) &_gemino_make_mutation_sampler_base, 6},
+    {"_gemino_make_mutation_sampler_chunk_base", (DL_FUNC) &_gemino_make_mutation_sampler_chunk_base, 7},
     {"_gemino_print_rg", (DL_FUNC) &_gemino_print_rg, 1},
     {"_gemino_print_vs", (DL_FUNC) &_gemino_print_vs, 1},
     {"_gemino_optim_prob", (DL_FUNC) &_gemino_optim_prob, 4},
