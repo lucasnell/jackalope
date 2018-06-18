@@ -84,6 +84,13 @@ public:
             nt_rates[j] = q_tcag[i];
         }
     }
+    MutationRates(const std::vector<double>& q_tcag):
+        vs(), nt_rates(256, 0.0), gammas() {
+        for (uint i = 0; i < 4; i++) {
+            uint j = mevo::bases[i];
+            nt_rates[j] = q_tcag[i];
+        }
+    }
     MutationRates(const MutationRates& other)
         : vs(other.vs), nt_rates(other.nt_rates), gammas(other.gammas) {}
 
