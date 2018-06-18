@@ -610,13 +610,13 @@ public:
     // For new insertion sequences:
     TableStringSampler<std::string> insert;
 
-    OneSeqMutationSampler() : location(), type(), insert(), vs() {}
+    OneSeqMutationSampler() : vs(), location(), type(), insert() {}
 
     OneSeqMutationSampler(VarSequence& vs_,
                           const C& location_,
                           const MutationTypeSampler& type_,
                           const TableStringSampler<std::string>& insert_)
-        : location(location_), type(type_), insert(insert_), vs(&vs_) {}
+        : vs(&vs_), location(location_), type(type_), insert(insert_) {}
 
 
     void fill_ptrs(VarSequence& vs_) {

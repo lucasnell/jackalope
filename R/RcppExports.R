@@ -400,6 +400,8 @@ NULL
 #' * use `[Chunk]MutationSampler.fill_ptrs(VarSequence& vs)` to fill pointers.
 #' * use `[Chunk]MutationSampler.fill_gamma(const arma::mat& gamma_mat)` to fill
 #'   the gamma matrix.
+#' * use `ChunkMutationSampler.location.change_chunk(chunk_size)` if using chunked
+#'   version.
 #'
 #' @noRd
 #'
