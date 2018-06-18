@@ -30,14 +30,17 @@ using namespace Rcpp;
 
 
 
+
+
+
 /*
  This function produces `spp_order` in `test_phylo`.
  This object is a vector of which indices in the phylogeny tips should go first.
  This effectively ensures that the tip labels line up with the output from this function.
  It's equivalent to the following R code, where `ordered_tip_labels` is a character vector
  of the tip names in the order you always want them:
-`spp_order <- match(ordered_tip_labels, phy$tip.label)`
-*/
+ `spp_order <- match(ordered_tip_labels, phy$tip.label)`
+ */
 std::vector<uint> match_(std::vector<std::string> x, std::vector<std::string> table) {
 
     std::vector<uint> out(x.size());
@@ -69,7 +72,7 @@ void test_phylo(SEXP& vs_sexp,
                 SEXP& sampler_base_sexp,
                 const uint& seq_ind,
                 const std::vector<double>& branch_lens,
-                const arma::Mat<uint>& edges,
+                arma::Mat<uint> edges,
                 const std::vector<std::string>& tip_labels,
                 const std::vector<std::string>& ordered_tip_labels,
                 const arma::mat& gamma_mat) {
@@ -77,18 +80,22 @@ void test_phylo(SEXP& vs_sexp,
     XPtr<VarSet> vs_xptr(vs_sexp);
     XPtr<ChunkMutationSampler> sampler_base_xptr(sampler_base_sexp);
 
-    std::vector<uint> spp_order = match_(ordered_tip_labels, tip_labels);
-
     uint n_tips = vs_xptr->size();
-    if (spp_order.size() != n_tips) {
-        stop("spp_order must have the same length as # variants.");
+    if (ordered_tip_labels.size() != n_tips || tip_labels.size() != n_tips) {
+        stop("ordered_tip_labels and tip_labels must have the same length as ",
+             "# variants.");
     }
+
+    std::vector<uint> spp_order = match_(ordered_tip_labels, tip_labels);
 
     uint n_edges = edges.n_rows;
     if (branch_lens.size() != n_edges) {
         stop("branch_lens must have the same length as the # rows in edges.");
     }
     if (edges.n_cols != 2) stop("edges must have exactly two columns.");
+
+    // From R to C++ indices
+    edges -= 1;
 
     pcg32 eng = seeded_pcg();
 

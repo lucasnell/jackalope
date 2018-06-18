@@ -90,7 +90,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // test_phylo
-void test_phylo(SEXP& vs_sexp, SEXP& sampler_base_sexp, const uint& seq_ind, const std::vector<double>& branch_lens, const arma::Mat<uint>& edges, const std::vector<std::string>& tip_labels, const std::vector<std::string>& ordered_tip_labels, const arma::mat& gamma_mat);
+void test_phylo(SEXP& vs_sexp, SEXP& sampler_base_sexp, const uint& seq_ind, const std::vector<double>& branch_lens, arma::Mat<uint> edges, const std::vector<std::string>& tip_labels, const std::vector<std::string>& ordered_tip_labels, const arma::mat& gamma_mat);
 RcppExport SEXP _gemino_test_phylo(SEXP vs_sexpSEXP, SEXP sampler_base_sexpSEXP, SEXP seq_indSEXP, SEXP branch_lensSEXP, SEXP edgesSEXP, SEXP tip_labelsSEXP, SEXP ordered_tip_labelsSEXP, SEXP gamma_matSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -98,7 +98,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP& >::type sampler_base_sexp(sampler_base_sexpSEXP);
     Rcpp::traits::input_parameter< const uint& >::type seq_ind(seq_indSEXP);
     Rcpp::traits::input_parameter< const std::vector<double>& >::type branch_lens(branch_lensSEXP);
-    Rcpp::traits::input_parameter< const arma::Mat<uint>& >::type edges(edgesSEXP);
+    Rcpp::traits::input_parameter< arma::Mat<uint> >::type edges(edgesSEXP);
     Rcpp::traits::input_parameter< const std::vector<std::string>& >::type tip_labels(tip_labelsSEXP);
     Rcpp::traits::input_parameter< const std::vector<std::string>& >::type ordered_tip_labels(ordered_tip_labelsSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type gamma_mat(gamma_matSEXP);

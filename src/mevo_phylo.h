@@ -64,7 +64,8 @@ inline void one_tree_no_recomb_(VarSet& vars,
     /*
      Create tree of the same VarSequence objects
      */
-    std::vector<VarSequence> var_seqs(tree_size, VarSequence(vars.reference[seq_ind]));
+    std::vector<VarSequence*> var_seqs(tree_size);
+    for (uint i = 0; i < tree_size; i++) var_seqs[i] = new VarSequence(vars.reference[seq_ind]);
 
     /*
      Create corresponding tree of MutationSampler objects
@@ -73,9 +74,10 @@ inline void one_tree_no_recomb_(VarSet& vars,
      */
     std::vector<T> samplers(tree_size, sampler_base);
     for (uint i = 0; i < tree_size; i++) {
-        samplers[i].fill_ptrs(var_seqs[i]);
+        samplers[i].fill_ptrs(*var_seqs[i]);
         samplers[i].fill_gamma(gamma_mat);
     }
+
 
     /*
      Exponential distribution to do the time-jumps along the branch lengths:
@@ -138,7 +140,8 @@ inline void one_tree_no_recomb_(VarSet& vars,
          */
         bool clear_b1;
         if (i < (n_tips - 1)) {
-            clear_b1 = arma::any(edges(arma::span(i+1, edges.n_rows - 1), 0) == b1);
+            // Is it absent from any remaining items in the first column?
+            clear_b1 = ! arma::any(edges(arma::span(i+1, edges.n_rows - 1), 0) == b1);
         } else clear_b1 = true;
         if (clear_b1) samplers[b1].vs->clear();
     }
@@ -148,7 +151,7 @@ inline void one_tree_no_recomb_(VarSet& vars,
      */
     for (uint i = 0; i < n_tips; i++) {
         uint j = spp_order[i];
-        vars[i][seq_ind].replace(var_seqs[j]);
+        vars[i][seq_ind].replace(*var_seqs[j]);
     }
 
     return;
