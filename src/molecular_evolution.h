@@ -123,7 +123,7 @@ public:
     inline double operator()(const uint& start, const uint& end) const {
 
         std::string seq;
-        uint mut_;
+        uint mut_ = vs->get_mut_(start);
         vs->set_seq_chunk(seq, start, end - start + 1, mut_);
 
         std::vector<double> gamma_vals = gammas(start, end);
@@ -359,7 +359,7 @@ public:
      position and the deletion size.
      */
     double deletion_rate_change(const uint& start, const sint& size_mod) const {
-        uint end = start - size_mod + 1;
+        uint end = start - size_mod - 1;
         const MutationRates& mr(rates.res_rates);
         double out = mr(start, end);
         out *= -1;
@@ -419,7 +419,7 @@ public:
     }
 
     double deletion_rate_change(const uint& start, const sint& size_mod) const {
-        uint end = start - size_mod + 1;
+        uint end = start - size_mod - 1;
         const MutationRates& mr(rates.res_rates.all_rates);
         double out = mr(start, end);
         out *= -1;
