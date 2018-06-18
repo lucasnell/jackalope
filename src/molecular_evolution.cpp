@@ -204,9 +204,7 @@ XPtr<T> make_mutation_sampler_base_(const arma::mat& Q,
     for (uint i = 0; i < 4; i++) q_tcag[i] = probs[i][i];
     MutationRates mr;
     mr.nt_rates = q_tcag;
-    U ls(mr);
-
-    out->location = ls;
+    out->location = U(mr);
 
     return out;
 }

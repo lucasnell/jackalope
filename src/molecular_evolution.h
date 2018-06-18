@@ -90,6 +90,8 @@ public:
 
     // To get size of the variant sequence
     inline uint size() const noexcept {
+        // If a null pointer, return 0
+        if (!vs) return 0;
         return vs->size();
     }
 
@@ -278,7 +280,7 @@ public:
     OneSeqLocationSampler() : rates() {};
     OneSeqLocationSampler(const OneSeqLocationSampler<C>& other)
         : rates(other.rates) {}
-    OneSeqLocationSampler(const MutationRates& mr, const uint chunk = 0)
+    OneSeqLocationSampler(const MutationRates& mr, const uint& chunk)
         : rates(mr, chunk) {}
 
     inline uint sample(pcg32& eng) {
@@ -307,7 +309,7 @@ public:
 
     // Constructor:
     LocationSampler(const MutationRates& mr) :
-        OneSeqLocationSampler<ReservoirRates>(mr) {};
+        OneSeqLocationSampler<ReservoirRates>(mr, 0) {};
 
     /*
      Get the change in mutation rate for a substitution at a location given a
@@ -567,8 +569,8 @@ public:
 
 
 /*
- OneSeqMutationSampler combines objects for sampling mutation types and new nucleotides for
- insertions.
+ OneSeqMutationSampler combines objects for sampling mutation types and new
+ nucleotides for insertions.
 
  Class `C` should be `LocationSampler` or `ChunkLocationSampler`.
  */

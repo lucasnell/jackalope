@@ -142,7 +142,7 @@ digest_ref <- function(ref_, bind_sites, len5s, n_cores = 1L, chunk_size = 0L) {
     .Call(`_gemino_digest_ref`, ref_, bind_sites, len5s, n_cores, chunk_size)
 }
 
-#' Test sampling based on a evolutionary model.
+#' Test sampling based on an evolutionary model.
 #'
 #' Make SURE `sampler_base_sexp` is a `ChunkMutationSampler`, not a `MutationSampler`!
 #'

@@ -191,7 +191,7 @@ struct ChunkRateGetter {
     ChunkRateGetter() : all_rates(), inds() {};
     ChunkRateGetter(const T& r, const uint& chunk)
         : all_rates(r), inds(chunk) {
-        if (chunk > r.size()) inds = std::vector<uint>(r.size());
+        if (chunk > all_rates.size()) inds = std::vector<uint>(all_rates.size());
     };
     ChunkRateGetter(const ChunkRateGetter<T>& other)
         : all_rates(other.all_rates), inds(other.inds) {}

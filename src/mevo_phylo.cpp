@@ -54,7 +54,7 @@ std::vector<uint> match_(std::vector<std::string> x, std::vector<std::string> ta
 
 
 
-//' Test sampling based on a evolutionary model.
+//' Test sampling based on an evolutionary model.
 //'
 //' Make SURE `sampler_base_sexp` is a `ChunkMutationSampler`, not a `MutationSampler`!
 //'

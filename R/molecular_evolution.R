@@ -37,66 +37,78 @@
 #' @noRd
 #'
 make_sampler <- function(sub_params,
+                         indel_params,
                          model = c("TN93", "JC69", "K80", "F81", "HKY85",
-                                   "F84", "GTR", "UNREST")) {
+                                   "F84", "GTR", "UNREST"),
+                         chunk_size = 100) {
+
+    if (any(! c("xi", "psi", "rel_insertion_rates", "rel_deletion_rates") %in%
+            names(indel_params))) {
+        stop("\nNot all required names provided in `indel_params`. ",
+             "See `?make_samplers` for what to provide.", call. = FALSE)
+    }
+
     model <- match.arg(model)
 
-    err_msg <- paste("\nNot all required names provided.",
+    err_msg <- paste("\nNot all required names provided in `sub_params`.",
                      "See `?make_samplers` for what to provide.")
 
     if (model == "TN93") {
-        if (any(! c("pi_tcag", "alpha_1", "alpha_2", "beta", "xi") %in% names(sub_params))) {
+        if (any(! c("pi_tcag", "alpha_1", "alpha_2", "beta") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         Q <- TN93_rate_matrix(sub_params$pi_tcag, sub_params$alpha_1, sub_params$alpha_2,
                               sub_params$beta, indel_params$xi)
         pi_tcag <- sub_params$pi_tcag
     } else if (model == "JC69") {
-        if (any(! c("lambda", "xi") %in% names(sub_params))) {
+        if (any(! c("lambda") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         Q <- JC69_rate_matrix(sub_params$lambda, indel_params$xi)
         pi_tcag <- sub_params$pi_tcag
     } else if (model == "K80") {
-        if (any(! c("alpha", "beta", "xi") %in% names(sub_params))) {
+        if (any(! c("alpha", "beta") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         Q <- K80_rate_matrix(sub_params$alpha, sub_params$beta, indel_params$xi);
         pi_tcag <- sub_params$pi_tcag
     } else if (model == "F81") {
-        if (any(! c("pi_tcag", "xi") %in% names(sub_params))) {
+        if (any(! c("pi_tcag") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         Q <- F81_rate_matrix(sub_params$pi_tcag, indel_params$xi);
         pi_tcag <- sub_params$pi_tcag
     } else if (model == "HKY85") {
-        if (any(! c("pi_tcag", "alpha", "beta", "xi") %in% names(sub_params))) {
+        if (any(! c("pi_tcag", "alpha", "beta") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         Q <- HKY85_rate_matrix(sub_params$pi_tcag, sub_params$alpha, sub_params$beta,
                                indel_params$xi)
         pi_tcag <- sub_params$pi_tcag
     } else if (model == "F84") {
-        if (any(! c("pi_tcag", "beta", "kappa", "xi") %in% names(sub_params))) {
+        if (any(! c("pi_tcag", "beta", "kappa") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         Q <- F84_rate_matrix(sub_params$pi_tcag, sub_params$beta, sub_params$kappa,
                              indel_params$xi)
         pi_tcag <- sub_params$pi_tcag
     } else if (model == "GTR") {
-        if (any(! c("pi_tcag", "abcdef", "xi") %in% names(sub_params))) {
+        if (any(! c("pi_tcag", "abcdef") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         Q <- GTR_rate_matrix(sub_params$pi_tcag, sub_params$abcdef, indel_params$xi)
         pi_tcag <- sub_params$pi_tcag
     } else if (model == "UNREST") {
-        if (any(! c("Q", "xi") %in% names(sub_params))) {
+        if (any(! c("Q") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         q_pi_list <- UNREST_rate_matrix(sub_params$Q, indel_params$xi)
         Q <- q_pi_list$Q
         pi_tcag <- q_pi_list$pi_tcag
     } else stop("\nInput model to `make_sampler` not available.", call. = FALSE)
+
+
+
 
 
     if (chunk_size <= 0) {
