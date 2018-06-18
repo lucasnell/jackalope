@@ -42,6 +42,8 @@ struct GammaRegion {
     GammaRegion() {}
     GammaRegion(const double& gamma_, const uint& start_, const uint& end_)
         : gamma(gamma_), start(start_), end(end_) {}
+    GammaRegion(const GammaRegion& other)
+        : gamma(other.gamma), start(other.start), end(other.end) {}
     // Assignment operator
     GammaRegion& operator=(const GammaRegion& other) {
         gamma = other.gamma;
@@ -98,6 +100,13 @@ public:
     SequenceGammas(const SequenceGammas& other)
         : regions(other.regions), seq_size(other.seq_size) {}
 
+    // Assignment operator
+    SequenceGammas& operator=(const SequenceGammas& other) {
+        regions = other.regions;
+        seq_size = other.seq_size;
+        return *this;
+    }
+
     SequenceGammas(arma::mat gamma_mat) {
         if (gamma_mat.n_cols != 2) stop("input Gamma matrix must have 2 columns, "
                                             "one for end positions, one for gammas.");
@@ -125,12 +134,7 @@ public:
         }
         seq_size = gamma_mat(gamma_mat.n_rows-1, 0);
     }
-    // Assignment operator
-    SequenceGammas& operator=(const SequenceGammas& other) {
-        regions = other.regions;
-        seq_size = other.seq_size;
-        return *this;
-    }
+
 
     /*
      Get Gamma value based on the position on the chromosome.

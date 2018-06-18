@@ -225,7 +225,7 @@ public:
     ChunkReservoirRates(const T& r, const uint& chunk)
         : res_rates(r, chunk), distr(1.0) {};
     ChunkReservoirRates(const ChunkReservoirRates<T>& other)
-        : res_rates(other.res_rates) {}
+        : res_rates(other.res_rates), distr(1.0) {}
     // Assignment operator
     ChunkReservoirRates<T>& operator=(const ChunkReservoirRates<T>& other) {
         res_rates = other.res_rates;

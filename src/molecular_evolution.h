@@ -87,6 +87,13 @@ public:
     MutationRates(const MutationRates& other)
         : vs(other.vs), nt_rates(other.nt_rates), gammas(other.gammas) {}
 
+    MutationRates& operator=(const MutationRates& other) {
+        vs = other.vs;
+        nt_rates = other.nt_rates;
+        gammas = other.gammas;
+        return *this;
+    }
+
 
     // To get size of the variant sequence
     inline uint size() const noexcept {
@@ -278,10 +285,14 @@ public:
     C<MutationRates> rates;
 
     OneSeqLocationSampler() : rates() {};
-    OneSeqLocationSampler(const OneSeqLocationSampler<C>& other)
-        : rates(other.rates) {}
     OneSeqLocationSampler(const MutationRates& mr, const uint& chunk)
         : rates(mr, chunk) {}
+    OneSeqLocationSampler(const OneSeqLocationSampler<C>& other)
+        : rates(other.rates) {}
+    OneSeqLocationSampler<C>& operator=(const OneSeqLocationSampler<C>& other) {
+        rates = other.rates;
+        return *this;
+    }
 
     inline uint sample(pcg32& eng) {
         return rates.sample(eng);
@@ -305,11 +316,18 @@ public:
 class LocationSampler: public OneSeqLocationSampler<ReservoirRates> {
 public:
 
+    // Constructors:
     LocationSampler() : OneSeqLocationSampler<ReservoirRates>() {}
-
-    // Constructor:
-    LocationSampler(const MutationRates& mr) :
-        OneSeqLocationSampler<ReservoirRates>(mr, 0) {};
+    LocationSampler(const MutationRates& mr)
+        : OneSeqLocationSampler<ReservoirRates>(mr, 0) {};
+    // Copy constructor
+    LocationSampler(const LocationSampler& other)
+        : OneSeqLocationSampler<ReservoirRates>(other) {};
+    // Assignment operator
+    LocationSampler& operator=(const LocationSampler& other) {
+        OneSeqLocationSampler<ReservoirRates>::operator=(other);
+        return *this;
+    }
 
     /*
      Get the change in mutation rate for a substitution at a location given a
@@ -367,11 +385,18 @@ class ChunkLocationSampler: public OneSeqLocationSampler<ChunkReservoirRates> {
 public:
 
 
+    // Constructors:
     ChunkLocationSampler() : OneSeqLocationSampler<ChunkReservoirRates>() {}
-
-    // Constructor:
     ChunkLocationSampler(const MutationRates& mr, const uint chunk = 0)
         : OneSeqLocationSampler<ChunkReservoirRates>(mr, chunk) {}
+    // Copy constructor
+    ChunkLocationSampler(const ChunkLocationSampler& other)
+        : OneSeqLocationSampler<ChunkReservoirRates>(other) {};
+    // Assignment operator
+    ChunkLocationSampler& operator=(const ChunkLocationSampler& other) {
+        OneSeqLocationSampler<ChunkReservoirRates>::operator=(other);
+        return *this;
+    }
 
 
     double substitution_rate_change(const uint& pos, const char& c) const {
@@ -447,6 +472,13 @@ struct MutationInfo {
     sint length;
 
     MutationInfo() : nucleo(), length() {}
+    MutationInfo(const MutationInfo& other)
+        : nucleo(other.nucleo), length(other.length) {}
+    MutationInfo& operator=(const MutationInfo& other) {
+        nucleo = other.nucleo;
+        length = other.length;
+        return *this;
+    }
 
     // Initialize from an index and mut-lengths vector
     MutationInfo (const uint& ind, const std::vector<sint>& mut_lengths)
@@ -620,6 +652,17 @@ public:
                           const TableStringSampler<std::string>& insert_)
         : vs(&vs_), location(location_), type(type_), insert(insert_) {}
 
+    OneSeqMutationSampler(const OneSeqMutationSampler<C>& other)
+        : vs(other.vs), location(other.location), type(other.type),
+          insert(other.insert) {}
+
+    OneSeqMutationSampler<C>& operator=(const OneSeqMutationSampler<C>& other) {
+        if (other.vs) vs = other.vs;
+        location = other.location;
+        type = other.type;
+        insert = other.insert;
+        return *this;
+    }
 
     void fill_ptrs(VarSequence& vs_) {
         vs = &vs_;
