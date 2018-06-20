@@ -275,6 +275,7 @@ public:
     void clear() {
         mutations.clear();
         clear_memory<std::deque<Mutation>>(mutations);
+        seq_size = ref_seq.size();
         return;
     }
 

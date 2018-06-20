@@ -110,9 +110,16 @@ public:
     }
 
     // Using bracket operator to get the overall mutation rate at a location
-    inline double operator[](const uint& pos) const {
+    inline double operator[](uint pos) const {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         char c = vs->get_nt(pos);
         double r = nt_rates[c];
+        if (pos > gammas.regions.back().end) pos = gammas.regions.back().end;
+        // if (pos > gammas.regions.back().end) {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        //     Rcout << pos << ' ' << gammas.regions.back().end << ' ';
+        //     Rcout << gammas.seq_size << ' ';
+        //     Rcout << vs->size() << "; \n";
+        //     stop("pos too high in MutationRates::[]");// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // }
         r *= gammas[pos];
         return r;
     }
@@ -146,15 +153,13 @@ public:
      */
     inline double sub_rate_change(const uint& pos, const char& c) const {
         char c0 = vs->get_nt(pos);
+        if (pos > gammas.regions.back().end) {              // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            stop("pos too high in sub_rate_change");// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        }
         double gamma = gammas[pos];
         double r0 = nt_rates[c0];
         double r1 = nt_rates[c];
         return gamma * (r1 - r0);
-    }
-
-    // Return a single gamma value
-    inline double gamma(const uint& pos) const {
-        return gammas[pos];
     }
 
     // Return a rate (NO gamma) for an input string
@@ -258,12 +263,6 @@ public:
         return out;
     }
 
-    // To update gamma boundaries when indels occur:
-    inline void update_gamma_regions(const uint& pos, const sint& size_change) {
-        gammas.update_gamma_regions(pos, size_change);
-        return;
-    }
-
 };
 
 
@@ -292,8 +291,8 @@ public:
     C<MutationRates> rates;
 
     OneSeqLocationSampler() : rates() {};
-    OneSeqLocationSampler(const MutationRates& mr, const uint& chunk)
-        : rates(mr, chunk) {}
+    OneSeqLocationSampler(const MutationRates& mr_, const uint& chunk)
+        : rates(mr_, chunk) {}
     OneSeqLocationSampler(const OneSeqLocationSampler<C>& other)
         : rates(other.rates) {}
     OneSeqLocationSampler<C>& operator=(const OneSeqLocationSampler<C>& other) {
@@ -303,11 +302,6 @@ public:
 
     inline uint sample(pcg32& eng) {
         return rates.sample(eng);
-    }
-
-    inline void update_gamma_regions(const uint& pos, const sint& size_change) {
-        rates.update_gamma_regions(pos, size_change);
-        return;
     }
 
 };
@@ -325,8 +319,8 @@ public:
 
     // Constructors:
     LocationSampler() : OneSeqLocationSampler<ReservoirRates>() {}
-    LocationSampler(const MutationRates& mr)
-        : OneSeqLocationSampler<ReservoirRates>(mr, 0) {};
+    LocationSampler(const MutationRates& mr_)
+        : OneSeqLocationSampler<ReservoirRates>(mr_, 0) {};
     // Copy constructor
     LocationSampler(const LocationSampler& other)
         : OneSeqLocationSampler<ReservoirRates>(other) {};
@@ -341,17 +335,17 @@ public:
      position and the character it'll change to
      */
     double substitution_rate_change(const uint& pos, const char& c) const {
-        const MutationRates& mr(rates.res_rates);
-        return mr.sub_rate_change(pos, c);
+        const MutationRates& mr_(rates.res_rates);
+        return mr_.sub_rate_change(pos, c);
     }
     /*
      Get the change in mutation rate for an insertion at a location given a
      position and the characters that'll be inserted.
      */
     double insertion_rate_change(const uint& pos, const std::string& seq) const {
-        const MutationRates& mr(rates.res_rates);
-        double gamma = mr.gamma(pos);
-        double rate = mr.raw_rate(seq);
+        const MutationRates& mr_(rates.res_rates);
+        double gamma = mr_.gammas[pos];
+        double rate = mr_.raw_rate(seq);
         return gamma * rate;
     }
     /*
@@ -360,8 +354,8 @@ public:
      */
     double deletion_rate_change(const uint& start, const sint& size_mod) const {
         uint end = start - size_mod - 1;
-        const MutationRates& mr(rates.res_rates);
-        double out = mr(start, end);
+        const MutationRates& mr_(rates.res_rates);
+        double out = mr_(start, end);
         out *= -1;
         return out;
     }
@@ -369,15 +363,15 @@ public:
      Return the total rate for a VarSequence object
     */
     inline double total_rate() const {
-        const MutationRates& mr(rates.res_rates);
-        return mr.total_rate();
+        const MutationRates& mr_(rates.res_rates);
+        return mr_.total_rate();
     }
     /*
      To update gamma boundaries when indels occur:
      */
     inline void update_gamma_regions(const uint& pos, const sint& size_change) {
-        MutationRates& mr(rates.res_rates);
-        mr.update_gamma_regions(pos, size_change);
+        MutationRates& mr_(rates.res_rates);
+        mr_.gammas.update(pos, size_change);
         return;
     }
     /*
@@ -394,8 +388,8 @@ public:
 
     // Constructors:
     ChunkLocationSampler() : OneSeqLocationSampler<ChunkReservoirRates>() {}
-    ChunkLocationSampler(const MutationRates& mr, const uint chunk = 0)
-        : OneSeqLocationSampler<ChunkReservoirRates>(mr, chunk) {}
+    ChunkLocationSampler(const MutationRates& mr_, const uint chunk = 0)
+        : OneSeqLocationSampler<ChunkReservoirRates>(mr_, chunk) {}
     // Copy constructor
     ChunkLocationSampler(const ChunkLocationSampler& other)
         : OneSeqLocationSampler<ChunkReservoirRates>(other) {};
@@ -407,33 +401,36 @@ public:
 
 
     double substitution_rate_change(const uint& pos, const char& c) const {
-        const MutationRates& mr(rates.res_rates.all_rates);
-        return mr.sub_rate_change(pos, c);
+        const MutationRates& mr_(rates.res_rates.all_rates);
+        return mr_.sub_rate_change(pos, c);
     }
 
     double insertion_rate_change(const uint& pos, const std::string& seq) const {
-        const MutationRates& mr(rates.res_rates.all_rates);
-        double gamma = mr.gamma(pos);
-        double rate = mr.raw_rate(seq);
+        const MutationRates& mr_(rates.res_rates.all_rates);
+        if (pos > mr_.gammas.regions.back().end) {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            stop("pos too high in insertion_rate_change");// <<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        }
+        double gamma = mr_.gammas[pos];
+        double rate = mr_.raw_rate(seq);
         return gamma * rate;
     }
 
     double deletion_rate_change(const uint& start, const sint& size_mod) const {
         uint end = start - size_mod - 1;
-        const MutationRates& mr(rates.res_rates.all_rates);
-        double out = mr(start, end);
+        const MutationRates& mr_(rates.res_rates.all_rates);
+        double out = mr_(start, end);
         out *= -1;
         return out;
     }
 
     inline double total_rate() const {
-        const MutationRates& mr(rates.res_rates.all_rates);
-        return mr.total_rate();
+        const MutationRates& mr_(rates.res_rates.all_rates);
+        return mr_.total_rate();
     }
 
     inline void update_gamma_regions(const uint& pos, const sint& size_change) {
-        MutationRates& mr(rates.res_rates.all_rates);
-        mr.update_gamma_regions(pos, size_change);
+        MutationRates& mr_(rates.res_rates.all_rates);
+        mr_.gammas.update(pos, size_change);
         return;
     }
 
@@ -708,9 +705,10 @@ public:
     // Same as above, but it returns the change in the sequence rate that results
     double mutate_rate_change(pcg32& eng) {
         uint pos = sample_location(eng);
+        if (pos > location.mr().gammas.regions.back().end) stop("pos too high in mrc");
         char c = vs->get_nt(pos);
         MutationInfo m = sample_type(c, eng);
-        double rate_change;
+        double rate_change = 0;
         if (m.length == 0) {
             rate_change = location.substitution_rate_change(pos, m.nucleo);
             vs->add_substitution(m.nucleo, pos);
@@ -729,6 +727,20 @@ public:
             }
             // Update Gamma region bounds:
             location.update_gamma_regions(pos, m.length);
+
+            Rcout << pos << ' ' << m.length << ' ';
+            Rcout << location.mr().gammas.regions.back().end << ' ';
+            Rcout << location.mr().gammas.seq_size << ' ';
+            Rcout << vs->size() << ";" << std::endl;
+
+            if (vs->size() != location.mr().gammas.seq_size ||
+                vs->size() != (location.mr().gammas.regions.back().end + 1)) {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                Rcout << pos << ' ' << m.length << ' ';
+                Rcout << location.mr().gammas.regions.back().end << ' ';
+                Rcout << location.mr().gammas.seq_size << ' ';
+                Rcout << vs->size() << ";" << std::endl;
+                stop("location.mr().gammas not updating");// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            }
         }
         return rate_change;
     }

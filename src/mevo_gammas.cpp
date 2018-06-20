@@ -28,6 +28,12 @@ using namespace Rcpp;
 
 
 
+bool operator<(const GammaRegion& right, const uint& pos) {  // <<<<<<<<<<<<<<<<<<<<<<<<<
+    return right.end < pos;  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+}  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+
 
 
 /*
@@ -74,7 +80,7 @@ void GammaRegion::deletion_adjust(const uint& ind, std::vector<uint>& erase_inds
 
 
 
-void SequenceGammas::update_gamma_regions(const uint& pos, const sint& size_change) {
+void SequenceGammas::update(const uint& pos, const sint& size_change) {
 
     /*
      -----------
@@ -93,14 +99,21 @@ void SequenceGammas::update_gamma_regions(const uint& pos, const sint& size_chan
     seq_size += static_cast<double>(size_change);
     uint idx = get_idx(pos);
 
+
     /*
      Insertions
      */
     if (size_change > 0) {
+        if (idx >= regions.size()) {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            Rcout << "idx too high in SeqGammas::update" << std::endl;  // <<<<<<<<<<<<<<
+        }  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         regions[idx].end += size_change;
         idx++;
         // update all following ranges:
         while (idx < regions.size()) {
+            if (idx >= regions.size()) {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                Rcout << "idx too high in SeqGammas::update" << std::endl;  // <<<<<<<<<<
+            }  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             regions[idx].end += size_change;
             regions[idx].start += size_change;
             idx++;
@@ -118,6 +131,9 @@ void SequenceGammas::update_gamma_regions(const uint& pos, const sint& size_chan
     // Iterate through and adjust all regions including and following the deletion:
     std::vector<uint> erase_inds;
     while (idx < regions.size()) {
+        if (idx >= regions.size()) {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            Rcout << "idx too high in SeqGammas::update" << std::endl;  // <<<<<<<<<<<<<<
+        }  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         regions[idx].deletion_adjust(idx, erase_inds, del_start, del_end,
                                      size_change);
         idx++;
