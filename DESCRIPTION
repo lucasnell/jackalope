@@ -22,7 +22,8 @@ Imports:
     Rcpp (>= 0.12.11),
     RcppArmadillo,
     R6,
-    RcppProgress (>= 0.1)
+    RcppProgress (>= 0.1),
+    ape
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress
 SystemRequirements: C++11, GNU make
 RoxygenNote: 6.0.1
@@ -30,7 +31,6 @@ Roxygen: list(markdown = TRUE)
 Suggests:
     knitr,
     vcfR,
-    ape,
     testthat
 VignetteBuilder: knitr
 URL: https://github.com/lucasnell/gemino
