@@ -28,13 +28,6 @@ using namespace Rcpp;
 
 
 
-bool operator<(const GammaRegion& right, const uint& pos) {  // <<<<<<<<<<<<<<<<<<<<<<<<<
-    return right.end < pos;  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-}  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-
-
-
 
 /*
  Adjust for a deletion.
@@ -104,16 +97,10 @@ void SequenceGammas::update(const uint& pos, const sint& size_change) {
      Insertions
      */
     if (size_change > 0) {
-        if (idx >= regions.size()) {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            Rcout << "idx too high in SeqGammas::update" << std::endl;  // <<<<<<<<<<<<<<
-        }  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         regions[idx].end += size_change;
         idx++;
         // update all following ranges:
         while (idx < regions.size()) {
-            if (idx >= regions.size()) {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                Rcout << "idx too high in SeqGammas::update" << std::endl;  // <<<<<<<<<<
-            }  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             regions[idx].end += size_change;
             regions[idx].start += size_change;
             idx++;
@@ -131,9 +118,6 @@ void SequenceGammas::update(const uint& pos, const sint& size_change) {
     // Iterate through and adjust all regions including and following the deletion:
     std::vector<uint> erase_inds;
     while (idx < regions.size()) {
-        if (idx >= regions.size()) {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            Rcout << "idx too high in SeqGammas::update" << std::endl;  // <<<<<<<<<<<<<<
-        }  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         regions[idx].deletion_adjust(idx, erase_inds, del_start, del_end,
                                      size_change);
         idx++;

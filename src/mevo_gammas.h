@@ -52,9 +52,6 @@ struct GammaRegion {
         return *this;
     }
 
-    // Less than operator for finding positions
-    friend bool operator<(const GammaRegion& right, const uint& pos);  // <<<<<<<<<<<<<<<
-
     /*
      Adjust for a deletion.
      `ind` is the index to the current region in the vector of regions.
@@ -88,13 +85,10 @@ class SequenceGammas {
      Based on a sequence position, return an index to the Gamma region it's inside.
      */
     inline uint get_idx(const uint& pos) const {
-        // uint idx = pos * (static_cast<double>(regions.size()) / seq_size);  // <<<<<<<
-        // if (idx >= regions.size()) idx = regions.size() - 1;  // <<<<<<<<<<<<<<<<<<<<<
-        // while (regions[idx].end < pos) idx++;  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        // while (regions[idx].start > pos) idx--;  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        uint idx;  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        auto iter = std::lower_bound(regions.begin(), regions.end(), pos);  // <<<<<<<<<<
-        idx = iter - regions.begin();  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        uint idx = pos * (static_cast<double>(regions.size()) / seq_size);
+        if (idx >= regions.size()) idx = regions.size() - 1;
+        while (regions[idx].end < pos) idx++;
+        while (regions[idx].start > pos) idx--;
         return idx;
     }
 
@@ -148,15 +142,7 @@ public:
      Get Gamma value based on the position on the chromosome.
      */
     inline double operator[](const uint& pos) const {
-        if (pos > regions.back().end) {              // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            Rcout << "gamma pos too high" << std::endl;// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            return 1.0;                              // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        }
         uint idx = get_idx(pos);
-        if (idx >= regions.size()) {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            Rcout << "idx too high in SeqGammas::operator[]" << std::endl;  // <<<<<<<<<<
-        }  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
         return regions[idx].gamma;
     }
 
@@ -165,20 +151,11 @@ public:
      */
     inline std::vector<double> operator()(const uint& start, const uint& end) const {
 
-        std::vector<double> out(end - start + 1, 1.0);// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        // std::vector<double> out(end - start + 1); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-        if (end > regions.back().end) {              // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            Rcout << "gamma end too high" << std::endl;// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            return out;                              // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        }
+        std::vector<double> out(end - start + 1);
 
         uint idx = get_idx(start);
 
         for (uint i = start; i <= end;) {
-            if (idx >= regions.size()) {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                Rcout << "idx too high in SeqGammas::operator()" << std::endl;  // <<<<<<
-            }  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             double gamma = regions[idx].gamma;
             uint length = regions[idx].end - i + 1;
             if (i + length - 1 > end) length = end - i + 1;

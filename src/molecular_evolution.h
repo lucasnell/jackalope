@@ -110,16 +110,9 @@ public:
     }
 
     // Using bracket operator to get the overall mutation rate at a location
-    inline double operator[](uint pos) const {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    inline double operator[](const uint& pos) const {
         char c = vs->get_nt(pos);
         double r = nt_rates[c];
-        if (pos > gammas.regions.back().end) pos = gammas.regions.back().end;
-        // if (pos > gammas.regions.back().end) {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        //     Rcout << pos << ' ' << gammas.regions.back().end << ' ';
-        //     Rcout << gammas.seq_size << ' ';
-        //     Rcout << vs->size() << "; \n";
-        //     stop("pos too high in MutationRates::[]");// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        // }
         r *= gammas[pos];
         return r;
     }
@@ -153,9 +146,6 @@ public:
      */
     inline double sub_rate_change(const uint& pos, const char& c) const {
         char c0 = vs->get_nt(pos);
-        if (pos > gammas.regions.back().end) {              // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            stop("pos too high in sub_rate_change");// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        }
         double gamma = gammas[pos];
         double r0 = nt_rates[c0];
         double r1 = nt_rates[c];
@@ -407,9 +397,6 @@ public:
 
     double insertion_rate_change(const uint& pos, const std::string& seq) const {
         const MutationRates& mr_(rates.res_rates.all_rates);
-        if (pos > mr_.gammas.regions.back().end) {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            stop("pos too high in insertion_rate_change");// <<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        }
         double gamma = mr_.gammas[pos];
         double rate = mr_.raw_rate(seq);
         return gamma * rate;
@@ -705,10 +692,9 @@ public:
     // Same as above, but it returns the change in the sequence rate that results
     double mutate_rate_change(pcg32& eng) {
         uint pos = sample_location(eng);
-        if (pos > location.mr().gammas.regions.back().end) stop("pos too high in mrc");
         char c = vs->get_nt(pos);
         MutationInfo m = sample_type(c, eng);
-        double rate_change = 0;
+        double rate_change;
         if (m.length == 0) {
             rate_change = location.substitution_rate_change(pos, m.nucleo);
             vs->add_substitution(m.nucleo, pos);
@@ -728,19 +714,6 @@ public:
             // Update Gamma region bounds:
             location.update_gamma_regions(pos, m.length);
 
-            Rcout << pos << ' ' << m.length << ' ';
-            Rcout << location.mr().gammas.regions.back().end << ' ';
-            Rcout << location.mr().gammas.seq_size << ' ';
-            Rcout << vs->size() << ";" << std::endl;
-
-            if (vs->size() != location.mr().gammas.seq_size ||
-                vs->size() != (location.mr().gammas.regions.back().end + 1)) {  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                Rcout << pos << ' ' << m.length << ' ';
-                Rcout << location.mr().gammas.regions.back().end << ' ';
-                Rcout << location.mr().gammas.seq_size << ' ';
-                Rcout << vs->size() << ";" << std::endl;
-                stop("location.mr().gammas not updating");// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            }
         }
         return rate_change;
     }

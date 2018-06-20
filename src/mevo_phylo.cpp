@@ -67,9 +67,6 @@ inline void one_tree_no_recomb_(VarSet& vars,
      Create tree of the same VarSequence objects
      */
     std::vector<VarSequence> var_seqs(tree_size, VarSequence(vars.reference[seq_ind]));
-    // for (uint i = 0; i < tree_size; i++) {
-    //     var_seqs[i] = VarSequence(vars.reference[seq_ind]);
-    // }
 
     /*
      Create corresponding tree of MutationSampler objects
@@ -98,11 +95,10 @@ inline void one_tree_no_recomb_(VarSet& vars,
      Now iterate through the phylogeny:
      */
     for (uint i = 0; i < n_edges; i++) {
-        Rcout << "\nedge_i:" << i << ' ';
+
         // Indices for nodes/tips that the branch length in `branch_lens` refers to
         uint b1 = edges(i,0);
         uint b2 = edges(i,1);
-        Rcout << '(' << b1 << ',' << b2 << ")\n";
         /*
          Replace existing mutation information in VarSequence at `b1` with info in the
          one at `b2`
@@ -128,14 +124,11 @@ inline void one_tree_no_recomb_(VarSet& vars,
         double time_jumped = distr(eng);
         double rate_change = 0;
         while (time_jumped <= amt_time) {
-            Rcpp::checkUserInterrupt();
             /*
              Add mutation here, outputting how much the overall sequence rate should
              change:
              */
             rate_change = samplers[b2].mutate_rate_change(eng);
-            // rate_change = 0;
-            // samplers[b2].mutate(eng);
             /*
              Adjust the overall sequence rate, then update the exponential distribution:
              */
@@ -158,7 +151,7 @@ inline void one_tree_no_recomb_(VarSet& vars,
             clear_b1 = ! arma::any(edges(arma::span(i+1, edges.n_rows - 1), 0) == b1);
         } else clear_b1 = true;
         if (clear_b1) samplers[b1].vs->clear();
-        Rcout << "\n";
+
     }
 
     /*
@@ -168,9 +161,6 @@ inline void one_tree_no_recomb_(VarSet& vars,
         uint j = spp_order[i];
         vars[i][seq_ind].replace(var_seqs[j]);
     }
-
-    // // Clear pointers
-    // for (uint i = 0; i < tree_size; i++) delete var_seqs[i];
 
     return;
 
