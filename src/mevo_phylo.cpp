@@ -68,7 +68,7 @@ inline int one_tree_no_recomb_(VarSet& vars,
     uint32 n_edges = edges.n_rows;
 
     /*
-     Create tree of the same VarSequence objects
+     Create tree of empty VarSequence objects
      */
     std::vector<VarSequence> var_seqs(tree_size, VarSequence(vars.reference[seq_ind]));
 
@@ -131,7 +131,7 @@ inline int one_tree_no_recomb_(VarSet& vars,
         double amt_time = branch_lens[i];
         double time_jumped = distr(eng);
         double rate_change = 0;
-        while (time_jumped <= amt_time) {
+        while (time_jumped <= amt_time && var_seqs[b2].size() > 0) {
             /*
              Add mutation here, outputting how much the overall sequence rate should
              change:
@@ -219,14 +219,14 @@ std::vector<uint32> match_(std::vector<std::string> x, std::vector<std::string> 
 //'
 //[[Rcpp::export]]
 std::vector<uint32> test_phylo(SEXP& vs_sexp,
-                             SEXP& sampler_base_sexp,
-                             const uint32& seq_ind,
-                             const std::vector<double>& branch_lens,
-                             arma::Mat<uint32> edges,
-                             const std::vector<std::string>& tip_labels,
-                             const std::vector<std::string>& ordered_tip_labels,
-                             const arma::mat& gamma_mat,
-                             const bool& display_progress = false) {
+                               SEXP& sampler_base_sexp,
+                               const uint32& seq_ind,
+                               const std::vector<double>& branch_lens,
+                               arma::Mat<uint32> edges,
+                               const std::vector<std::string>& tip_labels,
+                               const std::vector<std::string>& ordered_tip_labels,
+                               const arma::mat& gamma_mat,
+                               const bool& display_progress = false) {
 
     XPtr<VarSet> vs_xptr(vs_sexp);
     XPtr<ChunkMutationSampler> sampler_base_xptr(sampler_base_sexp);
