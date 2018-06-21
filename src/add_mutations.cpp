@@ -438,7 +438,7 @@ void VarSequence::merge_del_ins_(uint32& insert_i,
 
         // index for first char to erase from `nucleos`
         sint32 tmp = deletion_start - insertion_start;
-        tmp = std::max(0, tmp);
+        if (tmp < 0L) tmp = 0L;
         uint32 erase_ind0 = static_cast<uint32>(tmp);
         // index for last char NOT to erase from `nucleos`
         uint32 erase_ind1 = deletion_end - insertion_start + 1;
