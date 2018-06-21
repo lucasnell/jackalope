@@ -286,3 +286,35 @@ std::vector<uint32> test_phylo(SEXP& vs_sexp,
 
     return n_muts;
 }
+
+
+
+//' Get a rate for given start and end points of a VarSequence.
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+double test_rate(const uint32& start, const uint32& end,
+                 const uint32& var_ind, const uint32& seq_ind,
+                 SEXP var_set_sexp, SEXP sampler_sexp) {
+
+    XPtr<VarSet> var_set(var_set_sexp);
+    VarSequence& vs((*var_set)[var_ind][seq_ind]);
+
+    XPtr<ChunkMutationSampler> sampler(sampler_sexp);
+
+    arma::mat gamma_mat(1, 2);
+    gamma_mat(0,0) = vs.size();
+    gamma_mat(0,1) = 1;
+
+    sampler->fill_ptrs(vs);
+    sampler->fill_gamma(gamma_mat);
+
+    double out = sampler->total_rate(start, end);
+
+    return out;
+
+}
+
+
+

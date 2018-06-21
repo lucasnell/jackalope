@@ -158,6 +158,14 @@ test_phylo <- function(vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, 
     .Call(`_gemino_test_phylo`, vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, display_progress)
 }
 
+#' Get a rate for given start and end points of a VarSequence.
+#'
+#' @noRd
+#'
+test_rate <- function(start, end, var_ind, seq_ind, var_set_sexp, sampler_sexp) {
+    .Call(`_gemino_test_rate`, start, end, var_ind, seq_ind, var_set_sexp, sampler_sexp)
+}
+
 #' Estimates equilibrium nucleotide frequencies from an input rate matrix.
 #'
 #' It does this by solving for πQ = 0 by finding the left eigenvector of Q that

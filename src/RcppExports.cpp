@@ -108,6 +108,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// test_rate
+double test_rate(const uint32& start, const uint32& end, const uint32& var_ind, const uint32& seq_ind, SEXP var_set_sexp, SEXP sampler_sexp);
+RcppExport SEXP _gemino_test_rate(SEXP startSEXP, SEXP endSEXP, SEXP var_indSEXP, SEXP seq_indSEXP, SEXP var_set_sexpSEXP, SEXP sampler_sexpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const uint32& >::type start(startSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type end(endSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type var_ind(var_indSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type seq_ind(seq_indSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type var_set_sexp(var_set_sexpSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type sampler_sexp(sampler_sexpSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_rate(start, end, var_ind, seq_ind, var_set_sexp, sampler_sexp));
+    return rcpp_result_gen;
+END_RCPP
+}
 // TN93_rate_matrix
 arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta, const double& xi);
 RcppExport SEXP _gemino_TN93_rate_matrix(SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP, SEXP xiSEXP) {
@@ -628,6 +644,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_digest_var", (DL_FUNC) &_gemino_digest_var, 5},
     {"_gemino_digest_ref", (DL_FUNC) &_gemino_digest_ref, 5},
     {"_gemino_test_phylo", (DL_FUNC) &_gemino_test_phylo, 9},
+    {"_gemino_test_rate", (DL_FUNC) &_gemino_test_rate, 6},
     {"_gemino_TN93_rate_matrix", (DL_FUNC) &_gemino_TN93_rate_matrix, 5},
     {"_gemino_JC69_rate_matrix", (DL_FUNC) &_gemino_JC69_rate_matrix, 2},
     {"_gemino_K80_rate_matrix", (DL_FUNC) &_gemino_K80_rate_matrix, 3},
