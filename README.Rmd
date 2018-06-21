@@ -15,6 +15,7 @@ knitr::opts_chunk$set(
 options(tibble.print_min = 5, tibble.print_max = 5)
 ```
 
+[![Build Status](https://travis-ci.org/lucasnell/gemino.svg?branch=master)](https://travis-ci.org/lucasnell/gemino)
 
 # gemino
 

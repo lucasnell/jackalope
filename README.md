@@ -1,6 +1,9 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
+[![Build
+Status](https://travis-ci.org/lucasnell/gemino.svg?branch=master)](https://travis-ci.org/lucasnell/gemino)
+
 # gemino
 
 **An efficient, flexible molecular evolution and sequencing simulator**

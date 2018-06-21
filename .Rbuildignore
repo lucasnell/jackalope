@@ -3,3 +3,4 @@
 ^\.Rprofile$
 ^under_constr$
 ^_crash_test.R$
+^\.travis\.yml$
