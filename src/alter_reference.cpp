@@ -63,7 +63,7 @@ void merge_sequences(SEXP ref_) {
     std::string& nts(seqs.front().nucleos);
     reference->old_names.push_back(seqs.front().name);
     seqs.front().name = "MERGE";
-    uint i = seqs.size() - 1;
+    uint32 i = seqs.size() - 1;
     while (seqs.size() > 1) {
         nts += seqs[i].nucleos;
         reference->old_names.push_back(seqs[i].name);
@@ -116,7 +116,7 @@ void merge_sequences(SEXP ref_) {
 //'
 //[[Rcpp::export]]
 void filter_sequences(SEXP ref_,
-                      const uint& min_seq_size = 0,
+                      const uint32& min_seq_size = 0,
                       const double& out_seq_prop = 0) {
 
     XPtr<RefGenome> reference(ref_);
@@ -135,7 +135,7 @@ void filter_sequences(SEXP ref_,
     std::sort(seqs.begin(), seqs.end(), std::greater<RefSequence>());
 
     // Index that will point to the first sequence to be deleted
-    uint i = 0;
+    uint32 i = 0;
     // Keeping track of total genome size after filtering
     double out_seq = 0;
 

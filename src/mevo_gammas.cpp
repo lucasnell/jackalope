@@ -36,9 +36,9 @@ using namespace Rcpp;
  entirely spans one or more region(s).
  Adding to this variable will result in the current region being erased.
  */
-void GammaRegion::deletion_adjust(const uint& ind, std::vector<uint>& erase_inds,
-                                  const uint& del_start, const uint& del_end,
-                                  const sint& del_size) {
+void GammaRegion::deletion_adjust(const uint32& ind, std::vector<uint32>& erase_inds,
+                                  const uint32& del_start, const uint32& del_end,
+                                  const sint32& del_size) {
 
     // Total overlap
     if (del_start <= start & del_end >= end) {
@@ -73,7 +73,7 @@ void GammaRegion::deletion_adjust(const uint& ind, std::vector<uint>& erase_inds
 
 
 
-void SequenceGammas::update(const uint& pos, const sint& size_change) {
+void SequenceGammas::update(const uint32& pos, const sint32& size_change) {
 
     /*
      -----------
@@ -90,7 +90,7 @@ void SequenceGammas::update(const uint& pos, const sint& size_change) {
      */
 
     seq_size += static_cast<double>(size_change);
-    uint idx = get_idx(pos);
+    uint32 idx = get_idx(pos);
 
 
     /*
@@ -111,12 +111,12 @@ void SequenceGammas::update(const uint& pos, const sint& size_change) {
     /*
      Deletions
      */
-    const uint& del_start(pos);
-    uint del_end = pos;
+    const uint32& del_start(pos);
+    uint32 del_end = pos;
     del_end -= (size_change + 1);
 
     // Iterate through and adjust all regions including and following the deletion:
-    std::vector<uint> erase_inds;
+    std::vector<uint32> erase_inds;
     while (idx < regions.size()) {
         regions[idx].deletion_adjust(idx, erase_inds, del_start, del_end,
                                      size_change);
@@ -151,7 +151,7 @@ void SequenceGammas::update(const uint& pos, const sint& size_change) {
 //'
 //' @noRd
 //'
-arma::mat make_gamma_mat(const uint& seq_size_, const uint& gamma_size_,
+arma::mat make_gamma_mat(const uint32& seq_size_, const uint32& gamma_size_,
                          const double& alpha, pcg32& eng) {
 
     // If gamma_size_ is set to zero, then we'll assume everything's the same
@@ -163,7 +163,7 @@ arma::mat make_gamma_mat(const uint& seq_size_, const uint& gamma_size_,
     }
 
     // Number of gamma values needed:
-    uint n_gammas = static_cast<uint>(std::ceil(
+    uint32 n_gammas = static_cast<uint32>(std::ceil(
         static_cast<double>(seq_size_) / static_cast<double>(gamma_size_)));
 
     // Initialize output matrix
@@ -179,9 +179,9 @@ arma::mat make_gamma_mat(const uint& seq_size_, const uint& gamma_size_,
      I'm doing it this way to make it more straightforward if someone wants to pass
      their own matrix directly from R (since R obviously uses 1-based).
      */
-    for (uint i = 0, start_ = 0; i < n_gammas; i++, start_ += gamma_size_) {
+    for (uint32 i = 0, start_ = 0; i < n_gammas; i++, start_ += gamma_size_) {
         double gamma_ = distr(eng);
-        uint end_ = start_ + gamma_size_;
+        uint32 end_ = start_ + gamma_size_;
         if (i == n_gammas - 1) end_ = seq_size_;
         out(i,0) = end_;
         out(i,1) = gamma_;

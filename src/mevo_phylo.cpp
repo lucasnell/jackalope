@@ -49,23 +49,23 @@ using namespace Rcpp;
 template <typename T>
 inline int one_tree_no_recomb_(VarSet& vars,
                                const T& sampler_base,
-                               const uint& seq_ind,
+                               const uint32& seq_ind,
                                const std::vector<double>& branch_lens,
-                               const arma::Mat<uint>& edges,
-                               const std::vector<uint>& spp_order,
+                               const arma::Mat<uint32>& edges,
+                               const std::vector<uint32>& spp_order,
                                const arma::mat& gamma_mat,
                                pcg32& eng,
                                Progress& progress,
-                               const std::vector<uint>& progress_branch_lens,
-                               std::vector<uint>& n_muts) {
+                               const std::vector<uint32>& progress_branch_lens,
+                               std::vector<uint32>& n_muts) {
 
 
     // # tips = # variants
-    uint n_tips = vars.size();
+    uint32 n_tips = vars.size();
     // tree size is # tips plus # nodes
-    uint tree_size = edges.max() + 1;
+    uint32 tree_size = edges.max() + 1;
     // Number of edges = the number of connections between nodes/tips
-    uint n_edges = edges.n_rows;
+    uint32 n_edges = edges.n_rows;
 
     /*
      Create tree of the same VarSequence objects
@@ -78,7 +78,7 @@ inline int one_tree_no_recomb_(VarSet& vars,
      VarSequence object, then fill in the gamma matrix.
      */
     std::vector<T> samplers(tree_size, sampler_base);
-    for (uint i = 0; i < tree_size; i++) {
+    for (uint32 i = 0; i < tree_size; i++) {
         samplers[i].fill_ptrs(var_seqs[i]);
         samplers[i].fill_gamma(gamma_mat);
     }
@@ -98,15 +98,15 @@ inline int one_tree_no_recomb_(VarSet& vars,
     /*
      Now iterate through the phylogeny:
      */
-    for (uint i = 0; i < n_edges; i++) {
+    for (uint32 i = 0; i < n_edges; i++) {
 
         if (progress.is_aborted()) return -1;
 
-        uint n_muts_ = 0;
+        uint32 n_muts_ = 0;
 
         // Indices for nodes/tips that the branch length in `branch_lens` refers to
-        uint b1 = edges(i,0);
-        uint b2 = edges(i,1);
+        uint32 b1 = edges(i,0);
+        uint32 b2 = edges(i,1);
         /*
          Replace existing mutation information in VarSequence at `b1` with info in the
          one at `b2`
@@ -169,8 +169,8 @@ inline int one_tree_no_recomb_(VarSet& vars,
     /*
      Update final `VarSequence` objects using the index vector `spp_order`:
      */
-    for (uint i = 0; i < n_tips; i++) {
-        uint j = spp_order[i];
+    for (uint32 i = 0; i < n_tips; i++) {
+        uint32 j = spp_order[i];
         vars[i][seq_ind].replace(var_seqs[j]);
     }
 
@@ -189,11 +189,11 @@ inline int one_tree_no_recomb_(VarSet& vars,
  of the tip names in the order you always want them:
  `spp_order <- match(ordered_tip_labels, phy$tip.label)`
  */
-std::vector<uint> match_(std::vector<std::string> x, std::vector<std::string> table) {
+std::vector<uint32> match_(std::vector<std::string> x, std::vector<std::string> table) {
 
-    std::vector<uint> out(x.size());
+    std::vector<uint32> out(x.size());
 
-    for (uint i = 0; i < out.size(); i++) {
+    for (uint32 i = 0; i < out.size(); i++) {
         auto iter = std::find(table.begin(), table.end(), x[i]);
         if (iter == table.end()) stop("item in `table` not found.");
         out[i] = iter - table.begin();
@@ -218,11 +218,11 @@ std::vector<uint> match_(std::vector<std::string> x, std::vector<std::string> ta
 //' @noRd
 //'
 //[[Rcpp::export]]
-std::vector<uint> test_phylo(SEXP& vs_sexp,
+std::vector<uint32> test_phylo(SEXP& vs_sexp,
                              SEXP& sampler_base_sexp,
-                             const uint& seq_ind,
+                             const uint32& seq_ind,
                              const std::vector<double>& branch_lens,
-                             arma::Mat<uint> edges,
+                             arma::Mat<uint32> edges,
                              const std::vector<std::string>& tip_labels,
                              const std::vector<std::string>& ordered_tip_labels,
                              const arma::mat& gamma_mat,
@@ -235,12 +235,12 @@ std::vector<uint> test_phylo(SEXP& vs_sexp,
      Setting up a sum of branch lengths to use for the progress bar.
      Since it gets cast to an integer, I process each branch length to be an integer >= 1.
      */
-    std::vector<uint> progress_branch_lens(branch_lens.size());
+    std::vector<uint32> progress_branch_lens(branch_lens.size());
     double branch_min = *std::min_element(branch_lens.begin(), branch_lens.end());
-    for (uint i = 0; i < progress_branch_lens.size(); i++) {
-        progress_branch_lens[i] = static_cast<uint>(branch_lens[i] / branch_min);
+    for (uint32 i = 0; i < progress_branch_lens.size(); i++) {
+        progress_branch_lens[i] = static_cast<uint32>(branch_lens[i] / branch_min);
     }
-    uint total_branches = std::accumulate(progress_branch_lens.begin(),
+    uint32 total_branches = std::accumulate(progress_branch_lens.begin(),
                                           progress_branch_lens.end(), 0);
 
     Progress progress(total_branches, display_progress);
@@ -249,21 +249,21 @@ std::vector<uint> test_phylo(SEXP& vs_sexp,
         stop("gamma_mat doesn't reach the end of the sequence.");
     }
 
-    uint n_tips = vs_xptr->size();
+    uint32 n_tips = vs_xptr->size();
     if (ordered_tip_labels.size() != n_tips || tip_labels.size() != n_tips) {
         stop("ordered_tip_labels and tip_labels must have the same length as ",
              "# variants.");
     }
 
-    std::vector<uint> spp_order = match_(ordered_tip_labels, tip_labels);
+    std::vector<uint32> spp_order = match_(ordered_tip_labels, tip_labels);
 
-    uint n_edges = edges.n_rows;
+    uint32 n_edges = edges.n_rows;
     if (branch_lens.size() != n_edges) {
         stop("branch_lens must have the same length as the # rows in edges.");
     }
     if (edges.n_cols != 2) stop("edges must have exactly two columns.");
 
-    std::vector<uint> n_muts(n_edges, 0);
+    std::vector<uint32> n_muts(n_edges, 0);
 
     // From R to C++ indices
     edges -= 1;

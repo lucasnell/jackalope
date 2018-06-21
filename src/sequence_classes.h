@@ -54,25 +54,25 @@ struct RefSequence {
         : name(""), nucleos(nucleos_) {};
 
     // Overloaded operator so nucleotides can be easily extracted
-    char operator[](const uint& idx) const {
+    char operator[](const uint32& idx) const {
         if (idx >= nucleos.size()) {
             stop("Trying to extract nucleotide that doesn't exist");
         }
         return nucleos[idx];
     }
-    char& operator[](const uint& idx) {
+    char& operator[](const uint32& idx) {
         if (idx >= nucleos.size()) {
             stop("Trying to extract nucleotide that doesn't exist");
         }
         return nucleos[idx];
     }
     // To resize this sequence
-    void reserve(const uint& n) {
+    void reserve(const uint32& n) {
         nucleos.reserve(n);
         return;
     }
     // To resize this sequence
-    void resize(const uint& n, const char& x) {
+    void resize(const uint32& n, const char& x) {
         // nucleos.resize(n, x); // the below way should be faster based on testing
         nucleos = std::string(n, x);
         return;
@@ -83,7 +83,7 @@ struct RefSequence {
         return;
     }
     // To return the size of this sequence
-    uint size() const noexcept {
+    uint32 size() const noexcept {
         return nucleos.size();
     }
     // For sorting from largest to smallest sequence
@@ -116,12 +116,12 @@ struct RefGenome {
     RefGenome(const RefGenome& ref_)
         : total_size(ref_.total_size), sequences(ref_.sequences),
           merged(ref_.merged), old_names(ref_.old_names) {};
-    RefGenome(const uint& N)
+    RefGenome(const uint32& N)
         : sequences(std::deque<RefSequence>(N, RefSequence())) {};
     RefGenome(const std::deque<std::string>& seqs) {
-        uint n_seqs = seqs.size();
+        uint32 n_seqs = seqs.size();
         sequences = std::deque<RefSequence>(n_seqs, RefSequence());
-        for (uint i = 0; i < n_seqs; i++) {
+        for (uint32 i = 0; i < n_seqs; i++) {
             sequences[i].nucleos = seqs[i];
             sequences[i].name = "seq" + std::to_string(i);
             total_size += seqs[i].size();
@@ -129,26 +129,26 @@ struct RefGenome {
     }
     // Overloaded operator so sequences can be easily extracted
     // It returns a reference so no copying is done and so changes can be made
-    RefSequence& operator[](const uint& idx) {
+    RefSequence& operator[](const uint32& idx) {
         if (idx >= sequences.size()) {
             stop("Trying to extract sequence that doesn't exist");
         }
         return sequences[idx];
     }
-    const RefSequence& operator[](const uint& idx) const {
+    const RefSequence& operator[](const uint32& idx) const {
         if (idx >= sequences.size()) {
             stop("Trying to extract sequence that doesn't exist");
         }
         return sequences[idx];
     }
     // To return the number of sequences
-    uint size() const noexcept {
+    uint32 size() const noexcept {
         return sequences.size();
     }
     // To return the sequence sizes
-    std::vector<uint> seq_sizes() const {
-        std::vector<uint> out(size());
-        for (uint i = 0; i < out.size(); i++) out[i] = sequences[i].size();
+    std::vector<uint32> seq_sizes() const {
+        std::vector<uint32> out(size());
+        for (uint32 i = 0; i < out.size(); i++) out[i] = sequences[i].size();
         return out;
     }
     // For printing reference genome info
@@ -175,21 +175,21 @@ struct RefGenome {
 struct Mutation {
 
     // How this mutation changes the overall sequence size:
-    sint size_modifier;
+    sint32 size_modifier;
     // Position on the old (i.e., reference) sequence:
-    uint old_pos;
+    uint32 old_pos;
     // Position on the new, variant sequence:
-    uint new_pos;
+    uint32 new_pos;
     // Nucleotides associated with this mutation:
     std::string nucleos;
 
     // Constructors
     Mutation() {};
-    Mutation(uint old_pos_, uint new_pos_, std::string nucleos_)
+    Mutation(uint32 old_pos_, uint32 new_pos_, std::string nucleos_)
         : size_modifier(nucleos_.size() - 1), old_pos(old_pos_),
           new_pos(new_pos_), nucleos(nucleos_) {};
     // For deletions:
-    Mutation(uint old_pos_, uint new_pos_, sint size_modifier_)
+    Mutation(uint32 old_pos_, uint32 new_pos_, sint32 size_modifier_)
         : size_modifier(size_modifier_), old_pos(old_pos_),
           new_pos(new_pos_), nucleos("") {};
 
@@ -217,7 +217,7 @@ struct Mutation {
         return old_pos == other.old_pos;
     }
     // For easily outputting mutation sequence
-    const char& operator[](const uint& idx) const {
+    const char& operator[](const uint32& idx) const {
         return nucleos[idx];
     }
 };
@@ -257,7 +257,7 @@ public:
 
     const RefSequence& ref_seq;
     std::deque<Mutation> mutations;
-    uint seq_size;
+    uint32 seq_size;
 
     // Constructor
     VarSequence(const RefSequence& ref)
@@ -267,7 +267,7 @@ public:
     /*
      Since all other classes have a size() method, I'm including this here:
      */
-    uint size() const noexcept {
+    uint32 size() const noexcept {
         return seq_size;
     }
 
@@ -291,8 +291,8 @@ public:
      Re-calculate new positions (and total sequence size)
      ------------------
      */
-    void calc_positions(uint mut_i);
-    void calc_positions(uint mut_i, const sint& modifier);
+    void calc_positions(uint32 mut_i);
+    void calc_positions(uint32 mut_i, const sint32& modifier);
 
 
 
@@ -302,7 +302,7 @@ public:
      based on the position in the new, variant sequence
      ------------------
      */
-    char get_nt(const uint& new_pos) const;
+    char get_nt(const uint32& new_pos) const;
 
     /*
      ------------------
@@ -318,7 +318,7 @@ public:
      Retrieve the first part of a sequence from the variant sequence.
      ------------------
      */
-    std::string get_seq_start(uint out_length) const;
+    std::string get_seq_start(uint32 out_length) const;
 
     /*
      ------------------
@@ -326,18 +326,18 @@ public:
      ------------------
      */
     void set_seq_chunk(std::string& chunk_str,
-                       const uint& start,
-                       const uint& chunk_size,
-                       uint& mut_i) const;
+                       const uint32& start,
+                       const uint32& chunk_size,
+                       uint32& mut_i) const;
 
     /*
      ------------------
      Adding mutations somewhere in the deque
      ------------------
      */
-    void add_deletion(const uint& size_, const uint& new_pos_);
-    void add_insertion(const std::string& nucleos_, const uint& new_pos_);
-    void add_substitution(const char& nucleo, const uint& new_pos_);
+    void add_deletion(const uint32& size_, const uint32& new_pos_);
+    void add_insertion(const std::string& nucleos_, const uint32& new_pos_);
+    void add_substitution(const char& nucleo, const uint32& new_pos_);
 
 
 
@@ -350,8 +350,8 @@ private:
      entirely by the deletion, and it merges any deletions that are contiguous.
      -------------------
      */
-    void deletion_blowup_(uint& mut_i, uint& deletion_start, uint& deletion_end,
-                          sint& size_mod);
+    void deletion_blowup_(uint32& mut_i, uint32& deletion_start, uint32& deletion_end,
+                          sint32& size_mod);
 
 
 
@@ -361,10 +361,10 @@ private:
      Inner function to merge an insertion and deletion.
      -------------------
      */
-    void merge_del_ins_(uint& insert_i,
-                        uint& deletion_start,
-                        uint& deletion_end,
-                        sint& size_mod);
+    void merge_del_ins_(uint32& insert_i,
+                        uint32& deletion_start,
+                        uint32& deletion_end,
+                        sint32& size_mod);
 
 
 
@@ -374,8 +374,8 @@ private:
      Inner function to remove Mutation and keep iterator from being invalidated.
      -------------------
      */
-    void remove_mutation_(uint& mut_i);
-    void remove_mutation_(uint& mut_i1, uint& mut_i2);
+    void remove_mutation_(uint32& mut_i);
+    void remove_mutation_(uint32& mut_i1, uint32& mut_i2);
 
 
     /*
@@ -385,7 +385,7 @@ private:
      a single Mutation object.
      ------------------
      */
-    char get_char_(const uint& new_pos, const uint& mut) const;
+    char get_char_(const uint32& new_pos, const uint32& mut) const;
 
     /*
      ------------------
@@ -393,7 +393,7 @@ private:
      (without being past) an input position on the "new", variant sequence.
      ------------------
      */
-    uint get_mut_(const uint& new_pos) const;
+    uint32 get_mut_(const uint32& new_pos) const;
 
 };
 
@@ -415,30 +415,30 @@ public:
     // Constructors
     VarGenome(const RefGenome& ref) {
         name = "";
-        for (uint i = 0; i < ref.size(); i++) {
+        for (uint32 i = 0; i < ref.size(); i++) {
             VarSequence vs(ref[i]);
             var_genome.push_back(vs);
         }
     };
     VarGenome(const std::string& name_, const RefGenome& ref) {
         name = name_;
-        for (uint i = 0; i < ref.size(); i++) {
+        for (uint32 i = 0; i < ref.size(); i++) {
             VarSequence vs(ref[i]);
             var_genome.push_back(vs);
         }
     };
 
     // For easily outputting a reference to a VarSequence
-    VarSequence operator[](const uint& idx) const {
+    VarSequence operator[](const uint32& idx) const {
         return var_genome[idx];
     }
     // For easily outputting a reference to a VarSequence
-    VarSequence& operator[](const uint& idx) {
+    VarSequence& operator[](const uint32& idx) {
         VarSequence& vs(var_genome[idx]);
         return vs;
     }
     // To return the number of sequences
-    uint size() const noexcept {
+    uint32 size() const noexcept {
         return var_genome.size();
     }
 
@@ -465,20 +465,20 @@ public:
      Constructors:
      */
     VarSet() {};
-    VarSet(const RefGenome& ref, const uint& n_vars)
+    VarSet(const RefGenome& ref, const uint32& n_vars)
         : variants(std::deque<VarGenome>(n_vars, VarGenome(ref))),
           reference(ref) {
-        for (uint i = 0; i < n_vars; i++) variants[i].name = "var" + std::to_string(i);
+        for (uint32 i = 0; i < n_vars; i++) variants[i].name = "var" + std::to_string(i);
     };
-    VarSet(const std::string& fasta_file, const uint& n_vars,
+    VarSet(const std::string& fasta_file, const uint32& n_vars,
            const bool& cut_names = true, const bool& remove_soft_mask = true);
     VarSet(const std::string& fasta_file, const std::string& fai_file,
-           const uint& n_vars,
+           const uint32& n_vars,
            const bool& remove_soft_mask = true);
-    VarSet(const std::deque<std::string>& seqs, const uint& n_vars);
+    VarSet(const std::deque<std::string>& seqs, const uint32& n_vars);
 
     // For easily outputting a reference to a VarGenome
-    VarGenome& operator[](const uint& idx) {
+    VarGenome& operator[](const uint32& idx) {
         if (idx >= variants.size()) {
             stop("trying to access a VarGenome that doesn't exist");
         }
@@ -486,7 +486,7 @@ public:
         return vg;
     }
     // To return the number of variants
-    uint size() const noexcept {
+    uint32 size() const noexcept {
         return variants.size();
     }
 
@@ -496,14 +496,14 @@ public:
     /*
      Fill VarGenome objects after the reference has been filled
      */
-    void fill_vars(const uint& n_vars) {
+    void fill_vars(const uint32& n_vars) {
         VarGenome vg(reference);
-        for (uint i = 0; i < n_vars; i++) variants.push_back(vg);
+        for (uint32 i = 0; i < n_vars; i++) variants.push_back(vg);
         return;
     }
     // Overloaded for if you want to provide names
     void fill_vars(const std::vector<std::string>& names) {
-        for (uint i = 0; i < names.size(); i++) {
+        for (uint32 i = 0; i < names.size(); i++) {
             VarGenome vg(names[i], reference);
             variants.push_back(vg);
         }

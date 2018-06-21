@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <random>
 
-
+#include "gemino_types.h" // for integer types
 
 using namespace Rcpp;
 
@@ -83,9 +83,9 @@ std::vector<std::string> cpp_str_split_delim(const std::string& in_string,
     std::string::size_type i = in_string.find(split);
     if (i != std::string::npos) {
         // Index for the output vector
-        uint j = 0;
+        uint32 j = 0;
         // Index for the previous i:
-        uint i0 = 0;
+        uint32 i0 = 0;
         while (i != std::string::npos) {
             for (std::string::size_type k = i0; k < i; k++) {
                 out[j] += in_string[k];

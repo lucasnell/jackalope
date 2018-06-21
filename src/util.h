@@ -43,13 +43,13 @@ void clear_memory(U& x) {
 //'
 //' @noRd
 //'
-inline uint cpp_choose(const uint& n, uint k) {
+inline uint32 cpp_choose(const uint32& n, uint32 k) {
     if (k > n) return 0;
     if (k * 2 > n) k = n - k;
     if (k == 0) return 1;
 
-    uint result = n;
-    for (uint i = 2; i <= k; ++i) {
+    uint32 result = n;
+    for (uint32 i = 2; i <= k; ++i) {
         result *= (n - i + 1);
         result /= i;
     }
@@ -62,7 +62,7 @@ inline double cpp_choose(const double& n, double k) {
     if (k == 0) return 1;
 
     double result = n;
-    for (uint i = 2; i <= k; ++i) {
+    for (uint32 i = 2; i <= k; ++i) {
         result *= (n - i + 1);
         result /= i;
     }
@@ -70,19 +70,19 @@ inline double cpp_choose(const double& n, double k) {
 }
 
 /*
- Get a size from either an arma::uvec or std::vector<uint>.
+ Get a size from either an arma::uvec or std::vector<uint32>.
  This is used in template functions that work for either class.
  */
-inline uint uints_get_size(std::vector<uint>& uints) {
+inline uint32 uints_get_size(std::vector<uint32>& uints) {
     return uints.size();
 }
-inline uint uints_get_size(arma::uvec& uints) {
+inline uint32 uints_get_size(arma::uvec& uints) {
     return uints.n_elem;
 }
 
 
 double gc_prop(const std::string& sequence);
-double gc_prop(const std::string& sequence, const uint& start, const uint& stop);
+double gc_prop(const std::string& sequence, const uint32& start, const uint32& stop);
 
 
 

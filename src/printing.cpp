@@ -147,7 +147,7 @@ void print_rg(SEXP rg_) {
 // For printing info on a set of variants
 void VarSet::print() const noexcept {
 
-    uint total_muts = 0;
+    uint32 total_muts = 0;
     for (const VarGenome& vg : variants) {
         for (const VarSequence& vs : vg.var_genome) {
             total_muts += vs.mutations.size();

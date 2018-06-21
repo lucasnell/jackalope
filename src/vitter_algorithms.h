@@ -32,7 +32,7 @@ using namespace Rcpp;
  (when n^2 / N <= the n2N parameter (default = 50))
  ============================
  */
-uint algorithm_d1_S(const sint& n, const uint& N, pcg32& engine,
+uint32 algorithm_d1_S(const sint32& n, const uint32& N, pcg32& engine,
                     const double alpha);
 
 /*
@@ -41,7 +41,7 @@ uint algorithm_d1_S(const sint& n, const uint& N, pcg32& engine,
  (when n^2 / N > the n2N parameter (default = 50))
  ============================
  */
-uint algorithm_d2_S(const sint& n, const uint& N, pcg32& engine,
+uint32 algorithm_d2_S(const sint32& n, const uint32& N, pcg32& engine,
                     const double& alpha);
 
 /*
@@ -56,7 +56,7 @@ uint algorithm_d2_S(const sint& n, const uint& N, pcg32& engine,
 //'     the ACM 27:703–718.
 //'
 //' @param input_vec A vector of unsigned integers (class `arma::uvec` or
-//'     `std::vector<uint>`) of length `n`.
+//'     `std::vector<uint32>`) of length `n`.
 //'     Sampling will generate `n` random numbers. `n` should always be <= N.
 //' @param N The population size. The sampling will generate numbers from
 //'     `0` to `(N - 1)`.
@@ -76,16 +76,16 @@ uint algorithm_d2_S(const sint& n, const uint& N, pcg32& engine,
 //'
 //'
 template <typename T>
-void vitter_d(T& samples, uint N, pcg32& engine,
-              const uint& start = 0,
+void vitter_d(T& samples, uint32 N, pcg32& engine,
+              const uint32& start = 0,
               const double n2N = 50, const double alpha = 0.8) {
 
     // Commented this out bc this will crash R if run in parallel and stop happens.
     // if (alpha > 1 || alpha < 0) stop("Invalid alpha. It must be (0,1).");
 
-    sint n = static_cast<sint>(uints_get_size(samples));
+    sint32 n = static_cast<sint32>(uints_get_size(samples));
 
-    uint S, ind = 0;
+    uint32 S, ind = 0;
     sint64 current_pos = -1;
     if (((n * n) / N) > n2N) {
         while (n > 1) {

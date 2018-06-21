@@ -34,7 +34,7 @@ arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag,
     Q.fill(beta);
     Q.submat(arma::span(0,1), arma::span(0,1)).fill(alpha_1);
     Q.submat(arma::span(2,3), arma::span(2,3)).fill(alpha_2);
-    for (uint i = 0; i < 4; i++) Q.col(i) *= pi_tcag[i];
+    for (uint32 i = 0; i < 4; i++) Q.col(i) *= pi_tcag[i];
 
     // Filling in diagonals
     Q.diag().fill(0.0);  // reset to zero so summing by row works
@@ -152,15 +152,15 @@ arma::mat GTR_rate_matrix(const std::vector<double>& pi_tcag,
     arma::mat Q(4, 4, arma::fill::zeros);
 
     // Filling in non-diagonals
-    uint k = 0;
-    for (uint i = 0; i < 3; i++) {
-        for (uint j = i+1; j < 4; j++) {
+    uint32 k = 0;
+    for (uint32 i = 0; i < 3; i++) {
+        for (uint32 j = i+1; j < 4; j++) {
             Q(i,j) = abcdef[k];
             Q(j,i) = abcdef[k];
             k++;
         }
     }
-    for (uint i = 0; i < 4; i++) Q.col(i) *= pi_tcag[i];
+    for (uint32 i = 0; i < 4; i++) Q.col(i) *= pi_tcag[i];
 
     // Filling in diagonals
     arma::vec rowsums = arma::sum(Q, 1);
@@ -199,13 +199,13 @@ inline void est_pi_tcag(const arma::mat& Q, std::vector<double>& pi_tcag) {
     arma::vec vals = arma::abs(arma::real(eigvals));
     arma::mat vecs = arma::real(eigvecs);
 
-    uint i = arma::as_scalar(arma::find(vals == arma::min(vals), 1));
+    uint32 i = arma::as_scalar(arma::find(vals == arma::min(vals), 1));
 
     arma::vec left_vec = vecs.col(i);
     double sumlv = arma::accu(left_vec);
 
     pi_tcag.resize(4);
-    for (uint i = 0; i < 4; i++) pi_tcag[i] = left_vec(i) / sumlv;
+    for (uint32 i = 0; i < 4; i++) pi_tcag[i] = left_vec(i) / sumlv;
 
     return;
 }

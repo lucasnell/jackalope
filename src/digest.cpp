@@ -32,13 +32,13 @@ void multi_search(
         MultiOut& search_obj,
         const DigestInfo& dinfo,
         const std::string& s,
-        const uint& last_pos) {
+        const uint32& last_pos) {
 
     search_obj.reset();
 
     std::string::size_type new_pos;
 
-    for (uint j = 0; j < dinfo.bind_sites.size(); j++) {
+    for (uint32 j = 0; j < dinfo.bind_sites.size(); j++) {
         new_pos = s.find(dinfo.bind_sites[j], last_pos);
         if (new_pos < search_obj.new_pos) {
             search_obj.new_pos = new_pos;
@@ -58,14 +58,14 @@ void multi_search(
  (`pos_mod` is to modify positions because `s` is a chunk not from the start of the
   sequence.)
  */
-void digest_seq(std::deque<uint>& pos_vec,
-                uint& start_pos,
+void digest_seq(std::deque<uint32>& pos_vec,
+                uint32& start_pos,
                 const std::string& s,
                 const DigestInfo& dinfo,
-                const uint& pos_mod = 0,
-                const uint& end = 0) {
+                const uint32& pos_mod = 0,
+                const uint32& end = 0) {
 
-    uint cut_site_pos;
+    uint32 cut_site_pos;
     MultiOut search_obj;
 
     multi_search(search_obj, dinfo, s, start_pos);
@@ -124,7 +124,7 @@ void VarSeqDigest::digest(const DigestInfo& dinfo) {
     }
 
     // index to the nearest mutation for a given chunk's starting position:
-    uint mut_i = 0;
+    uint32 mut_i = 0;
 
     // Initialize chunk sequence string
     std::string chunk_str(chunk_size, 'x');
@@ -133,16 +133,16 @@ void VarSeqDigest::digest(const DigestInfo& dinfo) {
      I'm iterating by `chunk_size - (max_size - 1)` to make sure I catch any
     matches that overlap the "seam" between chunks.
     */
-    uint it = chunk_size - (dinfo.max_size - 1);
+    uint32 it = chunk_size - (dinfo.max_size - 1);
 
     /*
      The last chunk start position in this sequence (without allowing only overlap
      at the end)
      */
-    uint last_chunk = var_info.seq_size - dinfo.max_size;
+    uint32 last_chunk = var_info.seq_size - dinfo.max_size;
 
     // Digesting each chunk:
-    for (uint chunk_start = 0; chunk_start <= last_chunk; chunk_start += it) {
+    for (uint32 chunk_start = 0; chunk_start <= last_chunk; chunk_start += it) {
         // Filling new chunk string:
         var_info.set_seq_chunk(chunk_str, chunk_start, chunk_size, mut_i);
         // Compensating for matches at the end of the previous chunk:
@@ -185,18 +185,18 @@ void VarSeqDigest::digest(const DigestInfo& dinfo) {
 //' @noRd
 //'
 // [[Rcpp::export]]
-std::vector< std::vector< std::deque<uint> > > digest_var(
+std::vector< std::vector< std::deque<uint32> > > digest_var(
         SEXP var_,
         const std::vector<std::string>& bind_sites,
-        const std::vector<uint>& len5s,
-        const uint& chunk_size,
-        const uint& n_cores) {
+        const std::vector<uint32>& len5s,
+        const uint32& chunk_size,
+        const uint32& n_cores) {
 
     XPtr<VarSet> var_xptr(var_);
     VarSet& var(*var_xptr);
 
-    const uint n_vars = var.size();
-    const uint n_seqs = var.reference.size();
+    const uint32 n_vars = var.size();
+    const uint32 n_seqs = var.reference.size();
 
     const DigestInfo dinfo(bind_sites, len5s);
 
@@ -206,15 +206,15 @@ std::vector< std::vector< std::deque<uint> > > digest_var(
                  "max(<binding site sizes>) - 1`)");
     }
 
-    std::vector< std::vector< std::deque<uint> > > out_vec(
-            n_vars, std::vector< std::deque<uint> >(
-                    n_seqs, std::deque<uint>(0)));
+    std::vector< std::vector< std::deque<uint32> > > out_vec(
+            n_vars, std::vector< std::deque<uint32> >(
+                    n_seqs, std::deque<uint32>(0)));
 
     #ifdef _OPENMP
     #pragma omp parallel for default(shared) num_threads(n_cores) schedule(dynamic) collapse(2)
     #endif
-    for (uint v = 0; v < n_vars; v++) {
-        for (uint s = 0; s < n_seqs; s++) {
+    for (uint32 v = 0; v < n_vars; v++) {
+        for (uint32 s = 0; s < n_seqs; s++) {
             VarSeqDigest vsd(var, v, s, chunk_size, out_vec[v][s]);
             vsd.digest(dinfo);
         }
@@ -280,10 +280,10 @@ void RefSeqChunk::merge_seam(const RefSeqChunk& prev, const DigestInfo& dinfo) {
     // If there were no cut sites on this chunk or the previous one, don't do anything
     if (cut_sites.empty() || prev.cut_sites.empty()) return;
 
-    std::deque<uint>& pos_vec2(cut_sites);
+    std::deque<uint32>& pos_vec2(cut_sites);
 
     // Earliest possible starting position in `pos_vec2`
-    uint start_pos = prev.next_start;
+    uint32 start_pos = prev.next_start;
 
     if (pos_vec2.front() >= start_pos) return;
 
@@ -297,7 +297,7 @@ void RefSeqChunk::merge_seam(const RefSeqChunk& prev, const DigestInfo& dinfo) {
     MultiOut search_obj;
     multi_search(search_obj, dinfo, ref, start_pos);
     while (search_obj.new_pos != std::string::npos) {
-        uint cut_site_pos = search_obj.new_pos + dinfo.len5s[search_obj.j];
+        uint32 cut_site_pos = search_obj.new_pos + dinfo.len5s[search_obj.j];
         while (pos_vec2.front() < cut_site_pos) pos_vec2.pop_front();
         if (pos_vec2.front() == cut_site_pos) {  // <---------- how I'm defining "merged"
             break;
@@ -354,17 +354,17 @@ void RefSeqChunk::merge_seam(const RefSeqChunk& prev, const DigestInfo& dinfo) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-std::vector< std::deque<uint> > digest_ref(
+std::vector< std::deque<uint32> > digest_ref(
         SEXP ref_,
         const std::vector<std::string>& bind_sites,
-        const std::vector<uint>& len5s,
-        const uint& n_cores = 1,
-        const uint& chunk_size = 0) {
+        const std::vector<uint32>& len5s,
+        const uint32& n_cores = 1,
+        const uint32& chunk_size = 0) {
 
     const XPtr<RefGenome> ref(ref_);
     const RefGenome& reference(*ref);
 
-    std::vector< std::deque<uint> > out_vec(reference.size());
+    std::vector< std::deque<uint32> > out_vec(reference.size());
     DigestInfo dinfo(bind_sites, len5s);
 
     if (chunk_size > 0) {
@@ -377,10 +377,10 @@ std::vector< std::deque<uint> > digest_ref(
          I'm iterating by `chunk_size - (max_size - 1)` to make sure I catch any
         matches that overlap the "seam" between chunks.
         */
-        uint iter_by = chunk_size - (dinfo.max_size - 1);
+        uint32 iter_by = chunk_size - (dinfo.max_size - 1);
         // Set up temporary deque containing a deque of RefSeqChunk objects:
         std::deque<RefSeqChunk> chunk_dq;
-        for (uint i = 0; i < reference.size(); i++) {
+        for (uint32 i = 0; i < reference.size(); i++) {
             const std::string& seq(reference[i].nucleos);
 
             if (chunk_size >= seq.size()) {
@@ -391,8 +391,8 @@ std::vector< std::deque<uint> > digest_ref(
                  The last chunk start position (without allowing only overlap
                  at the end):
                  */
-                uint last_chunk = seq.size() - dinfo.max_size;
-                for (uint s = 0; s < last_chunk; s += iter_by) {
+                uint32 last_chunk = seq.size() - dinfo.max_size;
+                for (uint32 s = 0; s < last_chunk; s += iter_by) {
                     RefSeqChunk tmp_sc(seq, i, s, chunk_size);
                     chunk_dq.push_back(tmp_sc);
                 }
@@ -402,7 +402,7 @@ std::vector< std::deque<uint> > digest_ref(
         #ifdef _OPENMP
         #pragma omp parallel for default(shared) num_threads(n_cores) schedule(static)
         #endif
-        for (uint i = 0; i < chunk_dq.size(); i++) {
+        for (uint32 i = 0; i < chunk_dq.size(); i++) {
             chunk_dq[i].digest(dinfo);
         }
 
@@ -413,7 +413,7 @@ std::vector< std::deque<uint> > digest_ref(
         #ifdef _OPENMP
         #pragma omp parallel for default(shared) num_threads(n_cores) schedule(static)
         #endif
-        for (uint i = 1; i < chunk_dq.size(); i++) {
+        for (uint32 i = 1; i < chunk_dq.size(); i++) {
             chunk_dq[i].merge_seam(chunk_dq[(i-1)], dinfo);
         }
 
@@ -421,8 +421,8 @@ std::vector< std::deque<uint> > digest_ref(
          Lastly combine all RefSeqChunk objects for a given sequence together into
          one deque.
          */
-        for (uint i = 0; i < reference.size(); i++) {
-            std::deque<uint>& out_dq(out_vec[i]);
+        for (uint32 i = 0; i < reference.size(); i++) {
+            std::deque<uint32>& out_dq(out_vec[i]);
             while (chunk_dq.front().seq == i) {
                 chunk_dq.front().combine(out_dq);
                 chunk_dq.pop_front();
@@ -430,16 +430,16 @@ std::vector< std::deque<uint> > digest_ref(
             }
         }
     } else if (reference.merged) {
-        uint i = 0, j = 0; // j is only used for the call to digest_seq
+        uint32 i = 0, j = 0; // j is only used for the call to digest_seq
         const std::string& seq(reference[i].nucleos);
         digest_seq(out_vec[i], j, seq, dinfo);
     } else {
         #ifdef _OPENMP
         #pragma omp parallel for default(shared) num_threads(n_cores) schedule(dynamic)
         #endif
-        for (uint i = 0; i < reference.size(); i++) {
+        for (uint32 i = 0; i < reference.size(); i++) {
             const std::string& seq_s(reference[i].nucleos);
-            uint j = 0; // j is only used for the call to digest_seq
+            uint32 j = 0; // j is only used for the call to digest_seq
             digest_seq(out_vec[i], j, seq_s, dinfo);
         }
     }

@@ -54,7 +54,7 @@ namespace mevo {
 
  For nucleotide rates (not including Gammas), Ns are set to 0 bc we don't want to
  process these.
- Input char objects are cast to uint which provide the indices.
+ Input char objects are cast to uint32 which provide the indices.
  T, C, A, G, and N should never be higher than 84, so will be safe.
  In case someone inputs other characters accidentally, I've set the length to 256,
  which should work for all 8-bit character values.
@@ -79,15 +79,15 @@ public:
     MutationRates(const VarSequence& vs_, const std::vector<double>& q_tcag,
                   const SequenceGammas& gammas_)
         : vs(&vs_), nt_rates(256, 0.0), gammas(gammas_) {
-        for (uint i = 0; i < 4; i++) {
-            uint j = mevo::bases[i];
+        for (uint32 i = 0; i < 4; i++) {
+            uint32 j = mevo::bases[i];
             nt_rates[j] = q_tcag[i];
         }
     }
     MutationRates(const std::vector<double>& q_tcag):
         vs(), nt_rates(256, 0.0), gammas() {
-        for (uint i = 0; i < 4; i++) {
-            uint j = mevo::bases[i];
+        for (uint32 i = 0; i < 4; i++) {
+            uint32 j = mevo::bases[i];
             nt_rates[j] = q_tcag[i];
         }
     }
@@ -103,14 +103,14 @@ public:
 
 
     // To get size of the variant sequence
-    inline uint size() const noexcept {
+    inline uint32 size() const noexcept {
         // If a null pointer, return 0
         if (!vs) return 0;
         return vs->size();
     }
 
     // Using bracket operator to get the overall mutation rate at a location
-    inline double operator[](const uint& pos) const {
+    inline double operator[](const uint32& pos) const {
         char c = vs->get_nt(pos);
         double r = nt_rates[c];
         r *= gammas[pos];
@@ -120,10 +120,10 @@ public:
     /*
      The same as above, but for a range of positions.
      */
-    inline double operator()(const uint& start, const uint& end) const {
+    inline double operator()(const uint32& start, const uint32& end) const {
 
         std::string seq;
-        uint mut_ = vs->get_mut_(start);
+        uint32 mut_ = vs->get_mut_(start);
         vs->set_seq_chunk(seq, start, end - start + 1, mut_);
 
         std::vector<double> gamma_vals = gammas(start, end);
@@ -132,7 +132,7 @@ public:
         }
 
         double out = 0;
-        for (uint i = 0; i < gamma_vals.size(); i++) {
+        for (uint32 i = 0; i < gamma_vals.size(); i++) {
             double r = nt_rates[seq[i]];
             out += r * gamma_vals[i];
         }
@@ -144,7 +144,7 @@ public:
      Get the change in mutation rate for a substitution at a location given a
      position and the character it'll change to
      */
-    inline double sub_rate_change(const uint& pos, const char& c) const {
+    inline double sub_rate_change(const uint32& pos, const char& c) const {
         char c0 = vs->get_nt(pos);
         double gamma = gammas[pos];
         double r0 = nt_rates[c0];
@@ -176,12 +176,12 @@ public:
         // If there are no mutations, this is pretty easy:
         if (vs->mutations.empty()) {
 
-            uint end = vs->ref_seq.nucleos.size();
+            uint32 end = vs->ref_seq.nucleos.size();
             if ((end - 1) != gammas.regions.back().end) {
                 stop("gammas and vs ref sizes don't match inside MutationRates");
             }
 
-            for (uint i = 0, idx = 0; idx < gammas.regions.size(); idx++) {
+            for (uint32 i = 0, idx = 0; idx < gammas.regions.size(); idx++) {
                 double gamma = gammas.regions[idx].gamma;
                 double tmp = 0;
                 while (gammas.regions[idx].end >= i) {
@@ -195,14 +195,14 @@ public:
         }
 
         // Index to the first Mutation object
-        uint mut_i = 0;
+        uint32 mut_i = 0;
         // Index to the first gamma region
-        uint gam_i = 0;
+        uint32 gam_i = 0;
         double gamma = gammas.regions[gam_i].gamma;
-        uint gamma_end = gammas.regions[gam_i].end;
+        uint32 gamma_end = gammas.regions[gam_i].end;
 
         // Current position
-        uint pos = 0;
+        uint32 pos = 0;
 
         // Picking up any nucleotides before the first mutation
         for (; pos < vs->mutations[mut_i].new_pos; pos++) {
@@ -222,7 +222,7 @@ public:
 
         // Now, for each subsequent mutation except the last, add all nucleotides
         // at or after its position but before the next one
-        uint next_mut_i = mut_i + 1;
+        uint32 next_mut_i = mut_i + 1;
         while (next_mut_i < vs->mutations.size()) {
             while (pos < vs->mutations[next_mut_i].new_pos) {
                 char c = vs->get_char_(pos, mut_i);
@@ -281,7 +281,7 @@ public:
     C<MutationRates> rates;
 
     OneSeqLocationSampler() : rates() {};
-    OneSeqLocationSampler(const MutationRates& mr_, const uint& chunk)
+    OneSeqLocationSampler(const MutationRates& mr_, const uint32& chunk)
         : rates(mr_, chunk) {}
     OneSeqLocationSampler(const OneSeqLocationSampler<C>& other)
         : rates(other.rates) {}
@@ -290,10 +290,10 @@ public:
         return *this;
     }
 
-    inline uint sample(pcg32& eng) {
+    inline uint32 sample(pcg32& eng) {
         return rates.sample(eng);
     }
-    inline uint sample(pcg32& eng, const uint& start, const uint& end) {
+    inline uint32 sample(pcg32& eng, const uint32& start, const uint32& end) {
         return rates.sample(eng, start, end);
     }
 
@@ -338,7 +338,7 @@ public:
      Get the change in mutation rate for a substitution at a location given a
      position and the character it'll change to
      */
-    double substitution_rate_change(const char& c, const uint& pos) const {
+    double substitution_rate_change(const char& c, const uint32& pos) const {
         const MutationRates& mr_(mr());
         return mr_.sub_rate_change(pos, c);
     }
@@ -346,7 +346,7 @@ public:
      Get the change in mutation rate for an insertion at a location given a
      position and the characters that'll be inserted.
      */
-    double insertion_rate_change(const std::string& seq, const uint& pos) const {
+    double insertion_rate_change(const std::string& seq, const uint32& pos) const {
         const MutationRates& mr_(mr());
         double gamma = mr_.gammas[pos];
         double rate = mr_.raw_rate(seq);
@@ -356,8 +356,8 @@ public:
      Get the change in mutation rate for a deletion at a location given a
      position and the deletion size.
      */
-    double deletion_rate_change(const sint& size_mod, const uint& start) const {
-        uint end = start - size_mod - 1;
+    double deletion_rate_change(const sint32& size_mod, const uint32& start) const {
+        uint32 end = start - size_mod - 1;
         const MutationRates& mr_(mr());
         double out = mr_(start, end);
         out *= -1;
@@ -373,7 +373,7 @@ public:
     /*
      To update gamma boundaries when indels occur:
      */
-    inline void update_gamma_regions(const sint& size_change, const uint& pos) {
+    inline void update_gamma_regions(const sint32& size_change, const uint32& pos) {
         MutationRates& mr_(mr());
         mr_.gammas.update(pos, size_change);
         return;
@@ -387,7 +387,7 @@ public:
 
     // Constructors:
     ChunkLocationSampler() : OneSeqLocationSampler<ChunkReservoirRates>() {}
-    ChunkLocationSampler(const MutationRates& mr_, const uint chunk = 0)
+    ChunkLocationSampler(const MutationRates& mr_, const uint32 chunk = 0)
         : OneSeqLocationSampler<ChunkReservoirRates>(mr_, chunk) {}
     // Copy constructor
     ChunkLocationSampler(const ChunkLocationSampler& other)
@@ -405,20 +405,20 @@ public:
         return rates.res_rates.all_rates;
     }
 
-    double substitution_rate_change(const char& c, const uint& pos) const {
+    double substitution_rate_change(const char& c, const uint32& pos) const {
         const MutationRates& mr_(mr());
         return mr_.sub_rate_change(pos, c);
     }
 
-    double insertion_rate_change(const std::string& seq, const uint& pos) const {
+    double insertion_rate_change(const std::string& seq, const uint32& pos) const {
         const MutationRates& mr_(mr());
         double gamma = mr_.gammas[pos];
         double rate = mr_.raw_rate(seq);
         return gamma * rate;
     }
 
-    double deletion_rate_change(const sint& size_mod, const uint& start) const {
-        uint end = start - size_mod - 1;
+    double deletion_rate_change(const sint32& size_mod, const uint32& start) const {
+        uint32 end = start - size_mod - 1;
         const MutationRates& mr_(mr());
         double out = mr_(start, end);
         out *= -1;
@@ -430,7 +430,7 @@ public:
         return mr_.total_rate();
     }
 
-    inline void update_gamma_regions(const sint& size_change, const uint& pos) {
+    inline void update_gamma_regions(const sint32& size_change, const uint32& pos) {
         MutationRates& mr_(mr());
         mr_.gammas.update(pos, size_change);
         return;
@@ -438,7 +438,7 @@ public:
 
 
     // Resize chunk size; this method is obviously not available for non-chunked version
-    void change_chunk(const uint& chunk_size) {
+    void change_chunk(const uint32& chunk_size) {
         ChunkRateGetter<MutationRates>& crg(rates.res_rates);
         crg.chunk_size = chunk_size;
         if (crg.all_rates.size() > chunk_size) {
@@ -480,7 +480,7 @@ public:
  */
 struct MutationInfo {
     char nucleo;
-    sint length;
+    sint32 length;
 
     MutationInfo() : nucleo(), length() {}
     MutationInfo(const MutationInfo& other)
@@ -492,7 +492,7 @@ struct MutationInfo {
     }
 
     // Initialize from an index and mut-lengths vector
-    MutationInfo (const uint& ind, const std::vector<sint>& mut_lengths)
+    MutationInfo (const uint32& ind, const std::vector<sint32>& mut_lengths)
         : nucleo('\0'), length(0) {
         if (ind < 4) {
             nucleo = mevo::bases[ind];
@@ -535,7 +535,7 @@ inline std::vector<uint8> make_base_inds() {
 class MutationTypeSampler {
 
     std::vector<TableSampler> sampler;
-    std::vector<sint> mut_lengths;
+    std::vector<sint32> mut_lengths;
     std::vector<uint8> base_inds;
 
 public:
@@ -544,11 +544,11 @@ public:
         base_inds = make_base_inds();
     }
     MutationTypeSampler(const std::vector<std::vector<double>>& probs,
-                        const std::vector<sint>& mut_lengths_)
+                        const std::vector<sint32>& mut_lengths_)
     : sampler(4), mut_lengths(mut_lengths_), base_inds() {
         base_inds = make_base_inds();
         if (probs.size() != 4) stop("probs must be size 4.");
-        for (uint i = 0; i < 4; i++) {
+        for (uint32 i = 0; i < 4; i++) {
             std::vector<double> probs_i = probs[i];
             /*
              Item `i` in `probs_i` needs to be manually converted to zero so
@@ -575,11 +575,11 @@ public:
 
     /*
      Sample a mutation based on an input nucleotide.
-     `c` gets cast to an uint, which is then input to `base_inds` to get the index
+     `c` gets cast to an uint32, which is then input to `base_inds` to get the index
      from 0 to 3.
      */
     MutationInfo sample(const char& c, pcg32& eng) const {
-        uint ind = sampler[base_inds[c]].sample(eng);
+        uint32 ind = sampler[base_inds[c]].sample(eng);
         MutationInfo mi(ind, mut_lengths);
         return mi;
     }
@@ -623,11 +623,11 @@ class OneSeqMutationSampler {
     /*
      Sample for mutation location based on rates by sequence region and nucleotide.
      */
-    inline uint sample_location(pcg32& eng) {
+    inline uint32 sample_location(pcg32& eng) {
         return location.sample(eng);
     }
     // Same thing as above, but for within a range
-    inline uint sample_location(pcg32& eng, const uint& start, const uint& end) {
+    inline uint32 sample_location(pcg32& eng, const uint32& start, const uint32& end) {
         return location.sample(eng, start, end);
     }
 
@@ -642,7 +642,7 @@ class OneSeqMutationSampler {
     Create a new string of nucleotides (for insertions) of a given length and using
     an input rng engine
     */
-    inline std::string new_nucleos(const uint& len, pcg32& eng) const {
+    inline std::string new_nucleos(const uint32& len, pcg32& eng) const {
         std::string str(len, 'x');
         insert.sample(str, eng);
         return str;
@@ -691,7 +691,7 @@ public:
     }
 
     void mutate(pcg32& eng) {
-        uint pos = sample_location(eng);
+        uint32 pos = sample_location(eng);
         char c = vs->get_nt(pos);
         MutationInfo m = sample_type(c, eng);
         if (m.length == 0) {
@@ -701,10 +701,10 @@ public:
                 std::string nts = new_nucleos(m.length, eng);
                 vs->add_insertion(nts, pos);
             } else {
-                if ((static_cast<sint>(pos) - m.length) > static_cast<sint>(vs->size())) {
-                    m.length = static_cast<sint>(pos) - static_cast<sint>(vs->size());
+                if ((static_cast<sint32>(pos) - m.length) > static_cast<sint32>(vs->size())) {
+                    m.length = static_cast<sint32>(pos) - static_cast<sint32>(vs->size());
                 }
-                uint del_size = std::abs(m.length);
+                uint32 del_size = std::abs(m.length);
                 vs->add_deletion(del_size, pos);
             }
             // Update Gamma region bounds:
@@ -715,7 +715,7 @@ public:
 
     // Same as above, but it returns the change in the sequence rate that results
     double mutate_rate_change(pcg32& eng) {
-        uint pos = sample_location(eng);
+        uint32 pos = sample_location(eng);
         char c = vs->get_nt(pos);
         MutationInfo m = sample_type(c, eng);
         double rate_change;
@@ -728,10 +728,10 @@ public:
                 rate_change = location.insertion_rate_change(nts, pos);
                 vs->add_insertion(nts, pos);
             } else {
-                if ((static_cast<sint>(pos) - m.length) > static_cast<sint>(vs->size())) {
-                    m.length = static_cast<sint>(pos) - static_cast<sint>(vs->size());
+                if ((static_cast<sint32>(pos) - m.length) > static_cast<sint32>(vs->size())) {
+                    m.length = static_cast<sint32>(pos) - static_cast<sint32>(vs->size());
                 }
-                uint del_size = std::abs(m.length);
+                uint32 del_size = std::abs(m.length);
                 rate_change = location.deletion_rate_change(m.length, pos);
                 vs->add_deletion(del_size, pos);
             }
@@ -757,7 +757,7 @@ typedef OneSeqMutationSampler<ChunkLocationSampler> ChunkMutationSampler;
 
 void fill_mut_prob_length_vectors(
         std::vector<std::vector<double>>& probs,
-        std::vector<sint>& mut_lengths,
+        std::vector<sint32>& mut_lengths,
         const arma::mat& Q,
         const double& xi,
         const double& psi,
@@ -768,17 +768,17 @@ void fill_mut_prob_length_vectors(
 
 MutationSampler make_mutation_sampler(VarSequence& vs,
                                       const std::vector<std::vector<double>>& probs,
-                                      const std::vector<sint>& mut_lengths,
+                                      const std::vector<sint32>& mut_lengths,
                                       const std::vector<double>& pi_tcag,
                                       const arma::mat& gamma_mat);
 
 
 ChunkMutationSampler make_mutation_sampler(VarSequence& vs,
                                            const std::vector<std::vector<double>>& probs,
-                                           const std::vector<sint>& mut_lengths,
+                                           const std::vector<sint32>& mut_lengths,
                                            const std::vector<double>& pi_tcag,
                                            const arma::mat& gamma_mat,
-                                           const uint& chunk_size);
+                                           const uint32& chunk_size);
 
 
 

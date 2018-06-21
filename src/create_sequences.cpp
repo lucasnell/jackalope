@@ -54,11 +54,11 @@ using namespace Rcpp;
  */
 
 template <typename OuterClass, typename InnerClass>
-OuterClass create_sequences_(const uint& n_seqs,
+OuterClass create_sequences_(const uint32& n_seqs,
                              const double& len_mean,
                              const double& len_sd,
                              NumericVector equil_freqs,
-                             const uint& n_cores) {
+                             const uint32& n_cores) {
 
     if (equil_freqs.size() == 0) equil_freqs = NumericVector(4, 0.25);
 
@@ -88,7 +88,7 @@ OuterClass create_sequences_(const uint& n_seqs,
 
     // Write the active seed per core or just write one of the seeds.
     #ifdef _OPENMP
-    uint active_thread = omp_get_thread_num();
+    uint32 active_thread = omp_get_thread_num();
     active_seeds = seeds[active_thread];
     #else
     active_seeds = seeds[0];
@@ -105,19 +105,19 @@ OuterClass create_sequences_(const uint& n_seqs,
     #ifdef _OPENMP
     #pragma omp for schedule(static)
     #endif
-    for (uint i = 0; i < n_seqs; i++) {
+    for (uint32 i = 0; i < n_seqs; i++) {
         InnerClass& seq(seqs_out[i]);
 
         // Get length of output sequence:
-        uint len;
+        uint32 len;
         if (len_sd > 0) {
-            len = static_cast<uint>(distr(engine));
+            len = static_cast<uint32>(distr(engine));
             if (len < 1) len = 1;
         } else len = len_mean;
         // Sample sequence:
         seq.resize(len, 'x');
-        for (uint j = 0; j < len; j++) {
-            uint k = sampler.sample(engine);
+        for (uint32 j = 0; j < len; j++) {
+            uint32 k = sampler.sample(engine);
             seq[j] = table_sampler::bases[k];
         }
     }
@@ -157,11 +157,11 @@ OuterClass create_sequences_(const uint& n_seqs,
 //' genome <- create_genome(10, 100e6, 10e6, equil_freqs = c(0.1, 0.2, 0.3, 0.4))
 //'
 //[[Rcpp::export]]
-SEXP create_genome(const uint& n_seqs,
+SEXP create_genome(const uint32& n_seqs,
                    const double& len_mean,
                    const double& len_sd = 0,
                    NumericVector equil_freqs = NumericVector(0),
-                   const uint& n_cores = 1) {
+                   const uint32& n_cores = 1) {
 
     XPtr<RefGenome> ref_xptr(new RefGenome(), true);
     RefGenome& ref(*ref_xptr);
@@ -169,7 +169,7 @@ SEXP create_genome(const uint& n_seqs,
     ref = create_sequences_<RefGenome, RefSequence>(
         n_seqs, len_mean, len_sd, equil_freqs, n_cores);
 
-    for (uint i = 0; i < n_seqs; i++) {
+    for (uint32 i = 0; i < n_seqs; i++) {
         ref.total_size += ref[i].size();
         ref[i].name = "seq" + std::to_string(i);
     }
@@ -195,11 +195,11 @@ SEXP create_genome(const uint& n_seqs,
 //' randos <- rando_seqs(10, 1000, 10)
 //'
 //[[Rcpp::export]]
-std::vector<std::string> rando_seqs(const uint& n_seqs,
+std::vector<std::string> rando_seqs(const uint32& n_seqs,
                                     const double& len_mean,
                                     const double& len_sd = 0,
                                     NumericVector equil_freqs = NumericVector(0),
-                                    const uint& n_cores = 1) {
+                                    const uint32& n_cores = 1) {
 
     std::vector<std::string> ref = create_sequences_<std::vector<std::string>,
                 std::string>(n_seqs, len_mean, len_sd, equil_freqs, n_cores);

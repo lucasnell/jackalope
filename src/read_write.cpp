@@ -110,7 +110,7 @@ void fill_ref_noind(RefGenome& ref,
         std::vector<std::string> svec = cpp_str_split_delim(mystring, split);
 
         // Scroll through lines derived from the buffer.
-        for (uint i = 0; i < svec.size() - 1; i++){
+        for (uint32 i = 0; i < svec.size() - 1; i++){
             parse_line(svec[i], cut_names, ref);
         }
         // Manage the last line.
@@ -189,7 +189,7 @@ void parse_line_fai(const std::string& line,
                     std::vector<uint64>& offsets,
                     std::vector<std::string>& names,
                     std::vector<uint64>& lengths,
-                    std::vector<uint>& line_lens) {
+                    std::vector<uint32>& line_lens) {
 
     char split = '\t';
 
@@ -210,7 +210,7 @@ void read_fai(const std::string& fai_file,
               std::vector<uint64>& offsets,
               std::vector<std::string>& names,
               std::vector<uint64>& lengths,
-              std::vector<uint>& line_lens) {
+              std::vector<uint32>& line_lens) {
 
 
     gzFile file;
@@ -241,7 +241,7 @@ void read_fai(const std::string& fai_file,
         std::vector<std::string> svec = cpp_str_split_delim(mystring, split);
 
         // Scroll through lines derived from the buffer.
-        for (uint i = 0; i < svec.size() - 1; i++){
+        for (uint32 i = 0; i < svec.size() - 1; i++){
             parse_line_fai(svec[i], offsets, names, lengths, line_lens);
         }
         // Manage the last line.
@@ -283,7 +283,7 @@ void fill_ref_ind(RefGenome& ref,
     std::vector<uint64> offsets;
     std::vector<std::string> names;
     std::vector<uint64> lengths;
-    std::vector<uint> line_lens;
+    std::vector<uint32> line_lens;
 
     expand_path(fasta_file);
     expand_path(fai_file);
@@ -304,11 +304,11 @@ void fill_ref_ind(RefGenome& ref,
         Rcpp::stop(e);
     }
 
-    uint n_seqs = offsets.size();
+    uint32 n_seqs = offsets.size();
     uint64 LIMIT = 4194304;
     ref.sequences = std::deque<RefSequence>(n_seqs, RefSequence());
 
-    for (uint i = 0; i < n_seqs; i++) {
+    for (uint32 i = 0; i < n_seqs; i++) {
 
         Rcpp::checkUserInterrupt();
 
@@ -322,7 +322,7 @@ void fill_ref_ind(RefGenome& ref,
 
         for (uint64 j = 0; j < len; j += (LIMIT-1)) {
             gzseek(file, offsets[i] + j, SEEK_SET);
-            uint partial_len = LIMIT;
+            uint32 partial_len = LIMIT;
             if (len - j < LIMIT) partial_len = len - j;
             char buffer[partial_len];
             bytes_read = gzread(file, buffer, partial_len - 1);
@@ -421,7 +421,7 @@ SEXP read_fasta_ind(const std::string& fasta_file,
 //[[Rcpp::export]]
 void write_fasta_fa(std::string file_name,
                     SEXP ref_,
-                    const uint& text_width){
+                    const uint32& text_width){
 
     XPtr<RefGenome> ref_xptr(ref_);
     RefGenome& ref(*ref_xptr);
@@ -430,14 +430,14 @@ void write_fasta_fa(std::string file_name,
 
     if (out_file.is_open()) {
 
-        for (uint i = 0; i < ref.size(); i++) {
+        for (uint32 i = 0; i < ref.size(); i++) {
             out_file << '>';
             out_file << ref[i].name;
             out_file << '\n';
 
             const std::string& seq_str(ref[i].nucleos);
 
-            for (uint pos = 0; pos < seq_str.size(); pos++) {
+            for (uint32 pos = 0; pos < seq_str.size(); pos++) {
                 out_file << seq_str[pos];
                 if ((pos % text_width) == (text_width - 1)) out_file << '\n';
             }
@@ -466,7 +466,7 @@ void write_fasta_fa(std::string file_name,
 //[[Rcpp::export]]
 void write_fasta_gz(const std::string& file_name,
                     SEXP ref_,
-                    const uint& text_width){
+                    const uint32& text_width){
 
     XPtr<RefGenome> ref_xptr(ref_);
     RefGenome& ref(*ref_xptr);
@@ -490,14 +490,14 @@ void write_fasta_gz(const std::string& file_name,
         Rcpp::stop(e);
     }
 
-    for (uint i = 0; i < ref.size(); i++) {
+    for (uint32 i = 0; i < ref.size(); i++) {
         std::string name = '>' + ref[i].name + '\n';
         gzwrite(fi, name.c_str(), name.size());
 
         const std::string& seq_str(ref[i].nucleos);
-        uint num_rows = seq_str.length() / text_width;
+        uint32 num_rows = seq_str.length() / text_width;
 
-        for (uint i = 0; i < num_rows; i++) {
+        for (uint32 i = 0; i < num_rows; i++) {
             std::string one_line = seq_str.substr(i * text_width, text_width);
             one_line += '\n';
             gzwrite(fi, one_line.c_str(), one_line.size());

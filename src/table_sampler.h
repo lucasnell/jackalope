@@ -32,7 +32,7 @@ namespace table_sampler {
 class TableSampler {
 public:
     // Stores vectors of each category's Pr(sampled):
-    std::vector<std::vector<uint>> T;
+    std::vector<std::vector<uint32>> T;
     // Stores values at which to transition between vectors of `T`:
     std::vector<uint64> t;
 
@@ -41,8 +41,8 @@ public:
     // Copy constructor
     TableSampler(const TableSampler& other) : T(other.T), t(other.t) {}
 
-    inline uint sample(pcg32& eng) const {
-        uint j = eng();
+    inline uint32 sample(pcg32& eng) const {
+        uint32 j = eng();
         if (j<t[0]) return T[0][j>>24];
         if (j<t[1]) return T[1][(j-t[0])>>(32-8*2)];
         if (j<t[2]) return T[2][(j-t[1])>>(32-8*3)];
@@ -52,7 +52,7 @@ public:
     void print() const;
 
 private:
-    uint dg(const uint64& m, const uint& k) {
+    uint32 dg(const uint64& m, const uint32& k) {
         uint64 x = ((m>>(32-8*k))&255);
         return x;
     }
@@ -63,16 +63,16 @@ private:
 /*
  EXAMPLE USAGE:
 
-uint sample_rare_(SEXP xptr_sexp, const uint64& N, const uint& rare) {
+uint32 sample_rare_(SEXP xptr_sexp, const uint64& N, const uint32& rare) {
 
     XPtr<TableSampler> xptr(xptr_sexp);
 
-    uint rares = 0;
+    uint32 rares = 0;
 
     pcg32 eng = seeded_pcg();
 
     for (uint64 i = 0; i < N; i++) {
-        uint k = xptr->sample(eng);
+        uint32 k = xptr->sample(eng);
         if (k == rare) rares++;
     }
 
@@ -108,8 +108,8 @@ public:
           n(other.n) {}
 
     void sample(std::string& str, pcg32& eng) const {
-        for (uint i = 0; i < str.size(); i++) {
-            uint k = uint_sampler.sample(eng);
+        for (uint32 i = 0; i < str.size(); i++) {
+            uint32 k = uint_sampler.sample(eng);
             str[i] = characters[k];
         }
         return;
@@ -117,7 +117,7 @@ public:
 
 private:
     TableSampler uint_sampler;
-    uint n;
+    uint32 n;
 };
 
 

@@ -72,9 +72,9 @@
  */
 
 template <typename R>
-inline uint weighted_reservoir_(R& obj, pcg32& eng,
-                                const uint& start = 0,
-                                uint end = 0) {
+inline uint32 weighted_reservoir_(R& obj, pcg32& eng,
+                                const uint32& start = 0,
+                                uint32 end = 0) {
 
     double r, key, X, w, t;
 
@@ -84,13 +84,13 @@ inline uint weighted_reservoir_(R& obj, pcg32& eng,
     r = -1 * obj.rexp_(eng);        // ~ log(U(0,1))
     key = r / obj.res_rates[start];     // log(key)
     double largest_key = key;   // largest key (the one we're going to keep)
-    uint largest_pos = start;   // position where largest key was found
+    uint32 largest_pos = start;   // position where largest key was found
 
-    uint c = start;
+    uint32 c = start;
     while (c < end) {
         r = -1 * obj.rexp_(eng);    // ~ log(U(0,1))
         X = r / largest_key;        // log(key)
-        uint i = c + 1;
+        uint32 i = c + 1;
         X -= obj.res_rates[c];
         w = obj.res_rates[i];
         while (X > w && i < end) {
@@ -141,7 +141,7 @@ public:
      `cs` is ignored here, and this constructor is only to allow for template use along
      with chunked version:
      */
-    ReservoirRates(const T& r, const uint& cs) : res_rates(r), distr(1.0) {};
+    ReservoirRates(const T& r, const uint32& cs) : res_rates(r), distr(1.0) {};
     // Assignment operator
     ReservoirRates<T>& operator=(const ReservoirRates<T>& other) {
         res_rates = other.res_rates;
@@ -153,11 +153,11 @@ public:
     }
 
     // Sample for one location
-    inline uint sample(pcg32& eng) {
+    inline uint32 sample(pcg32& eng) {
         return weighted_reservoir_<ReservoirRates<T>>(*this, eng);
     }
     // Sample for one location inside a range
-    inline uint sample(pcg32& eng, const uint& start, const uint& end) {
+    inline uint32 sample(pcg32& eng, const uint32& start, const uint32& end) {
         return weighted_reservoir_<ReservoirRates<T>>(*this, eng, start, end);
     }
 
@@ -194,14 +194,14 @@ public:
     // The vector of rates
     T all_rates;
     // The vector of sub-sampled indices (possible values from 0 to all_rates.size() - 1)
-    std::vector<uint> inds;
+    std::vector<uint32> inds;
 
     // To store the initial chunk size argument to the constructor.
-    uint chunk_size;
+    uint32 chunk_size;
 
 
     ChunkRateGetter() : all_rates(), inds(), chunk_size(0), use_vitter(true) {};
-    ChunkRateGetter(const T& r, const uint& chunk_size_)
+    ChunkRateGetter(const T& r, const uint32& chunk_size_)
         : all_rates(r), inds(chunk_size_), chunk_size(chunk_size_), use_vitter(true) {
         /*
          If chunk >= all_rates size, then turn `inds` into a vector from 0 to
@@ -211,7 +211,7 @@ public:
          */
         if (chunk_size >= all_rates.size()) {
             inds.resize(all_rates.size());
-            for (uint i = 0; i < all_rates.size(); i++) inds[i] = i;
+            for (uint32 i = 0; i < all_rates.size(); i++) inds[i] = i;
             use_vitter = false;
         }
     };
@@ -227,10 +227,10 @@ public:
         return *this;
     }
 
-    inline double operator[](const uint& idx) const {
+    inline double operator[](const uint32& idx) const {
         return all_rates[inds[idx]];
     }
-    inline uint size() const noexcept {
+    inline uint32 size() const noexcept {
         return inds.size();
     }
     void reset(pcg32& eng) {
@@ -238,17 +238,17 @@ public:
         // Skip vitter_d if `inds` is a vector from 0 to `all_rates.size() - 1`:
         if (!use_vitter) return;
         // Otherwise, sample uniformly:
-        vitter_d<std::vector<uint>>(inds, all_rates.size(), eng);
+        vitter_d<std::vector<uint32>>(inds, all_rates.size(), eng);
         return;
     }
-    void reset(pcg32& eng, const uint& start, const uint& end) {
+    void reset(pcg32& eng, const uint32& start, const uint32& end) {
 
         if (start >= all_rates.size() || start > end) {
             stop("start too high in ChunkRateGetter::reset");
         }
         if (end >= all_rates.size()) stop("end too high in ChunkRateGetter::reset");
 
-        uint range_size = end - start + 1;
+        uint32 range_size = end - start + 1;
 
         if (range_size <= chunk_size) {
             adjust_range_small_(start, end, range_size);
@@ -259,7 +259,7 @@ public:
         // Skip vitter_d if `inds` is a vector from `start` to `end`:
         if (!use_vitter) return;
         // Otherwise, sample uniformly:
-        vitter_d<std::vector<uint>>(inds, range_size, eng, start);
+        vitter_d<std::vector<uint32>>(inds, range_size, eng, start);
         return;
     }
 
@@ -289,7 +289,7 @@ private:
         if (all_rates.size() <= chunk_size) {
             if (use_vitter) {
                 inds.resize(all_rates.size());
-                for (uint i = 0; i < all_rates.size(); i++) inds[i] = i;
+                for (uint32 i = 0; i < all_rates.size(); i++) inds[i] = i;
                 use_vitter = false;
             }
             return;
@@ -316,8 +316,8 @@ private:
      */
 
     // For when range_size <= chunk_size
-    inline void adjust_range_small_(const uint& start, const uint& end,
-                                    const uint& range_size) {
+    inline void adjust_range_small_(const uint32& start, const uint32& end,
+                                    const uint32& range_size) {
 
         /*
          Note #1:
@@ -338,7 +338,7 @@ private:
          The rest of this function is to try to efficiently manipulate `inds` properly.
          */
 
-        uint inds_size = inds.size();
+        uint32 inds_size = inds.size();
 
         /*
          If `use_vitter` was false, then `inds` should currently be a vector from `x` to
@@ -351,17 +351,17 @@ private:
             if (inds_size < range_size) {
                 inds.reserve(range_size);
                 if (inds_size == 0) {
-                    for (uint i = start; i <= end; i++) inds.push_back(i);
+                    for (uint32 i = start; i <= end; i++) inds.push_back(i);
                     return;
                 }
                 if (inds.front() != start) {
-                    for (uint i = 0; i < inds_size; i++) inds[i] = start + i;
+                    for (uint32 i = 0; i < inds_size; i++) inds[i] = start + i;
                 }
-                for (uint i = inds_size + start; i <= end; i++) inds.push_back(i);
+                for (uint32 i = inds_size + start; i <= end; i++) inds.push_back(i);
             } else {
                 if (inds_size > range_size) inds.resize(range_size);
                 if (inds.front() != start) {
-                    for (uint i = 0; i < range_size; i++) inds[i] = start + i;
+                    for (uint32 i = 0; i < range_size; i++) inds[i] = start + i;
                 }
             }
             /*
@@ -373,11 +373,11 @@ private:
             if (inds_size < range_size) {
                 inds.reserve(range_size);
                 // (The check for `inds_size == 0` is not needed here.)
-                for (uint i = 0; i < inds_size; i++) inds[i] = start + i;
-                for (uint i = inds_size + start; i <= end; i++) inds.push_back(i);
+                for (uint32 i = 0; i < inds_size; i++) inds[i] = start + i;
+                for (uint32 i = inds_size + start; i <= end; i++) inds.push_back(i);
             } else {
                 if (inds_size > range_size) inds.resize(range_size);
-                for (uint i = 0; i < range_size; i++) inds[i] = start + i;
+                for (uint32 i = 0; i < range_size; i++) inds[i] = start + i;
             }
         }
 
@@ -386,8 +386,8 @@ private:
 
 
     // For when range_size > chunk_size
-    inline void adjust_range_big_(const uint& start, const uint& end,
-                                  const uint& range_size) {
+    inline void adjust_range_big_(const uint32& start, const uint32& end,
+                                  const uint32& range_size) {
 
         /*
          Note #1:
@@ -419,7 +419,7 @@ public:
     ChunkRateGetter<T> res_rates;
 
     ChunkReservoirRates() : res_rates(), distr(1.0) {};
-    ChunkReservoirRates(const T& r, const uint& chunk)
+    ChunkReservoirRates(const T& r, const uint32& chunk)
         : res_rates(r, chunk), distr(1.0) {};
     ChunkReservoirRates(const ChunkReservoirRates<T>& other)
         : res_rates(other.res_rates), distr(1.0) {}
@@ -434,15 +434,15 @@ public:
     }
 
     // Sample for one location
-    inline uint sample(pcg32& eng) {
+    inline uint32 sample(pcg32& eng) {
         res_rates.reset(eng);
-        uint i = weighted_reservoir_<ChunkReservoirRates<T>>(*this, eng);
+        uint32 i = weighted_reservoir_<ChunkReservoirRates<T>>(*this, eng);
         return res_rates.inds[i];
     }
     // Sample for one location inside a range
-    inline uint sample(pcg32& eng, const uint& start, const uint& end) {
+    inline uint32 sample(pcg32& eng, const uint32& start, const uint32& end) {
         res_rates.reset(eng, start, end);
-        uint i = weighted_reservoir_<ChunkReservoirRates<T>>(*this, eng);
+        uint32 i = weighted_reservoir_<ChunkReservoirRates<T>>(*this, eng);
         return res_rates.inds[i];
     }
 

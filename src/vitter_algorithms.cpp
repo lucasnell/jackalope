@@ -74,7 +74,7 @@ std::vector<double> F_s(const std::vector<double>& s_vec, const double& n,
                         const double& N) {
     std::vector<double> out(s_vec.size());
     double out_i, s;
-    for (uint i = 0; i < s_vec.size(); i++) {
+    for (uint32 i = 0; i < s_vec.size(); i++) {
         s = s_vec[i];
         if (s < 0 || s > (N - n)) {
             out[i] = 0;
@@ -124,9 +124,9 @@ double expected_s(double n, double N) {
 // --------
 // One S value using Algorithm A (used in Algorithm D if n >= alpha * N)
 // --------
-uint vitter_a_S(double n, double N, pcg32& engine) {
+uint32 vitter_a_S(double n, double N, pcg32& engine) {
     double V = runif_01(engine);
-    uint s = 0;
+    uint32 s = 0;
     double lhs = N - n;
     double rhs = V * N;
     while (lhs > rhs) {
@@ -151,14 +151,14 @@ uint vitter_a_S(double n, double N, pcg32& engine) {
 // --------
 inline double g1(const double& x, const double& n, const double& N) {
     if (x < 0 || x > N) return 0;
-    return (n / N) * std::pow(1 - x/N, static_cast<uint>(n - 1));
+    return (n / N) * std::pow(1 - x/N, static_cast<uint32>(n - 1));
 }
 inline double c1(const double& n, const double& N) {
     return N / (N - n + 1);
 }
 inline double h1(const double& s, const double& n, const double& N) {
     if (s < 0 || s > (N - n)) return 0;
-    return (n / N) * std::pow(1 - (s / (N - n + 1)), static_cast<uint>(n - 1));
+    return (n / N) * std::pow(1 - (s / (N - n + 1)), static_cast<uint32>(n - 1));
 }
 inline double x1(const double& U, const double& n, const double& N) {
     return N * (1 - std::pow(U, 1/n));
@@ -166,11 +166,11 @@ inline double x1(const double& U, const double& n, const double& N) {
 // --------
 // One S value for Algorithm D_1
 // --------
-uint algorithm_d1_S(const sint& n, const uint& N, pcg32& engine,
+uint32 algorithm_d1_S(const sint32& n, const uint32& N, pcg32& engine,
                     const double alpha) {
 
     double U, X, c, comp_denom;
-    uint S;
+    uint32 S;
     if (n < (alpha * N)) {
         while (true) {
             U = runif_01(engine);
@@ -212,14 +212,14 @@ uint algorithm_d1_S(const sint& n, const uint& N, pcg32& engine,
 // --------
 inline double g2(const double& s, const double& n, const double& N) {
     if (s < 0) stop("Computational error. s cannot < 0 in g2.");
-    return ((n - 1) / (N - 1)) * std::pow(1 - ((n - 1) / (N - 1)), static_cast<uint>(s));
+    return ((n - 1) / (N - 1)) * std::pow(1 - ((n - 1) / (N - 1)), static_cast<uint32>(s));
 }
 inline double c2(const double& n, const double& N) {
     return (n / (n - 1)) * ((N - 1) / N);
 }
 inline double h2(const double& s, const double& n, const double& N) {
     if (s < 0 || s > (N - n)) return 0;
-    return (n / N) * std::pow(1 - ((n - 1) / (N - s)), static_cast<uint>(s));
+    return (n / N) * std::pow(1 - ((n - 1) / (N - s)), static_cast<uint32>(s));
 }
 inline double x2(const double& U, const double& n, const double& N) {
     return std::floor(std::log(U) / std::log(1 - ((n - 1) / (N - 1))));
@@ -228,11 +228,11 @@ inline double x2(const double& U, const double& n, const double& N) {
 // --------
 // One S value for Algorithm D_2
 // --------
-uint algorithm_d2_S(const sint& n, const uint& N, pcg32& engine,
+uint32 algorithm_d2_S(const sint32& n, const uint32& N, pcg32& engine,
                     const double& alpha) {
 
     double U, X, c, comp_denom;
-    uint S;
+    uint32 S;
     if (n < (alpha * N)) {
         while (true) {
             U = runif_01(engine);
@@ -276,11 +276,11 @@ uint algorithm_d2_S(const sint& n, const uint& N, pcg32& engine,
 
 
 //[[Rcpp::export]]
-arma::Mat<uint> test_vitter_d(const uint reps, uint n, uint N,
-                              const uint& n_cores,
+arma::Mat<uint32> test_vitter_d(const uint32 reps, uint32 n, uint32 N,
+                              const uint32& n_cores,
                               const double n2N = 50, const double alpha = 0.8) {
 
-    arma::Mat<uint> out(n, reps);
+    arma::Mat<uint32> out(n, reps);
     if (alpha > 1 || alpha < 0) stop("Invalid alpha. It must be (0,1).");
     if (n > N) stop("n must be <= N.");
 
@@ -306,7 +306,7 @@ arma::Mat<uint> test_vitter_d(const uint reps, uint n, uint N,
     #ifdef _OPENMP
     #pragma omp for schedule(static)
     #endif
-    for (uint i = 0; i < reps; i++) {
+    for (uint32 i = 0; i < reps; i++) {
         arma::uvec point_positions(n);
         vitter_d<arma::uvec>(point_positions, N, engine, n2N, alpha);
         out.col(i) = point_positions;

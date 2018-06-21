@@ -26,7 +26,7 @@ using namespace Rcpp;
 double gc_prop(const std::string& sequence) {
     double total_seq = sequence.size();
     double total_gc = 0;
-    for (uint i = 0; i < total_seq; i++) {
+    for (uint32 i = 0; i < total_seq; i++) {
         if (sequence[i] == 'G' || sequence[i] == 'C') {
             total_gc += 1;
         }
@@ -35,10 +35,10 @@ double gc_prop(const std::string& sequence) {
     return gc_prop;
 }
 // ... overloaded for portion of a string
-double gc_prop(const std::string& sequence, const uint& start, const uint& stop) {
+double gc_prop(const std::string& sequence, const uint32& start, const uint32& stop) {
     double total_seq = stop - start + 1;
     double total_gc = 0;
-    for (uint i = start; i <= stop; i++) {
+    for (uint32 i = start; i <= stop; i++) {
         if (sequence[i] == 'G' || sequence[i] == 'C') {
             total_gc += 1;
         }

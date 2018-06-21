@@ -22,11 +22,10 @@
 using namespace Rcpp;
 
 typedef uint_fast8_t uint8;
-typedef uint_fast32_t uint;
-typedef int_fast32_t sint;
+typedef uint_fast32_t uint32;
+typedef int_fast32_t sint32;
 typedef uint_fast64_t uint64;
 typedef int_fast64_t sint64;
-
 
 
 

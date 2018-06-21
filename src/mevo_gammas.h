@@ -36,11 +36,11 @@ using namespace Rcpp;
 struct GammaRegion {
 
     double gamma;
-    uint start;
-    uint end;
+    uint32 start;
+    uint32 end;
 
     GammaRegion() {}
-    GammaRegion(const double& gamma_, const uint& start_, const uint& end_)
+    GammaRegion(const double& gamma_, const uint32& start_, const uint32& end_)
         : gamma(gamma_), start(start_), end(end_) {}
     GammaRegion(const GammaRegion& other)
         : gamma(other.gamma), start(other.start), end(other.end) {}
@@ -59,9 +59,9 @@ struct GammaRegion {
      entirely spans one or more region(s).
      Adding to this variable will result in the current region being erased.
      */
-    void deletion_adjust(const uint& ind, std::vector<uint>& erase_inds,
-                         const uint& del_start, const uint& del_end,
-                         const sint& del_size);
+    void deletion_adjust(const uint32& ind, std::vector<uint32>& erase_inds,
+                         const uint32& del_start, const uint32& del_end,
+                         const sint32& del_size);
 
     inline double size() const {
         return static_cast<double>(end - start + 1);
@@ -84,8 +84,8 @@ class SequenceGammas {
     /*
      Based on a sequence position, return an index to the Gamma region it's inside.
      */
-    inline uint get_idx(const uint& pos) const {
-        uint idx = pos * (static_cast<double>(regions.size()) / seq_size);
+    inline uint32 get_idx(const uint32& pos) const {
+        uint32 idx = pos * (static_cast<double>(regions.size()) / seq_size);
         if (idx >= regions.size()) idx = regions.size() - 1;
         while (regions[idx].end < pos) idx++;
         while (regions[idx].start > pos) idx--;
@@ -126,11 +126,11 @@ public:
         if (arma::any(diffs == 0)) stop("All Gamma matrix end points must be unique");
         // Now fill in the regions vector
         regions = std::vector<GammaRegion>(gamma_mat.n_rows);
-        for (uint i = 0; i < gamma_mat.n_rows; i++) {
+        for (uint32 i = 0; i < gamma_mat.n_rows; i++) {
             // Below, I'm subtracting 1 to go back to 0-based indexing
-            regions[i].end = static_cast<uint>(gamma_mat(i,0)) - 1;
+            regions[i].end = static_cast<uint32>(gamma_mat(i,0)) - 1;
             if (i > 0) {
-                regions[i].start = static_cast<uint>(gamma_mat(i-1,0));
+                regions[i].start = static_cast<uint32>(gamma_mat(i-1,0));
             } else regions[i].start = 0;
             regions[i].gamma = gamma_mat(i,1);
         }
@@ -141,23 +141,23 @@ public:
     /*
      Get Gamma value based on the position on the chromosome.
      */
-    inline double operator[](const uint& pos) const {
-        uint idx = get_idx(pos);
+    inline double operator[](const uint32& pos) const {
+        uint32 idx = get_idx(pos);
         return regions[idx].gamma;
     }
 
     /*
      The same thing as above, except for across a range.
      */
-    inline std::vector<double> operator()(const uint& start, const uint& end) const {
+    inline std::vector<double> operator()(const uint32& start, const uint32& end) const {
 
         std::vector<double> out(end - start + 1);
 
-        uint idx = get_idx(start);
+        uint32 idx = get_idx(start);
 
-        for (uint i = start; i <= end;) {
+        for (uint32 i = start; i <= end;) {
             double gamma = regions[idx].gamma;
-            uint length = regions[idx].end - i + 1;
+            uint32 length = regions[idx].end - i + 1;
             if (i + length - 1 > end) length = end - i + 1;
             std::fill(out.begin() + i - start, out.begin() + i - start + length, gamma);
             idx++;
@@ -168,13 +168,13 @@ public:
     }
 
 
-    void update(const uint& pos, const sint& size_change);
+    void update(const uint32& pos, const sint32& size_change);
 
 };
 
 
 
-arma::mat make_gamma_mat(const uint& seq_size_, const uint& gamma_size_,
+arma::mat make_gamma_mat(const uint32& seq_size_, const uint32& gamma_size_,
                          const double& alpha, pcg32& eng);
 
 

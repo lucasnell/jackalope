@@ -84,14 +84,14 @@ double optim_prob(NumericVector v, NumericVector mean_pws_, NumericVector dens_,
 //' @noRd
 //'
 // [[Rcpp::export]]
-std::vector<uint> sample_seqs(const uint& total_mutations,
+std::vector<uint32> sample_seqs(const uint32& total_mutations,
                               const std::vector<double>& seq_lens,
-                              const uint& n_cores) {
+                              const uint32& n_cores) {
 
-    const uint n_seqs = seq_lens.size();
+    const uint32 n_seqs = seq_lens.size();
 
     // Creating output vector
-    std::vector<uint> out_vec(n_seqs, 0);
+    std::vector<uint32> out_vec(n_seqs, 0);
 
     // Seeds
     const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
@@ -108,7 +108,7 @@ std::vector<uint> sample_seqs(const uint& total_mutations,
 
     // Write the active seed per core or just write one of the seeds.
     #ifdef _OPENMP
-    uint active_thread = omp_get_thread_num();
+    uint32 active_thread = omp_get_thread_num();
     active_seeds = seeds[active_thread];
     #else
     active_seeds = seeds[0];
@@ -121,8 +121,8 @@ std::vector<uint> sample_seqs(const uint& total_mutations,
     #ifdef _OPENMP
     #pragma omp for schedule(static)
     #endif
-    for (uint i = 0; i < total_mutations; i++){
-        uint ind = sampler.sample(eng);
+    for (uint32 i = 0; i < total_mutations; i++){
+        uint32 ind = sampler.sample(eng);
         #ifdef _OPENMP
         #pragma omp atomic
         #endif
@@ -262,36 +262,36 @@ List cpp_nt_freq(int N) {
 
 // Change variant_set and return length for one segregating site
 
-uint one_mutation(
-        VarSet& var_set, const uint& seq_index,
-        const sint& n, const uint& N, const uint& S, const sint64& current_pos,
-        const uint& n_vars, const uint& seq_len,
-        const std::vector<std::vector<uint>>& snp_combo_list,
-        const std::vector<uint>& mutation_types,
-        const std::vector<uint>& mutation_sizes,
+uint32 one_mutation(
+        VarSet& var_set, const uint32& seq_index,
+        const sint32& n, const uint32& N, const uint32& S, const sint64& current_pos,
+        const uint32& n_vars, const uint32& seq_len,
+        const std::vector<std::vector<uint32>>& snp_combo_list,
+        const std::vector<uint32>& mutation_types,
+        const std::vector<uint32>& mutation_sizes,
         const TableSampler& sampler,
         pcg32& engine,
         const double& n2N = 50,
         const double& alpha = 0.8) {
 
-    uint length;
+    uint32 length;
 
     // Storing nucleos, sites, and sequence modifier
     std::string nucleos;
-    std::vector<uint> sites;
+    std::vector<uint32> sites;
 
     // Sampling for which type of mutation (SNP, insertion, deletion)
-    uint mut_ind = sampler.sample(engine);
-    uint mut_type = mutation_types[mut_ind];
+    uint32 mut_ind = sampler.sample(engine);
+    uint32 mut_type = mutation_types[mut_ind];
 
     // SNP
     if (mut_type == 0) {
         length = 0;
-        std::vector<uint> combo = snp_combo_list[mut_ind];
+        std::vector<uint32> combo = snp_combo_list[mut_ind];
         std::shuffle(combo.begin(), combo.end(), engine);
         // Creating and filling string
         nucleos = std::string(n_vars, 'x');
-        for (uint j = 0, k = 0; j < 4; j++) {
+        for (uint32 j = 0, k = 0; j < 4; j++) {
             while (combo[j] > 0) {
                 nucleos[k] = table_sampler::bases[j];
                 combo[j]--;
@@ -299,30 +299,30 @@ uint one_mutation(
             }
         }
         std::shuffle(nucleos.begin(), nucleos.end(), engine);
-        for (uint v = 0; v < n_vars; v++) {
+        for (uint32 v = 0; v < n_vars; v++) {
             VarSequence& vs(var_set[v][seq_index]);
-            uint pos = static_cast<uint>(current_pos);
+            uint32 pos = static_cast<uint32>(current_pos);
             if (pos >= vs.size()) continue;
             vs.add_substitution(nucleos[v], pos);
         }
     // InDel: Insertion or Deletion
     } else {
         // Make vector of the variants that have this indel:
-        uint n_w_indel = runif_01(engine) * (n_vars - 1);
-        std::vector<uint> w_indel(n_w_indel);
-        vitter_d<std::vector<uint>>(w_indel, n_vars, engine, n2N, alpha);
+        uint32 n_w_indel = runif_01(engine) * (n_vars - 1);
+        std::vector<uint32> w_indel(n_w_indel);
+        vitter_d<std::vector<uint32>>(w_indel, n_vars, engine, n2N, alpha);
         // Insertion
         if (mut_type == 1) {
             length = mutation_sizes[mut_ind];
             // Creating and filling string
             nucleos = std::string(length, 'x');
-            for (uint j = 0; j < length; j++) {
-                uint rnd = runif_01(engine) * 4;
+            for (uint32 j = 0; j < length; j++) {
+                uint32 rnd = runif_01(engine) * 4;
                 nucleos[j] = table_sampler::bases[rnd];
             }
-            for (uint v : w_indel) {
+            for (uint32 v : w_indel) {
                 VarSequence& vs(var_set[v][seq_index]);
-                uint pos = static_cast<uint>(current_pos);
+                uint32 pos = static_cast<uint32>(current_pos);
                 if (pos >= vs.size()) continue;
                 vs.add_insertion(nucleos, pos);
             }
@@ -334,9 +334,9 @@ uint one_mutation(
             length = mutation_sizes[mut_ind];
             // Make sure it doesn't span over the # positions left
             if (length > N - S - n + 1) length = N - S - n + 1;
-            for (uint v : w_indel) {
+            for (uint32 v : w_indel) {
                 VarSequence& vs(var_set[v][seq_index]);
-                uint pos = static_cast<uint>(current_pos);
+                uint32 pos = static_cast<uint32>(current_pos);
                 if (pos >= vs.size()) continue;
                 vs.add_deletion(length, pos);
             }
@@ -354,12 +354,12 @@ uint one_mutation(
 //'
 void one_seq(
         VarSet& var_set,
-        const uint& seq_ind,
-        const uint& n_muts,
-        const uint& n_vars,
-        const std::vector<std::vector<uint>>& snp_combo_list,
-        const std::vector<uint> mutation_types,
-        const std::vector<uint>& mutation_sizes,
+        const uint32& seq_ind,
+        const uint32& n_muts,
+        const uint32& n_vars,
+        const std::vector<std::vector<uint32>>& snp_combo_list,
+        const std::vector<uint32> mutation_types,
+        const std::vector<uint32>& mutation_sizes,
         const TableSampler& sampler,
         pcg32& engine,
         const double& n2N = 50,
@@ -367,19 +367,19 @@ void one_seq(
     ) {
 
     // These values are copied bc n and N will be changing
-    sint n = n_muts;
-    uint seq_len = var_set.reference[seq_ind].size();
-    uint N = seq_len;
+    sint32 n = n_muts;
+    uint32 seq_len = var_set.reference[seq_ind].size();
+    uint32 N = seq_len;
 
     // The # positions to skip before taking the next one (0 to (N - n - 1))
-    uint S;
+    uint32 S;
     // Keeping track of the current position
     sint64 current_pos = -1;  // (starts at -1 so it can reach 0 on the first skip)
 
-    uint length; // Length of segregating sites
+    uint32 length; // Length of segregating sites
 
     // Stores function to sequentially find `S`
-    std::function<uint(const sint&, const uint&, pcg32&,
+    std::function<uint32(const sint32&, const uint32&, pcg32&,
                        const double)> algorithm;
 
     if (((n * n) / N) > n2N) {
@@ -440,23 +440,23 @@ void one_seq(
 //'
 //[[Rcpp::export]]
 SEXP make_variants_(
-        const std::vector<uint>& n_mutations,
+        const std::vector<uint32>& n_mutations,
         const SEXP& ref_xptr,
-        const std::vector<std::vector<uint>>& snp_combo_list,
+        const std::vector<std::vector<uint32>>& snp_combo_list,
         const std::vector<double>& mutation_probs,
-        const std::vector<uint>& mutation_types,
-        const std::vector<uint>& mutation_sizes,
-        const uint& n_cores,
+        const std::vector<uint32>& mutation_types,
+        const std::vector<uint32>& mutation_sizes,
+        const uint32& n_cores,
         double n2N = 50,
         double alpha = 0.8
     ) {
 
     const XPtr<RefGenome> reference(ref_xptr);
 
-    const std::vector<uint> seq_lens = reference->seq_sizes();
-    const uint n_seqs = reference->size();
+    const std::vector<uint32> seq_lens = reference->seq_sizes();
+    const uint32 n_seqs = reference->size();
     const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
-    const uint n_vars = std::accumulate(snp_combo_list[0].begin(),
+    const uint32 n_vars = std::accumulate(snp_combo_list[0].begin(),
                                         snp_combo_list[0].end(), 0.0);
 
     if (n_mutations.size() != n_seqs) stop("n_mutations is incorrect length.");
@@ -488,7 +488,7 @@ SEXP make_variants_(
     #ifdef _OPENMP
     #pragma omp for schedule(static)
     #endif
-    for (uint s = 0; s < n_seqs; s++) {
+    for (uint32 s = 0; s < n_seqs; s++) {
         one_seq(var_set, s, n_mutations[s], n_vars,
                 snp_combo_list, mutation_types, mutation_sizes, sampler, engine,
                 n2N, alpha);

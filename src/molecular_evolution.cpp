@@ -40,7 +40,7 @@ using namespace Rcpp;
 //'
 void fill_mut_prob_length_vectors(
         std::vector<std::vector<double>>& probs,
-        std::vector<sint>& mut_lengths,
+        std::vector<sint32>& mut_lengths,
         const arma::mat& Q,
         const double& xi,
         const double& psi,
@@ -53,9 +53,9 @@ void fill_mut_prob_length_vectors(
         rel_insertion_rates.reset();
         rel_deletion_rates.reset();
     }
-    uint n_ins = rel_insertion_rates.n_elem;
-    uint n_del = rel_deletion_rates.n_elem;
-    uint n_muts = 4 + n_ins + n_del;
+    uint32 n_ins = rel_insertion_rates.n_elem;
+    uint32 n_del = rel_deletion_rates.n_elem;
+    uint32 n_muts = 4 + n_ins + n_del;
 
     if (n_muts == 4 && xi > 0) {
         stop("If indel rate > 0, vectors of the relative rates of insertions and "
@@ -85,7 +85,7 @@ void fill_mut_prob_length_vectors(
      (2) Create TableSampler for each nucleotide
      (3) Fill the `rates` field with mutation rates for each nucleotide
      */
-    for (uint i = 0; i < 4; i++) {
+    for (uint32 i = 0; i < 4; i++) {
 
         std::vector<double>& qc(probs[i]);
 
@@ -94,26 +94,26 @@ void fill_mut_prob_length_vectors(
         double qi = -1 * qc[i];
         // Add insertions, then deletions
         qc.reserve(n_muts);
-        for (uint j = 0; j < rel_insertion_rates.n_elem; j++) {
+        for (uint32 j = 0; j < rel_insertion_rates.n_elem; j++) {
             qc.push_back(rel_insertion_rates(j));
         }
-        for (uint j = 0; j < rel_deletion_rates.n_elem; j++) {
+        for (uint32 j = 0; j < rel_deletion_rates.n_elem; j++) {
             qc.push_back(rel_deletion_rates(j));
         }
         // Divide all by qi to make them probabilities
-        for (uint j = 0; j < n_muts; j++) qc[j] /= qi;
+        for (uint32 j = 0; j < n_muts; j++) qc[j] /= qi;
 
         // Change the diagonal back to the mutation rate, which will be used later.
         qc[i] = qi;
     }
 
     // Now filling in mut_lengths vector
-    mut_lengths = std::vector<sint>(n_muts, 0);
-    for (uint i = 0; i < rel_insertion_rates.n_elem; i++) {
-        mut_lengths[i + 4] = static_cast<sint>(i+1);
+    mut_lengths = std::vector<sint32>(n_muts, 0);
+    for (uint32 i = 0; i < rel_insertion_rates.n_elem; i++) {
+        mut_lengths[i + 4] = static_cast<sint32>(i+1);
     }
-    for (uint i = 0; i < rel_deletion_rates.n_elem; i++) {
-        sint ds = static_cast<sint>(i + 1);
+    for (uint32 i = 0; i < rel_deletion_rates.n_elem; i++) {
+        sint32 ds = static_cast<sint32>(i + 1);
         ds *= -1;
         mut_lengths[i + 4 + rel_insertion_rates.n_elem] = ds;
     }
@@ -125,7 +125,7 @@ void fill_mut_prob_length_vectors(
 
 MutationSampler make_mutation_sampler(VarSequence& vs,
                                       const std::vector<std::vector<double>>& probs,
-                                      const std::vector<sint>& mut_lengths,
+                                      const std::vector<sint32>& mut_lengths,
                                       const std::vector<double>& pi_tcag,
                                       const arma::mat& gamma_mat) {
 
@@ -134,7 +134,7 @@ MutationSampler make_mutation_sampler(VarSequence& vs,
 
     SequenceGammas gammas(gamma_mat);
     std::vector<double> q_tcag(4);
-    for (uint i = 0; i < 4; i++) q_tcag[i] = probs[i][i];
+    for (uint32 i = 0; i < 4; i++) q_tcag[i] = probs[i][i];
     MutationRates mr(vs, q_tcag, gammas);
     LocationSampler ls(mr);
 
@@ -146,17 +146,17 @@ MutationSampler make_mutation_sampler(VarSequence& vs,
 
 ChunkMutationSampler make_mutation_sampler(VarSequence& vs,
                                            const std::vector<std::vector<double>>& probs,
-                                           const std::vector<sint>& mut_lengths,
+                                           const std::vector<sint32>& mut_lengths,
                                            const std::vector<double>& pi_tcag,
                                            const arma::mat& gamma_mat,
-                                           const uint& chunk_size) {
+                                           const uint32& chunk_size) {
 
     MutationTypeSampler mts(probs, mut_lengths);
     TableStringSampler<std::string> tss(mevo::bases, pi_tcag);
 
     SequenceGammas gammas(gamma_mat);
     std::vector<double> q_tcag(4);
-    for (uint i = 0; i < 4; i++) q_tcag[i] = probs[i][i];
+    for (uint32 i = 0; i < 4; i++) q_tcag[i] = probs[i][i];
     MutationRates mr(vs, q_tcag, gammas);
     ChunkLocationSampler ls(mr, chunk_size);
 
@@ -190,7 +190,7 @@ XPtr<T> make_mutation_sampler_base_(const arma::mat& Q,
                                     const arma::vec& rel_deletion_rates) {
 
     std::vector<std::vector<double>> probs;
-    std::vector<sint> mut_lengths;
+    std::vector<sint32> mut_lengths;
 
     fill_mut_prob_length_vectors(probs, mut_lengths, Q, xi, psi, pi_tcag,
                                  rel_insertion_rates, rel_deletion_rates);
@@ -201,7 +201,7 @@ XPtr<T> make_mutation_sampler_base_(const arma::mat& Q,
     out->insert = TableStringSampler<std::string>(mevo::bases, pi_tcag);
 
     std::vector<double> q_tcag(4);
-    for (uint i = 0; i < 4; i++) q_tcag[i] = probs[i][i];
+    for (uint32 i = 0; i < 4; i++) q_tcag[i] = probs[i][i];
     MutationRates mr(q_tcag);
     out->location = U(mr);
 
@@ -234,7 +234,7 @@ SEXP make_mutation_sampler_chunk_base(const arma::mat& Q,
                                       const std::vector<double>& pi_tcag,
                                       const arma::vec& rel_insertion_rates,
                                       const arma::vec& rel_deletion_rates,
-                                      const uint& chunk_size) {
+                                      const uint32& chunk_size) {
 
     XPtr<ChunkMutationSampler> out =
         make_mutation_sampler_base_<ChunkMutationSampler,ChunkLocationSampler>(

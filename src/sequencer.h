@@ -48,7 +48,7 @@
 #include <unordered_map> // unordered_map
 #include <string>  // string class
 
-#include "gemino_types.h"  // uint
+#include "gemino_types.h"  // uint32
 
 using namespace Rcpp;
 
@@ -116,7 +116,7 @@ struct seq_options
 struct seq_values
 {
     seq_values(seq_options opts) {
-        read_length = static_cast<uint>(opts.read_length);
+        read_length = static_cast<uint32>(opts.read_length);
         prob_insert = opts.prob_insert;
         prob_delete = opts.prob_delete;
         mismatch_probs = std::vector<double>(read_length);
@@ -132,7 +132,7 @@ struct seq_values
             opts.prob_mismatch_end * opts.position_raise;
         // Compute mismatch probability at each base.
         // Use piecewise linear function for mismatch probability simulation.
-        for (uint i = 0; i < read_length; i++) {
+        for (uint32 i = 0; i < read_length; i++) {
             double x = static_cast<double>(i) / (opts.read_length - 1);
             if (x < opts.position_raise) {
                 double b = opts.prob_mismatch_begin;
@@ -148,33 +148,33 @@ struct seq_values
             }
         }
         if (opts.prob_mismatch_scale != 1.0) {
-            for (uint i = 0; i < read_length; ++i) {
+            for (uint32 i = 0; i < read_length; ++i) {
                 mismatch_probs[i] *= opts.prob_mismatch_scale;
             }
         }
         // Compute match/mismatch means and standard deviations.
-        for (uint i = 0; i < read_length; ++i) {
+        for (uint32 i = 0; i < read_length; ++i) {
             double b = opts.mean_mismatch_qual_begin;
             double x = static_cast<double>(i) / (opts.read_length - 1);
             double m = (opts.mean_mismatch_qual_end -
                         opts.mean_mismatch_qual_begin);
             mismatch_qual_mean[i] = m * x + b;
         }
-        for (uint i = 0; i < read_length; ++i) {
+        for (uint32 i = 0; i < read_length; ++i) {
             double b = opts.sd_mismatch_qual_begin;
             double x = static_cast<double>(i) / (opts.read_length - 1);
             double m = (opts.sd_mismatch_qual_end -
                         opts.sd_mismatch_qual_begin);
             mismatch_qual_sd[i] = m * x + b;
         }
-        for (uint i = 0; i < read_length; ++i) {
+        for (uint32 i = 0; i < read_length; ++i) {
             double b = opts.mean_qual_begin;
             double x = static_cast<double>(i) / (opts.read_length - 1);
             double m = (opts.mean_qual_end -
                         opts.mean_qual_begin);
             qual_mean[i] = m * x + b;
         }
-        for (uint i = 0; i < read_length; ++i) {
+        for (uint32 i = 0; i < read_length; ++i) {
             double b = opts.sd_qual_begin;
             double x = static_cast<double>(i) / (opts.read_length - 1);
             double m = (opts.sd_qual_end -
@@ -183,7 +183,7 @@ struct seq_values
         }
     }
 
-    uint read_length;
+    uint32 read_length;
     std::vector<double> mismatch_probs;
     double prob_insert;
     double prob_delete;

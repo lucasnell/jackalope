@@ -34,11 +34,11 @@ namespace pcg {
 
 
 // To sample for seeds before multi-core operations
-inline std::vector<std::vector<uint64>> mc_seeds(const uint& n_cores) {
+inline std::vector<std::vector<uint64>> mc_seeds(const uint32& n_cores) {
 
     std::vector<std::vector<uint64>> sub_seeds(n_cores, std::vector<uint64>(4));
 
-    for (uint i = 0; i < n_cores; i++) {
+    for (uint32 i = 0; i < n_cores; i++) {
         sub_seeds[i] = as<std::vector<uint64>>(Rcpp::runif(4,0,4294967296));
     }
 
@@ -72,7 +72,7 @@ inline pcg32 seeded_pcg() {
 
 /*
  For multi-core operations, you should call `mc_seeds` when outside multi-core mode,
- then input an inner `std::vector<uint>` (from inside the object output from `mc_seeds`)
+ then input an inner `std::vector<uint32>` (from inside the object output from `mc_seeds`)
  to this function when in multi-core mode to seed the PRNG.
  */
 // sub_seeds needs to be at least 4-long!
@@ -94,11 +94,11 @@ inline pcg32 seeded_pcg(const std::vector<uint64>& sub_seeds) {
  */
 
 // To sample for seeds before multi-core operations
-inline std::vector<std::vector<uint64>> mc_seeds64(const uint& n_cores) {
+inline std::vector<std::vector<uint64>> mc_seeds64(const uint32& n_cores) {
 
     std::vector<std::vector<uint64>> sub_seeds(n_cores, std::vector<uint64>(8));
 
-    for (uint i = 0; i < n_cores; i++) {
+    for (uint32 i = 0; i < n_cores; i++) {
         sub_seeds[i] = as<std::vector<uint64>>(Rcpp::runif(8,0,4294967296));
     }
 
@@ -182,7 +182,7 @@ inline long double runif_ab(pcg64& eng, const long double& a, const long double&
     return a + ((static_cast<long double>(eng()) + 1) / (pcg::max64 + 2)) * (b - a);
 }
 // uniform in range [a,b]
-inline uint runif_aabb(pcg32& eng, const uint& a, const uint& b) {
+inline uint32 runif_aabb(pcg32& eng, const uint32& a, const uint32& b) {
     return a + (static_cast<double>(eng()) / (pcg::max + 1)) * (b - a + 1);
 }
 inline uint64 runif_aabb(pcg64& eng, const uint64& a, const uint64& b) {

@@ -26,16 +26,16 @@ using namespace Rcpp;
 /*
  EXAMPLE USAGE: Sampling for a "rare" (low p) integer named `rare`
 
-uint sample_rare_(SEXP xptr_sexp, const uint64& N, const uint& rare) {
+uint32 sample_rare_(SEXP xptr_sexp, const uint64& N, const uint32& rare) {
 
     XPtr<TableSampler> xptr(xptr_sexp);
 
-    uint rares = 0;
+    uint32 rares = 0;
 
     pcg32 eng = seeded_pcg();
 
     for (uint64 i = 0; i < N; i++) {
-        uint k = xptr->sample(eng);
+        uint32 k = xptr->sample(eng);
         if (k == rare) rares++;
     }
 
@@ -83,7 +83,7 @@ inline void fill_ints(const std::vector<double>& p, std::vector<uint64>& ints,
      `2^-x` until we would no longer be setting all probabilities to zero
      */
     while (iv.n_elem == p2.n_elem) {
-        for (uint zz = 0; zz < 8; zz++) z /= 2;
+        for (uint32 zz = 0; zz < 8; zz++) z /= 2;
         iv = arma::find(p2 < z);
     }
     p2(iv).fill(0);
@@ -115,22 +115,22 @@ TableSampler::TableSampler(const std::vector<double>& probs) : T(4), t(3, 0) {
 
     pcg32 eng = seeded_pcg();
 
-    uint n_tables = T.size();
+    uint32 n_tables = T.size();
 
-    uint n = probs.size();
+    uint32 n = probs.size();
     std::vector<uint64> ints(n);
     // Filling the `ints` vector based on `probs`
     fill_ints(probs, ints, eng);
 
-    std::vector<uint> sizes(n_tables, 0);
+    std::vector<uint32> sizes(n_tables, 0);
     // Adding up sizes of `T` vectors:
-    for (uint i = 0; i < n; i++) {
-        for (uint k = 1; k <= n_tables; k++) {
+    for (uint32 i = 0; i < n; i++) {
+        for (uint32 k = 1; k <= n_tables; k++) {
             sizes[k-1] += dg(ints[i], k);
         }
     }
     // Adding up thresholds in the `t` vector
-    for (uint k = 0; k < (n_tables - 1); k++) {
+    for (uint32 k = 0; k < (n_tables - 1); k++) {
         t[k] = sizes[k];
         t[k] <<= (32-8*(1+k));
         if (k > 0) t[k] += t[k-1];
@@ -144,17 +144,17 @@ TableSampler::TableSampler(const std::vector<double>& probs) : T(4), t(3, 0) {
          always returns it. Bc we're iterating by 2^8, that's the number of
          items I have to fill in for the T[0] vector.
          */
-        uint max_ind = std::find(ints.begin(), ints.end(), t[0]) - ints.begin();
-        T[0] = std::vector<uint>((1UL<<8), max_ind);
+        uint32 max_ind = std::find(ints.begin(), ints.end(), t[0]) - ints.begin();
+        T[0] = std::vector<uint32>((1UL<<8), max_ind);
     } else {
         // Re-sizing `T` vectors:
-        for (uint i = 0; i < n_tables; i++) T[i].resize(sizes[i]);
+        for (uint32 i = 0; i < n_tables; i++) T[i].resize(sizes[i]);
         // Filling `T` vectors
-        for (uint k = 1; k <= n_tables; k++) {
-            uint ind = 0; // index inside `T[k-1]`
-            for (uint i = 0; i < n; i++) {
-                uint z = dg(ints[i], k);
-                for (uint j = 0; j < z; j++) T[k-1][ind + j] = i;
+        for (uint32 k = 1; k <= n_tables; k++) {
+            uint32 ind = 0; // index inside `T[k-1]`
+            for (uint32 i = 0; i < n; i++) {
+                uint32 z = dg(ints[i], k);
+                for (uint32 j = 0; j < z; j++) T[k-1][ind + j] = i;
                 ind += z;
             }
         }
@@ -167,9 +167,9 @@ TableSampler::TableSampler(const std::vector<double>& probs) : T(4), t(3, 0) {
 void TableSampler::print() const {
     // names coincide with names from Marsaglia (2004)
     std::vector<std::string> names = {"AA", "BB", "CC", "DD"};
-    for (uint i = 0; i < T.size(); i++) {
+    for (uint32 i = 0; i < T.size(); i++) {
         Rcout << "T[" << i << "]:" << std::endl;
-        for (const uint& tt : T[i]) Rcout << tt << ' ';
+        for (const uint32& tt : T[i]) Rcout << tt << ' ';
         Rcout << std::endl;
     }
     Rcout << "t" << std::endl;
