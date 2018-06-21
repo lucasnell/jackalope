@@ -277,8 +277,8 @@ uint32 algorithm_d2_S(const sint32& n, const uint32& N, pcg32& engine,
 
 //[[Rcpp::export]]
 arma::Mat<uint32> test_vitter_d(const uint32 reps, uint32 n, uint32 N,
-                              const uint32& n_cores,
-                              const double n2N = 50, const double alpha = 0.8) {
+                                const uint32& n_cores,
+                                const double& n2N = 50, const double& alpha = 0.8) {
 
     arma::Mat<uint32> out(n, reps);
     if (alpha > 1 || alpha < 0) stop("Invalid alpha. It must be (0,1).");
@@ -309,7 +309,7 @@ arma::Mat<uint32> test_vitter_d(const uint32 reps, uint32 n, uint32 N,
     for (uint32 i = 0; i < reps; i++) {
         arma::uvec point_positions(n);
         vitter_d<arma::uvec>(point_positions, N, engine, n2N, alpha);
-        out.col(i) = point_positions;
+        for (uint32 j = 0; j < n; j++) out(j,i) = static_cast<uint32>(point_positions(j));
         // Rcpp::checkUserInterrupt(); // <-- Causes crash when in parallel
     }
     #ifdef _OPENMP
