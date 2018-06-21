@@ -218,7 +218,8 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint32& new_p
      a new Mutation object:
      */
     } else {
-        uint32 old_pos_ = ind + (mutations[mut_i].old_pos - mutations[mut_i].size_modifier);
+        uint32 old_pos_ = ind + (mutations[mut_i].old_pos -
+            mutations[mut_i].size_modifier);
         std::string nt = ref_seq[old_pos_] + nucleos_;
         Mutation new_mut(old_pos_, new_pos_, nt);
         ++mut_i;
@@ -284,8 +285,8 @@ void VarSequence::add_substitution(const char& nucleo, const uint32& new_pos_) {
  Note that there's a check to ensure that this is never run when `mutations`
  is empty.
  */
-void VarSequence::deletion_blowup_(uint32& mut_i, uint32& deletion_start, uint32& deletion_end,
-                                   sint32& size_mod) {
+void VarSequence::deletion_blowup_(uint32& mut_i, uint32& deletion_start,
+                                   uint32& deletion_end, sint32& size_mod) {
 
     /*
      ---------

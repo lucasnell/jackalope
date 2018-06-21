@@ -82,7 +82,7 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
         stop("The iteration limit maxit had been reached.")
     }
     if (make_converge & optim_out$convergence == 10) {
-        stop("Degeneracy of the Nelder–Mead simplex.")
+        stop("Degeneracy of the Nelder-Mead simplex.")
     }
     if (optim_out$value > threshold) {
         stop('Optimization did not find a sufficiently accurate value.')
@@ -145,7 +145,7 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
 #' Sung, W., M. S. Ackerman, M. M. Dillon, T. G. Platt, C. Fuqua, V. S. Cooper, and M.
 #' Lynch. 2016.
 #' Evolution of the insertion-deletion mutation rate across the tree of life.
-#' *G3: Genes|Genomes|Genetics* __6__:2583–2591.
+#' *G3: Genes|Genomes|Genetics* __6__:2583-2591.
 #'
 #' @examples
 #' n_vars <- 10
@@ -263,7 +263,7 @@ random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
 
 # Below study simulates 1:9 ratio of indels to SNPs:
 # Albers, C. A., G. Lunter, D. G. MacArthur, G. McVean, W. H. Ouwehand, and R. Durbin.
-#     2011. Dindel: accurate indel calls from short-read data. Genome Research 21:961–973.
+#     2011. Dindel: accurate indel calls from short-read data. Genome Research 21:961-973.
 # Also...
 #   The length of the indels varied from 1 to 10 bp, and the length distribution was
 #   such that the number of indels with length l was proportional to exp(-l), similar to
