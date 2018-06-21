@@ -293,6 +293,9 @@ public:
     inline uint sample(pcg32& eng) {
         return rates.sample(eng);
     }
+    inline uint sample(pcg32& eng, const uint& start, const uint& end) {
+        return rates.sample(eng, start, end);
+    }
 
 };
 
@@ -436,7 +439,15 @@ public:
 
     // Resize chunk size; this method is obviously not available for non-chunked version
     void change_chunk(const uint& chunk_size) {
-        rates.res_rates.inds.resize(chunk_size);
+        ChunkRateGetter<MutationRates>& crg(rates.res_rates);
+        crg.chunk_size = chunk_size;
+        if (crg.all_rates.size() > chunk_size) {
+            crg.inds.resize(chunk_size);
+        } else if (crg.all_rates.size() != crg.inds.size()) {
+            crg.inds.resize(crg.all_rates.size());
+        }
+        // `recheck_size_()` will automatically do the rest of the work from here
+        return;
     }
 };
 
@@ -614,6 +625,10 @@ class OneSeqMutationSampler {
      */
     inline uint sample_location(pcg32& eng) {
         return location.sample(eng);
+    }
+    // Same thing as above, but for within a range
+    inline uint sample_location(pcg32& eng, const uint& start, const uint& end) {
+        return location.sample(eng, start, end);
     }
 
     /*

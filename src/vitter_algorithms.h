@@ -61,6 +61,9 @@ uint algorithm_d2_S(const sint& n, const uint& N, pcg32& engine,
 //' @param N The population size. The sampling will generate numbers from
 //'     `0` to `(N - 1)`.
 //' @param engine A pcg PRNG engine.
+//' @param start An unsigned integer to add to each position. In effect, this makes
+//'     the output a range from `start` to `start + N - 1`.
+//'     Defaults to `0`.
 //' @param n2N A numeric threshold placed on the algorithm used to find new locations.
 //'     This is not recommended to be changed. Defaults to 50.
 //' @param alpha A numeric threshold placed on the algorithm used to find new locations.
@@ -74,6 +77,7 @@ uint algorithm_d2_S(const sint& n, const uint& N, pcg32& engine,
 //'
 template <typename T>
 void vitter_d(T& samples, uint N, pcg32& engine,
+              const uint& start = 0,
               const double n2N = 50, const double alpha = 0.8) {
 
     // Commented this out bc this will crash R if run in parallel and stop happens.
@@ -87,7 +91,7 @@ void vitter_d(T& samples, uint N, pcg32& engine,
         while (n > 1) {
             S = algorithm_d2_S(n, N, engine, alpha);
             current_pos += S + 1;
-            samples[ind] = current_pos;
+            samples[ind] = current_pos + start;
             ind++;
             n--;
             N -= (S + 1);
@@ -96,14 +100,14 @@ void vitter_d(T& samples, uint N, pcg32& engine,
         if (n == 1) {
             S = runif_01(engine) * N;
             current_pos += S + 1;
-            samples[ind] = current_pos;
+            samples[ind] = current_pos + start;
             ind++;
         }
     } else {
         while (n > 0) {
             S = algorithm_d1_S(n, N, engine, alpha);
             current_pos += S + 1;
-            samples[ind] = current_pos;
+            samples[ind] = current_pos + start;
             ind++;
             n--;
             N -= (S + 1);
