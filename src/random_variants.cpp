@@ -157,18 +157,18 @@ std::vector<uint32> sample_seqs(const uint32& total_mutations,
 //'
 double cpp_mean_pairwise_freqs(const std::vector<int>& sample_segr) {
 
-    int N_nt = sample_segr.size();
+    uint32 N_nt = sample_segr.size();
 
     if (N_nt != 4) {
         stop("Vector input to cpp_mean_pairwise_freqs must be of length 4.");
     }
 
-    int N = std::accumulate(sample_segr.begin(), sample_segr.end(), 0.0);
+    int N = std::accumulate(sample_segr.begin(), sample_segr.end(), 0);
 
-    int total_pairs = cpp_choose(N, 2U);
+    double total_pairs = cpp_choose(static_cast<double>(N), 2.0);
     double same_pairs = 0;
-    for (int i = 0; i < N_nt; i++) {
-        same_pairs += cpp_choose(sample_segr[i], 2U);
+    for (uint32 i = 0; i < N_nt; i++) {
+        same_pairs += cpp_choose(static_cast<double>(sample_segr[i]), 2.0);
     }
 
     double mean_pw = (total_pairs - same_pairs) / total_pairs;

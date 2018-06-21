@@ -60,7 +60,7 @@ using namespace Rcpp;
 //' @noRd
 inline double f(const double& s, const double& n, const double& N) {
     if (s < 0 || s > (N - n)) return 0;
-    double out = cpp_choose(N - s - 1, n - 1);
+    double out = cpp_choose(N - s - 1.0, n - 1.0);
     out /= cpp_choose(N, n);
     return out;
 }
