@@ -239,6 +239,7 @@ public:
         if (!use_vitter) return;
         // Otherwise, sample uniformly:
         vitter_d<std::vector<uint>>(inds, all_rates.size(), eng);
+        return;
     }
     void reset(pcg32& eng, const uint& start, const uint& end) {
 
@@ -259,6 +260,7 @@ public:
         if (!use_vitter) return;
         // Otherwise, sample uniformly:
         vitter_d<std::vector<uint>>(inds, range_size, eng, start);
+        return;
     }
 
 
