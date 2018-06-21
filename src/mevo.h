@@ -164,10 +164,24 @@ public:
         return out;
     }
 
+    // Used below to check if gamma region needs to be iterated to the next one.
+    inline void check_gamma(const uint32& pos,
+                            uint32& gamma_end, uint32& gam_i, double& gamma,
+                            const SequenceGammas& gammas) const {
+        if (pos > gamma_end) {
+            gam_i++;
+            gamma = gammas.regions[gam_i].gamma;
+            gamma_end = gammas.regions[gam_i].end;
+        }
+        return;
+    }
+
     // To return the overall rate for an entire sequence:
-    double total_rate() const {
+    double total_rate(const uint32& start, uint32 end) const {
 
         double out = 0;
+
+        if (start >= end && end == 0) end = vs->size() - 1;
 
         if ((vs->size() - 1) != gammas.regions.back().end) {
             stop("gammas and vs sizes don't match inside MutationRates");
@@ -176,78 +190,76 @@ public:
         // If there are no mutations, this is pretty easy:
         if (vs->mutations.empty()) {
 
-            uint32 end = vs->ref_seq.nucleos.size();
-            if ((end - 1) != gammas.regions.back().end) {
+            if ((vs->ref_seq.nucleos.size() - 1) != gammas.regions.back().end) {
                 stop("gammas and vs ref sizes don't match inside MutationRates");
             }
 
-            for (uint32 i = 0, idx = 0; idx < gammas.regions.size(); idx++) {
-                double gamma = gammas.regions[idx].gamma;
+            uint32 i = start, gam_i = gammas.get_idx(start);
+
+            while (i <= end) {
+                double gamma = gammas.regions[gam_i].gamma;
                 double tmp = 0;
-                while (gammas.regions[idx].end >= i) {
+                while (i <= gammas.regions[gam_i].end && i <= end) {
                     tmp += nt_rates[vs->ref_seq.nucleos[i]];
                     i++;
                 }
                 out += (tmp * gamma);
+                gam_i++;
             }
 
             return out;
         }
 
-        // Index to the first Mutation object
-        uint32 mut_i = 0;
-        // Index to the first gamma region
-        uint32 gam_i = 0;
+        // Index to the first Mutation object not past `start` position:
+        uint32 mut_i = vs->get_mut_(start);
+        // Index to the corresponding gamma region:
+        uint32 gam_i = gammas.get_idx(start);
+
         double gamma = gammas.regions[gam_i].gamma;
         uint32 gamma_end = gammas.regions[gam_i].end;
 
         // Current position
-        uint32 pos = 0;
+        uint32 pos = start;
 
-        // Picking up any nucleotides before the first mutation
-        for (; pos < vs->mutations[mut_i].new_pos; pos++) {
-            if (pos > gamma_end) {
-                gam_i++;
-                gamma = gammas.regions[gam_i].gamma;
-                gamma_end = gammas.regions[gam_i].end;
+        /*
+         If `start` is before the first mutation (resulting in
+         `mut_i == vs->mutations.size()`),
+         we must pick up any nucleotides before the first mutation.
+         */
+        if (mut_i == vs->mutations.size()) {
+            mut_i = 0;
+            for (; pos < vs->mutations[mut_i].new_pos; pos++) {
+                check_gamma(pos, gamma_end, gam_i, gamma, gammas);
+                out += (nt_rates[vs->ref_seq[pos]] * gamma);
             }
-            out += (nt_rates[vs->ref_seq[pos]] * gamma);
-        }
-        if (pos > gamma_end) {
-            gam_i++;
-            gamma = gammas.regions[gam_i].gamma;
-            gamma_end = gammas.regions[gam_i].end;
+            check_gamma(pos, gamma_end, gam_i, gamma, gammas);
         }
 
 
-        // Now, for each subsequent mutation except the last, add all nucleotides
-        // at or after its position but before the next one
+        /*
+         Now, for each subsequent mutation except the last, add all nucleotides
+         at or after its position but before the next one.
+         I'm adding `pos <= end` inside all while-statement checks to make sure
+         it doesn't keep going after we've reached `end`.
+         */
         uint32 next_mut_i = mut_i + 1;
-        while (next_mut_i < vs->mutations.size()) {
-            while (pos < vs->mutations[next_mut_i].new_pos) {
+        while (pos <= end && next_mut_i < vs->mutations.size()) {
+            while (pos <= end && pos < vs->mutations[next_mut_i].new_pos) {
                 char c = vs->get_char_(pos, mut_i);
                 out += nt_rates[c] * gamma;
                 ++pos;
-                if (pos > gamma_end) {
-                    gam_i++;
-                    gamma = gammas.regions[gam_i].gamma;
-                    gamma_end = gammas.regions[gam_i].end;
-                }
+                check_gamma(pos, gamma_end, gam_i, gamma, gammas);
             }
             ++mut_i;
             ++next_mut_i;
         }
 
         // Now taking care of nucleotides after the last Mutation
-        while (pos < vs->seq_size) {
+        while (pos <= end &&pos < vs->seq_size) {
             char c = vs->get_char_(pos, mut_i);
             out += nt_rates[c] * gamma;
             ++pos;
-            if (pos > gamma_end) {
-                gam_i++;
-                gamma = gammas.regions[gam_i].gamma;
-                gamma_end = gammas.regions[gam_i].end;
-            }
+            check_gamma(pos, gamma_end, gam_i, gamma, gammas);
         }
 
         return out;
@@ -366,9 +378,9 @@ public:
     /*
      Return the total rate for a VarSequence object
     */
-    inline double total_rate() const {
+    inline double total_rate(const uint32& start, const uint32& end) const {
         const MutationRates& mr_(mr());
-        return mr_.total_rate();
+        return mr_.total_rate(start, end);
     }
     /*
      To update gamma boundaries when indels occur:
@@ -425,9 +437,9 @@ public:
         return out;
     }
 
-    inline double total_rate() const {
+    inline double total_rate(const uint32& start, const uint32& end) const {
         const MutationRates& mr_(mr());
-        return mr_.total_rate();
+        return mr_.total_rate(start, end);
     }
 
     inline void update_gamma_regions(const sint32& size_change, const uint32& pos) {
@@ -712,8 +724,38 @@ public:
         }
         return;
     }
+    /*
+     Overloaded for only mutating within a range.
+     It also updates `end` if an indel occurs in the range.
+     Make sure to keep checking for situation where `end < start` (i.e., sequence section
+     is empty).
+     */
+    void mutate(pcg32& eng, const uint32& start, uint32& end) {
+        uint32 pos = sample_location(eng, start, end);
+        char c = vs->get_nt(pos);
+        MutationInfo m = sample_type(c, eng);
+        if (m.length == 0) {
+            vs->add_substitution(m.nucleo, pos);
+        } else {
+            if (m.length > 0) {
+                std::string nts = new_nucleos(m.length, eng);
+                vs->add_insertion(nts, pos);
+            } else {
+                sint32 pos_ = static_cast<sint32>(pos);
+                sint32 size_ = static_cast<sint32>(end + 1);
+                if ((pos_ - m.length) > size_) m.length = pos_ - size_;
+                uint32 del_size = std::abs(m.length);
+                vs->add_deletion(del_size, pos);
+            }
+            // Update Gamma region bounds:
+            location.update_gamma_regions(m.length, pos);
+            // Update end point:
+            end += m.length;
+        }
+        return;
+    }
 
-    // Same as above, but it returns the change in the sequence rate that results
+    // Same as `mutate`, but it returns the change in the sequence rate that results
     double mutate_rate_change(pcg32& eng) {
         uint32 pos = sample_location(eng);
         char c = vs->get_nt(pos);
@@ -742,8 +784,43 @@ public:
         return rate_change;
     }
 
-    double total_rate() {
-        return location.total_rate();
+    /*
+     Overloaded for only mutating within a range.
+     It also updates `end` if an indel occurs in the range.
+     Make sure to keep checking for situation where `end < start` (i.e., sequence section
+     is empty).
+     */
+    double mutate_rate_change(pcg32& eng, const uint32& start, uint32& end) {
+        uint32 pos = sample_location(eng, start, end);
+        char c = vs->get_nt(pos);
+        MutationInfo m = sample_type(c, eng);
+        double rate_change;
+        if (m.length == 0) {
+            rate_change = location.substitution_rate_change(m.nucleo, pos);
+            vs->add_substitution(m.nucleo, pos);
+        } else {
+            if (m.length > 0) {
+                std::string nts = new_nucleos(m.length, eng);
+                rate_change = location.insertion_rate_change(nts, pos);
+                vs->add_insertion(nts, pos);
+            } else {
+                sint32 pos_ = static_cast<sint32>(pos);
+                sint32 size_ = static_cast<sint32>(end + 1);
+                if ((pos_ - m.length) > size_) m.length = pos_ - size_;
+                uint32 del_size = std::abs(m.length);
+                rate_change = location.deletion_rate_change(m.length, pos);
+                vs->add_deletion(del_size, pos);
+            }
+            // Update Gamma region bounds:
+            location.update_gamma_regions(m.length, pos);
+            // Update end point:
+            end += m.length;
+        }
+        return rate_change;
+    }
+
+    double total_rate(const uint32& start = 0, const uint32& end = 0) {
+        return location.total_rate(start, end);
     }
 };
 

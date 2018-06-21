@@ -81,17 +81,6 @@ struct GammaRegion {
 
 class SequenceGammas {
 
-    /*
-     Based on a sequence position, return an index to the Gamma region it's inside.
-     */
-    inline uint32 get_idx(const uint32& pos) const {
-        uint32 idx = pos * (static_cast<double>(regions.size()) / seq_size);
-        if (idx >= regions.size()) idx = regions.size() - 1;
-        while (regions[idx].end < pos) idx++;
-        while (regions[idx].start > pos) idx--;
-        return idx;
-    }
-
 public:
 
     std::vector<GammaRegion> regions;
@@ -165,6 +154,17 @@ public:
         }
 
         return out;
+    }
+
+    /*
+     Based on a sequence position, return an index to the Gamma region it's inside.
+     */
+    inline uint32 get_idx(const uint32& pos) const {
+        uint32 idx = pos * (static_cast<double>(regions.size()) / seq_size);
+        if (idx >= regions.size()) idx = regions.size() - 1;
+        while (regions[idx].end < pos) idx++;
+        while (regions[idx].start > pos) idx--;
+        return idx;
     }
 
 
