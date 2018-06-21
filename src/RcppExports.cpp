@@ -90,8 +90,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // test_phylo
-void test_phylo(SEXP& vs_sexp, SEXP& sampler_base_sexp, const uint& seq_ind, const std::vector<double>& branch_lens, arma::Mat<uint> edges, const std::vector<std::string>& tip_labels, const std::vector<std::string>& ordered_tip_labels, const arma::mat& gamma_mat);
-RcppExport SEXP _gemino_test_phylo(SEXP vs_sexpSEXP, SEXP sampler_base_sexpSEXP, SEXP seq_indSEXP, SEXP branch_lensSEXP, SEXP edgesSEXP, SEXP tip_labelsSEXP, SEXP ordered_tip_labelsSEXP, SEXP gamma_matSEXP) {
+void test_phylo(SEXP& vs_sexp, SEXP& sampler_base_sexp, const uint& seq_ind, const std::vector<double>& branch_lens, arma::Mat<uint> edges, const std::vector<std::string>& tip_labels, const std::vector<std::string>& ordered_tip_labels, const arma::mat& gamma_mat, const bool& display_progress);
+RcppExport SEXP _gemino_test_phylo(SEXP vs_sexpSEXP, SEXP sampler_base_sexpSEXP, SEXP seq_indSEXP, SEXP branch_lensSEXP, SEXP edgesSEXP, SEXP tip_labelsSEXP, SEXP ordered_tip_labelsSEXP, SEXP gamma_matSEXP, SEXP display_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP& >::type vs_sexp(vs_sexpSEXP);
@@ -102,7 +102,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::vector<std::string>& >::type tip_labels(tip_labelsSEXP);
     Rcpp::traits::input_parameter< const std::vector<std::string>& >::type ordered_tip_labels(ordered_tip_labelsSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type gamma_mat(gamma_matSEXP);
-    test_phylo(vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat);
+    Rcpp::traits::input_parameter< const bool& >::type display_progress(display_progressSEXP);
+    test_phylo(vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, display_progress);
     return R_NilValue;
 END_RCPP
 }
@@ -625,7 +626,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_rando_seqs", (DL_FUNC) &_gemino_rando_seqs, 5},
     {"_gemino_digest_var", (DL_FUNC) &_gemino_digest_var, 5},
     {"_gemino_digest_ref", (DL_FUNC) &_gemino_digest_ref, 5},
-    {"_gemino_test_phylo", (DL_FUNC) &_gemino_test_phylo, 8},
+    {"_gemino_test_phylo", (DL_FUNC) &_gemino_test_phylo, 9},
     {"_gemino_TN93_rate_matrix", (DL_FUNC) &_gemino_TN93_rate_matrix, 5},
     {"_gemino_JC69_rate_matrix", (DL_FUNC) &_gemino_JC69_rate_matrix, 2},
     {"_gemino_K80_rate_matrix", (DL_FUNC) &_gemino_K80_rate_matrix, 3},

@@ -47,14 +47,17 @@ using namespace Rcpp;
  In other words, the vector of VarSequence objects is indexed by tip numbers.
  */
 template <typename T>
-inline void one_tree_no_recomb_(VarSet& vars,
-                                const T& sampler_base,
-                                const uint& seq_ind,
-                                const std::vector<double>& branch_lens,
-                                const arma::Mat<uint>& edges,
-                                const std::vector<uint>& spp_order,
-                                const arma::mat& gamma_mat,
-                                pcg32& eng) {
+inline int one_tree_no_recomb_(VarSet& vars,
+                               const T& sampler_base,
+                               const uint& seq_ind,
+                               const std::vector<double>& branch_lens,
+                               const arma::Mat<uint>& edges,
+                               const std::vector<uint>& spp_order,
+                               const arma::mat& gamma_mat,
+                               pcg32& eng,
+                               Progress& progress,
+                               const std::vector<uint>& progress_branch_lens) {
+
 
     // # tips = # variants
     uint n_tips = vars.size();
@@ -95,6 +98,8 @@ inline void one_tree_no_recomb_(VarSet& vars,
      Now iterate through the phylogeny:
      */
     for (uint i = 0; i < n_edges; i++) {
+
+        if (progress.is_aborted()) return -1;
 
         // Indices for nodes/tips that the branch length in `branch_lens` refers to
         uint b1 = edges(i,0);
@@ -152,6 +157,7 @@ inline void one_tree_no_recomb_(VarSet& vars,
         } else clear_b1 = true;
         if (clear_b1) samplers[b1].vs->clear();
 
+        progress.increment(progress_branch_lens[i]);
     }
 
     /*
@@ -162,7 +168,7 @@ inline void one_tree_no_recomb_(VarSet& vars,
         vars[i][seq_ind].replace(var_seqs[j]);
     }
 
-    return;
+    return 0;
 
 }
 
@@ -211,10 +217,25 @@ void test_phylo(SEXP& vs_sexp,
                 arma::Mat<uint> edges,
                 const std::vector<std::string>& tip_labels,
                 const std::vector<std::string>& ordered_tip_labels,
-                const arma::mat& gamma_mat) {
+                const arma::mat& gamma_mat,
+                const bool& display_progress = false) {
 
     XPtr<VarSet> vs_xptr(vs_sexp);
     XPtr<ChunkMutationSampler> sampler_base_xptr(sampler_base_sexp);
+
+    /*
+     Setting up a sum of branch lengths to use for the progress bar.
+     Since it gets cast to an integer, I process each branch length to be an integer >= 1.
+     */
+    std::vector<uint> progress_branch_lens(branch_lens.size());
+    double branch_min = *std::min_element(branch_lens.begin(), branch_lens.end());
+    for (uint i = 0; i < progress_branch_lens.size(); i++) {
+        progress_branch_lens[i] = static_cast<uint>(branch_lens[i] / branch_min);
+    }
+    uint total_branches = std::accumulate(progress_branch_lens.begin(),
+                                          progress_branch_lens.end(), 0);
+
+    Progress progress(total_branches, display_progress);
 
     if (gamma_mat(gamma_mat.n_rows-1,0) != (*vs_xptr)[0][seq_ind].size()) {
         stop("gamma_mat doesn't reach the end of the sequence.");
@@ -239,9 +260,19 @@ void test_phylo(SEXP& vs_sexp,
 
     pcg32 eng = seeded_pcg();
 
-    one_tree_no_recomb_<ChunkMutationSampler>(*vs_xptr, *sampler_base_xptr, seq_ind,
-                                              branch_lens, edges, spp_order,
-                                              gamma_mat, eng);
+    int code = one_tree_no_recomb_<ChunkMutationSampler>(
+        *vs_xptr, *sampler_base_xptr, seq_ind, branch_lens, edges, spp_order,
+        gamma_mat, eng, progress, progress_branch_lens
+    );
+
+    // Make sure this happens outside of multithreaded code
+    if (code == -1) {
+        std::string warn_msg = "\nUser interrupted phylogenetic evolution. ";
+        warn_msg += "Note that changes occur in place, so your variants have ";
+        warn_msg += "already been partially added.";
+        // throw(Rcpp::exception(err_msg.c_str(), false));
+        Rcpp::warning(warn_msg.c_str());
+    }
 
     return;
 }
