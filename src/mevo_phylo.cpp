@@ -56,7 +56,8 @@ inline int one_tree_no_recomb_(VarSet& vars,
                                const arma::mat& gamma_mat,
                                pcg32& eng,
                                Progress& progress,
-                               const std::vector<uint>& progress_branch_lens) {
+                               const std::vector<uint>& progress_branch_lens,
+                               std::vector<uint>& n_muts) {
 
 
     // # tips = # variants
@@ -101,6 +102,8 @@ inline int one_tree_no_recomb_(VarSet& vars,
 
         if (progress.is_aborted()) return -1;
 
+        uint n_muts_ = 0;
+
         // Indices for nodes/tips that the branch length in `branch_lens` refers to
         uint b1 = edges(i,0);
         uint b2 = edges(i,1);
@@ -134,6 +137,7 @@ inline int one_tree_no_recomb_(VarSet& vars,
              change:
              */
             rate_change = samplers[b2].mutate_rate_change(eng);
+            n_muts_++;
             /*
              Adjust the overall sequence rate, then update the exponential distribution:
              */
@@ -158,6 +162,8 @@ inline int one_tree_no_recomb_(VarSet& vars,
         if (clear_b1) samplers[b1].vs->clear();
 
         progress.increment(progress_branch_lens[i]);
+
+        n_muts[i] = n_muts_;
     }
 
     /*
@@ -207,18 +213,20 @@ std::vector<uint> match_(std::vector<std::string> x, std::vector<std::string> ta
 //' @param ordered_tip_labels Character vector of the tip labels in the order
 //'     you want them.
 //'
+//' @return A vector of integers indicating the number of mutations per edge.
+//'
 //' @noRd
 //'
 //[[Rcpp::export]]
-void test_phylo(SEXP& vs_sexp,
-                SEXP& sampler_base_sexp,
-                const uint& seq_ind,
-                const std::vector<double>& branch_lens,
-                arma::Mat<uint> edges,
-                const std::vector<std::string>& tip_labels,
-                const std::vector<std::string>& ordered_tip_labels,
-                const arma::mat& gamma_mat,
-                const bool& display_progress = false) {
+std::vector<uint> test_phylo(SEXP& vs_sexp,
+                             SEXP& sampler_base_sexp,
+                             const uint& seq_ind,
+                             const std::vector<double>& branch_lens,
+                             arma::Mat<uint> edges,
+                             const std::vector<std::string>& tip_labels,
+                             const std::vector<std::string>& ordered_tip_labels,
+                             const arma::mat& gamma_mat,
+                             const bool& display_progress = false) {
 
     XPtr<VarSet> vs_xptr(vs_sexp);
     XPtr<ChunkMutationSampler> sampler_base_xptr(sampler_base_sexp);
@@ -255,6 +263,8 @@ void test_phylo(SEXP& vs_sexp,
     }
     if (edges.n_cols != 2) stop("edges must have exactly two columns.");
 
+    std::vector<uint> n_muts(n_edges, 0);
+
     // From R to C++ indices
     edges -= 1;
 
@@ -262,7 +272,7 @@ void test_phylo(SEXP& vs_sexp,
 
     int code = one_tree_no_recomb_<ChunkMutationSampler>(
         *vs_xptr, *sampler_base_xptr, seq_ind, branch_lens, edges, spp_order,
-        gamma_mat, eng, progress, progress_branch_lens
+        gamma_mat, eng, progress, progress_branch_lens, n_muts
     );
 
     // Make sure this happens outside of multithreaded code
@@ -274,5 +284,5 @@ void test_phylo(SEXP& vs_sexp,
         Rcpp::warning(warn_msg.c_str());
     }
 
-    return;
+    return n_muts;
 }

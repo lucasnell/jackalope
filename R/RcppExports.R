@@ -150,10 +150,12 @@ digest_ref <- function(ref_, bind_sites, len5s, n_cores = 1L, chunk_size = 0L) {
 #' @param ordered_tip_labels Character vector of the tip labels in the order
 #'     you want them.
 #'
+#' @return A vector of integers indicating the number of mutations per edge.
+#'
 #' @noRd
 #'
 test_phylo <- function(vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, display_progress = FALSE) {
-    invisible(.Call(`_gemino_test_phylo`, vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, display_progress))
+    .Call(`_gemino_test_phylo`, vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, display_progress)
 }
 
 #' Estimates equilibrium nucleotide frequencies from an input rate matrix.
