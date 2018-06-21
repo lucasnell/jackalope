@@ -22,7 +22,7 @@
 
 #include "gemino_types.h"  // integer types
 #include "sequence_classes.h"  // Var* and Ref* classes
-#include "molecular_evolution.h"  // samplers
+#include "mevo.h"  // samplers
 #include "table_sampler.h" // table sampling
 #include "pcg.h" // pcg sampler types
 

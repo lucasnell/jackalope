@@ -18,7 +18,7 @@
 
 
 #include "gemino_types.h"
-#include "molecular_evolution.h"
+#include "mevo.h"
 #include "sequence_classes.h"  // Var* and Ref* classes
 #include "pcg.h"  // pcg seeding
 #include "table_sampler.h"  // table method of sampling

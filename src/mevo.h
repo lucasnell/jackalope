@@ -701,9 +701,9 @@ public:
                 std::string nts = new_nucleos(m.length, eng);
                 vs->add_insertion(nts, pos);
             } else {
-                if ((static_cast<sint32>(pos) - m.length) > static_cast<sint32>(vs->size())) {
-                    m.length = static_cast<sint32>(pos) - static_cast<sint32>(vs->size());
-                }
+                sint32 pos_ = static_cast<sint32>(pos);
+                sint32 size_ = static_cast<sint32>(vs->size());
+                if ((pos_ - m.length) > size_) m.length = pos_ - size_;
                 uint32 del_size = std::abs(m.length);
                 vs->add_deletion(del_size, pos);
             }
@@ -728,9 +728,9 @@ public:
                 rate_change = location.insertion_rate_change(nts, pos);
                 vs->add_insertion(nts, pos);
             } else {
-                if ((static_cast<sint32>(pos) - m.length) > static_cast<sint32>(vs->size())) {
-                    m.length = static_cast<sint32>(pos) - static_cast<sint32>(vs->size());
-                }
+                sint32 pos_ = static_cast<sint32>(pos);
+                sint32 size_ = static_cast<sint32>(vs->size());
+                if ((pos_ - m.length) > size_) m.length = pos_ - size_;
                 uint32 del_size = std::abs(m.length);
                 rate_change = location.deletion_rate_change(m.length, pos);
                 vs->add_deletion(del_size, pos);
