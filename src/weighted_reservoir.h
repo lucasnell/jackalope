@@ -152,13 +152,17 @@ public:
         return distr(eng);
     }
 
-    // Sample for one location
-    inline uint32 sample(pcg32& eng) {
-        return weighted_reservoir_<ReservoirRates<T>>(*this, eng);
-    }
-    // Sample for one location inside a range
-    inline uint32 sample(pcg32& eng, const uint32& start, const uint32& end) {
-        return weighted_reservoir_<ReservoirRates<T>>(*this, eng, start, end);
+
+    // Sample for one location across the whole object or inside a range
+    inline uint32 sample(pcg32& eng, const uint32& start, const uint32& end,
+                         const bool& ranged) {
+        uint32 i;
+        if (ranged) {
+            i = weighted_reservoir_<ReservoirRates<T>>(*this, eng, start, end);
+        } else {
+            i = weighted_reservoir_<ReservoirRates<T>>(*this, eng);
+        }
+        return i;
     }
 
 protected:
@@ -433,15 +437,12 @@ public:
         return distr(eng);
     }
 
-    // Sample for one location
-    inline uint32 sample(pcg32& eng) {
-        res_rates.reset(eng);
-        uint32 i = weighted_reservoir_<ChunkReservoirRates<T>>(*this, eng);
-        return res_rates.inds[i];
-    }
-    // Sample for one location inside a range
-    inline uint32 sample(pcg32& eng, const uint32& start, const uint32& end) {
-        res_rates.reset(eng, start, end);
+    // Sample for one location across the whole object or inside a range
+    inline uint32 sample(pcg32& eng, const uint32& start, const uint32& end,
+                         const bool& ranged) {
+        if (ranged) {
+            res_rates.reset(eng, start, end);
+        } else res_rates.reset(eng);
         uint32 i = weighted_reservoir_<ChunkReservoirRates<T>>(*this, eng);
         return res_rates.inds[i];
     }
