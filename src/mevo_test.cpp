@@ -69,7 +69,8 @@ void test_sampling(SEXP& vs_sexp, const uint32& N,
         if (Progress::check_abort()) return;
         p.increment(); // update progress
         if (vs.size() == 0) return;
-        ms.mutate(eng);
+        // Mutating and ignoring the rate change that it outputs:
+        static_cast<void>(ms.mutate(eng));
     }
 
     return;

@@ -102,8 +102,6 @@ inline int one_tree_no_recomb_(VarSet& vars,
 
         if (progress.is_aborted()) return -1;
 
-        uint32 n_muts_ = 0;
-
         // Indices for nodes/tips that the branch length in `branch_lens` refers to
         uint32 b1 = edges(i,0);
         uint32 b2 = edges(i,1);
@@ -136,8 +134,8 @@ inline int one_tree_no_recomb_(VarSet& vars,
              Add mutation here, outputting how much the overall sequence rate should
              change:
              */
-            rate_change = samplers[b2].mutate_rate_change(eng);
-            n_muts_++;
+            rate_change = samplers[b2].mutate(eng);
+            n_muts[i]++;
             /*
              Adjust the overall sequence rate, then update the exponential distribution:
              */
@@ -162,8 +160,6 @@ inline int one_tree_no_recomb_(VarSet& vars,
         if (clear_b1) samplers[b1].vs->clear();
 
         progress.increment(progress_branch_lens[i]);
-
-        n_muts[i] = n_muts_;
     }
 
     /*
@@ -251,8 +247,6 @@ inline int one_tree_recomb_(VarSet& vars,
 
         if (progress.is_aborted()) return -1;
 
-        uint32 n_muts_ = 0;
-
         // Indices for nodes/tips that the branch length in `branch_lens` refers to
         uint32 b1 = edges(i,0);
         uint32 b2 = edges(i,1);
@@ -288,9 +282,10 @@ inline int one_tree_recomb_(VarSet& vars,
             /*
              Add mutation here, outputting how much the overall sequence rate should
              change:
+             (`end` is automatically adjusted for indels)
              */
-            rate_change = samplers[b2].mutate_rate_change(eng, start, end);  // ***
-            n_muts_++;
+            rate_change = samplers[b2].mutate(eng, start, end);  // ***
+            n_muts[i]++;
             /*
              Adjust the overall sequence rate, then update the exponential distribution:
              */

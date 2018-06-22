@@ -705,61 +705,8 @@ public:
         return;
     }
 
-    void mutate(pcg32& eng) {
-        uint32 pos = sample_location(eng);
-        char c = vs->get_nt(pos);
-        MutationInfo m = sample_type(c, eng);
-        if (m.length == 0) {
-            vs->add_substitution(m.nucleo, pos);
-        } else {
-            if (m.length > 0) {
-                std::string nts = new_nucleos(m.length, eng);
-                vs->add_insertion(nts, pos);
-            } else {
-                sint32 pos_ = static_cast<sint32>(pos);
-                sint32 size_ = static_cast<sint32>(vs->size());
-                if ((pos_ - m.length) > size_) m.length = pos_ - size_;
-                uint32 del_size = std::abs(m.length);
-                vs->add_deletion(del_size, pos);
-            }
-            // Update Gamma region bounds:
-            location.update_gamma_regions(m.length, pos);
-        }
-        return;
-    }
-    /*
-     Overloaded for only mutating within a range.
-     It also updates `end` if an indel occurs in the range.
-     Make sure to keep checking for situation where `end < start` (i.e., sequence section
-     is empty).
-     */
-    void mutate(pcg32& eng, const uint32& start, uint32& end) {
-        uint32 pos = sample_location(eng, start, end);
-        char c = vs->get_nt(pos);
-        MutationInfo m = sample_type(c, eng);
-        if (m.length == 0) {
-            vs->add_substitution(m.nucleo, pos);
-        } else {
-            if (m.length > 0) {
-                std::string nts = new_nucleos(m.length, eng);
-                vs->add_insertion(nts, pos);
-            } else {
-                sint32 pos_ = static_cast<sint32>(pos);
-                sint32 size_ = static_cast<sint32>(end + 1);
-                if ((pos_ - m.length) > size_) m.length = pos_ - size_;
-                uint32 del_size = std::abs(m.length);
-                vs->add_deletion(del_size, pos);
-            }
-            // Update Gamma region bounds:
-            location.update_gamma_regions(m.length, pos);
-            // Update end point:
-            end += m.length;
-        }
-        return;
-    }
-
-    // Same as `mutate`, but it returns the change in the sequence rate that results
-    double mutate_rate_change(pcg32& eng) {
+    // Add mutation and return the change in the sequence rate that results
+    double mutate(pcg32& eng) {
         uint32 pos = sample_location(eng);
         char c = vs->get_nt(pos);
         MutationInfo m = sample_type(c, eng);
@@ -792,9 +739,10 @@ public:
      It also updates `end` if an indel occurs in the range.
      Make sure to keep checking for situation where `end < start` (i.e., sequence section
      is empty).
+     `// ***` mark difference between this and previous `mutate` versions
      */
-    double mutate_rate_change(pcg32& eng, const uint32& start, uint32& end) {
-        uint32 pos = sample_location(eng, start, end);
+    double mutate(pcg32& eng, const uint32& start, uint32& end) {
+        uint32 pos = sample_location(eng, start, end, true);  // ***
         char c = vs->get_nt(pos);
         MutationInfo m = sample_type(c, eng);
         double rate_change;
@@ -808,7 +756,7 @@ public:
                 vs->add_insertion(nts, pos);
             } else {
                 sint32 pos_ = static_cast<sint32>(pos);
-                sint32 size_ = static_cast<sint32>(end + 1);
+                sint32 size_ = static_cast<sint32>(end + 1);  // ***
                 if ((pos_ - m.length) > size_) m.length = pos_ - size_;
                 uint32 del_size = std::abs(m.length);
                 rate_change = location.deletion_rate_change(m.length, pos);
@@ -817,7 +765,7 @@ public:
             // Update Gamma region bounds:
             location.update_gamma_regions(m.length, pos);
             // Update end point:
-            end += m.length;
+            end += m.length;  // ***
         }
         return rate_change;
     }
