@@ -68,32 +68,18 @@ inline int one_tree_no_recomb_(VarSet& vars,
     uint32 n_edges = edges.n_rows;
 
     /*
-     Create tree of empty VarSequence objects
+     Create tree of empty VarSequence objects, corresponding tree of
+     [Chunk]MutationSampler objects, and fill in sequence rates:
      */
-    std::vector<VarSequence> var_seqs(tree_size, VarSequence(vars.reference[seq_ind]));
+    std::vector<VarSequence> var_seqs;
+    std::vector<T> samplers;
+    std::vector<double> seq_rates;
+    fill_var_samp_rate_<T>(var_seqs, samplers, seq_rates, tree_size, vars, seq_ind,
+                           sampler_base, gamma_mat);
 
-    /*
-     Create corresponding tree of MutationSampler objects
-     First fill with the base sampler, then fill in pointers to the corresponding
-     VarSequence object, then fill in the gamma matrix.
-     */
-    std::vector<T> samplers(tree_size, sampler_base);
-    for (uint32 i = 0; i < tree_size; i++) {
-        samplers[i].fill_ptrs(var_seqs[i]);
-        samplers[i].fill_gamma(gamma_mat);
-    }
-
-
-    /*
-     Exponential distribution to do the time-jumps along the branch lengths:
-     */
+    // Exponential distribution to do the time-jumps along the branch lengths:
     std::exponential_distribution<double> distr;
 
-    /*
-     Set up vector of overall sequence rates.
-     They should all be the same as the first one to start out.
-     */
-    std::vector<double> seq_rates(tree_size, samplers[0].total_rate());
 
     /*
      Now iterate through the phylogeny:
@@ -106,26 +92,14 @@ inline int one_tree_no_recomb_(VarSet& vars,
         uint32 b1 = edges(i,0);
         uint32 b2 = edges(i,1);
         /*
-         Replace existing mutation information in VarSequence at `b1` with info in the
-         one at `b2`
-         */
-        samplers[b2].vs->replace(*samplers[b1].vs);
-        /*
-         Do the same for the SeqGammas in the sampler:
-         */
-        samplers[b2].location.mr().gammas = samplers[b1].location.mr().gammas;
-        /*
-         Update overall sequence rate:
-         */
-        double& rate(seq_rates[b2]);
-        rate = seq_rates[b1];
-
-        // Set exponential distribution to use this sequence's rate:
-        distr.param(std::exponential_distribution<double>::param_type(rate));
+         Update `samplers`, `seq_rates`, and `distr` for this edge:
+        */
+        update_samplers_rates_distr_<T>(samplers, seq_rates, distr, b1, b2);
 
         /*
          Now do exponential jumps and mutate until you exceed the branch length.
          */
+        double& rate(seq_rates[b2]);
         double amt_time = branch_lens[i];
         double time_jumped = distr(eng);
         double rate_change = 0;
@@ -149,15 +123,8 @@ inline int one_tree_no_recomb_(VarSet& vars,
         /*
          Clear info from VarSequence object at `b1` if it's no longer needed to
          free up some memory.
-         (If it's the last branch length, `b1` will always be a node and thus no longer
-         needed.)
          */
-        bool clear_b1;
-        if (i < (n_edges - 1)) {
-            // Is it absent from any remaining items in the first column?
-            clear_b1 = ! arma::any(edges(arma::span(i+1, edges.n_rows - 1), 0) == b1);
-        } else clear_b1 = true;
-        if (clear_b1) samplers[b1].vs->clear();
+        clear_branches_<T>(samplers, b1, i, edges);
 
         progress.increment(progress_branch_lens[i]);
     }
@@ -182,11 +149,9 @@ inline int one_tree_no_recomb_(VarSet& vars,
  Same thing as above, but with recombination, which means that mutations must
  occur inside a range that changes with indels.
  Only the ending position will change, so the starting position is kept constant.
+
  Look for lines ending in `// ***` for those that differ from the non-recombination
  version.
-
- Look for `// <<<<<<<<<<` for stuff that needs to be updated for the
- recombination version.
  */
 template <typename T>
 inline int one_tree_recomb_(VarSet& vars,
@@ -212,33 +177,18 @@ inline int one_tree_recomb_(VarSet& vars,
     uint32 n_edges = edges.n_rows;
 
     /*
-     Create tree of empty VarSequence objects
+     Create tree of empty VarSequence objects, corresponding tree of
+     [Chunk]MutationSampler objects, and fill in sequence rates:
      */
-    std::vector<VarSequence> var_seqs(tree_size,
-                                      VarSequence(vars.reference[seq_ind]));// <<<<<<<<<<
+    std::vector<VarSequence> var_seqs;
+    std::vector<T> samplers;
+    std::vector<double> seq_rates;
+    fill_var_samp_rate_<T>(var_seqs, samplers, seq_rates, tree_size, vars, seq_ind,
+                           sampler_base, gamma_mat,
+                           true, start, end); // ***
 
-    /*
-     Create corresponding tree of MutationSampler objects
-     First fill with the base sampler, then fill in pointers to the corresponding
-     VarSequence object, then fill in the gamma matrix.
-     */
-    std::vector<T> samplers(tree_size, sampler_base);
-    for (uint32 i = 0; i < tree_size; i++) {
-        samplers[i].fill_ptrs(var_seqs[i]);
-        samplers[i].fill_gamma(gamma_mat);
-    }
-
-
-    /*
-     Exponential distribution to do the time-jumps along the branch lengths:
-     */
+    // Exponential distribution to do the time-jumps along the branch lengths:
     std::exponential_distribution<double> distr;
-
-    /*
-     Set up vector of overall sequence rates.
-     They should all be the same as the first one to start out.
-     */
-    std::vector<double> seq_rates(tree_size, samplers[0].total_rate(start, end));  // ***
 
     /*
      Now iterate through the phylogeny:
@@ -250,31 +200,16 @@ inline int one_tree_recomb_(VarSet& vars,
         // Indices for nodes/tips that the branch length in `branch_lens` refers to
         uint32 b1 = edges(i,0);
         uint32 b2 = edges(i,1);
-        /*
-         Replace existing mutation information in VarSequence at `b1` with info in the
-         one at `b2`
-         */
-        // THIS NEEDS TO BE FIXED:
-        samplers[b2].vs->replace(*samplers[b1].vs);  // <<<<<<<<<<
-        /*
-         Do the same for the SeqGammas in the sampler:
-         */
-        // SO DOES THIS:
-        samplers[b2].location.mr().gammas =
-            samplers[b1].location.mr().gammas;// <<<<<<<<<<
-        /*
-         Update overall sequence rate:
-         */
-        // SO DOES THIS:
-        double& rate(seq_rates[b2]);  // <<<<<<<<<<
-        rate = seq_rates[b1];  // <<<<<<<<<<
 
-        // Set exponential distribution to use this sequence's rate:
-        distr.param(std::exponential_distribution<double>::param_type(rate));
+        /*
+         Update `samplers`, `seq_rates`, and `distr` for this edge:
+         */
+        update_samplers_rates_distr_<T>(samplers, seq_rates, distr, b1, b2);
 
         /*
          Now do exponential jumps and mutate until you exceed the branch length.
          */
+        double& rate(seq_rates[b2]);
         double amt_time = branch_lens[i];
         double time_jumped = distr(eng);
         double rate_change = 0;
@@ -299,19 +234,10 @@ inline int one_tree_recomb_(VarSet& vars,
         /*
          Clear info from VarSequence object at `b1` if it's no longer needed to
          free up some memory.
-         (If it's the last branch length, `b1` will always be a node and thus no longer
-         needed.)
          */
-        bool clear_b1;
-        if (i < (n_edges - 1)) {
-            // Is it absent from any remaining items in the first column?
-            clear_b1 = ! arma::any(edges(arma::span(i+1, edges.n_rows - 1), 0) == b1);
-        } else clear_b1 = true;
-        if (clear_b1) samplers[b1].vs->clear();
+        clear_branches_<T>(samplers, b1, i, edges);
 
         progress.increment(progress_branch_lens[i]);
-
-        n_muts[i] = n_muts_;
     }
 
     /*
@@ -319,7 +245,7 @@ inline int one_tree_recomb_(VarSet& vars,
      */
     for (uint32 i = 0; i < n_tips; i++) {
         uint32 j = spp_order[i];
-        vars[i][seq_ind].replace(var_seqs[j]);  // <<<<<<<<<<
+        vars[i][seq_ind] += var_seqs[j];  // ***
     }
 
     return 0;
