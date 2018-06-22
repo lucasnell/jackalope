@@ -177,11 +177,14 @@ public:
     }
 
     // To return the overall rate for an entire sequence:
-    double total_rate(const uint32& start, uint32 end) const {
+    double total_rate(uint32 start, uint32 end, const bool& ranged) const {
 
         double out = 0;
 
-        if (start >= end && end == 0) end = vs->size() - 1;
+        if (!ranged) {
+            start = 0;
+            end = vs->size() - 1;
+        }
 
         if ((vs->size() - 1) != gammas.regions.back().end) {
             stop("gammas and vs sizes don't match inside MutationRates");
@@ -302,11 +305,10 @@ public:
         return *this;
     }
 
-    inline uint32 sample(pcg32& eng) {
-        return rates.sample(eng);
-    }
-    inline uint32 sample(pcg32& eng, const uint32& start, const uint32& end) {
-        return rates.sample(eng, start, end);
+
+    inline uint32 sample(pcg32& eng, const uint32& start, const uint32& end,
+                         const bool& ranged) {
+        return rates.sample(eng, start, end, ranged);
     }
 
 };
@@ -378,9 +380,10 @@ public:
     /*
      Return the total rate for a VarSequence object
     */
-    inline double total_rate(const uint32& start, const uint32& end) const {
+    inline double total_rate(const uint32& start, const uint32& end,
+                             const bool& ranged) const {
         const MutationRates& mr_(mr());
-        return mr_.total_rate(start, end);
+        return mr_.total_rate(start, end, ranged);
     }
     /*
      To update gamma boundaries when indels occur:
@@ -437,9 +440,10 @@ public:
         return out;
     }
 
-    inline double total_rate(const uint32& start, const uint32& end) const {
+    inline double total_rate(const uint32& start, const uint32& end,
+                             const bool& ranged) const {
         const MutationRates& mr_(mr());
-        return mr_.total_rate(start, end);
+        return mr_.total_rate(start, end, ranged);
     }
 
     inline void update_gamma_regions(const sint32& size_change, const uint32& pos) {
@@ -633,14 +637,13 @@ template <class C>
 class OneSeqMutationSampler {
 
     /*
-     Sample for mutation location based on rates by sequence region and nucleotide.
+     Sample for mutation location based on rates by sequence region and nucleotide,
+     for the whole sequence or a range.
      */
-    inline uint32 sample_location(pcg32& eng) {
-        return location.sample(eng);
-    }
-    // Same thing as above, but for within a range
-    inline uint32 sample_location(pcg32& eng, const uint32& start, const uint32& end) {
-        return location.sample(eng, start, end);
+    inline uint32 sample_location(pcg32& eng,
+                                  const uint32& start = 0, const uint32& end = 0,
+                                  const bool& ranged = false) {
+        return location.sample(eng, start, end, ranged);
     }
 
     /*
@@ -819,8 +822,9 @@ public:
         return rate_change;
     }
 
-    double total_rate(const uint32& start = 0, const uint32& end = 0) {
-        return location.total_rate(start, end);
+    double total_rate(const uint32& start = 0, const uint32& end = 0,
+                      const bool& ranged = false) {
+        return location.total_rate(start, end, ranged);
     }
 };
 
