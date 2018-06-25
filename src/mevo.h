@@ -192,12 +192,21 @@ public:
             stop("gammas and vs sizes don't match inside MutationRates");
         }
 
-        // If there are no mutations, this is pretty easy:
+        /*
+         If there are no mutations or if `end` is before the first mutation,
+         then we don't need to use the `mutations` field at all.
+         (I'm using separate statements to avoid calling `front()` on an empty deque.)
+         */
+        bool use_mutations = true;
         if (vs->mutations.empty()) {
-
+            use_mutations = false;
             if ((vs->ref_seq.nucleos.size() - 1) != gammas.regions.back().end) {
                 stop("gammas and vs ref sizes don't match inside MutationRates");
             }
+        } else if (vs->mutations.front().new_pos > end) {
+            use_mutations = false;
+        }
+        if (!use_mutations) {
 
             uint32 i = start, gam_i = gammas.get_idx(start);
 
@@ -214,6 +223,7 @@ public:
 
             return out;
         }
+
 
         // Index to the first Mutation object not past `start` position:
         uint32 mut_i = vs->get_mut_(start);
