@@ -1,5 +1,7 @@
 context("Testing phylogenetic evolution accuracy")
 
+
+library(testthat)
 library(gemino)
 
 set.seed(1953993132)
@@ -41,17 +43,34 @@ expected <- tree$edge.length / sum(tree$edge.length)
 phylo_sims <- as.list(0:(length(seqs) - 1))
 set.seed(546085105)
 for (i in 0:(length(seqs) - 1)) {
-    phylo_sims[[i+1]] <-
-        gemino:::test_phylo(
-            vars,
-            sampler,
-            seq_ind = i,
-            branch_lens = tree$edge.length,
-            edges = tree$edge,
-            tip_labels = tree$tip.label,
-            ordered_tip_labels = ordered_tip_labels,
-            gamma_mat = gamma_mat
-        )
+    if (i < 50) {
+        phylo_sims[[i+1]] <-
+            gemino:::test_phylo(
+                vars,
+                sampler,
+                seq_ind = i,
+                branch_lens = tree$edge.length,
+                edges = tree$edge,
+                tip_labels = tree$tip.label,
+                ordered_tip_labels = ordered_tip_labels,
+                gamma_mat = gamma_mat
+            )
+    } else {
+        phylo_sims[[i+1]] <-
+            gemino:::test_phylo(
+                vars,
+                sampler,
+                seq_ind = i,
+                branch_lens = tree$edge.length,
+                edges = tree$edge,
+                tip_labels = tree$tip.label,
+                ordered_tip_labels = ordered_tip_labels,
+                gamma_mat = gamma_mat,
+                recombination = TRUE,
+                start = 100,
+                end = 499
+            )
+    }
 }
 phylo_sims <- do.call(rbind, phylo_sims)
 phylo_sims <- t(apply(phylo_sims, 1, function(x) x / sum(x)))
@@ -67,6 +86,52 @@ test_that(paste("mutation counts on phylogeny edges are not significantly",
     p <- pchisq(-2 * sum(log(pvals)), df = 2 * length(pvals))
     expect_gt(p, 0.05)
 })
+
+
+
+# List of data frames describing the mutations for each sequence mutated within a range:
+mut_list <- lapply(0:4, function(var_ind) {
+    df_ <- gemino:::see_mutations(vars, var_ind)
+    return(df_[df_$seq >= 50,])
+})
+mut_df <- do.call(rbind, mut_list)
+
+test_that("Ranged mutations do not occur outside specified range.", {
+    expect_identical(range(mut_df$old_pos), c(100, 499))
+})
+
+
+proper_dels <- logical(5 * 50)
+i <- 1
+for (var_ind in 0:4) {
+    for (seq_ind in 50:99) {
+        mut_df_ <- mut_df[mut_df$var == var_ind & mut_df$seq == seq_ind,]
+        max_ <- max(mut_df_$new_pos)
+        max_possible <- 499 + sum(mut_df_$size_mod)
+
+        if (max_ > max_possible) {
+            if (max_ - max_possible == 1 & tail(mut_df_$size_mod, 1) < 0) {
+                del_size <- abs(tail(mut_df_$size_mod, 1))
+                del_start <- tail(mut_df_$old_pos, 1)
+                if ((del_start + del_size - 1) == 499) {
+                    proper_dels[i] <- TRUE
+                } else proper_dels[i] <- FALSE
+            } else proper_dels[i] <- FALSE
+        } else proper_dels[i] <- TRUE
+        i <- i + 1
+    }
+}
+
+
+test_that("Ranged mutations deal with deletions at the end of sequences properly.", {
+    expect_true(all(proper_dels))
+})
+
+
+
+
+
+
 
 
 # ------------------------------------
@@ -96,6 +161,7 @@ compare_rates <- function(var_ind, seq_ind) {
                                    var_ind = var_ind-1, seq_ind = seq_ind-1,
                                    var_set_sexp = vars, sampler_sexp = sampler)
     rate_r <- get_seq_rate(var_seqs[[var_ind]][seq_ind], rates, start, end)
+    if (rate_cpp != rate_r) cat(sprintf("%i, %i, %i, %i\n", var_ind, seq_ind, start, end))
     return(cbind(rate_cpp, rate_r))
 }
 
@@ -108,7 +174,6 @@ for (var_ind in 1:5) {
         i <- i + 1
     }
 }
-
 
 test_that("Rate method produces accurate results", {
     expect_identical(mat[,1], mat[,2])

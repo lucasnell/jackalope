@@ -217,7 +217,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // see_mutations
-List see_mutations(SEXP vs_, const uint32& var_ind);
+DataFrame see_mutations(SEXP vs_, const uint32& var_ind);
 RcppExport SEXP _gemino_see_mutations(SEXP vs_SEXP, SEXP var_indSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

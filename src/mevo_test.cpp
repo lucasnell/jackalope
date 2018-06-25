@@ -101,31 +101,46 @@ List conv_mut(const Mutation& mut) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-List see_mutations(SEXP vs_, const uint32& var_ind) {
+DataFrame see_mutations(SEXP vs_, const uint32& var_ind) {
 
     XPtr<VarSet> vs(vs_);
-    VarGenome& vg((*vs)[var_ind]);
+    const VarGenome& vg((*vs)[var_ind]);
 
-    List out(vg.size());
+    uint32 n_muts = 0;
+    for (const VarSequence& vs : vg.var_genome) n_muts += vs.mutations.size();
+
+    std::vector<sint32> size_mod;
+    size_mod.reserve(n_muts);
+    std::vector<uint32> old_pos;
+    old_pos.reserve(n_muts);
+    std::vector<uint32> new_pos;
+    new_pos.reserve(n_muts);
+    std::vector<std::string> nucleos;
+    nucleos.reserve(n_muts);
+    std::vector<uint32> vars(n_muts, var_ind);
+    std::vector<uint32> seqs;
+    seqs.reserve(n_muts);
+
     for (uint32 i = 0; i < vg.size(); i++) {
         const VarSequence& vs(vg.var_genome[i]);
-        std::vector<sint32> size_mod;
-        std::vector<uint32> old_pos;
-        std::vector<uint32> new_pos;
-        std::vector<std::string> nucleos;
-        for (uint32 mut_i = 0; mut_i < vs.mutations.size(); ++mut_i) {
-            size_mod.push_back(vs.mutations[mut_i].size_modifier);
-            old_pos.push_back(vs.mutations[mut_i].old_pos);
-            new_pos.push_back(vs.mutations[mut_i].new_pos);
-            nucleos.push_back(vs.mutations[mut_i].nucleos);
+        uint32 n_muts_i = vs.mutations.size();
+        for (uint32 j = 0; j < n_muts_i; ++j) {
+            size_mod.push_back(vs.mutations[j].size_modifier);
+            old_pos.push_back(vs.mutations[j].old_pos);
+            new_pos.push_back(vs.mutations[j].new_pos);
+            nucleos.push_back(vs.mutations[j].nucleos);
+            seqs.push_back(i);
         }
-        DataFrame mutations_i = DataFrame::create(
-            _["size_mod"] = size_mod,
-            _["old_pos"] = old_pos,
-            _["new_pos"] = new_pos,
-            _["nucleos"] = nucleos);
-        out[i] = mutations_i;
     }
+
+    DataFrame out = DataFrame::create(
+        _["var"] = vars,
+        _["seq"] = seqs,
+        _["size_mod"] = size_mod,
+        _["old_pos"] = old_pos,
+        _["new_pos"] = new_pos,
+        _["nucleos"] = nucleos);
+
     return out;
 }
 
