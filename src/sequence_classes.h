@@ -188,34 +188,39 @@ struct Mutation {
     Mutation(uint32 old_pos_, uint32 new_pos_, std::string nucleos_)
         : size_modifier(nucleos_.size() - 1), old_pos(old_pos_),
           new_pos(new_pos_), nucleos(nucleos_) {};
+    Mutation(const Mutation& other)
+        : size_modifier(other.size_modifier), old_pos(other.old_pos),
+          new_pos(other.new_pos), nucleos(other.nucleos) {};
     // For deletions:
     Mutation(uint32 old_pos_, uint32 new_pos_, sint32 size_modifier_)
         : size_modifier(size_modifier_), old_pos(old_pos_),
           new_pos(new_pos_), nucleos("") {};
 
     /*
-    Is this Mutation "less than" another Mutation object?
-    This is used to `std::sort` Mutation objects as well as to compare them like you
-    would an integer.
-    I'm using the old_pos field preferentially bc it should never change based
-    on new mutations.
+     These operators compare Mutation objects.
+     If there is any overlap between the two mutations, then neither > nor <
+     will return true.
+     They are used to determine how and whether to merge VarSequence objects.
     */
     bool operator<(const Mutation& other) const {
-        if (old_pos == other.old_pos) {
-            return new_pos < other.new_pos;
+        // Check for a deletion spanning the distance between the two:
+        if (size_modifier < 0) {
+            uint32 end_pos = old_pos + static_cast<uint32>(std::abs(size_modifier)) - 1;
+            return end_pos < other.old_pos;
         }
         return old_pos < other.old_pos;
     }
-    // Same for greater than and equal to
     bool operator>(const Mutation& other) const {
-        if (old_pos == other.old_pos) {
-            return new_pos > other.new_pos;
+        // Check for a deletion spanning the distance between the two:
+        if (other.size_modifier < 0) {
+            uint32 other_end_pos = other.old_pos +
+                static_cast<uint32>(std::abs(other.size_modifier)) - 1;
+            return old_pos > other_end_pos;
         }
         return old_pos > other.old_pos;
     }
-    bool operator==(const Mutation& other) const {
-        return old_pos == other.old_pos;
-    }
+
+
     // For easily outputting mutation sequence
     const char& operator[](const uint32& idx) const {
         return nucleos[idx];
@@ -284,6 +289,62 @@ public:
         mutations = other.mutations;
         seq_size = other.seq_size;
         return;
+    }
+
+    // Add existing mutation information in another `VarSequence` to this one
+    VarSequence& operator+=(const VarSequence& other) {
+        // If either is empty, then this is easy:
+        if (other.mutations.empty()) return *this;
+        if (mutations.empty()) {
+            mutations = other.mutations;
+            seq_size = other.seq_size;
+            return *this;
+        }
+
+        // Combine sequence sizes:
+        sint32 diff = static_cast<sint32>(other.seq_size) -
+            static_cast<sint32>(ref_seq.size());
+        seq_size += diff;
+
+        /*
+         Now combine `mutations` deques.
+         Process differently depending on whether `other` has its mutations before
+         or after this one's.
+         If they overlap, then throw an error.
+         */
+        // `other` has mutations before this one:
+        bool other_is_before = other.mutations.back() < mutations.front();
+        // `other` has mutations after this one:
+        bool other_is_after = other.mutations.front() > mutations.back();
+        if (other_is_before) {
+            // Adjust current mutations' `new_pos` fields (using `diff` from above):
+            auto mut_ = mutations.begin();
+            for (; mut_ != mutations.end(); ++mut_) {
+                (*mut_).new_pos += diff;
+            }
+            // Now add the new mutations:
+            auto mut = other.mutations.rbegin();  // note the use of reverse iterator!
+            for (; mut != other.mutations.rend(); ++mut) {
+                // Add the new mutation to the front of `(*this).mutations`:
+                mutations.push_front(*mut);
+            }
+        } else if (other_is_after) {
+            // The amount to adjust the new mutation's `new_pos` fields:
+            diff = static_cast<sint32>(seq_size) - static_cast<sint32>(ref_seq.size());
+            auto mut = other.mutations.begin();
+            for (; mut != other.mutations.end(); ++mut) {
+                // Add the new mutation to the back of `(*this).mutations`:
+                mutations.push_back(*mut);
+                // Adjust the `new_pos` field:
+                mutations.back().new_pos += diff;
+            }
+        } else {
+            stop("\nOverlapping VarSequence.mutations in +=. ",
+                 "Note that when combining VarSequence objects, you must ",
+                 "do it sequentially, either from the front or back.");
+        }
+
+        return *this;
     }
 
     /*

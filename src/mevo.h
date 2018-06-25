@@ -177,11 +177,14 @@ public:
     }
 
     // To return the overall rate for an entire sequence:
-    double total_rate(const uint32& start, uint32 end) const {
+    double total_rate(uint32 start, uint32 end, const bool& ranged) const {
 
         double out = 0;
 
-        if (start >= end && end == 0) end = vs->size() - 1;
+        if (!ranged) {
+            start = 0;
+            end = vs->size() - 1;
+        }
 
         if ((vs->size() - 1) != gammas.regions.back().end) {
             stop("gammas and vs sizes don't match inside MutationRates");
@@ -302,11 +305,10 @@ public:
         return *this;
     }
 
-    inline uint32 sample(pcg32& eng) {
-        return rates.sample(eng);
-    }
-    inline uint32 sample(pcg32& eng, const uint32& start, const uint32& end) {
-        return rates.sample(eng, start, end);
+
+    inline uint32 sample(pcg32& eng, const uint32& start, const uint32& end,
+                         const bool& ranged) {
+        return rates.sample(eng, start, end, ranged);
     }
 
 };
@@ -378,9 +380,10 @@ public:
     /*
      Return the total rate for a VarSequence object
     */
-    inline double total_rate(const uint32& start, const uint32& end) const {
+    inline double total_rate(const uint32& start, const uint32& end,
+                             const bool& ranged) const {
         const MutationRates& mr_(mr());
-        return mr_.total_rate(start, end);
+        return mr_.total_rate(start, end, ranged);
     }
     /*
      To update gamma boundaries when indels occur:
@@ -437,9 +440,10 @@ public:
         return out;
     }
 
-    inline double total_rate(const uint32& start, const uint32& end) const {
+    inline double total_rate(const uint32& start, const uint32& end,
+                             const bool& ranged) const {
         const MutationRates& mr_(mr());
-        return mr_.total_rate(start, end);
+        return mr_.total_rate(start, end, ranged);
     }
 
     inline void update_gamma_regions(const sint32& size_change, const uint32& pos) {
@@ -633,14 +637,13 @@ template <class C>
 class OneSeqMutationSampler {
 
     /*
-     Sample for mutation location based on rates by sequence region and nucleotide.
+     Sample for mutation location based on rates by sequence region and nucleotide,
+     for the whole sequence or a range.
      */
-    inline uint32 sample_location(pcg32& eng) {
-        return location.sample(eng);
-    }
-    // Same thing as above, but for within a range
-    inline uint32 sample_location(pcg32& eng, const uint32& start, const uint32& end) {
-        return location.sample(eng, start, end);
+    inline uint32 sample_location(pcg32& eng,
+                                  const uint32& start = 0, const uint32& end = 0,
+                                  const bool& ranged = false) {
+        return location.sample(eng, start, end, ranged);
     }
 
     /*
@@ -702,61 +705,8 @@ public:
         return;
     }
 
-    void mutate(pcg32& eng) {
-        uint32 pos = sample_location(eng);
-        char c = vs->get_nt(pos);
-        MutationInfo m = sample_type(c, eng);
-        if (m.length == 0) {
-            vs->add_substitution(m.nucleo, pos);
-        } else {
-            if (m.length > 0) {
-                std::string nts = new_nucleos(m.length, eng);
-                vs->add_insertion(nts, pos);
-            } else {
-                sint32 pos_ = static_cast<sint32>(pos);
-                sint32 size_ = static_cast<sint32>(vs->size());
-                if ((pos_ - m.length) > size_) m.length = pos_ - size_;
-                uint32 del_size = std::abs(m.length);
-                vs->add_deletion(del_size, pos);
-            }
-            // Update Gamma region bounds:
-            location.update_gamma_regions(m.length, pos);
-        }
-        return;
-    }
-    /*
-     Overloaded for only mutating within a range.
-     It also updates `end` if an indel occurs in the range.
-     Make sure to keep checking for situation where `end < start` (i.e., sequence section
-     is empty).
-     */
-    void mutate(pcg32& eng, const uint32& start, uint32& end) {
-        uint32 pos = sample_location(eng, start, end);
-        char c = vs->get_nt(pos);
-        MutationInfo m = sample_type(c, eng);
-        if (m.length == 0) {
-            vs->add_substitution(m.nucleo, pos);
-        } else {
-            if (m.length > 0) {
-                std::string nts = new_nucleos(m.length, eng);
-                vs->add_insertion(nts, pos);
-            } else {
-                sint32 pos_ = static_cast<sint32>(pos);
-                sint32 size_ = static_cast<sint32>(end + 1);
-                if ((pos_ - m.length) > size_) m.length = pos_ - size_;
-                uint32 del_size = std::abs(m.length);
-                vs->add_deletion(del_size, pos);
-            }
-            // Update Gamma region bounds:
-            location.update_gamma_regions(m.length, pos);
-            // Update end point:
-            end += m.length;
-        }
-        return;
-    }
-
-    // Same as `mutate`, but it returns the change in the sequence rate that results
-    double mutate_rate_change(pcg32& eng) {
+    // Add mutation and return the change in the sequence rate that results
+    double mutate(pcg32& eng) {
         uint32 pos = sample_location(eng);
         char c = vs->get_nt(pos);
         MutationInfo m = sample_type(c, eng);
@@ -770,9 +720,9 @@ public:
                 rate_change = location.insertion_rate_change(nts, pos);
                 vs->add_insertion(nts, pos);
             } else {
-                sint32 pos_ = static_cast<sint32>(pos);
-                sint32 size_ = static_cast<sint32>(vs->size());
-                if ((pos_ - m.length) > size_) m.length = pos_ - size_;
+                sint64 pos_ = static_cast<sint64>(pos);
+                sint64 size_ = static_cast<sint64>(vs->size());
+                if (pos_ - m.length > size_) m.length = static_cast<sint32>(pos_-size_);
                 uint32 del_size = std::abs(m.length);
                 rate_change = location.deletion_rate_change(m.length, pos);
                 vs->add_deletion(del_size, pos);
@@ -789,9 +739,10 @@ public:
      It also updates `end` if an indel occurs in the range.
      Make sure to keep checking for situation where `end < start` (i.e., sequence section
      is empty).
+     `// ***` mark difference between this and previous `mutate` versions
      */
-    double mutate_rate_change(pcg32& eng, const uint32& start, uint32& end) {
-        uint32 pos = sample_location(eng, start, end);
+    double mutate(pcg32& eng, const uint32& start, sint64& end) {
+        uint32 pos = sample_location(eng, start, static_cast<uint32>(end), true);  // ***
         char c = vs->get_nt(pos);
         MutationInfo m = sample_type(c, eng);
         double rate_change;
@@ -804,9 +755,9 @@ public:
                 rate_change = location.insertion_rate_change(nts, pos);
                 vs->add_insertion(nts, pos);
             } else {
-                sint32 pos_ = static_cast<sint32>(pos);
-                sint32 size_ = static_cast<sint32>(end + 1);
-                if ((pos_ - m.length) > size_) m.length = pos_ - size_;
+                sint64 pos_ = static_cast<sint64>(pos);
+                sint64 size_ = end + 1;  // ***
+                if (pos_ - m.length > size_) m.length = static_cast<sint32>(pos_-size_);
                 uint32 del_size = std::abs(m.length);
                 rate_change = location.deletion_rate_change(m.length, pos);
                 vs->add_deletion(del_size, pos);
@@ -814,13 +765,14 @@ public:
             // Update Gamma region bounds:
             location.update_gamma_regions(m.length, pos);
             // Update end point:
-            end += m.length;
+            end += static_cast<sint64>(m.length);  // ***
         }
         return rate_change;
     }
 
-    double total_rate(const uint32& start = 0, const uint32& end = 0) {
-        return location.total_rate(start, end);
+    double total_rate(const uint32& start = 0, const uint32& end = 0,
+                      const bool& ranged = false) {
+        return location.total_rate(start, end, ranged);
     }
 };
 
