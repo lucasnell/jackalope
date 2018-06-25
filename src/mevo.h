@@ -181,6 +181,8 @@ public:
 
         double out = 0;
 
+        if (vs->size() == 0) return out;
+
         if (!ranged) {
             start = 0;
             end = vs->size() - 1;
@@ -742,6 +744,7 @@ public:
      `// ***` mark difference between this and previous `mutate` versions
      */
     double mutate(pcg32& eng, const uint32& start, sint64& end) {
+        if (end < 0) stop("end is negative in [Chunk]MutationSampler.mutate");
         uint32 pos = sample_location(eng, start, static_cast<uint32>(end), true);  // ***
         char c = vs->get_nt(pos);
         MutationInfo m = sample_type(c, eng);
