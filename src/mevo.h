@@ -720,9 +720,9 @@ public:
                 rate_change = location.insertion_rate_change(nts, pos);
                 vs->add_insertion(nts, pos);
             } else {
-                sint32 pos_ = static_cast<sint32>(pos);
-                sint32 size_ = static_cast<sint32>(vs->size());
-                if ((pos_ - m.length) > size_) m.length = pos_ - size_;
+                sint64 pos_ = static_cast<sint64>(pos);
+                sint64 size_ = static_cast<sint64>(vs->size());
+                if (pos_ - m.length > size_) m.length = static_cast<sint32>(pos_-size_);
                 uint32 del_size = std::abs(m.length);
                 rate_change = location.deletion_rate_change(m.length, pos);
                 vs->add_deletion(del_size, pos);
@@ -741,8 +741,8 @@ public:
      is empty).
      `// ***` mark difference between this and previous `mutate` versions
      */
-    double mutate(pcg32& eng, const uint32& start, uint32& end) {
-        uint32 pos = sample_location(eng, start, end, true);  // ***
+    double mutate(pcg32& eng, const uint32& start, sint64& end) {
+        uint32 pos = sample_location(eng, start, static_cast<uint32>(end), true);  // ***
         char c = vs->get_nt(pos);
         MutationInfo m = sample_type(c, eng);
         double rate_change;
@@ -755,9 +755,9 @@ public:
                 rate_change = location.insertion_rate_change(nts, pos);
                 vs->add_insertion(nts, pos);
             } else {
-                sint32 pos_ = static_cast<sint32>(pos);
-                sint32 size_ = static_cast<sint32>(end + 1);  // ***
-                if ((pos_ - m.length) > size_) m.length = pos_ - size_;
+                sint64 pos_ = static_cast<sint64>(pos);
+                sint64 size_ = end + 1;  // ***
+                if (pos_ - m.length > size_) m.length = static_cast<sint32>(pos_-size_);
                 uint32 del_size = std::abs(m.length);
                 rate_change = location.deletion_rate_change(m.length, pos);
                 vs->add_deletion(del_size, pos);
@@ -765,7 +765,7 @@ public:
             // Update Gamma region bounds:
             location.update_gamma_regions(m.length, pos);
             // Update end point:
-            end += m.length;  // ***
+            end += static_cast<sint64>(m.length);  // ***
         }
         return rate_change;
     }

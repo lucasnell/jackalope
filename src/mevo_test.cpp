@@ -26,6 +26,7 @@
 #include "table_sampler.h"  // table method of sampling
 #include "weighted_reservoir.h"  // weighted reservoir sampling
 #include "mevo_gammas.h"  // SequenceGammas class
+#include "mevo_phylo.h"  // match_ and template functions
 #include "mevo_rate_matrices.h"  // rate matrix functions
 
 using namespace Rcpp;
@@ -317,7 +318,7 @@ double test_rate(const uint32& start, const uint32& end,
     sampler->fill_ptrs(vs);
     sampler->fill_gamma(gamma_mat);
 
-    double out = sampler->total_rate(start, end);
+    double out = sampler->total_rate(start, end, true);
 
     return out;
 
@@ -349,24 +350,14 @@ std::vector<uint32> test_phylo(SEXP& vs_sexp,
                                const std::vector<std::string>& tip_labels,
                                const std::vector<std::string>& ordered_tip_labels,
                                const arma::mat& gamma_mat,
-                               const bool& display_progress = false) {
+                               const bool& recombination = false,
+                               const uint32& start = 0,
+                               const sint64& end = 0) {
 
     XPtr<VarSet> vs_xptr(vs_sexp);
     XPtr<ChunkMutationSampler> sampler_base_xptr(sampler_base_sexp);
 
-    /*
-    Setting up a sum of branch lengths to use for the progress bar.
-    Since it gets cast to an integer, I process each branch length to be an integer >= 1.
-    */
-    std::vector<uint32> progress_branch_lens(branch_lens.size());
-    double branch_min = *std::min_element(branch_lens.begin(), branch_lens.end());
-    for (uint32 i = 0; i < progress_branch_lens.size(); i++) {
-        progress_branch_lens[i] = static_cast<uint32>(branch_lens[i] / branch_min);
-    }
-    uint32 total_branches = std::accumulate(progress_branch_lens.begin(),
-                                            progress_branch_lens.end(), 0);
-
-    Progress progress(total_branches, display_progress);
+    Progress progress(100, false);
 
     if (gamma_mat(gamma_mat.n_rows-1,0) != (*vs_xptr)[0][seq_ind].size()) {
         stop("gamma_mat doesn't reach the end of the sequence.");
@@ -393,9 +384,9 @@ std::vector<uint32> test_phylo(SEXP& vs_sexp,
 
     pcg32 eng = seeded_pcg();
 
-    int code = one_tree_no_recomb_<ChunkMutationSampler>(
+    int code = one_tree_<ChunkMutationSampler>(
         *vs_xptr, *sampler_base_xptr, seq_ind, branch_lens, edges, spp_order,
-        gamma_mat, eng, progress, progress_branch_lens, n_muts
+        gamma_mat, eng, progress, n_muts, recombination, start, end
     );
 
     // Make sure this happens outside of multithreaded code
