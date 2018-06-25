@@ -30,6 +30,34 @@
 using namespace Rcpp;
 
 
+
+
+
+/*
+This function produces a vector of which indices in the phylogeny tips should go first.
+This effectively ensures that the tip labels line up with the output from this function.
+It's equivalent to the following R code, where `ordered_tip_labels` is a character vector
+of the tip names in the order you always want them:
+`spp_order <- match(ordered_tip_labels, phy$tip.label)`
+*/
+std::vector<uint32> match_(const std::vector<std::string>& ordered_tip_labels,
+                           const std::vector<std::string>& tip_labels) {
+
+    std::vector<uint32> spp_order(ordered_tip_labels.size());
+
+    for (uint32 i = 0; i < spp_order.size(); i++) {
+        auto iter = std::find(tip_labels.begin(), tip_labels.end(),
+                              ordered_tip_labels[i]);
+        if (iter == tip_labels.end()) stop("item in `tip_labels` not found.");
+        spp_order[i] = iter - tip_labels.begin();
+    }
+
+    return spp_order;
+}
+
+
+
+
 /*
  Update `samplers`, `seq_rates`, and `distr` for a given edge.
 
