@@ -208,7 +208,7 @@ int one_tree_(VarSet& vars,
               std::vector<uint32>& n_muts,
               const bool& recombination = false,
               const uint32& start = 0,
-              sint64 end = 0) {
+              const sint64& end = 0) {
 
 
     // # tips = # variants
@@ -217,6 +217,9 @@ int one_tree_(VarSet& vars,
     uint32 tree_size = edges.max() + 1;
     // Number of edges = the number of connections between nodes/tips
     uint32 n_edges = edges.n_rows;
+
+    // `end` values for each tree node and tip:
+    std::vector<sint64> ends(tree_size, end);
 
     /*
      Create tree of empty VarSequence objects, corresponding tree of
@@ -261,14 +264,16 @@ int one_tree_(VarSet& vars,
         double time_jumped = distr(eng);
         double rate_change = 0;
         if (recombination) {
-            sint64 start_ = static_cast<sint64>(start);
-            while (time_jumped <= amt_time && end >= start_) {
+            sint64& end_(ends[b2]);
+            end_ = ends[b1];
+            const sint64 start_ = static_cast<sint64>(start);
+            while (time_jumped <= amt_time && end_ >= start_) {
                 /*
                  Add mutation here, outputting how much the overall sequence rate should
                  change:
-                 (`end` is automatically adjusted for indels)
+                 (`end_` is automatically adjusted for indels)
                  */
-                rate_change = samplers[b2].mutate(eng, start, end);
+                rate_change = samplers[b2].mutate(eng, start, end_);
                 n_muts[i]++;
                 /*
                  Adjust the overall sequence rate, then update the exponential
