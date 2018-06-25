@@ -296,68 +296,6 @@ void add_deletion(SEXP vs_, const uint32& var_ind,
 
 
 
-//' Add many mutations (> 1,000) to a VarSet object from R.
-//'
-//' `min_muts` and `max_muts` give range of # mutations per variant sequence.
-//'
-//' Inner function used for testing.
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-void many_mutations(SEXP vs_,
-                    const double& min_muts,
-                    const double& max_muts) {
-
-    XPtr<VarSet> vs_xptr(vs_);
-    VarSet& vset(*vs_xptr);
-
-    std::string bases = "TCAG";
-
-    double prev_type;
-
-    for (uint32 v = 0; v < vset.size(); v++) {
-        for (uint32 s = 0; s < vset.reference.size(); s++) {
-            VarSequence& vs(vset[v][s]);
-            uint32 n_muts = static_cast<uint32>(R::runif(min_muts, max_muts+1));
-            if (static_cast<double>(n_muts) > max_muts) n_muts = max_muts;
-            uint32 m = 0;
-            uint32 max_size = vs.seq_size;
-            while (m < n_muts && max_size > 0) {
-                uint32 pos = static_cast<uint32>(R::unif_rand() *
-                    static_cast<double>(max_size));
-                double rnd = R::unif_rand();
-                if (rnd < 0.5) {
-                    char str = bases[static_cast<uint32>(R::runif(0,4))];
-                    vs.add_substitution(str, pos);
-                } else if (rnd < 0.75) {
-                    uint32 size = static_cast<uint32>(R::rexp(2.0) + 1.0);
-                    if (size > 10) size = 10;
-                    std::string str(size + 1, 'x');
-                    for (uint32 i = 0; i < str.size(); i++) {
-                        str[i] = bases[static_cast<uint32>(R::runif(0,4))];
-                    }
-                    vs.add_insertion(str, pos);
-                } else {
-                    uint32 size = static_cast<uint32>(R::rexp(2.0) + 1.0);
-                    if (size > 10) size = 10;
-                    if (size > (max_size - pos)) size = max_size - pos;
-                    vs.add_deletion(size, pos);
-                }
-                prev_type = rnd;
-                ++m;
-                max_size = vs.seq_size;
-            }
-        }
-    }
-
-    return;
-}
-
-
-
-
 //' Get a rate for given start and end points of a VarSequence.
 //'
 //' @noRd
