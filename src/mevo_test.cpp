@@ -218,6 +218,9 @@ List examine_mutations(SEXP var_set_sexp, const uint32& var_ind, const uint32& s
 
 //' Faster version of table function to count the number of mutations in Gamma regions.
 //'
+//' @param gamma_ends Vector of endpoints for gamma regions
+//' @param positions Vector of positions that you want to bin into gamma regions.
+//'
 //'
 //'
 //[[Rcpp::export]]

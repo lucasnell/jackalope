@@ -105,6 +105,8 @@ digest_reference <- function(dna_set_in, enzyme_names, n_cores, enz_list, in_pla
 #'
 #' @examples
 #'
+#' \dontrun{
+#'
 #' ref_genome <- dna_set$new(rando_seqs(100, mean_len = 1e3, sd_len = 1e2))
 #' digest(ref_genome, 'ApeKI', n_cores = 1, in_place = TRUE)
 #' ref_genome
@@ -120,6 +122,8 @@ digest_reference <- function(dna_set_in, enzyme_names, n_cores, enz_list, in_pla
 #' # To see the changes...
 #' variants_obj
 #'
+#' }
+#'
 digest <- function(object, enzyme_names, n_cores = 1,
                    chunk_size = 1000,
                    enz_list = binding_sites, in_place = FALSE) {
@@ -134,9 +138,9 @@ digest <- function(object, enzyme_names, n_cores = 1,
                    "See output above for the names that are present."))
     }
 
-    if (is(object, 'dna_set')) {
+    if (inherits(object, 'dna_set')) {
         digest_reference(object, enzyme_names, n_cores, enz_list, in_place)
-    } else if (is(object, 'variants')) {
+    } else if (inherits(object, 'variants')) {
         digest_variants(object, enzyme_names, n_cores, chunk_size, enz_list, in_place)
     } else {
         stop("Input object must be a dna_set or variants object.")

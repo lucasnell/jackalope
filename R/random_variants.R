@@ -24,6 +24,10 @@
 #'     probabilities for each row in the \code{combo_mat} field matrix.}
 #' }
 #'
+#' @importFrom stats dbeta
+#' @importFrom stats density
+#' @importFrom stats optim
+#'
 #' @noRd
 #'
 #'
@@ -105,7 +109,7 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
 
 #' Construct a \code{VarSet} object from a reference genome and summary statistics.
 #'
-#' This function creates a \code{\link{VarSet}} object, which is designed to be a
+#' This function creates a \code{VarSet} object, which is designed to be a
 #' low-memory way to store variants.
 #' (The variants class also prevents what might otherwise be an annoyingly long list
 #' from ever printing in the console.)
@@ -137,9 +141,8 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
 #' @param alpha A numeric threshold placed on the algorithm used to find new locations.
 #'     This is not recommended to be changed. Defaults to 0.8.
 #'
-#' @return A \code{\link{variants}} object.
+#' @return A \code{VarSet} object.
 #'
-#' @seealso \code{\link{variants}}
 #'
 #' @references
 #' Sung, W., M. S. Ackerman, M. M. Dillon, T. G. Platt, C. Fuqua, V. S. Cooper, and M.
@@ -148,11 +151,13 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
 #' *G3: Genes|Genomes|Genetics* __6__:2583-2591.
 #'
 #' @examples
+#' \dontrun{
 #' n_vars <- 10
 #' dna_set_in <- dna_set$new(rando_seqs(100, 100))
 #' set.seed(1)
 #' varseq_out <- random_variants(dna_set_in, n_vars,
 #'                               theta_w = 0.0045, theta_pi = 0.005)
+#' }
 #'
 random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
                             indel_probs = exp(-1:-10),

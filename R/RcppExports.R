@@ -61,7 +61,9 @@ filter_sequences <- function(ref_, min_seq_size = 0L, out_seq_prop = 0) {
 #'
 #' @examples
 #'
+#' \dontrun{
 #' genome <- create_genome(10, 100e6, 10e6, equil_freqs = c(0.1, 0.2, 0.3, 0.4))
+#' }
 #'
 create_genome <- function(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0), n_cores = 1L) {
     .Call(`_gemino_create_genome`, n_seqs, len_mean, len_sd, equil_freqs, n_cores)
@@ -78,7 +80,9 @@ create_genome <- function(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0)
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' randos <- rando_seqs(10, 1000, 10)
+#' }
 #'
 rando_seqs <- function(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0), n_cores = 1L) {
     .Call(`_gemino_rando_seqs`, n_seqs, len_mean, len_sd, equil_freqs, n_cores)
@@ -299,6 +303,9 @@ examine_mutations <- function(var_set_sexp, var_ind, seq_ind) {
 }
 
 #' Faster version of table function to count the number of mutations in Gamma regions.
+#'
+#' @param gamma_ends Vector of endpoints for gamma regions
+#' @param positions Vector of positions that you want to bin into gamma regions.
 #'
 #'
 #'
