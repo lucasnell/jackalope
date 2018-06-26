@@ -16,10 +16,11 @@
 #' @export
 #'
 #' @examples
-#'
+#' \dontrun{
 #' dna_set$new(c("AACT", "TGGCA", "AAAAAATTTTTT"), LETTERS[1:3])
+#' }
 #'
-#' @format An \code{\link{R6Class}} generator object
+#' @format An \code{\link[R6]{R6Class}} generator object
 #'
 dna_set <- R6::R6Class(
     "dna_set",
@@ -166,7 +167,7 @@ dna_set <- R6::R6Class(
 #'
 #' @export
 #'
-#' @format An \code{\link{R6Class}} generator object
+#' @format An \code{\link[R6]{R6Class}} generator object
 #'
 variants <- R6::R6Class(
     "variants",

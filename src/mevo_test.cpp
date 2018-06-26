@@ -2,7 +2,9 @@
 /*
  ****************************************************
 
- Functions for testing molecular evolution code
+ Functions for testing molecular evolution code.
+ These functions are R versions of what would normally be run entirely from C++.
+ This is to test the output in R using the testthat package.
 
  ****************************************************
  */
@@ -24,6 +26,7 @@
 #include "table_sampler.h"  // table method of sampling
 #include "weighted_reservoir.h"  // weighted reservoir sampling
 #include "mevo_gammas.h"  // SequenceGammas class
+#include "mevo_phylo.h"  // match_ and template functions
 #include "mevo_rate_matrices.h"  // rate matrix functions
 
 using namespace Rcpp;
@@ -69,7 +72,8 @@ void test_sampling(SEXP& vs_sexp, const uint32& N,
         if (Progress::check_abort()) return;
         p.increment(); // update progress
         if (vs.size() == 0) return;
-        ms.mutate(eng);
+        // Mutating and ignoring the rate change that it outputs:
+        static_cast<void>(ms.mutate(eng));
     }
 
     return;
@@ -97,31 +101,46 @@ List conv_mut(const Mutation& mut) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-List see_mutations(SEXP vs_, const uint32& var_ind) {
+DataFrame see_mutations(SEXP vs_, const uint32& var_ind) {
 
     XPtr<VarSet> vs(vs_);
-    VarGenome& vg((*vs)[var_ind]);
+    const VarGenome& vg((*vs)[var_ind]);
 
-    List out(vg.size());
+    uint32 n_muts = 0;
+    for (const VarSequence& vs : vg.var_genome) n_muts += vs.mutations.size();
+
+    std::vector<sint32> size_mod;
+    size_mod.reserve(n_muts);
+    std::vector<uint32> old_pos;
+    old_pos.reserve(n_muts);
+    std::vector<uint32> new_pos;
+    new_pos.reserve(n_muts);
+    std::vector<std::string> nucleos;
+    nucleos.reserve(n_muts);
+    std::vector<uint32> vars(n_muts, var_ind);
+    std::vector<uint32> seqs;
+    seqs.reserve(n_muts);
+
     for (uint32 i = 0; i < vg.size(); i++) {
         const VarSequence& vs(vg.var_genome[i]);
-        std::vector<sint32> size_mod;
-        std::vector<uint32> old_pos;
-        std::vector<uint32> new_pos;
-        std::vector<std::string> nucleos;
-        for (uint32 mut_i = 0; mut_i < vs.mutations.size(); ++mut_i) {
-            size_mod.push_back(vs.mutations[mut_i].size_modifier);
-            old_pos.push_back(vs.mutations[mut_i].old_pos);
-            new_pos.push_back(vs.mutations[mut_i].new_pos);
-            nucleos.push_back(vs.mutations[mut_i].nucleos);
+        uint32 n_muts_i = vs.mutations.size();
+        for (uint32 j = 0; j < n_muts_i; ++j) {
+            size_mod.push_back(vs.mutations[j].size_modifier);
+            old_pos.push_back(vs.mutations[j].old_pos);
+            new_pos.push_back(vs.mutations[j].new_pos);
+            nucleos.push_back(vs.mutations[j].nucleos);
+            seqs.push_back(i);
         }
-        DataFrame mutations_i = DataFrame::create(
-            _["size_mod"] = size_mod,
-            _["old_pos"] = old_pos,
-            _["new_pos"] = new_pos,
-            _["nucleos"] = nucleos);
-        out[i] = mutations_i;
     }
+
+    DataFrame out = DataFrame::create(
+        _["var"] = vars,
+        _["seq"] = seqs,
+        _["size_mod"] = size_mod,
+        _["old_pos"] = old_pos,
+        _["new_pos"] = new_pos,
+        _["nucleos"] = nucleos);
+
     return out;
 }
 
@@ -198,6 +217,9 @@ List examine_mutations(SEXP var_set_sexp, const uint32& var_ind, const uint32& s
 
 
 //' Faster version of table function to count the number of mutations in Gamma regions.
+//'
+//' @param gamma_ends Vector of endpoints for gamma regions
+//' @param positions Vector of positions that you want to bin into gamma regions.
 //'
 //'
 //'
@@ -293,61 +315,113 @@ void add_deletion(SEXP vs_, const uint32& var_ind,
 
 
 
-//' Add many mutations (> 1,000) to a VarSet object from R.
-//'
-//' `min_muts` and `max_muts` give range of # mutations per variant sequence.
-//'
-//' Inner function used for testing.
-//'
+//' Get a rate for given start and end points of a VarSequence.
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
-void many_mutations(SEXP vs_,
-                    const double& min_muts,
-                    const double& max_muts) {
+double test_rate(const uint32& start, const uint32& end,
+                 const uint32& var_ind, const uint32& seq_ind,
+                 SEXP var_set_sexp, SEXP sampler_sexp) {
 
-    XPtr<VarSet> vs_xptr(vs_);
-    VarSet& vset(*vs_xptr);
+    XPtr<VarSet> var_set(var_set_sexp);
+    VarSequence& vs((*var_set)[var_ind][seq_ind]);
 
-    std::string bases = "TCAG";
+    XPtr<ChunkMutationSampler> sampler(sampler_sexp);
 
-    double prev_type;
+    arma::mat gamma_mat(1, 2);
+    gamma_mat(0,0) = vs.size();
+    gamma_mat(0,1) = 1;
 
-    for (uint32 v = 0; v < vset.size(); v++) {
-        for (uint32 s = 0; s < vset.reference.size(); s++) {
-            VarSequence& vs(vset[v][s]);
-            uint32 n_muts = static_cast<uint32>(R::runif(min_muts, max_muts+1));
-            if (static_cast<double>(n_muts) > max_muts) n_muts = max_muts;
-            uint32 m = 0;
-            uint32 max_size = vs.seq_size;
-            while (m < n_muts && max_size > 0) {
-                uint32 pos = static_cast<uint32>(R::unif_rand() *
-                    static_cast<double>(max_size));
-                double rnd = R::unif_rand();
-                if (rnd < 0.5) {
-                    char str = bases[static_cast<uint32>(R::runif(0,4))];
-                    vs.add_substitution(str, pos);
-                } else if (rnd < 0.75) {
-                    uint32 size = static_cast<uint32>(R::rexp(2.0) + 1.0);
-                    if (size > 10) size = 10;
-                    std::string str(size + 1, 'x');
-                    for (uint32 i = 0; i < str.size(); i++) {
-                        str[i] = bases[static_cast<uint32>(R::runif(0,4))];
-                    }
-                    vs.add_insertion(str, pos);
-                } else {
-                    uint32 size = static_cast<uint32>(R::rexp(2.0) + 1.0);
-                    if (size > 10) size = 10;
-                    if (size > (max_size - pos)) size = max_size - pos;
-                    vs.add_deletion(size, pos);
-                }
-                prev_type = rnd;
-                ++m;
-                max_size = vs.seq_size;
-            }
-        }
+    sampler->fill_ptrs(vs);
+    sampler->fill_gamma(gamma_mat);
+
+    double out = sampler->total_rate(start, end, true);
+
+    return out;
+
+}
+
+
+
+
+
+
+//' Test sampling based on an evolutionary model.
+//'
+//' Make SURE `sampler_base_sexp` is a `ChunkMutationSampler`, not a `MutationSampler`!
+//'
+//' @param tip_labels Character vector of the actual phylogeny's tip labels.
+//' @param ordered_tip_labels Character vector of the tip labels in the order
+//'     you want them.
+//'
+//' @return A vector of integers indicating the number of mutations per edge.
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+std::vector<uint32> test_phylo(SEXP& vs_sexp,
+                               SEXP& sampler_base_sexp,
+                               const uint32& seq_ind,
+                               const std::vector<double>& branch_lens,
+                               arma::Mat<uint32> edges,
+                               const std::vector<std::string>& tip_labels,
+                               const std::vector<std::string>& ordered_tip_labels,
+                               const arma::mat& gamma_mat,
+                               const bool& recombination = false,
+                               const uint32& start = 0,
+                               const sint64& end = 0) {
+
+    XPtr<VarSet> vs_xptr(vs_sexp);
+    XPtr<ChunkMutationSampler> sampler_base_xptr(sampler_base_sexp);
+
+    Progress progress(100, false);
+
+    if (gamma_mat(gamma_mat.n_rows-1,0) != (*vs_xptr)[0][seq_ind].size()) {
+        stop("gamma_mat doesn't reach the end of the sequence.");
     }
 
-    return;
+    uint32 n_tips = vs_xptr->size();
+    if (ordered_tip_labels.size() != n_tips || tip_labels.size() != n_tips) {
+        stop("ordered_tip_labels and tip_labels must have the same length as ",
+             "# variants.");
+    }
+
+    std::vector<uint32> spp_order = match_(ordered_tip_labels, tip_labels);
+
+    uint32 n_edges = edges.n_rows;
+    if (branch_lens.size() != n_edges) {
+        stop("branch_lens must have the same length as the # rows in edges.");
+    }
+    if (edges.n_cols != 2) stop("edges must have exactly two columns.");
+
+    std::vector<uint32> n_muts(n_edges, 0);
+
+    // From R to C++ indices
+    edges -= 1;
+
+    pcg32 eng = seeded_pcg();
+
+    int code = one_tree_<ChunkMutationSampler>(
+        *vs_xptr, *sampler_base_xptr, seq_ind, branch_lens, edges, spp_order,
+        gamma_mat, eng, progress, n_muts, recombination, start, end
+    );
+
+    // Make sure this happens outside of multithreaded code
+    if (code == -1) {
+        std::string warn_msg = "\nUser interrupted phylogenetic evolution. ";
+        warn_msg += "Note that changes occur in place, so your variants have ";
+        warn_msg += "already been partially added.";
+        // throw(Rcpp::exception(err_msg.c_str(), false));
+        Rcpp::warning(warn_msg.c_str());
+    }
+
+    return n_muts;
 }
+
+
+
+
+
+
+

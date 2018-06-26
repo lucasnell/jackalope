@@ -61,7 +61,9 @@ filter_sequences <- function(ref_, min_seq_size = 0L, out_seq_prop = 0) {
 #'
 #' @examples
 #'
+#' \dontrun{
 #' genome <- create_genome(10, 100e6, 10e6, equil_freqs = c(0.1, 0.2, 0.3, 0.4))
+#' }
 #'
 create_genome <- function(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0), n_cores = 1L) {
     .Call(`_gemino_create_genome`, n_seqs, len_mean, len_sd, equil_freqs, n_cores)
@@ -78,7 +80,9 @@ create_genome <- function(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0)
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' randos <- rando_seqs(10, 1000, 10)
+#' }
 #'
 rando_seqs <- function(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0), n_cores = 1L) {
     .Call(`_gemino_rando_seqs`, n_seqs, len_mean, len_sd, equil_freqs, n_cores)
@@ -140,30 +144,6 @@ digest_var <- function(var_, bind_sites, len5s, chunk_size, n_cores) {
 #'
 digest_ref <- function(ref_, bind_sites, len5s, n_cores = 1L, chunk_size = 0L) {
     .Call(`_gemino_digest_ref`, ref_, bind_sites, len5s, n_cores, chunk_size)
-}
-
-#' Test sampling based on an evolutionary model.
-#'
-#' Make SURE `sampler_base_sexp` is a `ChunkMutationSampler`, not a `MutationSampler`!
-#'
-#' @param tip_labels Character vector of the actual phylogeny's tip labels.
-#' @param ordered_tip_labels Character vector of the tip labels in the order
-#'     you want them.
-#'
-#' @return A vector of integers indicating the number of mutations per edge.
-#'
-#' @noRd
-#'
-test_phylo <- function(vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, display_progress = FALSE) {
-    .Call(`_gemino_test_phylo`, vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, display_progress)
-}
-
-#' Get a rate for given start and end points of a VarSequence.
-#'
-#' @noRd
-#'
-test_rate <- function(start, end, var_ind, seq_ind, var_set_sexp, sampler_sexp) {
-    .Call(`_gemino_test_rate`, start, end, var_ind, seq_ind, var_set_sexp, sampler_sexp)
 }
 
 #' Estimates equilibrium nucleotide frequencies from an input rate matrix.
@@ -324,6 +304,9 @@ examine_mutations <- function(var_set_sexp, var_ind, seq_ind) {
 
 #' Faster version of table function to count the number of mutations in Gamma regions.
 #'
+#' @param gamma_ends Vector of endpoints for gamma regions
+#' @param positions Vector of positions that you want to bin into gamma regions.
+#'
 #'
 #'
 table_gammas <- function(gamma_ends, positions) {
@@ -369,17 +352,28 @@ add_deletion <- function(vs_, var_ind, seq_ind, size_, new_pos_) {
     invisible(.Call(`_gemino_add_deletion`, vs_, var_ind, seq_ind, size_, new_pos_))
 }
 
-#' Add many mutations (> 1,000) to a VarSet object from R.
-#'
-#' `min_muts` and `max_muts` give range of # mutations per variant sequence.
-#'
-#' Inner function used for testing.
-#'
+#' Get a rate for given start and end points of a VarSequence.
 #'
 #' @noRd
 #'
-many_mutations <- function(vs_, min_muts, max_muts) {
-    invisible(.Call(`_gemino_many_mutations`, vs_, min_muts, max_muts))
+test_rate <- function(start, end, var_ind, seq_ind, var_set_sexp, sampler_sexp) {
+    .Call(`_gemino_test_rate`, start, end, var_ind, seq_ind, var_set_sexp, sampler_sexp)
+}
+
+#' Test sampling based on an evolutionary model.
+#'
+#' Make SURE `sampler_base_sexp` is a `ChunkMutationSampler`, not a `MutationSampler`!
+#'
+#' @param tip_labels Character vector of the actual phylogeny's tip labels.
+#' @param ordered_tip_labels Character vector of the tip labels in the order
+#'     you want them.
+#'
+#' @return A vector of integers indicating the number of mutations per edge.
+#'
+#' @noRd
+#'
+test_phylo <- function(vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, recombination = FALSE, start = 0L, end = 0L) {
+    .Call(`_gemino_test_phylo`, vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, recombination, start, end)
 }
 
 #' Fill in vectors of mutation probabilities and lengths.

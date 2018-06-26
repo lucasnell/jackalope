@@ -1,6 +1,10 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.Rprofile$
-^under_constr$
-^_crash_test.R$
 ^\.travis\.yml$
+^README\.Rmd$
+^under_constr$
+^_crash_test\.R$
+^gfiles$
+^methods$
+^R/aaa-classes\.R$

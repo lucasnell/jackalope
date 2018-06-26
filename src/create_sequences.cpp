@@ -154,7 +154,9 @@ OuterClass create_sequences_(const uint32& n_seqs,
 //'
 //' @examples
 //'
+//' \dontrun{
 //' genome <- create_genome(10, 100e6, 10e6, equil_freqs = c(0.1, 0.2, 0.3, 0.4))
+//' }
 //'
 //[[Rcpp::export]]
 SEXP create_genome(const uint32& n_seqs,
@@ -192,7 +194,9 @@ SEXP create_genome(const uint32& n_seqs,
 //' @export
 //'
 //' @examples
+//' \dontrun{
 //' randos <- rando_seqs(10, 1000, 10)
+//' }
 //'
 //[[Rcpp::export]]
 std::vector<std::string> rando_seqs(const uint32& n_seqs,
