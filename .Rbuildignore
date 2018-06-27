@@ -8,3 +8,4 @@
 ^gfiles$
 ^methods$
 ^R/aaa-classes\.R$
+^data-raw$
