@@ -38,7 +38,7 @@ using namespace Rcpp;
 //' @noRd
 //'
 //[[Rcpp::export]]
-void test_sampling(SEXP& vs_sexp, const uint32& N,
+void test_sampling(SEXP& var_set_, const uint32& N,
                    const std::vector<double>& pi_tcag,
                    const double& alpha_1, const double& alpha_2,
                    const double& beta,
@@ -49,9 +49,9 @@ void test_sampling(SEXP& vs_sexp, const uint32& N,
                    const uint32& chunk_size,
                    bool display_progress = true) {
 
-    XPtr<VarSet> vs_xptr(vs_sexp);
-    VarSet& vs_(*vs_xptr);
-    VarSequence& vs(vs_[0][0]);
+    XPtr<VarSet> var_set_xptr(var_set_);
+    VarSet& var_set(*var_set_xptr);
+    VarSequence& var_seq(var_set[0][0]);
 
     arma::mat Q = TN93_rate_matrix(pi_tcag, alpha_1, alpha_2, beta, xi);
 
@@ -63,7 +63,7 @@ void test_sampling(SEXP& vs_sexp, const uint32& N,
 
     pcg32 eng = seeded_pcg();
 
-    ChunkMutationSampler ms = make_mutation_sampler(vs, probs, mut_lengths, pi_tcag,
+    ChunkMutationSampler ms = make_mutation_sampler(var_seq, probs, mut_lengths, pi_tcag,
                                                     gamma_mat, chunk_size);
 
     Progress p(N, display_progress);
@@ -71,7 +71,7 @@ void test_sampling(SEXP& vs_sexp, const uint32& N,
     for (uint32 i = 0; i < N; i++) {
         if (Progress::check_abort()) return;
         p.increment(); // update progress
-        if (vs.size() == 0) return;
+        if (var_seq.size() == 0) return;
         // Mutating and ignoring the rate change that it outputs:
         static_cast<void>(ms.mutate(eng));
     }
@@ -101,13 +101,13 @@ List conv_mut(const Mutation& mut) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-DataFrame see_mutations(SEXP vs_, const uint32& var_ind) {
+DataFrame see_mutations(SEXP var_set_, const uint32& var_ind) {
 
-    XPtr<VarSet> vs(vs_);
-    const VarGenome& vg((*vs)[var_ind]);
+    XPtr<VarSet> var_set(var_set_);
+    const VarGenome& var_genome((*var_set)[var_ind]);
 
     uint32 n_muts = 0;
-    for (const VarSequence& vs : vg.var_genome) n_muts += vs.mutations.size();
+    for (const VarSequence& vs : var_genome.var_genome) n_muts += vs.mutations.size();
 
     std::vector<sint32> size_mod;
     size_mod.reserve(n_muts);
@@ -121,14 +121,14 @@ DataFrame see_mutations(SEXP vs_, const uint32& var_ind) {
     std::vector<uint32> seqs;
     seqs.reserve(n_muts);
 
-    for (uint32 i = 0; i < vg.size(); i++) {
-        const VarSequence& vs(vg.var_genome[i]);
-        uint32 n_muts_i = vs.mutations.size();
+    for (uint32 i = 0; i < var_genome.size(); i++) {
+        const VarSequence& var_seq(var_genome.var_genome[i]);
+        uint32 n_muts_i = var_seq.mutations.size();
         for (uint32 j = 0; j < n_muts_i; ++j) {
-            size_mod.push_back(vs.mutations[j].size_modifier);
-            old_pos.push_back(vs.mutations[j].old_pos);
-            new_pos.push_back(vs.mutations[j].new_pos);
-            nucleos.push_back(vs.mutations[j].nucleos);
+            size_mod.push_back(var_seq.mutations[j].size_modifier);
+            old_pos.push_back(var_seq.mutations[j].old_pos);
+            new_pos.push_back(var_seq.mutations[j].new_pos);
+            nucleos.push_back(var_seq.mutations[j].nucleos);
             seqs.push_back(i);
         }
     }
@@ -153,11 +153,11 @@ DataFrame see_mutations(SEXP vs_, const uint32& var_ind) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-List examine_mutations(SEXP var_set_sexp, const uint32& var_ind, const uint32& seq_ind) {
+List examine_mutations(SEXP var_set_, const uint32& var_ind, const uint32& seq_ind) {
 
-    XPtr<VarSet> var_set_xptr(var_set_sexp);
-    const VarGenome& vg((*var_set_xptr)[var_ind]);
-    const VarSequence& vs(vg[seq_ind]);
+    XPtr<VarSet> var_set_xptr(var_set_);
+    const VarGenome& var_genome((*var_set_xptr)[var_ind]);
+    const VarSequence& var_seq(var_genome[seq_ind]);
 
     std::string bases = "TCAG";
     std::vector<uint32> base_inds(85);
@@ -167,12 +167,12 @@ List examine_mutations(SEXP var_set_sexp, const uint32& var_ind, const uint32& s
         j++;
     }
 
-    uint32 n_muts = vs.mutations.size();
+    uint32 n_muts = var_seq.mutations.size();
     arma::mat sub_mat(4, 4, arma::fill::zeros);
     uint32 max_ins = 0;
     uint32 max_del = 0;
     for (uint32 i = 0; i < n_muts; i++) {
-        sint32 mi = vs.mutations[i].size_modifier;
+        sint32 mi = var_seq.mutations[i].size_modifier;
         if (mi == 0) continue;
         if (mi > 0) {
             if (mi > max_ins) max_ins = mi;
@@ -187,9 +187,9 @@ List examine_mutations(SEXP var_set_sexp, const uint32& var_ind, const uint32& s
 
     for (uint32 mut_i = 0; mut_i < n_muts; mut_i++) {
 
-        const Mutation& m(vs.mutations[mut_i]);
+        const Mutation& m(var_seq.mutations[mut_i]);
 
-        char c = vs.ref_seq[m.old_pos];
+        char c = var_seq.ref_seq[m.old_pos];
         uint32 i = base_inds[static_cast<uint32>(c)];
         sint32 smod = m.size_modifier;
         if (smod == 0) {
@@ -203,7 +203,7 @@ List examine_mutations(SEXP var_set_sexp, const uint32& var_ind, const uint32& s
             del_mat(i, j)++;
         }
 
-        pos_vec[mut_i] = vs.mutations[mut_i].old_pos;
+        pos_vec[mut_i] = var_seq.mutations[mut_i].old_pos;
     }
 
     List out = List::create(
@@ -225,7 +225,7 @@ List examine_mutations(SEXP var_set_sexp, const uint32& var_ind, const uint32& s
 //'
 //[[Rcpp::export]]
 std::vector<uint32> table_gammas(const std::vector<uint32>& gamma_ends,
-                               const std::vector<uint32>& positions) {
+                                 const std::vector<uint32>& positions) {
     std::vector<uint32> out(gamma_ends.size(), 0U);
     for (uint32 i = 0; i < positions.size(); i++) {
         uint32 j = std::lower_bound(gamma_ends.begin(), gamma_ends.end(),
@@ -242,7 +242,7 @@ std::vector<uint32> table_gammas(const std::vector<uint32>& gamma_ends,
 //' Note that all indices are in 0-based C++ indexing. This means that the first
 //' item is indexed by `0`, and so forth.
 //'
-//' @param vs_ External pointer to a C++ `VarSet` object
+//' @param var_set_ External pointer to a C++ `VarSet` object
 //' @param var_ind Integer index to the desired variant. Uses 0-based indexing!
 //' @param seq_ind Integer index to the desired sequence. Uses 0-based indexing!
 //' @param new_pos_ Integer index to the desired subsitution location.
@@ -253,7 +253,7 @@ NULL_ENTRY;
 
 //' @describeIn add_mutations Add a substitution.
 //'
-//' @inheritParams vs_ add_mutations
+//' @inheritParams var_set_ add_mutations
 //' @inheritParams var_ind add_mutations
 //' @inheritParams seq_ind add_mutations
 //' @param nucleo_ Character to substitute for existing one.
@@ -261,19 +261,19 @@ NULL_ENTRY;
 //'
 //'
 //[[Rcpp::export]]
-void add_substitution(SEXP vs_, const uint32& var_ind,
+void add_substitution(SEXP var_set_, const uint32& var_ind,
                       const uint32& seq_ind,
                       const char& nucleo_,
                       const uint32& new_pos_) {
-    XPtr<VarSet> vset(vs_);
-    VarGenome& vg((*vset)[var_ind]);
-    VarSequence& vs(vg[seq_ind]);
-    vs.add_substitution(nucleo_, new_pos_);
+    XPtr<VarSet> var_set(var_set_);
+    VarGenome& var_genome((*var_set)[var_ind]);
+    VarSequence& var_seq(var_genome[seq_ind]);
+    var_seq.add_substitution(nucleo_, new_pos_);
     return;
 }
 //' @describeIn add_mutations Add an insertion.
 //'
-//' @inheritParams vs_ add_mutations
+//' @inheritParams var_set_ add_mutations
 //' @inheritParams var_ind add_mutations
 //' @inheritParams seq_ind add_mutations
 //' @param nucleos_ Nucleotides to insert at the desired location.
@@ -281,19 +281,19 @@ void add_substitution(SEXP vs_, const uint32& var_ind,
 //'
 //'
 //[[Rcpp::export]]
-void add_insertion(SEXP vs_, const uint32& var_ind,
+void add_insertion(SEXP var_set_, const uint32& var_ind,
                    const uint32& seq_ind,
                    const std::string& nucleos_,
                    const uint32& new_pos_) {
-    XPtr<VarSet> vset(vs_);
-    VarGenome& vg((*vset)[var_ind]);
-    VarSequence& vs(vg[seq_ind]);
-    vs.add_insertion(nucleos_, new_pos_);
+    XPtr<VarSet> var_set(var_set_);
+    VarGenome& var_genome((*var_set)[var_ind]);
+    VarSequence& var_seq(var_genome[seq_ind]);
+    var_seq.add_insertion(nucleos_, new_pos_);
     return;
 }
 //' @describeIn add_mutations Add a deletion.
 //'
-//' @inheritParams vs_ add_mutations
+//' @inheritParams var_set_ add_mutations
 //' @inheritParams var_ind add_mutations
 //' @inheritParams seq_ind add_mutations
 //' @param size_ Size of deletion.
@@ -301,14 +301,14 @@ void add_insertion(SEXP vs_, const uint32& var_ind,
 //'
 //'
 //[[Rcpp::export]]
-void add_deletion(SEXP vs_, const uint32& var_ind,
+void add_deletion(SEXP var_set_, const uint32& var_ind,
                   const uint32& seq_ind,
                   const uint32& size_,
                   const uint32& new_pos_) {
-    XPtr<VarSet> vset(vs_);
-    VarGenome& vg((*vset)[var_ind]);
-    VarSequence& vs(vg[seq_ind]);
-    vs.add_deletion(size_, new_pos_);
+    XPtr<VarSet> var_set(var_set_);
+    VarGenome& var_genome((*var_set)[var_ind]);
+    VarSequence& var_seq(var_genome[seq_ind]);
+    var_seq.add_deletion(size_, new_pos_);
     return;
 }
 
@@ -322,18 +322,18 @@ void add_deletion(SEXP vs_, const uint32& var_ind,
 //[[Rcpp::export]]
 double test_rate(const uint32& start, const uint32& end,
                  const uint32& var_ind, const uint32& seq_ind,
-                 SEXP var_set_sexp, SEXP sampler_sexp) {
+                 SEXP var_set_, SEXP sampler_) {
 
-    XPtr<VarSet> var_set(var_set_sexp);
-    VarSequence& vs((*var_set)[var_ind][seq_ind]);
+    XPtr<VarSet> var_set(var_set_);
+    VarSequence& var_seq((*var_set)[var_ind][seq_ind]);
 
-    XPtr<ChunkMutationSampler> sampler(sampler_sexp);
+    XPtr<ChunkMutationSampler> sampler(sampler_);
 
     arma::mat gamma_mat(1, 2);
-    gamma_mat(0,0) = vs.size();
+    gamma_mat(0,0) = var_seq.size();
     gamma_mat(0,1) = 1;
 
-    sampler->fill_ptrs(vs);
+    sampler->fill_ptrs(var_seq);
     sampler->fill_gamma(gamma_mat);
 
     double out = sampler->total_rate(start, end, true);
@@ -360,8 +360,8 @@ double test_rate(const uint32& start, const uint32& end,
 //' @noRd
 //'
 //[[Rcpp::export]]
-std::vector<uint32> test_phylo(SEXP& vs_sexp,
-                               SEXP& sampler_base_sexp,
+std::vector<uint32> test_phylo(SEXP& var_set_,
+                               SEXP& sampler_base_,
                                const uint32& seq_ind,
                                const std::vector<double>& branch_lens,
                                arma::Mat<uint32> edges,
@@ -372,16 +372,16 @@ std::vector<uint32> test_phylo(SEXP& vs_sexp,
                                const uint32& start = 0,
                                const sint64& end = 0) {
 
-    XPtr<VarSet> vs_xptr(vs_sexp);
-    XPtr<ChunkMutationSampler> sampler_base_xptr(sampler_base_sexp);
+    XPtr<VarSet> var_set(var_set_);
+    XPtr<ChunkMutationSampler> sampler_base(sampler_base_);
 
     Progress progress(100, false);
 
-    if (gamma_mat(gamma_mat.n_rows-1,0) != (*vs_xptr)[0][seq_ind].size()) {
+    if (gamma_mat(gamma_mat.n_rows-1,0) != (*var_set)[0][seq_ind].size()) {
         stop("gamma_mat doesn't reach the end of the sequence.");
     }
 
-    uint32 n_tips = vs_xptr->size();
+    uint32 n_tips = var_set->size();
     if (ordered_tip_labels.size() != n_tips || tip_labels.size() != n_tips) {
         stop("ordered_tip_labels and tip_labels must have the same length as ",
              "# variants.");
@@ -403,7 +403,7 @@ std::vector<uint32> test_phylo(SEXP& vs_sexp,
     pcg32 eng = seeded_pcg();
 
     int code = one_tree_<ChunkMutationSampler>(
-        *vs_xptr, *sampler_base_xptr, seq_ind, branch_lens, edges, spp_order,
+        *var_set, *sampler_base, seq_ind, branch_lens, edges, spp_order,
         gamma_mat, eng, progress, n_muts, recombination, start, end
     );
 

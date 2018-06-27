@@ -48,10 +48,39 @@ using namespace Rcpp;
 
 
 
-// This function is to get the value of the two beta-distribution shapes that
-// minimize the absolute difference between the expected and desired segregated-site
-// divergence (i.e., mean pairwise differences)
-// It is used in the R function `freq_probs` during the optimization step.
+//' Get a reference genome sequence's size.
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+uint32 see_ref_seq_size(SEXP ref_genome_, const uint32& s) {
+    XPtr<RefGenome> ref_genome(ref_genome_);
+    uint32 out = (*ref_genome)[s].nucleos.size();
+    return out;
+}
+
+//' Get number of sequences in a reference genome.
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+uint32 see_ref_n_seq(SEXP ref_genome_) {
+    XPtr<RefGenome> ref_genome(ref_genome_);
+    uint32 out = ref_genome->size();
+    return out;
+}
+
+
+//' Compute absolute difference between expected and desired segregated-site divergence
+//'
+//'
+//' This function is to get the value of the two beta-distribution shapes that
+//' minimize the absolute difference between the expected and desired segregated-site
+//' divergence (i.e., mean pairwise differences).
+//' It is used in the R function `freq_probs` during the optimization step.
+//'
+//' @noRd
+//'
 // [[Rcpp::export]]
 double optim_prob(NumericVector v, NumericVector mean_pws_, NumericVector dens_,
                   double seg_div_) {
@@ -85,8 +114,8 @@ double optim_prob(NumericVector v, NumericVector mean_pws_, NumericVector dens_,
 //'
 // [[Rcpp::export]]
 std::vector<uint32> sample_seqs(const uint32& total_mutations,
-                              const std::vector<double>& seq_lens,
-                              const uint32& n_cores) {
+                                const std::vector<double>& seq_lens,
+                                const uint32& n_cores) {
 
     const uint32 n_seqs = seq_lens.size();
 
@@ -300,10 +329,10 @@ uint32 one_mutation(
         }
         std::shuffle(nucleos.begin(), nucleos.end(), engine);
         for (uint32 v = 0; v < n_vars; v++) {
-            VarSequence& vs(var_set[v][seq_index]);
+            VarSequence& var_seq(var_set[v][seq_index]);
             uint32 pos = static_cast<uint32>(current_pos);
-            if (pos >= vs.size()) continue;
-            vs.add_substitution(nucleos[v], pos);
+            if (pos >= var_seq.size()) continue;
+            var_seq.add_substitution(nucleos[v], pos);
         }
     // InDel: Insertion or Deletion
     } else {
@@ -321,10 +350,10 @@ uint32 one_mutation(
                 nucleos[j] = table_sampler::bases[rnd];
             }
             for (uint32 v : w_indel) {
-                VarSequence& vs(var_set[v][seq_index]);
+                VarSequence& var_seq(var_set[v][seq_index]);
                 uint32 pos = static_cast<uint32>(current_pos);
-                if (pos >= vs.size()) continue;
-                vs.add_insertion(nucleos, pos);
+                if (pos >= var_seq.size()) continue;
+                var_seq.add_insertion(nucleos, pos);
             }
             // Changing back to 0 bc insertions don't need to be skipped over like
             // deletions bc they don't take up existing nucleotides
@@ -335,10 +364,10 @@ uint32 one_mutation(
             // Make sure it doesn't span over the # positions left
             if (length > N - S - n + 1) length = N - S - n + 1;
             for (uint32 v : w_indel) {
-                VarSequence& vs(var_set[v][seq_index]);
+                VarSequence& var_seq(var_set[v][seq_index]);
                 uint32 pos = static_cast<uint32>(current_pos);
-                if (pos >= vs.size()) continue;
-                vs.add_deletion(length, pos);
+                if (pos >= var_seq.size()) continue;
+                var_seq.add_deletion(length, pos);
             }
             length--;
         }
@@ -410,15 +439,12 @@ void one_seq(
 
 
 
-//' Inner function to create a C++ \code{VariantSet} object
+//' Inner function to create a C++ \code{VarSet} object
 //'
-//' A \code{VariantSet} object constitutes the majority of information in a
-//' \code{variants} object (other than the reference genome) and is located in
-//' the \code{variant_set} field.
 //'
 //' @param n_mutations Integer vector of the total number of mutations (SNPs or indels)
 //'     for each sequence.
-//' @param reference External pointer to a C++ \code{SequenceSet} object that
+//' @param ref_genome_ External pointer to a C++ \code{SequenceSet} object that
 //'     represents the reference genome.
 //' @param snp_combo_list Matrix of all possible nucleotide combinations among all
 //'     variants per SNP.
@@ -434,14 +460,14 @@ void one_seq(
 //'     This is not recommended to be changed. Defaults to 0.8.
 //'
 //'
-//' @return An external pointer to a \code{VariantSet} object in C++.
+//' @return An external pointer to a \code{VarSet} object in C++.
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
 SEXP make_variants_(
         const std::vector<uint32>& n_mutations,
-        const SEXP& ref_xptr,
+        const SEXP& ref_genome_,
         const std::vector<std::vector<uint32>>& snp_combo_list,
         const std::vector<double>& mutation_probs,
         const std::vector<uint32>& mutation_types,
@@ -451,18 +477,18 @@ SEXP make_variants_(
         double alpha = 0.8
     ) {
 
-    const XPtr<RefGenome> reference(ref_xptr);
+    XPtr<RefGenome> ref_genome(ref_genome_);
 
-    const std::vector<uint32> seq_lens = reference->seq_sizes();
-    const uint32 n_seqs = reference->size();
+    const std::vector<uint32> seq_lens = ref_genome->seq_sizes();
+    const uint32 n_seqs = ref_genome->size();
     const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
     const uint32 n_vars = std::accumulate(snp_combo_list[0].begin(),
-                                        snp_combo_list[0].end(), 0.0);
+                                          snp_combo_list[0].end(), 0.0);
 
     if (n_mutations.size() != n_seqs) stop("n_mutations is incorrect length.");
     if (alpha > 1 || alpha < 0) stop("Invalid alpha. It must be [0,1].");
 
-    XPtr<VarSet> var_set_xptr(new VarSet((*reference), n_vars), true);
+    XPtr<VarSet> var_set_xptr(new VarSet((*ref_genome), n_vars), true);
     VarSet& var_set(*var_set_xptr);
 
     // Table-sampling object

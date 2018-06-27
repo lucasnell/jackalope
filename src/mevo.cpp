@@ -123,7 +123,7 @@ void fill_mut_prob_length_vectors(
 
 
 
-MutationSampler make_mutation_sampler(VarSequence& vs,
+MutationSampler make_mutation_sampler(VarSequence& var_seq,
                                       const std::vector<std::vector<double>>& probs,
                                       const std::vector<sint32>& mut_lengths,
                                       const std::vector<double>& pi_tcag,
@@ -135,16 +135,16 @@ MutationSampler make_mutation_sampler(VarSequence& vs,
     SequenceGammas gammas(gamma_mat);
     std::vector<double> q_tcag(4);
     for (uint32 i = 0; i < 4; i++) q_tcag[i] = probs[i][i];
-    MutationRates mr(vs, q_tcag, gammas);
+    MutationRates mr(var_seq, q_tcag, gammas);
     LocationSampler ls(mr);
 
-    MutationSampler ms(vs, ls, mts, tss);
+    MutationSampler ms(var_seq, ls, mts, tss);
 
     return ms;
 }
 
 
-ChunkMutationSampler make_mutation_sampler(VarSequence& vs,
+ChunkMutationSampler make_mutation_sampler(VarSequence& var_seq,
                                            const std::vector<std::vector<double>>& probs,
                                            const std::vector<sint32>& mut_lengths,
                                            const std::vector<double>& pi_tcag,
@@ -157,10 +157,10 @@ ChunkMutationSampler make_mutation_sampler(VarSequence& vs,
     SequenceGammas gammas(gamma_mat);
     std::vector<double> q_tcag(4);
     for (uint32 i = 0; i < 4; i++) q_tcag[i] = probs[i][i];
-    MutationRates mr(vs, q_tcag, gammas);
+    MutationRates mr(var_seq, q_tcag, gammas);
     ChunkLocationSampler ls(mr, chunk_size);
 
-    ChunkMutationSampler ms(vs, ls, mts, tss);
+    ChunkMutationSampler ms(var_seq, ls, mts, tss);
 
     return ms;
 }
@@ -173,7 +173,7 @@ ChunkMutationSampler make_mutation_sampler(VarSequence& vs,
 //' ChunkMutationSampler with ChunkLocationSampler
 //'
 //' Before actually using the object output from this function, make sure to...
-//' * use `[Chunk]MutationSampler.fill_ptrs(VarSequence& vs)` to fill pointers.
+//' * use `[Chunk]MutationSampler.fill_ptrs(VarSequence& var_seq)` to fill pointers.
 //' * use `[Chunk]MutationSampler.fill_gamma(const arma::mat& gamma_mat)` to fill
 //'   the gamma matrix.
 //' * use `ChunkMutationSampler.location.change_chunk(chunk_size)` if using chunked

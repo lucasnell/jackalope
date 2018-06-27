@@ -65,12 +65,12 @@ class MutationRates {
 
 public:
 
-    const VarSequence * vs;  // pointer to const VarSequence
+    const VarSequence * var_seq;  // pointer to const VarSequence
     std::vector<double> nt_rates;
     SequenceGammas gammas;
 
 
-    MutationRates() : vs(), nt_rates(), gammas() {}
+    MutationRates() : var_seq(), nt_rates(), gammas() {}
 
     /*
      Below `q_tcag` is a length-4 vector of rates (q_i from Yang (2006)), for
@@ -78,24 +78,24 @@ public:
      */
     MutationRates(const VarSequence& vs_, const std::vector<double>& q_tcag,
                   const SequenceGammas& gammas_)
-        : vs(&vs_), nt_rates(256, 0.0), gammas(gammas_) {
+        : var_seq(&vs_), nt_rates(256, 0.0), gammas(gammas_) {
         for (uint32 i = 0; i < 4; i++) {
             uint32 j = mevo::bases[i];
             nt_rates[j] = q_tcag[i];
         }
     }
     MutationRates(const std::vector<double>& q_tcag):
-        vs(), nt_rates(256, 0.0), gammas() {
+        var_seq(), nt_rates(256, 0.0), gammas() {
         for (uint32 i = 0; i < 4; i++) {
             uint32 j = mevo::bases[i];
             nt_rates[j] = q_tcag[i];
         }
     }
     MutationRates(const MutationRates& other)
-        : vs(other.vs), nt_rates(other.nt_rates), gammas(other.gammas) {}
+        : var_seq(other.var_seq), nt_rates(other.nt_rates), gammas(other.gammas) {}
 
     MutationRates& operator=(const MutationRates& other) {
-        vs = other.vs;
+        var_seq = other.var_seq;
         nt_rates = other.nt_rates;
         gammas = other.gammas;
         return *this;
@@ -105,13 +105,13 @@ public:
     // To get size of the variant sequence
     inline uint32 size() const noexcept {
         // If a null pointer, return 0
-        if (!vs) return 0;
-        return vs->size();
+        if (!var_seq) return 0;
+        return var_seq->size();
     }
 
     // Using bracket operator to get the overall mutation rate at a location
     inline double operator[](const uint32& pos) const {
-        char c = vs->get_nt(pos);
+        char c = var_seq->get_nt(pos);
         double r = nt_rates[c];
         r *= gammas[pos];
         return r;
@@ -123,8 +123,8 @@ public:
     inline double operator()(const uint32& start, const uint32& end) const {
 
         std::string seq;
-        uint32 mut_ = vs->get_mut_(start);
-        vs->set_seq_chunk(seq, start, end - start + 1, mut_);
+        uint32 mut_ = var_seq->get_mut_(start);
+        var_seq->set_seq_chunk(seq, start, end - start + 1, mut_);
 
         std::vector<double> gamma_vals = gammas(start, end);
         if (gamma_vals.size() != seq.size()) {
@@ -145,7 +145,7 @@ public:
      position and the character it'll change to
      */
     inline double sub_rate_change(const uint32& pos, const char& c) const {
-        char c0 = vs->get_nt(pos);
+        char c0 = var_seq->get_nt(pos);
         double gamma = gammas[pos];
         double r0 = nt_rates[c0];
         double r1 = nt_rates[c];
@@ -181,15 +181,15 @@ public:
 
         double out = 0;
 
-        if (vs->size() == 0) return out;
+        if (var_seq->size() == 0) return out;
 
         if (!ranged) {
             start = 0;
-            end = vs->size() - 1;
+            end = var_seq->size() - 1;
         }
 
-        if ((vs->size() - 1) != gammas.regions.back().end) {
-            stop("gammas and vs sizes don't match inside MutationRates");
+        if ((var_seq->size() - 1) != gammas.regions.back().end) {
+            stop("gammas and var_seq sizes don't match inside MutationRates");
         }
 
         /*
@@ -198,12 +198,12 @@ public:
          (I'm using separate statements to avoid calling `front()` on an empty deque.)
          */
         bool use_mutations = true;
-        if (vs->mutations.empty()) {
+        if (var_seq->mutations.empty()) {
             use_mutations = false;
-            if ((vs->ref_seq.nucleos.size() - 1) != gammas.regions.back().end) {
-                stop("gammas and vs ref sizes don't match inside MutationRates");
+            if ((var_seq->ref_seq.nucleos.size() - 1) != gammas.regions.back().end) {
+                stop("gammas and var_seq ref sizes don't match inside MutationRates");
             }
-        } else if (vs->mutations.front().new_pos > end) {
+        } else if (var_seq->mutations.front().new_pos > end) {
             use_mutations = false;
         }
         if (!use_mutations) {
@@ -214,7 +214,7 @@ public:
                 double gamma = gammas.regions[gam_i].gamma;
                 double tmp = 0;
                 while (i <= gammas.regions[gam_i].end && i <= end) {
-                    tmp += nt_rates[vs->ref_seq.nucleos[i]];
+                    tmp += nt_rates[var_seq->ref_seq.nucleos[i]];
                     i++;
                 }
                 out += (tmp * gamma);
@@ -226,7 +226,7 @@ public:
 
 
         // Index to the first Mutation object not past `start` position:
-        uint32 mut_i = vs->get_mut_(start);
+        uint32 mut_i = var_seq->get_mut_(start);
         // Index to the corresponding gamma region:
         uint32 gam_i = gammas.get_idx(start);
 
@@ -238,14 +238,14 @@ public:
 
         /*
          If `start` is before the first mutation (resulting in
-         `mut_i == vs->mutations.size()`),
+         `mut_i == var_seq->mutations.size()`),
          we must pick up any nucleotides before the first mutation.
          */
-        if (mut_i == vs->mutations.size()) {
+        if (mut_i == var_seq->mutations.size()) {
             mut_i = 0;
-            for (; pos < vs->mutations[mut_i].new_pos; pos++) {
+            for (; pos < var_seq->mutations[mut_i].new_pos; pos++) {
                 check_gamma(pos, gamma_end, gam_i, gamma, gammas);
-                out += (nt_rates[vs->ref_seq[pos]] * gamma);
+                out += (nt_rates[var_seq->ref_seq[pos]] * gamma);
             }
             check_gamma(pos, gamma_end, gam_i, gamma, gammas);
         }
@@ -258,9 +258,9 @@ public:
          it doesn't keep going after we've reached `end`.
          */
         uint32 next_mut_i = mut_i + 1;
-        while (pos <= end && next_mut_i < vs->mutations.size()) {
-            while (pos <= end && pos < vs->mutations[next_mut_i].new_pos) {
-                char c = vs->get_char_(pos, mut_i);
+        while (pos <= end && next_mut_i < var_seq->mutations.size()) {
+            while (pos <= end && pos < var_seq->mutations[next_mut_i].new_pos) {
+                char c = var_seq->get_char_(pos, mut_i);
                 out += nt_rates[c] * gamma;
                 ++pos;
                 check_gamma(pos, gamma_end, gam_i, gamma, gammas);
@@ -270,8 +270,8 @@ public:
         }
 
         // Now taking care of nucleotides after the last Mutation
-        while (pos <= end &&pos < vs->seq_size) {
-            char c = vs->get_char_(pos, mut_i);
+        while (pos <= end &&pos < var_seq->seq_size) {
+            char c = var_seq->get_char_(pos, mut_i);
             out += nt_rates[c] * gamma;
             ++pos;
             check_gamma(pos, gamma_end, gam_i, gamma, gammas);
@@ -678,7 +678,7 @@ class OneSeqMutationSampler {
 public:
 
     // VarSequence object pointer to be manipulated
-    VarSequence* vs;
+    VarSequence* var_seq;
     // For sampling the mutation location:
     C location;
     // For sampling the type of mutation:
@@ -686,20 +686,20 @@ public:
     // For new insertion sequences:
     TableStringSampler<std::string> insert;
 
-    OneSeqMutationSampler() : vs(), location(), type(), insert() {}
+    OneSeqMutationSampler() : var_seq(), location(), type(), insert() {}
 
     OneSeqMutationSampler(VarSequence& vs_,
                           const C& location_,
                           const MutationTypeSampler& type_,
                           const TableStringSampler<std::string>& insert_)
-        : vs(&vs_), location(location_), type(type_), insert(insert_) {}
+        : var_seq(&vs_), location(location_), type(type_), insert(insert_) {}
 
     OneSeqMutationSampler(const OneSeqMutationSampler<C>& other)
-        : vs(other.vs), location(other.location), type(other.type),
+        : var_seq(other.var_seq), location(other.location), type(other.type),
           insert(other.insert) {}
 
     OneSeqMutationSampler<C>& operator=(const OneSeqMutationSampler<C>& other) {
-        if (other.vs) vs = other.vs;
+        if (other.var_seq) var_seq = other.var_seq;
         location = other.location;
         type = other.type;
         insert = other.insert;
@@ -707,8 +707,8 @@ public:
     }
 
     void fill_ptrs(VarSequence& vs_) {
-        vs = &vs_;
-        location.mr().vs = &vs_;
+        var_seq = &vs_;
+        location.mr().var_seq = &vs_;
         return;
     }
 
@@ -720,24 +720,24 @@ public:
     // Add mutation and return the change in the sequence rate that results
     double mutate(pcg32& eng) {
         uint32 pos = sample_location(eng);
-        char c = vs->get_nt(pos);
+        char c = var_seq->get_nt(pos);
         MutationInfo m = sample_type(c, eng);
         double rate_change;
         if (m.length == 0) {
             rate_change = location.substitution_rate_change(m.nucleo, pos);
-            vs->add_substitution(m.nucleo, pos);
+            var_seq->add_substitution(m.nucleo, pos);
         } else {
             if (m.length > 0) {
                 std::string nts = new_nucleos(m.length, eng);
                 rate_change = location.insertion_rate_change(nts, pos);
-                vs->add_insertion(nts, pos);
+                var_seq->add_insertion(nts, pos);
             } else {
                 sint64 pos_ = static_cast<sint64>(pos);
-                sint64 size_ = static_cast<sint64>(vs->size());
+                sint64 size_ = static_cast<sint64>(var_seq->size());
                 if (pos_ - m.length > size_) m.length = static_cast<sint32>(pos_-size_);
                 uint32 del_size = std::abs(m.length);
                 rate_change = location.deletion_rate_change(m.length, pos);
-                vs->add_deletion(del_size, pos);
+                var_seq->add_deletion(del_size, pos);
             }
             // Update Gamma region bounds:
             location.update_gamma_regions(m.length, pos);
@@ -756,24 +756,24 @@ public:
     double mutate(pcg32& eng, const uint32& start, sint64& end) {
         if (end < 0) stop("end is negative in [Chunk]MutationSampler.mutate");
         uint32 pos = sample_location(eng, start, static_cast<uint32>(end), true);  // ***
-        char c = vs->get_nt(pos);
+        char c = var_seq->get_nt(pos);
         MutationInfo m = sample_type(c, eng);
         double rate_change;
         if (m.length == 0) {
             rate_change = location.substitution_rate_change(m.nucleo, pos);
-            vs->add_substitution(m.nucleo, pos);
+            var_seq->add_substitution(m.nucleo, pos);
         } else {
             if (m.length > 0) {
                 std::string nts = new_nucleos(m.length, eng);
                 rate_change = location.insertion_rate_change(nts, pos);
-                vs->add_insertion(nts, pos);
+                var_seq->add_insertion(nts, pos);
             } else {
                 sint64 pos_ = static_cast<sint64>(pos);
                 sint64 size_ = end + 1;  // ***
                 if (pos_ - m.length > size_) m.length = static_cast<sint32>(pos_-size_);
                 uint32 del_size = std::abs(m.length);
                 rate_change = location.deletion_rate_change(m.length, pos);
-                vs->add_deletion(del_size, pos);
+                var_seq->add_deletion(del_size, pos);
             }
             // Update Gamma region bounds:
             location.update_gamma_regions(m.length, pos);
@@ -808,14 +808,14 @@ void fill_mut_prob_length_vectors(
         arma::vec rel_deletion_rates);
 
 
-MutationSampler make_mutation_sampler(VarSequence& vs,
+MutationSampler make_mutation_sampler(VarSequence& var_seq,
                                       const std::vector<std::vector<double>>& probs,
                                       const std::vector<sint32>& mut_lengths,
                                       const std::vector<double>& pi_tcag,
                                       const arma::mat& gamma_mat);
 
 
-ChunkMutationSampler make_mutation_sampler(VarSequence& vs,
+ChunkMutationSampler make_mutation_sampler(VarSequence& var_seq,
                                            const std::vector<std::vector<double>>& probs,
                                            const std::vector<sint32>& mut_lengths,
                                            const std::vector<double>& pi_tcag,

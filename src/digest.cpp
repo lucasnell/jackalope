@@ -169,13 +169,12 @@ void VarSeqDigest::digest(const DigestInfo& dinfo) {
 //'
 //'
 //'
-//' @param var_ An external pointer to a C++ \code{VarSet} object
+//' @param var_set_ An external pointer to a C++ \code{VarSet} object
 //'     representing variants from the reference genome.
-//' @param bind_sites Vector of enzyme full recognition site(s).
-//' @param len5s A vector of the numbers of characters of the prime5 sites for each
-//'     recognition site.
+//' @inheritParams bind_sites digest_ref
+//' @inheritParams len5s digest_ref
 //' @param chunk_size The size of chunks to divide sequences into when digesting.
-//' @param n_cores The number of cores to use for processing.
+//' @param n_cores The number of cores to use for processing. Defaults to \code{1}.
 //'
 //' @return A list of lists, each sub-list containing multiple vectors representing
 //'     the locations of cut sites for a given variant on a given sequence.
@@ -185,18 +184,17 @@ void VarSeqDigest::digest(const DigestInfo& dinfo) {
 //' @noRd
 //'
 // [[Rcpp::export]]
-std::vector< std::vector< std::deque<uint32> > > digest_var(
-        SEXP var_,
+std::vector< std::vector< std::deque<uint32> > > digest_var_set(
+        SEXP var_set_,
         const std::vector<std::string>& bind_sites,
         const std::vector<uint32>& len5s,
         const uint32& chunk_size,
-        const uint32& n_cores) {
+        const uint32& n_cores = 1) {
 
-    XPtr<VarSet> var_xptr(var_);
-    VarSet& var(*var_xptr);
+    XPtr<VarSet> var_set(var_set_);
 
-    const uint32 n_vars = var.size();
-    const uint32 n_seqs = var.reference.size();
+    const uint32 n_vars = var_set->size();
+    const uint32 n_seqs = var_set->reference->size();
 
     const DigestInfo dinfo(bind_sites, len5s);
 
@@ -215,7 +213,7 @@ std::vector< std::vector< std::deque<uint32> > > digest_var(
     #endif
     for (uint32 v = 0; v < n_vars; v++) {
         for (uint32 s = 0; s < n_seqs; s++) {
-            VarSeqDigest vsd(var, v, s, chunk_size, out_vec[v][s]);
+            VarSeqDigest vsd(*var_set, v, s, chunk_size, out_vec[v][s]);
             vsd.digest(dinfo);
         }
     }
@@ -326,14 +324,11 @@ void RefSeqChunk::merge_seam(const RefSeqChunk& prev, const DigestInfo& dinfo) {
 //'
 //'
 //'
-//' @param ref_ An external pointer to a C++ \code{RefGenome} object
+//' @param ref_genome_ An external pointer to a C++ \code{RefGenome} object
 //'     representing the reference genome.
 //' @param bind_sites Vector of enzyme full recognition site(s).
 //' @param len5s A vector of the numbers of characters of the prime5 sites for each
 //'     recognition site.
-//' @param n_cores The number of cores to use for processing. This value is ignored
-//'     if the input reference genome is merged and \code{chunk_size == 0}.
-//'     Defaults to \code{1}.
 //' @param chunk_size Size of chunks to break sequences into for processing.
 //'     This value is ignored if it's set to zero.
 //'     Ideally this is set to a value that results in a number of chunks divisible by
@@ -345,6 +340,9 @@ void RefSeqChunk::merge_seam(const RefSeqChunk& prev, const DigestInfo& dinfo) {
 //'     this argument for a reference genome does NOT decrease memory usage
 //'     appreciably.
 //'     Defaults to \code{0}.
+//' @param n_cores The number of cores to use for processing. This value is ignored
+//'     if the input reference genome is merged and \code{chunk_size == 0}.
+//'     Defaults to \code{1}.
 //'
 //' @return A list of vectors, each vector representing the locations of cut sites
 //'     on a given sequence.
@@ -355,16 +353,15 @@ void RefSeqChunk::merge_seam(const RefSeqChunk& prev, const DigestInfo& dinfo) {
 //'
 //[[Rcpp::export]]
 std::vector< std::deque<uint32> > digest_ref(
-        SEXP ref_,
+        SEXP ref_genome_,
         const std::vector<std::string>& bind_sites,
         const std::vector<uint32>& len5s,
-        const uint32& n_cores = 1,
-        const uint32& chunk_size = 0) {
+        const uint32& chunk_size = 0,
+        const uint32& n_cores = 1) {
 
-    const XPtr<RefGenome> ref(ref_);
-    const RefGenome& reference(*ref);
+    const XPtr<RefGenome> ref_genome(ref_genome_);
 
-    std::vector< std::deque<uint32> > out_vec(reference.size());
+    std::vector< std::deque<uint32> > out_vec(ref_genome->size());
     DigestInfo dinfo(bind_sites, len5s);
 
     if (chunk_size > 0) {
@@ -380,8 +377,8 @@ std::vector< std::deque<uint32> > digest_ref(
         uint32 iter_by = chunk_size - (dinfo.max_size - 1);
         // Set up temporary deque containing a deque of RefSeqChunk objects:
         std::deque<RefSeqChunk> chunk_dq;
-        for (uint32 i = 0; i < reference.size(); i++) {
-            const std::string& seq(reference[i].nucleos);
+        for (uint32 i = 0; i < ref_genome->size(); i++) {
+            const std::string& seq((*ref_genome)[i].nucleos);
 
             if (chunk_size >= seq.size()) {
                 RefSeqChunk tmp_sc(seq, i, 0, chunk_size);
@@ -421,7 +418,7 @@ std::vector< std::deque<uint32> > digest_ref(
          Lastly combine all RefSeqChunk objects for a given sequence together into
          one deque.
          */
-        for (uint32 i = 0; i < reference.size(); i++) {
+        for (uint32 i = 0; i < ref_genome->size(); i++) {
             std::deque<uint32>& out_dq(out_vec[i]);
             while (chunk_dq.front().seq == i) {
                 chunk_dq.front().combine(out_dq);
@@ -429,16 +426,16 @@ std::vector< std::deque<uint32> > digest_ref(
                 if (chunk_dq.empty()) break;
             }
         }
-    } else if (reference.merged) {
+    } else if (ref_genome->merged) {
         uint32 i = 0, j = 0; // j is only used for the call to digest_seq
-        const std::string& seq(reference[i].nucleos);
+        const std::string& seq((*ref_genome)[i].nucleos);
         digest_seq(out_vec[i], j, seq, dinfo);
     } else {
         #ifdef _OPENMP
         #pragma omp parallel for default(shared) num_threads(n_cores) schedule(dynamic)
         #endif
-        for (uint32 i = 0; i < reference.size(); i++) {
-            const std::string& seq_s(reference[i].nucleos);
+        for (uint32 i = 0; i < ref_genome->size(); i++) {
+            const std::string& seq_s((*ref_genome)[i].nucleos);
             uint32 j = 0; // j is only used for the call to digest_seq
             digest_seq(out_vec[i], j, seq_s, dinfo);
         }

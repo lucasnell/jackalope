@@ -78,6 +78,11 @@ struct RefSequence {
         return;
     }
     // To add character to sequence
+    void push_back(const char& nt) {
+        nucleos.push_back(nt);
+        return;
+    }
+    // To add character to sequence
     void operator+=(const char& nt) {
         nucleos += nt;
         return;
@@ -244,15 +249,15 @@ struct Mutation {
  ========================================================================================
  */
 
+// (This class will later need access to private members of VarSequence.)
+class MutationRates;
+
+
 /*
  =========================================
  One sequence from one variant haploid genome
  =========================================
  */
-
-// (This class will later need access to private members of VarSequence.)
-class MutationRates;
-
 
 class VarSequence {
 
@@ -477,15 +482,15 @@ public:
     VarGenome(const RefGenome& ref) {
         name = "";
         for (uint32 i = 0; i < ref.size(); i++) {
-            VarSequence vs(ref[i]);
-            var_genome.push_back(vs);
+            VarSequence var_seq(ref[i]);
+            var_genome.push_back(var_seq);
         }
     };
     VarGenome(const std::string& name_, const RefGenome& ref) {
         name = name_;
         for (uint32 i = 0; i < ref.size(); i++) {
-            VarSequence vs(ref[i]);
-            var_genome.push_back(vs);
+            VarSequence var_seq(ref[i]);
+            var_genome.push_back(var_seq);
         }
     };
 
@@ -495,8 +500,8 @@ public:
     }
     // For easily outputting a reference to a VarSequence
     VarSequence& operator[](const uint32& idx) {
-        VarSequence& vs(var_genome[idx]);
-        return vs;
+        VarSequence& var_seq(var_genome[idx]);
+        return var_seq;
     }
     // To return the number of sequences
     uint32 size() const noexcept {

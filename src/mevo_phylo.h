@@ -75,7 +75,7 @@ inline void update_samplers_rates_distr_(std::vector<T>& samplers,
      Replace existing mutation information in VarSequence at `b1` with info in the
      one at `b2`
      */
-    samplers[b2].vs->replace(*samplers[b1].vs);
+    samplers[b2].var_seq->replace(*samplers[b1].var_seq);
     /*
      Do the same for the SeqGammas in the sampler:
      */
@@ -107,13 +107,17 @@ template <typename T>
 inline void fill_var_samp_rate_(std::vector<VarSequence>& var_seqs,
                                 std::vector<T>& samplers,
                                 std::vector<double>& seq_rates,
-                                const uint32& tree_size, const VarSet& vars,
-                                const uint32& seq_ind, const T& sampler_base,
+                                const uint32& tree_size,
+                                const VarSet& var_set,
+                                const uint32& seq_ind,
+                                const T& sampler_base,
                                 const arma::mat& gamma_mat,
                                 const bool& whole_sequence = true,
-                                const uint32& start = 0, const sint64& end = 0) {
+                                const uint32& start = 0,
+                                const sint64& end = 0) {
 
-    var_seqs = std::vector<VarSequence>(tree_size, VarSequence(vars.reference[seq_ind]));
+    var_seqs = std::vector<VarSequence>(tree_size,
+                                        VarSequence((*var_set.reference)[seq_ind]));
 
     /*
      For tree of [Chunk]MutationSampler objects,
@@ -154,7 +158,7 @@ inline void clear_branches_(std::vector<T>& samplers,
         // Is it absent from any remaining items in the first column?
         clear_b1 = ! arma::any(edges(arma::span(i+1, edges.n_rows - 1), 0) == b1);
     } else clear_b1 = true;
-    if (clear_b1) samplers[b1].vs->clear();
+    if (clear_b1) samplers[b1].var_seq->clear();
     return;
 }
 
@@ -162,19 +166,19 @@ inline void clear_branches_(std::vector<T>& samplers,
 
 inline void fill_VarSequences_(const uint32& n_tips,
                                const std::vector<uint32>& spp_order,
-                               VarSet& vars,
+                               VarSet& var_set,
                                const uint32& seq_ind,
                                const std::vector<VarSequence>& var_seqs,
                                const bool& recombination) {
     if (recombination) {
         for (uint32 i = 0; i < n_tips; i++) {
             uint32 j = spp_order[i];
-            vars[i][seq_ind] += var_seqs[j];
+            var_set[i][seq_ind] += var_seqs[j];
         }
     } else {
         for (uint32 i = 0; i < n_tips; i++) {
             uint32 j = spp_order[i];
-            vars[i][seq_ind].replace(var_seqs[j]);
+            var_set[i][seq_ind].replace(var_seqs[j]);
         }
     }
     return;
@@ -196,7 +200,7 @@ inline void fill_VarSequences_(const uint32& n_tips,
  In other words, the vector of VarSequence objects is indexed by tip numbers.
  */
 template <typename T>
-int one_tree_(VarSet& vars,
+int one_tree_(VarSet& var_set,
               const T& sampler_base,
               const uint32& seq_ind,
               const std::vector<double>& branch_lens,
@@ -212,7 +216,7 @@ int one_tree_(VarSet& vars,
 
 
     // # tips = # variants
-    uint32 n_tips = vars.size();
+    uint32 n_tips = var_set.size();
     // tree size is # tips plus # nodes
     uint32 tree_size = edges.max() + 1;
     // Number of edges = the number of connections between nodes/tips
@@ -229,11 +233,11 @@ int one_tree_(VarSet& vars,
     std::vector<T> samplers;
     std::vector<double> seq_rates;
     if (recombination) {
-        fill_var_samp_rate_<T>(var_seqs, samplers, seq_rates, tree_size, vars, seq_ind,
+        fill_var_samp_rate_<T>(var_seqs, samplers, seq_rates, tree_size, var_set, seq_ind,
                                sampler_base, gamma_mat,
                                true, start, end);
     } else {
-        fill_var_samp_rate_<T>(var_seqs, samplers, seq_rates, tree_size, vars, seq_ind,
+        fill_var_samp_rate_<T>(var_seqs, samplers, seq_rates, tree_size, var_set, seq_ind,
                                sampler_base, gamma_mat);
     }
 
@@ -306,7 +310,7 @@ int one_tree_(VarSet& vars,
     /*
      Update final `VarSequence` objects using the index vector `spp_order`:
      */
-    fill_VarSequences_(n_tips, spp_order, vars, seq_ind, var_seqs, recombination);
+    fill_VarSequences_(n_tips, spp_order, var_set, seq_ind, var_seqs, recombination);
 
     return 0;
 
