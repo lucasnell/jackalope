@@ -11,13 +11,13 @@ n_muts <- 500
 len <- 100
 
 
-seqs <- rando_seqs(n_seqs, len)
+seqs <- gemino:::rando_seqs(n_seqs, len)
 
 test_that("Random sequences using `rando_seqs` have the correct lengths.", {
     expect_equal(nchar(seqs), rep(len, n_seqs))
 })
 
-vars <- gemino:::make_vars(seqs, n_vars)
+vars <- gemino:::make_var_set(seqs, n_vars)
 vars_R <- replicate(n_vars, seqs, simplify = FALSE)
 
 
@@ -64,7 +64,7 @@ for (v in 0:(n_vars-1)) {
 }
 
 # Converting to list like vars_R:
-vars_cpp <- lapply(1:n_vars, function(i) gemino:::see_vg(vars, i-1))
+vars_cpp <- lapply(1:n_vars, function(i) gemino:::see_var_genome(vars, i-1))
 
 # identical(vars_R, vars_cpp)
 

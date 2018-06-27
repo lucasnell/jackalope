@@ -153,7 +153,7 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
 #' @examples
 #' \dontrun{
 #' n_vars <- 10
-#' dna_set_in <- dna_set$new(rando_seqs(100, 100))
+#' dna_set_in <- dna_set$new(gemino:::rando_seqs(100, 100))
 #' set.seed(1)
 #' varseq_out <- random_variants(dna_set_in, n_vars,
 #'                               theta_w = 0.0045, theta_pi = 0.005)

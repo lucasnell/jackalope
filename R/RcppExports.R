@@ -4,7 +4,7 @@
 #' Merge a reference genome into a single sequence.
 #'
 #'
-#' @param ref_ An external pointer (R class \code{externalptr}) to a
+#' @param ref_genome_ An external pointer (R class \code{externalptr}) to a
 #'     \code{RefGenome} class in C++ (the full class in C++ is
 #'     \code{Rcpp::XPtr<RefGenome>}).
 #'
@@ -14,16 +14,14 @@
 #'
 #' @noRd
 #'
-merge_sequences <- function(ref_) {
-    invisible(.Call(`_gemino_merge_sequences`, ref_))
+merge_sequences <- function(ref_genome_) {
+    invisible(.Call(`_gemino_merge_sequences`, ref_genome_))
 }
 
 #' Filter reference genome sequences by size or for a proportion of total nucleotides.
 #'
 #'
-#' @param ref_ An external pointer (R class \code{externalptr}) to a
-#'     \code{RefGenome} class in C++ (the full class in C++ is
-#'     \code{Rcpp::XPtr<RefGenome>}).
+#' @inheritParams ref_genome_ merge_sequences
 #' @param min_seq_size Integer minimum sequence size to keep.
 #'     Defaults to \code{0}, which results in this argument being ignored.
 #' @param out_seq_prop Numeric proportion of total sequence to keep.
@@ -36,8 +34,8 @@ merge_sequences <- function(ref_) {
 #' @noRd
 #'
 #'
-filter_sequences <- function(ref_, min_seq_size = 0L, out_seq_prop = 0) {
-    invisible(.Call(`_gemino_filter_sequences`, ref_, min_seq_size, out_seq_prop))
+filter_sequences <- function(ref_genome_, min_seq_size = 0L, out_seq_prop = 0) {
+    invisible(.Call(`_gemino_filter_sequences`, ref_genome_, min_seq_size, out_seq_prop))
 }
 
 #' Create `RefGenome` pointer based on nucleotide equilibrium frequencies.
@@ -50,7 +48,7 @@ filter_sequences <- function(ref_, min_seq_size = 0L, out_seq_prop = 0) {
 #' @param len_mean Mean for the gamma distribution for sequence sizes.
 #' @param len_sd Standard deviation for the gamma distribution for sequence sizes.
 #'     If set to `<= 0`, all sequences will be the same length. Defaults to `0`.
-#' @param equil_freqs Vector of nucleotide equilibrium frequencies for
+#' @param pi_tcag Vector of nucleotide equilibrium frequencies for
 #'     "T", "C", "A", and "G", respectively. Defaults to `rep(0.25, 4)`.
 #' @param n_cores Number of cores to use via OpenMP.
 #'
@@ -61,15 +59,15 @@ filter_sequences <- function(ref_, min_seq_size = 0L, out_seq_prop = 0) {
 #'
 #' @examples
 #'
-#' \dontrun{
-#' genome <- create_genome(10, 100e6, 10e6, equil_freqs = c(0.1, 0.2, 0.3, 0.4))
-#' }
+#' genome <- create_genome(10, 100e3, 100, pi_tcag = c(0.1, 0.2, 0.3, 0.4))
 #'
-create_genome <- function(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0), n_cores = 1L) {
-    .Call(`_gemino_create_genome`, n_seqs, len_mean, len_sd, equil_freqs, n_cores)
+create_genome <- function(n_seqs, len_mean, len_sd = 0, pi_tcag = numeric(0), n_cores = 1L) {
+    .Call(`_gemino_create_genome`, n_seqs, len_mean, len_sd, pi_tcag, n_cores)
 }
 
-#' @describeIn create_genome create random sequences as a character vector.
+#' Create random sequences as a character vector.
+#'
+#' This function is used internally for testing.
 #'
 #'
 #' @inheritParams create_genome
@@ -77,28 +75,22 @@ create_genome <- function(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0)
 #' @return Character vector of sequence strings.
 #'
 #'
-#' @export
+#' @noRd
 #'
-#' @examples
-#' \dontrun{
-#' randos <- rando_seqs(10, 1000, 10)
-#' }
-#'
-rando_seqs <- function(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0), n_cores = 1L) {
-    .Call(`_gemino_rando_seqs`, n_seqs, len_mean, len_sd, equil_freqs, n_cores)
+rando_seqs <- function(n_seqs, len_mean, len_sd = 0, pi_tcag = numeric(0), n_cores = 1L) {
+    .Call(`_gemino_rando_seqs`, n_seqs, len_mean, len_sd, pi_tcag, n_cores)
 }
 
 #' Internal C++ function to digest all sequences for all variants in a variant set.
 #'
 #'
 #'
-#' @param var_ An external pointer to a C++ \code{VarSet} object
+#' @param var_set_ An external pointer to a C++ \code{VarSet} object
 #'     representing variants from the reference genome.
-#' @param bind_sites Vector of enzyme full recognition site(s).
-#' @param len5s A vector of the numbers of characters of the prime5 sites for each
-#'     recognition site.
+#' @inheritParams bind_sites digest_ref
+#' @inheritParams len5s digest_ref
 #' @param chunk_size The size of chunks to divide sequences into when digesting.
-#' @param n_cores The number of cores to use for processing.
+#' @param n_cores The number of cores to use for processing. Defaults to \code{1}.
 #'
 #' @return A list of lists, each sub-list containing multiple vectors representing
 #'     the locations of cut sites for a given variant on a given sequence.
@@ -107,22 +99,19 @@ rando_seqs <- function(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0), n
 #'
 #' @noRd
 #'
-digest_var <- function(var_, bind_sites, len5s, chunk_size, n_cores) {
-    .Call(`_gemino_digest_var`, var_, bind_sites, len5s, chunk_size, n_cores)
+digest_var_set <- function(var_set_, bind_sites, len5s, chunk_size, n_cores = 1L) {
+    .Call(`_gemino_digest_var_set`, var_set_, bind_sites, len5s, chunk_size, n_cores)
 }
 
 #' Internal C++ function to digest all sequences in a reference genome.
 #'
 #'
 #'
-#' @param ref_ An external pointer to a C++ \code{RefGenome} object
+#' @param ref_genome_ An external pointer to a C++ \code{RefGenome} object
 #'     representing the reference genome.
 #' @param bind_sites Vector of enzyme full recognition site(s).
 #' @param len5s A vector of the numbers of characters of the prime5 sites for each
 #'     recognition site.
-#' @param n_cores The number of cores to use for processing. This value is ignored
-#'     if the input reference genome is merged and \code{chunk_size == 0}.
-#'     Defaults to \code{1}.
 #' @param chunk_size Size of chunks to break sequences into for processing.
 #'     This value is ignored if it's set to zero.
 #'     Ideally this is set to a value that results in a number of chunks divisible by
@@ -134,6 +123,9 @@ digest_var <- function(var_, bind_sites, len5s, chunk_size, n_cores) {
 #'     this argument for a reference genome does NOT decrease memory usage
 #'     appreciably.
 #'     Defaults to \code{0}.
+#' @param n_cores The number of cores to use for processing. This value is ignored
+#'     if the input reference genome is merged and \code{chunk_size == 0}.
+#'     Defaults to \code{1}.
 #'
 #' @return A list of vectors, each vector representing the locations of cut sites
 #'     on a given sequence.
@@ -142,8 +134,8 @@ digest_var <- function(var_, bind_sites, len5s, chunk_size, n_cores) {
 #'
 #' @noRd
 #'
-digest_ref <- function(ref_, bind_sites, len5s, n_cores = 1L, chunk_size = 0L) {
-    .Call(`_gemino_digest_ref`, ref_, bind_sites, len5s, n_cores, chunk_size)
+digest_ref <- function(ref_genome_, bind_sites, len5s, chunk_size = 0L, n_cores = 1L) {
+    .Call(`_gemino_digest_ref`, ref_genome_, bind_sites, len5s, chunk_size, n_cores)
 }
 
 #' Estimates equilibrium nucleotide frequencies from an input rate matrix.
@@ -263,7 +255,7 @@ UNREST_rate_matrix <- function(Q, xi) {
 #' Note that all indices are in 0-based C++ indexing. This means that the first
 #' item is indexed by `0`, and so forth.
 #'
-#' @param vs_ External pointer to a C++ `VarSet` object
+#' @param var_set_ External pointer to a C++ `VarSet` object
 #' @param var_ind Integer index to the desired variant. Uses 0-based indexing!
 #' @param seq_ind Integer index to the desired sequence. Uses 0-based indexing!
 #' @param new_pos_ Integer index to the desired subsitution location.
@@ -276,8 +268,8 @@ NULL
 #'
 #' @noRd
 #'
-test_sampling <- function(vs_sexp, N, pi_tcag, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_mat, chunk_size, display_progress = TRUE) {
-    invisible(.Call(`_gemino_test_sampling`, vs_sexp, N, pi_tcag, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_mat, chunk_size, display_progress))
+test_sampling <- function(var_set_, N, pi_tcag, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_mat, chunk_size, display_progress = TRUE) {
+    invisible(.Call(`_gemino_test_sampling`, var_set_, N, pi_tcag, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_mat, chunk_size, display_progress))
 }
 
 #' Turns a VarGenome's mutations into a list of data frames.
@@ -287,8 +279,8 @@ test_sampling <- function(vs_sexp, N, pi_tcag, alpha_1, alpha_2, beta, xi, psi, 
 #'
 #' @noRd
 #'
-see_mutations <- function(vs_, var_ind) {
-    .Call(`_gemino_see_mutations`, vs_, var_ind)
+see_mutations <- function(var_set_, var_ind) {
+    .Call(`_gemino_see_mutations`, var_set_, var_ind)
 }
 
 #' Turns a VarGenome's mutations into a list of data frames.
@@ -298,8 +290,8 @@ see_mutations <- function(vs_, var_ind) {
 #'
 #' @noRd
 #'
-examine_mutations <- function(var_set_sexp, var_ind, seq_ind) {
-    .Call(`_gemino_examine_mutations`, var_set_sexp, var_ind, seq_ind)
+examine_mutations <- function(var_set_, var_ind, seq_ind) {
+    .Call(`_gemino_examine_mutations`, var_set_, var_ind, seq_ind)
 }
 
 #' Faster version of table function to count the number of mutations in Gamma regions.
@@ -315,49 +307,49 @@ table_gammas <- function(gamma_ends, positions) {
 
 #' @describeIn add_mutations Add a substitution.
 #'
-#' @inheritParams vs_ add_mutations
+#' @inheritParams var_set_ add_mutations
 #' @inheritParams var_ind add_mutations
 #' @inheritParams seq_ind add_mutations
 #' @param nucleo_ Character to substitute for existing one.
 #' @inheritParams new_pos_ add_mutations
 #'
 #'
-add_substitution <- function(vs_, var_ind, seq_ind, nucleo_, new_pos_) {
-    invisible(.Call(`_gemino_add_substitution`, vs_, var_ind, seq_ind, nucleo_, new_pos_))
+add_substitution <- function(var_set_, var_ind, seq_ind, nucleo_, new_pos_) {
+    invisible(.Call(`_gemino_add_substitution`, var_set_, var_ind, seq_ind, nucleo_, new_pos_))
 }
 
 #' @describeIn add_mutations Add an insertion.
 #'
-#' @inheritParams vs_ add_mutations
+#' @inheritParams var_set_ add_mutations
 #' @inheritParams var_ind add_mutations
 #' @inheritParams seq_ind add_mutations
 #' @param nucleos_ Nucleotides to insert at the desired location.
 #' @inheritParams new_pos_ add_mutations
 #'
 #'
-add_insertion <- function(vs_, var_ind, seq_ind, nucleos_, new_pos_) {
-    invisible(.Call(`_gemino_add_insertion`, vs_, var_ind, seq_ind, nucleos_, new_pos_))
+add_insertion <- function(var_set_, var_ind, seq_ind, nucleos_, new_pos_) {
+    invisible(.Call(`_gemino_add_insertion`, var_set_, var_ind, seq_ind, nucleos_, new_pos_))
 }
 
 #' @describeIn add_mutations Add a deletion.
 #'
-#' @inheritParams vs_ add_mutations
+#' @inheritParams var_set_ add_mutations
 #' @inheritParams var_ind add_mutations
 #' @inheritParams seq_ind add_mutations
 #' @param size_ Size of deletion.
 #' @inheritParams new_pos_ add_mutations
 #'
 #'
-add_deletion <- function(vs_, var_ind, seq_ind, size_, new_pos_) {
-    invisible(.Call(`_gemino_add_deletion`, vs_, var_ind, seq_ind, size_, new_pos_))
+add_deletion <- function(var_set_, var_ind, seq_ind, size_, new_pos_) {
+    invisible(.Call(`_gemino_add_deletion`, var_set_, var_ind, seq_ind, size_, new_pos_))
 }
 
 #' Get a rate for given start and end points of a VarSequence.
 #'
 #' @noRd
 #'
-test_rate <- function(start, end, var_ind, seq_ind, var_set_sexp, sampler_sexp) {
-    .Call(`_gemino_test_rate`, start, end, var_ind, seq_ind, var_set_sexp, sampler_sexp)
+test_rate <- function(start, end, var_ind, seq_ind, var_set_, sampler_) {
+    .Call(`_gemino_test_rate`, start, end, var_ind, seq_ind, var_set_, sampler_)
 }
 
 #' Test sampling based on an evolutionary model.
@@ -372,8 +364,8 @@ test_rate <- function(start, end, var_ind, seq_ind, var_set_sexp, sampler_sexp) 
 #'
 #' @noRd
 #'
-test_phylo <- function(vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, recombination = FALSE, start = 0L, end = 0L) {
-    .Call(`_gemino_test_phylo`, vs_sexp, sampler_base_sexp, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, recombination, start, end)
+test_phylo <- function(var_set_, sampler_base_, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, recombination = FALSE, start = 0L, end = 0L) {
+    .Call(`_gemino_test_phylo`, var_set_, sampler_base_, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, recombination, start, end)
 }
 
 #' Fill in vectors of mutation probabilities and lengths.
@@ -401,7 +393,7 @@ NULL
 #' ChunkMutationSampler with ChunkLocationSampler
 #'
 #' Before actually using the object output from this function, make sure to...
-#' * use `[Chunk]MutationSampler.fill_ptrs(VarSequence& vs)` to fill pointers.
+#' * use `[Chunk]MutationSampler.fill_ptrs(VarSequence& var_seq)` to fill pointers.
 #' * use `[Chunk]MutationSampler.fill_gamma(const arma::mat& gamma_mat)` to fill
 #'   the gamma matrix.
 #' * use `ChunkMutationSampler.location.change_chunk(chunk_size)` if using chunked
@@ -458,6 +450,32 @@ NULL
 #'
 NULL
 
+#' Get a reference genome sequence's size.
+#'
+#' @noRd
+#'
+see_ref_seq_size <- function(ref_genome_, s) {
+    .Call(`_gemino_see_ref_seq_size`, ref_genome_, s)
+}
+
+#' Get number of sequences in a reference genome.
+#'
+#' @noRd
+#'
+see_ref_n_seq <- function(ref_genome_) {
+    .Call(`_gemino_see_ref_n_seq`, ref_genome_)
+}
+
+#' Compute absolute difference between expected and desired segregated-site divergence
+#'
+#'
+#' This function is to get the value of the two beta-distribution shapes that
+#' minimize the absolute difference between the expected and desired segregated-site
+#' divergence (i.e., mean pairwise differences).
+#' It is used in the R function `freq_probs` during the optimization step.
+#'
+#' @noRd
+#'
 optim_prob <- function(v, mean_pws_, dens_, seg_div_) {
     .Call(`_gemino_optim_prob`, v, mean_pws_, dens_, seg_div_)
 }
@@ -508,15 +526,12 @@ cpp_nt_freq <- function(N) {
     .Call(`_gemino_cpp_nt_freq`, N)
 }
 
-#' Inner function to create a C++ \code{VariantSet} object
+#' Inner function to create a C++ \code{VarSet} object
 #'
-#' A \code{VariantSet} object constitutes the majority of information in a
-#' \code{variants} object (other than the reference genome) and is located in
-#' the \code{variant_set} field.
 #'
 #' @param n_mutations Integer vector of the total number of mutations (SNPs or indels)
 #'     for each sequence.
-#' @param reference External pointer to a C++ \code{SequenceSet} object that
+#' @param ref_genome_ External pointer to a C++ \code{SequenceSet} object that
 #'     represents the reference genome.
 #' @param snp_combo_list Matrix of all possible nucleotide combinations among all
 #'     variants per SNP.
@@ -532,12 +547,12 @@ cpp_nt_freq <- function(N) {
 #'     This is not recommended to be changed. Defaults to 0.8.
 #'
 #'
-#' @return An external pointer to a \code{VariantSet} object in C++.
+#' @return An external pointer to a \code{VarSet} object in C++.
 #'
 #' @noRd
 #'
-make_variants_ <- function(n_mutations, ref_xptr, snp_combo_list, mutation_probs, mutation_types, mutation_sizes, n_cores, n2N = 50, alpha = 0.8) {
-    .Call(`_gemino_make_variants_`, n_mutations, ref_xptr, snp_combo_list, mutation_probs, mutation_types, mutation_sizes, n_cores, n2N, alpha)
+make_variants_ <- function(n_mutations, ref_genome_, snp_combo_list, mutation_probs, mutation_types, mutation_sizes, n_cores, n2N = 50, alpha = 0.8) {
+    .Call(`_gemino_make_variants_`, n_mutations, ref_genome_, snp_combo_list, mutation_probs, mutation_types, mutation_sizes, n_cores, n2N, alpha)
 }
 
 #' Read a non-indexed fasta file to a \code{RefGenome} object.
@@ -602,68 +617,6 @@ write_fasta_gz <- function(file_name, ref_, text_width) {
     invisible(.Call(`_gemino_write_fasta_gz`, file_name, ref_, text_width))
 }
 
-#' Make a VarSet object from a set of sequences and # variants
-#'
-#' @noRd
-make_vars <- function(seqs, n_vars) {
-    .Call(`_gemino_make_vars`, seqs, n_vars)
-}
-
-#' Function to piece together the strings for all sequences in a VarGenome.
-#'
-#' @noRd
-see_vg <- function(vs_, v) {
-    .Call(`_gemino_see_vg`, vs_, v)
-}
-
-#' See all sequence sizes in a VarSet object.
-#'
-#' @noRd
-see_sizes <- function(vs_, v) {
-    .Call(`_gemino_see_sizes`, vs_, v)
-}
-
-make_ref <- function(input) {
-    .Call(`_gemino_make_ref`, input)
-}
-
-see_ref_seq <- function(ref_, s) {
-    .Call(`_gemino_see_ref_seq`, ref_, s)
-}
-
-#' Get a reference genome sequence's name.
-#'
-#' Temporary function for testing.
-#'
-#'
-#' @noRd
-#'
-see_ref_name <- function(ref_, s) {
-    .Call(`_gemino_see_ref_name`, ref_, s)
-}
-
-#' Get a reference genome sequence's size.
-#'
-#' Temporary function for testing.
-#'
-#'
-#' @noRd
-#'
-see_ref_seq_size <- function(ref_, s) {
-    .Call(`_gemino_see_ref_seq_size`, ref_, s)
-}
-
-#' Get number of sequences in a reference genome.
-#'
-#' Temporary function for testing.
-#'
-#'
-#' @noRd
-#'
-see_ref_n_seq <- function(ref_) {
-    .Call(`_gemino_see_ref_n_seq`, ref_)
-}
-
 #' Make a string uppercase in place.
 #'
 #' The version of this function exported to R was ~4x faster than R's
@@ -700,6 +653,27 @@ cpp_merge_str <- function(in_strings) {
 #'
 cpp_str_split_delim <- function(in_string, split) {
     .Call(`_gemino_cpp_str_split_delim`, in_string, split)
+}
+
+#' Make a VarSet object from a set of sequences and # variants
+#'
+#' @noRd
+make_var_set <- function(seqs, n_vars) {
+    .Call(`_gemino_make_var_set`, seqs, n_vars)
+}
+
+#' Function to piece together the strings for all sequences in a VarGenome.
+#'
+#' @noRd
+see_var_genome <- function(var_set_, var_ind) {
+    .Call(`_gemino_see_var_genome`, var_set_, var_ind)
+}
+
+#' See all sequence sizes in a VarSet object.
+#'
+#' @noRd
+see_sizes <- function(var_set_, var_ind) {
+    .Call(`_gemino_see_sizes`, var_set_, var_ind)
 }
 
 #' Pr(S == s).

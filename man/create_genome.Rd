@@ -2,13 +2,9 @@
 % Please edit documentation in R/RcppExports.R
 \name{create_genome}
 \alias{create_genome}
-\alias{rando_seqs}
 \title{Create \code{RefGenome} pointer based on nucleotide equilibrium frequencies.}
 \usage{
-create_genome(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0),
-  n_cores = 1L)
-
-rando_seqs(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0),
+create_genome(n_seqs, len_mean, len_sd = 0, pi_tcag = numeric(0),
   n_cores = 1L)
 }
 \arguments{
@@ -19,15 +15,13 @@ rando_seqs(n_seqs, len_mean, len_sd = 0, equil_freqs = numeric(0),
 \item{len_sd}{Standard deviation for the gamma distribution for sequence sizes.
 If set to \code{<= 0}, all sequences will be the same length. Defaults to \code{0}.}
 
-\item{equil_freqs}{Vector of nucleotide equilibrium frequencies for
+\item{pi_tcag}{Vector of nucleotide equilibrium frequencies for
 "T", "C", "A", and "G", respectively. Defaults to \code{rep(0.25, 4)}.}
 
 \item{n_cores}{Number of cores to use via OpenMP.}
 }
 \value{
 External pointer to a \code{RefGenome} C++ object.
-
-Character vector of sequence strings.
 }
 \description{
 Function to create random sequences for a new reference genome object.
@@ -35,19 +29,8 @@ Function to create random sequences for a new reference genome object.
 \details{
 Note that this function will never return empty sequences.
 }
-\section{Functions}{
-\itemize{
-\item \code{rando_seqs}: create random sequences as a character vector.
-}}
-
 \examples{
 
-\dontrun{
-genome <- create_genome(10, 100e6, 10e6, equil_freqs = c(0.1, 0.2, 0.3, 0.4))
-}
-
-\dontrun{
-randos <- rando_seqs(10, 1000, 10)
-}
+genome <- create_genome(10, 100e3, 100, pi_tcag = c(0.1, 0.2, 0.3, 0.4))
 
 }

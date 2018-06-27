@@ -2,7 +2,6 @@
 
 export(create_genome)
 export(digest)
-export(rando_seqs)
 export(read_fasta)
 export(write_fasta)
 importFrom(Rcpp,evalCpp)

@@ -36,8 +36,8 @@ make_ten <- function(x) cbind(x, matrix(0, nrow(x), 10 - ncol(x)))
 
 
 test_samp <- function() {
-    vars <- gemino:::make_vars(seq, 1)
-    gemino:::test_sampling(vs_sexp = vars,
+    vars <- gemino:::make_var_set(seq, 1)
+    gemino:::test_sampling(var_set_ = vars,
                            N = N_,
                            pi_tcag = pi_tcag_,
                            alpha_1 = alpha_1_,

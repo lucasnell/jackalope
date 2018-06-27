@@ -21,7 +21,7 @@ rates <- c(1 * 0.25 + 2 * (0.25+0.25) + 0.25 * 1,
            1.5 * 0.25 + 2 * (0.25+0.25) + 0.25 * 1)
 
 # Random sequences
-seqs <- rando_seqs(100, 1e3)
+seqs <- gemino:::rando_seqs(100, 1e3)
 
 # Phylogenetic tree:
 tree <- ape::rcoal(5)
@@ -34,7 +34,7 @@ gamma_mat <- cbind(1000, 1)
 
 
 # Pointer to VarSet object
-vars <- gemino:::make_vars(seqs, 5)
+vars <- gemino:::make_var_set(seqs, 5)
 
 # Expected proportions of mutations at each edge:
 expected <- tree$edge.length / sum(tree$edge.length)
@@ -142,7 +142,7 @@ test_that("Ranged mutations deal with deletions at the end of sequences properly
 
 # Full sequences:
 var_seqs <- lapply(0:(length(tree$tip.label)-1),
-                   function(v_) gemino:::see_vg(vs_ = vars, v = v_))
+                   function(v) gemino:::see_var_genome(var_set_ = vars, var_ind = v))
 
 # R function to get expected rate to compare against C++ version:
 get_seq_rate <- function(seq, rates, start, end) {
@@ -159,7 +159,7 @@ compare_rates <- function(var_ind, seq_ind) {
     end <- sample.int(nchars - start, 1) + start
     rate_cpp <- gemino:::test_rate(start = start-1, end = end-1,
                                    var_ind = var_ind-1, seq_ind = seq_ind-1,
-                                   var_set_sexp = vars, sampler_sexp = sampler)
+                                   var_set_ = vars, sampler_ = sampler)
     rate_r <- get_seq_rate(var_seqs[[var_ind]][seq_ind], rates, start, end)
     if (rate_cpp != rate_r) cat(sprintf("%i, %i, %i, %i\n", var_ind, seq_ind, start, end))
     return(cbind(rate_cpp, rate_r))

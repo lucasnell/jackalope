@@ -42,7 +42,7 @@ of all enzymes you're interested in included in the \code{enzyme_names} argument
 
 \dontrun{
 
-ref_genome <- dna_set$new(rando_seqs(100, mean_len = 1e3, sd_len = 1e2))
+ref_genome <- dna_set$new(gemino:::rando_seqs(100, mean_len = 1e3, sd_len = 1e2))
 digest(ref_genome, 'ApeKI', n_cores = 1, in_place = TRUE)
 ref_genome
 
