@@ -117,7 +117,7 @@ inline void fill_var_samp_rate_(std::vector<VarSequence>& var_seqs,
                                 const sint64& end = 0) {
 
     var_seqs = std::vector<VarSequence>(tree_size,
-                                        VarSequence((*var_set.reference)[seq_ind]));
+                                        VarSequence(var_set.reference[seq_ind]));
 
     /*
      For tree of [Chunk]MutationSampler objects,

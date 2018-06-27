@@ -194,7 +194,7 @@ std::vector< std::vector< std::deque<uint32> > > digest_var_set(
     XPtr<VarSet> var_set(var_set_);
 
     const uint32 n_vars = var_set->size();
-    const uint32 n_seqs = var_set->reference->size();
+    const uint32 n_seqs = var_set->reference.size();
 
     const DigestInfo dinfo(bind_sites, len5s);
 
