@@ -122,9 +122,9 @@ void RefGenome::print() const {
 //' @noRd
 //'
 //[[Rcpp::export]]
-void print_rg(SEXP rg_) {
-    XPtr<RefGenome> rg(rg_);
-    rg->print();
+void print_ref_genome(SEXP ref_genome_) {
+    XPtr<RefGenome> ref_genome(ref_genome_);
+    ref_genome->print();
     return;
 }
 
@@ -188,8 +188,8 @@ void VarSet::print() const noexcept {
 //' @noRd
 //'
 //[[Rcpp::export]]
-void print_vs(SEXP vs_) {
-    XPtr<VarSet> vs(vs_);
-    vs->print();
+void print_var_set(SEXP var_set_) {
+    XPtr<VarSet> var_set(var_set_);
+    var_set->print();
     return;
 }
