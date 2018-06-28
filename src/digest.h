@@ -5,8 +5,47 @@
 #include <string> // find, string::npos, string::size_type, ...
 #include <vector> // vector class
 #include <deque> // deque class
+#include <unordered_map> // unordered_map
 
 #include "sequence_classes.h" // classes RefGenome, VarSet, VarSequence
+
+
+
+namespace digest {
+
+// Degenerate bases and what nucleotides they represent:
+std::unordered_map<char, std::string> deg_bases = {
+    {'N', "ACGT"},
+    {'M', "AC"},
+    {'R', "AG"},
+    {'W', "AT"},
+    {'Y', "CT"},
+    {'S', "CG"},
+    {'K', "GT"},
+    {'H', "ACT"},
+    {'B', "CGT"},
+    {'V', "ACG"},
+    {'D', "AGT"}
+};
+
+std::vector<uint32> cmp_map = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 84, 0, 71, 0, 0, 0, 67, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 65, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+}
+
 
 
 

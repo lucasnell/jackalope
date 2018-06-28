@@ -25,25 +25,85 @@ using namespace Rcpp;
 //'
 //' @noRd
 //'
-//[[Rcpp::export]]
 std::string rev_comp(const std::string& seq) {
-    std::vector<uint32> map(256);
-    map['T'] = 'A';
-    map['C'] = 'G';
-    map['A'] = 'T';
-    map['G'] = 'C';
 
     uint32 N = seq.size();
 
     std::string out;
     out.reserve(N);
 
-    for (uint32 i = 1; i <= N; i++) {
-        out.push_back(map[seq[N - i]]);
+    for (uint32 j = 1; j <= N; j++) {
+        out.push_back(digest::cmp_map[seq[N - j]]);
     }
 
     return out;
 }
+
+
+//' Calculate how many bases come before a cleavage site.
+//'
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+std::vector<uint32> get_precleavage_lens(const std::vector<std::string>& seqs) {
+
+    std::vector<uint32> out(seqs.size());
+
+    for (uint32 i = 0; i < seqs.size(); i++) {
+        uint32 cleav = seqs[i].find('/');
+        out[i] = cleav;
+    }
+
+    return out;
+}
+
+
+
+//' Expand sequences with non-specific nucleobases.
+//'
+//'
+//' @noRd
+//'
+std::vector<std::string> expand_sites(const std::vector<std::string>& sites,
+                                      const bool& add_rev_comp = true) {
+
+    std::vector<std::string> seqs_out;
+
+    uint32 n_combs = 1;
+    for (uint32 i = 0; i < sites.size(); i++) n_combs *= sites[i].size();
+    seqs_out.reserve(n_combs);
+
+    for (uint32 i = 0; i < sites[0].size(); i++) {
+        seqs_out.push_back(std::string(1, sites[0][i]));
+    }
+
+
+
+    for (uint32 i = 1; i < sites.size(); i++) {
+        const std::string& site_i(sites[i]);
+        uint32 n = seqs_out.size();
+        for (uint32 j = 1; j < site_i.size(); j++) {
+            for (uint32 k = 0; k < n; k++) {
+                seqs_out.push_back(seqs_out[k] + site_i[j]);
+            }
+        }
+        for (uint32 k = 0; k < n; k++) {
+            seqs_out[k] += site_i[0];
+        }
+    }
+    if (add_rev_comp) {
+        seqs_out.reserve(n_combs * 2);
+        for (uint32 i = 0; i < n_combs; i++) {
+            seqs_out.push_back(rev_comp(seqs_out[i]));
+        }
+    }
+
+    return seqs_out;
+}
+
+
+
 
 
 

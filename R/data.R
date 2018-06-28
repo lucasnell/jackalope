@@ -7,7 +7,7 @@
 #'       See \code{\link{nucleobase_legend}} for what bases other than `T`, `C`, `A`,
 #'       and `G` mean.
 #'       Each `/` indicates a cleavage point.
-#'       According to [NEB](https://www.neb.com):
+#'       According to NEB (see link below under Source):
 #'       "Numbers in parentheses indicate point of cleaveage for non-palindromic
 #'       enzymes."
 #'       These types of enzymes are not implemented.}
