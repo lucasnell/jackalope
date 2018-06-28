@@ -19,6 +19,33 @@
 using namespace Rcpp;
 
 
+//' Reverse complement of a DNA sequence.
+//'
+//' Make sure that `seq` contains only T, C, A, or G!
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+std::string rev_comp(const std::string& seq) {
+    std::vector<uint32> map(256);
+    map['T'] = 'A';
+    map['C'] = 'G';
+    map['A'] = 'T';
+    map['G'] = 'C';
+
+    uint32 N = seq.size();
+
+    std::string out;
+    out.reserve(N);
+
+    for (uint32 i = 1; i <= N; i++) {
+        out.push_back(map[seq[N - i]]);
+    }
+
+    return out;
+}
+
+
 
 
 
@@ -184,7 +211,7 @@ void VarSeqDigest::digest(const DigestInfo& dinfo) {
 //' @noRd
 //'
 // [[Rcpp::export]]
-std::vector< std::vector< std::deque<uint32> > > digest_var_set(
+SEXP digest_var_set(
         SEXP var_set_,
         const std::vector<std::string>& bind_sites,
         const std::vector<uint32>& len5s,
@@ -196,6 +223,8 @@ std::vector< std::vector< std::deque<uint32> > > digest_var_set(
     const uint32 n_vars = var_set->size();
     const uint32 n_seqs = var_set->reference.size();
 
+    XPtr<GenomeSetDigest> out_digests(new GenomeSetDigest(n_vars, n_seqs));
+
     const DigestInfo dinfo(bind_sites, len5s);
 
     if (chunk_size < (2 * dinfo.max_size - 1)) {
@@ -204,21 +233,18 @@ std::vector< std::vector< std::deque<uint32> > > digest_var_set(
                  "max(<binding site sizes>) - 1`)");
     }
 
-    std::vector< std::vector< std::deque<uint32> > > out_vec(
-            n_vars, std::vector< std::deque<uint32> >(
-                    n_seqs, std::deque<uint32>(0)));
 
     #ifdef _OPENMP
     #pragma omp parallel for default(shared) num_threads(n_cores) schedule(dynamic) collapse(2)
     #endif
     for (uint32 v = 0; v < n_vars; v++) {
         for (uint32 s = 0; s < n_seqs; s++) {
-            VarSeqDigest vsd(*var_set, v, s, chunk_size, out_vec[v][s]);
+            VarSeqDigest vsd(*var_set, v, s, chunk_size, (*out_digests)[v][s]);
             vsd.digest(dinfo);
         }
     }
 
-    return out_vec;
+    return out_digests;
 }
 
 
@@ -352,7 +378,7 @@ void RefSeqChunk::merge_seam(const RefSeqChunk& prev, const DigestInfo& dinfo) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-std::vector< std::deque<uint32> > digest_ref(
+SEXP digest_ref(
         SEXP ref_genome_,
         const std::vector<std::string>& bind_sites,
         const std::vector<uint32>& len5s,
@@ -361,7 +387,9 @@ std::vector< std::deque<uint32> > digest_ref(
 
     const XPtr<RefGenome> ref_genome(ref_genome_);
 
-    std::vector< std::deque<uint32> > out_vec(ref_genome->size());
+    XPtr<GenomeDigest> out_digest_xptr(new GenomeDigest(ref_genome->size()));
+    GenomeDigest& out_digest(*out_digest_xptr);
+
     DigestInfo dinfo(bind_sites, len5s);
 
     if (chunk_size > 0) {
@@ -419,7 +447,7 @@ std::vector< std::deque<uint32> > digest_ref(
          one deque.
          */
         for (uint32 i = 0; i < ref_genome->size(); i++) {
-            std::deque<uint32>& out_dq(out_vec[i]);
+            std::deque<uint32>& out_dq(out_digest[i]);
             while (chunk_dq.front().seq == i) {
                 chunk_dq.front().combine(out_dq);
                 chunk_dq.pop_front();
@@ -429,7 +457,7 @@ std::vector< std::deque<uint32> > digest_ref(
     } else if (ref_genome->merged) {
         uint32 i = 0, j = 0; // j is only used for the call to digest_seq
         const std::string& seq((*ref_genome)[i].nucleos);
-        digest_seq(out_vec[i], j, seq, dinfo);
+        digest_seq(out_digest[i], j, seq, dinfo);
     } else {
         #ifdef _OPENMP
         #pragma omp parallel for default(shared) num_threads(n_cores) schedule(dynamic)
@@ -437,10 +465,10 @@ std::vector< std::deque<uint32> > digest_ref(
         for (uint32 i = 0; i < ref_genome->size(); i++) {
             const std::string& seq_s((*ref_genome)[i].nucleos);
             uint32 j = 0; // j is only used for the call to digest_seq
-            digest_seq(out_vec[i], j, seq_s, dinfo);
+            digest_seq(out_digest[i], j, seq_s, dinfo);
         }
     }
 
-    return out_vec;
+    return out_digest_xptr;
 }
 

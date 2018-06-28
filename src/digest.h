@@ -140,5 +140,47 @@ private:
 
 
 
+// Used to store a single genome's digestion info:
+
+class GenomeDigest {
+
+public:
+
+    std::vector< std::deque<uint32> > cut_sites;
+
+    GenomeDigest() {}
+    GenomeDigest(const uint32& n_seqs) : cut_sites(n_seqs) {}
+
+    std::deque<uint32>& operator[](const uint& idx) {
+        return cut_sites[idx];
+    }
+    const std::deque<uint32>& operator[](const uint& idx) const {
+        return cut_sites[idx];
+    }
+};
+
+
+// Used to store multiple digestions, like from a `VarSet` object
+class GenomeSetDigest {
+
+public:
+
+    std::vector< GenomeDigest > digestions;
+
+    GenomeSetDigest() {}
+    GenomeSetDigest(const uint32& n_vars) : digestions(n_vars) {}
+    GenomeSetDigest(const uint32& n_vars, const uint32& n_seqs)
+        : digestions(n_vars, GenomeDigest(n_seqs)) {}
+
+    GenomeDigest& operator[](const uint& idx) {
+        return digestions[idx];
+    }
+    const GenomeDigest& operator[](const uint& idx) const {
+        return digestions[idx];
+    }
+};
+
+
+
 
 #endif
