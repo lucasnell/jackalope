@@ -1,7 +1,9 @@
 #' An R6 class representing a reference genome
 #'
-#' Note: Do NOT change fields in this class directly. It will likely cause your
+#' \emph{Note:} Do NOT change fields in this class directly. It will cause your
 #' R session to do bad things.
+#' (Ever seen the bomb popup on RStudio? Manually mess with these fields and you
+#' surely will.)
 #'
 #' @field genome An \code{externalptr} to a C++ object storing the sequences
 #'     representing the genome.
@@ -36,13 +38,13 @@ reference <- R6::R6Class(
 
         print = function(...) {
             "print reference object"
-            print_ref_genome(genome)
+            print_ref_genome(self$genome)
             invisible(self)
         },
 
         merge = function() {
             "Merge all reference genome sequences into one"
-            merge_sequences(genome)
+            merge_sequences(self$genome)
             invisible(self)
         },
 
@@ -71,7 +73,7 @@ reference <- R6::R6Class(
                 }
                 out_seq_prop <- threshold
             }
-            filter_sequences(genome, min_seq_size, out_seq_prop)
+            filter_sequences(self$genome, min_seq_size, out_seq_prop)
             invisible(self)
         }
 
@@ -88,14 +90,34 @@ reference$lock()
 
 #' An R6 class representing haploid variants from a reference genome
 #'
-#' Note: Do NOT change fields in this class directly. It will likely cause your
+#' \emph{Note:} Do NOT change fields in this class directly. It will cause your
 #' R session to do bad things.
+#' (Ever seen the bomb popup on RStudio? Manually mess with these fields and you
+#' surely will.)
 #'
 #'
 #' @field genome An \code{externalptr} to a C++ object storing the sequences
 #'     representing the genome.
 #' @field digests An \code{externalptr} to a C++ object storing the digestion of the
 #'     genome, if a digestion has been carried out. It's \code{NULL} otherwise.
+#' @field reference An \code{externalptr} to a C++ object storing the sequences
+#'     representing the genome.
+#'     There are a few extra notes for this field:
+#'     \itemize{
+#'         \item \strong{This point is the most important.}
+#'             Since it's a pointer, if you make any changes to the reference genome
+#'             that it points to, those changes will also show up in the \code{variants}
+#'             object. For example, if you make a \code{variants} object \code{V}
+#'             based on an existing \code{reference} object \code{R}, then you merge
+#'             sequences in \code{R}, \code{V} will now have merged sequences.
+#'             If you've already started adding mutations to \code{V},
+#'             then all the indexes used to store those mutations will be inaccurate.
+#'             So when you do anything with \code{V} later, your R session will crash.
+#'         \item This field is private so cannot be accessed directly.
+#'         \item If a \code{reference} object is used to create a \code{variants} object,
+#'             don't worry about later deleting the \code{reference} object.
+#'     }
+#'
 #'
 #' @return An object of class \code{variants}.
 #'
@@ -115,19 +137,27 @@ variants <- R6::R6Class(
         genomes = NULL,
         digests = NULL,
 
-        initialize = function(genomes_ptr) {
+        initialize = function(genomes_ptr, reference_ptr) {
             if (!inherits(genomes_ptr, "externalptr")) {
                 stop("\nWhen initializing a variants object, you need to use ",
                      "an externalptr object.", call. = FALSE)
             }
             self$genomes <- genomes_ptr
+            private$reference <- reference_ptr
         },
 
         print = function() {
             "print reference object"
-            print_var_set(genomes)
+            print_var_set(self$genomes)
             invisible(self)
         }
+    ),
+
+
+    private = list(
+        # This should store a `XPtr<RefGenome>` to make sure it doesn't
+        # go out of scope:
+        reference = NULL
     )
 
 )
