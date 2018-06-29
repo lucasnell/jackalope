@@ -1,7 +1,6 @@
 context("Testing phylogenetic evolution accuracy")
 
 
-library(testthat)
 library(gemino)
 
 set.seed(1953993132)
@@ -20,8 +19,9 @@ rates <- c(1 * 0.25 + 2 * (0.25+0.25) + 0.25 * 1,
            1.5 * 0.25 + 2 * (0.25+0.25) + 0.25 * 1,
            1.5 * 0.25 + 2 * (0.25+0.25) + 0.25 * 1)
 
-# Random sequences
-seqs <- gemino:::rando_seqs(100, 1e3)
+# reference genome of random sequences
+n_seqs <- 100
+ref_genome <- create_genome(n_seqs, 1e3)
 
 # Phylogenetic tree:
 tree <- ape::rcoal(5)
@@ -33,16 +33,16 @@ ordered_tip_labels <- sort(tree$tip.label)
 gamma_mat <- cbind(1000, 1)
 
 
-# Pointer to VarSet object
-vars <- gemino:::make_var_set(seqs, 5)
+# Pointer to VarSet object that is empty (i.e., has no mutations)
+vars <- gemino:::make_var_set(ref_genome$genome, 5)
 
 # Expected proportions of mutations at each edge:
 expected <- tree$edge.length / sum(tree$edge.length)
 
 # Realized proportions:
-phylo_sims <- as.list(0:(length(seqs) - 1))
+phylo_sims <- as.list(0:(n_seqs - 1))
 set.seed(546085105)
-for (i in 0:(length(seqs) - 1)) {
+for (i in 0:(n_seqs - 1)) {
     if (i < 50) {
         phylo_sims[[i+1]] <-
             gemino:::test_phylo(

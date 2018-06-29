@@ -8,6 +8,9 @@ seq <- c(rep("T", 0.25e6), rep("C", 0.25e6), rep("A", 0.25e6), rep("G", 0.25e6))
 seq <- sample(seq)
 seq <- paste(seq, collapse = "")
 
+# Make pointer to RefGenome object based on `seq`
+ref <- gemino:::make_ref_genome(seq)
+
 # Set molecular evolution parameters
 N_ <- 1e3
 pi_tcag_ = 0.1*1:4
@@ -36,7 +39,7 @@ make_ten <- function(x) cbind(x, matrix(0, nrow(x), 10 - ncol(x)))
 
 
 test_samp <- function() {
-    vars <- gemino:::make_var_set(seq, 1)
+    vars <- gemino:::make_var_set(ref, 1)
     gemino:::test_sampling(var_set_ = vars,
                            N = N_,
                            pi_tcag = pi_tcag_,
@@ -189,6 +192,7 @@ test_that("molecular evolution selects mutation regions according to Gamma value
     gamma_coef <- coef(lm(count ~ gamma, data = pos_df))[['gamma']]
     expect_true(gamma_coef > 0.9 & gamma_coef < 1.1)
 })
+
 
 
 

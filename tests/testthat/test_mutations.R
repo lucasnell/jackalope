@@ -13,11 +13,37 @@ len <- 100
 
 seqs <- gemino:::rando_seqs(n_seqs, len)
 
+# Make pointer to RefGenome object based on `seqs`
+ref <- gemino:::make_ref_genome(seqs)
+
 test_that("Random sequences using `rando_seqs` have the correct lengths.", {
     expect_equal(nchar(seqs), rep(len, n_seqs))
 })
 
-vars <- gemino:::make_var_set(seqs, n_vars)
+
+char_frequencies <- function(char, s) {
+    s2 <- gsub(char,"",s)
+    return((nchar(s) - nchar(s2)) / nchar(s))
+}
+# Combined P value for all items in matrix (using Fisher's method):
+combine_pvals <- function(pvals) {
+    p <- pchisq(-2 * sum(log(pvals)), df = 2 * length(pvals))
+}
+
+
+test_that(paste("Random sequences using `rando_seqs` aren't significantly different",
+                "from expectation."),
+{
+    freqs <- t(sapply(1:n_seqs, function(i) sapply(c("T", "C", "A", "G"), char_frequencies,
+                                                   s = seqs[i])))
+    pvals <- apply(freqs, 2, function(x) t.test(x, mu = 0.25)$p.value)
+    p <- combine_pvals(pvals)
+
+    expect_gt(p, 0.05)
+})
+
+
+vars <- gemino:::make_var_set(ref, n_vars)
 vars_R <- replicate(n_vars, seqs, simplify = FALSE)
 
 

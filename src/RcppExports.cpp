@@ -537,15 +537,26 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// make_var_set
-SEXP make_var_set(const std::deque<std::string>& seqs, const uint32& n_vars);
-RcppExport SEXP _gemino_make_var_set(SEXP seqsSEXP, SEXP n_varsSEXP) {
+// make_ref_genome
+SEXP make_ref_genome(const std::deque<std::string>& seqs);
+RcppExport SEXP _gemino_make_ref_genome(SEXP seqsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::deque<std::string>& >::type seqs(seqsSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_ref_genome(seqs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// make_var_set
+SEXP make_var_set(SEXP ref_genome_, const uint32& n_vars);
+RcppExport SEXP _gemino_make_var_set(SEXP ref_genome_SEXP, SEXP n_varsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_(ref_genome_SEXP);
     Rcpp::traits::input_parameter< const uint32& >::type n_vars(n_varsSEXP);
-    rcpp_result_gen = Rcpp::wrap(make_var_set(seqs, n_vars));
+    rcpp_result_gen = Rcpp::wrap(make_var_set(ref_genome_, n_vars));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -630,6 +641,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_read_fasta_ind", (DL_FUNC) &_gemino_read_fasta_ind, 3},
     {"_gemino_write_fasta_fa", (DL_FUNC) &_gemino_write_fasta_fa, 3},
     {"_gemino_write_fasta_gz", (DL_FUNC) &_gemino_write_fasta_gz, 3},
+    {"_gemino_make_ref_genome", (DL_FUNC) &_gemino_make_ref_genome, 1},
     {"_gemino_make_var_set", (DL_FUNC) &_gemino_make_var_set, 2},
     {"_gemino_see_var_genome", (DL_FUNC) &_gemino_see_var_genome, 2},
     {"_gemino_see_sizes", (DL_FUNC) &_gemino_see_sizes, 2},

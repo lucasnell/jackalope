@@ -21,15 +21,23 @@ using namespace Rcpp;
 
 
 
-
-
-
-//' Make a VarSet object from a set of sequences and # variants
+//' Make a RefGenome object from a set of sequences
 //'
 //' @noRd
 //[[Rcpp::export]]
-SEXP make_var_set(const std::deque<std::string>& seqs, const uint32& n_vars) {
-    XPtr<VarSet> var_set(new VarSet(seqs, n_vars), true);
+SEXP make_ref_genome(const std::deque<std::string>& seqs) {
+    XPtr<RefGenome> ref_genome(new RefGenome(seqs), true);
+    return ref_genome;
+}
+
+
+//' Make a VarSet object from a RefGenome pointer and # variants
+//'
+//' @noRd
+//[[Rcpp::export]]
+SEXP make_var_set(SEXP ref_genome_, const uint32& n_vars) {
+    XPtr<RefGenome> ref_genome(ref_genome_);
+    XPtr<VarSet> var_set(new VarSet(*ref_genome, n_vars), true);
     return var_set;
 }
 

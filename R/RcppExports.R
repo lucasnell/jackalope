@@ -634,11 +634,18 @@ write_fasta_gz <- function(file_name, ref_, text_width) {
     invisible(.Call(`_gemino_write_fasta_gz`, file_name, ref_, text_width))
 }
 
-#' Make a VarSet object from a set of sequences and # variants
+#' Make a RefGenome object from a set of sequences
 #'
 #' @noRd
-make_var_set <- function(seqs, n_vars) {
-    .Call(`_gemino_make_var_set`, seqs, n_vars)
+make_ref_genome <- function(seqs) {
+    .Call(`_gemino_make_ref_genome`, seqs)
+}
+
+#' Make a VarSet object from a RefGenome pointer and # variants
+#'
+#' @noRd
+make_var_set <- function(ref_genome_, n_vars) {
+    .Call(`_gemino_make_var_set`, ref_genome_, n_vars)
 }
 
 #' Function to piece together the strings for all sequences in a VarGenome.
