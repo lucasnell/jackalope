@@ -57,19 +57,14 @@ template <typename OuterClass, typename InnerClass>
 OuterClass create_sequences_(const uint32& n_seqs,
                              const double& len_mean,
                              const double& len_sd,
-                             NumericVector pi_tcag,
+                             const std::vector<double>& pi_tcag,
                              const uint32& n_cores) {
-
-    if (pi_tcag.size() == 0) pi_tcag = NumericVector(4, 0.25);
-
-    // Converting to STL format
-    std::vector<double> pi_tcag_ = as<std::vector<double>>(pi_tcag);
 
     // Generate seeds for random number generators (1 RNG per core)
     const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
 
     // Table-sampling object
-    const TableSampler sampler(pi_tcag_);
+    const TableSampler sampler(pi_tcag);
 
     // Creating output object
     OuterClass seqs_out(n_seqs);
@@ -144,26 +139,25 @@ OuterClass create_sequences_(const uint32& n_seqs,
 //' @param n_seqs Number of sequences.
 //' @param len_mean Mean for the gamma distribution for sequence sizes.
 //' @param len_sd Standard deviation for the gamma distribution for sequence sizes.
-//'     If set to `<= 0`, all sequences will be the same length. Defaults to `0`.
+//'     If set to `<= 0`, all sequences will be the same length.
 //' @param pi_tcag Vector of nucleotide equilibrium frequencies for
-//'     "T", "C", "A", and "G", respectively. Defaults to `rep(0.25, 4)`.
+//'     "T", "C", "A", and "G", respectively.
 //' @param n_cores Number of cores to use via OpenMP.
 //'
 //'
 //' @return External pointer to a `RefGenome` C++ object.
 //'
-//' @export
+//' @noRd
 //'
 //' @examples
 //'
-//' genome <- create_genome(10, 100e3, 100, pi_tcag = c(0.1, 0.2, 0.3, 0.4))
 //'
 //[[Rcpp::export]]
-SEXP create_genome(const uint32& n_seqs,
-                   const double& len_mean,
-                   const double& len_sd = 0,
-                   NumericVector pi_tcag = NumericVector(0),
-                   const uint32& n_cores = 1) {
+SEXP create_genome_(const uint32& n_seqs,
+                    const double& len_mean,
+                    const double& len_sd,
+                    std::vector<double> pi_tcag,
+                    const uint32& n_cores) {
 
     XPtr<RefGenome> ref_xptr(new RefGenome(), true);
     RefGenome& ref(*ref_xptr);
@@ -175,7 +169,6 @@ SEXP create_genome(const uint32& n_seqs,
         ref.total_size += ref[i].size();
         ref[i].name = "seq" + std::to_string(i);
     }
-
 
     return ref_xptr;
 }
@@ -202,8 +195,11 @@ std::vector<std::string> rando_seqs(const uint32& n_seqs,
                                     NumericVector pi_tcag = NumericVector(0),
                                     const uint32& n_cores = 1) {
 
+    std::vector<double> pi_tcag_ = as<std::vector<double>>(pi_tcag);
+    if (pi_tcag_.size() == 0) pi_tcag_ = std::vector<double>(4, 0.25);
+
     std::vector<std::string> ref = create_sequences_<std::vector<std::string>,
-                std::string>(n_seqs, len_mean, len_sd, pi_tcag, n_cores);
+                std::string>(n_seqs, len_mean, len_sd, pi_tcag_, n_cores);
 
     return ref;
 }

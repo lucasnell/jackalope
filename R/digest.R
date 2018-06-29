@@ -3,10 +3,10 @@
 #
 
 
+
 #' Check validity, adjust for degeneracy, and remove duplicates for input enzymes.
 #'
-#' @inheritParams enzyme_names digest
-#' @inheritParams custom_enzymes digest
+#' @inheritParams digest
 #'
 #' @noRd
 #'
@@ -93,12 +93,11 @@ process_enzymes <- function(enzyme_names, custom_enzymes) {
 #' of all enzymes you're interested in included in the \code{enzyme_names} argument.
 #'
 #'
+#' @inheritParams create_genome
 #' @param object Either a \code{ref_genome} or \code{variants} object.
 #' @param enzyme_names Name of enzymes that should be present inside the package data
 #'     object `binding_sites` (in the `enzyme` column).
 #' @param custom_enzymes Custom enzymes for those not present in internal data.
-#' @param n_cores Number of cores to use for parallel processing. This argument is
-#'     ignored if OpenMP is not enabled. Defaults to \code{1}.
 #' @param chunk_size The size of chunks to break up sqeuences into when digesting
 #'     a \code{ref_genome} or \code{variants} object.
 #'     Changing this might affect performance, for better or worse.

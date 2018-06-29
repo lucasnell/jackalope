@@ -49,20 +49,20 @@ filter_sequences <- function(ref_genome_, min_seq_size = 0L, out_seq_prop = 0) {
 #' @param len_sd Standard deviation for the gamma distribution for sequence sizes.
 #'     If set to `<= 0`, all sequences will be the same length. Defaults to `0`.
 #' @param pi_tcag Vector of nucleotide equilibrium frequencies for
-#'     "T", "C", "A", and "G", respectively. Defaults to `rep(0.25, 4)`.
+#'     "T", "C", "A", and "G", respectively.
 #' @param n_cores Number of cores to use via OpenMP.
 #'
 #'
 #' @return External pointer to a `RefGenome` C++ object.
 #'
-#' @export
+#' @noRd
 #'
 #' @examples
 #'
 #' genome <- create_genome(10, 100e3, 100, pi_tcag = c(0.1, 0.2, 0.3, 0.4))
 #'
-create_genome <- function(n_seqs, len_mean, len_sd = 0, pi_tcag = numeric(0), n_cores = 1L) {
-    .Call(`_gemino_create_genome`, n_seqs, len_mean, len_sd, pi_tcag, n_cores)
+create_genome_ <- function(n_seqs, len_mean, len_sd, pi_tcag, n_cores) {
+    .Call(`_gemino_create_genome_`, n_seqs, len_mean, len_sd, pi_tcag, n_cores)
 }
 
 #' Create random sequences as a character vector.

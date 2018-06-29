@@ -29,18 +29,18 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// create_genome
-SEXP create_genome(const uint32& n_seqs, const double& len_mean, const double& len_sd, NumericVector pi_tcag, const uint32& n_cores);
-RcppExport SEXP _gemino_create_genome(SEXP n_seqsSEXP, SEXP len_meanSEXP, SEXP len_sdSEXP, SEXP pi_tcagSEXP, SEXP n_coresSEXP) {
+// create_genome_
+SEXP create_genome_(const uint32& n_seqs, const double& len_mean, const double& len_sd, std::vector<double> pi_tcag, const uint32& n_cores);
+RcppExport SEXP _gemino_create_genome_(SEXP n_seqsSEXP, SEXP len_meanSEXP, SEXP len_sdSEXP, SEXP pi_tcagSEXP, SEXP n_coresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const uint32& >::type n_seqs(n_seqsSEXP);
     Rcpp::traits::input_parameter< const double& >::type len_mean(len_meanSEXP);
     Rcpp::traits::input_parameter< const double& >::type len_sd(len_sdSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type pi_tcag(pi_tcagSEXP);
     Rcpp::traits::input_parameter< const uint32& >::type n_cores(n_coresSEXP);
-    rcpp_result_gen = Rcpp::wrap(create_genome(n_seqs, len_mean, len_sd, pi_tcag, n_cores));
+    rcpp_result_gen = Rcpp::wrap(create_genome_(n_seqs, len_mean, len_sd, pi_tcag, n_cores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -593,7 +593,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_gemino_merge_sequences", (DL_FUNC) &_gemino_merge_sequences, 1},
     {"_gemino_filter_sequences", (DL_FUNC) &_gemino_filter_sequences, 3},
-    {"_gemino_create_genome", (DL_FUNC) &_gemino_create_genome, 5},
+    {"_gemino_create_genome_", (DL_FUNC) &_gemino_create_genome_, 5},
     {"_gemino_rando_seqs", (DL_FUNC) &_gemino_rando_seqs, 5},
     {"_gemino_get_precleavage_lens", (DL_FUNC) &_gemino_get_precleavage_lens, 1},
     {"_gemino_expand_seqs", (DL_FUNC) &_gemino_expand_seqs, 1},
