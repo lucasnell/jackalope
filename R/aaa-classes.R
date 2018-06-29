@@ -81,7 +81,7 @@ reference <- R6::R6Class(
 
 
 
-
+reference$lock()
 
 
 
@@ -132,5 +132,5 @@ variants <- R6::R6Class(
 
 )
 
-
+variants$lock()
 

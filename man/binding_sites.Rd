@@ -4,18 +4,20 @@
 \name{binding_sites}
 \alias{binding_sites}
 \title{Binding sites for selected restriction enzymes.}
-\format{A list of length 11. For each element in the list...
+\format{A 695 x 2 data frame with the following columns:
 \describe{
-\item{name}{The element's name is the restriction enzyme's name.
-The enzymes present in this list are
-\emph{AclI}, \emph{ApeKI}, \emph{AscI}, \emph{BspEI}, \emph{BstBI},
-\emph{EcoT22I}, \emph{FspI}, \emph{MluI-HF}, \emph{NruI-HF}, \emph{PstI},
-and \emph{SbfI}.}
-\item{sites}{Enzyme binding site sequences. This vector is of the binding sites,
-5' then 3', for each unique site that the enzyme can bind to.}
+\item{enzyme}{Restriction enzyme name.}
+\item{sites}{Enzyme binding site sequences.
+See \code{\link{nucleobase_legend}} for what bases other than \code{T}, \code{C}, \code{A},
+and \code{G} mean.
+Each \code{/} indicates a cleavage point.
+According to NEB (see link below under Source):
+"Numbers in parentheses indicate point of cleaveage for non-palindromic
+enzymes."
+These types of enzymes are not implemented.}
 }}
 \source{
-\url{http://www.neb.com}
+\url{https://www.neb.com/tools-and-resources/selection-charts/alphabetized-list-of-recognition-specificities}
 }
 \usage{
 binding_sites

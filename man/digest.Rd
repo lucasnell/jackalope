@@ -2,61 +2,32 @@
 % Please edit documentation in R/digest.R
 \name{digest}
 \alias{digest}
-\title{Digest genome(s).}
+\title{Digest reference genome or variants from a genome.}
 \usage{
-digest(object, enzyme_names, n_cores = 1, chunk_size = 1000,
-  enz_list = binding_sites, in_place = FALSE)
+digest(object, enzyme_names, custom_enzymes, chunk_size = 0, n_cores = 1)
 }
 \arguments{
-\item{object}{Either a \code{dna_set} or \code{variants} object.}
+\item{object}{Either a \code{reference} or \code{variants} object.}
 
-\item{enzyme_names}{Name of enzyme(s).}
+\item{enzyme_names}{Name of enzymes that should be present inside the package data
+object \code{binding_sites} (in the \code{enzyme} column).}
 
-\item{n_cores}{Number of cores to use for parallel processing. This argument is
-ignored if OpenMP is not enabled. Defaults to \code{1}.}
+\item{custom_enzymes}{Custom enzymes for those not present in internal data.}
 
-\item{chunk_size}{The size of chunks to break up scaffolds into when digesting
-a \code{variants} object.
-(This argument is ignored if digesting a \code{dna_set}.)
+\item{chunk_size}{The size of chunks to break up sqeuences into when digesting
+a \code{reference} or \code{variants} object.
 Changing this might affect performance, for better or worse.
 The default worked best on my computer. Defaults to \code{1000}.}
 
-\item{enz_list}{List of enzymes with binding sites. Default is the internal
-\code{binding_sites} list (see \code{\link{binding_sites}}).}
-
-\item{in_place}{Boolean for whether to edit the object in place without
-making a new copy. Defaults to \code{FALSE}.}
+\item{n_cores}{Number of cores to use for parallel processing. This argument is
+ignored if OpenMP is not enabled. Defaults to \code{1}.}
 }
 \value{
-If \code{in_place == FALSE}, a \code{variants} or \code{dna_set} object
-with the \code{digests} field filled in.
-If \code{in_place == TRUE}, it returns \code{NULL}, but it changes the input
-object in place.
+All changes occur in place, but the input object is return invisibly
+so that chaining/piping commands works.
 }
 \description{
 \emph{Note:} This will override any digestions currently in place in the
 object. If you want to add a new digestion, re-run this function with the names
 of all enzymes you're interested in included in the \code{enzyme_names} argument.
-}
-\examples{
-
-\dontrun{
-
-ref_genome <- dna_set$new(gemino:::rando_seqs(100, mean_len = 1e3, sd_len = 1e2))
-digest(ref_genome, 'ApeKI', n_cores = 1, in_place = TRUE)
-ref_genome
-
-variants_obj <- make_variants(ref_genome, n_vars = 10)
-variants_obj
-
-# Returns a new variants object
-digest(variants_obj, 'ApeKI')
-
-# Returns nothing, but changes variants_obj object
-digest(variants_obj, 'AscI', in_place = TRUE)
-# To see the changes...
-variants_obj
-
-}
-
 }

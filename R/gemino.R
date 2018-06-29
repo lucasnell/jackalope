@@ -12,7 +12,6 @@
 #' double-digest RADseq, and genotyping-by-sequencing), and sequencing technologies
 #' (e.g., Pacific BioSciences, Oxford Nanopore Technologies).
 #'
-#' @section gemino functions:
 #'
 #' @importFrom Rcpp evalCpp
 #' @useDynLib gemino, .registration = TRUE

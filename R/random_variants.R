@@ -167,8 +167,9 @@ random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
 
     # If nothing provided, use data from Sung et al. (2016):
     if (is.null(snp_proportion)) {
-        snp_proportion <- gemino::evo_rates$subs[evo_rates$domain == 'Eukarya'] /
-            gemino::evo_rates$indels[evo_rates$domain == 'Eukarya']
+        rates_ <- gemino::evo_rates
+        snp_proportion <- rates_$subs[rates_$domain == 'Eukarya'] /
+            rates_$indels[rates_$domain == 'Eukarya']
         snp_proportion <- mean(snp_proportion)
         snp_proportion <- snp_proportion / (1 + snp_proportion)
     }

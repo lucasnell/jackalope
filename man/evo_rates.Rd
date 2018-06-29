@@ -4,13 +4,23 @@
 \name{evo_rates}
 \alias{evo_rates}
 \title{Table of evolutionary rates.}
-\format{A data frame with 15 rows and 4 variables:
+\format{A data frame with 15 rows and 8 variables:
 \describe{
 \item{domain}{Either \code{Bacteria} or \code{Eukarya} for what type of organism
 the species is.}
 \item{species}{Species name.}
-\item{indels}{Rate of insertions and deletions (events per site per generation).}
-\item{subs}{Base-substitution mutation rate (events per site per generation).}
+\item{Ge}{Effective genome size using only coding DNA.}
+\item{Gc_Gnc}{Effective genome size using coding DNA and non-coding DNA that is
+under purifying selection.}
+\item{indels}{Rate of insertions and deletions (\eqn{\times 10^{-10}}
+events per site per generation).}
+\item{subs}{Base-substitution mutation rate (\eqn{\times 10^{-10}}
+events per site per generation).}
+\item{pop_mutation_rate}{Population mutation rate estimates using \eqn{{\theta}_s}
+or \eqn{{\pi}_s}. The \eqn{{\pi}_s} estimate was only used for the following
+species: \emph{Agrobacterium tumefaciens}, \emph{Pseudomonas aeruginosa}, and
+\emph{Mus musculus}.}
+\item{Ne}{Effective population size (\eqn{\times 10^6}).}
 }}
 \source{
 \url{http://dx.doi.org/10.1534/g3.116.030890}

@@ -18,7 +18,3 @@ and can be extended to simulate different methods (e.g., original RADseq,
 double-digest RADseq, and genotyping-by-sequencing), and sequencing technologies
 (e.g., Pacific BioSciences, Oxford Nanopore Technologies).
 }
-\section{gemino functions}{
-
-}
-
