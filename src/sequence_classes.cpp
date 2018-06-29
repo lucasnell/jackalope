@@ -263,34 +263,6 @@ char VarSequence::get_char_(const uint32& new_pos,
 
 
 
-VarSet::VarSet(const std::string& fasta_file, const uint32& n_vars,
-               const bool& cut_names, const bool& remove_soft_mask) {
-    RefGenome reference;
-    fill_ref_noind(reference, fasta_file, cut_names, remove_soft_mask);
-
-    VarGenome vg(reference);
-    variants = std::deque<VarGenome>(n_vars, vg);
-    for (uint32 i = 0; i < n_vars; i++) variants[i].name = "var" + std::to_string(i);
-
-}
-VarSet::VarSet(const std::string& fasta_file, const std::string& fai_file,
-               const uint32& n_vars,
-               const bool& remove_soft_mask) {
-    RefGenome reference;
-    fill_ref_ind(reference, fasta_file, fai_file, remove_soft_mask);
-
-    VarGenome vg(reference);
-    variants = std::deque<VarGenome>(n_vars, vg);
-    for (uint32 i = 0; i < n_vars; i++) variants[i].name = "var" + std::to_string(i);
-}
-
-VarSet::VarSet(const std::deque<std::string>& seqs, const uint32& n_vars)
-    : variants(), reference(seqs) {
-    VarGenome vg(reference);
-    variants = std::deque<VarGenome>(n_vars, vg);
-    for (uint32 i = 0; i < n_vars; i++) variants[i].name = "var" + std::to_string(i);
-}
-
 
 
 

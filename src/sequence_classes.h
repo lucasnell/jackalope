@@ -525,23 +525,16 @@ private:
 class VarSet {
 public:
     std::deque<VarGenome> variants;
-    RefGenome reference;
+    const RefGenome& reference;
 
     /*
      Constructors:
      */
-    VarSet() {};
     VarSet(const RefGenome& ref, const uint32& n_vars)
-        : variants(std::deque<VarGenome>(n_vars, VarGenome(ref))),
+        : variants(n_vars, VarGenome(ref)),
           reference(ref) {
         for (uint32 i = 0; i < n_vars; i++) variants[i].name = "var" + std::to_string(i);
     };
-    VarSet(const std::string& fasta_file, const uint32& n_vars,
-           const bool& cut_names = true, const bool& remove_soft_mask = true);
-    VarSet(const std::string& fasta_file, const std::string& fai_file,
-           const uint32& n_vars,
-           const bool& remove_soft_mask = true);
-    VarSet(const std::deque<std::string>& seqs, const uint32& n_vars);
 
     // For easily outputting a reference to a VarGenome
     VarGenome& operator[](const uint32& idx) {
