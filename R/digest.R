@@ -5,9 +5,8 @@
 
 #' Check validity, adjust for degeneracy, and remove duplicates for input enzymes.
 #'
-#' @param enzyme_names Name of enzymes that should be present in the `binding_sites`
-#'     dataset.
-#' @param custom_enzymes Custom enzymes for those not present in internal data.
+#' @inheritParams enzyme_names digest
+#' @inheritParams custom_enzymes digest
 #'
 #' @noRd
 #'
@@ -85,77 +84,75 @@ process_enzymes <- function(enzyme_names, custom_enzymes) {
 
 
 
-#'
-#' Digest genome(s).
+
+#' Digest reference genome or variants from a genome.
 #'
 #' \emph{Note:} This will override any digestions currently in place in the
 #' object. If you want to add a new digestion, re-run this function with the names
 #' of all enzymes you're interested in included in the \code{enzyme_names} argument.
 #'
 #'
-#' @param object Either a \code{dna_set} or \code{variants} object.
-#' @param enzyme_names Name of enzyme(s).
+#' @param object Either a \code{reference} or \code{variants} object.
+#' @param enzyme_names Name of enzymes that should be present inside the package data
+#'     object `binding_sites` (in the `enzyme` column).
+#' @param custom_enzymes Custom enzymes for those not present in internal data.
 #' @param n_cores Number of cores to use for parallel processing. This argument is
 #'     ignored if OpenMP is not enabled. Defaults to \code{1}.
-#' @param chunk_size The size of chunks to break up scaffolds into when digesting
-#'     a \code{variants} object.
-#'     (This argument is ignored if digesting a \code{dna_set}.)
+#' @param chunk_size The size of chunks to break up sqeuences into when digesting
+#'     a \code{reference} or \code{variants} object.
 #'     Changing this might affect performance, for better or worse.
 #'     The default worked best on my computer. Defaults to \code{1000}.
-#' @param enz_list List of enzymes with binding sites. Default is the internal
-#'     \code{binding_sites} list (see \code{\link{binding_sites}}).
-#' @param in_place Boolean for whether to edit the object in place without
-#'     making a new copy. Defaults to \code{FALSE}.
 #'
-#' @return If \code{in_place == FALSE}, a \code{variants} or \code{dna_set} object
-#'     with the \code{digests} field filled in.
-#'     If \code{in_place == TRUE}, it returns \code{NULL}, but it changes the input
-#'     object in place.
+#' @return All changes occur in place, but the input object is return invisibly
+#'     so that chaining/piping commands works.
 #'
 #'
 #' @export
 #'
-#' @examples
 #'
-#' \dontrun{
-#'
-#' ref_genome <- dna_set$new(gemino:::rando_seqs(100, mean_len = 1e3, sd_len = 1e2))
-#' digest(ref_genome, 'ApeKI', n_cores = 1, in_place = TRUE)
-#' ref_genome
-#'
-#' variants_obj <- make_variants(ref_genome, n_vars = 10)
-#' variants_obj
-#'
-#' # Returns a new variants object
-#' digest(variants_obj, 'ApeKI')
-#'
-#' # Returns nothing, but changes variants_obj object
-#' digest(variants_obj, 'AscI', in_place = TRUE)
-#' # To see the changes...
-#' variants_obj
-#'
-#' }
-#'
-digest <- function(object, enzyme_names, n_cores = 1,
-                   chunk_size = 1000,
-                   enz_list = binding_sites, in_place = FALSE) {
+digest <- function(object,
+                   enzyme_names,
+                   custom_enzymes,
+                   chunk_size = 0,
+                   n_cores = 1) {
 
-    if (missing(enzyme_names)) stop("enzyme_names required")
     if (missing(object)) stop("object required")
 
-    if (any(!enzyme_names %in% names(enz_list))) {
-        cat(paste(names(enz_list), collapse = "  "))
-        stop(paste("One or more of the enzyme_names input is not present in the",
-                   "names of the enz_list argument.",
-                   "See output above for the names that are present."))
+    if (missing(enzyme_names) & missing(custom_enzymes)) {
+        stop("\nWhen digesting a reference genome or variants, you must provide ",
+             "either an enzyme name, a custom enzyme, or both.",
+             call. = FALSE)
     }
 
-    if (inherits(object, 'dna_set')) {
-        digest_reference(object, enzyme_names, n_cores, enz_list, in_place)
+    enz_info <- process_enzymes(enzyme_names, custom_enzymes)
+
+    if (inherits(object, 'reference')) {
+        if (!inherits(object$genome, "externalptr")) {
+            stop("\nYou're attempting a digestion on a reference object with ",
+                 "a genome field that is not an externalptr. ",
+                 "Restart by reading a FASTA file or by simulating a genome. ",
+                 "And do NOT change the genome field manually.",
+                 call. = FALSE)
+        }
+        object$digests <- digest_ref(object$genome,
+                                     enz_info$bind_sites, enz_info$len5s,
+                                     chunk_size, n_cores)
     } else if (inherits(object, 'variants')) {
-        digest_variants(object, enzyme_names, n_cores, chunk_size, enz_list, in_place)
+        if (!inherits(object$genomes, "externalptr")) {
+            stop("\nYou're attempting a digestion on a variants object with ",
+                 "a genomes field that is not an externalptr. ",
+                 "Restart by reading a FASTA file or by simulating a genome, ",
+                 "then generating variants. ",
+                 "And do NOT change the genomes field manually.",
+                 call. = FALSE)
+        }
+        oject$digests <- digest_var_set(oject$genomes,
+                                        enz_info$bind_sites, enz_info$len5s,
+                                        chunk_size, n_cores)
     } else {
-        stop("Input object must be a dna_set or variants object.")
+        stop("\nA digestion can only be applied to a reference or variants object.",
+             call. = FALSE)
     }
-    invisible(NULL)
+    invisible(object)
 }
+

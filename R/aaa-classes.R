@@ -1,7 +1,7 @@
 #' An R6 class representing a reference genome
 #'
-#' Note: all fields are private so that they cannot be manipulated manually.
-#' Trust me that this is a good thing.
+#' Note: Do NOT change fields in this class directly. It will likely cause your
+#' R session to do bad things.
 #'
 #' @field genome An \code{externalptr} to a C++ object storing the sequences
 #'     representing the genome.
@@ -23,12 +23,15 @@ reference <- R6::R6Class(
 
     public = list(
 
+        genome = NULL,
+        digests = NULL,
+
         initialize = function(genome_ptr) {
             if (!inherits(genome_ptr, "externalptr")) {
                 stop("\nWhen initializing a reference object, you need to use ",
                      "an externalptr object.", call. = FALSE)
             }
-            private$genome <- genome_ptr
+            self$genome <- genome_ptr
         },
 
         print = function(...) {
@@ -72,49 +75,21 @@ reference <- R6::R6Class(
             invisible(self)
         }
 
-    ),
-
-    private = list(
-        genome = NULL,
-        digests = NULL
     )
+
 )
 
 
 
 
-
-# "Digest reference genome based on restriction enzyme(s)"
-reference$set(
-
-    "public", "digest",
-
-    function(enzyme_names,
-             custom_enzymes,
-             chunk_size = 0,
-             n_cores = 1) {
-
-        if (missing(enzyme_names) & missing(custom_enzymes)) {
-            stop("\nWhen digesting a reference genome, you must provide either an ",
-                 "enzyme name, a custom enzyme, or both.",
-                 call. = FALSE)
-        }
-
-        enz_info <- process_enzymes(enzyme_names, custom_enzymes)
-
-        private$digests <- digest_ref(genome, enz_info$bind_sites, enz_info$len5s,
-                                      chunk_size, n_cores)
-        invisible(self)
-    }
-)
 
 
 
 
 #' An R6 class representing haploid variants from a reference genome
 #'
-#' Note: all fields are private so that they cannot be manipulated manually.
-#' Trust me that this is a good thing.
+#' Note: Do NOT change fields in this class directly. It will likely cause your
+#' R session to do bad things.
 #'
 #'
 #' @field genome An \code{externalptr} to a C++ object storing the sequences
@@ -137,12 +112,15 @@ variants <- R6::R6Class(
 
     public = list(
 
+        genomes = NULL,
+        digests = NULL,
+
         initialize = function(genomes_ptr) {
             if (!inherits(genomes_ptr, "externalptr")) {
                 stop("\nWhen initializing a variants object, you need to use ",
                      "an externalptr object.", call. = FALSE)
             }
-            private$genomes <- genomes_ptr
+            self$genomes <- genomes_ptr
         },
 
         print = function() {
@@ -150,37 +128,9 @@ variants <- R6::R6Class(
             print_var_set(genomes)
             invisible(self)
         }
-    ),
-
-    private = list(
-        genomes = NULL,
-        digests = NULL
     )
+
 )
 
-
-
-# "Digest genome variants based on restriction enzyme(s)"
-variants$set(
-
-    "public", "digest",
-
-    function(enzyme_names,
-             custom_enzymes,
-             chunk_size = 1000,
-             n_cores = 1) {
-
-        if (missing(enzyme_names) & missing(custom_enzymes)) {
-            stop("\nWhen digesting genome variants, you must provide either an ",
-                 "enzyme name, a custom enzyme, or both.",
-                 call. = FALSE)
-        }
-
-        enz_info <- process_enzymes(enzyme_names, custom_enzymes)
-        private$digests <- digest_var_set(genomes, enz_info$bind_sites, enz_info$len5s,
-                                          chunk_size, n_cores)
-        invisible(self)
-    }
-)
 
 
