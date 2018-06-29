@@ -10,7 +10,7 @@
 #'     relation to the desired one.
 #' @param make_converge Boolean for whether to return an error if it does not converge
 #'     successfully. Defaults to \code{TRUE}.
-#' @param optim_opts List of additional arguments to pass to `optim`.
+#' @param optim_opts List of additional arguments to pass to `stats::optim`.
 #'
 #'
 #' @return A list containing a matrix and numeric vector.
@@ -24,9 +24,6 @@
 #'     probabilities for each row in the \code{combo_mat} field matrix.}
 #' }
 #'
-#' @importFrom stats dbeta
-#' @importFrom stats density
-#' @importFrom stats optim
 #'
 #' @noRd
 #'
@@ -63,7 +60,7 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
     # nt_probs <- freq_probs(nt_freq$mean_pws, snp_div, threshold, make_converge,
     #                        optim_opts)
     # Kernel density estimation
-    dens_obj <- density(nt_freq$mean_pws)
+    dens_obj <- stats::density(nt_freq$mean_pws)
     # Assigning densities to each value in nt_freq$mean_pws
     dens <- sapply(nt_freq$mean_pws, function(x) {
         d <- dens_obj$y[abs(x - dens_obj$x) == min(abs(x - dens_obj$x))]
@@ -79,9 +76,9 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
                                mean_pws_ = quote(nt_freq$mean_pws), dens_ = quote(dens),
                                seg_div_ = seg_div))
     args[['method']] <- "Nelder-Mead"
-    optim_out <- suppressWarnings(do.call(optim, args))
+    optim_out <- suppressWarnings(do.call(stats::optim, args))
 
-    # Checks on optim convergence
+    # Checks on stats::optim convergence
     if (make_converge & optim_out$convergence == 1) {
         stop("The iteration limit maxit had been reached.")
     }
@@ -92,7 +89,7 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
         stop('Optimization did not find a sufficiently accurate value.')
     }
 
-    probs <- dbeta(nt_freq$mean_pws, optim_out$par[1], optim_out$par[2]) / dens
+    probs <- stats::dbeta(nt_freq$mean_pws, optim_out$par[1], optim_out$par[2]) / dens
 
     nt_probs <- probs / sum(probs)
 

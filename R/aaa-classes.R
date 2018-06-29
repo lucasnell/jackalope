@@ -13,7 +13,6 @@
 #' @return An object of class \code{ref_genome}.
 #'
 #' @docType class
-#' @importFrom R6 R6Class
 #'
 #' @export
 #'
@@ -122,7 +121,6 @@ ref_genome$lock()
 #' @return An object of class \code{variants}.
 #'
 #' @docType class
-#' @importFrom R6 R6Class
 #'
 #' @export
 #'

@@ -12,8 +12,10 @@ variants
 An object of class \code{variants}.
 }
 \description{
-Note: Do NOT change fields in this class directly. It will likely cause your
+\emph{Note:} Do NOT change fields in this class directly. It will cause your
 R session to do bad things.
+(Ever seen the bomb popup on RStudio? Manually mess with these fields and you
+surely will.)
 }
 \section{Fields}{
 
@@ -23,6 +25,24 @@ representing the genome.}
 
 \item{\code{digests}}{An \code{externalptr} to a C++ object storing the digestion of the
 genome, if a digestion has been carried out. It's \code{NULL} otherwise.}
+
+\item{\code{reference}}{An \code{externalptr} to a C++ object storing the sequences
+representing the genome.
+There are a few extra notes for this field:
+\itemize{
+\item \strong{This point is the most important.}
+Since it's a pointer, if you make any changes to the reference genome
+that it points to, those changes will also show up in the \code{variants}
+object. For example, if you make a \code{variants} object \code{V}
+based on an existing \code{ref_genome} object \code{R}, then you merge
+sequences in \code{R}, \code{V} will now have merged sequences.
+If you've already started adding mutations to \code{V},
+then all the indexes used to store those mutations will be inaccurate.
+So when you do anything with \code{V} later, your R session will crash.
+\item This field is private so cannot be accessed directly.
+\item If a \code{ref_genome} object is used to create a \code{variants} object,
+don't worry about later deleting the \code{ref_genome} object.
+}}
 }}
 
 \keyword{datasets}

@@ -7,7 +7,7 @@
 digest(object, enzyme_names, custom_enzymes, chunk_size = 0, n_cores = 1)
 }
 \arguments{
-\item{object}{Either a \code{reference} or \code{variants} object.}
+\item{object}{Either a \code{ref_genome} or \code{variants} object.}
 
 \item{enzyme_names}{Name of enzymes that should be present inside the package data
 object \code{binding_sites} (in the \code{enzyme} column).}
@@ -15,7 +15,7 @@ object \code{binding_sites} (in the \code{enzyme} column).}
 \item{custom_enzymes}{Custom enzymes for those not present in internal data.}
 
 \item{chunk_size}{The size of chunks to break up sqeuences into when digesting
-a \code{reference} or \code{variants} object.
+a \code{ref_genome} or \code{variants} object.
 Changing this might affect performance, for better or worse.
 The default worked best on my computer. Defaults to \code{1000}.}
 
@@ -24,7 +24,7 @@ ignored if OpenMP is not enabled. Defaults to \code{1}.}
 }
 \value{
 All changes occur in place, but the input object is return invisibly
-so that chaining/piping commands works.
+so that piping works.
 }
 \description{
 \emph{Note:} This will override any digestions currently in place in the

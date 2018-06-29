@@ -2,24 +2,24 @@
 % Please edit documentation in R/read_write.R
 \name{write_fasta}
 \alias{write_fasta}
-\title{Write to FASTA file.}
+\title{Write a \code{ref_genome} object to a FASTA file.}
 \usage{
-write_fasta(file_name, ptr, text_width = 80, compression = "none")
+write_fasta(ref_obj, file_name, text_width = 80, compress = FALSE)
 }
 \arguments{
+\item{ref_obj}{A \code{ref_genome} object.}
+
 \item{file_name}{File name of the output fasta file.}
 
-\item{ptr}{External pointer to a \code{RefGenome} C++ object.}
-
 \item{text_width}{The number of characters per line in the output fasta file.
-Defaults to 80.}
+Defaults to \code{80}.}
 
-\item{compression}{Type of compression. Takes either \code{"none"} or \code{"gzip"}.
-Defaults to \code{"none"}.}
+\item{compress}{Boolean for whether to compress using \code{"gzip"}.
+Defaults to \code{FALSE}.}
 }
 \value{
-Nothing.
+\code{NULL}
 }
 \description{
-Write to FASTA file.
+Write a \code{ref_genome} object to a FASTA file.
 }

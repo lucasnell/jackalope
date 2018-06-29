@@ -47,7 +47,7 @@ filter_sequences <- function(ref_genome_, min_seq_size = 0L, out_seq_prop = 0) {
 #' @param n_seqs Number of sequences.
 #' @param len_mean Mean for the gamma distribution for sequence sizes.
 #' @param len_sd Standard deviation for the gamma distribution for sequence sizes.
-#'     If set to `<= 0`, all sequences will be the same length. Defaults to `0`.
+#'     If set to `<= 0`, all sequences will be the same length.
 #' @param pi_tcag Vector of nucleotide equilibrium frequencies for
 #'     "T", "C", "A", and "G", respectively.
 #' @param n_cores Number of cores to use via OpenMP.
@@ -59,7 +59,6 @@ filter_sequences <- function(ref_genome_, min_seq_size = 0L, out_seq_prop = 0) {
 #'
 #' @examples
 #'
-#' genome <- create_genome(10, 100e3, 100, pi_tcag = c(0.1, 0.2, 0.3, 0.4))
 #'
 create_genome_ <- function(n_seqs, len_mean, len_sd, pi_tcag, n_cores) {
     .Call(`_gemino_create_genome_`, n_seqs, len_mean, len_sd, pi_tcag, n_cores)
