@@ -19,12 +19,24 @@
 using namespace Rcpp;
 
 
-//' Reverse complement of a DNA sequence.
-//'
-//' Make sure that `seq` contains only T, C, A, or G!
-//'
-//' @noRd
-//'
+
+/*
+ Remove duplicates from a vector of strings in place.
+ */
+void unique_(std::vector<std::string>& x) {
+    std::sort(x.begin(), x.end());
+    std::vector<std::string>::iterator iter = std::unique(x.begin(), x.end());
+    x.resize(iter - x.begin());
+    return;
+}
+
+
+
+/*
+ Reverse complement of a DNA sequence.
+
+ Make sure that `seq` contains only T, C, A, or G!
+ */
 std::string rev_comp(const std::string& seq) {
 
     uint32 N = seq.size();
@@ -59,16 +71,12 @@ std::vector<uint32> get_precleavage_lens(const std::vector<std::string>& seqs) {
 }
 
 
-
-//' Expand sequences with non-specific nucleobases.
-//'
-//'
-//' @noRd
-//'
-std::vector<std::string> expand_sites(const std::vector<std::string>& sites,
-                                      const bool& add_rev_comp = true) {
-
-    std::vector<std::string> seqs_out;
+/*
+ Expand sequences with non-specific nucleobases.
+ */
+void expand_sites(const std::vector<std::string>& sites,
+                  std::vector<std::string>& seqs_out,
+                  const bool& add_rev_comp = true) {
 
     uint32 n_combs = 1;
     for (uint32 i = 0; i < sites.size(); i++) n_combs *= sites[i].size();
@@ -77,8 +85,6 @@ std::vector<std::string> expand_sites(const std::vector<std::string>& sites,
     for (uint32 i = 0; i < sites[0].size(); i++) {
         seqs_out.push_back(std::string(1, sites[0][i]));
     }
-
-
 
     for (uint32 i = 1; i < sites.size(); i++) {
         const std::string& site_i(sites[i]);
@@ -92,17 +98,57 @@ std::vector<std::string> expand_sites(const std::vector<std::string>& sites,
             seqs_out[k] += site_i[0];
         }
     }
+    // Add all reverse complements, whether or not they already exist in the output vector
     if (add_rev_comp) {
         seqs_out.reserve(n_combs * 2);
         for (uint32 i = 0; i < n_combs; i++) {
-            seqs_out.push_back(rev_comp(seqs_out[i]));
+            std::string rc = rev_comp(seqs_out[i]);
+            seqs_out.push_back(rc);
         }
     }
 
-    return seqs_out;
+    return;
 }
 
 
+
+
+//' Expand sequences for reverse complements and for non-specific nucleobases.
+//'
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+std::vector<std::string> expand_seqs(const std::vector<std::string>& seqs) {
+
+    std::vector<std::string> out;
+    std::string bases = "TCAG";
+
+    for (uint32 i = 0; i < seqs.size(); i++) {
+        const std::string& seq(seqs[i]);
+        // See if the sequence is degenerate (i.e., ambiguous) or not:
+        bool degenerate = false;
+        for (const char& c : seq) {
+            if (bases.find(c) == std::string::npos) degenerate = true;
+        }
+        if (!degenerate) {
+            out.push_back(seq);
+            std::string rc = rev_comp(seq);
+            if (rc != seq) out.push_back(rc);
+        } else {
+            std::vector<std::string> sites(seq.size());
+            for (uint32 j = 0; j < seq.size(); j++) {
+                sites[j] = digest::deg_bases[seq[j]];
+            }
+            // Create all combos of these sites and add to `out`
+            expand_sites(sites, out);
+        }
+    }
+    // Remove duplicates:
+    unique_(out);
+
+    return out;
+}
 
 
 

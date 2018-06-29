@@ -81,6 +81,24 @@ rando_seqs <- function(n_seqs, len_mean, len_sd = 0, pi_tcag = numeric(0), n_cor
     .Call(`_gemino_rando_seqs`, n_seqs, len_mean, len_sd, pi_tcag, n_cores)
 }
 
+#' Calculate how many bases come before a cleavage site.
+#'
+#'
+#' @noRd
+#'
+get_precleavage_lens <- function(seqs) {
+    .Call(`_gemino_get_precleavage_lens`, seqs)
+}
+
+#' Expand sequences for reverse complements and for non-specific nucleobases.
+#'
+#'
+#' @noRd
+#'
+expand_seqs <- function(seqs) {
+    .Call(`_gemino_expand_seqs`, seqs)
+}
+
 #' Internal C++ function to digest all sequences for all variants in a variant set.
 #'
 #'
@@ -417,8 +435,8 @@ make_mutation_sampler_chunk_base <- function(Q, xi, psi, pi_tcag, rel_insertion_
 #'
 #' @noRd
 #'
-print_rg <- function(rg_) {
-    invisible(.Call(`_gemino_print_rg`, rg_))
+print_ref_genome <- function(ref_genome_) {
+    invisible(.Call(`_gemino_print_ref_genome`, ref_genome_))
 }
 
 #' Function to print info on a VarSet.
@@ -427,8 +445,8 @@ print_rg <- function(rg_) {
 #'
 #' @noRd
 #'
-print_vs <- function(vs_) {
-    invisible(.Call(`_gemino_print_vs`, vs_))
+print_var_set <- function(var_set_) {
+    invisible(.Call(`_gemino_print_var_set`, var_set_))
 }
 
 #' Calculate mean pairwise differences between samples using a vector of nucleotide

@@ -3,72 +3,84 @@
 #
 
 
+#' Check validity, adjust for degeneracy, and remove duplicates for input enzymes.
+#'
+#' @param enzyme_names Name of enzymes that should be present in the `binding_sites`
+#'     dataset.
+#' @param custom_enzymes Custom enzymes for those not present in internal data.
+#'
+#' @noRd
+#'
+process_enzymes <- function(enzyme_names, custom_enzymes) {
 
-
-
-# ----------------
-# Digest a variants object
-# ----------------
-
-digest_variants <- function(variants_obj, enzyme_names, n_cores,
-                            chunk_size, enz_list, in_place) {
-
-
-    enzyme_sites <- c(enz_list[enzyme_names], recursive = TRUE, use.names = FALSE)
-    len5s <- sapply(seq(1, length(enzyme_sites), 2), function(i) nchar(enzyme_sites[i]))
-    bind_sites <- sapply(seq(1, length(enzyme_sites), 2),
-                         function(i) cpp_merge_str(enzyme_sites[i:(i+1)]))
-
-    indiv_lists <- digest_all_variants_all_scaffs(
-        variants_obj$reference, variants_obj$variant_set,
-        bind_sites, len5s, chunk_size, n_cores)
-
-    if (in_place) {
-        variants_obj$digests <- indiv_lists
-        variants_obj$binding_sites <- enzyme_sites
-        invisible(NULL)
-    } else {
-        variants_out <- variants_obj$clone()
-        variants_out$digests <- indiv_lists
-        variants_out$binding_sites <- enzyme_sites
-        return(variants_out)
+    if (missing(enzyme_names) & missing(custom_enzymes)) {
+        stop("\nWhen digesting a reference genome, you must provide either an ",
+             "enzyme name, a custom enzyme, or both.",
+             call. = FALSE)
     }
+    enzyme_seqs <- character(0)
+    if (!missing(enzyme_names)) {
+        enzyme_seqs <- character(length(enzyme_names))
+        for (i in 1:length(enzyme_names)) {
+            x <- enzyme_names[i]
+            z <- binding_sites$sequence[binding_sites == x]
+            if (length(z) == 0) {
+                stop(paste0("\nEnzyme name \"", x, "\" not found."),
+                     call. = TRUE)
+            }
+            if (grepl("\\(|\\)", z)) {
+                stop(paste0("\n", x, " is a non-palindromic enzyme. ",
+                            "See the link in ?binding_sites for ",
+                            "more info."),
+                     call. = TRUE)
+            }
+            if (!grepl("/", z)) {
+                stop(paste("\n", x, "doesn't have a cleavage site",
+                           "according to NEB.",
+                           "Choose another enzyme,",
+                           "or provide a custom enzyme if you're",
+                           "sure I've erred in this error."),
+                     call. = TRUE)
+            }
+            enzyme_seqs[i] <- z
+        }
+
+    }
+    if (!missing(custom_enzymes)) {
+        stopifnot(inherits(custom_enzymes, "character"))
+
+        allowed_chars <- sort(unique(c(nucleobase_legend, "/", recursive = TRUE)))
+        allowed_chars <- paste(allowed_chars, collapse = "")
+        weird_chars <- grepl(sprintf("[^%s]", allowed_chars), custom_enzymes)
+        if (any(weird_chars)) {
+            stop(paste("\nThe only allowed characters for restriction enzymes are",
+                       allowed_chars),
+                 call. = FALSE)
+        }
+
+        no_cleavage <- ! grepl("/", custom_enzymes)
+
+        if (any(no_cleavage)) {
+            stop("\nYou must include a cleavage site for each custom restriction ",
+                 "site using \"/\" (e.g., \"TTA/TAA\" for the enzyme AanI).",
+                 call. = TRUE)
+        }
+
+        enzyme_seqs <- c(enzyme_seqs, custom_enzymes)
+    }
+
+    # Get number of nucleotides before the cleavage site:
+    len5s <- get_precleavage_lens(enzyme_seqs)
+
+    # Now we no longer want/need the cleavage indicators:
+    bind_sites <- gsub("/", "", enzyme_seqs)
+
+    bind_sites <- expand_seqs(bind_sites)
+
+    return(list(len5s = len5s, bind_sites = bind_sites))
 }
 
 
-
-
-
-
-
-
-
-
-
-# ----------------
-# Digest a dna_set object
-# ----------------
-
-digest_reference <- function(dna_set_in, enzyme_names, n_cores, enz_list, in_place) {
-
-    enzyme_sites <- c(enz_list[enzyme_names], recursive = TRUE, use.names = FALSE)
-    len5s <- sapply(seq(1, length(enzyme_sites), 2), function(i) nchar(enzyme_sites[i]))
-    bind_sites <- sapply(seq(1, length(enzyme_sites), 2),
-                         function(i) cpp_merge_str(enzyme_sites[i:(i+1)]))
-
-    dig_list <- digest_ref_scaffs(dna_set_in$sequence_set, bind_sites, len5s, n_cores)
-
-    if (in_place) {
-        dna_set_in$digests <- dig_list
-        dna_set_in$binding_sites <- enzyme_sites
-        invisible(NULL)
-    } else {
-        dna_set_out <- dna_set_in$clone()
-        dna_set_out$digests <- dig_list
-        dna_set_out$binding_sites <- enzyme_sites
-        return(dna_set_out)
-    }
-}
 
 
 

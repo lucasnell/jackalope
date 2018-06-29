@@ -59,8 +59,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_precleavage_lens
+std::vector<uint32> get_precleavage_lens(const std::vector<std::string>& seqs);
+RcppExport SEXP _gemino_get_precleavage_lens(SEXP seqsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type seqs(seqsSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_precleavage_lens(seqs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// expand_seqs
+std::vector<std::string> expand_seqs(const std::vector<std::string>& seqs);
+RcppExport SEXP _gemino_expand_seqs(SEXP seqsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type seqs(seqsSEXP);
+    rcpp_result_gen = Rcpp::wrap(expand_seqs(seqs));
+    return rcpp_result_gen;
+END_RCPP
+}
 // digest_var_set
-std::vector< std::vector< std::deque<uint32> > > digest_var_set(SEXP var_set_, const std::vector<std::string>& bind_sites, const std::vector<uint32>& len5s, const uint32& chunk_size, const uint32& n_cores);
+SEXP digest_var_set(SEXP var_set_, const std::vector<std::string>& bind_sites, const std::vector<uint32>& len5s, const uint32& chunk_size, const uint32& n_cores);
 RcppExport SEXP _gemino_digest_var_set(SEXP var_set_SEXP, SEXP bind_sitesSEXP, SEXP len5sSEXP, SEXP chunk_sizeSEXP, SEXP n_coresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -75,7 +97,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // digest_ref
-std::vector< std::deque<uint32> > digest_ref(SEXP ref_genome_, const std::vector<std::string>& bind_sites, const std::vector<uint32>& len5s, const uint32& chunk_size, const uint32& n_cores);
+SEXP digest_ref(SEXP ref_genome_, const std::vector<std::string>& bind_sites, const std::vector<uint32>& len5s, const uint32& chunk_size, const uint32& n_cores);
 RcppExport SEXP _gemino_digest_ref(SEXP ref_genome_SEXP, SEXP bind_sitesSEXP, SEXP len5sSEXP, SEXP chunk_sizeSEXP, SEXP n_coresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -365,23 +387,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// print_rg
-void print_rg(SEXP rg_);
-RcppExport SEXP _gemino_print_rg(SEXP rg_SEXP) {
+// print_ref_genome
+void print_ref_genome(SEXP ref_genome_);
+RcppExport SEXP _gemino_print_ref_genome(SEXP ref_genome_SEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type rg_(rg_SEXP);
-    print_rg(rg_);
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_(ref_genome_SEXP);
+    print_ref_genome(ref_genome_);
     return R_NilValue;
 END_RCPP
 }
-// print_vs
-void print_vs(SEXP vs_);
-RcppExport SEXP _gemino_print_vs(SEXP vs_SEXP) {
+// print_var_set
+void print_var_set(SEXP var_set_);
+RcppExport SEXP _gemino_print_var_set(SEXP var_set_SEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type vs_(vs_SEXP);
-    print_vs(vs_);
+    Rcpp::traits::input_parameter< SEXP >::type var_set_(var_set_SEXP);
+    print_var_set(var_set_);
     return R_NilValue;
 END_RCPP
 }
@@ -596,6 +618,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_filter_sequences", (DL_FUNC) &_gemino_filter_sequences, 3},
     {"_gemino_create_genome", (DL_FUNC) &_gemino_create_genome, 5},
     {"_gemino_rando_seqs", (DL_FUNC) &_gemino_rando_seqs, 5},
+    {"_gemino_get_precleavage_lens", (DL_FUNC) &_gemino_get_precleavage_lens, 1},
+    {"_gemino_expand_seqs", (DL_FUNC) &_gemino_expand_seqs, 1},
     {"_gemino_digest_var_set", (DL_FUNC) &_gemino_digest_var_set, 5},
     {"_gemino_digest_ref", (DL_FUNC) &_gemino_digest_ref, 5},
     {"_gemino_TN93_rate_matrix", (DL_FUNC) &_gemino_TN93_rate_matrix, 5},
@@ -617,8 +641,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_test_phylo", (DL_FUNC) &_gemino_test_phylo, 11},
     {"_gemino_make_mutation_sampler_base", (DL_FUNC) &_gemino_make_mutation_sampler_base, 6},
     {"_gemino_make_mutation_sampler_chunk_base", (DL_FUNC) &_gemino_make_mutation_sampler_chunk_base, 7},
-    {"_gemino_print_rg", (DL_FUNC) &_gemino_print_rg, 1},
-    {"_gemino_print_vs", (DL_FUNC) &_gemino_print_vs, 1},
+    {"_gemino_print_ref_genome", (DL_FUNC) &_gemino_print_ref_genome, 1},
+    {"_gemino_print_var_set", (DL_FUNC) &_gemino_print_var_set, 1},
     {"_gemino_see_ref_seq_size", (DL_FUNC) &_gemino_see_ref_seq_size, 2},
     {"_gemino_see_ref_n_seq", (DL_FUNC) &_gemino_see_ref_n_seq, 1},
     {"_gemino_optim_prob", (DL_FUNC) &_gemino_optim_prob, 4},

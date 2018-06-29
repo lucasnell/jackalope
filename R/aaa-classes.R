@@ -34,17 +34,6 @@ reference <- R6::R6Class(
         print = function(...) {
             "print reference object"
             print_ref_genome(genome)
-        },
-
-        digest = function(bind_sites,
-                          len5s,
-                          chunk_size = 0,
-                          n_cores = 1) {
-            "Digest reference genome based on restriction enzyme(s)"
-            # Warning should be removed and "digest_ref(...)" lines should be
-            # uncommented when digest returns a C++ class:
-            warning("Digestion not yet implemented for reference class", call. = FALSE)
-            # private$digests <- digest_ref(genome, bind_sites, len5s, chunk_size, n_cores)
             invisible(self)
         },
 
@@ -94,6 +83,34 @@ reference <- R6::R6Class(
 
 
 
+
+# "Digest reference genome based on restriction enzyme(s)"
+reference$set(
+
+    "public", "digest",
+
+    function(enzyme_names,
+             custom_enzymes,
+             chunk_size = 0,
+             n_cores = 1) {
+
+        if (missing(enzyme_names) & missing(custom_enzymes)) {
+            stop("\nWhen digesting a reference genome, you must provide either an ",
+                 "enzyme name, a custom enzyme, or both.",
+                 call. = FALSE)
+        }
+
+        enz_info <- process_enzymes(enzyme_names, custom_enzymes)
+
+        private$digests <- digest_ref(genome, enz_info$bind_sites, enz_info$len5s,
+                                      chunk_size, n_cores)
+        invisible(self)
+    }
+)
+
+
+
+
 #' An R6 class representing haploid variants from a reference genome
 #'
 #' Note: all fields are private so that they cannot be manipulated manually.
@@ -131,18 +148,6 @@ variants <- R6::R6Class(
         print = function() {
             "print reference object"
             print_var_set(genomes)
-        },
-
-        digest = function(bind_sites,
-                          len5s,
-                          chunk_size = 1000,
-                          n_cores = 1) {
-            "Digest reference genome based on restriction enzyme(s)"
-            # Warning should be removed and "digest_ref(...)" lines should be
-            # uncommented when digest returns a C++ class:
-            warning("Digestion not yet implemented for variants class", call. = FALSE)
-            # private$digests <- digest_var_set(genomes, bind_sites, len5s,
-            #                                   chunk_size, n_cores)
             invisible(self)
         }
     ),
@@ -152,4 +157,30 @@ variants <- R6::R6Class(
         digests = NULL
     )
 )
+
+
+
+# "Digest genome variants based on restriction enzyme(s)"
+variants$set(
+
+    "public", "digest",
+
+    function(enzyme_names,
+             custom_enzymes,
+             chunk_size = 1000,
+             n_cores = 1) {
+
+        if (missing(enzyme_names) & missing(custom_enzymes)) {
+            stop("\nWhen digesting genome variants, you must provide either an ",
+                 "enzyme name, a custom enzyme, or both.",
+                 call. = FALSE)
+        }
+
+        enz_info <- process_enzymes(enzyme_names, custom_enzymes)
+        private$digests <- digest_var_set(genomes, enz_info$bind_sites, enz_info$len5s,
+                                          chunk_size, n_cores)
+        invisible(self)
+    }
+)
+
 
