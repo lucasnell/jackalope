@@ -537,29 +537,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// cpp_merge_str
-std::string cpp_merge_str(const std::vector<std::string>& in_strings);
-RcppExport SEXP _gemino_cpp_merge_str(SEXP in_stringsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type in_strings(in_stringsSEXP);
-    rcpp_result_gen = Rcpp::wrap(cpp_merge_str(in_strings));
-    return rcpp_result_gen;
-END_RCPP
-}
-// cpp_str_split_delim
-std::vector<std::string> cpp_str_split_delim(const std::string& in_string, const char& split);
-RcppExport SEXP _gemino_cpp_str_split_delim(SEXP in_stringSEXP, SEXP splitSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type in_string(in_stringSEXP);
-    Rcpp::traits::input_parameter< const char& >::type split(splitSEXP);
-    rcpp_result_gen = Rcpp::wrap(cpp_str_split_delim(in_string, split));
-    return rcpp_result_gen;
-END_RCPP
-}
 // make_var_set
 SEXP make_var_set(const std::deque<std::string>& seqs, const uint32& n_vars);
 RcppExport SEXP _gemino_make_var_set(SEXP seqsSEXP, SEXP n_varsSEXP) {
@@ -653,8 +630,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_read_fasta_ind", (DL_FUNC) &_gemino_read_fasta_ind, 3},
     {"_gemino_write_fasta_fa", (DL_FUNC) &_gemino_write_fasta_fa, 3},
     {"_gemino_write_fasta_gz", (DL_FUNC) &_gemino_write_fasta_gz, 3},
-    {"_gemino_cpp_merge_str", (DL_FUNC) &_gemino_cpp_merge_str, 1},
-    {"_gemino_cpp_str_split_delim", (DL_FUNC) &_gemino_cpp_str_split_delim, 2},
     {"_gemino_make_var_set", (DL_FUNC) &_gemino_make_var_set, 2},
     {"_gemino_see_var_genome", (DL_FUNC) &_gemino_see_var_genome, 2},
     {"_gemino_see_sizes", (DL_FUNC) &_gemino_see_sizes, 2},

@@ -6,7 +6,7 @@ set.seed(1087437799)
 # Construct sequence with known number of each nucleotide
 seq <- c(rep("T", 0.25e6), rep("C", 0.25e6), rep("A", 0.25e6), rep("G", 0.25e6))
 seq <- sample(seq)
-seq <- gemino:::cpp_merge_str(seq)
+seq <- paste(seq, collapse = "")
 
 # Set molecular evolution parameters
 N_ <- 1e3

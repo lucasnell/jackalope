@@ -6,11 +6,9 @@
 #include <zlib.h>
 
 #include "sequence_classes.h"  // RefGenome and RefSequence classes
-#include "str_manip.h"
-#include "read_write.h"
+#include "str_manip.h"  // filter_nucleos
 
 using namespace Rcpp;
-
 
 
 
@@ -132,10 +130,9 @@ void fill_ref_noind(RefGenome& ref,
     }
     gzclose (file);
 
-    if (remove_soft_mask) {
-        for (int i = 0; i < ref.size(); i++) {
-            cpp_to_upper(ref.sequences[i].nucleos);
-        }
+    // Remove weird characters and remove soft masking if desired:
+    for (int i = 0; i < ref.size(); i++) {
+        filter_nucleos(ref.sequences[i].nucleos, remove_soft_mask);
     }
 
     return;
@@ -335,7 +332,8 @@ void fill_ref_ind(RefGenome& ref,
             seq_str.erase(remove(seq_str.begin(), seq_str.end(), '\n'),
                           seq_str.end());
 
-            if (remove_soft_mask) cpp_to_upper(seq_str);
+            // Filter out weird characters and remove soft masking if requested
+            filter_nucleos(seq_str, remove_soft_mask);
 
             rs.nucleos += seq_str;
             ref.total_size += seq_str.size();

@@ -6,73 +6,30 @@
 #include <random>
 
 #include "gemino_types.h" // for integer types
+#include "str_manip.h" // for lookup tables
 
 using namespace Rcpp;
 
 
-
-
-//' Make a string uppercase in place.
-//'
-//' The version of this function exported to R was ~4x faster than R's
-//' `.Internal(toupper(...))`, and keeping it in C++ is surely even faster.
-//'
-//' @param input_str An input string to be changed.
-//'
-//' @return Nothing. Changes are made in place.
-//'
-//' @noRd
-//'
-void cpp_to_upper(std::string& input_str) {
-    /*
-     Convert to upper: clear the '32' bit, 0x20 in hex. And with the
-     inverted bit string (~).
-     */
-    for (std::string::iterator it = input_str.begin(); it != input_str.begin(); ++it) {
-        *it &= ~0x20;
+/*
+ Filter for only T, C, A, G, N, t, c, a, g, or n. Others characters are ignored.
+ If upper=true, it converts lowercase to uppercase.
+ */
+void filter_nucleos(std::string& nucleos, const bool& upper) {
+    if (upper) {
+        for (char& c : nucleos) c = str_manip::upper_filter_table[c];
+    } else {
+        for (char& c : nucleos) c = str_manip::filter_table[c];
     }
     return;
 }
 
 
 
+/*
+ Split a string based on a single-character delimiter
+ */
 
-
-//' Merge a vector of strings into one.
-//'
-//'
-//' @param in_strings Character vector of strings to merge.
-//'
-//' @return A single string.
-//'
-//' @noRd
-//'
-// [[Rcpp::export]]
-std::string cpp_merge_str(const std::vector<std::string>& in_strings) {
-
-    int num_char = in_strings.size();
-    std::string out_str;
-
-    for(int j=0; j < num_char; j++) {
-        out_str += in_strings[j];
-    }
-
-    return out_str;
-}
-
-
-
-
-
-//' Split a string based on a single-character delimiter
-//'
-//'
-//' @param in_string A string to split.
-//' @param split Character to split string by.
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
 std::vector<std::string> cpp_str_split_delim(const std::string& in_string,
                                              const char& split) {
 

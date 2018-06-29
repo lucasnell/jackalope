@@ -635,44 +635,6 @@ write_fasta_gz <- function(file_name, ref_, text_width) {
     invisible(.Call(`_gemino_write_fasta_gz`, file_name, ref_, text_width))
 }
 
-#' Make a string uppercase in place.
-#'
-#' The version of this function exported to R was ~4x faster than R's
-#' `.Internal(toupper(...))`, and keeping it in C++ is surely even faster.
-#'
-#' @param input_str An input string to be changed.
-#'
-#' @return Nothing. Changes are made in place.
-#'
-#' @noRd
-#'
-NULL
-
-#' Merge a vector of strings into one.
-#'
-#'
-#' @param in_strings Character vector of strings to merge.
-#'
-#' @return A single string.
-#'
-#' @noRd
-#'
-cpp_merge_str <- function(in_strings) {
-    .Call(`_gemino_cpp_merge_str`, in_strings)
-}
-
-#' Split a string based on a single-character delimiter
-#'
-#'
-#' @param in_string A string to split.
-#' @param split Character to split string by.
-#'
-#' @noRd
-#'
-cpp_str_split_delim <- function(in_string, split) {
-    .Call(`_gemino_cpp_str_split_delim`, in_string, split)
-}
-
 #' Make a VarSet object from a set of sequences and # variants
 #'
 #' @noRd
