@@ -10,7 +10,7 @@
 #' @field digests An \code{externalptr} to a C++ object storing the digestion of the
 #'     genome, if a digestion has been carried out. It's \code{NULL} otherwise.
 #'
-#' @return An object of class \code{reference}.
+#' @return An object of class \code{ref_genome}.
 #'
 #' @docType class
 #' @importFrom R6 R6Class
@@ -19,9 +19,9 @@
 #'
 #' @format An \code{\link[R6]{R6Class}} generator object
 #'
-reference <- R6::R6Class(
+ref_genome <- R6::R6Class(
 
-    "reference",
+    "ref_genome",
 
     public = list(
 
@@ -30,44 +30,44 @@ reference <- R6::R6Class(
 
         initialize = function(genome_ptr) {
             if (!inherits(genome_ptr, "externalptr")) {
-                stop("\nWhen initializing a reference object, you need to use ",
+                stop("\nWhen initializing a ref_genome object, you need to use ",
                      "an externalptr object.", call. = FALSE)
             }
             self$genome <- genome_ptr
         },
 
         print = function(...) {
-            "print reference object"
+            "print ref_genome object"
             print_ref_genome(self$genome)
             invisible(self)
         },
 
         merge = function() {
-            "Merge all reference genome sequences into one"
+            "Merge all ref_genome genome sequences into one"
             merge_sequences(self$genome)
             invisible(self)
         },
 
         filter = function(threshold, method = c("size", "prop")) {
-            "Filter reference genome sequences by size or for a proportion of total bases"
+            "Filter ref_genome genome sequences by size or for a proportion of total bases"
             method <- match.arg(method)
             min_seq_size <- 0
             out_seq_prop <- 0
             # Filling in the necessary parameter and checking for sensible inputs
             if (!is.numeric(threshold)) {
-                stop("\nWhen filtering reference genome, the threshold must be numeric.",
+                stop("\nWhen filtering ref_genome genome, the threshold must be numeric.",
                      call. = FALSE)
             }
             if (method == "size") {
                 if (threshold < 1 | threshold %% 1 != 0) {
-                    stop("\nWhen filtering reference genome based on sequence ",
+                    stop("\nWhen filtering ref_genome genome based on sequence ",
                          "sizes, the threshold must be a whole number greater than 0.",
                          call. = FALSE)
                 }
                 min_seq_size <- threshold
             } else {
                 if (threshold >= 1 | threshold <= 0) {
-                    stop("\nWhen filtering reference genome based on a proportion of ",
+                    stop("\nWhen filtering ref_genome genome based on a proportion of ",
                          "total bases, the threshold must be > 0 and < 1",
                          call. = FALSE)
                 }
@@ -83,7 +83,7 @@ reference <- R6::R6Class(
 
 
 
-reference$lock()
+ref_genome$lock()
 
 
 
@@ -108,14 +108,14 @@ reference$lock()
 #'             Since it's a pointer, if you make any changes to the reference genome
 #'             that it points to, those changes will also show up in the \code{variants}
 #'             object. For example, if you make a \code{variants} object \code{V}
-#'             based on an existing \code{reference} object \code{R}, then you merge
+#'             based on an existing \code{ref_genome} object \code{R}, then you merge
 #'             sequences in \code{R}, \code{V} will now have merged sequences.
 #'             If you've already started adding mutations to \code{V},
 #'             then all the indexes used to store those mutations will be inaccurate.
 #'             So when you do anything with \code{V} later, your R session will crash.
 #'         \item This field is private so cannot be accessed directly.
-#'         \item If a \code{reference} object is used to create a \code{variants} object,
-#'             don't worry about later deleting the \code{reference} object.
+#'         \item If a \code{ref_genome} object is used to create a \code{variants} object,
+#'             don't worry about later deleting the \code{ref_genome} object.
 #'     }
 #'
 #'
@@ -147,7 +147,7 @@ variants <- R6::R6Class(
         },
 
         print = function() {
-            "print reference object"
+            "print variants object"
             print_var_set(self$genomes)
             invisible(self)
         }
