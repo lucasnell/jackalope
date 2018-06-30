@@ -30,30 +30,30 @@ create_genome <- function(n_seqs,
                           n_cores = 1) {
 
 
-    if (!is.numeric(n_seqs) | length(n_seqs) != 1 | n_seqs %% 1 != 0 | n_seqs < 1) {
+    if (!single_whole_number(n_seqs, .min = 1)) {
         stop("\nThe n_seqs argument supplied to create_genome is not a single",
              "whole number greater than 0.",
              call. = FALSE)
     }
-    if (!is.numeric(len_mean) | length(len_mean) != 1 | len_mean < 1) {
+    if (!single_number(len_mean, .min = 1)) {
         stop("\nThe len_mean argument supplied to create_genome is not a single",
-             "number greater than zero.",
+             "number greater than or equal to 1.",
              call. = FALSE)
     }
-    if (!is.numeric(len_sd) | length(len_sd) != 1 | len_sd < 0) {
+    if (!single_number(len_sd, .min = 0)) {
         stop("\nThe len_sd argument supplied to create_genome is not a single",
              "number >= 0.",
              call. = FALSE)
     }
 
-    if (!is.numeric(pi_tcag) | length(pi_tcag) != 4) {
+    if (!is.numeric(pi_tcag) | length(pi_tcag) != 4 | any(pi_tcag < 0)) {
         stop("\nThe pi_tcag argument supplied to create_genome is not a numeric",
-             "vector of length 4.",
+             "vector of exactly 4 non-negative numbers.",
              call. = FALSE)
     }
-    if (!is.numeric(n_cores) | length(n_cores) != 1 | n_cores %% 1 != 0 | n_cores < 1) {
+    if (!single_whole_number(n_cores, .min = 1)) {
         stop("\nThe n_cores argument supplied to create_genome is not a single",
-             "whole number greater than 0.",
+             "whole number greater than or equal to 1.",
              call. = FALSE)
     }
 
