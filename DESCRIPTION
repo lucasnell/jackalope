@@ -3,7 +3,8 @@ Type: Package
 Title: An efficient, flexible molecular evolution and sequencing simulator
 Version: 0.1.0
 Authors@R: person(c("Lucas", "A."), "Nell", email = "lucas@lucasnell.com", 
-                    role = c("cph", "aut", "cre"))
+                    role = c("cph", "aut", "cre"),
+                    comment = c(ORCID = "0000-0003-3209-0517"))
 Description: `gemino` efficiently (i) reads and simulates reference genomes;
     (ii) generates variants using summary statistics, phylogenies, Variant
     Call Format (VCF) files, and coalescent simulations—the latter of which can include
