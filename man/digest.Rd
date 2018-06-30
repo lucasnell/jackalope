@@ -23,7 +23,7 @@ The default worked best on my computer. Defaults to \code{1000}.}
 ignored if OpenMP is not enabled. Defaults to \code{1}.}
 }
 \value{
-All changes occur in place, but the input object is return invisibly
+All changes occur in place, but the input object is returned invisibly
 so that piping works.
 }
 \description{

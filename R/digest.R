@@ -103,7 +103,7 @@ process_enzymes <- function(enzyme_names, custom_enzymes) {
 #'     Changing this might affect performance, for better or worse.
 #'     The default worked best on my computer. Defaults to \code{1000}.
 #'
-#' @return All changes occur in place, but the input object is return invisibly
+#' @return All changes occur in place, but the input object is returned invisibly
 #'     so that piping works.
 #'
 #'
