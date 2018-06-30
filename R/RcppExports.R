@@ -281,17 +281,9 @@ UNREST_rate_matrix <- function(Q, xi) {
 #' @name add_mutations
 NULL
 
-#' Test sampling based on a evolutionary model.
-#'
-#' @noRd
-#'
-test_sampling <- function(var_set_, N, pi_tcag, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_mat, chunk_size, display_progress = TRUE) {
-    invisible(.Call(`_gemino_test_sampling`, var_set_, N, pi_tcag, alpha_1, alpha_2, beta, xi, psi, rel_insertion_rates, rel_deletion_rates, gamma_mat, chunk_size, display_progress))
-}
-
 #' Turns a VarGenome's mutations into a list of data frames.
 #'
-#' Temporary function for testing.
+#' Internal function for testing.
 #'
 #'
 #' @noRd
@@ -302,7 +294,7 @@ see_mutations <- function(var_set_, var_ind) {
 
 #' Turns a VarGenome's mutations into a list of data frames.
 #'
-#' Temporary function for testing.
+#' Internal function for testing.
 #'
 #'
 #' @noRd
@@ -365,24 +357,37 @@ add_deletion <- function(var_set_, var_ind, seq_ind, size_, new_pos_) {
 #'
 #' @noRd
 #'
-test_rate <- function(start, end, var_ind, seq_ind, var_set_, sampler_) {
-    .Call(`_gemino_test_rate`, start, end, var_ind, seq_ind, var_set_, sampler_)
+test_rate <- function(start, end, var_ind, seq_ind, var_set_, sampler_, gamma_mat_) {
+    .Call(`_gemino_test_rate`, start, end, var_ind, seq_ind, var_set_, sampler_, gamma_mat_)
 }
 
 #' Test sampling based on an evolutionary model.
 #'
-#' Make SURE `sampler_base_sexp` is a `ChunkMutationSampler`, not a `MutationSampler`!
+#' Make SURE `sampler_base_` is a `ChunkMutationSampler`, not a `MutationSampler`!
 #'
+#' @param var_set_ Pointer to a VarSet object.
+#' @param sampler_base_ Pointer to a ChunkMutationSampler object.
+#' @param branch_lens Branch lengths from phylogeny.
+#' @param edges Edge matrix from phylogeny.
 #' @param tip_labels Character vector of the actual phylogeny's tip labels.
 #' @param ordered_tip_labels Character vector of the tip labels in the order
 #'     you want them.
+#' @param gamma_mat Gamma matrix.
+#' @param recombination Boolean for whether to include recombination. If this is
+#'     \code{FALSE}, then \code{start} and \code{end} arguments are ignored.
+#'     Defaults to \code{FALSE}.
+#' @param start Starting point of region in which to insert mutations.
+#'     Ignored if \code{recombination} is \code{FALSE}.
+#' @param end Ending point of region in which to insert mutations.
+#'     Ignored if \code{recombination} is \code{FALSE}.
+#'
 #'
 #' @return A vector of integers indicating the number of mutations per edge.
 #'
 #' @noRd
 #'
-test_phylo <- function(var_set_, sampler_base_, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, recombination = FALSE, start = 0L, end = 0L) {
-    .Call(`_gemino_test_phylo`, var_set_, sampler_base_, seq_ind, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mat, recombination, start, end)
+test_mevo <- function(var_set_, sampler_base_, seq_inds, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mats, recombination = FALSE, start = 0L, end = 0L) {
+    .Call(`_gemino_test_mevo`, var_set_, sampler_base_, seq_inds, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mats, recombination, start, end)
 }
 
 #' Fill in vectors of mutation probabilities and lengths.

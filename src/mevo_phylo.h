@@ -208,7 +208,6 @@ int one_tree_(VarSet& var_set,
               const std::vector<uint32>& spp_order,
               const arma::mat& gamma_mat,
               pcg32& eng,
-              Progress& progress,
               std::vector<uint32>& n_muts,
               const bool& recombination = false,
               const uint32& start = 0,
@@ -224,6 +223,8 @@ int one_tree_(VarSet& var_set,
 
     // `end` values for each tree node and tip:
     std::vector<sint64> ends(tree_size, end);
+
+    Progress p(100, false);
 
     /*
      Create tree of empty VarSequence objects, corresponding tree of
@@ -249,7 +250,13 @@ int one_tree_(VarSet& var_set,
      */
     for (uint32 i = 0; i < n_edges; i++) {
 
-        if (progress.is_aborted()) return -1;
+        /*
+         Only do this check if not doing recombination, bc if you are including
+         recombination, you'd probably be checking too often.
+         */
+        if (!recombination){
+            if (p.is_aborted()) return -1;
+        }
 
         // Indices for nodes/tips that the branch length in `branch_lens` refers to
         uint32 b1 = edges(i,0);

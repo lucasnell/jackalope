@@ -33,54 +33,6 @@ using namespace Rcpp;
 
 
 
-//' Test sampling based on a evolutionary model.
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-void test_sampling(SEXP& var_set_, const uint32& N,
-                   const std::vector<double>& pi_tcag,
-                   const double& alpha_1, const double& alpha_2,
-                   const double& beta,
-                   const double& xi, const double& psi,
-                   const arma::vec& rel_insertion_rates,
-                   const arma::vec& rel_deletion_rates,
-                   arma::mat gamma_mat,
-                   const uint32& chunk_size,
-                   bool display_progress = true) {
-
-    XPtr<VarSet> var_set_xptr(var_set_);
-    VarSet& var_set(*var_set_xptr);
-    VarSequence& var_seq(var_set[0][0]);
-
-    arma::mat Q = TN93_rate_matrix(pi_tcag, alpha_1, alpha_2, beta, xi);
-
-    std::vector<std::vector<double>> probs;
-    std::vector<sint32> mut_lengths;
-
-    fill_mut_prob_length_vectors(probs, mut_lengths, Q, xi, psi, pi_tcag,
-                                 rel_insertion_rates, rel_deletion_rates);
-
-    pcg32 eng = seeded_pcg();
-
-    ChunkMutationSampler ms = make_mutation_sampler(var_seq, probs, mut_lengths, pi_tcag,
-                                                    gamma_mat, chunk_size);
-
-    Progress p(N, display_progress);
-
-    for (uint32 i = 0; i < N; i++) {
-        if (Progress::check_abort()) return;
-        p.increment(); // update progress
-        if (var_seq.size() == 0) return;
-        // Mutating and ignoring the rate change that it outputs:
-        static_cast<void>(ms.mutate(eng));
-    }
-
-    return;
-}
-
-
-
 
 // Turn a Mutation into a List
 List conv_mut(const Mutation& mut) {
@@ -95,7 +47,7 @@ List conv_mut(const Mutation& mut) {
 
 //' Turns a VarGenome's mutations into a list of data frames.
 //'
-//' Temporary function for testing.
+//' Internal function for testing.
 //'
 //'
 //' @noRd
@@ -147,7 +99,7 @@ DataFrame see_mutations(SEXP var_set_, const uint32& var_ind) {
 
 //' Turns a VarGenome's mutations into a list of data frames.
 //'
-//' Temporary function for testing.
+//' Internal function for testing.
 //'
 //'
 //' @noRd
@@ -322,19 +274,16 @@ void add_deletion(SEXP var_set_, const uint32& var_ind,
 //[[Rcpp::export]]
 double test_rate(const uint32& start, const uint32& end,
                  const uint32& var_ind, const uint32& seq_ind,
-                 SEXP var_set_, SEXP sampler_) {
+                 SEXP var_set_, SEXP sampler_,
+                 const arma::mat& gamma_mat_) {
 
     XPtr<VarSet> var_set(var_set_);
     VarSequence& var_seq((*var_set)[var_ind][seq_ind]);
 
     XPtr<ChunkMutationSampler> sampler(sampler_);
 
-    arma::mat gamma_mat(1, 2);
-    gamma_mat(0,0) = var_seq.size();
-    gamma_mat(0,1) = 1;
-
     sampler->fill_ptrs(var_seq);
-    sampler->fill_gamma(gamma_mat);
+    sampler->fill_gamma(gamma_mat_);
 
     double out = sampler->total_rate(start, end, true);
 
@@ -349,42 +298,55 @@ double test_rate(const uint32& start, const uint32& end,
 
 //' Test sampling based on an evolutionary model.
 //'
-//' Make SURE `sampler_base_sexp` is a `ChunkMutationSampler`, not a `MutationSampler`!
+//' Make SURE `sampler_base_` is a `ChunkMutationSampler`, not a `MutationSampler`!
 //'
+//' @param var_set_ Pointer to a VarSet object.
+//' @param sampler_base_ Pointer to a ChunkMutationSampler object.
+//' @param branch_lens Branch lengths from phylogeny.
+//' @param edges Edge matrix from phylogeny.
 //' @param tip_labels Character vector of the actual phylogeny's tip labels.
 //' @param ordered_tip_labels Character vector of the tip labels in the order
 //'     you want them.
+//' @param gamma_mat Gamma matrix.
+//' @param recombination Boolean for whether to include recombination. If this is
+//'     \code{FALSE}, then \code{start} and \code{end} arguments are ignored.
+//'     Defaults to \code{FALSE}.
+//' @param start Starting point of region in which to insert mutations.
+//'     Ignored if \code{recombination} is \code{FALSE}.
+//' @param end Ending point of region in which to insert mutations.
+//'     Ignored if \code{recombination} is \code{FALSE}.
+//'
 //'
 //' @return A vector of integers indicating the number of mutations per edge.
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
-std::vector<uint32> test_phylo(SEXP& var_set_,
-                               SEXP& sampler_base_,
-                               const uint32& seq_ind,
-                               const std::vector<double>& branch_lens,
-                               arma::Mat<uint32> edges,
-                               const std::vector<std::string>& tip_labels,
-                               const std::vector<std::string>& ordered_tip_labels,
-                               const arma::mat& gamma_mat,
-                               const bool& recombination = false,
-                               const uint32& start = 0,
-                               const sint64& end = 0) {
+std::vector<std::vector<uint32>> test_mevo(
+        SEXP& var_set_,
+        SEXP& sampler_base_,
+        const std::vector<uint32>& seq_inds,
+        const std::vector<double>& branch_lens,
+        arma::Mat<uint32> edges,
+        const std::vector<std::string>& tip_labels,
+        const std::vector<std::string>& ordered_tip_labels,
+        const std::vector<arma::mat>& gamma_mats,
+        const bool& recombination = false,
+        const uint32& start = 0,
+        const sint64& end = 0) {
 
     XPtr<VarSet> var_set(var_set_);
     XPtr<ChunkMutationSampler> sampler_base(sampler_base_);
 
-    Progress progress(100, false);
+    uint32 n_seqs = seq_inds.size();
 
-    if (gamma_mat(gamma_mat.n_rows-1,0) != (*var_set)[0][seq_ind].size()) {
-        stop("gamma_mat doesn't reach the end of the sequence.");
+    if (n_seqs != gamma_mats.size()) {
+        stop("seq_inds and gamma_mats must be the same length");
     }
 
     uint32 n_tips = var_set->size();
     if (ordered_tip_labels.size() != n_tips || tip_labels.size() != n_tips) {
-        stop("ordered_tip_labels and tip_labels must have the same length as ",
-             "# variants.");
+        stop("ordered_tip_labels and tip_labels must have lengths == # variants.");
     }
 
     std::vector<uint32> spp_order = match_(ordered_tip_labels, tip_labels);
@@ -394,29 +356,38 @@ std::vector<uint32> test_phylo(SEXP& var_set_,
         stop("branch_lens must have the same length as the # rows in edges.");
     }
     if (edges.n_cols != 2) stop("edges must have exactly two columns.");
-
-    std::vector<uint32> n_muts(n_edges, 0);
-
     // From R to C++ indices
     edges -= 1;
 
+    std::vector<std::vector<uint32>> out(n_seqs, std::vector<uint32>(n_edges, 0));
+
     pcg32 eng = seeded_pcg();
 
-    int code = one_tree_<ChunkMutationSampler>(
-        *var_set, *sampler_base, seq_ind, branch_lens, edges, spp_order,
-        gamma_mat, eng, progress, n_muts, recombination, start, end
-    );
+    for (uint32 i = 0; i < n_seqs; i++) {
+        std::vector<uint32>& n_muts(out[i]);
+        const arma::mat& gamma_mat(gamma_mats[i]);
+        const uint32& seq_ind(seq_inds[i]);
+        if (gamma_mat(gamma_mat.n_rows-1,0) != (*var_set)[0][seq_ind].size()) {
+            stop("gamma_mat doesn't reach the end of the sequence.");
+        }
 
-    // Make sure this happens outside of multithreaded code
-    if (code == -1) {
-        std::string warn_msg = "\nUser interrupted phylogenetic evolution. ";
-        warn_msg += "Note that changes occur in place, so your variants have ";
-        warn_msg += "already been partially added.";
-        // throw(Rcpp::exception(err_msg.c_str(), false));
-        Rcpp::warning(warn_msg.c_str());
+        int code = one_tree_<ChunkMutationSampler>(
+            *var_set, *sampler_base, seq_ind, branch_lens, edges, spp_order,
+            gamma_mat, eng, n_muts, recombination, start, end
+        );
+
+        // Make sure this happens outside of multithreaded code
+        if (code == -1) {
+            std::string warn_msg = "\nUser interrupted phylogenetic evolution. ";
+            warn_msg += "Note that changes occur in place, so your variants have ";
+            warn_msg += "already been partially added.";
+            // throw(Rcpp::exception(err_msg.c_str(), false));
+            Rcpp::warning(warn_msg.c_str());
+            return out;
+        }
     }
 
-    return n_muts;
+    return out;
 }
 
 
