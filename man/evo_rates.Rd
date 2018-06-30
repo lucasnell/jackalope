@@ -16,11 +16,9 @@ under purifying selection.}
 events per site per generation).}
 \item{subs}{Base-substitution mutation rate (\eqn{\times 10^{-10}}
 events per site per generation).}
-\item{pop_mutation_rate}{Population mutation rate estimates using \eqn{{\theta}_s}
-or \eqn{{\pi}_s}. The \eqn{{\pi}_s} estimate was only used for the following
-species: \emph{Agrobacterium tumefaciens}, \emph{Pseudomonas aeruginosa}, and
-\emph{Mus musculus}.}
 \item{Ne}{Effective population size (\eqn{\times 10^6}).}
+\item{theta_s}{Population mutation rate estimated using \eqn{{\theta}_s}.}
+\item{pi_s}{Population mutation rate estimated using \eqn{{\pi}_s}.}
 }}
 \source{
 \url{http://dx.doi.org/10.1534/g3.116.030890}

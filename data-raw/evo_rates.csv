@@ -1,16 +1,16 @@
-domain,species,Ge,Gc_Gnc,indels,subs,pop_mutation_rate,Ne
-Bacteria,Agrobacterium tumefaciens,0.5,0.57,0.3,2.92,0.2,342.47
-Bacteria,Bacillus subtilis,0.36,0.43,1.2,3.35,0.041,61.19
-Bacteria,Escherichia coli,0.39,0.46,0.37,2,0.071,179.6
-Bacteria,Mesoplasma florum,0.07,0.08,23.1,97.8,0.021,1.07
-Bacteria,Pseudomonas aeruginosa,0.59,0.67,0.14,0.79,0.033,210.7
-Bacteria,Staphlyococcus epidermidis,0.21,0.26,1.13,7.4,0.052,35.14
-Bacteria,Vibrio cholerae,0.34,0.39,0.18,1.15,0.11,478.26
-Eukarya,Arabidopsis thaliana,4.21,5.55,11.2,69.5,0.008,0.29
-Eukarya,Caenorhabditis elegans,2.5,6.37,6.69,14.5,0.003,0.54
-Eukarya,Chlamydomonas reinhardtii,3.92,5.51,0.44,3.8,0.032,43.31
-Eukarya,Drosophila melanogaster,2.32,8.86,4.61,51.65,0.018,0.86
-Eukarya,Homo sapiens,3.65,21.75,18.2,135.13,0.001,0.02
-Eukarya,Mus musculus,3.55,27.17,3.1,54,0.004,1.77
-Eukarya,Paramecium tetraurelia,5.68,7.28,0.04,0.19,0.008,101.8
-Eukarya,Saccharomyces cerevisiae,0.87,1.02,0.92,2.63,0.004,7.78
+domain,species,Ge,Gc_Gnc,indels,subs,Ne,pi_s,theta_s
+Bacteria,Agrobacterium tumefaciens,0.5,0.57,0.3,2.92,342.47,0.2,NA
+Bacteria,Bacillus subtilis,0.36,0.43,1.2,3.35,61.19,NA,0.041
+Bacteria,Escherichia coli,0.39,0.46,0.37,2,179.6,NA,0.071
+Bacteria,Mesoplasma florum,0.07,0.08,23.1,97.8,1.07,NA,0.021
+Bacteria,Pseudomonas aeruginosa,0.59,0.67,0.14,0.79,210.7,0.033,NA
+Bacteria,Staphlyococcus epidermidis,0.21,0.26,1.13,7.4,35.14,NA,0.052
+Bacteria,Vibrio cholerae,0.34,0.39,0.18,1.15,478.26,NA,0.11
+Eukarya,Arabidopsis thaliana,4.21,5.55,11.2,69.5,0.29,NA,0.008
+Eukarya,Caenorhabditis elegans,2.5,6.37,6.69,14.5,0.54,NA,0.003
+Eukarya,Chlamydomonas reinhardtii,3.92,5.51,0.44,3.8,43.31,NA,0.032
+Eukarya,Drosophila melanogaster,2.32,8.86,4.61,51.65,0.86,NA,0.018
+Eukarya,Homo sapiens,3.65,21.75,18.2,135.13,0.02,NA,0.001
+Eukarya,Mus musculus,3.55,27.17,3.1,54,1.77,0.004,NA
+Eukarya,Paramecium tetraurelia,5.68,7.28,0.04,0.19,101.8,NA,0.008
+Eukarya,Saccharomyces cerevisiae,0.87,1.02,0.92,2.63,7.78,NA,0.004
