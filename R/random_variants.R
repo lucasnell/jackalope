@@ -111,9 +111,10 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
 #' (The variants class also prevents what might otherwise be an annoyingly long list
 #' from ever printing in the console.)
 #'
-#' @param dna_set_in A \code{dna_set} object of sequences representing the reference
-#'     genome.
+#' @param reference_ptr A \code{externalptr} object pointing to C++ object storing
+#'     sequences representing the reference genome.
 #' @param n_vars The number of variants to create.
+#' @param n_cores Number of cores to use. Defaults to 1.
 #' @param theta_w Watterson's estimator for the focal population.
 #' @param theta_pi Average nucleotide diversity for the focal population.
 #' @param snp_probs Relative probabilities of substitution types:
@@ -132,7 +133,12 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
 #' @param snp_proportion The proportion of mutations (not sites) that are SNPs.
 #'     Defaults to the proportion calculated using the average ratio of indels
 #'     to substitutions in eukaryotes from Sung et al. (2016).
-#' @param n_cores Number of cores to use. Defaults to 1.
+#'
+#'
+#'
+#'
+#' THE BELOW PARAMETERS ARE NO LONGER AVAILABLE:
+#'
 #' @param n2N A numeric threshold placed on the algorithm used to find new locations.
 #'     This is not recommended to be changed. Defaults to 50.
 #' @param alpha A numeric threshold placed on the algorithm used to find new locations.
@@ -141,35 +147,34 @@ get_snp_combos_weights <- function(n_vars, seg_div, snp_site_prop,
 #' @return A \code{VarSet} object.
 #'
 #'
+#' @noRd
+#'
 #' @references
 #' Sung, W., M. S. Ackerman, M. M. Dillon, T. G. Platt, C. Fuqua, V. S. Cooper, and M.
 #' Lynch. 2016.
 #' Evolution of the insertion-deletion mutation rate across the tree of life.
 #' *G3: Genes|Genomes|Genetics* __6__:2583-2591.
 #'
-#' @examples
-#' \dontrun{
-#' n_vars <- 10
-#' dna_set_in <- dna_set$new(gemino:::rando_seqs(100, 100))
-#' set.seed(1)
-#' varseq_out <- random_variants(dna_set_in, n_vars,
-#'                               theta_w = 0.0045, theta_pi = 0.005)
-#' }
 #'
-random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
-                            indel_probs = exp(-1:-10),
-                            snp_probs = rep(0.25, 4),
-                            snp_proportion = NULL,
-                            n_cores = 1, n2N = 50, alpha = 0.8) {
+random_variants_ <- function(reference_ptr,
+                            n_vars,
+                            n_cores,
+                            theta_w, theta_pi,
+                            indel_probs,
+                            snp_probs,
+                            snp_proportion) {
 
     # If nothing provided, use data from Sung et al. (2016):
-    if (is.null(snp_proportion)) {
+    if (missing(snp_proportion)) {
         rates_ <- gemino::evo_rates
         snp_proportion <- rates_$subs[rates_$domain == 'Eukarya'] /
             rates_$indels[rates_$domain == 'Eukarya']
         snp_proportion <- mean(snp_proportion)
         snp_proportion <- snp_proportion / (1 + snp_proportion)
     }
+    # Fill in these, too, if necessary
+    if (missing(indel_probs)) indel_probs <- exp(-1:-10)
+    if(missing(snp_probs)) snp_probs <- rep(0.25, 4)
 
     # Proportion of sites that are segregating
     seg_prop = theta_w * sum(1 / 1:(n_vars-1))
@@ -178,8 +183,8 @@ random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
 
 
     # Useful info from the input dna_set
-    n_seqs <- see_ref_n_seq(dna_set_in$sequence_set)
-    seq_lens <- sapply(0:(n_seqs-1), see_ref_seq_size, ref_ = dna_set_in$sequence_set)
+    n_seqs <- see_ref_n_seq(reference_ptr)
+    seq_lens <- sapply(0:(n_seqs-1), see_ref_seq_size, ref_genome_ = reference_ptr)
     total_seg <- round(sum(seq_lens) * seg_prop)
 
     # Standardize and get info from `indel_props`
@@ -212,7 +217,8 @@ random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
 
     # Standardize `snp_props`
     if (length(snp_probs) != 4) {
-        stop("\nsnp_probs argument to random_variants must be of length 4", call. = FALSE)
+        stop("\nsnp_probs argument to random_variants must be of length 4",
+             call. = FALSE)
     }
     snp_probs <- snp_probs / sum(snp_probs)
 
@@ -231,7 +237,8 @@ random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
     snp_combos_weights <- get_snp_combos_weights(n_vars, seg_div, snp_site_prop,
                                                  threshold = 40)
 
-    snp_combo_list <- split(snp_combos_weights$combo_mat, row(snp_combos_weights$combo_mat))
+    snp_combo_list <- split(snp_combos_weights$combo_mat,
+                            row(snp_combos_weights$combo_mat))
 
     # Column 1 is sampling weight, column 2 is type of mutation
     sampling_weights <- c(
@@ -249,16 +256,13 @@ random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
     n_mutations <- sample_seqs(total_mutations, seq_lens, n_cores)
 
 
-    var_set <- make_variants_(n_mutations, dna_set_in$sequence_set, snp_combo_list,
+    var_set <- make_variants_(n_mutations, reference_ptr, snp_combo_list,
                               mutation_probs = sampling_weights[,1],
                               mutation_types = sampling_weights[,2],
                               mutation_sizes = mutation_sizes, n_cores = n_cores,
                               n2N = 50, alpha = 0.8)
 
-    # var_obj <- variants$new(dna_set_in$sequence_set, variant_set)
-    var_obj <- var_set
-
-    return(var_obj)
+    return(var_set)
 }
 
 
@@ -271,3 +275,49 @@ random_variants <- function(dna_set_in, n_vars, theta_w, theta_pi,
 #   The length of the indels varied from 1 to 10 bp, and the length distribution was
 #   such that the number of indels with length l was proportional to exp(-l), similar to
 #   what is observed in real data sets.
+
+
+
+
+
+#' Wrapper around `random_variants_` to use inside `create_variants`.
+#'
+#' See above for more info.
+#'
+#'
+#'
+#' @noRd
+#'
+random_variants <- function(reference_ptr, n_variants, n_cores, random_control) {
+
+    if (!inherits(random_control, "list") | is.null(names(random_control))) {
+        stop("\nThe random_control argument to create_variants must be a named list",
+             call. = FALSE)
+    }
+
+    args_ <- names(formals(gemino:::random_variants_))[-1:-3]
+
+    if (any(!names(random_control) %in% args_)) {
+        stop(paste("\nIf providing random_control to create_variants, only the",
+                   "following names can be provided in the list:",
+                   paste(args_, collapse = ", ")),
+             call. = FALSE)
+    }
+    if (is.null(random_control$theta_w)) {
+        stop("\nThe theta_w argument is required if using random_control in ",
+             "create_variants.",
+             .call = FALSE)
+    }
+    if (is.null(random_control$theta_pi)) {
+        stop("\nThe theta_pi argument is required if using random_control in ",
+             "create_variants.",
+             .call = FALSE)
+    }
+
+    call_list <- c(reference_ptr = reference_ptr, n_vars = n_variants, n_cores = n_cores,
+                   random_control)
+
+    ptr <- do.call(random_variants, call_list)
+
+    return(ptr)
+}
