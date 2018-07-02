@@ -155,6 +155,14 @@ digest_ref <- function(ref_genome_, bind_sites, len5s, chunk_size = 0L, n_cores 
     .Call(`_gemino_digest_ref`, ref_genome_, bind_sites, len5s, chunk_size, n_cores)
 }
 
+#' Create XPtr to nested vector of PhyloTree objects from phylogeny information.
+#'
+#' @noRd
+#'
+phylo_info_to_trees <- function(genome_phylo_info) {
+    .Call(`_gemino_phylo_info_to_trees`, genome_phylo_info)
+}
+
 #' Estimates equilibrium nucleotide frequencies from an input rate matrix.
 #'
 #' It does this by solving for πQ = 0 by finding the left eigenvector of Q that
@@ -546,6 +554,18 @@ cpp_nt_freq <- function(N) {
 #'
 make_variants_ <- function(n_mutations, ref_genome_, snp_combo_list, mutation_probs, mutation_types, mutation_sizes, n_cores, n2N = 50, alpha = 0.8) {
     .Call(`_gemino_make_variants_`, n_mutations, ref_genome_, snp_combo_list, mutation_probs, mutation_types, mutation_sizes, n_cores, n2N, alpha)
+}
+
+#' Read a ms output file with newick gene trees and return the gene tree strings.
+#'
+#' @param ms_file File name of the ms output file.
+#'
+#' @return A vector of strings for each set of gene trees.
+#'
+#' @noRd
+#'
+read_ms_output_ <- function(ms_file) {
+    .Call(`_gemino_read_ms_output_`, ms_file)
 }
 
 #' Read a non-indexed fasta file to a \code{RefGenome} object.

@@ -111,6 +111,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// phylo_info_to_trees
+SEXP phylo_info_to_trees(List genome_phylo_info);
+RcppExport SEXP _gemino_phylo_info_to_trees(SEXP genome_phylo_infoSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type genome_phylo_info(genome_phylo_infoSEXP);
+    rcpp_result_gen = Rcpp::wrap(phylo_info_to_trees(genome_phylo_info));
+    return rcpp_result_gen;
+END_RCPP
+}
 // TN93_rate_matrix
 arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta, const double& xi);
 RcppExport SEXP _gemino_TN93_rate_matrix(SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP, SEXP xiSEXP) {
@@ -445,6 +456,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// read_ms_output_
+std::vector<std::vector<std::string>> read_ms_output_(std::string ms_file);
+RcppExport SEXP _gemino_read_ms_output_(SEXP ms_fileSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type ms_file(ms_fileSEXP);
+    rcpp_result_gen = Rcpp::wrap(read_ms_output_(ms_file));
+    return rcpp_result_gen;
+END_RCPP
+}
 // read_fasta_noind
 SEXP read_fasta_noind(const std::string& fasta_file, const bool& cut_names, const bool& remove_soft_mask);
 RcppExport SEXP _gemino_read_fasta_noind(SEXP fasta_fileSEXP, SEXP cut_namesSEXP, SEXP remove_soft_maskSEXP) {
@@ -568,6 +590,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_expand_seqs", (DL_FUNC) &_gemino_expand_seqs, 1},
     {"_gemino_digest_var_set", (DL_FUNC) &_gemino_digest_var_set, 5},
     {"_gemino_digest_ref", (DL_FUNC) &_gemino_digest_ref, 5},
+    {"_gemino_phylo_info_to_trees", (DL_FUNC) &_gemino_phylo_info_to_trees, 1},
     {"_gemino_TN93_rate_matrix", (DL_FUNC) &_gemino_TN93_rate_matrix, 5},
     {"_gemino_JC69_rate_matrix", (DL_FUNC) &_gemino_JC69_rate_matrix, 2},
     {"_gemino_K80_rate_matrix", (DL_FUNC) &_gemino_K80_rate_matrix, 3},
@@ -593,6 +616,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_sample_seqs", (DL_FUNC) &_gemino_sample_seqs, 3},
     {"_gemino_cpp_nt_freq", (DL_FUNC) &_gemino_cpp_nt_freq, 1},
     {"_gemino_make_variants_", (DL_FUNC) &_gemino_make_variants_, 9},
+    {"_gemino_read_ms_output_", (DL_FUNC) &_gemino_read_ms_output_, 1},
     {"_gemino_read_fasta_noind", (DL_FUNC) &_gemino_read_fasta_noind, 3},
     {"_gemino_read_fasta_ind", (DL_FUNC) &_gemino_read_fasta_ind, 3},
     {"_gemino_write_fasta_fa", (DL_FUNC) &_gemino_write_fasta_fa, 3},
