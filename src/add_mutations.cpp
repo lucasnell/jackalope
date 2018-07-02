@@ -18,6 +18,7 @@
 
 #include "gemino_types.h"  // integer types
 #include "sequence_classes.h"  // Var* and Ref* classes
+#include "util.h"  // clear_memory
 
 
 using namespace Rcpp;
@@ -455,7 +456,7 @@ void VarSequence::merge_del_ins_(uint32& insert_i,
         std::string& nts(mutations[insert_i].nucleos);
         nts.erase(nts.begin() + erase_ind0, nts.begin() + erase_ind1);
         // clear memory:
-        std::string(nts.begin(), nts.end()).swap(nts);
+        clear_memory<std::string>(nts);
 
         // Adjust the insertion's size modifier
         mutations[insert_i].size_modifier = mutations[insert_i].nucleos.size() - 1;
@@ -499,7 +500,7 @@ void VarSequence::remove_mutation_(uint32& mut_i) {
     // erase:
     mutations.erase(mutations.begin() + mut_i);
     // clear memory:
-    std::deque<Mutation>(mutations.begin(), mutations.end()).swap(mutations);
+    clear_memory<std::deque<Mutation>>(mutations);
     return;
 }
 void VarSequence::remove_mutation_(uint32& mut_i1, uint32& mut_i2) {
@@ -507,7 +508,7 @@ void VarSequence::remove_mutation_(uint32& mut_i1, uint32& mut_i2) {
     // erase range:
     mutations.erase(mutations.begin() + mut_i1, mutations.begin() + mut_i2);
     // clear memory:
-    std::deque<Mutation>(mutations.begin(), mutations.end()).swap(mutations);
+    clear_memory<std::deque<Mutation>>(mutations);
     // reset indices:
     if (mut_i1 > 0) {
         mut_i2 = mut_i1;

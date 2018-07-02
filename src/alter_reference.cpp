@@ -13,6 +13,7 @@
 
 #include "sequence_classes.h"   // new classes
 #include "gemino_types.h"  // integer types
+#include "util.h"  // clear_memory
 
 
 using namespace Rcpp;
@@ -71,9 +72,9 @@ void merge_sequences(SEXP ref_genome_) {
         seqs.pop_back();
     }
     // clear memory in string
-    std::string(nts.begin(), nts.end()).swap(nts);
+    clear_memory<std::string>(nts);
     // clear memory in deque
-    std::deque<RefSequence>(seqs.begin(), seqs.end()).swap(seqs);
+    clear_memory<std::deque<RefSequence>>(seqs);
 
     ref_genome->merged = true;
 
@@ -166,7 +167,7 @@ void filter_sequences(SEXP ref_genome_,
     if (i < seqs.size()) {
         seqs.erase(seqs.begin() + i, seqs.end());
         // clear memory:
-        std::deque<RefSequence>(seqs.begin(), seqs.end()).swap(seqs);
+        clear_memory<std::deque<RefSequence>>(seqs);
     }
 
     ref_genome->total_size = static_cast<uint64>(out_seq);
