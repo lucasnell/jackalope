@@ -36,13 +36,13 @@ void expand_path(std::string& file_name) {
 
 void ms_parse_line(std::string& line,
                    std::vector<std::vector<std::string>>& newick_strings) {
+
     if (line[0] == '/' && line[1] == '/') {
         newick_strings.push_back(std::vector<std::string>(0));
         return;
     }
     if (line[0] == '[' || line[0] == '(') {
-        newick_strings.back().push_back("");
-        newick_strings.back().back() += line;
+        newick_strings.back().push_back(line);
     }
     return;
 }
@@ -84,13 +84,13 @@ std::vector<std::vector<std::string>> read_ms_output_(std::string ms_file) {
         std::string mystring(reinterpret_cast<char*>(buffer));
         mystring = lastline + mystring;
 
-        char split = '\n'; // Must be single quotes!
+        char split = '\n';
         // std::vector of strings for parsed buffer:
         std::vector<std::string> svec = cpp_str_split_delim(mystring, split);
 
         // Scroll through lines derived from the buffer.
-        for (std::string& line : svec){
-            ms_parse_line(line, newick_strings);
+        for (uint32 i = 0; i < svec.size() - 1; i++){
+            ms_parse_line(svec[i], newick_strings);
         }
         // Manage the last line.
         lastline = svec.back();
@@ -101,7 +101,7 @@ std::vector<std::vector<std::string>> read_ms_output_(std::string ms_file) {
                 ms_parse_line(lastline, newick_strings);
                 break;
             } else {
-                std::string error_string = gzerror (file, & err);
+                std::string error_string = gzerror(file, &err);
                 if (err) {
                     std::string e = "Error: " + error_string + ".\n";
                     stop(e);

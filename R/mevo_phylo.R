@@ -15,7 +15,7 @@ process_coal_tree_string <- function(str) {
         }
         sizes_ <- as.numeric(sapply(str, function(x) strsplit(x, "\\[|\\]")[[1]][2]))
     } else {
-        sizes_ <- 0
+        sizes_ <- 1
     }
     ends <- cumsum(sizes_) - 1
     starts <- c(0, head(ends, -1) + 1)
