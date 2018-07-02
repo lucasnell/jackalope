@@ -296,99 +296,138 @@ double test_rate(const uint32& start, const uint32& end,
 
 
 
-//' Test sampling based on an evolutionary model.
-//'
-//' Make SURE `sampler_base_` is a `ChunkMutationSampler`, not a `MutationSampler`!
-//'
-//' @param var_set_ Pointer to a VarSet object.
-//' @param sampler_base_ Pointer to a ChunkMutationSampler object.
-//' @param branch_lens Branch lengths from phylogeny.
-//' @param edges Edge matrix from phylogeny.
-//' @param tip_labels Character vector of the actual phylogeny's tip labels.
-//' @param ordered_tip_labels Character vector of the tip labels in the order
-//'     you want them.
-//' @param gamma_mat Gamma matrix.
-//' @param recombination Boolean for whether to include recombination. If this is
-//'     \code{FALSE}, then \code{start} and \code{end} arguments are ignored.
-//'     Defaults to \code{FALSE}.
-//' @param start Starting point of region in which to insert mutations.
-//'     Ignored if \code{recombination} is \code{FALSE}.
-//' @param end Ending point of region in which to insert mutations.
-//'     Ignored if \code{recombination} is \code{FALSE}.
-//'
-//'
-//' @return A vector of integers indicating the number of mutations per edge.
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-std::vector<std::vector<uint32>> test_mevo(
-        SEXP& var_set_,
-        SEXP& sampler_base_,
-        const std::vector<uint32>& seq_inds,
-        const std::vector<double>& branch_lens,
-        arma::Mat<uint32> edges,
-        const std::vector<std::string>& tip_labels,
-        const std::vector<std::string>& ordered_tip_labels,
-        const std::vector<arma::mat>& gamma_mats,
-        const bool& recombination = false,
-        const uint32& start = 0,
-        const sint64& end = 0) {
 
-    XPtr<VarSet> var_set(var_set_);
-    XPtr<ChunkMutationSampler> sampler_base(sampler_base_);
-
-    uint32 n_seqs = seq_inds.size();
-
-    if (n_seqs != gamma_mats.size()) {
-        stop("seq_inds and gamma_mats must be the same length");
-    }
-
-    uint32 n_tips = var_set->size();
-    if (ordered_tip_labels.size() != n_tips || tip_labels.size() != n_tips) {
-        stop("ordered_tip_labels and tip_labels must have lengths == # variants.");
-    }
-
-    std::vector<uint32> spp_order = match_(ordered_tip_labels, tip_labels);
-
-    uint32 n_edges = edges.n_rows;
-    if (branch_lens.size() != n_edges) {
-        stop("branch_lens must have the same length as the # rows in edges.");
-    }
-    if (edges.n_cols != 2) stop("edges must have exactly two columns.");
-    // From R to C++ indices
-    edges -= 1;
-
-    std::vector<std::vector<uint32>> out(n_seqs, std::vector<uint32>(n_edges, 0));
-
-    pcg32 eng = seeded_pcg();
-
-    for (uint32 i = 0; i < n_seqs; i++) {
-        std::vector<uint32>& n_muts(out[i]);
-        const arma::mat& gamma_mat(gamma_mats[i]);
-        const uint32& seq_ind(seq_inds[i]);
-        if (gamma_mat(gamma_mat.n_rows-1,0) != (*var_set)[0][seq_ind].size()) {
-            stop("gamma_mat doesn't reach the end of the sequence.");
-        }
-
-        int code = one_tree_<ChunkMutationSampler>(
-            *var_set, *sampler_base, seq_ind, branch_lens, edges, spp_order,
-            gamma_mat, eng, n_muts, recombination, start, end
-        );
-
-        // Make sure this happens outside of multithreaded code
-        if (code == -1) {
-            std::string warn_msg = "\nUser interrupted phylogenetic evolution. ";
-            warn_msg += "Note that changes occur in place, so your variants have ";
-            warn_msg += "already been partially added.";
-            // throw(Rcpp::exception(err_msg.c_str(), false));
-            Rcpp::warning(warn_msg.c_str());
-            return out;
-        }
-    }
-
-    return out;
-}
+// /*
+//  This version of `one_tree_` uses only `ChunkMutationSampler` and changes `n_muts`
+//  vector to see how many mutations occur at each edge.
+//  */
+//
+//
+// int one_tree_test_(VarSet& var_set,
+//                    const ChunkMutationSampler& sampler_base,
+//                    const uint32& seq_ind,
+//                    const std::vector<double>& branch_lens,
+//                    const arma::Mat<uint32>& edges,
+//                    const std::vector<std::string>& tip_labels,
+//                    const arma::mat& gamma_mat,
+//                    pcg32& eng) {
+//
+//     ChunkPhyloSeq phylo(
+//         var_set,
+//         sampler_base,
+//         seq_ind,
+//         gamma_mat,
+//         branch_lens,
+//         edges,
+//         tip_labels
+//     );
+//
+//     Progress p(var_set[0][seq_ind].ref_seq.size(), false);
+//
+//     int code = phylo.evolve(eng, p);
+//
+//     return code;
+//
+// }
+//
+//
+//
+//
+//
+//
+//
+// //' Test sampling based on an evolutionary model.
+// //'
+// //' Make SURE `sampler_base_` is a `ChunkMutationSampler`, not a `MutationSampler`!
+// //'
+// //' @param var_set_ Pointer to a VarSet object.
+// //' @param sampler_base_ Pointer to a ChunkMutationSampler object.
+// //' @param branch_lens Branch lengths from phylogeny.
+// //' @param edges Edge matrix from phylogeny.
+// //' @param tip_labels Character vector of the actual phylogeny's tip labels.
+// //' @param ordered_tip_labels Character vector of the tip labels in the order
+// //'     you want them.
+// //' @param gamma_mat Gamma matrix.
+// //' @param recombination Boolean for whether to include recombination. If this is
+// //'     \code{FALSE}, then \code{start} and \code{end} arguments are ignored.
+// //'     Defaults to \code{FALSE}.
+// //' @param start Starting point of region in which to insert mutations.
+// //'     Ignored if \code{recombination} is \code{FALSE}.
+// //' @param end Ending point of region in which to insert mutations.
+// //'     Ignored if \code{recombination} is \code{FALSE}.
+// //'
+// //'
+// //' @return A vector of integers indicating the number of mutations per edge.
+// //'
+// //' @noRd
+// //'
+// //[[Rcpp::export]]
+// std::vector<std::vector<uint32>> test_mevo(
+//         SEXP& var_set_,
+//         SEXP& sampler_base_,
+//         const std::vector<uint32>& seq_inds,
+//         const std::vector<std::vector<double>>& branch_lens,
+//         const std::vector<arma::Mat<uint32>>& edges,
+//         const std::vector<std::vector<std::string>>& tip_labels,
+//         const std::vector<std::string>& ordered_tip_labels,
+//         const std::vector<arma::mat>& gamma_mats) {
+//
+//     XPtr<VarSet> var_set(var_set_);
+//     XPtr<ChunkMutationSampler> sampler_base(sampler_base_);
+//
+//     for (uint32 i = 0; i < var_set->size(); i++) {
+//         (*var_set)[i].name = ordered_tip_labels[i];
+//     }
+//
+//     uint32 n_seqs = seq_inds.size();
+//
+//     if (n_seqs != gamma_mats.size()) {
+//         stop("seq_inds and gamma_mats must be the same length");
+//     }
+//
+//     uint32 n_tips = var_set->size();
+//     if (ordered_tip_labels.size() != n_tips || tip_labels.size() != n_tips) {
+//         stop("ordered_tip_labels and tip_labels must have lengths == # variants.");
+//     }
+//
+//     uint32 n_edges = edges.n_rows;
+//     if (branch_lens.size() != n_edges) {
+//         stop("branch_lens must have the same length as the # rows in edges.");
+//     }
+//     if (edges.n_cols != 2) stop("edges must have exactly two columns.");
+//     // From R to C++ indices
+//     edges -= 1;
+//
+//     std::vector<std::vector<uint32>> out(n_seqs, std::vector<uint32>(n_edges, 0));
+//
+//     pcg32 eng = seeded_pcg();
+//
+//     for (uint32 i = 0; i < n_seqs; i++) {
+//         std::vector<uint32>& n_muts(out[i]);
+//         const arma::mat& gamma_mat(gamma_mats[i]);
+//         const uint32& seq_ind(seq_inds[i]);
+//         if (gamma_mat(gamma_mat.n_rows-1,0) != (*var_set)[0][seq_ind].size()) {
+//             stop("gamma_mat doesn't reach the end of the sequence.");
+//         }
+//
+//         int code = one_tree_test_(
+//             *var_set, *sampler_base, seq_ind, branch_lens, edges, tip_labels,
+//             gamma_mat, eng
+//         );
+//
+//         // Make sure this happens outside of multithreaded code
+//         if (code == -1) {
+//             std::string warn_msg = "\nUser interrupted phylogenetic evolution. ";
+//             warn_msg += "Note that changes occur in place, so your variants have ";
+//             warn_msg += "already been partially added.";
+//             // throw(Rcpp::exception(err_msg.c_str(), false));
+//             Rcpp::warning(warn_msg.c_str());
+//             return out;
+//         }
+//     }
+//
+//     return out;
+// }
 
 
 

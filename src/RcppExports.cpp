@@ -312,27 +312,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// test_mevo
-std::vector<std::vector<uint32>> test_mevo(SEXP& var_set_, SEXP& sampler_base_, const std::vector<uint32>& seq_inds, const std::vector<double>& branch_lens, arma::Mat<uint32> edges, const std::vector<std::string>& tip_labels, const std::vector<std::string>& ordered_tip_labels, const std::vector<arma::mat>& gamma_mats, const bool& recombination, const uint32& start, const sint64& end);
-RcppExport SEXP _gemino_test_mevo(SEXP var_set_SEXP, SEXP sampler_base_SEXP, SEXP seq_indsSEXP, SEXP branch_lensSEXP, SEXP edgesSEXP, SEXP tip_labelsSEXP, SEXP ordered_tip_labelsSEXP, SEXP gamma_matsSEXP, SEXP recombinationSEXP, SEXP startSEXP, SEXP endSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP& >::type var_set_(var_set_SEXP);
-    Rcpp::traits::input_parameter< SEXP& >::type sampler_base_(sampler_base_SEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type seq_inds(seq_indsSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type branch_lens(branch_lensSEXP);
-    Rcpp::traits::input_parameter< arma::Mat<uint32> >::type edges(edgesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type tip_labels(tip_labelsSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type ordered_tip_labels(ordered_tip_labelsSEXP);
-    Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type gamma_mats(gamma_matsSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type recombination(recombinationSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type start(startSEXP);
-    Rcpp::traits::input_parameter< const sint64& >::type end(endSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_mevo(var_set_, sampler_base_, seq_inds, branch_lens, edges, tip_labels, ordered_tip_labels, gamma_mats, recombination, start, end));
-    return rcpp_result_gen;
-END_RCPP
-}
 // make_mutation_sampler_base
 SEXP make_mutation_sampler_base(const arma::mat& Q, const double& xi, const double& psi, const std::vector<double>& pi_tcag, const arma::vec& rel_insertion_rates, const arma::vec& rel_deletion_rates);
 RcppExport SEXP _gemino_make_mutation_sampler_base(SEXP QSEXP, SEXP xiSEXP, SEXP psiSEXP, SEXP pi_tcagSEXP, SEXP rel_insertion_ratesSEXP, SEXP rel_deletion_ratesSEXP) {
@@ -604,7 +583,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_add_insertion", (DL_FUNC) &_gemino_add_insertion, 5},
     {"_gemino_add_deletion", (DL_FUNC) &_gemino_add_deletion, 5},
     {"_gemino_test_rate", (DL_FUNC) &_gemino_test_rate, 7},
-    {"_gemino_test_mevo", (DL_FUNC) &_gemino_test_mevo, 11},
     {"_gemino_make_mutation_sampler_base", (DL_FUNC) &_gemino_make_mutation_sampler_base, 6},
     {"_gemino_make_mutation_sampler_chunk_base", (DL_FUNC) &_gemino_make_mutation_sampler_chunk_base, 7},
     {"_gemino_print_ref_genome", (DL_FUNC) &_gemino_print_ref_genome, 1},

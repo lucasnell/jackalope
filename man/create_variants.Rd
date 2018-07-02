@@ -8,9 +8,11 @@ create_variants(reference, n_variants, phylo_control, vcf_file, random_control,
   n_cores = 1)
 }
 \arguments{
-\item{reference}{A \code{ref_genome} object from which to generate variants.}
+\item{reference}{A \code{ref_genome} object from which to generate variants.
+This argument is required.}
 
-\item{n_variants}{The number of haploid variants to create.}
+\item{n_variants}{The number of haploid variants to create.
+This argument is required.}
 
 \item{phylo_control}{A list containing parameters for phylogenetic evolution.}
 
