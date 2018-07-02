@@ -5,7 +5,7 @@
 #'
 #' @noRd
 #'
-process_coal_tree_string <- function(str) {
+process_coal_tree_string <- function(str, seq_size) {
 
     if (length(str) > 1) {
         if (!all(grepl("^\\[", str))) {
@@ -14,6 +14,18 @@ process_coal_tree_string <- function(str) {
                  call. = FALSE)
         }
         sizes_ <- as.numeric(sapply(str, function(x) strsplit(x, "\\[|\\]")[[1]][2]))
+        # If they're <= 1, then they're not # bp, they're proportion of sequence
+        if (all(sizes_ <= 1) & seq_size > 1) {
+            sizes_ <- sizes_ / sum(sizes_)
+            sizes_ <- round(sizes_ * seq_size, 0)
+            # Remove any zero sizes:
+            sizes_ <- sizes_[sizes_ > 0]
+            # If it doesn't round quite right, then randomly add/subtract:
+            if (sum(sizes_) != seq_size) {
+                inds <- sample.int(length(sizes_), abs(seq_size - sum(sizes_)))
+                sizes_[inds] <- sizes_[inds] + sign(seq_size - sum(sizes_))
+            }
+        }
     } else {
         sizes_ <- 1
     }
@@ -50,13 +62,14 @@ process_coal_tree_string <- function(str) {
 #' Read info from a coalescent object from scrm or coala.
 #'
 #' @param coal_obj The coalescent-simulation object.
+#' @param seq_sizes Vector of sequence sizes.
 #'
 #' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
 #'
 #' @noRd
 #'
 #'
-read_coal_obj <- function(coal_obj) {
+read_coal_obj <- function(coal_obj, seq_sizes) {
 
     if (is.null(coal_obj$trees) | !inherits(coal_obj, "list")) {
         stop("\nWhen reading trees from a coalescent object from the scrm or coala ",
@@ -68,7 +81,8 @@ read_coal_obj <- function(coal_obj) {
 
     trees <- coal_obj$trees
 
-    tree_info <- lapply(trees, process_coal_tree_string)
+    tree_info <- mapply(process_coal_tree_string, trees, seq_sizes,
+                        SIMPLIFY = FALSE, USE.NAMES = FALSE)
 
     # Making sure all labels are the same
     label_mat <- do.call(rbind,
@@ -86,6 +100,46 @@ read_coal_obj <- function(coal_obj) {
     trees_ptr <- phylo_info_to_trees(tree_info)
 
     return(trees_ptr)
+}
+
+
+
+
+
+#' Read info from ms-style output.
+#'
+#' @param ms_filename The filename for ms-style output.
+#' @param seq_sizes Vector of sequence sizes.
+#'
+#' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
+#'
+#' @noRd
+#'
+#'
+read_ms_output <- function(ms_filename, seq_sizes) {
+
+    trees <- read_ms_output_(ms_filename)
+
+    tree_info <- mapply(process_coal_tree_string, trees, seq_sizes,
+                        SIMPLIFY = FALSE, USE.NAMES = FALSE)
+
+    # Making sure all labels are the same
+    label_mat <- do.call(rbind,
+                         lapply(tree_info, function(x) {
+                             t(sapply(x, function(xx) xx$labels))
+                         }))
+    label_mat <- t(apply(label_mat, 1, sort))
+    for (i in 2:nrow(label_mat)) {
+        if (any(label_mat[1,] != label_mat[i,])) {
+            stop("\nIn the input coalescent object, not all labels are the same.",
+                 call. = FALSE)
+        }
+    }
+
+    trees_ptr <- phylo_info_to_trees(tree_info)
+
+    return(trees_ptr)
+
 }
 
 
@@ -120,8 +174,3 @@ read_newick <- function(newick_filename, n_seqs) {
     return(trees_ptr)
 }
 
-
-
-read_ms_output <- function(ms_filename) {
-
-}
