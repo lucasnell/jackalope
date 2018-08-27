@@ -30,11 +30,12 @@ using namespace Rcpp;
 
 
 
-// T must be ChunkPhyloSeq or PhyloSeq
+// T must be MutationSampler or ChunkMutationSampler
+
 
 template <typename T>
-void fill_one_seq(const List& genome_phylo_info, const uint32& i,
-                  std::vector<T>& all_seqs) {
+void fill_one_seq_(const List& genome_phylo_info, const uint32& i,
+                  std::vector<PhyloOneSeq<T>>& all_seqs) {
 
     std::string err_msg;
 
@@ -85,7 +86,7 @@ void fill_one_seq(const List& genome_phylo_info, const uint32& i,
     }
 
 
-    all_seqs[i] = T(n_bases_, branch_lens_, edges_, tip_labels_);
+    all_seqs[i] = PhyloOneSeq<T>(n_bases_, branch_lens_, edges_, tip_labels_);
 
     return;
 
@@ -108,13 +109,13 @@ SEXP phylo_info_to_trees(List genome_phylo_info) {
                               false));
     }
 
-    XPtr<std::vector<PhyloSeq>> all_seqs_xptr(
-            new std::vector<PhyloSeq>(n_seqs)
+    XPtr<std::vector<PhyloOneSeq<MutationSampler>>> all_seqs_xptr(
+            new std::vector<PhyloOneSeq<MutationSampler>>(n_seqs)
     );
-    std::vector<PhyloSeq>& all_seqs(*all_seqs_xptr);
+    std::vector<PhyloOneSeq<MutationSampler>>& all_seqs(*all_seqs_xptr);
 
     for (uint32 i = 0; i < n_seqs; i++) {
-        fill_one_seq<PhyloSeq>(genome_phylo_info, i, all_seqs);
+        fill_one_seq_<MutationSampler>(genome_phylo_info, i, all_seqs);
     }
 
     return all_seqs_xptr;
@@ -137,19 +138,61 @@ SEXP phylo_info_to_trees_chunk(List genome_phylo_info) {
                               false));
     }
 
-    XPtr<std::vector<ChunkPhyloSeq>> all_seqs_xptr(
-            new std::vector<ChunkPhyloSeq>(n_seqs)
+    XPtr<std::vector<PhyloOneSeq<ChunkMutationSampler>>> all_seqs_xptr(
+            new std::vector<PhyloOneSeq<ChunkMutationSampler>>(n_seqs)
     );
-    std::vector<ChunkPhyloSeq>& all_seqs(*all_seqs_xptr);
+    std::vector<PhyloOneSeq<ChunkMutationSampler>>& all_seqs(*all_seqs_xptr);
 
     for (uint32 i = 0; i < n_seqs; i++) {
-        fill_one_seq<ChunkPhyloSeq>(genome_phylo_info, i, all_seqs);
+        fill_one_seq_<ChunkMutationSampler>(genome_phylo_info, i, all_seqs);
     }
 
     return all_seqs_xptr;
 }
 
 
+
+
+
+
+
+//' Evolve all sequences in a reference genome.
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+void evolve_seqs(
+        SEXP& var_set_xptr,
+        SEXP& sampler_base_xptr,
+        SEXP& phylo_info_xptr,
+        const std::vector<uint32>& seq_inds,
+        const std::vector<arma::mat>& gamma_mats,
+        const bool& show_progress) {
+
+    evolve_seqs_<MutationSampler>(var_set_xptr, sampler_base_xptr, phylo_info_xptr,
+                                  seq_inds, gamma_mats, show_progress);
+
+    return;
+}
+
+//' Same as above, but using chunks.
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+void evolve_seqs_chunk(
+        SEXP& var_set_xptr,
+        SEXP& sampler_base_xptr,
+        SEXP& phylo_info_xptr,
+        const std::vector<uint32>& seq_inds,
+        const std::vector<arma::mat>& gamma_mats,
+        const bool& show_progress) {
+
+    evolve_seqs_<ChunkMutationSampler>(var_set_xptr, sampler_base_xptr, phylo_info_xptr,
+                                       seq_inds, gamma_mats, show_progress);
+
+    return;
+}
 
 
 

@@ -534,97 +534,87 @@ int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
 }
 
 
-typedef PhyloOneSeq<MutationSampler> PhyloSeq;
-typedef PhyloOneSeq<ChunkMutationSampler> ChunkPhyloSeq;
+
 
 
 
 
 /*
- PhyloOneSeq<T>(
-     VarSet& var_set,
-     const T& sampler_base,
-     const uint32& seq_ind,
-     const arma::mat& gamma_mat_,
-     const std::vector<uint32>& n_bases_,
-     const std::vector<std::vector<double>>& branch_lens_,
-     const std::vector<arma::Mat<uint32>>& edges_,
-     const std::vector<std::vector<std::string>>& tip_labels_
- )
+ `T` should be `MutationSampler` or `ChunkMutationSampler`.
  */
+template <typename T>
+void evolve_seqs_(
+        SEXP& var_set_xptr,
+        SEXP& sampler_base_xptr,
+        SEXP& phylo_info_xptr,
+        const std::vector<uint32>& seq_inds,
+        const std::vector<arma::mat>& gamma_mats,
+        const bool& show_progress) {
+
+    XPtr<VarSet> var_set(var_set_xptr);
+    XPtr<T> sampler_base(sampler_base_xptr);
+    XPtr<std::vector<PhyloOneSeq<T>>> phylo_info(phylo_info_xptr);
+
+    uint32 n_seqs = var_set->reference.size();
+    uint64 total_seq = var_set->reference.total_size;
+
+    Progress prog_bar(total_seq, show_progress);
+
+    if (n_seqs != gamma_mats.size()) {
+        std::string err_msg = "\ngamma_mats must be of same length as # sequences in ";
+        err_msg += "reference";
+        throw(Rcpp::exception(err_msg.c_str(), false));
+    }
+    if (n_seqs != seq_inds.size()) {
+        std::string err_msg = "\nseq_inds must be of same length as # sequences in ";
+        err_msg += "reference";
+        throw(Rcpp::exception(err_msg.c_str(), false));
+    }
+    if (n_seqs != phylo_info->size()) {
+        std::string err_msg = "\nphylo_info must be of same length as # sequences in ";
+        err_msg += "reference";
+        throw(Rcpp::exception(err_msg.c_str(), false));
+    }
 
 
-// /*
-//  *
-//  */
-// template <typename T>
-// void evolve_seqs(
-//         SEXP& var_set_,
-//         SEXP& sampler_base_,
-//         const std::vector<uint32>& seq_inds,
-//         const std::vector<double>& branch_lens,
-//         arma::Mat<uint32> edges,
-//         const std::vector<std::string>& tip_labels,
-//         const std::vector<std::string>& ordered_tip_labels,
-//         const std::vector<arma::mat>& gamma_mats,
-//         const bool& show_progress = false,
-//         const bool& recombination = false,
-//         const uint32& start = 0,
-//         const sint64& end = 0) {
-//
-//     XPtr<VarSet> var_set(var_set_);
-//     XPtr<T> sampler_base(sampler_base_);
-//
-//     uint32 n_seqs = var_set->reference.size();
-//
-//     Progress prog_bar(100, show_progress);
-//
-//     if (n_seqs != gamma_mats.size()) {
-//         stop("seq_inds and gamma_mats must be the same length");
-//     }
-//
-//     uint32 n_tips = var_set->size();
-//     if (ordered_tip_labels.size() != n_tips || tip_labels.size() != n_tips) {
-//         stop("ordered_tip_labels and tip_labels must have lengths == # variants.");
-//     }
-//
-//     std::vector<uint32> spp_order = match_(ordered_tip_labels, tip_labels);
-//
-//     uint32 n_edges = edges.n_rows;
-//     if (branch_lens.size() != n_edges) {
-//         stop("branch_lens must have the same length as the # rows in edges.");
-//     }
-//     if (edges.n_cols != 2) stop("edges must have exactly two columns.");
-//     // From R to C++ indices
-//     edges -= 1;
-//
-//     pcg32 eng = seeded_pcg();
-//
-//     for (uint32 i = 0; i < n_seqs; i++) {
-//         const arma::mat& gamma_mat(gamma_mats[i]);
-//         const uint32& seq_ind(seq_inds[i]);
-//         if (gamma_mat(gamma_mat.n_rows-1,0) != (*var_set)[0][seq_ind].size()) {
-//             stop("gamma_mat doesn't reach the end of the sequence.");
-//         }
-//
-//         int code = one_tree_<T>(
-//             *var_set, *sampler_base, seq_ind, branch_lens, edges, spp_order,
-//             gamma_mat, eng, prog_bar, recombination, start, end
-//         );
-//
-//         // Make sure this happens outside of multithreaded code
-//         if (code == -1) {
-//             std::string warn_msg = "\nUser interrupted phylogenetic evolution. ";
-//             warn_msg += "Note that changes occur in place, so your variants have ";
-//             warn_msg += "already been partially added.";
-//             // throw(Rcpp::exception(err_msg.c_str(), false));
-//             Rcpp::warning(warn_msg.c_str());
-//             return;
-//         }
-//     }
-//
-//     return;
-// }
+    uint32 n_tips = var_set->size();
+
+    pcg32 eng = seeded_pcg();
+
+    for (uint32 i = 0; i < n_seqs; i++) {
+
+        PhyloOneSeq<T>& seq_phylo((*phylo_info)[i]);
+
+        const arma::mat& gamma_mat(gamma_mats[i]);
+        const uint32& seq_ind(seq_inds[i]);
+
+        if (gamma_mat(gamma_mat.n_rows-1,0) != (*var_set)[0][seq_ind].size()) {
+            std::string err_msg = "\nGamma matrices must have max values equal to ";
+            err_msg += "the respective sequence's length.\n";
+            err_msg += "This error occurred on Gamma matrix number ";
+            err_msg += std::to_string(i+1);
+            throw(Rcpp::exception(err_msg.c_str(), false));
+        }
+
+        // Set values for variant info and sampler:
+        seq_phylo.set_samp_var_info(var_set, sampler_base, seq_ind, gamma_mat);
+
+        // Evolve the sequence using the seq_phylo object:
+        int code = seq_phylo.evolve(eng, prog_bar);
+
+        // If the code is -1, the user interrupted the process.
+        // Make sure this check happens outside of multithreaded code.
+        if (code == -1) {
+            std::string warn_msg = "\nThe user interrupted phylogenetic evolution. ";
+            warn_msg += "Note that changes occur in place, so your variants have ";
+            warn_msg += "already been partially added.";
+            Rcpp::warning(warn_msg.c_str());
+            return;
+        }
+    }
+
+    return;
+}
 
 
 

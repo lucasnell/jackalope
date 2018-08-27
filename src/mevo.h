@@ -686,7 +686,7 @@ public:
     // For new insertion sequences:
     TableStringSampler<std::string> insert;
 
-    OneSeqMutationSampler() : var_seq(), location(), type(), insert() {}
+    OneSeqMutationSampler() {}
 
     OneSeqMutationSampler(VarSequence& vs_,
                           const C& location_,
