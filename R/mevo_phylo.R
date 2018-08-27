@@ -1,4 +1,6 @@
 
+
+
 #' Process one gene-tree string from a coalescent simulator with ms-style output.
 #'
 #' @param str The string to process.
@@ -43,7 +45,7 @@ process_coal_tree_string <- function(str, seq_size) {
     out <- rep(list(NA), length(phylo_))
 
     for (i in 1:length(phylo_)) {
-        phy <- reorder(phylo_[[i]], order = "cladewise")
+        phy <- ape::reorder.phylo(phylo_[[i]], order = "cladewise")
         labels <- paste(phy$tip.label) # used paste to make sure they're characters
         branch_lens <- phy$edge.length
         edges <- phy$edge
@@ -69,7 +71,7 @@ process_coal_tree_string <- function(str, seq_size) {
 #' @noRd
 #'
 #'
-read_coal_obj <- function(coal_obj, seq_sizes) {
+read_coal_obj <- function(coal_obj, seq_sizes, chunked = TRUE) {
 
     if (is.null(coal_obj$trees) | !inherits(coal_obj, "list")) {
         stop("\nWhen reading trees from a coalescent object from the scrm or coala ",
@@ -97,7 +99,11 @@ read_coal_obj <- function(coal_obj, seq_sizes) {
         }
     }
 
-    trees_ptr <- phylo_info_to_trees(tree_info)
+    if (!chunked) {
+        trees_ptr <- phylo_info_to_trees(tree_info)
+    } else {
+        trees_ptr <- phylo_info_to_trees_chunk(tree_info)
+    }
 
     return(trees_ptr)
 }
@@ -106,7 +112,7 @@ read_coal_obj <- function(coal_obj, seq_sizes) {
 
 
 
-#' Read info from ms-style output.
+#' Read info from ms-style output file.
 #'
 #' @param ms_filename The filename for ms-style output.
 #' @param seq_sizes Vector of sequence sizes.
@@ -116,7 +122,7 @@ read_coal_obj <- function(coal_obj, seq_sizes) {
 #' @noRd
 #'
 #'
-read_ms_output <- function(ms_filename, seq_sizes) {
+read_ms_output <- function(ms_filename, seq_sizes, chunked = TRUE) {
 
     trees <- read_ms_output_(ms_filename)
 
@@ -136,7 +142,11 @@ read_ms_output <- function(ms_filename, seq_sizes) {
         }
     }
 
-    trees_ptr <- phylo_info_to_trees(tree_info)
+    if (!chunked) {
+        trees_ptr <- phylo_info_to_trees(tree_info)
+    } else {
+        trees_ptr <- phylo_info_to_trees_chunk(tree_info)
+    }
 
     return(trees_ptr)
 
@@ -154,11 +164,11 @@ read_ms_output <- function(ms_filename, seq_sizes) {
 #'
 #' @noRd
 #'
-read_newick <- function(newick_filename, n_seqs) {
+read_newick <- function(newick_filename, n_seqs, chunked = TRUE) {
 
     phy <- ape::read.tree(file = newick_filename)
 
-    phy <- reorder(phy, order = "cladewise")
+    phy <- ape::reorder.phylo(phy, order = "cladewise")
     labels <- paste(phy$tip.label) # used paste to make sure they're characters
     branch_lens <- phy$edge.length
     edges <- phy$edge
@@ -169,7 +179,11 @@ read_newick <- function(newick_filename, n_seqs) {
     # I'm doing `list(list(...))` to keep nestedness the same among the different methods
     tree_info <- rep(list(list(phy_info)), n_seqs)
 
-    trees_ptr <- phylo_info_to_trees(tree_info)
+    if (!chunked) {
+        trees_ptr <- phylo_info_to_trees(tree_info)
+    } else {
+        trees_ptr <- phylo_info_to_trees_chunk(tree_info)
+    }
 
     return(trees_ptr)
 }
