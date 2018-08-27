@@ -22,8 +22,11 @@ process_coal_tree_string <- function(str, seq_size) {
             sizes_ <- round(sizes_ * seq_size, 0)
             # Remove any zero sizes:
             sizes_ <- sizes_[sizes_ > 0]
+            # If there's nothing left, just make it of length 1:
+            if (length(sizes_) == 0) {
+                sizes_ <- seq_size
             # If it doesn't round quite right, then randomly add/subtract:
-            if (sum(sizes_) != seq_size) {
+            } else if (sum(sizes_) != seq_size) {
                 inds <- sample.int(length(sizes_), abs(seq_size - sum(sizes_)))
                 sizes_[inds] <- sizes_[inds] + sign(seq_size - sum(sizes_))
             }
@@ -71,7 +74,7 @@ process_coal_tree_string <- function(str, seq_size) {
 #' @noRd
 #'
 #'
-read_coal_obj <- function(coal_obj, seq_sizes, chunked = TRUE) {
+read_coal_obj <- function(coal_obj, seq_sizes, chunked) {
 
     if (is.null(coal_obj$trees) | !inherits(coal_obj, "list")) {
         stop("\nWhen reading trees from a coalescent object from the scrm or coala ",
@@ -122,7 +125,7 @@ read_coal_obj <- function(coal_obj, seq_sizes, chunked = TRUE) {
 #' @noRd
 #'
 #'
-read_ms_output <- function(ms_filename, seq_sizes, chunked = TRUE) {
+read_ms_output <- function(ms_filename, seq_sizes, chunked) {
 
     trees <- read_ms_output_(ms_filename)
 
@@ -164,7 +167,7 @@ read_ms_output <- function(ms_filename, seq_sizes, chunked = TRUE) {
 #'
 #' @noRd
 #'
-read_newick <- function(newick_filename, n_seqs, chunked = TRUE) {
+read_newick <- function(newick_filename, n_seqs, chunked) {
 
     phy <- ape::read.tree(file = newick_filename)
 
@@ -186,5 +189,58 @@ read_newick <- function(newick_filename, n_seqs, chunked = TRUE) {
     }
 
     return(trees_ptr)
+}
+
+
+
+
+#' Random phylogenetic tree from theta and mu parameters.
+#'
+#' Note that mu should be derived from the mutation object, not passed to the function
+#' by the user.
+#'
+#' @param theta Theta parameter, population-scaled mutation rate.
+#' @param mu Average mutation rate (per bp per generation).
+#' @param n_seqs The number of sequences in the reference genome.
+#' @param chunked Whether to use a chunked sampler or not.
+#'
+#' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
+#'
+#' @noRd
+#'
+read_theta <- function(theta, mu, n_seqs, chunked) {
+
+    # Generate random coalescent tree:
+    phy <- ape::rcoal(n_seqs)
+
+    # Calculating L from theta:
+    # E(L) = 4 * N * a; a = sum(1 / (1:(n_seqs-1)))
+    a <- sum(1 / (1:(n_seqs-1)))
+    # theta = 4 * N * mu
+    # So if we know theta and mu, then...
+    L <- theta * a / mu
+
+    # Now rescale to have total tree length of `L`:
+    phy$edge.length <- phy$edge.length / max(ape::node.depth.edgelength(phy)) * L
+
+    phy <- ape::reorder.phylo(phy, order = "cladewise")
+    labels <- paste(phy$tip.label) # used paste to make sure they're characters
+    branch_lens <- phy$edge.length
+    edges <- phy$edge
+    phy_info <- list(branch_lens = branch_lens, edges = edges, labels = labels,
+                     start = 0, end = 0)
+
+    # I'm repeating this information to make one set of phylo. info per sequence
+    # I'm doing `list(list(...))` to keep nestedness the same among the different methods
+    tree_info <- rep(list(list(phy_info)), n_seqs)
+
+    if (!chunked) {
+        trees_ptr <- phylo_info_to_trees(tree_info)
+    } else {
+        trees_ptr <- phylo_info_to_trees_chunk(tree_info)
+    }
+
+    return(tree_ptr)
+
 }
 
