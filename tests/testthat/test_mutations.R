@@ -51,7 +51,7 @@ for (v in 0:(n_vars-1)) {
     ts <- vars_R[[(v+1)]]
     for (s in 0:(length(seqs)-1)) {
         m = 0;
-        max_size = gemino:::see_sizes(vars, v)[(s+1)]
+        max_size = gemino:::view_var_genome_seq_sizes(vars, v)[(s+1)]
         while (m < n_muts && max_size > 0) {
             pos = as.integer(runif(1) * max_size)
             rnd = runif(1);
@@ -90,7 +90,7 @@ for (v in 0:(n_vars-1)) {
 }
 
 # Converting to list like vars_R:
-vars_cpp <- lapply(1:n_vars, function(i) gemino:::see_var_genome(vars, i-1))
+vars_cpp <- lapply(1:n_vars, function(i) gemino:::view_var_genome(vars, i-1))
 
 # identical(vars_R, vars_cpp)
 

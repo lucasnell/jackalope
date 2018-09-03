@@ -298,7 +298,7 @@ test_that("molecular evolution selects mutation regions according to Gamma value
 # =================================================================
 # =================================================================
 
-mutations <- lapply(0:(n_vars-1), gemino:::see_mutations, var_set_ = var_set)
+mutations <- lapply(0:(n_vars-1), gemino:::view_mutations, var_set_ = var_set)
 
 
 # Function to return descendent tips from a given node:
@@ -393,7 +393,7 @@ test_that("Simulations conform to phylogenetic tree", {
 
 # Full sequences:
 var_seqs <- lapply(0:(n_vars-1),
-                   function(v) gemino:::see_var_genome(var_set_ = var_set, var_ind = v))
+                   function(v) gemino:::view_var_genome(var_set_ = var_set, var_ind = v))
 
 # R function to get expected rate to compare against C++ version:
 get_seq_rate <- function(seq, rates, start, end, gamma_mat_) {
