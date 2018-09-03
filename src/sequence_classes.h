@@ -265,13 +265,13 @@ class VarSequence {
 
 public:
 
-    const RefSequence& ref_seq;
+    const RefSequence* ref_seq;  // pointer to const RefSequence
     std::deque<Mutation> mutations;
     uint32 seq_size;
 
     // Constructor
     VarSequence(const RefSequence& ref)
-        : ref_seq(ref), mutations(std::deque<Mutation>()),
+        : ref_seq(&ref), mutations(std::deque<Mutation>()),
           seq_size(ref.size()) {};
 
     /*
@@ -285,7 +285,7 @@ public:
     void clear() {
         mutations.clear();
         clear_memory<std::deque<Mutation>>(mutations);
-        seq_size = ref_seq.size();
+        seq_size = ref_seq->size();
         return;
     }
 
@@ -308,7 +308,7 @@ public:
 
         // Combine sequence sizes:
         sint32 diff = static_cast<sint32>(other.seq_size) -
-            static_cast<sint32>(ref_seq.size());
+            static_cast<sint32>(ref_seq->size());
         seq_size += diff;
 
         /*
@@ -335,7 +335,7 @@ public:
             }
         } else if (other_is_after) {
             // The amount to adjust the new mutation's `new_pos` fields:
-            diff = static_cast<sint32>(seq_size) - static_cast<sint32>(ref_seq.size());
+            diff = static_cast<sint32>(seq_size) - static_cast<sint32>(ref_seq->size());
             auto mut = other.mutations.begin();
             for (; mut != other.mutations.end(); ++mut) {
                 // Add the new mutation to the back of `(*this).mutations`:

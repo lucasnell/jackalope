@@ -32,10 +32,93 @@ void expand_path(std::string& file_name) {
 
 
 
+
+
+void ms_parse_line(std::string& line,
+                   std::vector<std::vector<std::string>>& newick_strings) {
+
+    if (line[0] == '/' && line[1] == '/') {
+        newick_strings.push_back(std::vector<std::string>(0));
+        return;
+    }
+    if (line[0] == '[' || line[0] == '(') {
+        newick_strings.back().push_back(line);
+    }
+    return;
+}
+
+//' Read a ms output file with newick gene trees and return the gene tree strings.
+//'
+//' @param ms_file File name of the ms output file.
+//'
+//' @return A vector of strings for each set of gene trees.
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+std::vector<std::vector<std::string>> read_ms_output_(std::string ms_file) {
+
+    std::vector<std::vector<std::string>> newick_strings;
+
+    expand_path(ms_file);
+
+    gzFile file;
+    file = gzopen(ms_file.c_str(), "rb");
+    if (! file) {
+        std::string e = "gzopen of " + ms_file + " failed: " + strerror(errno) + ".\n";
+        Rcpp::stop(e);
+    }
+
+    // Scroll through buffers
+    std::string lastline = "";
+
+    while (1) {
+        Rcpp::checkUserInterrupt();
+        int err;
+        int bytes_read;
+        char buffer[LENGTH];
+        bytes_read = gzread(file, buffer, LENGTH - 1);
+        buffer[bytes_read] = '\0';
+
+        // Recast buffer as a std::string:
+        std::string mystring(reinterpret_cast<char*>(buffer));
+        mystring = lastline + mystring;
+
+        char split = '\n';
+        // std::vector of strings for parsed buffer:
+        std::vector<std::string> svec = cpp_str_split_delim(mystring, split);
+
+        // Scroll through lines derived from the buffer.
+        for (uint32 i = 0; i < svec.size() - 1; i++){
+            ms_parse_line(svec[i], newick_strings);
+        }
+        // Manage the last line.
+        lastline = svec.back();
+
+        // Check for end of file (EOF) or errors.
+        if (bytes_read < LENGTH - 1) {
+            if ( gzeof(file) ) {
+                ms_parse_line(lastline, newick_strings);
+                break;
+            } else {
+                std::string error_string = gzerror(file, &err);
+                if (err) {
+                    std::string e = "Error: " + error_string + ".\n";
+                    stop(e);
+                }
+            }
+        }
+    }
+    gzclose (file);
+
+    return newick_strings;
+}
+
+
 // ==================================================================
 // ==================================================================
 
-//                          READ - NON-INDEXED
+//                          READ FASTA - NON-INDEXED
 
 // ==================================================================
 // ==================================================================
@@ -53,7 +136,7 @@ void parse_line(const std::string& line, const bool& cut_names,
             if (spc == std::string::npos) spc = line.size();
             name_i = line.substr(1, spc);
             // Remove any spaces if they exist (they would occur at the beginning)
-            name_i.erase(remove_if(name_i.begin(), name_i.end(), ::isspace),
+            name_i.erase(std::remove_if(name_i.begin(), name_i.end(), ::isspace),
                          name_i.end());
         } else {
             name_i = line.substr(1, line.size());
@@ -171,10 +254,11 @@ SEXP read_fasta_noind(const std::string& fasta_file,
 
 
 
+
 // ==================================================================
 // ==================================================================
 
-//                          READ - INDEXED
+//                          READ FASTA - INDEXED
 
 // ==================================================================
 // ==================================================================

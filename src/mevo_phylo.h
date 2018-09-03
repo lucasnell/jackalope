@@ -60,129 +60,369 @@ inline std::vector<uint32> match_(const std::vector<std::string>& ordered_tip_la
 
 
 /*
- Update `samplers`, `seq_rates`, and `distr` for a given edge.
+ Phylogenetic tree info for one sequence range.
 
- <Recombination>
- This works the same with or without recombination.
+ * Do all input checks outside this object's creation!
+ * `edges` is converted to C++ indices inside this object's constructor.
+
  */
-template <typename T>
-inline void update_samplers_rates_distr_(std::vector<T>& samplers,
-                                         std::vector<double>& seq_rates,
-                                         std::exponential_distribution<double>& distr,
-                                         const uint32& b1, const uint32& b2) {
+struct PhyloTree {
 
-    /*
-     Replace existing mutation information in VarSequence at `b1` with info in the
-     one at `b2`
-     */
-    samplers[b2].var_seq->replace(*samplers[b1].var_seq);
-    /*
-     Do the same for the SeqGammas in the sampler:
-     */
-    samplers[b2].location.mr().gammas = samplers[b1].location.mr().gammas;
-    /*
-     Update overall sequence rate:
-     */
-    seq_rates[b2] = seq_rates[b1];
+    std::vector<double> branch_lens;
+    arma::Mat<uint32> edges;
+    std::vector<std::string> tip_labels;
+    uint32 start;
+    sint64 end;
+    std::vector<sint64> ends;  // `end` values for each tree node and tip
+    uint32 n_tips;             // # tips = # variants
+    uint32 tree_size;          // tree size is # tips plus # nodes
+    uint32 n_edges;            // # edges = # connections between nodes/tips
 
-    // Set exponential distribution to use this sequence's rate:
-    distr.param(std::exponential_distribution<double>::param_type(seq_rates[b2]));
+    PhyloTree() {}
+    PhyloTree(
+        const std::vector<double>& branch_lens_,
+        const arma::Mat<uint32>& edges_,
+        const std::vector<std::string>& tip_labels_,
+        const uint32& start_,
+        const sint64& end_
+    )
+        : branch_lens(branch_lens_), edges(edges_), tip_labels(tip_labels_),
+          start(start_), end(end_),
+          ends(edges_.max(), end_),
+          n_tips(tip_labels_.size()), tree_size(edges_.max()),
+          n_edges(edges_.n_rows) {
 
-    return;
-}
+        // From R to C++ indices
+        edges -= 1;
+    }
+    PhyloTree(const PhyloTree& other)
+        : branch_lens(other.branch_lens), edges(other.edges),
+          tip_labels(other.tip_labels), start(other.start), end(other.end),
+          ends(other.ends), n_tips(other.n_tips), tree_size(other.tree_size),
+          n_edges(other.n_edges) {}
+
+    PhyloTree& operator=(const PhyloTree& other) {
+        branch_lens = other.branch_lens;
+        edges = other.edges;
+        tip_labels = other.tip_labels;
+        start = other.start;
+        end = other.end;
+        ends = other.ends;
+        n_tips = other.n_tips;
+        tree_size = other.tree_size;
+        n_edges = other.n_edges;
+        return *this;
+    }
+
+};
 
 
 /*
- Create tree of empty VarSequence objects, corresponding tree of
- [Chunk]MutationSampler objects, and fill in sequence rates.
+ Phylogenetic tree info for one entire sequence.
 
- <Recombination>
- To do this for a whole sequence (i.e., without recombination), just
- use default values for `whole_sequence`, `start`, and `end`.
- If doing this for a region (i.e., with recombination), make sure `start` and `end`
- are specified and that `whole_sequence` is false!
+ The `trees` field contains the actual phylogeny information.
+ It is a vector of `PhyloTree` objects, to allow for
+ multiple phylogenies, as will be the case when recombination is included.
+ If not including recombination, `trees` will simply be of length 1.
+
+ `T` should be `MutationSampler` or `ChunkMutationSampler`.
 
  */
-template <typename T>
-inline void fill_var_samp_rate_(std::vector<VarSequence>& var_seqs,
-                                std::vector<T>& samplers,
-                                std::vector<double>& seq_rates,
-                                const uint32& tree_size,
-                                const VarSet& var_set,
-                                const uint32& seq_ind,
-                                const T& sampler_base,
-                                const arma::mat& gamma_mat,
-                                const bool& whole_sequence = true,
-                                const uint32& start = 0,
-                                const sint64& end = 0) {
 
-    var_seqs = std::vector<VarSequence>(tree_size,
-                                        VarSequence(var_set.reference[seq_ind]));
+
+template <typename T>
+class PhyloOneSeq {
+
+public:
+    std::vector<PhyloTree> trees;
+    std::vector<VarSequence*> var_seq_ptrs;    // pointers to original VarSequence objects
+    std::vector<VarSequence> var_seqs;  // blank VarSequence objects to evolve across tree
+    std::vector<T> samplers;         // samplers to do the mutation additions across tree
+    std::vector<double> seq_rates;   // sequence rates
+
+    PhyloOneSeq() {}
+    PhyloOneSeq(
+        VarSet& var_set,
+        const T& sampler_base,
+        const uint32& seq_ind,
+        const arma::mat& gamma_mat_,
+        const std::vector<uint32>& n_bases_,
+        const std::vector<std::vector<double>>& branch_lens_,
+        const std::vector<arma::Mat<uint32>>& edges_,
+        const std::vector<std::vector<std::string>>& tip_labels_
+    )
+        : trees(edges_.size()),
+          var_seq_ptrs(var_set.size()),
+          var_seqs(),
+          samplers(),
+          seq_rates(edges_[0].max()),
+          gamma_mat(gamma_mat_),
+          ordered_tip_labels(),
+          recombination(branch_lens_.size() > 1)
+    {
+
+        uint32 tree_size = edges_[0].max();
+        uint32 n_vars = var_set.size();
+        uint32 n_trees = edges_.size();
+
+        if (branch_lens_.size() != n_trees ||
+            n_bases_.size() != n_trees ||
+            tip_labels_.size() != n_trees) {
+            std::string err_msg = "\nVectors for number of bases, branch lengths, ";
+            err_msg += "edges, and tip labels do not all have the same length.";
+            throw(Rcpp::exception(err_msg.c_str(), false));
+        }
+
+        ordered_tip_labels = std::vector<std::string>(n_vars);
+        for (uint32 i = 0; i < n_vars; i++) ordered_tip_labels[i] = var_set[i].name;
+
+        // Fill `trees`:
+        uint32 start_ = 0;
+        sint64 end_ = -1;
+        for (uint32 i = 0; i < n_trees; i++) {
+            end_ += n_bases_[i];
+            trees[i] = PhyloTree(branch_lens_[i], edges_[i], tip_labels_[i],
+                                 start_, end_);
+            if (i < (n_trees - 1)) start_ += n_bases_[i+1];
+        }
+
+        // Filling in pointers:
+        for (uint32 i = 0; i < n_vars; i++) {
+            var_seq_ptrs[i] = &var_set[i][seq_ind];
+        }
+
+        // Fill in blank VarSequence objects:
+        var_seqs = std::vector<VarSequence>(tree_size,
+                                            VarSequence(var_set.reference[seq_ind]));
+
+        // Fill in samplers:
+        samplers = std::vector<T>(tree_size, sampler_base);
+        for (uint32 i = 0; i < tree_size; i++) {
+            samplers[i].fill_ptrs(var_seqs[i]);
+            samplers[i].fill_gamma(gamma_mat);
+        }
+
+    }
 
     /*
-     For tree of [Chunk]MutationSampler objects,
-     first fill with the base sampler, then fill in pointers to the corresponding
-     VarSequence object, then fill in the gamma matrix.
+     Similar to above, but no VarSet or sampler info yet available
      */
-    samplers = std::vector<T>(tree_size, sampler_base);
-    for (uint32 i = 0; i < tree_size; i++) {
-        samplers[i].fill_ptrs(var_seqs[i]);
-        samplers[i].fill_gamma(gamma_mat);
+
+    PhyloOneSeq(
+        const std::vector<uint32>& n_bases_,
+        const std::vector<std::vector<double>>& branch_lens_,
+        const std::vector<arma::Mat<uint32>>& edges_,
+        const std::vector<std::vector<std::string>>& tip_labels_
+    )
+        : trees(edges_.size()),
+          var_seq_ptrs(),
+          var_seqs(),
+          samplers(),
+          seq_rates(edges_[0].max()),
+          gamma_mat(),
+          ordered_tip_labels(),
+          recombination(branch_lens_.size() > 1)
+    {
+
+        uint32 n_trees = edges_.size();
+
+        if (n_bases_.size() != branch_lens_.size() ||
+            n_bases_.size() != edges_.size() ||
+            n_bases_.size() != tip_labels_.size()) {
+            std::string err_msg = "\nVectors for number of bases, branch lengths, edges";
+            err_msg += ", and tip labels do not all have the same length.";
+            throw(Rcpp::exception(err_msg.c_str(), false));
+        }
+
+        // Fill `trees`:
+        uint32 start_ = 0;
+        sint64 end_ = -1;
+        for (uint32 i = 0; i < n_trees; i++) {
+            end_ += n_bases_[i];
+            trees[i] = PhyloTree(branch_lens_[i], edges_[i], tip_labels_[i],
+                                 start_, end_);
+            if (i < (n_trees - 1)) start_ += n_bases_[i+1];
+        }
+
     }
+
     /*
-     Set up vector of overall sequence rates.
-     They should all be the same as the first one to start out.
+     Set sampler and variant info:
      */
-    double rate_;
-    if (whole_sequence) {
-        rate_ = samplers[0].total_rate();
-    } else rate_ = samplers[0].total_rate(start, static_cast<uint32>(end), true);
-    seq_rates = std::vector<double>(tree_size, rate_);
+    void set_samp_var_info(VarSet& var_set,
+                           const T& sampler_base,
+                           const uint32& seq_ind,
+                           const arma::mat& gamma_mat_) {
 
-    return;
-}
+        uint32 tree_size = trees[0].tree_size;
+        uint32 n_vars = var_set.size();
 
-/*
- Clear info from VarSequence object at `b1` if it's no longer needed to
- free up some memory.
- (If it's the last branch length, `b1` will always be a node and thus no longer
- needed.)
- */
-template <typename T>
-inline void clear_branches_(std::vector<T>& samplers,
-                            const uint32& b1,
-                            const uint32& i,
-                            const arma::Mat<uint32>& edges) {
-    bool clear_b1;
-    if (i < (edges.n_rows - 1)) {
-        // Is it absent from any remaining items in the first column?
-        clear_b1 = ! arma::any(edges(arma::span(i+1, edges.n_rows - 1), 0) == b1);
-    } else clear_b1 = true;
-    if (clear_b1) samplers[b1].var_seq->clear();
-    return;
-}
+        var_seq_ptrs.resize(var_set.size());
+        gamma_mat = gamma_mat_;
 
+        ordered_tip_labels = std::vector<std::string>(n_vars);
+        for (uint32 i = 0; i < n_vars; i++) ordered_tip_labels[i] = var_set[i].name;
 
-
-inline void fill_VarSequences_(const uint32& n_tips,
-                               const std::vector<uint32>& spp_order,
-                               VarSet& var_set,
-                               const uint32& seq_ind,
-                               const std::vector<VarSequence>& var_seqs,
-                               const bool& recombination) {
-    if (recombination) {
-        for (uint32 i = 0; i < n_tips; i++) {
-            uint32 j = spp_order[i];
-            var_set[i][seq_ind] += var_seqs[j];
+        // Filling in pointers:
+        for (uint32 i = 0; i < n_vars; i++) {
+            var_seq_ptrs[i] = &var_set[i][seq_ind];
         }
-    } else {
-        for (uint32 i = 0; i < n_tips; i++) {
-            uint32 j = spp_order[i];
-            var_set[i][seq_ind].replace(var_seqs[j]);
+
+        // Fill in blank VarSequence objects:
+        var_seqs = std::vector<VarSequence>(tree_size,
+                                            VarSequence(var_set.reference[seq_ind]));
+
+        // Fill in samplers:
+        samplers = std::vector<T>(tree_size, sampler_base);
+        for (uint32 i = 0; i < tree_size; i++) {
+            samplers[i].fill_ptrs(var_seqs[i]);
+            samplers[i].fill_gamma(gamma_mat);
         }
+
+        return;
+
     }
-    return;
-}
+
+
+
+    /*
+     Evolve all trees.
+     */
+    int evolve(pcg32& eng, Progress& prog_bar) {
+
+        for (PhyloTree& tree : trees) {
+            int code = one_tree(tree, eng, prog_bar);
+            if (code == -1) return code;
+        }
+        return 0;
+    }
+
+
+
+private:
+    arma::mat gamma_mat;
+    std::vector<std::string> ordered_tip_labels;
+    bool recombination;
+
+
+    /*
+     Evolve one tree.
+     */
+    int one_tree(PhyloTree& tree, pcg32& eng, Progress& prog_bar);
+
+
+    /*
+     Reset for a new tree:
+     */
+    void reset(const PhyloTree& tree) {
+
+        const uint32& tree_size(tree.tree_size);
+        const uint32& start(tree.start);
+        const uint32& end(tree.end);
+
+        if (tree_size == 0) {
+            throw(Rcpp::exception("\ntree size of zero is non-sensical.", false));
+        }
+        // Resize blank VarSequence objects if necessary:
+        if (tree_size != var_seqs.size()) {
+            VarSequence var_seq_(*(var_seq_ptrs[0]->ref_seq));
+            var_seqs.resize(tree_size, var_seq_);
+        }
+        // Empty mutations from tree of VarSequence objects:
+        for (VarSequence& var_seq : var_seqs) var_seq.clear();
+
+        // Re-size samplers if necessary
+        if (tree_size != samplers.size()) {
+            samplers.resize(tree_size, samplers[0]);
+        }
+        // Fill in sampler pointers and original gamma matrix:
+        for (uint32 i = 0; i < tree_size; i++) {
+            samplers[i].fill_ptrs(var_seqs[i]);
+            samplers[i].fill_gamma(gamma_mat);
+        }
+        /*
+         Set up vector of overall sequence rates.
+         They should all be the same as the first one to start out.
+         */
+        double rate_;
+        if (!recombination) {
+            rate_ = samplers[0].total_rate();
+        } else rate_ = samplers[0].total_rate(start, static_cast<uint32>(end), true);
+        seq_rates = std::vector<double>(tree_size, rate_);
+
+        return;
+    }
+
+
+    /*
+     Update for a new edge:
+     */
+    void update(std::exponential_distribution<double>& distr,
+                const uint32& b1,
+                const uint32& b2) {
+
+        /*
+         Replace existing mutation information in VarSequence at `b1` with info in the
+         one at `b2`
+         */
+        samplers[b2].var_seq->replace(*samplers[b1].var_seq);
+        /*
+         Do the same for the SeqGammas in the sampler:
+         */
+        samplers[b2].location.mr().gammas = samplers[b1].location.mr().gammas;
+        /*
+         Update overall sequence rate:
+         */
+        seq_rates[b2] = seq_rates[b1];
+
+        // Set exponential distribution to use this sequence's rate:
+        distr.param(std::exponential_distribution<double>::param_type(seq_rates[b2]));
+
+        return;
+    }
+
+    /*
+     Clear info from VarSequence object at `b1` if it's no longer needed, to free up
+     some memory.
+     (If it's the last branch length, `b1` will always be a node and thus no longer
+     needed.)
+     */
+    void clear_branches(const uint32& b1,
+                        const uint32& i,
+                        const PhyloTree& tree) {
+        bool clear_b1;
+        if (i < (tree.edges.n_rows - 1)) {
+            // Is it absent from any remaining items in the first column?
+            clear_b1 = ! arma::any(tree.edges(arma::span(i+1, tree.edges.n_rows - 1),
+                                              0) == b1);
+        } else clear_b1 = true;
+        if (clear_b1) samplers[b1].var_seq->clear();
+        return;
+    }
+
+    /*
+     Update final `VarSequence` objects in the same order as `ordered_tip_labels`:
+     */
+    void fill(const PhyloTree& tree) {
+
+        std::vector<uint32> spp_order = match_(ordered_tip_labels,
+                                               tree.tip_labels);
+
+        if (recombination) {
+            for (uint32 i = 0; i < tree.n_tips; i++) {
+                uint32 j = spp_order[i];
+                (*var_seq_ptrs[i]) += var_seqs[j];
+            }
+        } else {
+            for (uint32 i = 0; i < tree.n_tips; i++) {
+                uint32 j = spp_order[i];
+                (*var_seq_ptrs[i]).replace(var_seqs[j]);
+            }
+        }
+        return;
+    }
+
+};
 
 
 
@@ -193,99 +433,65 @@ inline void fill_VarSequences_(const uint32& n_tips,
  `T` should be `MutationSampler` or `ChunkMutationSampler`.
 
  Note that this function should be changed if any of these VarSequences differ from
- each other.
+ each other (within the range specified if recombination = true).
  They can already have mutations, but to start out, they must all be the same.
-
- Also, this function does not do any reordering of branches in relation to species names.
- In other words, the vector of VarSequence objects is indexed by tip numbers.
  */
-template <typename T>
-int one_tree_(VarSet& var_set,
-              const T& sampler_base,
-              const uint32& seq_ind,
-              const std::vector<double>& branch_lens,
-              const arma::Mat<uint32>& edges,
-              const std::vector<uint32>& spp_order,
-              const arma::mat& gamma_mat,
-              pcg32& eng,
-              std::vector<uint32>& n_muts,
-              const bool& recombination = false,
-              const uint32& start = 0,
-              const sint64& end = 0) {
+template<typename T>
+int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
+                             pcg32& eng,
+                             Progress& prog_bar) {
 
-
-    // # tips = # variants
-    uint32 n_tips = var_set.size();
-    // tree size is # tips plus # nodes
-    uint32 tree_size = edges.max() + 1;
-    // Number of edges = the number of connections between nodes/tips
-    uint32 n_edges = edges.n_rows;
-
-    // `end` values for each tree node and tip:
-    std::vector<sint64> ends(tree_size, end);
-
-    Progress p(100, false);
+    // Reset tree of samplers and VarSequence objects representing nodes and tips:
+    reset(tree);
 
     /*
-     Create tree of empty VarSequence objects, corresponding tree of
-     [Chunk]MutationSampler objects, and fill in sequence rates:
+     Check for a user interrupt. Using a Progress object allows the user to interrupt
+     the process during multithreaded operations.
+     If recombination == true, I'm only doing this here, not for each edge bc that
+     would likely cause too many checks, which would slow things down.
      */
-    std::vector<VarSequence> var_seqs;
-    std::vector<T> samplers;
-    std::vector<double> seq_rates;
-    if (recombination) {
-        fill_var_samp_rate_<T>(var_seqs, samplers, seq_rates, tree_size, var_set, seq_ind,
-                               sampler_base, gamma_mat,
-                               true, start, end);
-    } else {
-        fill_var_samp_rate_<T>(var_seqs, samplers, seq_rates, tree_size, var_set, seq_ind,
-                               sampler_base, gamma_mat);
-    }
+    if (prog_bar.is_aborted()) return -1;
 
     // Exponential distribution to do the time-jumps along the branch lengths:
-    std::exponential_distribution<double> distr;
+    std::exponential_distribution<double> distr(1.0);
 
     /*
      Now iterate through the phylogeny:
      */
-    for (uint32 i = 0; i < n_edges; i++) {
+    for (uint32 i = 0; i < tree.n_edges; i++) {
 
-        /*
-         Only do this check if not doing recombination, bc if you are including
-         recombination, you'd probably be checking too often.
-         */
-        if (!recombination){
-            if (p.is_aborted()) return -1;
+        // If not simulating recombination, checking for abort every edge:
+        if (!recombination) {
+            if (prog_bar.is_aborted()) return -1;
         }
 
         // Indices for nodes/tips that the branch length in `branch_lens` refers to
-        uint32 b1 = edges(i,0);
-        uint32 b2 = edges(i,1);
+        uint32 b1 = tree.edges(i,0);
+        uint32 b2 = tree.edges(i,1);
 
         /*
          Update `samplers`, `seq_rates`, and `distr` for this edge:
          */
-        update_samplers_rates_distr_<T>(samplers, seq_rates, distr, b1, b2);
+        update(distr, b1, b2);
 
         /*
          Now do exponential jumps and mutate until you exceed the branch length.
          */
         double& rate(seq_rates[b2]);
-        double amt_time = branch_lens[i];
+        double amt_time = tree.branch_lens[i];
         double time_jumped = distr(eng);
         double rate_change = 0;
         if (recombination) {
-            sint64& end_(ends[b2]);
-            end_ = ends[b1];
-            const sint64 start_ = static_cast<sint64>(start);
+            sint64& end_(tree.ends[b2]);
+            end_ = tree.ends[b1];
+            const sint64 start_ = static_cast<sint64>(tree.start);
             while (time_jumped <= amt_time && end_ >= start_) {
                 /*
                  Add mutation here, outputting how much the overall sequence rate should
                  change:
                  (`end_` is automatically adjusted for indels)
                  */
-                rate_change = samplers[b2].mutate(eng, start, end_);
-                n_muts[i]++;
+                rate_change = samplers[b2].mutate(eng, tree.start, end_);
                 /*
                  Adjust the overall sequence rate, then update the exponential
                  distribution:
@@ -299,7 +505,6 @@ int one_tree_(VarSet& var_set,
             // Same thing but without recombination
             while (time_jumped <= amt_time && var_seqs[b2].size() > 0) {
                 rate_change = samplers[b2].mutate(eng);
-                n_muts[i]++;
                 rate += rate_change;
                 distr.param(std::exponential_distribution<double>::param_type(rate));
                 time_jumped += distr(eng);
@@ -307,21 +512,108 @@ int one_tree_(VarSet& var_set,
         }
 
         /*
-         Clear info from VarSequence object at `b1` if it's no longer needed to
-         free up some memory.
+         To free up some memory, clear info from VarSequence object at `b1` if it's no
+         longer needed.
          */
-        clear_branches_<T>(samplers, b1, i, edges);
+        clear_branches(b1, i, tree);
 
     }
 
     /*
-     Update final `VarSequence` objects using the index vector `spp_order`:
+     Update final `VarSequence` objects:
      */
-    fill_VarSequences_(n_tips, spp_order, var_set, seq_ind, var_seqs, recombination);
+    fill(tree);
+
+    // Update progress bar:
+    if (recombination) {
+        prog_bar.increment(tree.end - tree.start + 1);
+    } else prog_bar.increment(var_seq_ptrs[0]->ref_seq->size());
 
     return 0;
 
 }
+
+
+
+
+
+
+
+/*
+ `T` should be `MutationSampler` or `ChunkMutationSampler`.
+ */
+template <typename T>
+void evolve_seqs_(
+        SEXP& var_set_ptr,
+        SEXP& sampler_base_ptr,
+        SEXP& phylo_info_ptr,
+        const std::vector<uint32>& seq_inds,
+        const std::vector<arma::mat>& gamma_mats,
+        const bool& show_progress) {
+
+    XPtr<VarSet> var_set(var_set_ptr);
+    XPtr<T> sampler_base(sampler_base_ptr);
+    XPtr<std::vector<PhyloOneSeq<T>>> phylo_info(phylo_info_ptr);
+
+    uint32 n_seqs = var_set->reference.size();
+    uint64 total_seq = var_set->reference.total_size;
+
+    Progress prog_bar(total_seq, show_progress);
+
+    if (n_seqs != gamma_mats.size()) {
+        std::string err_msg = "\ngamma_mats must be of same length as # sequences in ";
+        err_msg += "reference";
+        throw(Rcpp::exception(err_msg.c_str(), false));
+    }
+    if (n_seqs != seq_inds.size()) {
+        std::string err_msg = "\nseq_inds must be of same length as # sequences in ";
+        err_msg += "reference";
+        throw(Rcpp::exception(err_msg.c_str(), false));
+    }
+    if (n_seqs != phylo_info->size()) {
+        std::string err_msg = "\nphylo_info must be of same length as # sequences in ";
+        err_msg += "reference";
+        throw(Rcpp::exception(err_msg.c_str(), false));
+    }
+
+
+    pcg32 eng = seeded_pcg();
+
+    for (uint32 i = 0; i < n_seqs; i++) {
+
+        PhyloOneSeq<T>& seq_phylo((*phylo_info)[i]);
+
+        const arma::mat& gamma_mat(gamma_mats[i]);
+        const uint32& seq_ind(seq_inds[i]);
+
+        if (gamma_mat(gamma_mat.n_rows-1,0) != (*var_set)[0][seq_ind].size()) {
+            std::string err_msg = "\nGamma matrices must have max values equal to ";
+            err_msg += "the respective sequence's length.\n";
+            err_msg += "This error occurred on Gamma matrix number ";
+            err_msg += std::to_string(i+1);
+            throw(Rcpp::exception(err_msg.c_str(), false));
+        }
+
+        // Set values for variant info and sampler:
+        seq_phylo.set_samp_var_info(*var_set, *sampler_base, seq_ind, gamma_mat);
+
+        // Evolve the sequence using the seq_phylo object:
+        int code = seq_phylo.evolve(eng, prog_bar);
+
+        // If the code is -1, the user interrupted the process.
+        // Make sure this check happens outside of multithreaded code.
+        if (code == -1) {
+            std::string warn_msg = "\nThe user interrupted phylogenetic evolution. ";
+            warn_msg += "Note that changes occur in place, so your variants have ";
+            warn_msg += "already been partially added.";
+            Rcpp::warning(warn_msg.c_str());
+            return;
+        }
+    }
+
+    return;
+}
+
 
 
 

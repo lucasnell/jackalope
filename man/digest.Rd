@@ -4,7 +4,7 @@
 \alias{digest}
 \title{Digest reference genome or variants from a genome.}
 \usage{
-digest(object, enzyme_names, custom_enzymes, chunk_size = 0, n_cores = 1)
+digest(object, enzyme_names, custom_enzymes, chunk_size = 1000, n_cores = 1)
 }
 \arguments{
 \item{object}{Either a \code{ref_genome} or \code{variants} object.}

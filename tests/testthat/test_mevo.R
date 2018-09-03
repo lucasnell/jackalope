@@ -56,30 +56,28 @@ q <- rowSums(Q) + 0.25 * xi_
 gamma_mat <- matrix(1L, 10L, 2)
 gamma_mat[,1] <- seq(1e2, 1e3, 1e2)
 gamma_mat[,2] <- rgamma(nrow(gamma_mat), shape = 1, rate = 1)
-# Repeating the above gamma matrix for half of all sequences, bc we're
-# processing that many at a time:
-gamma_mats <- rep(list(gamma_mat), n_seqs / 2)
+# Repeating the above gamma matrix for all sequences:
+gamma_mats <- rep(list(gamma_mat), n_seqs)
 
 # Create pointer to C++ sampler object
-sampler <- gemino:::make_sampler(sub_params = list(pi_tcag = pi_tcag_,
-                                                   alpha_1 = alpha_1_,
-                                                   alpha_2 = alpha_2_,
-                                                   beta = beta_),
-                                 indel_params = list(xi = xi_, psi = psi_,
+sampler <- gemino:::make_sampler_ptr(sub_params = list(pi_tcag = pi_tcag_,
+                                                       alpha_1 = alpha_1_,
+                                                       alpha_2 = alpha_2_,
+                                                       beta = beta_),
+                                 indel_params = list(xi = xi_,
+                                                     psi = psi_,
                                                      rel_insertion_rates = exp(-1:-10),
                                                      rel_deletion_rates = exp(-1:-10)),
                                  model = "TN93", chunk_size = 100)
-
 
 n_vars <- 10
 
 # Phylogenetic tree:
 tree <- ape::rcoal(n_vars)
 tree$edge.length <- tree$edge.length * 0.1
+tree$tip.label <- paste0("var", 1:length(tree$tip.label) - 1)
 # Expected proportions of mutations at each edge:
 expected <- tree$edge.length / sum(tree$edge.length)
-ordered_tip_labels <- sort(tree$tip.label)
-
 
 
 # Function to make a matrix have ten columns
@@ -87,32 +85,17 @@ make_ten <- function(x) cbind(x, matrix(0, nrow(x), 10 - ncol(x)))
 
 
 var_set <- gemino:::make_var_set(ref, n_vars)
+phylo_info <- gemino:::read_phy_obj(tree, n_seqs, chunked = TRUE)
 
-edge_muts <- as.list(0:(n_seqs - 1))
-edge_muts[1:(n_seqs/2)] <- gemino:::test_mevo(
-    var_set_ = var_set,
-    sampler_base_ = sampler,
-    seq_inds = 0:(n_seqs/2 - 1),
-    branch_lens = tree$edge.length,
-    edges = tree$edge,
-    tip_labels = tree$tip.label,
-    ordered_tip_labels = ordered_tip_labels,
-    gamma_mats = gamma_mats
-)
-# Do the second half within a range (as would be done w recombination)
-edge_muts[(n_seqs/2+1):n_seqs] <- gemino:::test_mevo(
-    var_set_ = var_set,
-    sampler_base_ = sampler,
-    seq_inds = (n_seqs/2):(n_seqs-1),
-    branch_lens = tree$edge.length,
-    edges = tree$edge,
-    tip_labels = tree$tip.label,
-    ordered_tip_labels = ordered_tip_labels,
-    gamma_mats = gamma_mats,
-    recombination = TRUE,
-    start = 100,
-    end = 499
-)
+gemino:::evolve_seqs_chunk(
+    var_set,
+    sampler,
+    phylo_info,
+    seq_inds = (1:n_seqs - 1),
+    gamma_mats,
+    show_progress = FALSE)
+
+
 
 
 
@@ -134,6 +117,7 @@ mutation_exam <- function(v, s) {
     mut_exam$del <- setNames(colSums(make_ten(mut_exam$del)), 1:10)
     return(mut_exam)
 }
+
 
 exams <- lapply(0:(n_seqs-1),
                 function(s) lapply(0:(n_vars-1),
@@ -314,61 +298,86 @@ test_that("molecular evolution selects mutation regions according to Gamma value
 # =================================================================
 # =================================================================
 
-# Converting # mutations per edge to matrix
-edge_muts <- do.call(rbind, edge_muts)
-
-test_that(paste("mutation counts on phylogeny edges are not significantly",
-                "different from expectations"), {
-                    pvals <- sapply(1:ncol(edge_muts), function(i) {
-                        x <- edge_muts[,i]
-                        p <- binom.test(sum(x), sum(edge_muts), p = expected[i])$p.value
-                        return(p)
-                    })
-                    p <- fisher_method(pvals)
-                    expect_gt(p, 0.05)
-                })
+mutations <- lapply(0:(n_vars-1), gemino:::see_mutations, var_set_ = var_set)
 
 
-
-# List of data frames describing the mutations for each sequence mutated within a range:
-mut_list <- lapply(0:(n_vars-1), function(var_ind) {
-    df_ <- gemino:::see_mutations(var_set, var_ind)
-    return(df_[df_$seq >= (n_seqs/2),])
-})
-mut_df <- do.call(rbind, mut_list)
-
-test_that("Ranged mutations do not occur outside specified range.", {
-    expect_gte(min(mut_df$old_pos), 100)
-    expect_lte(max(mut_df$old_pos), 499)
-})
-
-
-proper_dels <- logical(n_vars * (n_seqs / 2))
-i <- 1
-for (var_ind in 0:(n_vars-1)) {
-    for (seq_ind in (n_seqs/2):(n_seqs-1)) {
-        mut_df_ <- mut_df[mut_df$var == var_ind & mut_df$seq == seq_ind,]
-        max_ <- max(mut_df_$new_pos)
-        max_possible <- 499 + sum(mut_df_$size_mod)
-
-        if (max_ > max_possible) {
-            if (max_ - max_possible == 1 & tail(mut_df_$size_mod, 1) < 0) {
-                del_size <- abs(tail(mut_df_$size_mod, 1))
-                del_start <- tail(mut_df_$old_pos, 1)
-                if ((del_start + del_size - 1) == 499) {
-                    proper_dels[i] <- TRUE
-                } else proper_dels[i] <- FALSE
-            } else proper_dels[i] <- FALSE
-        } else proper_dels[i] <- TRUE
-        i <- i + 1
+# Function to return descendent tips from a given node:
+get_descendant_tips <- function(tree, node) {
+    # Function to get descendent nodes and tips from a given node
+    # From http://blog.phytools.org/2012/01/function-to-get-descendant-node-numbers.html
+    # Slight tweeks for personal style
+    getDescendants <- function(tree, node, curr = NULL){
+        if(is.null(curr)) curr <- vector()
+        daughters <- tree$edge[which(tree$edge[,1] == node), 2]
+        curr <- c(curr, daughters)
+        w <- which(daughters >= length(tree$tip))
+        if (length(w) > 0) {
+            for (i in 1:length(w)) {
+                curr <- getDescendants(tree, daughters[w[i]], curr)
+            }
+        }
+        return(curr)
     }
+    tips_ <- getDescendants(tree, node)
+    tips_ <- tips_[tips_ <= length(tree$tip.label)]
+    return(tips_)
+}
+
+compare_mutations <- function(df1, df2) {
+
+    df1 <- df1[, c("seq", "old_pos", "size_mod", "nucleos")]
+    df2 <- df2[, c("seq", "old_pos", "size_mod", "nucleos")]
+
+    df1_ <- apply(df1, 1, function(xx) gsub(" ", "", paste(xx, collapse = "_")))
+    df2_ <- apply(df2, 1, function(xx) gsub(" ", "", paste(xx, collapse = "_")))
+
+    n_shared_muts <- sum(df2_ %in% df1_)
+
+    return(as.integer(n_shared_muts))
+
 }
 
 
-test_that("Ranged mutations deal with deletions at the end of sequences properly.", {
-    expect_true(all(proper_dels))
-})
+shared_muts <- matrix(0L, n_vars, n_vars)
+for (i in 1:(n_vars-1)) {
+    for (j in (i+1):n_vars) {
+        sm <- compare_mutations(mutations[[i]], mutations[[j]])
+        shared_muts[i,j] <- sm
+        shared_muts[j,i] <- sm
+    }
+}; rm(i, j, sm)
+diag(shared_muts) <- sapply(mutations, nrow)
 
+# "Mutational" distances between all pairs:
+mut_dists <- matrix(0L, n_vars, n_vars)
+for (i in 1:(n_vars-1)) {
+    for (j in (i+1):n_vars) {
+        # Total non-shared mutations for each:
+        mdi <- shared_muts[i,i] - shared_muts[i,j]
+        mdj <- shared_muts[j,j] - shared_muts[i,j]
+        mut_dists[i,j] <- mdi
+        mut_dists[j,i] <- mdj
+    }
+}; rm(i, j, mdi, mdj)
+
+
+# Phylogenetic distances between all pairs:
+phylo_dists <- ape::cophenetic.phylo(tree)
+rownames(phylo_dists) <- colnames(phylo_dists) <- NULL
+# Dividing by two to get branch lengths between MRCA:
+phylo_dists <- phylo_dists / 2
+
+
+# Average mutation rate for ancestral sequences times total bp in genome:
+mu_ <- mean(q) * sum(sapply(seqs, nchar)) * mean(gamma_mat[,2])
+
+# Expected mutational distances:
+expected <- mu_ * phylo_dists
+
+
+test_that("Simulations conform to phylogenetic tree", {
+    expect_lt(mean((expected - mut_dists) / expected, na.rm = TRUE), 0.1)
+})
 
 
 

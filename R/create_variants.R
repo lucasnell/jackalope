@@ -2,7 +2,9 @@
 #' Create variants from a reference genome.
 #'
 #' @param reference A \code{ref_genome} object from which to generate variants.
+#'     This argument is required.
 #' @param n_variants The number of haploid variants to create.
+#'     This argument is required.
 #' @param phylo_control A list containing parameters for phylogenetic evolution.
 #' @param vcf_file The file name for a VCF file to read from.
 #' @param random_control A list containing parameters for random mutation addition.
@@ -67,6 +69,10 @@ create_variants <- function(reference,
     }
     if (!missing(vcf_file)) {
         stop("\nVCF file reading not yet implemented.", call. = FALSE)
+        if (!inherits(vcf_file, "character") | length(vcf_file) != 1) {
+            stop("\nThe vcf_file argument to create_variants must be a single string.",
+                 call. = FALSE)
+        }
     }
     if (!missing(random_control)) {
         variants_ptr <- random_variants(reference_ptr, n_variants, n_cores,

@@ -86,6 +86,11 @@ make_Q_pis <- function(sub_params, model, xi) {
 #'     Uniformly sampling before doing weighted sampling dramatically speeds up
 #'     the mutation process (especially for very long sequences) and has little
 #'     effect on the sampling probabilities.
+#'     Higher values will more closely resemble sampling without the uniform-sampling
+#'     step, but will be slower.
+#'     From testing, values of `100` and `1000` don't differ much, and neither one
+#'     differs significantly from sampling without the uniform-sampling step on a
+#'     chromosome of length `1e6`.
 #'     Set this to `0` to not uniformly sample first.
 #'     Defaults to `100`.
 #' @param model Character indicating which substitution mutation model to use.

@@ -18,6 +18,7 @@
 
 #include "gemino_types.h"  // integer types
 #include "sequence_classes.h"  // Var* and Ref* classes
+#include "util.h"  // clear_memory
 
 
 using namespace Rcpp;
@@ -185,7 +186,7 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint32& new_p
     // `mutations.size()` is returned above if `new_pos_` is before the
     // first Mutation object or if `mutations` is empty
     if (mut_i == mutations.size()) {
-        std::string nt = ref_seq[new_pos_] + nucleos_;
+        std::string nt = (*ref_seq)[new_pos_] + nucleos_;
         // (below, notice that new position and old position are the same)
         Mutation new_mut(new_pos_, new_pos_, nt);
         mutations.push_front(new_mut);
@@ -220,7 +221,7 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint32& new_p
     } else {
         uint32 old_pos_ = ind + (mutations[mut_i].old_pos -
             mutations[mut_i].size_modifier);
-        std::string nt = ref_seq[old_pos_] + nucleos_;
+        std::string nt = (*ref_seq)[old_pos_] + nucleos_;
         Mutation new_mut(old_pos_, new_pos_, nt);
         ++mut_i;
         mutations.insert(mutations.begin() + mut_i, new_mut);
@@ -455,7 +456,7 @@ void VarSequence::merge_del_ins_(uint32& insert_i,
         std::string& nts(mutations[insert_i].nucleos);
         nts.erase(nts.begin() + erase_ind0, nts.begin() + erase_ind1);
         // clear memory:
-        std::string(nts.begin(), nts.end()).swap(nts);
+        clear_memory<std::string>(nts);
 
         // Adjust the insertion's size modifier
         mutations[insert_i].size_modifier = mutations[insert_i].nucleos.size() - 1;
@@ -499,7 +500,7 @@ void VarSequence::remove_mutation_(uint32& mut_i) {
     // erase:
     mutations.erase(mutations.begin() + mut_i);
     // clear memory:
-    std::deque<Mutation>(mutations.begin(), mutations.end()).swap(mutations);
+    clear_memory<std::deque<Mutation>>(mutations);
     return;
 }
 void VarSequence::remove_mutation_(uint32& mut_i1, uint32& mut_i2) {
@@ -507,7 +508,7 @@ void VarSequence::remove_mutation_(uint32& mut_i1, uint32& mut_i2) {
     // erase range:
     mutations.erase(mutations.begin() + mut_i1, mutations.begin() + mut_i2);
     // clear memory:
-    std::deque<Mutation>(mutations.begin(), mutations.end()).swap(mutations);
+    clear_memory<std::deque<Mutation>>(mutations);
     // reset indices:
     if (mut_i1 > 0) {
         mut_i2 = mut_i1;
