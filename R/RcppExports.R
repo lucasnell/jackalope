@@ -580,36 +580,3 @@ see_sizes <- function(var_set_, var_ind) {
     .Call(`_gemino_see_sizes`, var_set_, var_ind)
 }
 
-#' Pr(S == s).
-#'
-#'
-#' @noRd
-NULL
-
-#' Pr(S <= s)
-#'
-#' @noRd
-#'
-NULL
-
-#' var(S).
-#'
-#' @noRd
-#'
-NULL
-
-#' Expected value of S.
-#'
-#' If comparing distances to S, remember that S in Vitter's paper is the number of
-#' positions to skip _before_ taking the next one, so it should be 1 less than the
-#' distance.
-#' So just add 1 to this function to get expected distances.
-#'
-#' @noRd
-#'
-NULL
-
-test_vitter_d <- function(reps, n, N, n_cores, n2N = 50, alpha = 0.8) {
-    .Call(`_gemino_test_vitter_d`, reps, n, N, n_cores, n2N, alpha)
-}
-

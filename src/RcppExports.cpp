@@ -582,22 +582,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// test_vitter_d
-arma::Mat<uint32> test_vitter_d(const uint32 reps, uint32 n, uint32 N, const uint32& n_cores, const double& n2N, const double& alpha);
-RcppExport SEXP _gemino_test_vitter_d(SEXP repsSEXP, SEXP nSEXP, SEXP NSEXP, SEXP n_coresSEXP, SEXP n2NSEXP, SEXP alphaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const uint32 >::type reps(repsSEXP);
-    Rcpp::traits::input_parameter< uint32 >::type n(nSEXP);
-    Rcpp::traits::input_parameter< uint32 >::type N(NSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type n_cores(n_coresSEXP);
-    Rcpp::traits::input_parameter< const double& >::type n2N(n2NSEXP);
-    Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_vitter_d(reps, n, N, n_cores, n2N, alpha));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_gemino_merge_sequences", (DL_FUNC) &_gemino_merge_sequences, 1},
@@ -645,7 +629,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_make_var_set", (DL_FUNC) &_gemino_make_var_set, 2},
     {"_gemino_see_var_genome", (DL_FUNC) &_gemino_see_var_genome, 2},
     {"_gemino_see_sizes", (DL_FUNC) &_gemino_see_sizes, 2},
-    {"_gemino_test_vitter_d", (DL_FUNC) &_gemino_test_vitter_d, 6},
     {NULL, NULL, 0}
 };
 
