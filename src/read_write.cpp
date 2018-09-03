@@ -492,7 +492,7 @@ SEXP read_fasta_ind(const std::string& fasta_file,
 //' Write \code{RefGenome} to an uncompressed fasta file.
 //'
 //' @param file_name File name of output fasta file.
-//' @param ref_ An external pointer to a \code{RefGenome} C++ object.
+//' @param ref_genome_ptr An external pointer to a \code{RefGenome} C++ object.
 //' @param text_width The number of characters per line in the output fasta file.
 //'
 //' @return Nothing.
@@ -502,10 +502,10 @@ SEXP read_fasta_ind(const std::string& fasta_file,
 //'
 //[[Rcpp::export]]
 void write_fasta_fa(std::string file_name,
-                    SEXP ref_,
+                    SEXP ref_genome_ptr,
                     const uint32& text_width){
 
-    XPtr<RefGenome> ref_xptr(ref_);
+    XPtr<RefGenome> ref_xptr(ref_genome_ptr);
     RefGenome& ref(*ref_xptr);
 
     std::ofstream out_file(file_name);
@@ -547,10 +547,10 @@ void write_fasta_fa(std::string file_name,
 //'
 //[[Rcpp::export]]
 void write_fasta_gz(const std::string& file_name,
-                    SEXP ref_,
+                    SEXP ref_genome_ptr,
                     const uint32& text_width){
 
-    XPtr<RefGenome> ref_xptr(ref_);
+    XPtr<RefGenome> ref_xptr(ref_genome_ptr);
     RefGenome& ref(*ref_xptr);
 
     // Initialize filehandle.

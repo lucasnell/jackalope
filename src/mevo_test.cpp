@@ -53,9 +53,9 @@ List conv_mut(const Mutation& mut) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-DataFrame see_mutations(SEXP var_set_, const uint32& var_ind) {
+DataFrame see_mutations(SEXP var_set_ptr, const uint32& var_ind) {
 
-    XPtr<VarSet> var_set(var_set_);
+    XPtr<VarSet> var_set(var_set_ptr);
     const VarGenome& var_genome((*var_set)[var_ind]);
 
     uint32 n_muts = 0;
@@ -105,9 +105,9 @@ DataFrame see_mutations(SEXP var_set_, const uint32& var_ind) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-List examine_mutations(SEXP var_set_, const uint32& var_ind, const uint32& seq_ind) {
+List examine_mutations(SEXP var_set_ptr, const uint32& var_ind, const uint32& seq_ind) {
 
-    XPtr<VarSet> var_set_xptr(var_set_);
+    XPtr<VarSet> var_set_xptr(var_set_ptr);
     const VarGenome& var_genome((*var_set_xptr)[var_ind]);
     const VarSequence& var_seq(var_genome[seq_ind]);
 
@@ -194,7 +194,7 @@ std::vector<uint32> table_gammas(const std::vector<uint32>& gamma_ends,
 //' Note that all indices are in 0-based C++ indexing. This means that the first
 //' item is indexed by `0`, and so forth.
 //'
-//' @param var_set_ External pointer to a C++ `VarSet` object
+//' @param var_set_ptr External pointer to a C++ `VarSet` object
 //' @param var_ind Integer index to the desired variant. Uses 0-based indexing!
 //' @param seq_ind Integer index to the desired sequence. Uses 0-based indexing!
 //' @param new_pos_ Integer index to the desired subsitution location.
@@ -205,19 +205,16 @@ NULL_ENTRY;
 
 //' @describeIn add_mutations Add a substitution.
 //'
-//' @inheritParams var_set_ add_mutations
-//' @inheritParams var_ind add_mutations
-//' @inheritParams seq_ind add_mutations
+//' @inheritParams add_mutations
 //' @param nucleo_ Character to substitute for existing one.
-//' @inheritParams new_pos_ add_mutations
 //'
 //'
 //[[Rcpp::export]]
-void add_substitution(SEXP var_set_, const uint32& var_ind,
+void add_substitution(SEXP var_set_ptr, const uint32& var_ind,
                       const uint32& seq_ind,
                       const char& nucleo_,
                       const uint32& new_pos_) {
-    XPtr<VarSet> var_set(var_set_);
+    XPtr<VarSet> var_set(var_set_ptr);
     VarGenome& var_genome((*var_set)[var_ind]);
     VarSequence& var_seq(var_genome[seq_ind]);
     var_seq.add_substitution(nucleo_, new_pos_);
@@ -225,19 +222,16 @@ void add_substitution(SEXP var_set_, const uint32& var_ind,
 }
 //' @describeIn add_mutations Add an insertion.
 //'
-//' @inheritParams var_set_ add_mutations
-//' @inheritParams var_ind add_mutations
-//' @inheritParams seq_ind add_mutations
+//' @inheritParams add_mutations
 //' @param nucleos_ Nucleotides to insert at the desired location.
-//' @inheritParams new_pos_ add_mutations
 //'
 //'
 //[[Rcpp::export]]
-void add_insertion(SEXP var_set_, const uint32& var_ind,
+void add_insertion(SEXP var_set_ptr, const uint32& var_ind,
                    const uint32& seq_ind,
                    const std::string& nucleos_,
                    const uint32& new_pos_) {
-    XPtr<VarSet> var_set(var_set_);
+    XPtr<VarSet> var_set(var_set_ptr);
     VarGenome& var_genome((*var_set)[var_ind]);
     VarSequence& var_seq(var_genome[seq_ind]);
     var_seq.add_insertion(nucleos_, new_pos_);
@@ -245,19 +239,16 @@ void add_insertion(SEXP var_set_, const uint32& var_ind,
 }
 //' @describeIn add_mutations Add a deletion.
 //'
-//' @inheritParams var_set_ add_mutations
-//' @inheritParams var_ind add_mutations
-//' @inheritParams seq_ind add_mutations
+//' @inheritParams add_mutations
 //' @param size_ Size of deletion.
-//' @inheritParams new_pos_ add_mutations
 //'
 //'
 //[[Rcpp::export]]
-void add_deletion(SEXP var_set_, const uint32& var_ind,
+void add_deletion(SEXP var_set_ptr, const uint32& var_ind,
                   const uint32& seq_ind,
                   const uint32& size_,
                   const uint32& new_pos_) {
-    XPtr<VarSet> var_set(var_set_);
+    XPtr<VarSet> var_set(var_set_ptr);
     VarGenome& var_genome((*var_set)[var_ind]);
     VarSequence& var_seq(var_genome[seq_ind]);
     var_seq.add_deletion(size_, new_pos_);
@@ -274,13 +265,13 @@ void add_deletion(SEXP var_set_, const uint32& var_ind,
 //[[Rcpp::export]]
 double test_rate(const uint32& start, const uint32& end,
                  const uint32& var_ind, const uint32& seq_ind,
-                 SEXP var_set_, SEXP sampler_,
+                 SEXP var_set_ptr, SEXP sampler_base_ptr,
                  const arma::mat& gamma_mat_) {
 
-    XPtr<VarSet> var_set(var_set_);
+    XPtr<VarSet> var_set(var_set_ptr);
     VarSequence& var_seq((*var_set)[var_ind][seq_ind]);
 
-    XPtr<ChunkMutationSampler> sampler(sampler_);
+    XPtr<ChunkMutationSampler> sampler(sampler_base_ptr);
 
     sampler->fill_ptrs(var_seq);
     sampler->fill_gamma(gamma_mat_);
@@ -340,7 +331,7 @@ double test_rate(const uint32& start, const uint32& end,
 // //'
 // //' Make SURE `sampler_base_` is a `ChunkMutationSampler`, not a `MutationSampler`!
 // //'
-// //' @param var_set_ Pointer to a VarSet object.
+// //' @param var_set_ptr Pointer to a VarSet object.
 // //' @param sampler_base_ Pointer to a ChunkMutationSampler object.
 // //' @param branch_lens Branch lengths from phylogeny.
 // //' @param edges Edge matrix from phylogeny.
@@ -363,7 +354,7 @@ double test_rate(const uint32& start, const uint32& end,
 // //'
 // //[[Rcpp::export]]
 // std::vector<std::vector<uint32>> test_mevo(
-//         SEXP& var_set_,
+//         SEXP& var_set_ptr,
 //         SEXP& sampler_base_,
 //         const std::vector<uint32>& seq_inds,
 //         const std::vector<std::vector<double>>& branch_lens,
@@ -372,7 +363,7 @@ double test_rate(const uint32& start, const uint32& end,
 //         const std::vector<std::string>& ordered_tip_labels,
 //         const std::vector<arma::mat>& gamma_mats) {
 //
-//     XPtr<VarSet> var_set(var_set_);
+//     XPtr<VarSet> var_set(var_set_ptr);
 //     XPtr<ChunkMutationSampler> sampler_base(sampler_base_);
 //
 //     for (uint32 i = 0; i < var_set->size(); i++) {

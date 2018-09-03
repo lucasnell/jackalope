@@ -41,7 +41,7 @@ namespace alter_scaffs {
 //' Merge a reference genome into a single sequence.
 //'
 //'
-//' @param ref_genome_ An external pointer (R class \code{externalptr}) to a
+//' @param ref_genome_ptr An external pointer (R class \code{externalptr}) to a
 //'     \code{RefGenome} class in C++ (the full class in C++ is
 //'     \code{Rcpp::XPtr<RefGenome>}).
 //'
@@ -52,9 +52,9 @@ namespace alter_scaffs {
 //' @noRd
 //'
 //[[Rcpp::export]]
-void merge_sequences(SEXP ref_genome_) {
+void merge_sequences(SEXP ref_genome_ptr) {
 
-    XPtr<RefGenome> ref_genome(ref_genome_);
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::deque<RefSequence>& seqs(ref_genome->sequences);
 
     // Shuffling ref_genome info.
@@ -100,7 +100,7 @@ void merge_sequences(SEXP ref_genome_) {
 //' Filter reference genome sequences by size or for a proportion of total nucleotides.
 //'
 //'
-//' @inheritParams ref_genome_ merge_sequences
+//' @inheritParams ref_genome_ptr merge_sequences
 //' @param min_seq_size Integer minimum sequence size to keep.
 //'     Defaults to \code{0}, which results in this argument being ignored.
 //' @param out_seq_prop Numeric proportion of total sequence to keep.
@@ -114,11 +114,11 @@ void merge_sequences(SEXP ref_genome_) {
 //'
 //'
 //[[Rcpp::export]]
-void filter_sequences(SEXP ref_genome_,
+void filter_sequences(SEXP ref_genome_ptr,
                       const uint32& min_seq_size = 0,
                       const double& out_seq_prop = 0) {
 
-    XPtr<RefGenome> ref_genome(ref_genome_);
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::deque<RefSequence>& seqs(ref_genome->sequences);
 
     // Checking for sensible inputs

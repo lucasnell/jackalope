@@ -35,8 +35,8 @@ SEXP make_ref_genome(const std::deque<std::string>& seqs) {
 //'
 //' @noRd
 //[[Rcpp::export]]
-SEXP make_var_set(SEXP ref_genome_, const uint32& n_vars) {
-    XPtr<RefGenome> ref_genome(ref_genome_);
+SEXP make_var_set(SEXP ref_genome_ptr, const uint32& n_vars) {
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
     XPtr<VarSet> var_set(new VarSet(*ref_genome, n_vars), true);
     return var_set;
 }
@@ -45,9 +45,9 @@ SEXP make_var_set(SEXP ref_genome_, const uint32& n_vars) {
 //'
 //' @noRd
 //[[Rcpp::export]]
-std::vector<std::string> see_var_genome(SEXP var_set_, const uint32& var_ind) {
+std::vector<std::string> see_var_genome(SEXP var_set_ptr, const uint32& var_ind) {
 
-    XPtr<VarSet> var_set(var_set_);
+    XPtr<VarSet> var_set(var_set_ptr);
     const VarGenome& var_genome((*var_set)[var_ind]);
 
     std::vector<std::string> out(var_genome.size(), "");
@@ -62,9 +62,9 @@ std::vector<std::string> see_var_genome(SEXP var_set_, const uint32& var_ind) {
 //'
 //' @noRd
 //[[Rcpp::export]]
-std::vector<uint32> see_sizes(SEXP var_set_, const uint32& var_ind) {
+std::vector<uint32> see_sizes(SEXP var_set_ptr, const uint32& var_ind) {
 
-    XPtr<VarSet> var_set(var_set_);
+    XPtr<VarSet> var_set(var_set_ptr);
     const VarGenome& var_genome((*var_set)[var_ind]);
 
     std::vector<uint32> out(var_genome.size());

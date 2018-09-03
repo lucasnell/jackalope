@@ -281,18 +281,18 @@ char VarSequence::get_char_(const uint32& new_pos,
 
 
 //[[Rcpp::export]]
-std::vector<uint32> see_ref_genome_seq_sizes(SEXP ref_genome_) {
-    XPtr<RefGenome> ref_genome(ref_genome_);
+std::vector<uint32> see_ref_genome_seq_sizes(SEXP ref_genome_ptr) {
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::vector<uint32> out = ref_genome->seq_sizes();
     return out;
 }
 // Check for no duplicates
 //[[Rcpp::export]]
 void remove_ref_genome_seq_sizes(
-        SEXP ref_genome_,
+        SEXP ref_genome_ptr,
         std::vector<uint32> seq_inds) {
 
-    XPtr<RefGenome> ref_genome(ref_genome_);
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::deque<RefSequence>& sequences(ref_genome->sequences);
 
     std::sort(seq_inds.begin(), seq_inds.end());
@@ -308,8 +308,8 @@ void remove_ref_genome_seq_sizes(
 
 
 //[[Rcpp::export]]
-std::vector<std::string> see_ref_genome_seq_names(SEXP ref_genome_) {
-    XPtr<RefGenome> ref_genome(ref_genome_);
+std::vector<std::string> see_ref_genome_seq_names(SEXP ref_genome_ptr) {
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::vector<std::string> out;
     out.reserve(ref_genome->size());
     for (const RefSequence& seq : (*ref_genome).sequences) out.push_back(seq.name);
@@ -318,10 +318,10 @@ std::vector<std::string> see_ref_genome_seq_names(SEXP ref_genome_) {
 // Check for seq_inds and names lengths being equal
 //[[Rcpp::export]]
 void set_ref_genome_seq_names(
-        SEXP ref_genome_,
+        SEXP ref_genome_ptr,
         const std::vector<uint32>& seq_inds,
         const std::vector<std::string>& names) {
-    XPtr<RefGenome> ref_genome(ref_genome_);
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
     for (uint32 i = 0; i < seq_inds.size(); i++) {
         (*ref_genome)[seq_inds[i]].name = names[i];
     }
@@ -329,8 +329,8 @@ void set_ref_genome_seq_names(
 }
 
 //[[Rcpp::export]]
-std::string see_ref_genome_seq(SEXP ref_genome_, const uint32& seq_ind) {
-    XPtr<RefGenome> ref_genome(ref_genome_);
+std::string see_ref_genome_seq(SEXP ref_genome_ptr, const uint32& seq_ind) {
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::string out = (*ref_genome)[seq_ind].nucleos;
     return out;
 }
