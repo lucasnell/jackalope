@@ -29,10 +29,9 @@
 #endif
 
 #include "gemino_types.h"  // integer types
-#include "util.h"  // uints_get_size
+#include "util.h"  // uints_get_size, cpp_choose
 #include "vitter_algorithms.h"  // vitter namespace
 #include "pcg.h"
-#include "util.h"  // cpp_choose
 
 
 using namespace Rcpp;
