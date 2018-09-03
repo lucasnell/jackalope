@@ -113,7 +113,7 @@ process_enzymes <- function(enzyme_names, custom_enzymes) {
 digest <- function(object,
                    enzyme_names,
                    custom_enzymes,
-                   chunk_size = 0,
+                   chunk_size = 1000,
                    n_cores = 1) {
 
     if (missing(enzyme_names) & missing(custom_enzymes)) {
@@ -124,7 +124,7 @@ digest <- function(object,
 
     enz_info <- process_enzymes(enzyme_names, custom_enzymes)
 
-    if (inherits(object, 'ref_genome')) {
+    if (inherits(object, "ref_genome")) {
         if (!inherits(object$genome, "externalptr")) {
             stop("\nYou're attempting a digestion on a ref_genome object with ",
                  "a genome field that is not an externalptr. ",
@@ -135,7 +135,7 @@ digest <- function(object,
         object$digests <- digest_ref(object$genome,
                                      enz_info$bind_sites, enz_info$len5s,
                                      chunk_size, n_cores)
-    } else if (inherits(object, 'variants')) {
+    } else if (inherits(object, "variants")) {
         if (!inherits(object$genomes, "externalptr")) {
             stop("\nYou're attempting a digestion on a variants object with ",
                  "a genomes field that is not an externalptr. ",
