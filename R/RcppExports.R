@@ -163,6 +163,32 @@ phylo_info_to_trees <- function(genome_phylo_info) {
     .Call(`_gemino_phylo_info_to_trees`, genome_phylo_info)
 }
 
+#' Create XPtr to nested vector of PhyloTree objects from phylogeny information.
+#'
+#' Same as above, but chunked.
+#'
+#' @noRd
+#'
+phylo_info_to_trees_chunk <- function(genome_phylo_info) {
+    .Call(`_gemino_phylo_info_to_trees_chunk`, genome_phylo_info)
+}
+
+#' Evolve all sequences in a reference genome.
+#'
+#' @noRd
+#'
+evolve_seqs <- function(var_set_xptr, sampler_base_xptr, phylo_info_xptr, seq_inds, gamma_mats, show_progress) {
+    invisible(.Call(`_gemino_evolve_seqs`, var_set_xptr, sampler_base_xptr, phylo_info_xptr, seq_inds, gamma_mats, show_progress))
+}
+
+#' Same as above, but using chunks.
+#'
+#' @noRd
+#'
+evolve_seqs_chunk <- function(var_set_xptr, sampler_base_xptr, phylo_info_xptr, seq_inds, gamma_mats, show_progress) {
+    invisible(.Call(`_gemino_evolve_seqs_chunk`, var_set_xptr, sampler_base_xptr, phylo_info_xptr, seq_inds, gamma_mats, show_progress))
+}
+
 #' Estimates equilibrium nucleotide frequencies from an input rate matrix.
 #'
 #' It does this by solving for πQ = 0 by finding the left eigenvector of Q that
@@ -628,6 +654,26 @@ write_fasta_fa <- function(file_name, ref_, text_width) {
 #'
 write_fasta_gz <- function(file_name, ref_, text_width) {
     invisible(.Call(`_gemino_write_fasta_gz`, file_name, ref_, text_width))
+}
+
+see_ref_genome_seq_sizes <- function(ref_genome_) {
+    .Call(`_gemino_see_ref_genome_seq_sizes`, ref_genome_)
+}
+
+remove_ref_genome_seq_sizes <- function(ref_genome_, seq_inds) {
+    invisible(.Call(`_gemino_remove_ref_genome_seq_sizes`, ref_genome_, seq_inds))
+}
+
+see_ref_genome_seq_names <- function(ref_genome_) {
+    .Call(`_gemino_see_ref_genome_seq_names`, ref_genome_)
+}
+
+set_ref_genome_seq_names <- function(ref_genome_, seq_inds, names) {
+    invisible(.Call(`_gemino_set_ref_genome_seq_names`, ref_genome_, seq_inds, names))
+}
+
+see_ref_genome_seq <- function(ref_genome_, seq_ind) {
+    .Call(`_gemino_see_ref_genome_seq`, ref_genome_, seq_ind)
 }
 
 #' Make a RefGenome object from a set of sequences

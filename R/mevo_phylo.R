@@ -4,6 +4,7 @@
 #' Process one gene-tree string from a coalescent simulator with ms-style output.
 #'
 #' @param str The string to process.
+#' @param seq_size The number of bp in the sequence associated with the input string.
 #'
 #' @noRd
 #'
@@ -63,11 +64,50 @@ process_coal_tree_string <- function(str, seq_size) {
 
 
 
+#' Read info from a `phylo` object.
+#'
+#' @param phy The `phylo` object.
+#' @param n_seqs The number of sequences in the reference genome.
+#' @param chunked Boolean for whether the sampling for mutation locations
+#'     will be done in chunks.
+#'
+#' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
+#'
+#' @noRd
+#'
+read_phy_obj <- function(phy, n_seqs, chunked) {
+
+    phy <- ape::reorder.phylo(phy, order = "cladewise")
+    labels <- paste(phy$tip.label) # used paste to make sure they're characters
+    branch_lens <- phy$edge.length
+    edges <- phy$edge
+    phy_info <- list(branch_lens = branch_lens, edges = edges, labels = labels,
+                     start = 0, end = 0)
+
+    # I'm repeating this information to make one set of phylo. info per sequence
+    # I'm doing `list(list(...))` to keep nestedness the same among the different methods
+    tree_info <- rep(list(list(phy_info)), n_seqs)
+
+    if (!chunked) {
+        trees_ptr <- phylo_info_to_trees(tree_info)
+    } else {
+        trees_ptr <- phylo_info_to_trees_chunk(tree_info)
+    }
+
+    return(trees_ptr)
+}
+
+
+
+
+
+
 
 #' Read info from a coalescent object from scrm or coala.
 #'
 #' @param coal_obj The coalescent-simulation object.
 #' @param seq_sizes Vector of sequence sizes.
+#' @inheritParams read_phy_obj
 #'
 #' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
 #'
@@ -118,7 +158,8 @@ read_coal_obj <- function(coal_obj, seq_sizes, chunked) {
 #' Read info from ms-style output file.
 #'
 #' @param ms_filename The filename for ms-style output.
-#' @param seq_sizes Vector of sequence sizes.
+#' @inheritParams read_coal_obj
+#' @inheritParams read_phy_obj
 #'
 #' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
 #'
@@ -161,7 +202,7 @@ read_ms_output <- function(ms_filename, seq_sizes, chunked) {
 #' Read info from a NEWICK file.
 #'
 #' @param newick_filename The filename for the NEWICK phylogeny.
-#' @param n_seqs The number of sequences in the reference genome.
+#' @inheritParams read_phy_obj
 #'
 #' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
 #'
@@ -171,26 +212,10 @@ read_newick <- function(newick_filename, n_seqs, chunked) {
 
     phy <- ape::read.tree(file = newick_filename)
 
-    phy <- ape::reorder.phylo(phy, order = "cladewise")
-    labels <- paste(phy$tip.label) # used paste to make sure they're characters
-    branch_lens <- phy$edge.length
-    edges <- phy$edge
-    phy_info <- list(branch_lens = branch_lens, edges = edges, labels = labels,
-                     start = 0, end = 0)
-
-    # I'm repeating this information to make one set of phylo. info per sequence
-    # I'm doing `list(list(...))` to keep nestedness the same among the different methods
-    tree_info <- rep(list(list(phy_info)), n_seqs)
-
-    if (!chunked) {
-        trees_ptr <- phylo_info_to_trees(tree_info)
-    } else {
-        trees_ptr <- phylo_info_to_trees_chunk(tree_info)
-    }
+    trees_ptr <- read_phy_obj(phy, n_seqs, chunked)
 
     return(trees_ptr)
 }
-
 
 
 
@@ -201,21 +226,20 @@ read_newick <- function(newick_filename, n_seqs, chunked) {
 #'
 #' @param theta Theta parameter, population-scaled mutation rate.
 #' @param mu Average mutation rate (per bp per generation).
-#' @param n_seqs The number of sequences in the reference genome.
-#' @param chunked Whether to use a chunked sampler or not.
+#' @inheritParams read_phy_obj
 #'
 #' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
 #'
 #' @noRd
 #'
-read_theta <- function(theta, mu, n_seqs, chunked) {
+read_theta <- function(theta, mu, n_vars, n_seqs, chunked) {
 
     # Generate random coalescent tree:
-    phy <- ape::rcoal(n_seqs)
+    phy <- ape::rcoal(n_vars)
 
     # Calculating L from theta:
     # E(L) = 4 * N * a; a = sum(1 / (1:(n_seqs-1)))
-    a <- sum(1 / (1:(n_seqs-1)))
+    a <- sum(1 / (1:(n_vars-1)))
     # theta = 4 * N * mu
     # So if we know theta and mu, then...
     L <- theta * a / mu
@@ -223,22 +247,7 @@ read_theta <- function(theta, mu, n_seqs, chunked) {
     # Now rescale to have total tree length of `L`:
     phy$edge.length <- phy$edge.length / max(ape::node.depth.edgelength(phy)) * L
 
-    phy <- ape::reorder.phylo(phy, order = "cladewise")
-    labels <- paste(phy$tip.label) # used paste to make sure they're characters
-    branch_lens <- phy$edge.length
-    edges <- phy$edge
-    phy_info <- list(branch_lens = branch_lens, edges = edges, labels = labels,
-                     start = 0, end = 0)
-
-    # I'm repeating this information to make one set of phylo. info per sequence
-    # I'm doing `list(list(...))` to keep nestedness the same among the different methods
-    tree_info <- rep(list(list(phy_info)), n_seqs)
-
-    if (!chunked) {
-        trees_ptr <- phylo_info_to_trees(tree_info)
-    } else {
-        trees_ptr <- phylo_info_to_trees_chunk(tree_info)
-    }
+    trees_ptr <- read_phy_obj(phy, n_seqs, chunked)
 
     return(tree_ptr)
 

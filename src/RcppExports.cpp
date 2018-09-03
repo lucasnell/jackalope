@@ -122,6 +122,47 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// phylo_info_to_trees_chunk
+SEXP phylo_info_to_trees_chunk(List genome_phylo_info);
+RcppExport SEXP _gemino_phylo_info_to_trees_chunk(SEXP genome_phylo_infoSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type genome_phylo_info(genome_phylo_infoSEXP);
+    rcpp_result_gen = Rcpp::wrap(phylo_info_to_trees_chunk(genome_phylo_info));
+    return rcpp_result_gen;
+END_RCPP
+}
+// evolve_seqs
+void evolve_seqs(SEXP& var_set_xptr, SEXP& sampler_base_xptr, SEXP& phylo_info_xptr, const std::vector<uint32>& seq_inds, const std::vector<arma::mat>& gamma_mats, const bool& show_progress);
+RcppExport SEXP _gemino_evolve_seqs(SEXP var_set_xptrSEXP, SEXP sampler_base_xptrSEXP, SEXP phylo_info_xptrSEXP, SEXP seq_indsSEXP, SEXP gamma_matsSEXP, SEXP show_progressSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP& >::type var_set_xptr(var_set_xptrSEXP);
+    Rcpp::traits::input_parameter< SEXP& >::type sampler_base_xptr(sampler_base_xptrSEXP);
+    Rcpp::traits::input_parameter< SEXP& >::type phylo_info_xptr(phylo_info_xptrSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type seq_inds(seq_indsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type gamma_mats(gamma_matsSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    evolve_seqs(var_set_xptr, sampler_base_xptr, phylo_info_xptr, seq_inds, gamma_mats, show_progress);
+    return R_NilValue;
+END_RCPP
+}
+// evolve_seqs_chunk
+void evolve_seqs_chunk(SEXP& var_set_xptr, SEXP& sampler_base_xptr, SEXP& phylo_info_xptr, const std::vector<uint32>& seq_inds, const std::vector<arma::mat>& gamma_mats, const bool& show_progress);
+RcppExport SEXP _gemino_evolve_seqs_chunk(SEXP var_set_xptrSEXP, SEXP sampler_base_xptrSEXP, SEXP phylo_info_xptrSEXP, SEXP seq_indsSEXP, SEXP gamma_matsSEXP, SEXP show_progressSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP& >::type var_set_xptr(var_set_xptrSEXP);
+    Rcpp::traits::input_parameter< SEXP& >::type sampler_base_xptr(sampler_base_xptrSEXP);
+    Rcpp::traits::input_parameter< SEXP& >::type phylo_info_xptr(phylo_info_xptrSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type seq_inds(seq_indsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type gamma_mats(gamma_matsSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    evolve_seqs_chunk(var_set_xptr, sampler_base_xptr, phylo_info_xptr, seq_inds, gamma_mats, show_progress);
+    return R_NilValue;
+END_RCPP
+}
 // TN93_rate_matrix
 arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta, const double& xi);
 RcppExport SEXP _gemino_TN93_rate_matrix(SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP, SEXP xiSEXP) {
@@ -517,6 +558,63 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// see_ref_genome_seq_sizes
+std::vector<uint32> see_ref_genome_seq_sizes(SEXP ref_genome_);
+RcppExport SEXP _gemino_see_ref_genome_seq_sizes(SEXP ref_genome_SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_(ref_genome_SEXP);
+    rcpp_result_gen = Rcpp::wrap(see_ref_genome_seq_sizes(ref_genome_));
+    return rcpp_result_gen;
+END_RCPP
+}
+// remove_ref_genome_seq_sizes
+void remove_ref_genome_seq_sizes(SEXP ref_genome_, std::vector<uint32> seq_inds);
+RcppExport SEXP _gemino_remove_ref_genome_seq_sizes(SEXP ref_genome_SEXP, SEXP seq_indsSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_(ref_genome_SEXP);
+    Rcpp::traits::input_parameter< std::vector<uint32> >::type seq_inds(seq_indsSEXP);
+    remove_ref_genome_seq_sizes(ref_genome_, seq_inds);
+    return R_NilValue;
+END_RCPP
+}
+// see_ref_genome_seq_names
+std::vector<std::string> see_ref_genome_seq_names(SEXP ref_genome_);
+RcppExport SEXP _gemino_see_ref_genome_seq_names(SEXP ref_genome_SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_(ref_genome_SEXP);
+    rcpp_result_gen = Rcpp::wrap(see_ref_genome_seq_names(ref_genome_));
+    return rcpp_result_gen;
+END_RCPP
+}
+// set_ref_genome_seq_names
+void set_ref_genome_seq_names(SEXP ref_genome_, const std::vector<uint32>& seq_inds, const std::vector<std::string>& names);
+RcppExport SEXP _gemino_set_ref_genome_seq_names(SEXP ref_genome_SEXP, SEXP seq_indsSEXP, SEXP namesSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_(ref_genome_SEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type seq_inds(seq_indsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type names(namesSEXP);
+    set_ref_genome_seq_names(ref_genome_, seq_inds, names);
+    return R_NilValue;
+END_RCPP
+}
+// see_ref_genome_seq
+std::string see_ref_genome_seq(SEXP ref_genome_, const uint32& seq_ind);
+RcppExport SEXP _gemino_see_ref_genome_seq(SEXP ref_genome_SEXP, SEXP seq_indSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_(ref_genome_SEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type seq_ind(seq_indSEXP);
+    rcpp_result_gen = Rcpp::wrap(see_ref_genome_seq(ref_genome_, seq_ind));
+    return rcpp_result_gen;
+END_RCPP
+}
 // make_ref_genome
 SEXP make_ref_genome(const std::deque<std::string>& seqs);
 RcppExport SEXP _gemino_make_ref_genome(SEXP seqsSEXP) {
@@ -591,6 +689,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_digest_var_set", (DL_FUNC) &_gemino_digest_var_set, 5},
     {"_gemino_digest_ref", (DL_FUNC) &_gemino_digest_ref, 5},
     {"_gemino_phylo_info_to_trees", (DL_FUNC) &_gemino_phylo_info_to_trees, 1},
+    {"_gemino_phylo_info_to_trees_chunk", (DL_FUNC) &_gemino_phylo_info_to_trees_chunk, 1},
+    {"_gemino_evolve_seqs", (DL_FUNC) &_gemino_evolve_seqs, 6},
+    {"_gemino_evolve_seqs_chunk", (DL_FUNC) &_gemino_evolve_seqs_chunk, 6},
     {"_gemino_TN93_rate_matrix", (DL_FUNC) &_gemino_TN93_rate_matrix, 5},
     {"_gemino_JC69_rate_matrix", (DL_FUNC) &_gemino_JC69_rate_matrix, 2},
     {"_gemino_K80_rate_matrix", (DL_FUNC) &_gemino_K80_rate_matrix, 3},
@@ -621,6 +722,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_read_fasta_ind", (DL_FUNC) &_gemino_read_fasta_ind, 3},
     {"_gemino_write_fasta_fa", (DL_FUNC) &_gemino_write_fasta_fa, 3},
     {"_gemino_write_fasta_gz", (DL_FUNC) &_gemino_write_fasta_gz, 3},
+    {"_gemino_see_ref_genome_seq_sizes", (DL_FUNC) &_gemino_see_ref_genome_seq_sizes, 1},
+    {"_gemino_remove_ref_genome_seq_sizes", (DL_FUNC) &_gemino_remove_ref_genome_seq_sizes, 2},
+    {"_gemino_see_ref_genome_seq_names", (DL_FUNC) &_gemino_see_ref_genome_seq_names, 1},
+    {"_gemino_set_ref_genome_seq_names", (DL_FUNC) &_gemino_set_ref_genome_seq_names, 3},
+    {"_gemino_see_ref_genome_seq", (DL_FUNC) &_gemino_see_ref_genome_seq, 2},
     {"_gemino_make_ref_genome", (DL_FUNC) &_gemino_make_ref_genome, 1},
     {"_gemino_make_var_set", (DL_FUNC) &_gemino_make_var_set, 2},
     {"_gemino_see_var_genome", (DL_FUNC) &_gemino_see_var_genome, 2},
