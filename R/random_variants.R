@@ -295,7 +295,7 @@ random_variants <- function(reference_ptr, n_variants, n_cores, random_control) 
              call. = FALSE)
     }
 
-    args_ <- names(formals(gemino:::random_variants_))[-1:-3]
+    args_ <- names(formals(random_variants_))[-1:-3]
 
     if (any(!names(random_control) %in% args_)) {
         stop(paste("\nIf providing random_control to create_variants, only the",

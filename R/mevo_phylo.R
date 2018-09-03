@@ -36,7 +36,7 @@ process_coal_tree_string <- function(str, seq_size) {
         sizes_ <- 1
     }
     ends <- cumsum(sizes_) - 1
-    starts <- c(0, head(ends, -1) + 1)
+    starts <- c(0, utils::head(ends, -1) + 1)
 
     phylo_ <- ape::read.tree(text = str)
     # If no recombination (so only one phylo per sequence),
@@ -249,7 +249,7 @@ read_theta <- function(theta, mu, n_vars, n_seqs, chunked) {
 
     trees_ptr <- read_phy_obj(phy, n_seqs, chunked)
 
-    return(tree_ptr)
+    return(trees_ptr)
 
 }
 
