@@ -35,10 +35,11 @@ namespace table_sampler {
      I did it this way because larger probabilities should be less affected by changing
      their respective values in `ints`.
      */
-    void fill_ints(const std::vector<double>& p, std::vector<uint64>& ints,
+    inline void fill_ints(const std::vector<double>& p, std::vector<uint64>& ints,
                           pcg32& eng) {
 
-        // Vector holding the transitory values that will eventually be inserted into `int`
+        // Vector holding the transitory values that will eventually be inserted into
+        // `ints`
         arma::vec pp(p);
         pp /= arma::accu(pp);
         pp *= static_cast<double>(1UL<<32);
@@ -59,8 +60,8 @@ namespace table_sampler {
         double z = 1 / std::pow(2, 8);
         arma::uvec iv = arma::find(p2 < z);
         /*
-        If there aren't any *above* this threshold, keep adding 8 to `x` in the expression
-        `2^-x` until we would no longer be setting all probabilities to zero
+         If there aren't any *above* this threshold, keep adding 8 to `x` in the
+         expression `2^-x` until we would no longer be setting all probabilities to zero
         */
         while (iv.n_elem == p2.n_elem) {
             for (uint32 zz = 0; zz < 8; zz++) z /= 2;

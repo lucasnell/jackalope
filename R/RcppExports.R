@@ -301,91 +301,6 @@ UNREST_rate_matrix <- function(Q, xi) {
     .Call(`_gemino_UNREST_rate_matrix`, Q, xi)
 }
 
-#' Add mutations manually from R.
-#'
-#' Note that all indices are in 0-based C++ indexing. This means that the first
-#' item is indexed by `0`, and so forth.
-#'
-#' @param var_set_ptr External pointer to a C++ `VarSet` object
-#' @param var_ind Integer index to the desired variant. Uses 0-based indexing!
-#' @param seq_ind Integer index to the desired sequence. Uses 0-based indexing!
-#' @param new_pos_ Integer index to the desired subsitution location.
-#'     Uses 0-based indexing!
-#'
-#' @name add_mutations
-NULL
-
-#' Turns a VarGenome's mutations into a list of data frames.
-#'
-#' Internal function for testing.
-#'
-#'
-#' @noRd
-#'
-see_mutations <- function(var_set_ptr, var_ind) {
-    .Call(`_gemino_see_mutations`, var_set_ptr, var_ind)
-}
-
-#' Turns a VarGenome's mutations into a list of data frames.
-#'
-#' Internal function for testing.
-#'
-#'
-#' @noRd
-#'
-examine_mutations <- function(var_set_ptr, var_ind, seq_ind) {
-    .Call(`_gemino_examine_mutations`, var_set_ptr, var_ind, seq_ind)
-}
-
-#' Faster version of table function to count the number of mutations in Gamma regions.
-#'
-#' @param gamma_ends Vector of endpoints for gamma regions
-#' @param positions Vector of positions that you want to bin into gamma regions.
-#'
-#'
-#'
-table_gammas <- function(gamma_ends, positions) {
-    .Call(`_gemino_table_gammas`, gamma_ends, positions)
-}
-
-#' @describeIn add_mutations Add a substitution.
-#'
-#' @inheritParams add_mutations
-#' @param nucleo_ Character to substitute for existing one.
-#'
-#'
-add_substitution <- function(var_set_ptr, var_ind, seq_ind, nucleo_, new_pos_) {
-    invisible(.Call(`_gemino_add_substitution`, var_set_ptr, var_ind, seq_ind, nucleo_, new_pos_))
-}
-
-#' @describeIn add_mutations Add an insertion.
-#'
-#' @inheritParams add_mutations
-#' @param nucleos_ Nucleotides to insert at the desired location.
-#'
-#'
-add_insertion <- function(var_set_ptr, var_ind, seq_ind, nucleos_, new_pos_) {
-    invisible(.Call(`_gemino_add_insertion`, var_set_ptr, var_ind, seq_ind, nucleos_, new_pos_))
-}
-
-#' @describeIn add_mutations Add a deletion.
-#'
-#' @inheritParams add_mutations
-#' @param size_ Size of deletion.
-#'
-#'
-add_deletion <- function(var_set_ptr, var_ind, seq_ind, size_, new_pos_) {
-    invisible(.Call(`_gemino_add_deletion`, var_set_ptr, var_ind, seq_ind, size_, new_pos_))
-}
-
-#' Get a rate for given start and end points of a VarSequence.
-#'
-#' @noRd
-#'
-test_rate <- function(start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_) {
-    .Call(`_gemino_test_rate`, start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_)
-}
-
 #' Fill in vectors of mutation probabilities and lengths.
 #'
 #' These vectors should be initialized already, but there's no need to resize them.
@@ -427,26 +342,6 @@ make_mutation_sampler_base <- function(Q, xi, psi, pi_tcag, rel_insertion_rates,
 
 make_mutation_sampler_chunk_base <- function(Q, xi, psi, pi_tcag, rel_insertion_rates, rel_deletion_rates, chunk_size) {
     .Call(`_gemino_make_mutation_sampler_chunk_base`, Q, xi, psi, pi_tcag, rel_insertion_rates, rel_deletion_rates, chunk_size)
-}
-
-#' Function to print info on a `RefGenome`.
-#'
-#' Access `RefGenome` class's print method from R.
-#'
-#' @noRd
-#'
-print_ref_genome <- function(ref_genome_ptr) {
-    invisible(.Call(`_gemino_print_ref_genome`, ref_genome_ptr))
-}
-
-#' Function to print info on a VarSet.
-#'
-#' Access `VarSet` class's print method from R.
-#'
-#' @noRd
-#'
-print_var_set <- function(var_set_ptr) {
-    invisible(.Call(`_gemino_print_var_set`, var_set_ptr))
 }
 
 #' Read a ms output file with newick gene trees and return the gene tree strings.
@@ -523,51 +418,193 @@ write_fasta_gz <- function(file_name, ref_genome_ptr, text_width) {
     invisible(.Call(`_gemino_write_fasta_gz`, file_name, ref_genome_ptr, text_width))
 }
 
-see_ref_genome_seq_sizes <- function(ref_genome_ptr) {
-    .Call(`_gemino_see_ref_genome_seq_sizes`, ref_genome_ptr)
+#' Add mutations manually from R.
+#'
+#' Note that all indices are in 0-based C++ indexing. This means that the first
+#' item is indexed by `0`, and so forth.
+#'
+#' @param var_set_ptr External pointer to a C++ `VarSet` object
+#' @param var_ind Integer index to the desired variant. Uses 0-based indexing!
+#' @param seq_ind Integer index to the desired sequence. Uses 0-based indexing!
+#' @param new_pos_ Integer index to the desired subsitution location.
+#'     Uses 0-based indexing!
+#'
+#' @name add_mutations
+NULL
+
+#' Function to print info on a `RefGenome`.
+#'
+#' Access `RefGenome` class's print method from R.
+#'
+#' @noRd
+#'
+print_ref_genome <- function(ref_genome_ptr) {
+    invisible(.Call(`_gemino_print_ref_genome`, ref_genome_ptr))
 }
 
-remove_ref_genome_seq_sizes <- function(ref_genome_ptr, seq_inds) {
-    invisible(.Call(`_gemino_remove_ref_genome_seq_sizes`, ref_genome_ptr, seq_inds))
+#' Function to print info on a VarSet.
+#'
+#' Access `VarSet` class's print method from R.
+#'
+#' @noRd
+#'
+print_var_set <- function(var_set_ptr) {
+    invisible(.Call(`_gemino_print_var_set`, var_set_ptr))
 }
 
-see_ref_genome_seq_names <- function(ref_genome_ptr) {
-    .Call(`_gemino_see_ref_genome_seq_names`, ref_genome_ptr)
+#' Make a RefGenome object from a set of sequences.
+#'
+#' Used for testing.
+#'
+#' @noRd
+#'
+make_ref_genome <- function(seqs) {
+    .Call(`_gemino_make_ref_genome`, seqs)
+}
+
+#' Make a VarSet object from a RefGenome pointer and # variants.
+#'
+#' Used for testing.
+#'
+#'
+#' @noRd
+#'
+make_var_set <- function(ref_genome_ptr, n_vars) {
+    .Call(`_gemino_make_var_set`, ref_genome_ptr, n_vars)
+}
+
+view_ref_genome_seq_sizes <- function(ref_genome_ptr) {
+    .Call(`_gemino_view_ref_genome_seq_sizes`, ref_genome_ptr)
+}
+
+#' See all sequence sizes in a VarGenome object within a VarSet.
+#'
+#' @noRd
+#'
+view_var_genome_seq_sizes <- function(var_set_ptr, var_ind) {
+    .Call(`_gemino_view_var_genome_seq_sizes`, var_set_ptr, var_ind)
+}
+
+view_ref_genome_seq <- function(ref_genome_ptr, seq_ind) {
+    .Call(`_gemino_view_ref_genome_seq`, ref_genome_ptr, seq_ind)
+}
+
+#' Function to piece together the strings for one sequence in a VarGenome.
+#'
+#' @noRd
+#'
+view_var_genome_seq <- function(var_set_ptr, var_ind, seq_ind) {
+    .Call(`_gemino_view_var_genome_seq`, var_set_ptr, var_ind, seq_ind)
+}
+
+view_ref_genome <- function(ref_genome_ptr) {
+    .Call(`_gemino_view_ref_genome`, ref_genome_ptr)
+}
+
+#' Function to piece together the strings for all sequences in a VarGenome.
+#'
+#' @noRd
+#'
+view_var_genome <- function(var_set_ptr, var_ind) {
+    .Call(`_gemino_view_var_genome`, var_set_ptr, var_ind)
+}
+
+view_ref_genome_seq_names <- function(ref_genome_ptr) {
+    .Call(`_gemino_view_ref_genome_seq_names`, ref_genome_ptr)
+}
+
+#' See all variant-genome names in a VarSet object.
+#'
+#' @noRd
+#'
+view_var_set_var_names <- function(var_set_ptr) {
+    .Call(`_gemino_view_var_set_var_names`, var_set_ptr)
 }
 
 set_ref_genome_seq_names <- function(ref_genome_ptr, seq_inds, names) {
     invisible(.Call(`_gemino_set_ref_genome_seq_names`, ref_genome_ptr, seq_inds, names))
 }
 
-see_ref_genome_seq <- function(ref_genome_ptr, seq_ind) {
-    .Call(`_gemino_see_ref_genome_seq`, ref_genome_ptr, seq_ind)
+set_var_set_var_names <- function(var_set_ptr, seq_inds, names) {
+    invisible(.Call(`_gemino_set_var_set_var_names`, var_set_ptr, seq_inds, names))
 }
 
-#' Make a RefGenome object from a set of sequences
-#'
-#' @noRd
-make_ref_genome <- function(seqs) {
-    .Call(`_gemino_make_ref_genome`, seqs)
+remove_ref_genome_seqs <- function(ref_genome_ptr, seq_inds) {
+    invisible(.Call(`_gemino_remove_ref_genome_seqs`, ref_genome_ptr, seq_inds))
 }
 
-#' Make a VarSet object from a RefGenome pointer and # variants
-#'
-#' @noRd
-make_var_set <- function(ref_genome_ptr, n_vars) {
-    .Call(`_gemino_make_var_set`, ref_genome_ptr, n_vars)
+remove_var_set_vars <- function(var_set_ptr, seq_inds) {
+    invisible(.Call(`_gemino_remove_var_set_vars`, var_set_ptr, seq_inds))
 }
 
-#' Function to piece together the strings for all sequences in a VarGenome.
+#' Turns a VarGenome's mutations into a list of data frames.
+#'
+#' Internal function for testing.
+#'
 #'
 #' @noRd
-see_var_genome <- function(var_set_ptr, var_ind) {
-    .Call(`_gemino_see_var_genome`, var_set_ptr, var_ind)
+#'
+view_mutations <- function(var_set_ptr, var_ind) {
+    .Call(`_gemino_view_mutations`, var_set_ptr, var_ind)
 }
 
-#' See all sequence sizes in a VarSet object.
+#' Turns a VarGenome's mutations into a list of data frames.
+#'
+#' Internal function for testing.
+#'
 #'
 #' @noRd
-see_sizes <- function(var_set_ptr, var_ind) {
-    .Call(`_gemino_see_sizes`, var_set_ptr, var_ind)
+#'
+examine_mutations <- function(var_set_ptr, var_ind, seq_ind) {
+    .Call(`_gemino_examine_mutations`, var_set_ptr, var_ind, seq_ind)
+}
+
+#' Faster version of table function to count the number of mutations in Gamma regions.
+#'
+#' @param gamma_ends Vector of endpoints for gamma regions
+#' @param positions Vector of positions that you want to bin into gamma regions.
+#'
+#'
+#'
+table_gammas <- function(gamma_ends, positions) {
+    .Call(`_gemino_table_gammas`, gamma_ends, positions)
+}
+
+#' @describeIn add_mutations Add a substitution.
+#'
+#' @inheritParams add_mutations
+#' @param nucleo_ Character to substitute for existing one.
+#'
+#'
+add_substitution <- function(var_set_ptr, var_ind, seq_ind, nucleo_, new_pos_) {
+    invisible(.Call(`_gemino_add_substitution`, var_set_ptr, var_ind, seq_ind, nucleo_, new_pos_))
+}
+
+#' @describeIn add_mutations Add an insertion.
+#'
+#' @inheritParams add_mutations
+#' @param nucleos_ Nucleotides to insert at the desired location.
+#'
+#'
+add_insertion <- function(var_set_ptr, var_ind, seq_ind, nucleos_, new_pos_) {
+    invisible(.Call(`_gemino_add_insertion`, var_set_ptr, var_ind, seq_ind, nucleos_, new_pos_))
+}
+
+#' @describeIn add_mutations Add a deletion.
+#'
+#' @inheritParams add_mutations
+#' @param size_ Size of deletion.
+#'
+#'
+add_deletion <- function(var_set_ptr, var_ind, seq_ind, size_, new_pos_) {
+    invisible(.Call(`_gemino_add_deletion`, var_set_ptr, var_ind, seq_ind, size_, new_pos_))
+}
+
+#' Get a rate for given start and end points of a VarSequence.
+#'
+#' @noRd
+#'
+test_rate <- function(start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_) {
+    .Call(`_gemino_test_rate`, start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_)
 }
 
