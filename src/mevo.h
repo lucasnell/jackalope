@@ -796,6 +796,62 @@ typedef OneSeqMutationSampler<ChunkLocationSampler> ChunkMutationSampler;
 
 
 
+void fill_mut_prob_length_vectors(
+        std::vector<std::vector<double>>& probs,
+        std::vector<sint32>& mut_lengths,
+        const arma::mat& Q,
+        const double& xi,
+        const double& psi,
+        const std::vector<double>& pi_tcag,
+        arma::vec rel_insertion_rates,
+        arma::vec rel_deletion_rates);
+
+
+
+//' Creates MutationSampler without any of the pointers.
+//'
+//' `T` should be MutationSampler or ChunkMutationSampler
+//' `T` should be LocationSampler or ChunkLocationSampler
+//' MutationSampler should always go with LocationSampler, and
+//' ChunkMutationSampler with ChunkLocationSampler
+//'
+//' Before actually using the object output from this function, make sure to...
+//' * use `[Chunk]MutationSampler.fill_ptrs(VarSequence& var_seq)` to fill pointers.
+//' * use `[Chunk]MutationSampler.fill_gamma(const arma::mat& gamma_mat)` to fill
+//'   the gamma matrix.
+//' * use `ChunkMutationSampler.location.change_chunk(chunk_size)` if using chunked
+//'   version.
+//'
+//' @noRd
+//'
+template <typename T, typename U>
+XPtr<T> make_mutation_sampler_base_(const arma::mat& Q,
+                                    const double& xi,
+                                    const double& psi,
+                                    const std::vector<double>& pi_tcag,
+                                    const arma::vec& rel_insertion_rates,
+                                    const arma::vec& rel_deletion_rates) {
+
+    std::vector<std::vector<double>> probs;
+    std::vector<sint32> mut_lengths;
+
+    fill_mut_prob_length_vectors(probs, mut_lengths, Q, xi, psi, pi_tcag,
+                                 rel_insertion_rates, rel_deletion_rates);
+
+    XPtr<T> out(new T());
+
+    out->type = MutationTypeSampler(probs, mut_lengths);
+    out->insert = TableStringSampler<std::string>(mevo::bases, pi_tcag);
+
+    std::vector<double> q_tcag(4);
+    for (uint32 i = 0; i < 4; i++) q_tcag[i] = probs[i][i];
+    MutationRates mr(q_tcag);
+    out->location = U(mr);
+
+    return out;
+}
+
+
 
 MutationSampler make_mutation_sampler(VarSequence& var_seq,
                                       const std::vector<std::vector<double>>& probs,
