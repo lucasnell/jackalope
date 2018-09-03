@@ -158,7 +158,7 @@ public:
           seq_rates(edges_[0].max()),
           gamma_mat(gamma_mat_),
           ordered_tip_labels(),
-          recombination(branch_lens_.size() == 1)
+          recombination(branch_lens_.size() > 1)
     {
 
         uint32 tree_size = edges_[0].max();
@@ -221,10 +221,9 @@ public:
           seq_rates(edges_[0].max()),
           gamma_mat(),
           ordered_tip_labels(),
-          recombination(branch_lens_.size() == 1)
+          recombination(branch_lens_.size() > 1)
     {
 
-        uint32 tree_size = edges_[0].max();
         uint32 n_trees = edges_.size();
 
         if (n_bases_.size() != branch_lens_.size() ||
@@ -290,6 +289,7 @@ public:
      Evolve all trees.
      */
     int evolve(pcg32& eng, Progress& prog_bar) {
+
         for (PhyloTree& tree : trees) {
             int code = one_tree(tree, eng, prog_bar);
             if (code == -1) return code;
@@ -453,7 +453,7 @@ int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
     if (prog_bar.is_aborted()) return -1;
 
     // Exponential distribution to do the time-jumps along the branch lengths:
-    std::exponential_distribution<double> distr;
+    std::exponential_distribution<double> distr(1.0);
 
     /*
      Now iterate through the phylogeny:
@@ -544,16 +544,16 @@ int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
  */
 template <typename T>
 void evolve_seqs_(
-        SEXP& var_set_xptr,
-        SEXP& sampler_base_xptr,
-        SEXP& phylo_info_xptr,
+        SEXP& var_set_ptr,
+        SEXP& sampler_base_ptr,
+        SEXP& phylo_info_ptr,
         const std::vector<uint32>& seq_inds,
         const std::vector<arma::mat>& gamma_mats,
         const bool& show_progress) {
 
-    XPtr<VarSet> var_set(var_set_xptr);
-    XPtr<T> sampler_base(sampler_base_xptr);
-    XPtr<std::vector<PhyloOneSeq<T>>> phylo_info(phylo_info_xptr);
+    XPtr<VarSet> var_set(var_set_ptr);
+    XPtr<T> sampler_base(sampler_base_ptr);
+    XPtr<std::vector<PhyloOneSeq<T>>> phylo_info(phylo_info_ptr);
 
     uint32 n_seqs = var_set->reference.size();
     uint64 total_seq = var_set->reference.total_size;
@@ -577,8 +577,6 @@ void evolve_seqs_(
     }
 
 
-    uint32 n_tips = var_set->size();
-
     pcg32 eng = seeded_pcg();
 
     for (uint32 i = 0; i < n_seqs; i++) {
@@ -597,7 +595,7 @@ void evolve_seqs_(
         }
 
         // Set values for variant info and sampler:
-        seq_phylo.set_samp_var_info(var_set, sampler_base, seq_ind, gamma_mat);
+        seq_phylo.set_samp_var_info(*var_set, *sampler_base, seq_ind, gamma_mat);
 
         // Evolve the sequence using the seq_phylo object:
         int code = seq_phylo.evolve(eng, prog_bar);
