@@ -19,7 +19,7 @@
 #endif
 
 #include "gemino_types.h"  // integer types
-#include "sequence_classes.h" // RefGenome, RefSequence classes
+#include "seq_classes_ref.h"  // Ref* classes
 #include "table_sampler.h" // table sampling
 #include "pcg.h" // pcg::max, mc_seeds, seeded_pcg
 

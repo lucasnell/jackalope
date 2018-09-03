@@ -15,7 +15,8 @@
 
 
 #include "gemino_types.h"  // integer types
-#include "sequence_classes.h"  // Var* and Ref* classes
+#include "seq_classes_ref.h"  // Ref* classes
+#include "seq_classes_var.h"  // Var* classes
 
 using namespace Rcpp;
 

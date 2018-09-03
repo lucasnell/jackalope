@@ -5,7 +5,7 @@
 #include <vector>
 #include <zlib.h>
 
-#include "sequence_classes.h"  // RefGenome and RefSequence classes
+#include "seq_classes_ref.h"  // Ref* classes
 #include "str_manip.h"  // filter_nucleos
 
 using namespace Rcpp;

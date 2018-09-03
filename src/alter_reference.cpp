@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "sequence_classes.h"   // new classes
+#include "seq_classes_ref.h"  // Ref* classes
 #include "gemino_types.h"  // integer types
 #include "util.h"  // clear_memory
 

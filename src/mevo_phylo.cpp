@@ -18,7 +18,7 @@
 
 
 #include "gemino_types.h"  // integer types
-#include "sequence_classes.h"  // Var* and Ref* classes
+#include "seq_classes_var.h"  // Var* classes
 #include "mevo.h"  // samplers
 #include "table_sampler.h" // table sampling
 #include "pcg.h" // pcg sampler types

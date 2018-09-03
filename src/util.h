@@ -23,6 +23,21 @@ using namespace Rcpp;
 
 
 /*
+ Calling `base::options("width")$width`
+ */
+inline int get_width() {
+    // Obtain environment containing function
+    Environment base("package:base");
+    // Make function callable from C++
+    Function opt_r = base["options"];
+    // Call the function and receive its list output
+    List width_list = opt_r("width");
+    int console_width = width_list["width"];
+    return console_width;
+}
+
+
+/*
  Clear memory from a std::vector, std::deque, or std::string.
  Simply erasing objects does not clear memory.
  I'm not sure this works for other classes. You should check before using this function.

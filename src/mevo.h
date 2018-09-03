@@ -10,7 +10,7 @@
 
 
 #include "gemino_types.h" // integer types
-#include "sequence_classes.h"  // Var* and Ref* classes
+#include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // pcg seeding
 #include "table_sampler.h"  // table method of sampling
 #include "mevo_gammas.h"  // SequenceGammas class

@@ -13,7 +13,8 @@
 
 
 #include "gemino_types.h" // integer types
-#include "sequence_classes.h" // classes RefGenome and VarSet
+#include "seq_classes_ref.h"  // Ref* classes
+#include "seq_classes_var.h"  // Var* classes
 #include "digest.h" // DigestInfo, MultiOut,
 
 using namespace Rcpp;

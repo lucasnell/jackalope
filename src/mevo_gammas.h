@@ -20,7 +20,6 @@
 #include <random>               // gamma_distribution
 
 #include "gemino_types.h"       // integer types
-#include "sequence_classes.h"   // Var* and Ref* classes
 #include "pcg.h"                // pcg seeding
 
 

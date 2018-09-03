@@ -1,12 +1,11 @@
-#ifndef __GEMINO_SEQ_CLASSES_H
-#define __GEMINO_SEQ_CLASSES_H
+#ifndef __GEMINO_SEQ_CLASSES_VAR_H
+#define __GEMINO_SEQ_CLASSES_VAR_H
 
 
 /*
  ********************************************************
 
- Classes to store reference and variant sequence info
- See methods' comments for where it's located.
+ Classes to store variant sequence info.
 
  ********************************************************
  */
@@ -19,150 +18,10 @@
 #include <deque>  // deque class
 
 #include "gemino_types.h"  // integer types
+#include "seq_classes_ref.h"  // Ref* classes
 #include "util.h"  // clear_memory
 
 using namespace Rcpp;
-
-
-/*
- ========================================================================================
- ========================================================================================
-
- Reference genome
-
- ========================================================================================
- ========================================================================================
- */
-
-
-/*
- =========================================
- One reference-genome sequence (e.g., chromosome, scaffold)
- =========================================
- */
-struct RefSequence {
-
-    // Member variables
-    std::string name;
-    std::string nucleos;
-
-    // Constructors
-    RefSequence() : name(""), nucleos("") {};
-    RefSequence(const std::string& name_, const std::string& nucleos_)
-        : name(name_), nucleos(nucleos_) {};
-    RefSequence(const std::string& nucleos_)
-        : name(""), nucleos(nucleos_) {};
-
-    // Overloaded operator so nucleotides can be easily extracted
-    char operator[](const uint32& idx) const {
-        if (idx >= nucleos.size()) {
-            stop("Trying to extract nucleotide that doesn't exist");
-        }
-        return nucleos[idx];
-    }
-    char& operator[](const uint32& idx) {
-        if (idx >= nucleos.size()) {
-            stop("Trying to extract nucleotide that doesn't exist");
-        }
-        return nucleos[idx];
-    }
-    // To resize this sequence
-    void reserve(const uint32& n) {
-        nucleos.reserve(n);
-        return;
-    }
-    // To resize this sequence
-    void resize(const uint32& n, const char& x) {
-        // nucleos.resize(n, x); // the below way should be faster based on testing
-        nucleos = std::string(n, x);
-        return;
-    }
-    // To add character to sequence
-    void push_back(const char& nt) {
-        nucleos.push_back(nt);
-        return;
-    }
-    // To add character to sequence
-    void operator+=(const char& nt) {
-        nucleos += nt;
-        return;
-    }
-    // To return the size of this sequence
-    uint32 size() const noexcept {
-        return nucleos.size();
-    }
-    // For sorting from largest to smallest sequence
-    bool operator > (const RefSequence& other) const noexcept {
-        return size() > other.size();
-    }
-};
-
-
-
-
-/*
- =========================================
- One full reference genome
- =========================================
- */
-
-struct RefGenome {
-
-    // Member variables
-    uint64 total_size = 0;
-    std::deque<RefSequence> sequences;
-    bool merged = false;
-    // For storing original names if merged:
-    std::deque<std::string> old_names;
-
-    // Constructors
-    RefGenome()
-        : sequences(std::deque<RefSequence>(0)) {};
-    RefGenome(const RefGenome& ref_)
-        : total_size(ref_.total_size), sequences(ref_.sequences),
-          merged(ref_.merged), old_names(ref_.old_names) {};
-    RefGenome(const uint32& N)
-        : sequences(std::deque<RefSequence>(N, RefSequence())) {};
-    RefGenome(const std::deque<std::string>& seqs) {
-        uint32 n_seqs = seqs.size();
-        sequences = std::deque<RefSequence>(n_seqs, RefSequence());
-        for (uint32 i = 0; i < n_seqs; i++) {
-            sequences[i].nucleos = seqs[i];
-            sequences[i].name = "seq" + std::to_string(i);
-            total_size += seqs[i].size();
-        }
-    }
-    // Overloaded operator so sequences can be easily extracted
-    // It returns a reference so no copying is done and so changes can be made
-    RefSequence& operator[](const uint32& idx) {
-        if (idx >= sequences.size()) {
-            stop("Trying to extract sequence that doesn't exist");
-        }
-        return sequences[idx];
-    }
-    const RefSequence& operator[](const uint32& idx) const {
-        if (idx >= sequences.size()) {
-            stop("Trying to extract sequence that doesn't exist");
-        }
-        return sequences[idx];
-    }
-    // To return the number of sequences
-    uint32 size() const noexcept {
-        return sequences.size();
-    }
-    // To return the sequence sizes
-    std::vector<uint32> seq_sizes() const {
-        std::vector<uint32> out(size());
-        for (uint32 i = 0; i < out.size(); i++) out[i] = sequences[i].size();
-        return out;
-    }
-    // For printing reference genome info
-    void print() const;
-};
-
-
-
-
 
 
 
@@ -549,9 +408,6 @@ public:
         return variants.size();
     }
 
-    // For printing output
-    void print() const noexcept;
-
     /*
      Fill VarGenome objects after the reference has been filled
      */
@@ -568,6 +424,10 @@ public:
         }
         return;
     }
+
+    // For printing output
+    void print() const noexcept;
+
 };
 
 #endif
