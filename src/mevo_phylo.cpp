@@ -154,22 +154,20 @@ SEXP phylo_info_to_trees_chunk(List genome_phylo_info) {
 
 
 
-
-
 //' Evolve all sequences in a reference genome.
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
 void evolve_seqs(
-        SEXP& var_set_xptr,
-        SEXP& sampler_base_xptr,
-        SEXP& phylo_info_xptr,
+        SEXP& var_set_ptr,
+        SEXP& sampler_base_ptr,
+        SEXP& phylo_info_ptr,
         const std::vector<uint32>& seq_inds,
         const std::vector<arma::mat>& gamma_mats,
         const bool& show_progress) {
 
-    evolve_seqs_<MutationSampler>(var_set_xptr, sampler_base_xptr, phylo_info_xptr,
+    evolve_seqs_<MutationSampler>(var_set_ptr, sampler_base_ptr, phylo_info_ptr,
                                   seq_inds, gamma_mats, show_progress);
 
     return;
@@ -181,14 +179,14 @@ void evolve_seqs(
 //'
 //[[Rcpp::export]]
 void evolve_seqs_chunk(
-        SEXP& var_set_xptr,
-        SEXP& sampler_base_xptr,
-        SEXP& phylo_info_xptr,
+        SEXP& var_set_ptr,
+        SEXP& sampler_base_ptr,
+        SEXP& phylo_info_ptr,
         const std::vector<uint32>& seq_inds,
         const std::vector<arma::mat>& gamma_mats,
         const bool& show_progress) {
 
-    evolve_seqs_<ChunkMutationSampler>(var_set_xptr, sampler_base_xptr, phylo_info_xptr,
+    evolve_seqs_<ChunkMutationSampler>(var_set_ptr, sampler_base_ptr, phylo_info_ptr,
                                        seq_inds, gamma_mats, show_progress);
 
     return;
