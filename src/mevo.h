@@ -200,7 +200,7 @@ public:
         bool use_mutations = true;
         if (var_seq->mutations.empty()) {
             use_mutations = false;
-            if ((var_seq->ref_seq.nucleos.size() - 1) != gammas.regions.back().end) {
+            if ((var_seq->ref_seq->nucleos.size() - 1) != gammas.regions.back().end) {
                 stop("gammas and var_seq ref sizes don't match inside MutationRates");
             }
         } else if (var_seq->mutations.front().new_pos > end) {
@@ -214,7 +214,7 @@ public:
                 double gamma = gammas.regions[gam_i].gamma;
                 double tmp = 0;
                 while (i <= gammas.regions[gam_i].end && i <= end) {
-                    tmp += nt_rates[var_seq->ref_seq.nucleos[i]];
+                    tmp += nt_rates[var_seq->ref_seq->nucleos[i]];
                     i++;
                 }
                 out += (tmp * gamma);
@@ -245,7 +245,7 @@ public:
             mut_i = 0;
             for (; pos < var_seq->mutations[mut_i].new_pos; pos++) {
                 check_gamma(pos, gamma_end, gam_i, gamma, gammas);
-                out += (nt_rates[var_seq->ref_seq[pos]] * gamma);
+                out += (nt_rates[(*(var_seq->ref_seq))[pos]] * gamma);
             }
             check_gamma(pos, gamma_end, gam_i, gamma, gammas);
         }

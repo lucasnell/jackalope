@@ -325,7 +325,7 @@ private:
         }
         // Resize blank VarSequence objects if necessary:
         if (tree_size != var_seqs.size()) {
-            VarSequence var_seq_(var_seq_ptrs[0]->ref_seq);
+            VarSequence var_seq_(*(var_seq_ptrs[0]->ref_seq));
             var_seqs.resize(tree_size, var_seq_);
         }
         // Empty mutations from tree of VarSequence objects:
@@ -527,7 +527,7 @@ int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
     // Update progress bar:
     if (recombination) {
         prog_bar.increment(tree.end - tree.start + 1);
-    } else prog_bar.increment(var_seq_ptrs[0]->ref_seq.size());
+    } else prog_bar.increment(var_seq_ptrs[0]->ref_seq->size());
 
     return 0;
 

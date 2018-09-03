@@ -42,7 +42,7 @@ char VarSequence::get_nt(const uint32& new_pos) const {
      we just extract the character from the beginning of the reference string:
      */
     if (mut_i == mutations.size()) {
-        out = ref_seq[new_pos];
+        out = (*ref_seq)[new_pos];
         /*
          If not, then extract the character from the Mutation object that
          `mut` points to (see below for `get_char_` fxn):
@@ -65,7 +65,7 @@ char VarSequence::get_nt(const uint32& new_pos) const {
 
 std::string VarSequence::get_seq_full() const {
 
-    if (mutations.empty()) return ref_seq.nucleos;
+    if (mutations.empty()) return ref_seq->nucleos;
 
     // Index to the first Mutation object
     uint32 mut_i = 0;
@@ -75,7 +75,7 @@ std::string VarSequence::get_seq_full() const {
 
     // Picking up any nucleotides before the first mutation
     while (pos < mutations[mut_i].new_pos) {
-        out[pos] = ref_seq[pos];
+        out[pos] = (*ref_seq)[pos];
         ++pos;
     }
 
@@ -112,7 +112,7 @@ std::string VarSequence::get_seq_start(uint32 out_length) const {
 
     if (out_length > seq_size) out_length = seq_size;
 
-    if (mutations.empty()) return ref_seq.nucleos.substr(0, out_length);
+    if (mutations.empty()) return ref_seq->nucleos.substr(0, out_length);
 
     std::string out(out_length, 'x');
 
@@ -122,7 +122,7 @@ std::string VarSequence::get_seq_start(uint32 out_length) const {
 
     // Picking up any nucleotides before the first mutation
     while (pos < mutations[mut_i].new_pos) {
-        out[pos] = ref_seq[pos];
+        out[pos] = (*ref_seq)[pos];
         if (pos == out_length - 1) return out;
         ++pos;
     }
@@ -182,7 +182,7 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
 
     // No need to mess around with mutations if there aren't any
     if (mutations.empty()) {
-        chunk_str = ref_seq.nucleos.substr(start, out_length);
+        chunk_str = ref_seq->nucleos.substr(start, out_length);
         return;
     }
     // Move mutation to the proper spot
@@ -202,7 +202,7 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
      `mut == mutations.begin()` and `start` is before the first mutation)
      */
     while (pos < mutations[mut_i].new_pos && pos <= end) {
-        chunk_str[pos - start] = ref_seq[pos];
+        chunk_str[pos - start] = (*ref_seq)[pos];
         ++pos;
     }
     if (pos > end) return;
@@ -250,7 +250,7 @@ char VarSequence::get_char_(const uint32& new_pos,
     uint32 ind = new_pos - m.new_pos;
     if (static_cast<sint32>(ind) > m.size_modifier) {
         ind += (m.old_pos - m.size_modifier);
-        out = ref_seq[ind];
+        out = (*ref_seq)[ind];
     } else {
         out = m[ind];
     }

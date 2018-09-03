@@ -141,7 +141,7 @@ List examine_mutations(SEXP var_set_, const uint32& var_ind, const uint32& seq_i
 
         const Mutation& m(var_seq.mutations[mut_i]);
 
-        char c = var_seq.ref_seq[m.old_pos];
+        char c = (*(var_seq.ref_seq))[m.old_pos];
         uint32 i = base_inds[static_cast<uint32>(c)];
         sint32 smod = m.size_modifier;
         if (smod == 0) {
@@ -322,7 +322,7 @@ double test_rate(const uint32& start, const uint32& end,
 //         tip_labels
 //     );
 //
-//     Progress p(var_set[0][seq_ind].ref_seq.size(), false);
+//     Progress p(var_set[0][seq_ind].ref_seq->size(), false);
 //
 //     int code = phylo.evolve(eng, p);
 //
