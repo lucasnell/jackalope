@@ -1,6 +1,7 @@
 context("Testing molecular evolution accuracy")
 
-library(gemino)
+# library(gemino)
+# library(testthat)
 
 
 # Combining p-values using Fisher's method:
@@ -89,8 +90,8 @@ var_set <- gemino:::evolve_seqs_chunk(
     ref,
     sampler,
     phylo_info,
-    seq_inds = (1:n_seqs - 1),
     gamma_mats,
+    n_cores = 1,
     show_progress = FALSE)
 
 
@@ -164,7 +165,7 @@ deletions <- sapply(1:10, function(u) {
 
 
 test_that("molecular evolution produces correct proportion of indel sizes", {
-    expect_true(t.test(rowSums(insertions), rowSums(deletions))$p.value > 0.05)
+    expect_gt(t.test(rowSums(insertions), rowSums(deletions))$p.value, expected = 0.05)
     ins_pvals <- sapply(1:10, function(u) {
         binom.test(sum(insertions[,u]), sum(total_muts), p = indel_p(u))$p.value
     })
@@ -210,8 +211,6 @@ expected_sub <- function(i, j) {
 
 # Observed counts per variant--sequence combo
 Q_obs <- matrix(0, 4, 4)
-# Number of mutations per variant--sequence combo
-n_obs <- matrix(0, 4, 4)
 # Expected:
 Q_exp <- matrix(0, 4, 4)
 for (i in 1:4) {
@@ -219,34 +218,15 @@ for (i in 1:4) {
         if (i == j) next
         df_ <- sub_df[sub_df$from == i & sub_df$to == j,]
         Q_obs[i, j] <- sum(df_$count)
-        n_obs[i, j] <- sum(df_$n)
-        Q_exp[i, j] <- expected_sub(i, j)
+        Q_exp[i, j] <- expected_sub(i, j) * sum(df_$n)
     }
 }
-# Observed proportions:
-# apply(Q_obs, c(1,2), mean) / apply(n_obs, c(1,2), mean)
-# Expected:
-# Q_exp
-
-sub_pvals <- numeric(12)
-k <- 1
-for (i in 1:4) {
-    for (j in 1:4) {
-        if (i == j) next
-        sub_pvals[k] <- binom.test(Q_obs[i, j], n_obs[i, j], p = Q_exp[i,j])$p.value
-        k <- k + 1
-    }
-}; rm(k, i, j)
-
-# Combined P value for all items in matrix (using Fisher's method):
-p <- fisher_method(sub_pvals)
-
 
 test_that("molecular evolution produces correct substitution matrix", {
-    # I'm not just using alpha in case there's positive correlation
-    k <- length(sub_pvals)
-    threshold <- 0.05 * (k+1) / (2*k)
-    expect_true(p > threshold)
+    x <- c(Q_obs[lower.tri(Q_obs)], Q_obs[upper.tri(Q_obs)])
+    y <- c(Q_exp[lower.tri(Q_exp)], Q_exp[upper.tri(Q_exp)])
+    p <- t.test(x, y, paired = TRUE)$p.value
+    expect_true(p > 0.05)
 })
 
 
@@ -336,27 +316,33 @@ compare_mutations <- function(df1, df2) {
 }
 
 
-shared_muts <- matrix(0L, n_vars, n_vars)
-for (i in 1:(n_vars-1)) {
-    for (j in (i+1):n_vars) {
-        sm <- compare_mutations(mutations[[i]], mutations[[j]])
-        shared_muts[i,j] <- sm
-        shared_muts[j,i] <- sm
+shared_muts <- rep(list(matrix(0L, n_vars, n_vars)), n_seqs)
+for (s in 1:n_seqs) {
+    for (i in 1:(n_vars-1)) {
+        for (j in (i+1):n_vars) {
+            df1 <- mutations[[i]]
+            df2 <- mutations[[j]]
+            sm <- compare_mutations(df1[df1$seq == (s-1), ], df2[df2$seq == (s-1), ])
+            shared_muts[[s]][i,j] <- sm
+            shared_muts[[s]][j,i] <- sm
+        }
     }
-}; rm(i, j, sm)
-diag(shared_muts) <- sapply(mutations, nrow)
+    diag(shared_muts[[s]]) <- sapply(mutations, function(x) sum(x$seq==(s-1)))
+}; rm(s, i, j, df1, df2, sm)
 
 # "Mutational" distances between all pairs:
-mut_dists <- matrix(0L, n_vars, n_vars)
-for (i in 1:(n_vars-1)) {
-    for (j in (i+1):n_vars) {
-        # Total non-shared mutations for each:
-        mdi <- shared_muts[i,i] - shared_muts[i,j]
-        mdj <- shared_muts[j,j] - shared_muts[i,j]
-        mut_dists[i,j] <- mdi
-        mut_dists[j,i] <- mdj
+mut_dists <- rep(list(matrix(0L, n_vars, n_vars)), n_seqs)
+for (s in 1:n_seqs) {
+    for (i in 1:(n_vars-1)) {
+        for (j in (i+1):n_vars) {
+            # Total non-shared mutations for each:
+            mdi <- shared_muts[[s]][i,i] - shared_muts[[s]][i,j]
+            mdj <- shared_muts[[s]][j,j] - shared_muts[[s]][i,j]
+            mut_dists[[s]][i,j] <- mdi
+            mut_dists[[s]][j,i] <- mdj
+        }
     }
-}; rm(i, j, mdi, mdj)
+}; rm(s, i, j, mdi, mdj)
 
 
 # Phylogenetic distances between all pairs:
@@ -366,15 +352,16 @@ rownames(phylo_dists) <- colnames(phylo_dists) <- NULL
 phylo_dists <- phylo_dists / 2
 
 
-# Average mutation rate for ancestral sequences times total bp in genome:
-mu_ <- mean(q) * sum(sapply(seqs, nchar)) * mean(gamma_mat[,2])
+# Average mutation rate for ancestral sequences times total bp in each sequence:
+mu_ <- mean(q) * nchar(seqs[1]) * mean(gamma_mat[,2])
 
 # Expected mutational distances:
 expected <- mu_ * phylo_dists
 
 
 test_that("Simulations conform to phylogenetic tree", {
-    expect_lt(mean((expected - mut_dists) / expected, na.rm = TRUE), 0.1)
+    expect_lt(mean(sapply(mut_dists, function(x) mean((expected - x) / expected,
+                                                      na.rm = TRUE))), expected = 0.1)
 })
 
 

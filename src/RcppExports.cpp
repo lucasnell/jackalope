@@ -112,56 +112,56 @@ BEGIN_RCPP
 END_RCPP
 }
 // phylo_info_to_trees
-SEXP phylo_info_to_trees(List genome_phylo_info);
+SEXP phylo_info_to_trees(const List& genome_phylo_info);
 RcppExport SEXP _gemino_phylo_info_to_trees(SEXP genome_phylo_infoSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type genome_phylo_info(genome_phylo_infoSEXP);
+    Rcpp::traits::input_parameter< const List& >::type genome_phylo_info(genome_phylo_infoSEXP);
     rcpp_result_gen = Rcpp::wrap(phylo_info_to_trees(genome_phylo_info));
     return rcpp_result_gen;
 END_RCPP
 }
 // phylo_info_to_trees_chunk
-SEXP phylo_info_to_trees_chunk(List genome_phylo_info);
+SEXP phylo_info_to_trees_chunk(const List& genome_phylo_info);
 RcppExport SEXP _gemino_phylo_info_to_trees_chunk(SEXP genome_phylo_infoSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type genome_phylo_info(genome_phylo_infoSEXP);
+    Rcpp::traits::input_parameter< const List& >::type genome_phylo_info(genome_phylo_infoSEXP);
     rcpp_result_gen = Rcpp::wrap(phylo_info_to_trees_chunk(genome_phylo_info));
     return rcpp_result_gen;
 END_RCPP
 }
 // evolve_seqs
-SEXP evolve_seqs(SEXP& ref_genome_ptr, SEXP& sampler_base_ptr, SEXP& phylo_info_ptr, const std::vector<uint32>& seq_inds, const std::vector<arma::mat>& gamma_mats, const bool& show_progress);
-RcppExport SEXP _gemino_evolve_seqs(SEXP ref_genome_ptrSEXP, SEXP sampler_base_ptrSEXP, SEXP phylo_info_ptrSEXP, SEXP seq_indsSEXP, SEXP gamma_matsSEXP, SEXP show_progressSEXP) {
+SEXP evolve_seqs(SEXP& ref_genome_ptr, SEXP& sampler_base_ptr, SEXP& phylo_info_ptr, const std::vector<arma::mat>& gamma_mats, const uint32& n_cores, const bool& show_progress);
+RcppExport SEXP _gemino_evolve_seqs(SEXP ref_genome_ptrSEXP, SEXP sampler_base_ptrSEXP, SEXP phylo_info_ptrSEXP, SEXP gamma_matsSEXP, SEXP n_coresSEXP, SEXP show_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP& >::type ref_genome_ptr(ref_genome_ptrSEXP);
     Rcpp::traits::input_parameter< SEXP& >::type sampler_base_ptr(sampler_base_ptrSEXP);
     Rcpp::traits::input_parameter< SEXP& >::type phylo_info_ptr(phylo_info_ptrSEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type seq_inds(seq_indsSEXP);
     Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type gamma_mats(gamma_matsSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_cores(n_coresSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
-    rcpp_result_gen = Rcpp::wrap(evolve_seqs(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, seq_inds, gamma_mats, show_progress));
+    rcpp_result_gen = Rcpp::wrap(evolve_seqs(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress));
     return rcpp_result_gen;
 END_RCPP
 }
 // evolve_seqs_chunk
-SEXP evolve_seqs_chunk(SEXP& ref_genome_ptr, SEXP& sampler_base_ptr, SEXP& phylo_info_ptr, const std::vector<uint32>& seq_inds, const std::vector<arma::mat>& gamma_mats, const bool& show_progress);
-RcppExport SEXP _gemino_evolve_seqs_chunk(SEXP ref_genome_ptrSEXP, SEXP sampler_base_ptrSEXP, SEXP phylo_info_ptrSEXP, SEXP seq_indsSEXP, SEXP gamma_matsSEXP, SEXP show_progressSEXP) {
+SEXP evolve_seqs_chunk(SEXP& ref_genome_ptr, SEXP& sampler_base_ptr, SEXP& phylo_info_ptr, const std::vector<arma::mat>& gamma_mats, const uint32& n_cores, const bool& show_progress);
+RcppExport SEXP _gemino_evolve_seqs_chunk(SEXP ref_genome_ptrSEXP, SEXP sampler_base_ptrSEXP, SEXP phylo_info_ptrSEXP, SEXP gamma_matsSEXP, SEXP n_coresSEXP, SEXP show_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP& >::type ref_genome_ptr(ref_genome_ptrSEXP);
     Rcpp::traits::input_parameter< SEXP& >::type sampler_base_ptr(sampler_base_ptrSEXP);
     Rcpp::traits::input_parameter< SEXP& >::type phylo_info_ptr(phylo_info_ptrSEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type seq_inds(seq_indsSEXP);
     Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type gamma_mats(gamma_matsSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_cores(n_coresSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
-    rcpp_result_gen = Rcpp::wrap(evolve_seqs_chunk(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, seq_inds, gamma_mats, show_progress));
+    rcpp_result_gen = Rcpp::wrap(evolve_seqs_chunk(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress));
     return rcpp_result_gen;
 END_RCPP
 }

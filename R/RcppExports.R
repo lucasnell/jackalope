@@ -177,16 +177,16 @@ phylo_info_to_trees_chunk <- function(genome_phylo_info) {
 #'
 #' @noRd
 #'
-evolve_seqs <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, seq_inds, gamma_mats, show_progress) {
-    .Call(`_gemino_evolve_seqs`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, seq_inds, gamma_mats, show_progress)
+evolve_seqs <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress) {
+    .Call(`_gemino_evolve_seqs`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress)
 }
 
 #' Same as above, but using chunks.
 #'
 #' @noRd
 #'
-evolve_seqs_chunk <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, seq_inds, gamma_mats, show_progress) {
-    .Call(`_gemino_evolve_seqs_chunk`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, seq_inds, gamma_mats, show_progress)
+evolve_seqs_chunk <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress) {
+    .Call(`_gemino_evolve_seqs_chunk`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress)
 }
 
 #' Estimates equilibrium nucleotide frequencies from an input rate matrix.
