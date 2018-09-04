@@ -851,5 +851,5 @@ void VarSet::print() const noexcept {
 
     for (int i = 0; i < n_spaces; i++) Rcout << ' ';
     Rcout << "<< Reference genome info: >>" << std::endl;
-    reference.print();
+    reference->print();
 }

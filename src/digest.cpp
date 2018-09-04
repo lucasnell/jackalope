@@ -328,7 +328,7 @@ SEXP digest_var_set(
     XPtr<VarSet> var_set(var_set_ptr);
 
     const uint32 n_vars = var_set->size();
-    const uint32 n_seqs = var_set->reference.size();
+    const uint32 n_seqs = var_set->reference->size();
 
     XPtr<GenomeSetDigest> out_digests(new GenomeSetDigest(n_vars, n_seqs));
 

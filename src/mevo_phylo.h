@@ -193,7 +193,7 @@ public:
 
         // Fill in blank VarSequence objects:
         var_seqs = std::vector<VarSequence>(tree_size,
-                                            VarSequence(var_set.reference[seq_ind]));
+                                            VarSequence((*var_set.reference)[seq_ind]));
 
         // Fill in samplers:
         samplers = std::vector<T>(tree_size, sampler_base);
@@ -270,7 +270,7 @@ public:
 
         // Fill in blank VarSequence objects:
         var_seqs = std::vector<VarSequence>(tree_size,
-                                            VarSequence(var_set.reference[seq_ind]));
+                                            VarSequence((*var_set.reference)[seq_ind]));
 
         // Fill in samplers:
         samplers = std::vector<T>(tree_size, sampler_base);
@@ -282,7 +282,6 @@ public:
         return;
 
     }
-
 
 
     /*

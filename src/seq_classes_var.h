@@ -384,14 +384,14 @@ private:
 class VarSet {
 public:
     std::deque<VarGenome> variants;
-    const RefGenome& reference;
+    const RefGenome* reference;  // pointer to const RefGenome
 
     /*
      Constructors:
      */
     VarSet(const RefGenome& ref, const uint32& n_vars)
         : variants(n_vars, VarGenome(ref)),
-          reference(ref) {
+          reference(&ref) {
         for (uint32 i = 0; i < n_vars; i++) variants[i].name = "var" + std::to_string(i);
     };
 
@@ -412,14 +412,14 @@ public:
      Fill VarGenome objects after the reference has been filled
      */
     void fill_vars(const uint32& n_vars) {
-        VarGenome vg(reference);
+        VarGenome vg(*reference);
         for (uint32 i = 0; i < n_vars; i++) variants.push_back(vg);
         return;
     }
     // Overloaded for if you want to provide names
     void fill_vars(const std::vector<std::string>& names) {
         for (uint32 i = 0; i < names.size(); i++) {
-            VarGenome vg(names[i], reference);
+            VarGenome vg(names[i], *reference);
             variants.push_back(vg);
         }
         return;
