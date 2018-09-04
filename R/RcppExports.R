@@ -177,16 +177,16 @@ phylo_info_to_trees_chunk <- function(genome_phylo_info) {
 #'
 #' @noRd
 #'
-evolve_seqs <- function(var_set_ptr, sampler_base_ptr, phylo_info_ptr, seq_inds, gamma_mats, show_progress) {
-    invisible(.Call(`_gemino_evolve_seqs`, var_set_ptr, sampler_base_ptr, phylo_info_ptr, seq_inds, gamma_mats, show_progress))
+evolve_seqs <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, seq_inds, gamma_mats, show_progress) {
+    .Call(`_gemino_evolve_seqs`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, seq_inds, gamma_mats, show_progress)
 }
 
 #' Same as above, but using chunks.
 #'
 #' @noRd
 #'
-evolve_seqs_chunk <- function(var_set_ptr, sampler_base_ptr, phylo_info_ptr, seq_inds, gamma_mats, show_progress) {
-    invisible(.Call(`_gemino_evolve_seqs_chunk`, var_set_ptr, sampler_base_ptr, phylo_info_ptr, seq_inds, gamma_mats, show_progress))
+evolve_seqs_chunk <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, seq_inds, gamma_mats, show_progress) {
+    .Call(`_gemino_evolve_seqs_chunk`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, seq_inds, gamma_mats, show_progress)
 }
 
 #' Estimates equilibrium nucleotide frequencies from an input rate matrix.
@@ -313,24 +313,6 @@ UNREST_rate_matrix <- function(Q, xi) {
 #'     "T", "C", "A", and "G", respectively.
 #' @param rel_insertion_rates Relative insertion rates.
 #' @param rel_deletion_rates Relative deletion rates.
-#'
-#' @noRd
-#'
-NULL
-
-#' Creates MutationSampler without any of the pointers.
-#'
-#' `T` should be MutationSampler or ChunkMutationSampler
-#' `T` should be LocationSampler or ChunkLocationSampler
-#' MutationSampler should always go with LocationSampler, and
-#' ChunkMutationSampler with ChunkLocationSampler
-#'
-#' Before actually using the object output from this function, make sure to...
-#' * use `[Chunk]MutationSampler.fill_ptrs(VarSequence& var_seq)` to fill pointers.
-#' * use `[Chunk]MutationSampler.fill_gamma(const arma::mat& gamma_mat)` to fill
-#'   the gamma matrix.
-#' * use `ChunkMutationSampler.location.change_chunk(chunk_size)` if using chunked
-#'   version.
 #'
 #' @noRd
 #'

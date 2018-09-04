@@ -68,7 +68,7 @@ sampler <- gemino:::make_sampler_ptr(sub_params = list(pi_tcag = pi_tcag_,
                                                      psi = psi_,
                                                      rel_insertion_rates = exp(-1:-10),
                                                      rel_deletion_rates = exp(-1:-10)),
-                                 model = "TN93", chunk_size = 100)
+                                 sub_model = "TN93", chunk_size = 100)
 
 n_vars <- 10
 
@@ -83,12 +83,10 @@ expected <- tree$edge.length / sum(tree$edge.length)
 # Function to make a matrix have ten columns
 make_ten <- function(x) cbind(x, matrix(0, nrow(x), 10 - ncol(x)))
 
-
-var_set <- gemino:::make_var_set(ref, n_vars)
 phylo_info <- gemino:::read_phy_obj(tree, n_seqs, chunked = TRUE)
 
-gemino:::evolve_seqs_chunk(
-    var_set,
+var_set <- gemino:::evolve_seqs_chunk(
+    ref,
     sampler,
     phylo_info,
     seq_inds = (1:n_seqs - 1),

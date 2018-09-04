@@ -97,18 +97,21 @@ SEXP phylo_info_to_trees_chunk(List genome_phylo_info) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-void evolve_seqs(
-        SEXP& var_set_ptr,
+SEXP evolve_seqs(
+        SEXP& ref_genome_ptr,
         SEXP& sampler_base_ptr,
         SEXP& phylo_info_ptr,
         const std::vector<uint32>& seq_inds,
         const std::vector<arma::mat>& gamma_mats,
         const bool& show_progress) {
 
-    evolve_seqs_<MutationSampler>(var_set_ptr, sampler_base_ptr, phylo_info_ptr,
-                                  seq_inds, gamma_mats, show_progress);
+    XPtr<VarSet> var_set =
+        evolve_seqs_<MutationSampler>(ref_genome_ptr,
+                                      sampler_base_ptr,
+                                      phylo_info_ptr,
+                                      seq_inds, gamma_mats, show_progress);
 
-    return;
+    return var_set;
 }
 
 //' Same as above, but using chunks.
@@ -116,18 +119,21 @@ void evolve_seqs(
 //' @noRd
 //'
 //[[Rcpp::export]]
-void evolve_seqs_chunk(
-        SEXP& var_set_ptr,
+SEXP evolve_seqs_chunk(
+        SEXP& ref_genome_ptr,
         SEXP& sampler_base_ptr,
         SEXP& phylo_info_ptr,
         const std::vector<uint32>& seq_inds,
         const std::vector<arma::mat>& gamma_mats,
         const bool& show_progress) {
 
-    evolve_seqs_<ChunkMutationSampler>(var_set_ptr, sampler_base_ptr, phylo_info_ptr,
-                                       seq_inds, gamma_mats, show_progress);
+    XPtr<VarSet> var_set =
+        evolve_seqs_<ChunkMutationSampler>(ref_genome_ptr,
+                                           sampler_base_ptr,
+                                           phylo_info_ptr,
+                                           seq_inds, gamma_mats, show_progress);
 
-    return;
+    return var_set;
 }
 
 

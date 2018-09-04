@@ -139,6 +139,7 @@ public:
     std::vector<VarSequence> var_seqs;  // blank VarSequence objects to evolve across tree
     std::vector<T> samplers;         // samplers to do the mutation additions across tree
     std::vector<double> seq_rates;   // sequence rates
+    uint32 n_tips;                  // number of tips (i.e., variants)
 
     PhyloOneSeq() {}
     PhyloOneSeq(
@@ -156,6 +157,7 @@ public:
           var_seqs(),
           samplers(),
           seq_rates(edges_[0].max()),
+          n_tips(tip_labels_[0].size()),
           gamma_mat(gamma_mat_),
           ordered_tip_labels(),
           recombination(branch_lens_.size() > 1)
@@ -219,6 +221,7 @@ public:
           var_seqs(),
           samplers(),
           seq_rates(edges_[0].max()),
+          n_tips(tip_labels_[0].size()),
           gamma_mat(),
           ordered_tip_labels(),
           recombination(branch_lens_.size() > 1)
@@ -257,13 +260,13 @@ public:
         uint32 tree_size = trees[0].tree_size;
         uint32 n_vars = var_set.size();
 
-        var_seq_ptrs.resize(var_set.size());
         gamma_mat = gamma_mat_;
 
-        ordered_tip_labels = std::vector<std::string>(n_vars);
+        ordered_tip_labels.resize(n_vars);
         for (uint32 i = 0; i < n_vars; i++) ordered_tip_labels[i] = var_set[i].name;
 
         // Filling in pointers:
+        var_seq_ptrs.resize(n_vars);
         for (uint32 i = 0; i < n_vars; i++) {
             var_seq_ptrs[i] = &var_set[i][seq_ind];
         }
@@ -542,20 +545,24 @@ int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
  `T` should be `MutationSampler` or `ChunkMutationSampler`.
  */
 template <typename T>
-void evolve_seqs_(
-        SEXP& var_set_ptr,
+XPtr<VarSet> evolve_seqs_(
+        SEXP& ref_genome_ptr,
         SEXP& sampler_base_ptr,
         SEXP& phylo_info_ptr,
         const std::vector<uint32>& seq_inds,
         const std::vector<arma::mat>& gamma_mats,
         const bool& show_progress) {
 
-    XPtr<VarSet> var_set(var_set_ptr);
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
     XPtr<T> sampler_base(sampler_base_ptr);
     XPtr<std::vector<PhyloOneSeq<T>>> phylo_info(phylo_info_ptr);
 
-    uint32 n_seqs = var_set->reference.size();
-    uint64 total_seq = var_set->reference.total_size;
+    uint32 n_vars = (*phylo_info)[0].n_tips;
+
+    XPtr<VarSet> var_set(new VarSet(*ref_genome, n_vars), true);
+
+    uint32 n_seqs = var_set->reference->size();
+    uint64 total_seq = ref_genome->total_size;
 
     Progress prog_bar(total_seq, show_progress);
 
@@ -606,11 +613,11 @@ void evolve_seqs_(
             warn_msg += "Note that changes occur in place, so your variants have ";
             warn_msg += "already been partially added.";
             Rcpp::warning(warn_msg.c_str());
-            return;
+            return var_set;
         }
     }
 
-    return;
+    return var_set;
 }
 
 
