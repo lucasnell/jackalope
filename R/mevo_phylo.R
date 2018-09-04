@@ -66,12 +66,10 @@ process_coal_tree_string <- function(str, seq_size) {
 
 #' Read info from a `phylo` object.
 #'
-#' @param phy The `phylo` object.
-#' @param n_seqs The number of sequences in the reference genome.
-#' @param chunked Boolean for whether the sampling for mutation locations
-#'     will be done in chunks.
+#' @inheritParams make_phylo_info
 #'
-#' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
+#' @return An external pointer to the phylogenetic info needed to do the sequence
+#'     simulations.
 #'
 #' @noRd
 #'
@@ -105,11 +103,10 @@ read_phy_obj <- function(phy, n_seqs, chunked) {
 
 #' Read info from a coalescent object from scrm or coala.
 #'
-#' @param coal_obj The coalescent-simulation object.
-#' @param seq_sizes Vector of sequence sizes.
-#' @inheritParams read_phy_obj
+#' @inheritParams make_phylo_info
 #'
-#' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
+#' @return An XPtr to the info needed from the phylogenies to do the sequence
+#'     simulations.
 #'
 #' @noRd
 #'
@@ -157,11 +154,10 @@ read_coal_obj <- function(coal_obj, seq_sizes, chunked) {
 
 #' Read info from ms-style output file.
 #'
-#' @param ms_filename The filename for ms-style output.
-#' @inheritParams read_coal_obj
-#' @inheritParams read_phy_obj
+#' @inheritParams make_phylo_info
 #'
-#' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
+#' @return An external pointer to the phylogenetic info needed to do the sequence
+#'     simulations.
 #'
 #' @noRd
 #'
@@ -201,10 +197,10 @@ read_ms_output <- function(ms_filename, seq_sizes, chunked) {
 
 #' Read info from a NEWICK file.
 #'
-#' @param newick_filename The filename for the NEWICK phylogeny.
-#' @inheritParams read_phy_obj
+#' @inheritParams make_phylo_info
 #'
-#' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
+#' @return An external pointer to the phylogenetic info needed to do the sequence
+#'     simulations.
 #'
 #' @noRd
 #'
@@ -224,11 +220,10 @@ read_newick <- function(newick_filename, n_seqs, chunked) {
 #' Note that mu should be derived from the mutation object, not passed to the function
 #' by the user.
 #'
-#' @param theta Theta parameter, population-scaled mutation rate.
-#' @param mu Average mutation rate (per bp per generation).
-#' @inheritParams read_phy_obj
+#' @inheritParams make_phylo_info
 #'
-#' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
+#' @return An external pointer to the phylogenetic info needed to do the sequence
+#'     simulations.
 #'
 #' @noRd
 #'
@@ -252,4 +247,69 @@ read_theta <- function(theta, mu, n_vars, n_seqs, chunked) {
     return(trees_ptr)
 
 }
+
+
+
+
+
+
+#' Create phylogenetic information object from one of multiple types of inputs.
+#'
+#' Below are the possible input sets:
+#' \itemize{
+#'     \item `phy`, and `n_seqs`
+#'     \item `coal_obj`, and `seq_sizes`
+#'     \item `ms_filename`, and `seq_sizes`
+#'     \item `newick_filename`, and `n_seqs`
+#'     \item `theta`, `mu`, `n_vars`, and `n_seqs`
+#' }
+#'
+#' @inheritParams create_variants
+#' @param phy The `phylo` object.
+#' @param n_seqs The number of sequences in the reference genome.
+#' @param coal_obj The coalescent-simulation object.
+#' @param seq_sizes Vector of sequence sizes.
+#' @param ms_filename The filename for ms-style output.
+#' @param newick_filename The filename for the NEWICK phylogeny.
+#' @param theta Theta parameter, population-scaled mutation rate.
+#' @param mu Average mutation rate (per bp per generation).
+#' @param n_vars Number of variants (haploid genomes) to create.
+#'
+#' @return An external pointer to the phylogenetic info needed to do the sequence
+#'     simulations.
+#'
+#' @name make_phylo_info
+#'
+make_phylo_info <- function(method,
+                            phy, n_seqs,
+                            coal_obj, seq_sizes,
+                            ms_filename,
+                            newick_filename,
+                            theta, mu, n_vars,
+                            chunk_size) {
+
+    chunked <- chunk_size > 0
+
+    if (method == "phylo") {
+        trees_ptr <- read_phy_obj(phy, n_seqs, chunked)
+    } else if (method == "coal_obj") {
+        trees_ptr <- read_coal_obj(coal_obj, seq_sizes, chunked)
+    } else if (method == "ms_file") {
+        trees_ptr <- read_ms_output(ms_filename, seq_sizes, chunked)
+    } else if (method == "newick") {
+        trees_ptr <- read_newick(newick_filename, n_seqs, chunked)
+    } else if (method == "theta") {
+        trees_ptr <- read_theta(theta, mu, n_vars, n_seqs, chunked)
+    } else {
+        stop("\nAn improper method argument was input to the `make_phylo_info` function",
+             call. = FALSE)
+    }
+
+    return(trees_ptr)
+}
+
+
+
+
+
 

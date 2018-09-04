@@ -1,63 +1,63 @@
 
 #' Make substitution rate matrix (Q) and vector of equilibrium frequencies (pis).
 #'
-#' @inheritParams make_sampler
+#' @inheritParams make_sampler_ptr
 #' @param xi Overall indel rate.
 #'
 #' @noRd
 #'
 #'
-make_Q_pis <- function(sub_params, model, xi) {
+make_Q_pis <- function(sub_params, sub_model, xi) {
 
     err_msg <- paste("\nNot all required names provided in `sub_params`.",
-                     "See `?make_samplers` for what to provide.")
+                     "See `?make_sampler_ptr` for what to provide.")
 
-    if (model == "TN93") {
+    if (sub_model == "TN93") {
         if (any(! c("pi_tcag", "alpha_1", "alpha_2", "beta") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         Q <- TN93_rate_matrix(sub_params$pi_tcag, sub_params$alpha_1, sub_params$alpha_2,
                               sub_params$beta, xi)
         pi_tcag <- sub_params$pi_tcag
-    } else if (model == "JC69") {
+    } else if (sub_model == "JC69") {
         if (any(! c("lambda") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         Q <- JC69_rate_matrix(sub_params$lambda, xi)
         pi_tcag <- sub_params$pi_tcag
-    } else if (model == "K80") {
+    } else if (sub_model == "K80") {
         if (any(! c("alpha", "beta") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         Q <- K80_rate_matrix(sub_params$alpha, sub_params$beta, xi);
         pi_tcag <- sub_params$pi_tcag
-    } else if (model == "F81") {
+    } else if (sub_model == "F81") {
         if (any(! c("pi_tcag") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         Q <- F81_rate_matrix(sub_params$pi_tcag, xi);
         pi_tcag <- sub_params$pi_tcag
-    } else if (model == "HKY85") {
+    } else if (sub_model == "HKY85") {
         if (any(! c("pi_tcag", "alpha", "beta") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         Q <- HKY85_rate_matrix(sub_params$pi_tcag, sub_params$alpha, sub_params$beta,
                                xi)
         pi_tcag <- sub_params$pi_tcag
-    } else if (model == "F84") {
+    } else if (sub_model == "F84") {
         if (any(! c("pi_tcag", "beta", "kappa") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         Q <- F84_rate_matrix(sub_params$pi_tcag, sub_params$beta, sub_params$kappa,
                              xi)
         pi_tcag <- sub_params$pi_tcag
-    } else if (model == "GTR") {
+    } else if (sub_model == "GTR") {
         if (any(! c("pi_tcag", "abcdef") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
         Q <- GTR_rate_matrix(sub_params$pi_tcag, sub_params$abcdef, xi)
         pi_tcag <- sub_params$pi_tcag
-    } else if (model == "UNREST") {
+    } else if (sub_model == "UNREST") {
         if (any(! c("Q") %in% names(sub_params))) {
             stop(err_msg, call. = FALSE)
         }
@@ -69,31 +69,34 @@ make_Q_pis <- function(sub_params, model, xi) {
     return(list(Q = Q, pi_tcag = pi_tcag))
 }
 
+
+
+
 #' Create mutation sampler objects.
 #'
 #' @param sub_params A list containing the necessary parameters for the specified
 #'     substitution model.
 #' @param indel_params A list containing the necessary parameters for indels.
-#' It requires the following parameters:
-#' \describe{
-#' \item{`xi`}{Overall indel rate.}
-#' \item{`psi`}{Proportion of insertions to deletions.}
-#' \item{`rel_insertion_rates`}{Relative insertion rates.}
-#' \item{`rel_deletion_rates`}{Relative deletion rates.}
-#' }
-#' @param chunk_size The size of chunks to first sample uniformly before doing
-#'     weighted sampling by rates.
+#'     It requires the following parameters:
+#'     \describe{
+#'         \item{`xi`}{Overall indel rate.}
+#'         \item{`psi`}{Proportion of insertions to deletions.}
+#'         \item{`rel_insertion_rates`}{Relative insertion rates.}
+#'         \item{`rel_deletion_rates`}{Relative deletion rates.}
+#'     }
+#' @param chunk_size The size of "chunks" of sequences to first sample uniformly
+#'     before doing weighted sampling by rates for each sequence location.
 #'     Uniformly sampling before doing weighted sampling dramatically speeds up
 #'     the mutation process (especially for very long sequences) and has little
 #'     effect on the sampling probabilities.
 #'     Higher values will more closely resemble sampling without the uniform-sampling
 #'     step, but will be slower.
-#'     From testing, values of `100` and `1000` don't differ much, and neither one
-#'     differs significantly from sampling without the uniform-sampling step on a
-#'     chromosome of length `1e6`.
 #'     Set this to `0` to not uniformly sample first.
+#'     From testing on a chromosome of length `1e6`, a `chunk_size` value of `100`
+#'     offers a ~10x speed increase and doesn't differ significantly from sampling
+#'     without the uniform-sampling step.
 #'     Defaults to `100`.
-#' @param model Character indicating which substitution mutation model to use.
+#' @param sub_model Character indicating which substitution mutation model to use.
 #' Takes one of the following options, with the required parameters in parentheses:
 #'
 #' - `"TN93"` (`pi_tcag`, `alpha_1`, `alpha_2`, `beta`)
@@ -107,24 +110,25 @@ make_Q_pis <- function(sub_params, model, xi) {
 #'
 #' Defaults to `"TN93"`.
 #'
+#' @name make_sampler_ptr
 #'
-#' @noRd
+#' @export
 #'
 make_sampler_ptr <- function(sub_params,
                              indel_params,
-                             model = c("TN93", "JC69", "K80", "F81", "HKY85",
+                             sub_model = c("TN93", "JC69", "K80", "F81", "HKY85",
                                        "F84", "GTR", "UNREST"),
                              chunk_size = 100) {
 
     if (any(! c("xi", "psi", "rel_insertion_rates", "rel_deletion_rates") %in%
             names(indel_params))) {
         stop("\nNot all required names provided in `indel_params`. ",
-             "See `?make_samplers` for what to provide.", call. = FALSE)
+             "See `?make_samplers_ptr` for what to provide.", call. = FALSE)
     }
 
-    model <- match.arg(model)
+    sub_model <- match.arg(sub_model)
 
-    Q_pis <- make_Q_pis(sub_params, model, indel_params$xi)
+    Q_pis <- make_Q_pis(sub_params, sub_model, indel_params$xi)
 
     if (chunk_size <= 0) {
         sampler_ptr <- make_mutation_sampler_base(Q_pis$Q,
