@@ -4,24 +4,78 @@
 \alias{create_variants}
 \title{Create variants from a reference genome.}
 \usage{
-create_variants(reference, n_variants, phylo_control, vcf_file, random_control,
-  n_cores = 1)
+create_variants(reference, method, method_args, sub_params, indel_params,
+  sub_model = "TN93", chunk_size = 100, n_cores = 1,
+  show_progress = FALSE)
 }
 \arguments{
 \item{reference}{A \code{ref_genome} object from which to generate variants.
 This argument is required.}
 
-\item{n_variants}{The number of haploid variants to create.
-This argument is required.}
+\item{method}{Method to use for generating variants.
+Options are as follows:
+\describe{
+\item{\code{"phylo"}}{a single phylogenetic tree from a \code{phylo} object.}
+\item{\code{"coal_obj"}}{a coalescent-simulator object from the \code{scrm} or \code{coala}
+packages.}
+\item{\code{"ms_file"}}{a file containing output from a coalescent simulator in the
+format of the \code{ms} program.}
+\item{\code{"newick"}}{a NEWICK file containing a phylogenetic tree.}
+\item{\code{"theta"}}{an estimate for theta, the population-scaled mutation rate.}
+\item{\code{"vcf"}}{a variant call format (VCF) file that directly specifies
+variants.}
+}}
 
-\item{phylo_control}{A list containing parameters for phylogenetic evolution.}
+\item{method_args}{List of arguments used for the given method. See Details for which
+arguments are used for each method.}
 
-\item{vcf_file}{The file name for a VCF file to read from.}
+\item{sub_params}{A list containing the necessary parameters for the specified
+substitution model.}
 
-\item{random_control}{A list containing parameters for random mutation addition.}
+\item{indel_params}{A list containing the necessary parameters for indels.
+It requires the following parameters:
+\describe{
+\item{\code{xi}}{Overall indel rate.}
+\item{\code{psi}}{Proportion of insertions to deletions.}
+\item{\code{rel_insertion_rates}}{Relative insertion rates.}
+\item{\code{rel_deletion_rates}}{Relative deletion rates.}
+}}
 
-\item{n_cores}{Number of cores to use for parallel processing. This argument is
-ignored if OpenMP is not enabled. Defaults to \code{1}.}
+\item{sub_model}{Character indicating which substitution mutation model to use.
+Takes one of the following options, with the required parameters in parentheses:
+\describe{
+\item{\code{"TN93"}}{ \code{pi_tcag}, \code{alpha_1}, \code{alpha_2}, \code{beta} }
+\item{\code{"JC69"}}{ \code{lambda} }
+\item{\code{"K80"}}{ \code{alpha}, \code{beta} }
+\item{\code{"F81"}}{ \code{pi_tcag} }
+\item{\code{"HKY85"}}{ \code{pi_tcag}, \code{alpha}, \code{beta} }
+\item{\code{"F84"}}{ \code{pi_tcag}, \code{beta}, \code{kappa} }
+\item{\code{"GTR"}}{ \code{pi_tcag}, \code{abcdef} }
+\item{\code{"UNREST"}}{ \code{Q} }
+}\preformatted{Defaults to `"TN93"`.
+}}
+
+\item{chunk_size}{The size of "chunks" of sequences to first sample uniformly
+before doing weighted sampling by rates for each sequence location.
+Uniformly sampling before doing weighted sampling dramatically speeds up
+the mutation process (especially for very long sequences) and has little
+effect on the sampling probabilities.
+Higher values will more closely resemble sampling without the uniform-sampling
+step, but will be slower.
+Set this to \code{0} to not uniformly sample first.
+From testing on a chromosome of length \code{1e6}, a \code{chunk_size} value of \code{100}
+offers a ~10x speed increase and doesn't differ significantly from sampling
+without the uniform-sampling step.
+Defaults to \code{100}.}
+
+\item{n_cores}{Number of cores to use for parallel processing.
+This argument is ignored if OpenMP is not enabled.
+Cores are spread across sequences, so it
+doesn't make sense to supply more cores than sequences in the reference genome.
+Defaults to \code{1}.}
+
+\item{show_progress}{Boolean for whether to show a progress bar during processing.
+Defaults to \code{FALSE}.}
 }
 \description{
 Create variants from a reference genome.

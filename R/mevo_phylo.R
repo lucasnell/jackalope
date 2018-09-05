@@ -278,7 +278,7 @@ read_theta <- function(theta, mu, n_vars, n_seqs, chunked) {
 #' @return An external pointer to the phylogenetic info needed to do the sequence
 #'     simulations.
 #'
-#' @name make_phylo_info
+#' @noRd
 #'
 make_phylo_info <- function(method,
                             phy, n_seqs,

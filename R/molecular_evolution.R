@@ -10,7 +10,8 @@
 make_Q_pis <- function(sub_params, sub_model, xi) {
 
     err_msg <- paste("\nNot all required names provided in `sub_params`.",
-                     "See `?make_sampler_ptr` for what to provide.")
+                     "See `?create_variants` for what to provide for each",
+                     "possible value of the `sub_model` argument.")
 
     if (sub_model == "TN93") {
         if (any(! c("pi_tcag", "alpha_1", "alpha_2", "beta") %in% names(sub_params))) {
@@ -64,7 +65,7 @@ make_Q_pis <- function(sub_params, sub_model, xi) {
         q_pi_list <- UNREST_rate_matrix(sub_params$Q, xi)
         Q <- q_pi_list$Q
         pi_tcag <- q_pi_list$pi_tcag
-    } else stop("\nInput model to `make_sampler` not available.", call. = FALSE)
+    } else stop("\nInvalid `sub_model` argument to `create_variants`.", call. = FALSE)
 
     return(list(Q = Q, pi_tcag = pi_tcag))
 }
@@ -74,45 +75,9 @@ make_Q_pis <- function(sub_params, sub_model, xi) {
 
 #' Create mutation sampler objects.
 #'
-#' @param sub_params A list containing the necessary parameters for the specified
-#'     substitution model.
-#' @param indel_params A list containing the necessary parameters for indels.
-#'     It requires the following parameters:
-#'     \describe{
-#'         \item{`xi`}{Overall indel rate.}
-#'         \item{`psi`}{Proportion of insertions to deletions.}
-#'         \item{`rel_insertion_rates`}{Relative insertion rates.}
-#'         \item{`rel_deletion_rates`}{Relative deletion rates.}
-#'     }
-#' @param chunk_size The size of "chunks" of sequences to first sample uniformly
-#'     before doing weighted sampling by rates for each sequence location.
-#'     Uniformly sampling before doing weighted sampling dramatically speeds up
-#'     the mutation process (especially for very long sequences) and has little
-#'     effect on the sampling probabilities.
-#'     Higher values will more closely resemble sampling without the uniform-sampling
-#'     step, but will be slower.
-#'     Set this to `0` to not uniformly sample first.
-#'     From testing on a chromosome of length `1e6`, a `chunk_size` value of `100`
-#'     offers a ~10x speed increase and doesn't differ significantly from sampling
-#'     without the uniform-sampling step.
-#'     Defaults to `100`.
-#' @param sub_model Character indicating which substitution mutation model to use.
-#' Takes one of the following options, with the required parameters in parentheses:
+#' @inheritParams create_variants
 #'
-#' - `"TN93"` (`pi_tcag`, `alpha_1`, `alpha_2`, `beta`)
-#' - `"JC69"` (`lambda`)
-#' - `"K80"` (`alpha`, `beta`)
-#' - `"F81"` (`pi_tcag`)
-#' - `"HKY85"` (`pi_tcag`, `alpha`, `beta`)
-#' - `"F84"` (`pi_tcag`, `beta`, `kappa`)
-#' - `"GTR"` (`pi_tcag`, `abcdef`)
-#' - `"UNREST"` (`Q`)
-#'
-#' Defaults to `"TN93"`.
-#'
-#' @name make_sampler_ptr
-#'
-#' @export
+#' @noRd
 #'
 make_sampler_ptr <- function(sub_params,
                              indel_params,
@@ -123,10 +88,8 @@ make_sampler_ptr <- function(sub_params,
     if (any(! c("xi", "psi", "rel_insertion_rates", "rel_deletion_rates") %in%
             names(indel_params))) {
         stop("\nNot all required names provided in `indel_params`. ",
-             "See `?make_samplers_ptr` for what to provide.", call. = FALSE)
+             "See `?create_variants` for what to provide.", call. = FALSE)
     }
-
-    sub_model <- match.arg(sub_model)
 
     Q_pis <- make_Q_pis(sub_params, sub_model, indel_params$xi)
 
