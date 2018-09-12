@@ -155,6 +155,38 @@ digest_ref <- function(ref_genome_ptr, bind_sites, len5s, chunk_size = 0L, n_cor
     .Call(`_gemino_digest_ref`, ref_genome_ptr, bind_sites, len5s, chunk_size, n_cores)
 }
 
+#' Fill matrix of Gamma-region end points and Gamma values.
+#'
+#' @param gamma_mat The gamma matrix to fill.
+#' @param gammas_x_sizes The value of `sum(gamma[i] * region_size[i])` to fill in.
+#'     This value is used to later determine (in fxn `make_gamma_mats`) the
+#'     mean gamma value across the whole genome, which is then used to make sure that
+#'     the overall mean is 1.
+#' @param seq_size_ Length of the focal sequence.
+#' @param gamma_size_ Size of each Gamma region.
+#' @param shape The shape parameter for the Gamma distribution from which
+#'     Gamma values will be derived.
+#' @param eng A random number generator.
+#'
+#'
+#' @noRd
+#'
+NULL
+
+#' Make matrices of Gamma-region end points and Gamma values for multiple sequences.
+#'
+#' @param seq_sizes Lengths of the sequences in the genome.
+#' @param gamma_size_ Size of each Gamma region.
+#' @param shape The shape parameter for the Gamma distribution from which
+#'     Gamma values will be derived.
+#'
+#'
+#' @noRd
+#'
+make_gamma_mats <- function(seq_sizes, gamma_size_, shape) {
+    .Call(`_gemino_make_gamma_mats`, seq_sizes, gamma_size_, shape)
+}
+
 #' Create XPtr to nested vector of PhyloTree objects from phylogeny information.
 #'
 #' @noRd

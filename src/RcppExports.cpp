@@ -111,6 +111,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// make_gamma_mats
+arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes, const uint32& gamma_size_, const double& shape);
+RcppExport SEXP _gemino_make_gamma_mats(SEXP seq_sizesSEXP, SEXP gamma_size_SEXP, SEXP shapeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type seq_sizes(seq_sizesSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type gamma_size_(gamma_size_SEXP);
+    Rcpp::traits::input_parameter< const double& >::type shape(shapeSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_gamma_mats(seq_sizes, gamma_size_, shape));
+    return rcpp_result_gen;
+END_RCPP
+}
 // phylo_info_to_trees
 SEXP phylo_info_to_trees(const List& genome_phylo_info);
 RcppExport SEXP _gemino_phylo_info_to_trees(SEXP genome_phylo_infoSEXP) {
@@ -652,6 +665,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_expand_seqs", (DL_FUNC) &_gemino_expand_seqs, 1},
     {"_gemino_digest_var_set", (DL_FUNC) &_gemino_digest_var_set, 5},
     {"_gemino_digest_ref", (DL_FUNC) &_gemino_digest_ref, 5},
+    {"_gemino_make_gamma_mats", (DL_FUNC) &_gemino_make_gamma_mats, 3},
     {"_gemino_phylo_info_to_trees", (DL_FUNC) &_gemino_phylo_info_to_trees, 1},
     {"_gemino_phylo_info_to_trees_chunk", (DL_FUNC) &_gemino_phylo_info_to_trees_chunk, 1},
     {"_gemino_evolve_seqs", (DL_FUNC) &_gemino_evolve_seqs, 6},
