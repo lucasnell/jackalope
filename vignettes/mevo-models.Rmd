@@ -1,0 +1,25 @@
+---
+title: "Molecular-evolutionary models"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Molecular-evolutionary models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\usepackage[utf8]{inputenc}
+---
+
+```{r setup, echo = FALSE, message = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+options(tibble.print_min = 4L, tibble.print_max = 4L)
+library(gemino)
+set.seed(654612)
+```
+
+
+
+
+
+
+# References
+
+Yang, Z. 2006. *Computational molecular evolution*. (P. H. Harvey and R. M. May, Eds.).
+Oxford University Press, New York, NY, USA.
