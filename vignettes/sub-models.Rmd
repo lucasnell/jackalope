@@ -1,8 +1,8 @@
 ---
-title: "Molecular-evolutionary models"
+title: "Models of nucleotide substitution"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Molecular-evolutionary models}
+  %\VignetteIndexEntry{Models of nucleotide substitution}
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---
