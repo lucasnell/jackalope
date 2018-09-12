@@ -18,16 +18,6 @@
 #'     }
 #' @param method_args List of arguments used for the given method. See Details for which
 #'     arguments are used for each method.
-#' @param sub_params A list containing the necessary parameters for the specified
-#'     substitution model.
-#' @param indel_params A list containing the necessary parameters for indels.
-#'     It requires the following parameters:
-#'     \describe{
-#'         \item{`xi`}{Overall indel rate.}
-#'         \item{`psi`}{Proportion of insertions to deletions.}
-#'         \item{`rel_insertion_rates`}{Relative insertion rates.}
-#'         \item{`rel_deletion_rates`}{Relative deletion rates.}
-#'     }
 #' @param sub_model Character indicating which substitution mutation model to use.
 #'     Takes one of the following options, with the required parameters in parentheses:
 #'     \describe{
@@ -42,7 +32,20 @@
 #'     }
 #'
 #'     Defaults to `"TN93"`.
-#'
+#' @param sub_params A list containing the necessary parameters for the specified
+#'     substitution model.
+#'     Defaults to an empty list, which causes it to use all default parameters. See
+#'     Details for default parameter values.
+#' @param indel_params A list containing the parameters for indels.
+#'     The following parameters are allowed:
+#'     \describe{
+#'         \item{`xi`}{Overall indel rate.}
+#'         \item{`psi`}{Proportion of insertions to deletions.}
+#'         \item{`rel_insertion_rates`}{Relative insertion rates.}
+#'         \item{`rel_deletion_rates`}{Relative deletion rates.}
+#'     }
+#'     Defaults to an empty list, which causes it to use all default parameters. See
+#'     Details for default parameter values.
 #' @param chunk_size The size of "chunks" of sequences to first sample uniformly
 #'     before doing weighted sampling by rates for each sequence location.
 #'     Uniformly sampling before doing weighted sampling dramatically speeds up
@@ -71,22 +74,22 @@
 create_variants <- function(reference,
                             method,
                             method_args,
-                            sub_params,
-                            indel_params,
                             sub_model = "TN93",
+                            sub_params = list(),
+                            indel_params = list(),
                             chunk_size = 100,
                             n_cores = 1,
                             show_progress = FALSE) {
 
-    methods_ <- c("phylo", "coal_obj", "ms_file", "newick", "theta", "vcf")
-    method <- match.arg(method, methods_)
-    sub_model <- match.arg(sub_model, c("TN93", "JC69", "K80", "F81", "HKY85",
-                                        "F84", "GTR", "UNREST"))
+    method <- match.arg(method, c("phylo", "coal_obj", "ms_file", "newick", "theta",
+                                  "vcf"))
+    sub_model <- match.arg(sub_model, c("TN93", "JC69", "K80", "F81", "HKY85", "F84",
+                                        "GTR", "UNREST"))
 
 
-    # ---------
+    # ~~~~~~~~~
     # Checking for proper types:
-    # ---------
+    # ~~~~~~~~~
 
     if (!inherits(reference, "ref_genome")) {
         stop("\nCreating variants can only be done to a ref_genome object.",
@@ -107,9 +110,9 @@ create_variants <- function(reference,
     }
 
 
-    # ---------
+    # ~~~~~~~~~
     # Phylogenetic processing:
-    # ---------
+    # ~~~~~~~~~
 
     if (method != "vcf") {
 
@@ -117,11 +120,11 @@ create_variants <- function(reference,
                                   c(method_args, list(method = method,
                                                       chunk_size = chunk_size)))
 
-        # ----------------------------
-        # ----------------------------
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # Left off: Make sampler_base_ptr and gamma_mats
-        # ----------------------------
-        # ----------------------------
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         if (chunk_size > 0) {
             variant_ptr <- evolve_seqs_chunk(
@@ -141,9 +144,9 @@ create_variants <- function(reference,
                 show_progress)
         }
 
-    # ---------
+    # ~~~~~~~~~
     # VCF-file processing:
-    # ---------
+    # ~~~~~~~~~
 
     } else {
 
@@ -156,9 +159,9 @@ create_variants <- function(reference,
     }
 
 
-    # ---------
+    # ~~~~~~~~~
     # Create and return output object:
-    # ---------
+    # ~~~~~~~~~
 
     var_obj <- variants$new(variants_ptr, ref_genome_ptr)
 
