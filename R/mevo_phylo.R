@@ -251,17 +251,15 @@ read_theta <- function(theta, mu, n_vars, n_seqs, chunked) {
 
 
 
-
-
 #' Create phylogenetic information object from one of multiple types of inputs.
 #'
-#' Below are the possible input sets:
-#' \itemize{
-#'     \item `phy`, and `n_seqs`
-#'     \item `coal_obj`, and `seq_sizes`
-#'     \item `ms_filename`, and `seq_sizes`
-#'     \item `newick_filename`, and `n_seqs`
-#'     \item `theta`, `mu`, `n_vars`, and `n_seqs`
+#' Below are the required arguments for each method:
+#' \describe{
+#'     \item{`method = "phylo"`}{`phy`, and `n_seqs`}
+#'     \item{`method = "coal_obj"`}{`coal_obj`, and `seq_sizes`}
+#'     \item{`method = "ms_file"`}{`ms_filename`, and `seq_sizes`}
+#'     \item{`method = "newick"`}{`newick_filename`, and `n_seqs`}
+#'     \item{`method = "theta"`}{`theta`, `mu`, `n_vars`, and `n_seqs`}
 #' }
 #'
 #' @inheritParams create_variants
