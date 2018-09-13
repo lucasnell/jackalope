@@ -1,4 +1,5 @@
-#' An R6 class representing a reference genome
+# ref_genome class----
+#' An R6 class representing a reference genome.
 #'
 #' \emph{Note:} Do NOT change fields in this class directly. It will cause your
 #' R session to do bad things.
@@ -36,19 +37,22 @@ ref_genome <- R6::R6Class(
         },
 
         print = function(...) {
-            "print ref_genome object"
             print_ref_genome(self$genome)
             invisible(self)
         },
 
+        # -------*
+        # Merge all ref_genome genome sequences into one
+        # -------*
         merge = function() {
-            "Merge all ref_genome genome sequences into one"
             merge_sequences(self$genome)
             invisible(self)
         },
 
+        # -------*
+        # Filter ref_genome sequences by size or for a proportion of total bases
+        # -------*
         filter = function(threshold, method = c("size", "prop")) {
-            "Filter ref_genome genome sequences by size or for a proportion of total bases"
             method <- match.arg(method)
             min_seq_size <- 0
             out_seq_prop <- 0
@@ -76,6 +80,24 @@ ref_genome <- R6::R6Class(
             invisible(self)
         }
 
+    ),
+
+    active = list(
+
+        # -------*
+        # Get vector of sequence sizes
+        # -------*
+        sizes = function() {
+            if (!inherits(self$genome, "externalptr")) {
+                stop("\nYou're attempting to get sizes using a ref_genome object with ",
+                     "a genome field that is not an externalptr. ",
+                     "Restart by reading a FASTA file or by simulating a genome. ",
+                     "And do NOT change the genome field manually.",
+                     call. = FALSE)
+            }
+            return(view_ref_genome_seq_sizes(self$genome))
+        }
+
     )
 
 )
@@ -87,7 +109,118 @@ ref_genome$lock()
 
 
 
-#' An R6 class representing haploid variants from a reference genome
+# mevo class----
+#' An R6 class containing information needed for molecular evolution.
+#'
+#' You shouldn't need to interact with this class much.
+#'
+#' @field Q A matrix of substitution rates for each nucleotide.
+#' @field xi Overall rate of indels.
+#' @field psi Proportion of insertions to deletions.
+#' @field pi_tcag Vector of nucleotide equilibrium frequencies for "T", "C", "A", and
+#'     "G", respectively.
+#' @field rel_insertion_rates Relative insertion rates.
+#' @field rel_deletion_rates Relative deletion rates.
+#' @field gamma_mats List of matrices specifying "gamma distances" (see definition in
+#'     `?make_mevo`) for each sequence.
+#' @field chunk_size The size of "chunks" of sequences to first sample uniformly
+#'     before doing weighted sampling by rates for each sequence location.
+#'     See `?create_variants` for more information.
+#'
+#'
+#' @return An object of class \code{mevo}.
+#'
+#' @docType class
+#'
+#' @export
+#'
+#' @format An \code{\link[R6]{R6Class}} generator object
+#'
+mevo <- R6::R6Class(
+
+    "mevo",
+
+    public = list(
+
+        Q = NULL,
+        xi = NULL,
+        psi = NULL,
+        pi_tcag = NULL,
+        rel_insertion_rates = NULL,
+        rel_deletion_rates = NULL,
+        gamma_mats = NULL,
+        chunk_size = NULL,
+
+        initialize = function(Q,
+                              xi,
+                              psi,
+                              pi_tcag,
+                              rel_insertion_rates,
+                              rel_deletion_rates,
+                              gamma_mats,
+                              chunk_size) {
+            self$Q <- Q
+            self$xi <- xi
+            self$psi <- psi
+            self$pi_tcag <- pi_tcag
+            self$rel_insertion_rates <- rel_insertion_rates
+            self$rel_deletion_rates <- rel_deletion_rates
+            self$gamma_mats <- gamma_mats
+            self$chunk_size <- chunk_size
+
+        },
+
+
+        print = function() {
+            "print mevo object"
+            cat("< mevo object >\n")
+            invisible(self)
+        },
+
+
+        # -------*
+        # Convert to a XPtr<[Chunk]MutationSampler> object
+        # -------*
+        to_ptr = function() {
+
+            stopifnot(is.numeric(self$chunk_size) & !is.na(self$chunk_size))
+
+            if (self$chunk_size <= 0) {
+                sampler_ptr <- make_mutation_sampler_base(self$Q,
+                                                          self$xi,
+                                                          self$psi,
+                                                          self$pi_tcag,
+                                                          self$rel_insertion_rates,
+                                                          self$rel_deletion_rates)
+            } else {
+                sampler_ptr <- make_mutation_sampler_chunk_base(self$Q,
+                                                                self$xi,
+                                                                self$psi,
+                                                                self$pi_tcag,
+                                                                self$rel_insertion_rates,
+                                                                self$rel_deletion_rates,
+                                                                self$chunk_size)
+            }
+
+            return(sampler_ptr)
+        }
+
+    ),
+
+
+    private = list()
+
+)
+
+mevo$lock()
+
+
+
+
+
+
+# variants class----
+#' An R6 class representing haploid variants from a reference genome.
 #'
 #' \emph{Note:} Do NOT change fields in this class directly. It will cause your
 #' R session to do bad things.
@@ -140,12 +273,15 @@ variants <- R6::R6Class(
                 stop("\nWhen initializing a variants object, you need to use ",
                      "an externalptr object.", call. = FALSE)
             }
+            if (!inherits(reference_ptr, "externalptr")) {
+                stop("\nWhen initializing a variants object, you need to use ",
+                     "an externalptr object.", call. = FALSE)
+            }
             self$genomes <- genomes_ptr
             private$reference <- reference_ptr
         },
 
         print = function() {
-            "print variants object"
             print_var_set(self$genomes)
             invisible(self)
         }
