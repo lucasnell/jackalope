@@ -15,11 +15,264 @@ set.seed(654612)
 ```
 
 
+## Introduction
+
+This document outlines the models of substitution used in the package.
+The matrices below are substitution-rate matrices for each model.
+The rates within these matrices are ordered as follows:
+
+$$
+\begin{bmatrix}
+    \cdot           & T\rightarrow C    & T\rightarrow A    & T\rightarrow G    \\
+    C\rightarrow T  & \cdot             & C\rightarrow A    & C\rightarrow G    \\
+    A\rightarrow T  & A\rightarrow C    & \cdot             & A\rightarrow G    \\
+    G\rightarrow T  & G\rightarrow C    & G\rightarrow A    & \cdot
+\end{bmatrix}
+$$
+
+(For example, $C \rightarrow T$ indicates that the cell in that location refers to
+the rate from $C$ to $T$.)
+Diagonals are determined based on all rows having to sum to zero (Yang 2006).
+
+Under each rate matrix are listed the parameters in `make_mevo` required for that model.
+
+Below is a key of the parameters required in `make_mevo` for the models below,
+in order of their appearance:
+
+* `lambda`: $\lambda$
+* `alpha` $\alpha$
+* `beta` $\beta$
+* `pi_tcag` vector of $\pi_T$, $\pi_C$, $\pi_A$, then $\pi_G$
+* `alpha_1` $\alpha_1$
+* `alpha_2` $\alpha_2$
+* `kappa` transition / transversion rate ratio
+* `abcdef` vector of $a$, $b$, $c$, $d$, $e$, then $f$
+* `Q`: matrix of all parameters, where diagonals are ignored
 
 
 
 
-# References
+
+## JC69
+
+
+The JC69 model (Jukes and Cantor 1969) uses a single rate, $\lambda$.
+
+
+$$
+\mathbf{Q} = 
+\begin{bmatrix}
+\cdot   & \lambda   & \lambda   & \lambda \\
+\lambda & \cdot     & \lambda   & \lambda \\
+\lambda & \lambda   & \cdot     & \lambda \\
+\lambda & \lambda   & \lambda   & \cdot
+\end{bmatrix}
+$$
+
+
+__Parameters\:__
+
+* `lambda`
+
+
+## K80
+
+The K80 model (Kimura 1980) uses separate rates for transitions ($\alpha$)
+and transversions ($\beta$).
+
+$$
+\mathbf{Q} = 
+\begin{bmatrix}
+\cdot   & \alpha    & \beta     & \beta     \\
+\alpha  & \cdot     & \beta     & \beta     \\
+\beta   & \beta     & \cdot     & \alpha    \\
+\beta   & \beta     & \alpha    & \cdot
+\end{bmatrix}
+$$
+
+
+__Parameters\:__
+
+* `alpha`
+* `beta`
+
+
+## F81
+
+The F81 model (Felsenstein 1981) incorporates different equilibrium frequency
+distributions for each nucleotide ($\pi_X$ for nucleotide $X$).
+
+$$
+\mathbf{Q} = 
+\begin{bmatrix}
+\cdot   & \pi_C & \pi_A & \pi_G \\
+\pi_T   & \cdot & \pi_A & \pi_G \\
+\pi_T   & \pi_C & \cdot & \pi_G \\
+\pi_T   & \pi_C & \pi_A & \cdot
+\end{bmatrix}
+$$
+
+__Parameters\:__
+
+* `pi_tcag`
+
+
+## HKY85
+
+The HKY85 model (Hasegawa et al. 1984, 1985) combines different equilibrum frequency
+distributions with unequal transition and transversion rates.
+
+$$
+\mathbf{Q} = 
+\begin{bmatrix}
+\cdot           & \alpha \pi_C  & \beta \pi_A   & \beta \pi_G   \\
+\alpha \pi_T    & \cdot         & \beta \pi_A   & \beta \pi_G   \\
+\beta \pi_T     & \beta \pi_C   & \cdot         & \alpha \pi_G  \\
+\beta \pi_T     & \beta \pi_C   & \alpha \pi_A  & \cdot
+\end{bmatrix}
+$$
+
+__Parameters\:__
+
+* `alpha`
+* `beta`
+* `pi_tcag`
+
+
+
+## TN93
+
+The TN93 model (Tamura and Nei 1993) adds to the HKY85 model by distinguishing
+between the two types of transitions:
+between pyrimidines ($\alpha_1$) and
+between purines ($\alpha_2$).
+
+
+$$
+\mathbf{Q} = 
+\begin{bmatrix}
+\cdot           & \alpha_1 \pi_C    & \beta \pi_A       & \beta \pi_G \\
+\alpha_1 \pi_T  & \cdot             & \beta \pi_A       & \beta \pi_G \\
+\beta \pi_T     & \beta \pi_C       & \cdot             & \alpha_2 \pi_G \\
+\beta \pi_T     & \beta \pi_C       & \alpha_2 \pi_A    & \cdot
+\end{bmatrix}
+$$
+
+__Parameters\:__
+
+* `alpha_1`
+* `alpha_2`
+* `beta`
+* `pi_tcag`
+
+
+
+## F84
+
+The F84 model (Kishino and Hasegawa 1989) is a special case of TN93, 
+where $\alpha_1 = (1 + \kappa/\pi_Y) \beta$ and $\alpha_2 = (1 + \kappa/\pi_R) \beta$
+($\pi_Y = \pi_T + \pi_C$ and $\pi_R = \pi_A + \pi_G$).
+
+$$
+\mathbf{Q} = 
+\begin{bmatrix}
+\cdot                               & (1 + \kappa/\pi_Y) \beta \pi_C    &
+    \beta \pi_A                     & \beta \pi_G                       \\
+(1 + \kappa/\pi_Y) \beta \pi_T      & \cdot                             &
+    \beta \pi_A                     & \beta \pi_G                       \\
+\beta \pi_T                         & \beta \pi_C                       &
+    \cdot                           & (1 + \kappa/\pi_R) \beta \pi_G    \\
+\beta \pi_T                         & \beta \pi_C                       &
+    (1 + \kappa/\pi_R) \beta \pi_A  & \cdot
+\end{bmatrix}
+$$
+
+
+__Parameters\:__
+
+* `beta`
+* `kappa`
+* `pi_tcag`
+
+
+## GTR
+
+The GTR model (Tavaré 1986) is the least restrictive model that is still time-reversible
+(i.e., the rates $r_{x \rightarrow y} = r_{y \rightarrow x}$).
+
+$$
+\mathbf{Q} = 
+\begin{bmatrix}
+\cdot   & a \pi_C   & b \pi_A   & c \pi_G \\
+a \pi_T & \cdot     & d \pi_A   & e \pi_G \\
+b \pi_T & d \pi_C   & \cdot     & f \pi_G \\
+c \pi_T & e \pi_C   & f \pi_A   & \cdot
+\end{bmatrix}
+$$
+
+__Parameters\:__
+
+* `pi_tcag`
+* `abcdef`
+
+
+## UNREST
+
+The UNREST model (Yang 1994) is entirely unrestrained.
+
+
+$$
+\mathbf{Q} = 
+\begin{bmatrix}
+\cdot   & q_{TC}    & q_{TA}    & q_{TG}  \\
+q_{CT}  & \cdot     & q_{CA}    & q_{CG}  \\
+q_{AT}  & q_{AC}    & \cdot     & q_{AG}  \\
+q_{GT}  & q_{GC}    & q_{GA}    & \cdot
+\end{bmatrix}
+$$
+
+
+__Parameters\:__
+
+* `Q`
+
+
+
+
+## References
+
+Felsenstein, J. 1981. Evolutionary trees from DNA sequences: A maximum likelihood
+approach. Journal of Molecular Evolution 17:368–376.
+
+Hasegawa, M., H. Kishino, and T. Yano. 1985. Dating of the human-ape splitting by a
+molecular clock of mitochondrial DNA. Journal of Molecular Evolution 22:160–174.
+
+Hasegawa, M., T. Yano, and H. Kishino. 1984. A new molecular clock of mitochondrial
+DNA and the evolution of hominoids. Proceedings of the Japan Academy, Series B
+60:95–98.
+
+Jukes, T. H., and C. R. Cantor. 1969. Evolution of protein molecules. Pages 21–131 in H.
+N. Munro, editor. Mammalian protein metabolism. Academic Press, New York.
+
+Kimura, M. 1980. A simple method for estimating evolutionary rates of base substitutions
+through comparative studies of nucleotide sequences. Journal of Molecular Evolution
+16:111–120.
+
+Kishino, H., and M. Hasegawa. 1989.
+Evaluation of the maximum likelihood estimate of the evolutionary tree topologies from
+DNA sequence data, and the branching order in hominoidea.
+Journal of Molecular Evolution 29:170-179.
+
+Tamura, K., and M. Nei. 1993. Estimation of the number of nucleotide substitutions in the
+control region of mitochondrial dna in humans and chimpanzees. Molecular Biology and
+Evolution 10:512–526.
+
+Tavaré, S. 1986. Some probabilistic and statistical problems in the analysis of DNA
+sequences. Lectures on Mathematics in the Life Sciences 17:57–86.
+
+Yang, Z. B. 1994. Estimating the pattern of nucleotide substitution. Journal of
+Molecular Evolution 39:105–111.
 
 Yang, Z. 2006. *Computational molecular evolution*. (P. H. Harvey and R. M. May, Eds.).
 Oxford University Press, New York, NY, USA.
+
