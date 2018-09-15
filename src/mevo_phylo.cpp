@@ -22,7 +22,6 @@
 #include "mevo.h"  // samplers
 #include "table_sampler.h" // table sampling
 #include "pcg.h" // pcg sampler types
-#include "mevo_rate_matrices.h"
 #include "mevo_phylo.h"
 
 

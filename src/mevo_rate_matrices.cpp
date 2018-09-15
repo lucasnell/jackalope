@@ -15,7 +15,6 @@
 #include <RcppArmadillo.h>
 
 #include "gemino_types.h" // integer types
-#include "mevo_rate_matrices.h"
 
 using namespace Rcpp;
 

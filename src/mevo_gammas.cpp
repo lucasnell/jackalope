@@ -265,7 +265,7 @@ void check_gamma_mats(const std::vector<arma::mat>& mats,
                           const std::vector<uint32>& seq_sizes) {
 
     std::string err_msg = "\nIf providing custom matrices for the ";
-    err_msg += "`site_var_params` argument to the `create_variants` function, ";
+    err_msg += "`site_var` argument to the `make_mevo` function, ";
     err_msg += "all matrices ";
 
     bool error = false;
@@ -276,14 +276,14 @@ void check_gamma_mats(const std::vector<arma::mat>& mats,
 
         // There needs to be a column of end points and a column of gamma values
         if (gamma_mat.n_cols != 2) {
-            err_msg += "need to have 2 columns, one for end positions, one for gamma";
+            err_msg += "need to have 2 columns, one for end positions, one for gamma ";
             err_msg += "distances.";
             error = true;
             break;
         }
         // Since the input matrix should be 1-based indexing, make sure there are no 0s:
         if (arma::any(gamma_mat.col(0) <= 0)) {
-            err_msg += "should only have values > 0 in the first column,";
+            err_msg += "should only have values > 0 in the first column, ";
             err_msg += "which is where the end points should be.";
             error = true;
             break;
@@ -298,7 +298,7 @@ void check_gamma_mats(const std::vector<arma::mat>& mats,
         // Non-integer numbers in the end points doesn't make sense:
         arma::vec trunc_ends = arma::trunc(gamma_mat.col(0));
         if (arma::any(gamma_mat.col(0) != trunc_ends)) {
-            err_msg += "should contain only whole numbers as end points";
+            err_msg += "should contain only whole numbers as end points ";
             err_msg += "(i.e., in the first column).";
             error = true;
             break;

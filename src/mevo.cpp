@@ -15,7 +15,6 @@
 #include "table_sampler.h"  // table method of sampling
 #include "weighted_reservoir.h"  // weighted reservoir sampling
 #include "mevo_gammas.h"  // SequenceGammas class
-#include "mevo_rate_matrices.h"  // rate matrix functions
 
 using namespace Rcpp;
 
