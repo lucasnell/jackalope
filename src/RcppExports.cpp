@@ -111,6 +111,35 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// make_mutation_sampler_base
+SEXP make_mutation_sampler_base(const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates);
+RcppExport SEXP _gemino_make_mutation_sampler_base(SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type insertion_rates(insertion_ratesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_base(Q, pi_tcag, insertion_rates, deletion_rates));
+    return rcpp_result_gen;
+END_RCPP
+}
+// make_mutation_sampler_chunk_base
+SEXP make_mutation_sampler_chunk_base(const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, const uint32& chunk_size);
+RcppExport SEXP _gemino_make_mutation_sampler_chunk_base(SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP chunk_sizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type insertion_rates(insertion_ratesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type chunk_size(chunk_sizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_chunk_base(Q, pi_tcag, insertion_rates, deletion_rates, chunk_size));
+    return rcpp_result_gen;
+END_RCPP
+}
 // make_gamma_mats
 arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes, const uint32& gamma_size_, const double& shape);
 RcppExport SEXP _gemino_make_gamma_mats(SEXP seq_sizesSEXP, SEXP gamma_size_SEXP, SEXP shapeSEXP) {
@@ -283,35 +312,6 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::mat >::type Q(QSEXP);
     rcpp_result_gen = Rcpp::wrap(UNREST_rate_matrix(Q));
-    return rcpp_result_gen;
-END_RCPP
-}
-// make_mutation_sampler_base
-SEXP make_mutation_sampler_base(const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates);
-RcppExport SEXP _gemino_make_mutation_sampler_base(SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type insertion_rates(insertion_ratesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
-    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_base(Q, pi_tcag, insertion_rates, deletion_rates));
-    return rcpp_result_gen;
-END_RCPP
-}
-// make_mutation_sampler_chunk_base
-SEXP make_mutation_sampler_chunk_base(const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, const uint32& chunk_size);
-RcppExport SEXP _gemino_make_mutation_sampler_chunk_base(SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP chunk_sizeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type insertion_rates(insertion_ratesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type chunk_size(chunk_sizeSEXP);
-    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_chunk_base(Q, pi_tcag, insertion_rates, deletion_rates, chunk_size));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -664,6 +664,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_expand_seqs", (DL_FUNC) &_gemino_expand_seqs, 1},
     {"_gemino_digest_var_set", (DL_FUNC) &_gemino_digest_var_set, 5},
     {"_gemino_digest_ref", (DL_FUNC) &_gemino_digest_ref, 5},
+    {"_gemino_make_mutation_sampler_base", (DL_FUNC) &_gemino_make_mutation_sampler_base, 4},
+    {"_gemino_make_mutation_sampler_chunk_base", (DL_FUNC) &_gemino_make_mutation_sampler_chunk_base, 5},
     {"_gemino_make_gamma_mats", (DL_FUNC) &_gemino_make_gamma_mats, 3},
     {"_gemino_check_gamma_mats", (DL_FUNC) &_gemino_check_gamma_mats, 2},
     {"_gemino_phylo_info_to_trees", (DL_FUNC) &_gemino_phylo_info_to_trees, 1},
@@ -678,8 +680,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_F84_rate_matrix", (DL_FUNC) &_gemino_F84_rate_matrix, 3},
     {"_gemino_GTR_rate_matrix", (DL_FUNC) &_gemino_GTR_rate_matrix, 2},
     {"_gemino_UNREST_rate_matrix", (DL_FUNC) &_gemino_UNREST_rate_matrix, 1},
-    {"_gemino_make_mutation_sampler_base", (DL_FUNC) &_gemino_make_mutation_sampler_base, 4},
-    {"_gemino_make_mutation_sampler_chunk_base", (DL_FUNC) &_gemino_make_mutation_sampler_chunk_base, 5},
     {"_gemino_read_ms_output_", (DL_FUNC) &_gemino_read_ms_output_, 1},
     {"_gemino_read_fasta_noind", (DL_FUNC) &_gemino_read_fasta_noind, 3},
     {"_gemino_read_fasta_ind", (DL_FUNC) &_gemino_read_fasta_ind, 3},

@@ -280,7 +280,7 @@ make_phylo_info <- function(method,
         if (!inherits(method_info, "phylo")) {
             stop(sprintf(err_msg, "phylo object"), call. = FALSE)
         }
-        trees_ptr <- read_phy_obj(phy, n_seqs, chunked)
+        trees_ptr <- read_phy_obj(method_info, n_seqs, chunked)
     } else if (method == "coal_obj") {
         if (!inherits(method_info, "list")) {
             stop(sprintf(err_msg, "list with a `trees` field"), call. = FALSE)
@@ -288,17 +288,17 @@ make_phylo_info <- function(method,
         if (is.null(method_info$trees)) {
             stop(sprintf(err_msg, "list with a `trees` field"), call. = FALSE)
         }
-        trees_ptr <- read_coal_obj(coal_obj, seq_sizes, chunked)
+        trees_ptr <- read_coal_obj(method_info, seq_sizes, chunked)
     } else if (method == "ms_file") {
         if (!single_string(method_info)) {
             stop(sprintf(err_msg, "a single string"), call. = FALSE)
         }
-        trees_ptr <- read_ms_output(ms_filename, seq_sizes, chunked)
+        trees_ptr <- read_ms_output(method_info, seq_sizes, chunked)
     } else if (method == "newick") {
         if (!single_string(method_info)) {
             stop(sprintf(err_msg, "a single string"), call. = FALSE)
         }
-        trees_ptr <- read_newick(newick_filename, n_seqs, chunked)
+        trees_ptr <- read_newick(method_info, n_seqs, chunked)
     } else if (method == "theta") {
         err_msg <- sprintf(err_msg,
                            paste("a named list or numeric vector, with the names",

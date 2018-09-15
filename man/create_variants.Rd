@@ -65,3 +65,11 @@ and number of desired variants, respectively.}
 }
 }
 
+\examples{
+r <- create_genome(10, 1000)
+m <- make_mevo(r, list(model = "JC69", lambda = 1))
+p <- ape::rcoal(5)
+v <- create_variants(r, "phylo", p, m)
+
+
+}

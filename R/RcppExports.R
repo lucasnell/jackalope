@@ -155,6 +155,14 @@ digest_ref <- function(ref_genome_ptr, bind_sites, len5s, chunk_size = 0L, n_cor
     .Call(`_gemino_digest_ref`, ref_genome_ptr, bind_sites, len5s, chunk_size, n_cores)
 }
 
+make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates) {
+    .Call(`_gemino_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates)
+}
+
+make_mutation_sampler_chunk_base <- function(Q, pi_tcag, insertion_rates, deletion_rates, chunk_size) {
+    .Call(`_gemino_make_mutation_sampler_chunk_base`, Q, pi_tcag, insertion_rates, deletion_rates, chunk_size)
+}
+
 #' Fill matrix of Gamma-region end points and Gamma values.
 #'
 #' @param gamma_mat The gamma matrix to fill.
@@ -345,14 +353,6 @@ GTR_rate_matrix <- function(pi_tcag, abcdef) {
 #'
 UNREST_rate_matrix <- function(Q) {
     .Call(`_gemino_UNREST_rate_matrix`, Q)
-}
-
-make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates) {
-    .Call(`_gemino_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates)
-}
-
-make_mutation_sampler_chunk_base <- function(Q, pi_tcag, insertion_rates, deletion_rates, chunk_size) {
-    .Call(`_gemino_make_mutation_sampler_chunk_base`, Q, pi_tcag, insertion_rates, deletion_rates, chunk_size)
 }
 
 #' Read a ms output file with newick gene trees and return the gene tree strings.

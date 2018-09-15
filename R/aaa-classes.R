@@ -237,6 +237,7 @@ mevo <- R6::R6Class(
             return(sampler_ptr)
         },
 
+        # Average mutation rate
         mu = function() {
             # Indel rates (same for each nucleotide):
             ins <- sum(self$insertion_rates * 0.25)

@@ -51,6 +51,14 @@
 #'     Defaults to `FALSE`.
 #'
 #'
+#' @export
+#'
+#' @examples
+#' r <- create_genome(10, 1000)
+#' m <- make_mevo(r, list(model = "JC69", lambda = 1))
+#' p <- ape::rcoal(5)
+#' v <- create_variants(r, "phylo", p, m)
+#'
 #'
 # doc end ----
 create_variants <- function(reference,
@@ -73,7 +81,7 @@ create_variants <- function(reference,
         stop("\nCreating variants can only be done to a ref_genome object.",
              call. = FALSE)
     }
-    ref_genome_ptr <- ref_genome$genome
+    ref_genome_ptr <- reference$genome
     if (!inherits(ref_genome_ptr, "externalptr")) {
         stop("\nYou're attempting to create variants using a \"ref_genome\" object with ",
              "a `genome` field that is not of class \"externalptr\". ",
@@ -134,7 +142,7 @@ create_variants <- function(reference,
         # Make variants pointer:
         # -------+
         if (mevo_obj$chunk_size > 0) {
-            variant_ptr <- evolve_seqs_chunk(
+            variants_ptr <- evolve_seqs_chunk(
                 ref_genome_ptr,
                 sampler_base_ptr,
                 phylo_info_ptr,
@@ -142,7 +150,7 @@ create_variants <- function(reference,
                 n_cores,
                 show_progress)
         } else {
-            variant_ptr <- evolve_seqs(
+            variants_ptr <- evolve_seqs(
                 ref_genome_ptr,
                 sampler_base_ptr,
                 phylo_info_ptr,
@@ -171,7 +179,6 @@ create_variants <- function(reference,
     return(var_obj)
 
 }
-# function end ----
 
 
 

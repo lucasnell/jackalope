@@ -128,7 +128,8 @@ public:
     std::deque<Mutation> mutations;
     uint32 seq_size;
 
-    // Constructor
+    // Constructors
+    VarSequence() {};
     VarSequence(const RefSequence& ref)
         : ref_seq(&ref), mutations(std::deque<Mutation>()),
           seq_size(ref.size()) {};
@@ -338,6 +339,7 @@ public:
     std::deque<VarSequence> var_genome;
 
     // Constructors
+    VarGenome() {};
     VarGenome(const RefGenome& ref) {
         name = "";
         for (uint32 i = 0; i < ref.size(); i++) {
@@ -389,10 +391,17 @@ public:
     /*
      Constructors:
      */
+    VarSet(const RefGenome& ref) : variants(), reference(&ref) {};
     VarSet(const RefGenome& ref, const uint32& n_vars)
         : variants(n_vars, VarGenome(ref)),
           reference(&ref) {
         for (uint32 i = 0; i < n_vars; i++) variants[i].name = "var" + std::to_string(i);
+    };
+    // If you already have the names:
+    VarSet(const RefGenome& ref, const std::vector<std::string>& names_)
+        : variants(names_.size(), VarGenome(ref)),
+          reference(&ref) {
+        for (uint32 i = 0; i < names_.size(); i++) variants[i].name = names_[i];
     };
 
     // For easily outputting a reference to a VarGenome

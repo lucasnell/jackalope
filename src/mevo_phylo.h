@@ -51,7 +51,11 @@ inline std::vector<uint32> match_(const std::vector<std::string>& ordered_tip_la
     for (uint32 i = 0; i < spp_order.size(); i++) {
         auto iter = std::find(tip_labels.begin(), tip_labels.end(),
                               ordered_tip_labels[i]);
-        if (iter == tip_labels.end()) stop("item in `tip_labels` not found.");
+        if (iter == tip_labels.end()) {
+            std::string err_msg = ordered_tip_labels[i];
+            err_msg += " not found in `tip_labels`.";
+            stop(err_msg.c_str());
+        }
         spp_order[i] = iter - tip_labels.begin();
     }
 
@@ -658,9 +662,11 @@ XPtr<VarSet> PhyloInfo<T>::evolve_seqs(
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     XPtr<T> sampler_base(sampler_base_ptr);
 
-    uint32 n_vars = phylo_one_seqs[0].n_tips;
+    // Extract tip labels from the first tree:
+    const PhyloTree& first_tree(phylo_one_seqs[0].trees[0]);
+    std::vector<std::string> var_names = first_tree.tip_labels;
 
-    XPtr<VarSet> var_set(new VarSet(*ref_genome, n_vars), true);
+    XPtr<VarSet> var_set(new VarSet(*ref_genome, var_names), true);
 
     uint32 n_seqs = var_set->reference->size();
     uint64 total_seq = ref_genome->total_size;
