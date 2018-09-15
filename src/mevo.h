@@ -576,18 +576,7 @@ public:
     : sampler(4), mut_lengths(mut_lengths_), base_inds() {
         base_inds = make_base_inds();
         if (probs.size() != 4) stop("probs must be size 4.");
-        for (uint32 i = 0; i < 4; i++) {
-            std::vector<double> probs_i = probs[i];
-            /*
-             Item `i` in `probs_i` needs to be manually converted to zero so
-             it's not sampled.
-             (Remember, we want the probability of each, *given that a mutation occurs*.
-             Mutating into itself doesn't count.)
-            */
-            probs_i[i] = 0;
-            // Now create and fill the `TableSampler`:
-            sampler[i] = TableSampler(probs_i);
-        }
+        for (uint32 i = 0; i < 4; i++) sampler[i] = TableSampler(probs[i]);
     }
     // copy constructor
     MutationTypeSampler(const MutationTypeSampler& other)
@@ -796,19 +785,12 @@ typedef OneSeqMutationSampler<ChunkLocationSampler> ChunkMutationSampler;
 
 
 
-void fill_mut_prob_length_vectors(
-        std::vector<std::vector<double>>& probs,
-        std::vector<sint32>& mut_lengths,
-        const arma::mat& Q,
-        const double& xi,
-        const double& psi,
-        const std::vector<double>& pi_tcag,
-        arma::vec rel_insertion_rates,
-        arma::vec rel_deletion_rates);
+
 
 
 
 //' Creates MutationSampler without any of the pointers.
+//'
 //'
 //' `T` should be MutationSampler or ChunkMutationSampler
 //' `T` should be LocationSampler or ChunkLocationSampler
@@ -822,50 +804,90 @@ void fill_mut_prob_length_vectors(
 //' * use `ChunkMutationSampler.location.change_chunk(chunk_size)` if using chunked
 //'   version.
 //'
+//' @param Q A 4x4 matrix of substitution rates for each nucleotide.
+//' @param pi_tcag Vector of nucleotide equilibrium frequencies for
+//'     "T", "C", "A", and "G", respectively.
+//' @param insertion_rates Vector of insertion rates.
+//' @param deletion_rates Vector of deletion rates.
+//'
 //' @noRd
 //'
 template <typename T, typename U>
 XPtr<T> make_mutation_sampler_base_(const arma::mat& Q,
-                                    const double& xi,
-                                    const double& psi,
                                     const std::vector<double>& pi_tcag,
-                                    const arma::vec& rel_insertion_rates,
-                                    const arma::vec& rel_deletion_rates) {
+                                    const std::vector<double>& insertion_rates,
+                                    const std::vector<double>& deletion_rates) {
 
     std::vector<std::vector<double>> probs;
     std::vector<sint32> mut_lengths;
+    std::vector<double> q_tcag;
 
-    fill_mut_prob_length_vectors(probs, mut_lengths, Q, xi, psi, pi_tcag,
-                                 rel_insertion_rates, rel_deletion_rates);
+    uint32 n_ins = insertion_rates.size();
+    uint32 n_del = deletion_rates.size();
+    uint32 n_muts = 4 + n_ins + n_del;
 
+    // 1 vector of probabilities for each nucleotide: T, C, A, then G
+    probs.resize(4);
+    // Overall mutation rates for each nucleotide: T, C, A, then G
+    q_tcag.reserve(4);
+
+    /*
+    (1) Combine substitution, insertion, and deletion rates into a single vector
+    (2) Fill the `q_tcag` vector with mutation rates for each nucleotide
+    */
+    for (uint32 i = 0; i < 4; i++) {
+
+        std::vector<double>& qc(probs[i]);
+
+        qc.reserve(n_muts);
+
+        for (uint32 j = 0; j < Q.n_cols; j++) qc.push_back(Q(i, j));
+        /*
+        Make absolutely sure the diagonal is set to zero bc you don't want to
+        mutate back to the same nucleotide
+        */
+        qc[i] = 0;
+
+        // Add insertions, then deletions
+        for (uint32 j = 0; j < n_ins; j++) {
+            qc.push_back(insertion_rates[j] * 0.25);
+        }
+        for (uint32 j = 0; j < n_del; j++) {
+            qc.push_back(deletion_rates[j] * 0.25);
+        }
+        // Get the overall mutation rate for this nucleotide
+        double qi = std::accumulate(qc.begin(), qc.end(), 0.0);
+        // Divide all in `qc` by `qi` to make them probabilities:
+        for (uint32 j = 0; j < n_muts; j++) qc[j] /= qi;
+        // Add `qi` to vector of rates by nucleotide:
+        q_tcag.push_back(qi);
+    }
+
+    // Now filling in mut_lengths vector
+    mut_lengths.reserve(n_muts);
+    for (uint32 i = 0; i < 4; i++) mut_lengths.push_back(0);
+    for (uint32 i = 0; i < n_ins; i++) {
+        mut_lengths.push_back(static_cast<sint32>(i+1));
+    }
+    for (uint32 i = 0; i < n_del; i++) {
+        sint32 ds = static_cast<sint32>(i + 1);
+        ds *= -1;
+        mut_lengths.push_back(ds);
+    }
+
+    /*
+     Now create and fill output pointer to base sampler:
+     */
     XPtr<T> out(new T());
 
     out->type = MutationTypeSampler(probs, mut_lengths);
     out->insert = TableStringSampler<std::string>(mevo::bases, pi_tcag);
 
-    std::vector<double> q_tcag(4);
-    for (uint32 i = 0; i < 4; i++) q_tcag[i] = probs[i][i];
     MutationRates mr(q_tcag);
     out->location = U(mr);
 
     return out;
 }
-
-
-
-MutationSampler make_mutation_sampler(VarSequence& var_seq,
-                                      const std::vector<std::vector<double>>& probs,
-                                      const std::vector<sint32>& mut_lengths,
-                                      const std::vector<double>& pi_tcag,
-                                      const arma::mat& gamma_mat);
-
-
-ChunkMutationSampler make_mutation_sampler(VarSequence& var_seq,
-                                           const std::vector<std::vector<double>>& probs,
-                                           const std::vector<sint32>& mut_lengths,
-                                           const std::vector<double>& pi_tcag,
-                                           const arma::mat& gamma_mat,
-                                           const uint32& chunk_size);
 
 
 

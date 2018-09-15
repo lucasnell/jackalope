@@ -2,70 +2,70 @@
 #' Make substitution rate matrix (Q) and vector of equilibrium frequencies (pis).
 #'
 #' @inheritParams make_mevo
-#' @param xi Overall indel rate.
 #'
 #' @noRd
 #'
 #'
-make_Q_pis <- function(sub_params, sub_model, xi) {
+substitutions <- function(sub) {
 
-    err_msg <- paste("\nNot all required names provided in `sub_params`.",
-                     "See `?create_variants` for what to provide for each",
-                     "possible value of the `sub_model` argument.")
+    err_msg <- paste("\nNot all required parameters provided for the given",
+                     "substitution model (\"%s\").",
+                     "See `vignette(\"sub-model\")` for each model's required",
+                     "parameter(s).")
 
-    if (sub_model == "TN93") {
-        if (any(! c("pi_tcag", "alpha_1", "alpha_2", "beta") %in% names(sub_params))) {
-            stop(err_msg, call. = FALSE)
+    if (sub$model == "TN93") {
+        if (any(! c("pi_tcag", "alpha_1", "alpha_2", "beta") %in% names(sub))) {
+            stop(sprintf(err_msg, sub$model), call. = FALSE)
         }
-        Q <- TN93_rate_matrix(sub_params$pi_tcag, sub_params$alpha_1, sub_params$alpha_2,
-                              sub_params$beta, xi)
-        pi_tcag <- sub_params$pi_tcag
-    } else if (sub_model == "JC69") {
-        if (any(! c("lambda") %in% names(sub_params))) {
-            stop(err_msg, call. = FALSE)
+        Q <- TN93_rate_matrix(sub$pi_tcag, sub$alpha_1, sub$alpha_2,
+                              sub$beta)
+        pi_tcag <- sub$pi_tcag
+    } else if (sub$model == "JC69") {
+        if (any(! c("lambda") %in% names(sub))) {
+            stop(sprintf(err_msg, sub$model), call. = FALSE)
         }
-        Q <- JC69_rate_matrix(sub_params$lambda, xi)
-        pi_tcag <- sub_params$pi_tcag
-    } else if (sub_model == "K80") {
-        if (any(! c("alpha", "beta") %in% names(sub_params))) {
-            stop(err_msg, call. = FALSE)
+        Q <- JC69_rate_matrix(sub$lambda)
+        pi_tcag <- sub$pi_tcag
+    } else if (sub$model == "K80") {
+        if (any(! c("alpha", "beta") %in% names(sub))) {
+            stop(sprintf(err_msg, sub$model), call. = FALSE)
         }
-        Q <- K80_rate_matrix(sub_params$alpha, sub_params$beta, xi);
-        pi_tcag <- sub_params$pi_tcag
-    } else if (sub_model == "F81") {
-        if (any(! c("pi_tcag") %in% names(sub_params))) {
-            stop(err_msg, call. = FALSE)
+        Q <- K80_rate_matrix(sub$alpha, sub$beta);
+        pi_tcag <- sub$pi_tcag
+    } else if (sub$model == "F81") {
+        if (any(! c("pi_tcag") %in% names(sub))) {
+            stop(sprintf(err_msg, sub$model), call. = FALSE)
         }
-        Q <- F81_rate_matrix(sub_params$pi_tcag, xi);
-        pi_tcag <- sub_params$pi_tcag
-    } else if (sub_model == "HKY85") {
-        if (any(! c("pi_tcag", "alpha", "beta") %in% names(sub_params))) {
-            stop(err_msg, call. = FALSE)
+        Q <- F81_rate_matrix(sub$pi_tcag);
+        pi_tcag <- sub$pi_tcag
+    } else if (sub$model == "HKY85") {
+        if (any(! c("pi_tcag", "alpha", "beta") %in% names(sub))) {
+            stop(sprintf(err_msg, sub$model), call. = FALSE)
         }
-        Q <- HKY85_rate_matrix(sub_params$pi_tcag, sub_params$alpha, sub_params$beta,
+        Q <- HKY85_rate_matrix(sub$pi_tcag, sub$alpha, sub$beta,
                                xi)
-        pi_tcag <- sub_params$pi_tcag
-    } else if (sub_model == "F84") {
-        if (any(! c("pi_tcag", "beta", "kappa") %in% names(sub_params))) {
-            stop(err_msg, call. = FALSE)
+        pi_tcag <- sub$pi_tcag
+    } else if (sub$model == "F84") {
+        if (any(! c("pi_tcag", "beta", "kappa") %in% names(sub))) {
+            stop(sprintf(err_msg, sub$model), call. = FALSE)
         }
-        Q <- F84_rate_matrix(sub_params$pi_tcag, sub_params$beta, sub_params$kappa,
+        Q <- F84_rate_matrix(sub$pi_tcag, sub$beta, sub$kappa,
                              xi)
-        pi_tcag <- sub_params$pi_tcag
-    } else if (sub_model == "GTR") {
-        if (any(! c("pi_tcag", "abcdef") %in% names(sub_params))) {
-            stop(err_msg, call. = FALSE)
+        pi_tcag <- sub$pi_tcag
+    } else if (sub$model == "GTR") {
+        if (any(! c("pi_tcag", "abcdef") %in% names(sub))) {
+            stop(sprintf(err_msg, sub$model), call. = FALSE)
         }
-        Q <- GTR_rate_matrix(sub_params$pi_tcag, sub_params$abcdef, xi)
-        pi_tcag <- sub_params$pi_tcag
-    } else if (sub_model == "UNREST") {
-        if (any(! c("Q") %in% names(sub_params))) {
-            stop(err_msg, call. = FALSE)
+        Q <- GTR_rate_matrix(sub$pi_tcag, sub$abcdef)
+        pi_tcag <- sub$pi_tcag
+    } else if (sub$model == "UNREST") {
+        if (any(! c("Q") %in% names(sub))) {
+            stop(sprintf(err_msg, sub$model), call. = FALSE)
         }
-        q_pi_list <- UNREST_rate_matrix(sub_params$Q, xi)
+        q_pi_list <- UNREST_rate_matrix(sub$Q)
         Q <- q_pi_list$Q
         pi_tcag <- q_pi_list$pi_tcag
-    } else stop("\nInvalid `sub_model` argument to `create_variants`.", call. = FALSE)
+    } else stop("\nInvalid `sub$model` argument to `make_mevo`.", call. = FALSE)
 
     return(list(Q = Q, pi_tcag = pi_tcag))
 }
@@ -73,9 +73,121 @@ make_Q_pis <- function(sub_params, sub_model, xi) {
 
 
 
+#' Process information for indels
+#'
+#' @param indel List of indel parameters.
+#' @param which_type String of `"sub"` or `"del"` to print for error messages.
+#'
+#' @noRd
+#'
+indels <- function(indel) {
+
+    which_type <- deparse(substitute(indel))
+
+    if (is.null(indel)) {
+        rates <- numeric(0)
+    } else {
+        err_msg <- paste("\nWhen specifying", which_type, "in `make_mevo`, ")
+        if (is.null(indel$rate)) {
+            stop(err_msg, "you must always provide a rate.",
+                 call. = TRUE)
+        } else if (!single_number(indel$rate, 0)) {
+            stop(err_msg, "the rate must be a single number >= 0.",
+                 call. = TRUE)
+        }
+        if (indel$rate == 0) return(numeric(0))
+        names_ <- sort(names(indel))
+        if (identical(names_, sort(c("rate", "max_length")))) {
+            if (!single_whole_number(indel$max_length, 1)) {
+                stop(err_msg, "the max length must be a single whole number >= 1.",
+                     call. = TRUE)
+            }
+            rel_rates <- exp(-1 * 1:(indel$max_length))
+        } else if (identical(names_, sort(c("rate", "max_length", "a")))) {
+            if (!single_whole_number(indel$max_length, 1)) {
+                stop(err_msg, "the max length must be a single whole number >= 1.",
+                     call. = TRUE)
+            }
+            L <- 1:(indel$max_length)
+            rel_rates <- {(L * indel$max_length) / (indel$max_length - L + 1)}^(-indel$a)
+        } else if (identical(names_, sort(c("rate", "rel_rates")))) {
+            rel_rates <- indel$rel_rates
+        } else {
+            stop(err_msg, "it must contain names that coincide with one of the methods ",
+                 "in the \"Indels\" section within `?make_mevo`.",
+                 "Note that extra names return an error.",
+                 call. = FALSE)
+        }
+
+        # So relative rates sum to 1:
+        rel_rates <- rel_rates / sum(rel_rates)
+
+        # Absolute rates:
+        rates <- rel_rates * indel$rate
+
+    }
+
+    return(rates)
+}
 
 
 
+
+#' Process information for variation in mutation rates among sites.
+#'
+#' @inheritParams make_mevo
+#' @param seq_sizes Vector of reference-genome sequence sizes.
+#'
+#'
+#' @noRd
+#'
+site_variability <- function(site_var, seq_sizes) {
+
+    if (!is.null(site_var)) {
+
+        if (all(c("shape", "region_size", "mats") %in% names(site_var))) {
+            stop("\nThe `site_var` argument to `make_mevo` ",
+                 "must be a named list with names of either ",
+                 "(a) both \"shape\" and \"region_size\" or ",
+                 "(b) just \"mats\". ",
+                 "Providing all three names is not permitted.",
+                 call. = FALSE)
+        }
+
+        if (all(c("shape", "region_size") %in% names(site_var))) {
+            gamma_mats <- make_gamma_mats(seq_sizes,
+                                          gamma_size_ = site_var$region_size,
+                                          shape = site_var$shape)
+        } else if ("mats" %in% names(site_var)) {
+
+            err_msg <- paste("\nThe `mats` field inside the `site_var`",
+                             "argument to the `make_mevo` function needs to",
+                             "be a list of matrices.")
+            if (!inherits(site_var$mats, "list")) {
+                stop(err_msg, call. = FALSE)
+            } else if (!all(sapply(site_var$mats, inherits,
+                                   what = "matrix"))) {
+                stop(err_msg, call. = FALSE)
+            }
+
+            # Check matrices for proper end points and # columns:
+            check_gamma_mats(site_var$mats, seq_sizes)
+
+            gamma_mats <- site_var$mats
+
+        } else {
+            stop("\nThe `site_var` argument to `make_mevo` ",
+                 "must be a named list with names of either ",
+                 "(a) both \"shape\" and \"region_size\" or ",
+                 "(b) just \"mats\".",
+                 call. = FALSE)
+        }
+    } else {
+        # This results in no variability among sites:
+        gamma_mats <- make_gamma_mats(seq_sizes, gamma_size_ = 0, shape = 1)
+    }
+    return(gamma_mats)
+}
 
 
 
@@ -83,68 +195,82 @@ make_Q_pis <- function(sub_params, sub_model, xi) {
 #' Make a `mevo` object to store information needed for molecular evolution simulation.
 #'
 #'
-#' @param sub_model Character indicating which substitution mutation model to use.
-#'     It takes one of the following options, with the optional parameters in parentheses
-#'     for each:
-#'     \describe{
-#'         \item{`"TN93"`}{ `pi_tcag`, `alpha_1`, `alpha_2`, `beta` }
-#'         \item{`"JC69"`}{ `lambda` }
-#'         \item{`"K80"`}{ `alpha`, `beta` }
-#'         \item{`"F81"`}{ `pi_tcag` }
-#'         \item{`"HKY85"`}{ `pi_tcag`, `alpha`, `beta` }
-#'         \item{`"F84"`}{ `pi_tcag`, `beta`, `kappa` }
-#'         \item{`"GTR"`}{ `pi_tcag`, `abcdef` }
-#'         \item{`"UNREST"`}{ `Q` }
-#'     }
-#'     See `?vignette("sub-models")` for more information on these model parameters
-#'     and their default values.
-#'     Defaults to `"TN93"`.
-#' @param sub_params A list containing the parameters for the specified
-#'     substitution model.
-#'     See `?vignette("sub-models")` for more information on these model parameters
-#'     and their default values.
-#'     Defaults to `NULL`, which causes it to use all default parameters.
-#' @param indel_params A list containing the parameters for indels.
-#'     The following parameters are allowed:
-#'     \describe{
-#'         \item{`xi`}{Overall indel rate.}
-#'         \item{`psi`}{Proportion of insertions to deletions.}
-#'         \item{`rel_insertion_rates`}{Relative insertion rates.}
-#'         \item{`rel_deletion_rates`}{Relative deletion rates.}
-#'     }
-#'     Defaults to `NULL`, which causes it to use all default parameters. See
-#'     Details for default parameter values.
-#' @param site_var_params List of parameters for generating variability in mutation
+#'
+#' @section Indels
+#' Both insertions and deletions require the `rate` parameter, which specifies
+#' the overall insertion/deletion rate among all lengths.
+#' The `rate` parameter is ultimately combined with a vector of relative rates among
+#' the different lengths of insertions/deletions from 1 to the maximum
+#' possible length.
+#' There are three different ways to specify/generate relative-rate values.
+#' \enumerate{
+#'     \item Assume that rates are proportional to `exp(-l)` for indel length
+#'         `l` from 1 to the maximum length (Albers et al. 2011).
+#'         This method will be used if the `rate` and `max_length`
+#'         arguments are provided.
+#'     \item Generate relative rates from a Lavalette distribution
+#'         (Fletcher and Yang 2009), where the rate for length `l` is proportional to
+#'         `{l * max_size / (max_size - l + 1)}^(-a)`.
+#'         This method will be used if the `rate`, `max_length`, and `a`
+#'         arguments are provided.
+#'     \item Directly specify values by providing a numeric vector of relative
+#'         rates for each insertion/deletion length from 1 to the maximum length.
+#'         This method will be used if the `rate` and `rel_rates` arguments are
+#'         provided.
+#' }
+#' Note that providing extra parameter(s) will return an error.
+#'
+#'
+#' @section Site variation
+#' A site's deviance from the average mutation rate is determined by its
+#' "gamma distance".
+#' A site's overall mutation rate is the mutation rate for that nucleotide
+#' (substitution + indel) multiplied by the site's gamma distance.
+#' There are two options for specifying gamma distances:
+#' \enumerate{
+#'     \item Generate gamma distances from a Gamma distribution.
+#'         This option requires the following arguments:
+#'         \describe{
+#'             \item{`shape`}{Shape parameter for the Gamma distribution,
+#'                 where the variance of the distribution is `1 / shape`.
+#'                 The mean is fixed to 1.}
+#'             \item{`region_size`}{Size of regions where each site within that
+#'                 region has the same gamma distance.}
+#'         }
+#'     \item Manually input matrices that specify the gamma distance and end points
+#'         for regions each gamma distances refers to.
+#'         This option requires the following argument:
+#'         \describe{
+#'             \item{`mats`}{List of matrices, one for each sequence in the genome.
+#'                 Each matrix should have two columns.
+#'                 The first should contain the end points for each region.
+#'                 The second should contain the gamma distances for each region.
+#'                 Note that if gamma distances don't have a mean (weighted by
+#'                 sequence length for each gamma-distance value) equal to 1,
+#'                 you're essentially changing the overall mutation rate.}
+#'         }
+#' }
+#'
+#'
+#' @param sub A list containing the parameters for substitutions.
+#'     The `model` field is always required within this list, and this specifies
+#'     the model used for substitutions.
+#'     It takes one of the following options:
+#'     `"JC69"`, `"K80"`, `"F81"`, `"HKY85"`, `"TN93"`, `"F84"`, `"GTR"`, or `"UNREST"`.
+#'     See `vignette("sub-models")` for more information on these models and
+#'     their required parameters.
+#' @param ins A list containing the parameters for insertions.
+#'     Passing `NULL` to this argument results in no insertions.
+#'     See "Indels" section for more information.
+#'     Defaults to `NULL`.
+#' @param del A list containing the parameters for deletions.
+#'     Passing `NULL` to this argument results in no deletions.
+#'     See "Indels" section for more information.
+#'     Defaults to `NULL`.
+#' @param site_var List of parameters for generating variability in mutation
 #'     rates among sites (for both substitutions and indels).
-#'     A site's deviance from the average mutation rate is determined by its
-#'     "gamma distance".
-#'     A site's overall mutation rate is the mutation rate for that nucleotide
-#'     (substitution + indel) multiplied by the site's gamma distance.
-#'     There are two options for specifying gamma distances:
-#'     \enumerate{
-#'         \item Generate gamma distances from a Gamma distribution.
-#'             This option requires the following arguments:
-#'             \describe{
-#'                 \item{`shape`}{Shape parameter for the Gamma distribution,
-#'                     where the variance of the distribution is `1 / shape`.
-#'                     The mean is fixed to 1.}
-#'                 \item{`region_size`}{Size of regions where each site within that
-#'                     region has the same gamma distance.}
-#'             }
-#'         \item Manually input matrices that specify the gamma distance and end points
-#'             for regions each gamma distances refers to.
-#'             This option requires the following argument:
-#'             \describe{
-#'                 \item{`mats`}{List of matrices, one for each sequence in the genome.
-#'                     Each matrix should have two columns.
-#'                     The first should contain the end points for each region.
-#'                     The second should contain the gamma distances for each region.
-#'                     Note that if gamma distances don't have a mean (weighted by
-#'                     sequence length for each gamma-distance value) equal to 1,
-#'                     you're essentially changing the overall mutation rate.}
-#'             }
-#'     }
 #'     Passing `NULL` to this argument results in no variability among sites.
+#'     See "Site variation" section for more information.
 #'     Defaults to `NULL`.
 #' @param chunk_size The size of "chunks" of sequences to first sample uniformly
 #'     before doing weighted sampling by rates for each sequence location.
@@ -163,13 +289,20 @@ make_Q_pis <- function(sub_params, sub_model, xi) {
 #'
 #' @export
 #'
+#' @references
+#' Albers, C. A., G. Lunter, D. G. MacArthur, G. McVean, W. H. Ouwehand, and R. Durbin.
+#' 2011. Dindel: accurate indel calls from short-read data. Genome Research 21:961–973.
+#'
+#' Fletcher, W., and Z. Yang. 2009. INDELible: a flexible simulator of
+#' biological sequence evolution. Molecular Biology and Evolution 26:1879–1888.
+#'
 #' @examples
 #'
 make_mevo <- function(reference,
-                      sub_model = "TN93",
-                      sub_params = NULL,
-                      indel_params = NULL,
-                      site_var_params = NULL,
+                      sub,
+                      ins = NULL,
+                      del = NULL,
+                      site_var = NULL,
                       chunk_size = 100) {
 
     if (!inherits(reference, "ref_genome")) {
@@ -177,91 +310,38 @@ make_mevo <- function(reference,
              call. = FALSE)
     }
 
-    sub_model <- match.arg(sub_model, c("TN93", "JC69", "K80", "F81", "HKY85",
-                                        "F84", "GTR", "UNREST"))
-
-    # ================================*
-    # ================================*
-
-    # ** LEFT OFF ----
-    # Manage creation of matrices and indel vectors in a more elegant way.
-
-    # ================================*
-    # ================================*
-
-
-    # * start temp check ----
-    if (is.null(sub_params) | is.null(indel_params)) {
-        stop("\nIn make_mevo, defaults are not yet programmed for sub_params and ",
-             "indel_params, so you cannot pass NULL for either of these arguments.",
+    # -------+
+    # Process substitution info:
+    # -------+
+    if (is.null(sub$model)) {
+        stop("\nYou must always specify a `model` field to the `sub` argument in ",
+             "`make_mevo` (i.e., `is.null(sub$model)` should never be `TRUE`).",
              call. = FALSE)
     }
-    # _ end temp check ----
-
-
-
-    if (any(! c("xi", "psi", "rel_insertion_rates", "rel_deletion_rates") %in%
-            names(indel_params))) {
-        stop("\nNot all required names provided in `indel_params`. ",
-             "See `?make_mevo` for what to provide.", call. = FALSE)
-    }
-
-    Q_pis <- make_Q_pis(sub_params, sub_model, indel_params$xi)
-
-    # * start temp assign ----
-    # Below assigns these values to objects in global namespace.
-    # This is not a permanent solution.
-    xi <- indel_params$xi
-    psi <- indel_params$psi
-    rel_insertion_rates <- indel_params$rel_insertion_rates
-    rel_deletion_rates <- indel_params$rel_deletion_rates
-    # _ end temp assign ----
-
+    sub$model <- match.arg(sub$model, c("JC69", "K80", "F81", "HKY85", "TN93", "F84",
+                                        "GTR", "UNREST"))
+    sub_info <- substitutions(sub)
 
 
     # -------+
-    # Make Gamma matrices (for mutation-rate variability among sites):
+    # Process indel info:
     # -------+
-    seq_sizes <- reference$sizes
-    if (!is.null(site_var_params)) {
-        if (all(c("shape", "region_size") %in% names(site_var_params))) {
-            gamma_mats <- make_gamma_mats(seq_sizes,
-                                          gamma_size_ = site_var_params$region_size,
-                                          shape = site_var_params$shape)
-        } else if ("mats" %in% names(site_var_params)) {
+    insertion_rates <- indels(ins)
+    deletion_rates <- indels(del)
 
-            err_msg <- paste("\nThe `mats` field inside the `site_var_params`",
-                             "argument to the `create_variants` function needs to",
-                             "be a list of matrices.")
-            if (!inherits(site_var_params$mats, "list")) {
-                stop(err_msg, call. = FALSE)
-            } else if (!all(sapply(site_var_params$mats, inherits,
-                                   what = "matrix"))) {
-                stop(err_msg, call. = FALSE)
-            }
 
-            # Check matrices for proper end points and # columns:
-            check_gamma_mats(site_var_params$mats, seq_sizes)
+    # -------+
+    # Process info for mutation-rate variability among sites:
+    # -------+
+    gamma_mats <- site_variability(site_var, seq_sizes = reference$sizes)
 
-            gamma_mats <- site_var_params$mats
 
-        } else {
-            stop("\nThe `site_var_params` argument to `create_variants` ",
-                 "must be a named list containing \"shape\" and \"region_size\" ",
-                 "or \"mats\" as names.",
-                 call. = FALSE)
-        }
-    } else {
-        # This results in no variability among sites:
-        gamma_mats <- make_gamma_mats(seq_sizes, gamma_size_ = 0, shape = 1)
-    }
-
-    out <- mevo$new(Q_pis$Q,
-                    xi,
-                    psi,
-                    Q_pis$pi_tcag,
-                    rel_insertion_rates,
-                    rel_deletion_rates,
+    # -------+
+    # Make final output object
+    # -------+
+    out <- mevo$new(sub_info,
+                    insertion_rates,
+                    deletion_rates,
                     gamma_mats,
                     chunk_size)
 

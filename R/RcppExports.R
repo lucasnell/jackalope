@@ -187,6 +187,20 @@ make_gamma_mats <- function(seq_sizes, gamma_size_, shape) {
     .Call(`_gemino_make_gamma_mats`, seq_sizes, gamma_size_, shape)
 }
 
+#' Check input Gamma matrices for proper # columns and end points.
+#'
+#' @param mats List of matrices to check.
+#' @param seq_sizes Vector of sequences sizes for all sequences.
+#'
+#' @return A length-2 vector of potential error codes and the index (1-based indexing)
+#'     to which matrix was a problem.
+#'
+#' @noRd
+#'
+check_gamma_mats <- function(mats, seq_sizes) {
+    invisible(.Call(`_gemino_check_gamma_mats`, mats, seq_sizes))
+}
+
 #' Create XPtr to nested vector of PhyloTree objects from phylogeny information.
 #'
 #' @noRd
@@ -256,8 +270,8 @@ NULL
 #'
 #' @noRd
 #'
-TN93_rate_matrix <- function(pi_tcag, alpha_1, alpha_2, beta, xi) {
-    .Call(`_gemino_TN93_rate_matrix`, pi_tcag, alpha_1, alpha_2, beta, xi)
+TN93_rate_matrix <- function(pi_tcag, alpha_1, alpha_2, beta) {
+    .Call(`_gemino_TN93_rate_matrix`, pi_tcag, alpha_1, alpha_2, beta)
 }
 
 #' Q matrix for rates for a given nucleotide using the JC69 substitution model.
@@ -266,8 +280,8 @@ TN93_rate_matrix <- function(pi_tcag, alpha_1, alpha_2, beta, xi) {
 #'
 #' @noRd
 #'
-JC69_rate_matrix <- function(lambda, xi) {
-    .Call(`_gemino_JC69_rate_matrix`, lambda, xi)
+JC69_rate_matrix <- function(lambda) {
+    .Call(`_gemino_JC69_rate_matrix`, lambda)
 }
 
 #' Q matrix for rates for a given nucleotide using the K80 substitution model.
@@ -276,8 +290,8 @@ JC69_rate_matrix <- function(lambda, xi) {
 #'
 #' @noRd
 #'
-K80_rate_matrix <- function(alpha, beta, xi) {
-    .Call(`_gemino_K80_rate_matrix`, alpha, beta, xi)
+K80_rate_matrix <- function(alpha, beta) {
+    .Call(`_gemino_K80_rate_matrix`, alpha, beta)
 }
 
 #' Q matrix for rates for a given nucleotide using the F81 substitution model.
@@ -286,8 +300,8 @@ K80_rate_matrix <- function(alpha, beta, xi) {
 #'
 #' @noRd
 #'
-F81_rate_matrix <- function(pi_tcag, xi) {
-    .Call(`_gemino_F81_rate_matrix`, pi_tcag, xi)
+F81_rate_matrix <- function(pi_tcag) {
+    .Call(`_gemino_F81_rate_matrix`, pi_tcag)
 }
 
 #' Q matrix for rates for a given nucleotide using the HKY85 substitution model.
@@ -296,8 +310,8 @@ F81_rate_matrix <- function(pi_tcag, xi) {
 #'
 #' @noRd
 #'
-HKY85_rate_matrix <- function(pi_tcag, alpha, beta, xi) {
-    .Call(`_gemino_HKY85_rate_matrix`, pi_tcag, alpha, beta, xi)
+HKY85_rate_matrix <- function(pi_tcag, alpha, beta) {
+    .Call(`_gemino_HKY85_rate_matrix`, pi_tcag, alpha, beta)
 }
 
 #' Q matrix for rates for a given nucleotide using the F84 substitution model.
@@ -306,16 +320,16 @@ HKY85_rate_matrix <- function(pi_tcag, alpha, beta, xi) {
 #'
 #' @noRd
 #'
-F84_rate_matrix <- function(pi_tcag, beta, kappa, xi) {
-    .Call(`_gemino_F84_rate_matrix`, pi_tcag, beta, kappa, xi)
+F84_rate_matrix <- function(pi_tcag, beta, kappa) {
+    .Call(`_gemino_F84_rate_matrix`, pi_tcag, beta, kappa)
 }
 
 #' Q matrix for rates for a given nucleotide using the GTR substitution model.
 #'
 #' @noRd
 #'
-GTR_rate_matrix <- function(pi_tcag, abcdef, xi) {
-    .Call(`_gemino_GTR_rate_matrix`, pi_tcag, abcdef, xi)
+GTR_rate_matrix <- function(pi_tcag, abcdef) {
+    .Call(`_gemino_GTR_rate_matrix`, pi_tcag, abcdef)
 }
 
 #' Same as above, but it only takes a matrix and indel rate, and outputs a list.
@@ -329,33 +343,19 @@ GTR_rate_matrix <- function(pi_tcag, abcdef, xi) {
 #' @noRd
 #'
 #'
-UNREST_rate_matrix <- function(Q, xi) {
-    .Call(`_gemino_UNREST_rate_matrix`, Q, xi)
+UNREST_rate_matrix <- function(Q) {
+    .Call(`_gemino_UNREST_rate_matrix`, Q)
 }
 
 #' Fill in vectors of mutation probabilities and lengths.
-#'
-#' These vectors should be initialized already, but there's no need to resize them.
-#'
-#'
-#' @param Q A matrix of substitution rates for each nucleotide.
-#' @param xi Overall rate of indels.
-#' @param psi Proportion of insertions to deletions.
-#' @param pi_tcag Vector of nucleotide equilibrium frequencies for
-#'     "T", "C", "A", and "G", respectively.
-#' @param rel_insertion_rates Relative insertion rates.
-#' @param rel_deletion_rates Relative deletion rates.
-#'
-#' @noRd
-#'
 NULL
 
-make_mutation_sampler_base <- function(Q, xi, psi, pi_tcag, rel_insertion_rates, rel_deletion_rates) {
-    .Call(`_gemino_make_mutation_sampler_base`, Q, xi, psi, pi_tcag, rel_insertion_rates, rel_deletion_rates)
+make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates) {
+    .Call(`_gemino_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates)
 }
 
-make_mutation_sampler_chunk_base <- function(Q, xi, psi, pi_tcag, rel_insertion_rates, rel_deletion_rates, chunk_size) {
-    .Call(`_gemino_make_mutation_sampler_chunk_base`, Q, xi, psi, pi_tcag, rel_insertion_rates, rel_deletion_rates, chunk_size)
+make_mutation_sampler_chunk_base <- function(Q, pi_tcag, insertion_rates, deletion_rates, chunk_size) {
+    .Call(`_gemino_make_mutation_sampler_chunk_base`, Q, pi_tcag, insertion_rates, deletion_rates, chunk_size)
 }
 
 #' Read a ms output file with newick gene trees and return the gene tree strings.

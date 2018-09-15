@@ -113,6 +113,7 @@ ref_genome$lock()
 #' An R6 class containing information needed for molecular evolution.
 #'
 #' You shouldn't need to interact with this class much.
+#' This class is designed to simply store information to be used in `create_variants`.
 #'
 #' @field Q A matrix of substitution rates for each nucleotide.
 #' @field xi Overall rate of indels.
@@ -143,28 +144,21 @@ mevo <- R6::R6Class(
     public = list(
 
         Q = NULL,
-        xi = NULL,
-        psi = NULL,
         pi_tcag = NULL,
-        rel_insertion_rates = NULL,
-        rel_deletion_rates = NULL,
+        insertion_rates = NULL,
+        deletion_rates = NULL,
         gamma_mats = NULL,
         chunk_size = NULL,
 
-        initialize = function(Q,
-                              xi,
-                              psi,
-                              pi_tcag,
-                              rel_insertion_rates,
-                              rel_deletion_rates,
+        initialize = function(sub_info,
+                              insertion_rates,
+                              deletion_rates,
                               gamma_mats,
                               chunk_size) {
-            self$Q <- Q
-            self$xi <- xi
-            self$psi <- psi
-            self$pi_tcag <- pi_tcag
-            self$rel_insertion_rates <- rel_insertion_rates
-            self$rel_deletion_rates <- rel_deletion_rates
+            self$Q <- sub_info$Q
+            self$pi_tcag <- sub_info$pi_tcag
+            self$insertion_rates <- insertion_rates
+            self$deletion_rates <- deletion_rates
             self$gamma_mats <- gamma_mats
             self$chunk_size <- chunk_size
 
@@ -187,18 +181,14 @@ mevo <- R6::R6Class(
 
             if (self$chunk_size <= 0) {
                 sampler_ptr <- make_mutation_sampler_base(self$Q,
-                                                          self$xi,
-                                                          self$psi,
                                                           self$pi_tcag,
-                                                          self$rel_insertion_rates,
-                                                          self$rel_deletion_rates)
+                                                          self$insertion_rates,
+                                                          self$deletion_rates)
             } else {
                 sampler_ptr <- make_mutation_sampler_chunk_base(self$Q,
-                                                                self$xi,
-                                                                self$psi,
                                                                 self$pi_tcag,
-                                                                self$rel_insertion_rates,
-                                                                self$rel_deletion_rates,
+                                                                self$insertion_rates,
+                                                                self$deletion_rates,
                                                                 self$chunk_size)
             }
 
