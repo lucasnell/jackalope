@@ -347,9 +347,6 @@ UNREST_rate_matrix <- function(Q) {
     .Call(`_gemino_UNREST_rate_matrix`, Q)
 }
 
-#' Fill in vectors of mutation probabilities and lengths.
-NULL
-
 make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates) {
     .Call(`_gemino_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates)
 }

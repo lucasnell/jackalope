@@ -21,3 +21,9 @@ single_number <- function(x, .min, .max) {
     if (!missing(.max)) bool <- bool & x <= .max
     return(bool)
 }
+# Check for a single string
+single_string <- function(x) {
+    if (is.null(x)) return(FALSE)
+    bool <- is.character(x) & length(x) == 1
+    return(bool)
+}

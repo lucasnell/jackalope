@@ -1,10 +1,13 @@
 # ref_genome class----
 #' An R6 class representing a reference genome.
 #'
-#' \emph{Note:} Do NOT change fields in this class directly. It will cause your
-#' R session to do bad things.
+#'
+#' \emph{Note:} Do NOT change fields in this class directly.
+#' It will cause your R session to do bad things.
 #' (Ever seen the bomb popup on RStudio? Manually mess with these fields and you
 #' surely will.)
+#'
+#'
 #'
 #' @field genome An \code{externalptr} to a C++ object storing the sequences
 #'     representing the genome.
@@ -14,6 +17,8 @@
 #' @return An object of class \code{ref_genome}.
 #'
 #' @docType class
+#'
+#' @seealso \code{\link{read_fasta}} \code{\link{create_genome}}
 #'
 #' @export
 #'
@@ -244,6 +249,8 @@ mevo$lock()
 #' @return An object of class \code{variants}.
 #'
 #' @docType class
+#'
+#' @seealso \code{\link{create_variants}}
 #'
 #' @export
 #'

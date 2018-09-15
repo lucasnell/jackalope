@@ -3,7 +3,7 @@
 \docType{class}
 \name{variants}
 \alias{variants}
-\title{An R6 class representing haploid variants from a reference genome}
+\title{An R6 class representing haploid variants from a reference genome.}
 \format{An \code{\link[R6]{R6Class}} generator object}
 \usage{
 variants
@@ -45,4 +45,7 @@ don't worry about later deleting the \code{ref_genome} object.
 }}
 }}
 
+\seealso{
+\code{\link{create_variants}}
+}
 \keyword{datasets}

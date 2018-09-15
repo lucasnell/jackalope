@@ -22,8 +22,6 @@ using namespace Rcpp;
 
 
 
-//' Fill in vectors of mutation probabilities and lengths.
-
 
 // Wrapper to make non-chunked version available from R
 

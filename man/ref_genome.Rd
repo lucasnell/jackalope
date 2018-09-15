@@ -3,7 +3,7 @@
 \docType{class}
 \name{ref_genome}
 \alias{ref_genome}
-\title{An R6 class representing a reference genome}
+\title{An R6 class representing a reference genome.}
 \format{An \code{\link[R6]{R6Class}} generator object}
 \usage{
 ref_genome
@@ -12,8 +12,8 @@ ref_genome
 An object of class \code{ref_genome}.
 }
 \description{
-\emph{Note:} Do NOT change fields in this class directly. It will cause your
-R session to do bad things.
+\emph{Note:} Do NOT change fields in this class directly.
+It will cause your R session to do bad things.
 (Ever seen the bomb popup on RStudio? Manually mess with these fields and you
 surely will.)
 }
@@ -27,4 +27,7 @@ representing the genome.}
 genome, if a digestion has been carried out. It's \code{NULL} otherwise.}
 }}
 
+\seealso{
+\code{\link{read_fasta}} \code{\link{create_genome}}
+}
 \keyword{datasets}
