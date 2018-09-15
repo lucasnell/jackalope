@@ -117,26 +117,27 @@ ref_genome$lock()
 # mevo class----
 #' An R6 class containing information needed for molecular evolution.
 #'
-#' You shouldn't need to interact with this class much.
-#' This class is designed to simply store information to be used in `create_variants`.
+#' You shouldn't need to interact with this class much, if at all.
+#' This class is designed to be made in `make_mevo`, then to store information for use
+#' in `create_variants`.
 #'
 #' @field Q A matrix of substitution rates for each nucleotide.
-#' @field xi Overall rate of indels.
-#' @field psi Proportion of insertions to deletions.
 #' @field pi_tcag Vector of nucleotide equilibrium frequencies for "T", "C", "A", and
 #'     "G", respectively.
-#' @field rel_insertion_rates Relative insertion rates.
-#' @field rel_deletion_rates Relative deletion rates.
+#' @field insertion_rates Vector of insertion rates by length.
+#' @field deletion_rates Vector of deletion rates by length.
 #' @field gamma_mats List of matrices specifying "gamma distances" (see definition in
 #'     `?make_mevo`) for each sequence.
 #' @field chunk_size The size of "chunks" of sequences to first sample uniformly
 #'     before doing weighted sampling by rates for each sequence location.
-#'     See `?create_variants` for more information.
+#'     See `?make_mevo` for more information.
 #'
 #'
 #' @return An object of class \code{mevo}.
 #'
 #' @docType class
+#'
+#' @seealso \code{\link{make_mevo}}
 #'
 #' @export
 #'
@@ -160,6 +161,7 @@ mevo <- R6::R6Class(
                               deletion_rates,
                               gamma_mats,
                               chunk_size) {
+
             self$Q <- sub_info$Q
             self$pi_tcag <- sub_info$pi_tcag
             self$insertion_rates <- insertion_rates
@@ -170,9 +172,44 @@ mevo <- R6::R6Class(
         },
 
 
-        print = function() {
-            "print mevo object"
-            cat("< mevo object >\n")
+        print = function(digits = max(3, getOption("digits") - 3), ...) {
+            fmt <- paste0("%.", digits, "f")
+            cat("< Molecular evolution info >\n")
+
+            cat("# Equilibrium densities:\n")
+            cat("  ", sprintf(fmt, self$pi_tcag), "\n")
+
+            cat("# Chunk size: ", self$chunk_size, "\n", sep = "")
+
+            cat("# Among-site variability: ")
+            using_gammas <- !all(sapply(self$gamma_mats,
+                                        function(x) nrow(x) == 1 && all(x[,2] == 1)))
+            cat(using_gammas, "\n")
+
+            cat("# Insertion rates:")
+            if (length(self$insertion_rates) == 0) {
+                cat(" <none>\n")
+            } else if (length(self$insertion_rates) > 10) {
+                cat("\n")
+                cat(sprintf(fmt, self$insertion_rates[1:10]), "...\n")
+            } else {
+                cat("\n")
+                cat(sprintf(fmt, self$insertion_rates), "\n")
+            }
+            cat("# Deletion rates:")
+            if (length(self$deletion_rates) == 0) {
+                cat(" <none>\n")
+            } else if (length(self$deletion_rates) > 10) {
+                cat("\n ", sprintf(fmt, self$deletion_rates[1:10]), "...\n")
+            } else {
+                cat("\n ", sprintf(fmt, self$deletion_rates), "\n")
+            }
+
+            cat("# Substitution rate matrix:\n")
+            prmatrix(m$Q, digits = digits,
+                     rowlab = paste("  ", c("T", "C", "A", "G")),
+                     collab = c("T", "C", "A", "G"))
+
             invisible(self)
         },
 

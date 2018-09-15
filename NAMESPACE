@@ -2,6 +2,8 @@
 
 export(create_genome)
 export(digest)
+export(make_mevo)
+export(mevo)
 export(read_fasta)
 export(ref_genome)
 export(variants)

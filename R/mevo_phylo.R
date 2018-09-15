@@ -251,27 +251,13 @@ read_theta <- function(theta, mu, n_vars, n_seqs, chunked) {
 
 
 
-#' Create phylogenetic information object from one of multiple types of inputs.
+#' Create phylogenetic information object from one of multiple methods.
 #'
-#' Below are the required arguments for each method:
-#' \describe{
-#'     \item{`method = "phylo"`}{`phy`, and `n_seqs`}
-#'     \item{`method = "coal_obj"`}{`coal_obj`, and `seq_sizes`}
-#'     \item{`method = "ms_file"`}{`ms_filename`, and `seq_sizes`}
-#'     \item{`method = "newick"`}{`newick_filename`, and `n_seqs`}
-#'     \item{`method = "theta"`}{`theta`, `mu`, `n_vars`, and `n_seqs`}
-#' }
 #'
 #' @inheritParams create_variants
-#' @param phy The `phylo` object.
-#' @param n_seqs The number of sequences in the reference genome.
-#' @param coal_obj The coalescent-simulation object.
 #' @param seq_sizes Vector of sequence sizes.
-#' @param ms_filename The filename for ms-style output.
-#' @param newick_filename The filename for the NEWICK phylogeny.
-#' @param theta Theta parameter, population-scaled mutation rate.
+#' @param n_seqs The number of sequences in the reference genome.
 #' @param mu Average mutation rate (per bp per generation).
-#' @param n_vars Number of variants (haploid genomes) to create.
 #'
 #' @return An external pointer to the phylogenetic info needed to do the sequence
 #'     simulations.

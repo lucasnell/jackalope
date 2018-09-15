@@ -4,8 +4,7 @@
 \alias{create_variants}
 \title{Create variants from a reference genome.}
 \usage{
-create_variants(reference, method, method_args, sub_params, indel_params,
-  sub_model = "TN93", chunk_size = 100, n_cores = 1,
+create_variants(reference, method, method_info, mevo_obj, n_cores = 1,
   show_progress = FALSE)
 }
 \arguments{
@@ -23,50 +22,16 @@ format of the \code{ms} program.}
 \item{\code{"newick"}}{a NEWICK file containing a phylogenetic tree.}
 \item{\code{"theta"}}{an estimate for theta, the population-scaled mutation rate.}
 \item{\code{"vcf"}}{a variant call format (VCF) file that directly specifies
-variants.}
+variants. This method does not work if the \code{vcfR} package isn't installed.
+\strong{\emph{NOTE:}} If this method is chosen, all arguments other than
+\code{reference}, \code{method}, and \code{method_info} are ignored.}
 }}
 
-\item{method_args}{List of arguments used for the given method. See Details for which
-arguments are used for each method.}
+\item{method_info}{Object containing information used for the given method.
+See "Method arguments" section for which arguments are used for each method.}
 
-\item{sub_params}{A list containing the necessary parameters for the specified
-substitution model.}
-
-\item{indel_params}{A list containing the necessary parameters for indels.
-It requires the following parameters:
-\describe{
-\item{\code{xi}}{Overall indel rate.}
-\item{\code{psi}}{Proportion of insertions to deletions.}
-\item{\code{rel_insertion_rates}}{Relative insertion rates.}
-\item{\code{rel_deletion_rates}}{Relative deletion rates.}
-}}
-
-\item{sub_model}{Character indicating which substitution mutation model to use.
-Takes one of the following options, with the required parameters in parentheses:
-\describe{
-\item{\code{"TN93"}}{ \code{pi_tcag}, \code{alpha_1}, \code{alpha_2}, \code{beta} }
-\item{\code{"JC69"}}{ \code{lambda} }
-\item{\code{"K80"}}{ \code{alpha}, \code{beta} }
-\item{\code{"F81"}}{ \code{pi_tcag} }
-\item{\code{"HKY85"}}{ \code{pi_tcag}, \code{alpha}, \code{beta} }
-\item{\code{"F84"}}{ \code{pi_tcag}, \code{beta}, \code{kappa} }
-\item{\code{"GTR"}}{ \code{pi_tcag}, \code{abcdef} }
-\item{\code{"UNREST"}}{ \code{Q} }
-}\preformatted{Defaults to `"TN93"`.
-}}
-
-\item{chunk_size}{The size of "chunks" of sequences to first sample uniformly
-before doing weighted sampling by rates for each sequence location.
-Uniformly sampling before doing weighted sampling dramatically speeds up
-the mutation process (especially for very long sequences) and has little
-effect on the sampling probabilities.
-Higher values will more closely resemble sampling without the uniform-sampling
-step, but will be slower.
-Set this to \code{0} to not uniformly sample first.
-From testing on a chromosome of length \code{1e6}, a \code{chunk_size} value of \code{100}
-offers a ~10x speed increase and doesn't differ significantly from sampling
-without the uniform-sampling step.
-Defaults to \code{100}.}
+\item{mevo_obj}{A \code{mevo} object that stores molecular-evolution information.
+See \code{\link{make_mevo}} for more information.}
 
 \item{n_cores}{Number of cores to use for parallel processing.
 This argument is ignored if OpenMP is not enabled.
@@ -80,3 +45,23 @@ Defaults to \code{FALSE}.}
 \description{
 Create variants from a reference genome.
 }
+\section{Method arguments}{
+
+Below, I describe what the \code{method_info} should look like for each possible method.
+\describe{
+\item{\code{method = "phylo"}}{A single \code{\link[ape]{phylo}} object.}
+\item{\code{method = "coal_obj"}}{A single \code{list} with a \code{trees} field inside.
+For what this \code{trees} field should look like, see output from the
+\code{scrm} or \code{coala} package. (These packages are not required to be installed
+when installing \code{gemino}.)}
+\item{\code{method = "ms_file"}}{A single string specifying the name of the file
+containing the \code{ms}-style coalescent output.}
+\item{\code{method = "newick"}}{A single string specifying the name of the NEWICK file
+containing the phylogeny.}
+\item{\code{method = "theta"}}{A named vector or list containing the fields \code{theta}
+and \code{n_vars}, specifying the theta parameter (population-scaled mutation rate)
+and number of desired variants, respectively.}
+\item{\code{method = "vcf"}}{A single string specifying the name of the VCF file.}
+}
+}
+

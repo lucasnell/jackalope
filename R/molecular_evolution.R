@@ -194,7 +194,7 @@ site_variability <- function(site_var, seq_sizes) {
 #'
 #'
 #'
-#' @section Indels
+#' @section Indels:
 #' Both insertions and deletions require the `rate` parameter, which specifies
 #' the overall insertion/deletion rate among all lengths.
 #' The `rate` parameter is ultimately combined with a vector of relative rates among
@@ -202,24 +202,34 @@ site_variability <- function(site_var, seq_sizes) {
 #' possible length.
 #' There are three different ways to specify/generate relative-rate values.
 #' \enumerate{
-#'     \item Assume that rates are proportional to `exp(-l)` for indel length
-#'         `l` from 1 to the maximum length (Albers et al. 2011).
-#'         This method will be used if the `rate` and `max_length`
-#'         arguments are provided.
+#'     \item Assume that rates are proportional to `exp(-L)` for indel length
+#'         `L` from 1 to the maximum length (Albers et al. 2011).
+#'         This method will be used if the following arguments are provided:
+#'         \itemize{
+#'             \item `rate`
+#'             \item `max_length`
+#'         }
 #'     \item Generate relative rates from a Lavalette distribution
-#'         (Fletcher and Yang 2009), where the rate for length `l` is proportional to
-#'         `{l * max_size / (max_size - l + 1)}^(-a)`.
-#'         This method will be used if the `rate`, `max_length`, and `a`
-#'         arguments are provided.
+#'         (Fletcher and Yang 2009), where the rate for length `L` is proportional to
+#'         `{L * max_size / (max_size - L + 1)}^(-a)`.
+#'         This method will be used if the following arguments are provided:
+#'         \itemize{
+#'             \item `rate`
+#'             \item `max_length`
+#'             \item `a`
+#'         }
 #'     \item Directly specify values by providing a numeric vector of relative
 #'         rates for each insertion/deletion length from 1 to the maximum length.
-#'         This method will be used if the `rate` and `rel_rates` arguments are
-#'         provided.
+#'         This method will be used if the following arguments are provided:
+#'         \itemize{
+#'             \item `rate`
+#'             \item `rel_rates`
+#'         }
 #' }
 #' Note that providing extra parameter(s) will return an error.
 #'
 #'
-#' @section Site variation
+#' @section Site variation:
 #' A site's deviance from the average mutation rate is determined by its
 #' "gamma distance".
 #' A site's overall mutation rate is the mutation rate for that nucleotide
@@ -232,8 +242,8 @@ site_variability <- function(site_var, seq_sizes) {
 #'             \item{`shape`}{Shape parameter for the Gamma distribution,
 #'                 where the variance of the distribution is `1 / shape`.
 #'                 The mean is fixed to 1.}
-#'             \item{`region_size`}{Size of regions where each site within that
-#'                 region has the same gamma distance.}
+#'             \item{`region_size`}{Size of regions to break the genome into,
+#'                 where all sites within a region have the same gamma distance.}
 #'         }
 #'     \item Manually input matrices that specify the gamma distance and end points
 #'         for regions each gamma distances refers to.
@@ -295,6 +305,8 @@ site_variability <- function(site_var, seq_sizes) {
 #' biological sequence evolution. Molecular Biology and Evolution 26:1879–1888.
 #'
 #' @examples
+#' ref <- create_genome(10, 1000)
+#' mevo <- make_mevo(ref, list(model = "JC69", lambda = 1))
 #'
 make_mevo <- function(reference,
                       sub,

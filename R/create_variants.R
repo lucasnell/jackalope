@@ -2,6 +2,25 @@
 # doc start ----
 #' Create variants from a reference genome.
 #'
+#' @section Method arguments:
+#' Below, I describe what the `method_info` should look like for each possible method.
+#' \describe{
+#'     \item{`method = "phylo"`}{A single \code{\link[ape]{phylo}} object.}
+#'     \item{`method = "coal_obj"`}{A single `list` with a `trees` field inside.
+#'         For what this `trees` field should look like, see output from the
+#'         `scrm` or `coala` package. (These packages are not required to be installed
+#'         when installing `gemino`.)}
+#'     \item{`method = "ms_file"`}{A single string specifying the name of the file
+#'         containing the `ms`-style coalescent output.}
+#'     \item{`method = "newick"`}{A single string specifying the name of the NEWICK file
+#'         containing the phylogeny.}
+#'     \item{`method = "theta"`}{A named vector or list containing the fields `theta`
+#'         and `n_vars`, specifying the theta parameter (population-scaled mutation rate)
+#'         and number of desired variants, respectively.}
+#'     \item{`method = "vcf"`}{A single string specifying the name of the VCF file.}
+#' }
+#'
+#'
 #' @param reference A \code{ref_genome} object from which to generate variants.
 #'     This argument is required.
 #' @param method Method to use for generating variants.
@@ -15,12 +34,12 @@
 #'         \item{`"newick"`}{a NEWICK file containing a phylogenetic tree.}
 #'         \item{`"theta"`}{an estimate for theta, the population-scaled mutation rate.}
 #'         \item{`"vcf"`}{a variant call format (VCF) file that directly specifies
-#'             variants.
+#'             variants. This method does not work if the `vcfR` package isn't installed.
 #'             \strong{\emph{NOTE:}} If this method is chosen, all arguments other than
-#'             `reference`, `method`, and `method_args` are ignored.}
+#'             `reference`, `method`, and `method_info` are ignored.}
 #'     }
-#' @param method_args List of arguments used for the given method.
-#'     See Details for which arguments are used for each method.
+#' @param method_info Object containing information used for the given method.
+#'     See "Method arguments" section for which arguments are used for each method.
 #' @param mevo_obj A `mevo` object that stores molecular-evolution information.
 #'     See \code{\link{make_mevo}} for more information.
 #' @param n_cores Number of cores to use for parallel processing.
