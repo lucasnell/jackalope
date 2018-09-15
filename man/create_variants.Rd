@@ -14,12 +14,12 @@ This argument is required.}
 \item{method}{Method to use for generating variants.
 Options are as follows:
 \describe{
-\item{\code{"phylo"}}{a single phylogenetic tree from a \code{phylo} object.}
-\item{\code{"coal_obj"}}{a coalescent-simulator object from the \code{scrm} or \code{coala}
-packages.}
+\item{\code{"phylo"}}{phylogenetic tree(s) from \code{phylo} object(s).}
+\item{\code{"coal_obj"}}{coalescent-simulator object(s) from the \code{scrm} or \code{coala}
+package.}
 \item{\code{"ms_file"}}{a file containing output from a coalescent simulator in the
 format of the \code{ms} program.}
-\item{\code{"newick"}}{a NEWICK file containing a phylogenetic tree.}
+\item{\code{"newick"}}{NEWICK file(s) containing a phylogenetic tree(s).}
 \item{\code{"theta"}}{an estimate for theta, the population-scaled mutation rate.}
 \item{\code{"vcf"}}{a variant call format (VCF) file that directly specifies
 variants. This method does not work if the \code{vcfR} package isn't installed.
@@ -49,19 +49,43 @@ Create variants from a reference genome.
 
 Below, I describe what the \code{method_info} should look like for each possible method.
 \describe{
-\item{\code{method = "phylo"}}{A single \code{\link[ape]{phylo}} object.}
-\item{\code{method = "coal_obj"}}{A single \code{list} with a \code{trees} field inside.
-For what this \code{trees} field should look like, see output from the
-\code{scrm} or \code{coala} package. (These packages are not required to be installed
-when installing \code{gemino}.)}
+\item{\code{method = "phylo"}}{One of the following object types is allowed:
+\itemize{
+\item A single \code{\link[ape]{phylo}} object that represents all
+sequences in the genome.
+\item A \code{list} or \code{multiPhylo} object containing a \code{phylo} object for
+each reference sequence.
+Phylogenies will be assigned to sequences in the order provided.
+}
+}
+\item{\code{method = "coal_obj"}}{One of the following object types is allowed:
+\itemize{
+\item A single \code{list} with a \code{trees} field inside. This field must
+contain a set of gene trees for each sequence.
+\item A list of lists, each sub-list containing a \code{trees} field of
+length 1. The top-level list must be of the same length as the
+number of sequences.
+}
+For what all \code{trees} fields should look like, see output from the
+\code{scrm} or \code{coala} package.
+(These packages are not required to be installed when installing
+\code{gemino}.)
+To get gene trees in \code{coala}, make sure to add \code{+ sumstat_trees()}
+to the \code{coalmodel}.
+In \code{scrm}, make sure that \code{"-T"} is present in \code{args}.
+}
 \item{\code{method = "ms_file"}}{A single string specifying the name of the file
 containing the \code{ms}-style coalescent output.}
-\item{\code{method = "newick"}}{A single string specifying the name of the NEWICK file
-containing the phylogeny.}
+\item{\code{method = "newick"}}{One or more string(s), each of which specifies
+a name of a NEWICK file containing a phylogeny.
+If one name is provided, that phylogeny will be used for all sequences.
+If more than one is provided, there must be a phylogeny for each sequence,
+and phylogenies will be assigned to sequences in the order provided.}
 \item{\code{method = "theta"}}{A named vector or list containing the fields \code{theta}
 and \code{n_vars}, specifying the theta parameter (population-scaled mutation rate)
 and number of desired variants, respectively.}
-\item{\code{method = "vcf"}}{A single string specifying the name of the VCF file.}
+\item{\code{method = "vcf"}}{A single string specifying the name of the VCF file.
+This method won't work if the package \code{vcfR} isn't installed.}
 }
 }
 

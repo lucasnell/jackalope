@@ -5,19 +5,43 @@
 #' @section Method arguments:
 #' Below, I describe what the `method_info` should look like for each possible method.
 #' \describe{
-#'     \item{`method = "phylo"`}{A single \code{\link[ape]{phylo}} object.}
-#'     \item{`method = "coal_obj"`}{A single `list` with a `trees` field inside.
-#'         For what this `trees` field should look like, see output from the
-#'         `scrm` or `coala` package. (These packages are not required to be installed
-#'         when installing `gemino`.)}
+#'     \item{`method = "phylo"`}{One of the following object types is allowed:
+#'         \itemize{
+#'             \item A single \code{\link[ape]{phylo}} object that represents all
+#'                 sequences in the genome.
+#'             \item A `list` or `multiPhylo` object containing a `phylo` object for
+#'                 each reference sequence.
+#'                 Phylogenies will be assigned to sequences in the order provided.
+#'         }
+#'     }
+#'     \item{`method = "coal_obj"`}{One of the following object types is allowed:
+#'         \itemize{
+#'             \item A single `list` with a `trees` field inside. This field must
+#'                 contain a set of gene trees for each sequence.
+#'             \item A list of lists, each sub-list containing a `trees` field of
+#'                 length 1. The top-level list must be of the same length as the
+#'                 number of sequences.
+#'         }
+#'         For what all `trees` fields should look like, see output from the
+#'         `scrm` or `coala` package.
+#'         (These packages are not required to be installed when installing
+#'         `gemino`.)
+#'         To get gene trees in `coala`, make sure to add `+ sumstat_trees()`
+#'         to the `coalmodel`.
+#'         In `scrm`, make sure that `"-T"` is present in `args`.
+#'     }
 #'     \item{`method = "ms_file"`}{A single string specifying the name of the file
 #'         containing the `ms`-style coalescent output.}
-#'     \item{`method = "newick"`}{A single string specifying the name of the NEWICK file
-#'         containing the phylogeny.}
+#'     \item{`method = "newick"`}{One or more string(s), each of which specifies
+#'         a name of a NEWICK file containing a phylogeny.
+#'         If one name is provided, that phylogeny will be used for all sequences.
+#'         If more than one is provided, there must be a phylogeny for each sequence,
+#'         and phylogenies will be assigned to sequences in the order provided.}
 #'     \item{`method = "theta"`}{A named vector or list containing the fields `theta`
 #'         and `n_vars`, specifying the theta parameter (population-scaled mutation rate)
 #'         and number of desired variants, respectively.}
-#'     \item{`method = "vcf"`}{A single string specifying the name of the VCF file.}
+#'     \item{`method = "vcf"`}{A single string specifying the name of the VCF file.
+#'         This method won't work if the package `vcfR` isn't installed.}
 #' }
 #'
 #'
@@ -26,12 +50,12 @@
 #' @param method Method to use for generating variants.
 #'     Options are as follows:
 #'     \describe{
-#'         \item{`"phylo"`}{a single phylogenetic tree from a `phylo` object.}
-#'         \item{`"coal_obj"`}{a coalescent-simulator object from the `scrm` or `coala`
-#'             packages.}
+#'         \item{`"phylo"`}{phylogenetic tree(s) from `phylo` object(s).}
+#'         \item{`"coal_obj"`}{coalescent-simulator object(s) from the `scrm` or `coala`
+#'             package.}
 #'         \item{`"ms_file"`}{a file containing output from a coalescent simulator in the
 #'             format of the `ms` program.}
-#'         \item{`"newick"`}{a NEWICK file containing a phylogenetic tree.}
+#'         \item{`"newick"`}{NEWICK file(s) containing a phylogenetic tree(s).}
 #'         \item{`"theta"`}{an estimate for theta, the population-scaled mutation rate.}
 #'         \item{`"vcf"`}{a variant call format (VCF) file that directly specifies
 #'             variants. This method does not work if the `vcfR` package isn't installed.
@@ -167,8 +191,16 @@ create_variants <- function(reference,
     } else {
 
         stop("\nVCF files not yet implemented in `create_variants`.", call. = TRUE)
-        if (!inherits(vcf_file, "character") | length(vcf_file) != 1) {
-            stop("\nThe vcf_file argument to create_variants must be a single string.",
+
+        if (!requireNamespace("vcfR", quietly = TRUE)) {
+            stop("\nPackage \"vcfR\" is needed for reading VCF files. ",
+                 "Please install it.",
+                 call. = FALSE)
+        }
+        if (!single_string(method_info)) {
+            stop("\nIf method = \"vcf\" in `create_variants`, ",
+                 "the `method_info` arg must be a single string specifying the ",
+                 "filename for the VCF file.",
                  call. = FALSE)
         }
 

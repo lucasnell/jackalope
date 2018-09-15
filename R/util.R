@@ -27,3 +27,9 @@ single_string <- function(x) {
     bool <- is.character(x) & length(x) == 1
     return(bool)
 }
+# Check for a character vector of given length(s)
+vec_string <- function(x, L = 1) {
+    if (is.null(x)) return(FALSE)
+    bool <- is.character(x) & (length(x) %in% L)
+    return(bool)
+}
