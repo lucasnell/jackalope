@@ -279,25 +279,54 @@ read_theta <- function(theta, mu, n_vars, n_seqs, chunked) {
 #' @noRd
 #'
 make_phylo_info <- function(method,
-                            phy, n_seqs,
-                            coal_obj, seq_sizes,
-                            ms_filename,
-                            newick_filename,
-                            theta, mu, n_vars,
+                            method_info,
+                            seq_sizes,
+                            n_seqs,
+                            mu,
                             chunk_size) {
 
     chunked <- chunk_size > 0
 
+    err_msg <- paste0("\nFor `create_variants` method ", method,
+                      ", `method_info` must be a %s.")
+
     if (method == "phylo") {
+        if (!inherits(method_info, "phylo")) {
+            stop(sprintf(err_msg, "phylo object"), call. = FALSE)
+        }
         trees_ptr <- read_phy_obj(phy, n_seqs, chunked)
     } else if (method == "coal_obj") {
+        if (!inherits(method_info, "list")) {
+            stop(sprintf(err_msg, "list with a `trees` field"), call. = FALSE)
+        }
+        if (is.null(method_info$trees)) {
+            stop(sprintf(err_msg, "list with a `trees` field"), call. = FALSE)
+        }
         trees_ptr <- read_coal_obj(coal_obj, seq_sizes, chunked)
     } else if (method == "ms_file") {
+        if (!single_string(method_info)) {
+            stop(sprintf(err_msg, "a single string"), call. = FALSE)
+        }
         trees_ptr <- read_ms_output(ms_filename, seq_sizes, chunked)
     } else if (method == "newick") {
+        if (!single_string(method_info)) {
+            stop(sprintf(err_msg, "a single string"), call. = FALSE)
+        }
         trees_ptr <- read_newick(newick_filename, n_seqs, chunked)
     } else if (method == "theta") {
-        trees_ptr <- read_theta(theta, mu, n_vars, n_seqs, chunked)
+        err_msg <- sprintf(err_msg,
+                           paste("a named list or numeric vector, with the names",
+                                 "\"theta\" and \"n_vars\".",
+                                 "\"theta\" must be single number, and",
+                                 "\"n_vars\" must be a single whole number."))
+        if (!inherits(method_info, "list") | !inherits(method_info, "numeric") |
+            is.null(names(method_info))) {
+            stop(err_msg, call. = FALSE)
+        }
+        if (!single_number(method_info[["theta"]])) stop(err_msg, call. = FALSE)
+        if (!single_whole_number(method_info[["n_vars"]])) stop(err_msg, call. = FALSE)
+        trees_ptr <- read_theta(method_info[["theta"]], mu,
+                                method_info[["n_vars"]], n_seqs, chunked)
     } else {
         stop("\nAn improper method argument was input to the `make_phylo_info` function",
              call. = FALSE)

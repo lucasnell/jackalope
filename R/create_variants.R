@@ -36,13 +36,15 @@
 # doc end ----
 create_variants <- function(reference,
                             method,
-                            method_args,
+                            method_info,
                             mevo_obj,
                             n_cores = 1,
                             show_progress = FALSE) {
 
-    method <- match.arg(method, c("phylo", "coal_obj", "ms_file", "newick", "theta",
-                                  "vcf"))
+    methods_ <- list(phylo = c("phylo", "coal_obj", "ms_file", "newick", "theta"),
+                     non = "vcf")
+
+    method <- match.arg(method, do.call(c, methods_))
 
     # ---------*
     # --- check types ----
@@ -54,14 +56,14 @@ create_variants <- function(reference,
     }
     ref_genome_ptr <- ref_genome$genome
     if (!inherits(ref_genome_ptr, "externalptr")) {
-        stop("\nYou're attempting to create variants using a ref_genome object with ",
-             "a genome field that is not an externalptr. ",
+        stop("\nYou're attempting to create variants using a \"ref_genome\" object with ",
+             "a `genome` field that is not of class \"externalptr\". ",
              "Restart by reading a FASTA file or by simulating a genome. ",
-             "And do NOT change the genome field manually.",
+             "And do NOT change the `genome` field manually.",
              call. = FALSE)
     }
     if (!single_whole_number(n_cores, .min = 1)) {
-        stop("\nThe n_cores argument supplied to create_variants is not a single",
+        stop("\nThe `n_cores` argument supplied to `create_variants` is not a single",
              "whole number greater than or equal to 1.",
              call. = FALSE)
     }
@@ -71,13 +73,33 @@ create_variants <- function(reference,
     # --- phylo methods ----
     # ---------*
 
-    if (method != "vcf") {
+    if (method %in% methods_$phylo) {
 
-        chunk_size <- mevo_obj$chunk_size
+        # -------+
+        # Check mevo_obj argument
+        # -------+
+        mevo_obj_err <- FALSE
+        if (missing(mevo_obj)) {
+            mevo_obj_err <- TRUE
+        } else if (!inherits(mevo_obj, "mevo")) {
+            mevo_obj_err <- TRUE
+        }
+        if (mevo_obj_err) {
+            stop("\nIf you want to use a method other than \"vcf\" in ",
+                 "`create_variants`, you must provide the `mevo_obj` argument that is ",
+                 "of class \"mevo\". ",
+                 "You should use the `make_mevo` function to create this object.",
+                 call. = FALSE)
+        }
 
-        phylo_info_ptr <- do.call(make_phylo_info,
-                                  c(method_args, list(method = method,
-                                                      chunk_size = chunk_size)))
+        # -------+
+        # Make phylo_ptr
+        # -------+
+        seq_sizes <- reference$sizes
+        n_seqs <- length(seq_sizes)
+        phylo_info_ptr <- make_phylo_info(method, method_info,
+                                          seq_sizes, n_seqs, mevo_obj$mu,
+                                          mevo_obj$chunk_size)
 
         # -------+
         # Make sampler_base_ptr
@@ -92,7 +114,7 @@ create_variants <- function(reference,
         # -------+
         # Make variants pointer:
         # -------+
-        if (chunk_size > 0) {
+        if (mevo_obj$chunk_size > 0) {
             variant_ptr <- evolve_seqs_chunk(
                 ref_genome_ptr,
                 sampler_base_ptr,
@@ -112,6 +134,7 @@ create_variants <- function(reference,
 
     # ---------*
     # --- vcf method ----
+    # (It's the only non-phylogenetic method currently)
     # ---------*
 
     } else {
