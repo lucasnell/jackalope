@@ -25,13 +25,13 @@ substitutions <- function(sub) {
             stop(sprintf(err_msg, sub$model), call. = FALSE)
         }
         Q <- JC69_rate_matrix(sub$lambda)
-        pi_tcag <- sub$pi_tcag
+        pi_tcag <- rep(0.25, 4)
     } else if (sub$model == "K80") {
         if (any(! c("alpha", "beta") %in% names(sub))) {
             stop(sprintf(err_msg, sub$model), call. = FALSE)
         }
         Q <- K80_rate_matrix(sub$alpha, sub$beta);
-        pi_tcag <- sub$pi_tcag
+        pi_tcag <- rep(0.25, 4)
     } else if (sub$model == "F81") {
         if (any(! c("pi_tcag") %in% names(sub))) {
             stop(sprintf(err_msg, sub$model), call. = FALSE)
@@ -42,15 +42,13 @@ substitutions <- function(sub) {
         if (any(! c("pi_tcag", "alpha", "beta") %in% names(sub))) {
             stop(sprintf(err_msg, sub$model), call. = FALSE)
         }
-        Q <- HKY85_rate_matrix(sub$pi_tcag, sub$alpha, sub$beta,
-                               xi)
+        Q <- HKY85_rate_matrix(sub$pi_tcag, sub$alpha, sub$beta)
         pi_tcag <- sub$pi_tcag
     } else if (sub$model == "F84") {
         if (any(! c("pi_tcag", "beta", "kappa") %in% names(sub))) {
             stop(sprintf(err_msg, sub$model), call. = FALSE)
         }
-        Q <- F84_rate_matrix(sub$pi_tcag, sub$beta, sub$kappa,
-                             xi)
+        Q <- F84_rate_matrix(sub$pi_tcag, sub$beta, sub$kappa)
         pi_tcag <- sub$pi_tcag
     } else if (sub$model == "GTR") {
         if (any(! c("pi_tcag", "abcdef") %in% names(sub))) {
