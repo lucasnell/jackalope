@@ -167,6 +167,7 @@ mevo <- R6::R6Class(
             self$insertion_rates <- insertion_rates
             self$deletion_rates <- deletion_rates
             self$gamma_mats <- gamma_mats
+            dim(self$gamma_mats) <- NULL  # to make it a list instead of matrix
             self$chunk_size <- chunk_size
 
         },
@@ -206,7 +207,7 @@ mevo <- R6::R6Class(
             }
 
             cat("# Substitution rate matrix:\n")
-            prmatrix(m$Q, digits = digits,
+            prmatrix(self$Q, digits = digits,
                      rowlab = paste("  ", c("T", "C", "A", "G")),
                      collab = c("T", "C", "A", "G"))
 

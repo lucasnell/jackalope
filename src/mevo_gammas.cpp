@@ -291,7 +291,7 @@ void check_gamma_mats(const std::vector<arma::mat>& mats,
         // Make sure there are no repeat ends points
         arma::vec unq_ends = arma::unique(gamma_mat.col(0));
         if (unq_ends.n_elem != gamma_mat.n_rows) {
-            err_msg = "should contain no duplicate end points (in the first column).";
+            err_msg += "should contain no duplicate end points (in the first column).";
             error = true;
             break;
         }
@@ -300,6 +300,14 @@ void check_gamma_mats(const std::vector<arma::mat>& mats,
         if (arma::any(gamma_mat.col(0) != trunc_ends)) {
             err_msg += "should contain only whole numbers as end points ";
             err_msg += "(i.e., in the first column).";
+            error = true;
+            break;
+        }
+        // The last end point should be the end of the sequence:
+        uint32 last_end = static_cast<uint32>(gamma_mat.col(0).max());
+        if (last_end != seq_sizes[i]) {
+            err_msg += "need to have a maximum end point (in the first column) ";
+            err_msg += "equal to the size of the associated sequence.";
             error = true;
             break;
         }

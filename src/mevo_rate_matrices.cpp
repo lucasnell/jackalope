@@ -121,8 +121,8 @@ arma::mat F84_rate_matrix(const std::vector<double>& pi_tcag,
     double pi_y = pi_tcag[0] + pi_tcag[1];
     double pi_r = pi_tcag[2] + pi_tcag[3];
 
-    double alpha_1 = 1 + kappa / pi_y;
-    double alpha_2 = 1 + kappa / pi_r;
+    double alpha_1 = (1 + kappa / pi_y) * beta;
+    double alpha_2 = (1 + kappa / pi_r) * beta;
 
     arma::mat Q = TN93_rate_matrix(pi_tcag, alpha_1, alpha_2, beta);
 
