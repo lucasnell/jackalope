@@ -187,17 +187,25 @@ protected:
  This class is used to retrieve the rates based on indices from 0 to 999 instead of
  having to mess around with indices from 0 to 999999.
 
- Class `T` needs to return a double with square brackets and have a `size()` method.
+ Class `T` needs to return a double with square brackets and have the `size()`
+ and `empty()` methods.
  */
+
+
+template <typename T>
+class ChunkReservoirRates;
 
 template <typename T>
 class ChunkRateGetter {
+
+    friend class ChunkReservoirRates<T>;
 
 public:
 
     // The vector of rates
     T all_rates;
-    // The vector of sub-sampled indices (possible values from 0 to all_rates.size() - 1)
+    // The vector of sub-sampled indices
+    // (possible values from 0 to min(chunk_size, all_rates.size() - 1))
     std::vector<uint32> inds;
 
     // To store the initial chunk size argument to the constructor.
@@ -207,16 +215,19 @@ public:
     ChunkRateGetter() : all_rates(), inds(), chunk_size(0), use_vitter(true) {};
     ChunkRateGetter(const T& r, const uint32& chunk_size_)
         : all_rates(r), inds(chunk_size_), chunk_size(chunk_size_), use_vitter(true) {
-        /*
-         If chunk >= all_rates size, then turn `inds` into a vector from 0 to
-         `all_rates.size() - 1`, and set use_vitter to false.
-         This makes it easier to avoid the uniform sampling step when using
-         this class.
-         */
-        if (chunk_size >= all_rates.size()) {
-            inds.resize(all_rates.size());
-            for (uint32 i = 0; i < all_rates.size(); i++) inds[i] = i;
-            use_vitter = false;
+        // If `r` is empty, dont' go to the next step
+        if (!r.empty()) {
+            /*
+             If chunk >= all_rates size, then turn `inds` into a vector from 0 to
+             `all_rates.size() - 1`, and set use_vitter to false.
+             This makes it easier to avoid the uniform sampling step when using
+             this class.
+             */
+            if (chunk_size >= all_rates.size()) {
+                inds.resize(all_rates.size());
+                for (uint32 i = 0; i < all_rates.size(); i++) inds[i] = i;
+                use_vitter = false;
+            }
         }
     };
     ChunkRateGetter(const ChunkRateGetter<T>& other)
@@ -236,6 +247,11 @@ public:
     }
     inline uint32 size() const noexcept {
         return inds.size();
+    }
+    // Reset without any RNG (Just a way to make sure size is okay)
+    void reset() {
+        recheck_size_();
+        return;
     }
     void reset(pcg32& eng) {
         recheck_size_();
@@ -295,6 +311,9 @@ private:
                 inds.resize(all_rates.size());
                 for (uint32 i = 0; i < all_rates.size(); i++) inds[i] = i;
                 use_vitter = false;
+            } else if (all_rates.size() != inds.size()) {
+                inds.resize(all_rates.size());
+                for (uint32 i = 0; i < all_rates.size(); i++) inds[i] = i;
             }
             return;
         }
@@ -303,10 +322,8 @@ private:
          then make `inds` a vector of length `chunk_size`
          and set `use_vitter` to true
          */
-        if (!use_vitter) {
-            inds.resize(chunk_size);
-            use_vitter = true;
-        }
+        if (!use_vitter) use_vitter = true;
+        if (inds.size() != chunk_size) inds.resize(chunk_size);
 
         return;
     }

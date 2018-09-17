@@ -103,10 +103,17 @@ public:
 
 
     // To get size of the variant sequence
-    inline uint32 size() const noexcept {
-        // If a null pointer, return 0
-        if (!var_seq) return 0;
+    // inline uint32 size() const noexcept {
+    inline uint32 size() const {
+        // If a null pointer, throw error
+        if (!var_seq) stop("null pointer when accessing MutationRates");
         return var_seq->size();
+    }
+
+    // Return whether the pointer to the VarSequence object is null
+    inline bool empty() const noexcept {
+        if (!var_seq) return true;
+        return false;
     }
 
     // Using bracket operator to get the overall mutation rate at a location
@@ -360,6 +367,12 @@ public:
         return rates.res_rates;
     }
 
+    // Fill pointer
+    void fill_ptrs(const VarSequence& vs_) {
+        mr().var_seq = &vs_;
+        return;
+    }
+
     /*
      Get the change in mutation rate for a substitution at a location given a
      position and the character it'll change to
@@ -432,6 +445,15 @@ public:
         return rates.res_rates.all_rates;
     }
 
+    // Fill pointer
+    void fill_ptrs(const VarSequence& vs_) {
+        mr().var_seq = &vs_;
+        ChunkRateGetter<MutationRates>& chunk_rg(rates.res_rates);
+        // Make sure to check on sizes:
+        chunk_rg.reset();
+        return;
+    }
+
     double substitution_rate_change(const char& c, const uint32& pos) const {
         const MutationRates& mr_(mr());
         return mr_.sub_rate_change(pos, c);
@@ -469,6 +491,11 @@ public:
     void change_chunk(const uint32& chunk_size) {
         ChunkRateGetter<MutationRates>& crg(rates.res_rates);
         crg.chunk_size = chunk_size;
+        crg.inds.resize(chunk_size);
+        for (uint i = 0; i < chunk_size; i++) crg.inds[i] = i;
+        // If not a valid pointer, stop here
+        if (!crg.all_rates.var_seq) return;
+        // Else, check on sizes:
         if (crg.all_rates.size() > chunk_size) {
             crg.inds.resize(chunk_size);
         } else if (crg.all_rates.size() != crg.inds.size()) {
@@ -697,7 +724,7 @@ public:
 
     void fill_ptrs(VarSequence& vs_) {
         var_seq = &vs_;
-        location.mr().var_seq = &vs_;
+        location.fill_ptrs(vs_);
         return;
     }
 
