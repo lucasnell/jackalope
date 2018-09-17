@@ -5,15 +5,14 @@ context("Testing making of mevo (molecular evolution info) object")
 # library(testthat)
 
 
-# Reference genome
-n_seqs <- 10
-seq_len <- 1000
-ref <- create_genome(n_seqs, seq_len)
-
 
 # Set all needed molecular evolution parameters inside an environment
 pars <- new.env()
 with(pars, {
+    # For reference genome:
+    n_seqs <- 10
+    seq_len <- 1000
+    # Molecular evolution:
     lambda = 0.1
     alpha = 0.25
     beta = 0.5
@@ -46,6 +45,11 @@ with(pars, {
     mats_err4 = mats
     mats_err4[[4]][1,1] = mats_err4[[4]][2,1]
 })
+
+
+# Create reference genome
+ref <- with(pars, create_genome(n_seqs, seq_len))
+
 
 
 
@@ -236,8 +240,9 @@ M <- with(pars, make_mevo(ref, sub = list(model = "JC69", lambda = lambda),
 test_that("proper gamma distance values with `shape` and `region_size` inputs", {
     # Testing end points:
     expect_equal(sapply(M$gamma_mats, function(x) x[,1]),
-                 matrix(rep(seq(pars$region_size, seq_len, pars$region_size), n_seqs),
-                        ceiling(seq_len / pars$region_size), n_seqs))
+                 matrix(rep(seq(pars$region_size, pars$seq_len, pars$region_size),
+                            pars$n_seqs),
+                        ceiling(pars$seq_len / pars$region_size), pars$n_seqs))
     # Testing mean:
     expect_equal(mean(sapply(M$gamma_mats, function(x) mean(x[,2]))), 1)
     # Looking at variance:
