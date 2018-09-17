@@ -1,31 +1,14 @@
+
 context("Testing molecular evolution accuracy")
 
 # library(gemino)
 # library(testthat)
 
 
-# Combining p-values using Fisher's method:
-fisher_method <- function(pvals) {
-    chisq <- -2 * sum(log(pvals))
-    df_ <- 2 * length(pvals)
-    p <- pchisq(chisq, df = df_, lower.tail = FALSE)
-    return(p)
-}
 
-
-
-# =================================================================
-# =================================================================
-
-#  Do the simulations including a phylogeny and evolutionary model
-
-# =================================================================
-# =================================================================
-
-
+# simulate ----
 
 set.seed(1087437799)
-
 
 # Construct sequences with known number of each nucleotide
 n_seqs <- 20
@@ -35,85 +18,75 @@ seqs <- rep(list(c(rep("T", 0.25e3), rep("C", 0.25e3),
 seqs <- lapply(seqs, sample)
 seqs <- sapply(seqs, paste, collapse = "")
 
-# Make pointer to RefGenome object based on `seqs`
-ref <- gemino:::make_ref_genome(seqs)
+# Make ref_genome object from a pointer to a RefGenome object based on `seqs`
+ref <- ref_genome$new(gemino:::make_ref_genome(seqs))
 
-# Set molecular evolution parameters
-pi_tcag_ = 0.1*1:4
-alpha_1_ = 1
-alpha_2_ = 2
-beta_ = 0.5
-xi_ = 0.5
-psi_ = 1
+# Set all needed molecular evolution parameters inside an environment (using TN93 method)
+pars <- new.env()
+with(pars, {
+    pi_tcag = c(0.1, 0.2, 0.3, 0.4)
+    alpha_1 = 0.25
+    alpha_2 = 0.35
+    beta = 0.5
+    # For indels:
+    rates = c(0.2, 0.3)
+    M = c(8L, 10L)
+    a = c(0.1, 0.5)
+    # For site variability:
+    shape = 0.5
+    region_size = 100
+    seq_len = nchar(seqs[1])
+    ends = seq(region_size, seq_len, region_size)
+    mats = replicate(n_seqs,
+                     cbind(ends, rgamma(length(ends), shape = shape, rate = shape)),
+                     simplify = FALSE)
+})
 
-Q <- matrix(beta_, 4, 4)
-Q[2,1] <- Q[1,2] <- alpha_1_
-Q[4,3] <- Q[3,4] <- alpha_2_
-for (i in 1:4) Q[,i] <- Q[,i] * pi_tcag_[i]
-diag(Q) <- 0
 
-q <- rowSums(Q) + 0.25 * xi_
-
-gamma_mat <- matrix(1L, 10L, 2)
-gamma_mat[,1] <- seq(1e2, 1e3, 1e2)
-gamma_mat[,2] <- rgamma(nrow(gamma_mat), shape = 1, rate = 1)
-# Repeating the above gamma matrix for all sequences:
-gamma_mats <- rep(list(gamma_mat), n_seqs)
-
-# Create pointer to C++ sampler object
-sampler <- gemino:::make_sampler_ptr(sub_params = list(pi_tcag = pi_tcag_,
-                                                       alpha_1 = alpha_1_,
-                                                       alpha_2 = alpha_2_,
-                                                       beta = beta_),
-                                 indel_params = list(xi = xi_,
-                                                     psi = psi_,
-                                                     rel_insertion_rates = exp(-1:-10),
-                                                     rel_deletion_rates = exp(-1:-10)),
-                                 sub_model = "TN93", chunk_size = 100)
+mevo_ <- with(pars, {
+    make_mevo(ref,
+              sub = list(model = "TN93", alpha_1 = alpha_1, alpha_2 = alpha_2,
+                         beta = beta, pi_tcag = pi_tcag),
+              ins = list(rate = rates[1], max_length = M[1], a = a[1]),
+              del = list(rate = rates[2], max_length = M[2], a = a[2]),
+              site_var = list(mats = pars$mats),
+              chunk_size = 0)
+})
 
 n_vars <- 10
 
-# Phylogenetic tree:
-tree <- ape::rcoal(n_vars)
-tree$edge.length <- tree$edge.length * 0.1
-tree$tip.label <- paste0("var", 1:length(tree$tip.label) - 1)
-# Expected proportions of mutations at each edge:
-expected <- tree$edge.length / sum(tree$edge.length)
+# Phylogenetic trees:
+trees <- lapply(1:n_seqs,
+                function(i) {
+                    tree <- ape::rcoal(n_vars)
+                    # Don't want this to take too long:
+                    tree$edge.length <- tree$edge.length * 0.1
+                    return(tree)
+                })
 
-
-# Function to make a matrix have ten columns
-make_ten <- function(x) cbind(x, matrix(0, nrow(x), 10 - ncol(x)))
-
-phylo_info <- gemino:::read_phy_obj(tree, n_seqs, chunked = TRUE)
-
-var_set <- gemino:::evolve_seqs_chunk(
-    ref,
-    sampler,
-    phylo_info,
-    gamma_mats,
-    n_cores = 1,
-    show_progress = FALSE)
+var_set <- create_variants(ref, method = "phylo", method_info = trees,
+                           mevo_obj = mevo_)
 
 
 
 
 
+# =================================================================*
+# =================================================================*
+
+# examine output ----
+
+# =================================================================*
+# =================================================================*
 
 
-# =================================================================
-# =================================================================
-
-# Checking evolutionary model output
-
-# =================================================================
-# =================================================================
-
-
+# Function to make a matrix have N columns
+make_N <- function(x, N) cbind(x, matrix(0, nrow(x), N - ncol(x)))
 
 mutation_exam <- function(v, s) {
     mut_exam <- gemino:::examine_mutations(var_set, var_ind = v, seq_ind = s)
-    mut_exam$ins <- setNames(colSums(make_ten(mut_exam$ins)), 1:10)
-    mut_exam$del <- setNames(colSums(make_ten(mut_exam$del)), 1:10)
+    mut_exam$ins <- setNames(colSums(make_N(mut_exam$ins, pars$M[1])), 1:pars$M[1])
+    mut_exam$del <- setNames(colSums(make_N(mut_exam$del, pars$M[2])), 1:pars$M[2])
     return(mut_exam)
 }
 
@@ -121,18 +94,27 @@ mutation_exam <- function(v, s) {
 exams <- lapply(0:(n_seqs-1),
                 function(s) lapply(0:(n_vars-1),
                                     gemino:::examine_mutations,
-                                    var_set_ = var_set,
+                                    var_set_ = var_set$genomes,
                                     seq_ind = s))
 
 
-# --------------------
-# Checking the indel accuracy:
-# --------------------
+# --------------------*
+# indels ----
+# --------------------*
 
 # Function to calculate the expected proportion of mutations that are
 # insertions or deletions of a given size:
-indel_p <- function(u) {
-    (0.5 * xi_ / sum(q)) * (exp(-u) / sum(exp(-1:-10)))
+indel_p <- function(u, j) {
+    stopifnot(!missing(j))
+    # < indel of type j > / < all mutations >
+    ijp <- pars$rates[j] / sum(mevo_$q)
+    # < indel of type j and size u > / < indel of type j >
+    M_ <- pars$M[j]
+    a_ <- pars$a[j]
+    u_ <- 1:M_
+    all_ps <- {(u_ * M_) / (M_ - u_ + 1)}^(-a_)
+    piju <- all_ps[u] / sum(all_ps)
+    return(ijp * piju)
 }
 
 # Sample for only one variant to avoid the issue of closely related
@@ -147,47 +129,60 @@ total_muts <- sapply(1:n_seqs,
                        })
 
 # Columns are different sizes:
-insertions <- sapply(1:10, function(u) {
+insertions <- sapply(1:pars$M[1], function(u) {
     sapply(1:n_seqs,
              function(s) {
                  v <- rand_vars[s]
-                 sum(make_ten(exams[[s]][[v]]$ins)[,u])
+                 if (ncol(exams[[s]][[v]]$ins) > pars$M[1]) {
+                     M <- exams[[s]][[v]]$ins[,1:pars$M[1]]
+                 } else M <- exams[[s]][[v]]$ins
+                 sum(make_N(M, pars$M[1])[,u])
              })
 })
-deletions <- sapply(1:10, function(u) {
+deletions <- sapply(1:pars$M[2], function(u) {
     sapply(1:n_seqs,
              function(s) {
                  v <- rand_vars[s]
-                 sum(make_ten(exams[[s]][[v]]$del)[,u])
+                 if (ncol(exams[[s]][[v]]$del) > pars$M[2]) {
+                     M <- exams[[s]][[v]]$del[,1:pars$M[2]]
+                 } else M <- exams[[s]][[v]]$del
+                 sum(make_N(M, pars$M[2])[,u])
              })
 })
 
 
 
 test_that("molecular evolution produces correct proportion of indel sizes", {
-    expect_gt(t.test(rowSums(insertions), rowSums(deletions))$p.value, expected = 0.05)
-    ins_pvals <- sapply(1:10, function(u) {
-        binom.test(sum(insertions[,u]), sum(total_muts), p = indel_p(u))$p.value
+    # Combining p-values using Fisher's method:
+    fisher_method <- function(pvals) {
+        chisq <- -2 * sum(log(pvals))
+        df_ <- 2 * length(pvals)
+        p <- pchisq(chisq, df = df_, lower.tail = FALSE)
+        return(p)
+    }
+    ins_pvals <- sapply(1:pars$M[1], function(u) {
+        binom.test(sum(insertions[,u]), sum(total_muts), p = indel_p(u, 1))$p.value
     })
     # Combined P value for all items in matrix (using Fisher's method):
     p <- fisher_method(ins_pvals)
-    expect_true(p > 0.05, info = "insertion sizes")
+    alpha_hat <- 0.05 / length(ins_pvals)  # <-- Bonferroni correction
+    expect_gt(p, alpha_hat, label = "insertion sizes")
 
     # Same for deletions
-    del_pvals <- sapply(1:10, function(u) {
-        binom.test(sum(deletions[,u]), sum(total_muts), p = indel_p(u))$p.value
+    del_pvals <- sapply(1:pars$M[2], function(u) {
+        binom.test(sum(deletions[,u]), sum(total_muts), p = indel_p(u, 2))$p.value
     })
     # Combined P value for all items in matrix (using Fisher's method):
     p <- fisher_method(del_pvals)
-    expect_true(p > 0.05, info = "deletion sizes")
+    alpha_hat <- 0.05 / length(del_pvals)  # <-- Bonferroni correction
+    expect_gt(p, alpha_hat, label = "deletion sizes")
 })
 
 
 
-# --------------------
-# Checking the substition accuracy:
-# --------------------
-
+# --------------------*
+# substitutions ----
+# --------------------*
 
 sub_df <- do.call(
     rbind,
@@ -197,16 +192,18 @@ sub_df <- do.call(
                # individuals having many of the same mutations:
                v <- rand_vars[s]
                data.frame(seq = s, var = v,
-                          n = length(exams[[s]][[v]]$pos),
-                          count = as.integer(exams[[s]][[v]]$sub),
                           from = rep(1:4, 4),
-                          to = rep(1:4, each = 4))
+                          to = rep(1:4, each = 4),
+                          n = sum(exams[[s]][[v]]$sub),
+                          count = as.integer(exams[[s]][[v]]$sub))
            }))
 sub_df <- sub_df[sub_df$from != sub_df$to,]
 
 # Expected proportion
 expected_sub <- function(i, j) {
-    ((q[i] - 0.25 * xi_) / sum(q)) * (Q[i, j] / sum(Q[i,]))
+    Q <- mevo_$Q
+    q <- rowSums(Q)
+    (q[i] / sum(q)) * (Q[i, j] / sum(Q[i,]))
 }
 
 # Observed counts per variant--sequence combo
@@ -226,15 +223,15 @@ test_that("molecular evolution produces correct substitution matrix", {
     x <- c(Q_obs[lower.tri(Q_obs)], Q_obs[upper.tri(Q_obs)])
     y <- c(Q_exp[lower.tri(Q_exp)], Q_exp[upper.tri(Q_exp)])
     p <- t.test(x, y, paired = TRUE)$p.value
-    expect_true(p > 0.05)
+    expect_gt(p, 0.05)
 })
 
 
 
 
-# --------------------
-# Gamma region accuracy
-# --------------------
+# --------------------*
+# gammas ----
+# --------------------*
 
 pos_df <- do.call(
     rbind,
@@ -244,6 +241,7 @@ pos_df <- do.call(
                # individuals having many of the same mutations:
                v <- rand_vars[s]
                exam_ <- exams[[s]][[v]]
+               gamma_mat <- mevo_$gamma_mats[[s]]
                # Expected # mutations per gamma region:
                exp_mut = length(exam_$pos) / nrow(gamma_mat)
                df_ <- data.frame(seq = s, var = v,
@@ -257,9 +255,9 @@ pos_df <- do.call(
 
 # This regression coefficient should approximately correspond to one
 test_that("molecular evolution selects mutation regions according to Gamma values", {
-    mod <- lm(count ~ gamma, data = pos_df)
+    mod <- lm(count ~ gamma + 0, data = pos_df)
     gamma_coef <- coef(mod)[['gamma']]
-    expect_true(gamma_coef > 0.75 & gamma_coef < 1.25)
+    expect_true(gamma_coef > 0.5 & gamma_coef < 1.5)
 })
 
 
@@ -267,16 +265,12 @@ test_that("molecular evolution selects mutation regions according to Gamma value
 
 
 
+# --------------------*
+# phylogeny ----
+# --------------------*
 
-# =================================================================
-# =================================================================
 
-# Testing phylogenetic aspects of simulations
-
-# =================================================================
-# =================================================================
-
-mutations <- lapply(0:(n_vars-1), gemino:::view_mutations, var_set_ = var_set)
+mutations <- lapply(0:(n_vars-1), gemino:::view_mutations, var_set_ = var_set$genomes)
 
 
 # Function to return descendent tips from a given node:
@@ -346,17 +340,34 @@ for (s in 1:n_seqs) {
 
 
 # Phylogenetic distances between all pairs:
-phylo_dists <- ape::cophenetic.phylo(tree)
-rownames(phylo_dists) <- colnames(phylo_dists) <- NULL
-# Dividing by two to get branch lengths between MRCA:
-phylo_dists <- phylo_dists / 2
+phylo_dists <- lapply(trees, function(tree) {
+    pd <- ape::cophenetic.phylo(tree)
+    rownames(pd) <- colnames(pd) <- NULL
+    # Dividing by two to get branch lengths between MRCA:
+    pd <- pd / 2
+    return(pd)
+})
+
 
 
 # Average mutation rate for ancestral sequences times total bp in each sequence:
-mu_ <- mean(q) * nchar(seqs[1]) * mean(gamma_mat[,2])
+mu_ <- mean(mevo_$q) * nchar(seqs[1])
 
 # Expected mutational distances:
-expected <- mu_ * phylo_dists
+expected <- lapply(phylo_dists, function(pd) mu_ * pd)
+
+
+s = 18
+
+mapply(expected, mut_dists,
+       FUN = function(x, y) mean((x - y) / x, na.rm = TRUE))
+
+mean((expected[[s]] - mut_dists[[s]]) / expected[[s]], na.rm = TRUE)
+
+
+
+mean(sapply(mut_dists, function(x) mean((expected - x) / expected,
+                                        na.rm = TRUE)))
 
 
 test_that("Simulations conform to phylogenetic tree", {
@@ -368,13 +379,13 @@ test_that("Simulations conform to phylogenetic tree", {
 
 
 
-# =================================================================
-# =================================================================
+# =================================================================*
+# =================================================================*
 
-# Testing that rate method works
+# rate method ----
 
-# =================================================================
-# =================================================================
+# =================================================================*
+# =================================================================*
 
 # Full sequences:
 var_seqs <- lapply(0:(n_vars-1),
