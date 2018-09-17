@@ -642,14 +642,16 @@ double test_rate(const uint32& start, const uint32& end,
                  const arma::mat& gamma_mat_) {
 
     XPtr<VarSet> var_set(var_set_ptr);
+
     VarSequence& var_seq((*var_set)[var_ind][seq_ind]);
 
-    XPtr<ChunkMutationSampler> sampler(sampler_base_ptr);
+    XPtr<ChunkMutationSampler> sampler_base(sampler_base_ptr);
 
-    sampler->fill_ptrs(var_seq);
-    sampler->fill_gamma(gamma_mat_);
+    ChunkMutationSampler sampler(*sampler_base);
+    sampler.fill_ptrs(var_seq);
+    sampler.fill_gamma(gamma_mat_);
 
-    double out = sampler->total_rate(start, end, true);
+    double out = sampler.total_rate(start, end, true);
 
     return out;
 
