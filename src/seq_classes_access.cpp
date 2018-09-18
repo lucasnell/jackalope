@@ -119,7 +119,40 @@ SEXP make_var_set(SEXP ref_genome_ptr, const uint32& n_vars) {
 
 
 
+/*
+ ========================================================================================
+ ========================================================================================
 
+ Viewing numbers of sequences/variants
+
+ ========================================================================================
+ ========================================================================================
+ */
+
+
+//[[Rcpp::export]]
+uint32 view_ref_genome_nseqs(SEXP ref_genome_ptr) {
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
+    uint32 out = ref_genome->size();
+    return out;
+}
+
+
+// Number of sequences
+//[[Rcpp::export]]
+uint32 view_var_set_nseqs(SEXP var_set_ptr) {
+    XPtr<VarSet> var_set(var_set_ptr);
+    uint32 out = var_set->reference->size();
+    return out;
+}
+
+// Number of variants
+//[[Rcpp::export]]
+uint32 view_var_set_nvars(SEXP var_set_ptr) {
+    XPtr<VarSet> var_set(var_set_ptr);
+    uint32 out = var_set->size();
+    return out;
+}
 
 
 /*
@@ -316,15 +349,15 @@ void set_ref_genome_seq_names(
 //[[Rcpp::export]]
 void set_var_set_var_names(
         SEXP var_set_ptr,
-        const std::vector<uint32>& seq_inds,
+        const std::vector<uint32>& var_inds,
         const std::vector<std::string>& names) {
     XPtr<VarSet> var_set(var_set_ptr);
-    if (names.size() != seq_inds.size()) stop("names and seq_inds aren't the same size");
-    if (*std::max_element(seq_inds.begin(), seq_inds.end()) >= var_set->size()) {
-        stop("at least one value in seq_inds is too large");
+    if (names.size() != var_inds.size()) stop("names and var_inds aren't the same size");
+    if (*std::max_element(var_inds.begin(), var_inds.end()) >= var_set->size()) {
+        stop("at least one value in var_inds is too large");
     }
-    for (uint32 i = 0; i < seq_inds.size(); i++) {
-        (*var_set)[seq_inds[i]].name = names[i];
+    for (uint32 i = 0; i < var_inds.size(); i++) {
+        (*var_set)[var_inds[i]].name = names[i];
     }
     return;
 }
@@ -370,20 +403,20 @@ void remove_ref_genome_seqs(
 //[[Rcpp::export]]
 void remove_var_set_vars(
         SEXP var_set_ptr,
-        std::vector<uint32> seq_inds) {
+        std::vector<uint32> var_inds) {
 
     XPtr<VarSet> var_set(var_set_ptr);
     std::deque<VarGenome>& variants(var_set->variants);
 
     // Checking for duplicates:
-    std::sort(seq_inds.begin(), seq_inds.end());
-    if (adjacent_find(seq_inds.begin(), seq_inds.end()) != seq_inds.end()) {
-        stop("duplicates detected in seq_inds");
+    std::sort(var_inds.begin(), var_inds.end());
+    if (adjacent_find(var_inds.begin(), var_inds.end()) != var_inds.end()) {
+        stop("duplicates detected in var_inds");
     }
 
-    for (uint32 i = 1; i <= seq_inds.size(); i++) {
+    for (uint32 i = 1; i <= var_inds.size(); i++) {
         // Going backward so I don't have to update later ones each time:
-        uint32 j = seq_inds[(seq_inds.size() - i)];
+        uint32 j = var_inds[(var_inds.size() - i)];
         variants.erase(variants.begin() + j);
     }
     clear_memory<std::deque<VarGenome>>(variants);

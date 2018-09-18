@@ -116,7 +116,7 @@ exams <- lapply(0:(pars$n_seqs-1),
 indel_p <- function(u, j) {
     stopifnot(!missing(j))
     # < indel of type j > / < all mutations >
-    ijp <- pars$rates[j] / sum(mevo_$q)
+    ijp <- pars$rates[j] / sum(mevo_$q())
     # < indel of type j and size u > / < indel of type j >
     M_ <- pars$M[j]
     a_ <- pars$a[j]
@@ -341,7 +341,7 @@ phylo_dists <- phylo_dists / 2
 
 
 # Average mutation rate for ancestral sequences times total bp in each sequence:
-mu_ <- mevo_$mu * pars$seq_len
+mu_ <- mevo_$mu() * pars$seq_len
 
 # Expected mutational distances:
 expected <- mu_ * phylo_dists
@@ -407,7 +407,7 @@ mat <- matrix(0, pars$n_vars * pars$n_seqs, 2)
 i <- 1
 for (var_ind in 1:pars$n_vars) {
     for (seq_ind in 1:pars$n_seqs) {
-        mat[i,] <- compare_rates(var_ind, seq_ind, rates = mevo_$q)
+        mat[i,] <- compare_rates(var_ind, seq_ind, rates = mevo_$q())
         i <- i + 1
     }
 }

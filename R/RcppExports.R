@@ -493,6 +493,18 @@ make_var_set <- function(ref_genome_ptr, n_vars) {
     .Call(`_gemino_make_var_set`, ref_genome_ptr, n_vars)
 }
 
+view_ref_genome_nseqs <- function(ref_genome_ptr) {
+    .Call(`_gemino_view_ref_genome_nseqs`, ref_genome_ptr)
+}
+
+view_var_set_nseqs <- function(var_set_ptr) {
+    .Call(`_gemino_view_var_set_nseqs`, var_set_ptr)
+}
+
+view_var_set_nvars <- function(var_set_ptr) {
+    .Call(`_gemino_view_var_set_nvars`, var_set_ptr)
+}
+
 view_ref_genome_seq_sizes <- function(ref_genome_ptr) {
     .Call(`_gemino_view_ref_genome_seq_sizes`, ref_genome_ptr)
 }
@@ -545,16 +557,16 @@ set_ref_genome_seq_names <- function(ref_genome_ptr, seq_inds, names) {
     invisible(.Call(`_gemino_set_ref_genome_seq_names`, ref_genome_ptr, seq_inds, names))
 }
 
-set_var_set_var_names <- function(var_set_ptr, seq_inds, names) {
-    invisible(.Call(`_gemino_set_var_set_var_names`, var_set_ptr, seq_inds, names))
+set_var_set_var_names <- function(var_set_ptr, var_inds, names) {
+    invisible(.Call(`_gemino_set_var_set_var_names`, var_set_ptr, var_inds, names))
 }
 
 remove_ref_genome_seqs <- function(ref_genome_ptr, seq_inds) {
     invisible(.Call(`_gemino_remove_ref_genome_seqs`, ref_genome_ptr, seq_inds))
 }
 
-remove_var_set_vars <- function(var_set_ptr, seq_inds) {
-    invisible(.Call(`_gemino_remove_var_set_vars`, var_set_ptr, seq_inds))
+remove_var_set_vars <- function(var_set_ptr, var_inds) {
+    invisible(.Call(`_gemino_remove_var_set_vars`, var_set_ptr, var_inds))
 }
 
 #' Turns a VarGenome's mutations into a list of data frames.

@@ -435,6 +435,39 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// view_ref_genome_nseqs
+uint32 view_ref_genome_nseqs(SEXP ref_genome_ptr);
+RcppExport SEXP _gemino_view_ref_genome_nseqs(SEXP ref_genome_ptrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(view_ref_genome_nseqs(ref_genome_ptr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// view_var_set_nseqs
+uint32 view_var_set_nseqs(SEXP var_set_ptr);
+RcppExport SEXP _gemino_view_var_set_nseqs(SEXP var_set_ptrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(view_var_set_nseqs(var_set_ptr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// view_var_set_nvars
+uint32 view_var_set_nvars(SEXP var_set_ptr);
+RcppExport SEXP _gemino_view_var_set_nvars(SEXP var_set_ptrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(view_var_set_nvars(var_set_ptr));
+    return rcpp_result_gen;
+END_RCPP
+}
 // view_ref_genome_seq_sizes
 std::vector<uint32> view_ref_genome_seq_sizes(SEXP ref_genome_ptr);
 RcppExport SEXP _gemino_view_ref_genome_seq_sizes(SEXP ref_genome_ptrSEXP) {
@@ -541,14 +574,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // set_var_set_var_names
-void set_var_set_var_names(SEXP var_set_ptr, const std::vector<uint32>& seq_inds, const std::vector<std::string>& names);
-RcppExport SEXP _gemino_set_var_set_var_names(SEXP var_set_ptrSEXP, SEXP seq_indsSEXP, SEXP namesSEXP) {
+void set_var_set_var_names(SEXP var_set_ptr, const std::vector<uint32>& var_inds, const std::vector<std::string>& names);
+RcppExport SEXP _gemino_set_var_set_var_names(SEXP var_set_ptrSEXP, SEXP var_indsSEXP, SEXP namesSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type seq_inds(seq_indsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type var_inds(var_indsSEXP);
     Rcpp::traits::input_parameter< const std::vector<std::string>& >::type names(namesSEXP);
-    set_var_set_var_names(var_set_ptr, seq_inds, names);
+    set_var_set_var_names(var_set_ptr, var_inds, names);
     return R_NilValue;
 END_RCPP
 }
@@ -564,13 +597,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // remove_var_set_vars
-void remove_var_set_vars(SEXP var_set_ptr, std::vector<uint32> seq_inds);
-RcppExport SEXP _gemino_remove_var_set_vars(SEXP var_set_ptrSEXP, SEXP seq_indsSEXP) {
+void remove_var_set_vars(SEXP var_set_ptr, std::vector<uint32> var_inds);
+RcppExport SEXP _gemino_remove_var_set_vars(SEXP var_set_ptrSEXP, SEXP var_indsSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
-    Rcpp::traits::input_parameter< std::vector<uint32> >::type seq_inds(seq_indsSEXP);
-    remove_var_set_vars(var_set_ptr, seq_inds);
+    Rcpp::traits::input_parameter< std::vector<uint32> >::type var_inds(var_indsSEXP);
+    remove_var_set_vars(var_set_ptr, var_inds);
     return R_NilValue;
 END_RCPP
 }
@@ -706,6 +739,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_print_var_set", (DL_FUNC) &_gemino_print_var_set, 1},
     {"_gemino_make_ref_genome", (DL_FUNC) &_gemino_make_ref_genome, 1},
     {"_gemino_make_var_set", (DL_FUNC) &_gemino_make_var_set, 2},
+    {"_gemino_view_ref_genome_nseqs", (DL_FUNC) &_gemino_view_ref_genome_nseqs, 1},
+    {"_gemino_view_var_set_nseqs", (DL_FUNC) &_gemino_view_var_set_nseqs, 1},
+    {"_gemino_view_var_set_nvars", (DL_FUNC) &_gemino_view_var_set_nvars, 1},
     {"_gemino_view_ref_genome_seq_sizes", (DL_FUNC) &_gemino_view_ref_genome_seq_sizes, 1},
     {"_gemino_view_var_genome_seq_sizes", (DL_FUNC) &_gemino_view_var_genome_seq_sizes, 2},
     {"_gemino_view_ref_genome_seq", (DL_FUNC) &_gemino_view_ref_genome_seq, 2},

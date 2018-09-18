@@ -1,4 +1,4 @@
-# ref_genome class----
+# >> ref_genome class----
 #' An R6 class representing a reference genome.
 #'
 #'
@@ -6,13 +6,32 @@
 #' It will cause your R session to do bad things.
 #' (Ever seen the bomb popup on RStudio? Manually mess with these fields and you
 #' surely will.)
-#'
+#' For safe ways of manipulating the reference genome, see the "Methods" section.
 #'
 #'
 #' @field genome An \code{externalptr} to a C++ object storing the sequences
 #'     representing the genome.
 #' @field digests An \code{externalptr} to a C++ object storing the digestion of the
 #'     genome, if a digestion has been carried out. It's \code{NULL} otherwise.
+#'
+#' @section Methods:
+#' \describe{
+#'     \item{`n_seqs()`}{View the number of sequences.}
+#'     \item{`sizes()`}{View vector of sequence sizes.}
+#'     \item{`names()`}{View vector of sequence names.}
+#'     \item{`extract_seq(seq_ind)`}{Extract a sequence string based on an index,
+#'         `seq_ind`.}
+#'     \item{`set_names(names)`}{Set names for all sequences.}
+#'     \item{`rm_seqs(seq_names)`}{Remove one or more sequences based on names in
+#'         the `seq_names` vector.}
+#'     \item{`merge_seqs()`}{Merge all sequences into one.}
+#'     \item{`filter_seqs(threshold, method)`}{Filter sequences by size
+#'         (`method = "size"`) or for a proportion of total bases `method = "prop"`.
+#'         For the latter, sequences are first size-sorted, then the largest `N`
+#'         sequences are retained that allow at least
+#'         `threshold * sum(<all sequence sizes>)` base pairs remaining after
+#'         filtering.}
+#' }
 #'
 #' @return An object of class \code{ref_genome}.
 #'
@@ -42,23 +61,81 @@ ref_genome <- R6::R6Class(
         },
 
         print = function(...) {
+            stopifnot(inherits(self$genome, "externalptr"))
             print_ref_genome(self$genome)
             invisible(self)
         },
 
-        # -------*
+        # ----------*
+        # __view__ ----
+        # ----------*
+        # Get # sequences
+        n_seqs = function() {
+            stopifnot(inherits(self$genome, "externalptr"))
+            return(view_ref_genome_nseqs(self$genome))
+        },
+
+        # Get vector of sequence sizes
+        sizes = function() {
+            stopifnot(inherits(self$genome, "externalptr"))
+            return(view_ref_genome_seq_sizes(self$genome))
+        },
+
+        # Get vector of sequence names
+        names = function() {
+            stopifnot(inherits(self$genome, "externalptr"))
+            return(view_ref_genome_seq_names(self$genome))
+        },
+
+        # Extract one reference sequence
+        extract_seq = function(seq_ind) {
+            stopifnot(inherits(self$genome, "externalptr"))
+            if (seq_ind > self$n_seqs() | seq_ind < 1) {
+                stop("seq_ind arg must be in range [1, <# sequences>]", call. = FALSE)
+            }
+            return(view_ref_genome_seq(self$genome, seq_ind - 1))
+        },
+
+        # ----------*
+        # __edit__ ----
+        # ----------*
+        # Change sequence names
+        set_names = function(names) {
+            stopifnot(inherits(self$genome, "externalptr"))
+            if (length(names) != self$n_seqs()) {
+                stop("names arg must be the same length as # sequences", call. = FALSE)
+            }
+            seq_inds <- 0:(length(names) - 1)
+            set_ref_genome_seq_names(self$genome, seq_inds, names)
+            invisible(self)
+        },
+
+        # Remove one or more sequences by name
+        rm_seqs = function(seq_names) {
+            stopifnot(inherits(self$genome, "externalptr"))
+            self_names <- self$names()
+            if (!all(seq_names %in% self_names)) {
+                stop("not all provided seq_names are in this genome.", call. = FALSE)
+            }
+            if (anyDuplicated(seq_names) != 0) {
+                stop("one or more seq_names are duplicate.", call. = FALSE)
+            }
+            seq_inds <- match(seq_names, self_names) - 1
+            remove_ref_genome_seqs(self$genome, seq_inds)
+            invisible(self)
+        },
+
         # Merge all ref_genome genome sequences into one
-        # -------*
-        merge = function() {
+        merge_seqs = function() {
+            stopifnot(inherits(self$genome, "externalptr"))
             merge_sequences(self$genome)
             invisible(self)
         },
 
-        # -------*
         # Filter ref_genome sequences by size or for a proportion of total bases
-        # -------*
-        filter = function(threshold, method = c("size", "prop")) {
-            method <- match.arg(method)
+        filter_seqs = function(threshold, method) {
+            stopifnot(inherits(self$genome, "externalptr"))
+            method <- match.arg(method, c("size", "prop"))
             min_seq_size <- 0
             out_seq_prop <- 0
             # Filling in the necessary parameter and checking for sensible inputs
@@ -85,24 +162,6 @@ ref_genome <- R6::R6Class(
             invisible(self)
         }
 
-    ),
-
-    active = list(
-
-        # -------*
-        # Get vector of sequence sizes
-        # -------*
-        sizes = function() {
-            if (!inherits(self$genome, "externalptr")) {
-                stop("\nYou're attempting to get sizes using a ref_genome object with ",
-                     "a genome field that is not an externalptr. ",
-                     "Restart by reading a FASTA file or by simulating a genome. ",
-                     "And do NOT change the genome field manually.",
-                     call. = FALSE)
-            }
-            return(view_ref_genome_seq_sizes(self$genome))
-        }
-
     )
 
 )
@@ -114,7 +173,7 @@ ref_genome$lock()
 
 
 
-# mevo class----
+# >> mevo class----
 #' An R6 class containing information needed for molecular evolution.
 #'
 #' You shouldn't need to interact with this class much, if at all.
@@ -132,6 +191,13 @@ ref_genome$lock()
 #'     before doing weighted sampling by rates for each sequence location.
 #'     See `?make_mevo` for more information.
 #'
+#' @section Methods:
+#' \describe{
+#'     \item{`mu()`}{Calculates the average overall mutation rate at equilibrium.}
+#'     \item{`q()`}{Calculates the mutation rate for each nucleotide.}
+#'     \item{`to_ptr()`}{Converts information in this object to a C++ pointer.
+#'         You shouldn't need to use this. Ever.}
+#' }
 #'
 #' @return An object of class \code{mevo}.
 #'
@@ -215,6 +281,25 @@ mevo <- R6::R6Class(
         },
 
 
+        # Average mutation rate
+        mu = function() {
+            # Indel rates (same for each nucleotide):
+            indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
+            # Average mutation rate among all nucleotides:
+            mu <- sum({rowSums(self$Q) + indel} * self$pi_tcag)
+            return(mu)
+        },
+
+        # Overall mutation rate by nucleotide
+        q = function() {
+            # Indel rates (same for each nucleotide):
+            indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
+            # Mutation rates by nucleotides:
+            q <- rowSums(self$Q) + indel
+            return(q)
+        },
+
+
         # -------*
         # Convert to a XPtr<[Chunk]MutationSampler> object
         # -------*
@@ -240,28 +325,6 @@ mevo <- R6::R6Class(
 
     ),
 
-    active = list(
-
-        # Average mutation rate
-        mu = function() {
-            # Indel rates (same for each nucleotide):
-            indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
-            # Average mutation rate among all nucleotides:
-            mu <- sum({rowSums(self$Q) + indel} * self$pi_tcag)
-            return(mu)
-        },
-
-        # Overall mutation rate by nucleotide
-        q = function() {
-            # Indel rates (same for each nucleotide):
-            indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
-            # Mutation rates by nucleotides:
-            q <- rowSums(self$Q) + indel
-            return(q)
-        }
-
-    ),
-
 
     private = list()
 
@@ -274,14 +337,14 @@ mevo$lock()
 
 
 
-# variants class----
+# >> variants class----
 #' An R6 class representing haploid variants from a reference genome.
 #'
 #' \emph{Note:} Do NOT change fields in this class directly. It will cause your
 #' R session to do bad things.
 #' (Ever seen the bomb popup on RStudio? Manually mess with these fields and you
 #' surely will.)
-#'
+#' For safe ways of manipulating the variants' information, see the "Methods" section.
 #'
 #' @field genome An \code{externalptr} to a C++ object storing the sequences
 #'     representing the genome.
@@ -305,6 +368,21 @@ mevo$lock()
 #'             don't worry about later deleting the \code{ref_genome} object.
 #'     }
 #'
+#'
+#' @section Methods:
+#' \describe{
+#'     \item{`n_seqs()`}{View the number of sequences.}
+#'     \item{`n_vars()`}{View the number of variants.}
+#'     \item{`sizes(var_ind)`}{View vector of sequence sizes for a given variant.}
+#'     \item{`seq_names()`}{View vector of sequence names.}
+#'     \item{`var_names()`}{View vector of variant names.}
+#'     \item{`extract_seq(var_ind, seq_ind)`}{Extract a sequence string based on
+#'         indices for the sequence (`seq_ind`) and variant (`var_ind`).}
+#'     \item{`set_names(names)`}{Set names for all variants.}
+#'     \item{`rm_vars(var_names)`}{Remove one or more variants based on names in
+#'         the `var_names` vector.}
+#'
+#' }
 #'
 #' @return An object of class \code{variants}.
 #'
@@ -341,7 +419,88 @@ variants <- R6::R6Class(
         print = function() {
             print_var_set(self$genomes)
             invisible(self)
+        },
+
+
+        # ----------*
+        # __view__ ----
+        # ----------*
+        # Get # sequences
+        n_seqs = function() {
+            stopifnot(inherits(self$genomes, "externalptr"))
+            return(view_var_set_nseqs(self$genomes))
+        },
+
+        # Get # variants
+        n_vars = function() {
+            stopifnot(inherits(self$genomes, "externalptr"))
+            return(view_var_set_nvars(self$genomes))
+        },
+
+        # Get vector of sequence sizes for one variant
+        sizes = function(var_ind) {
+            stopifnot(inherits(self$genomes, "externalptr"))
+            if (var_ind > self$n_vars() | var_ind < 1) {
+                stop("var_ind arg must be in range [1, <# variants>]", call. = FALSE)
+            }
+            return(view_var_genome_seq_sizes(self$genomes, var_ind - 1))
+        },
+
+        # Get vector of sequence names
+        seq_names = function() {
+            stopifnot(inherits(self$reference, "externalptr"))
+            return(view_ref_genome_seq_names(self$reference))
+        },
+
+        # Get vector of variant names
+        var_names = function() {
+            stopifnot(inherits(self$genomes, "externalptr"))
+            return(view_var_set_var_names(self$genomes))
+        },
+
+        # Extract one variant sequence
+        extract_seq = function(var_ind, seq_ind) {
+            stopifnot(inherits(self$genomes, "externalptr"))
+            if (seq_ind > self$n_seqs() | seq_ind < 1) {
+                stop("seq_ind arg must be in range [1, <# sequences>]", call. = FALSE)
+            }
+            if (var_ind > self$n_vars() | var_ind < 1) {
+                stop("var_ind arg must be in range [1, <# variants>]", call. = FALSE)
+            }
+            return(view_var_genome_seq(self$genomes, var_ind - 1, seq_ind - 1))
+        },
+
+
+        # ----------*
+        # __edit__ ----
+        # ----------*
+
+        # Change variant names
+        set_names = function(names) {
+            stopifnot(inherits(self$genomes, "externalptr"))
+            if (length(names) != self$n_vars()) {
+                stop("names arg must be the same length as # variants", call. = FALSE)
+            }
+            var_inds <- 0:(length(names) - 1)
+            set_var_set_var_names(self$genomes, var_inds, names)
+            invisible(self)
+        },
+
+        # Remove one or more variants by name
+        rm_vars = function(var_names) {
+            stopifnot(inherits(self$genomes, "externalptr"))
+            self_names <- self$var_names()
+            if (!all(var_names %in% self_names)) {
+                stop("not all provided var_names are in this genome.", call. = FALSE)
+            }
+            if (anyDuplicated(var_names) != 0) {
+                stop("one or more var_names are duplicate.", call. = FALSE)
+            }
+            var_inds <- match(var_names, self_names) - 1
+            remove_var_set_vars(self$genomes, var_inds)
+            invisible(self)
         }
+
     ),
 
 

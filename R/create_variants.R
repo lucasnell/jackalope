@@ -154,7 +154,7 @@ create_variants <- function(reference,
         seq_sizes <- reference$sizes
         n_seqs <- length(seq_sizes)
         phylo_info_ptr <- make_phylo_info(method, method_info,
-                                          seq_sizes, n_seqs, mevo_obj$mu,
+                                          seq_sizes, n_seqs, mevo_obj$mu(),
                                           mevo_obj$chunk_size)
 
         # -------+

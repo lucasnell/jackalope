@@ -36,6 +36,16 @@ before doing weighted sampling by rates for each sequence location.
 See \code{?make_mevo} for more information.}
 }}
 
+\section{Methods}{
+
+\describe{
+\item{\code{mu()}}{Calculates the average overall mutation rate at equilibrium.}
+\item{\code{q()}}{Calculates the mutation rate for each nucleotide.}
+\item{\code{to_ptr()}}{Converts information in this object to a C++ pointer.
+You shouldn't need to use this. Ever.}
+}
+}
+
 \seealso{
 \code{\link{make_mevo}}
 }

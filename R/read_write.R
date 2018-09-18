@@ -196,7 +196,7 @@ read_vcf <- function(reference, method_info) {
         stop("\nSequence name(s) in VCF file don't match those in the ",
              "`ref_genome` object. ",
              "It's probably easiest to manually change the `ref_genome` object ",
-             "(using `$change_names()` method) to have the same names as the VCF file. ",
+             "(using `$set_names()` method) to have the same names as the VCF file. ",
              "Re-run this function with `print_names = TRUE` to see the VCF-file names.",
              call. = FALSE)
     }
