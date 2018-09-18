@@ -1,4 +1,6 @@
 
+# FASTA ----
+
 
 #' Read a fasta file.
 #'
@@ -50,15 +52,15 @@ read_fasta <- function(fasta_file, fai_file = NULL,
         ptr <- read_fasta_ind(fasta_file, fai_file, rm_soft_mask)
     }
 
-    ref_obj <- ref_genome$new(ptr)
+    reference <- ref_genome$new(ptr)
 
-    return(ref_obj)
+    return(reference)
 }
 
 
 #' Write a \code{ref_genome} object to a FASTA file.
 #'
-#' @param ref_obj A \code{ref_genome} object.
+#' @param reference A \code{ref_genome} object.
 #' @param file_name File name of the output fasta file.
 #' @param text_width The number of characters per line in the output fasta file.
 #'     Defaults to \code{80}.
@@ -69,7 +71,7 @@ read_fasta <- function(fasta_file, fai_file = NULL,
 #'
 #' @export
 #'
-write_fasta <- function(ref_obj, file_name, text_width = 80, compress = FALSE) {
+write_fasta <- function(reference, file_name, text_width = 80, compress = FALSE) {
 
     if (!inherits(compress, "logical") | length(compress) != 1) {
         stop("\nThe compress argument supplied to write_fasta is not a logical",
@@ -86,19 +88,103 @@ write_fasta <- function(ref_obj, file_name, text_width = 80, compress = FALSE) {
              "vector of length one.",
              call. = FALSE)
     }
-    if (!inherits(ref_obj, "ref_genome")) {
-        stop("\nThe ref_obj argument supplied to write_fasta is not a ref_genome object.",
+    if (!inherits(reference, "ref_genome")) {
+        stop("\nThe reference argument supplied to write_fasta is not a ref_genome object.",
              call. = FALSE)
     }
-    if (!inherits(ref_obj$genome, "externalptr")) {
+    if (!inherits(reference$genome, "externalptr")) {
         stop("\nThe genome field in the ref_genome object supplied to write_fasta ",
              "is not an external pointer.",
              call. = TRUE)
     }
     if (compress) {
-        invisible(write_fasta_gz(file_name, ref_obj$genome, text_width))
+        invisible(write_fasta_gz(file_name, reference$genome, text_width))
     } else {
-        invisible(write_fasta_fa(file_name, ref_obj$genome, text_width))
+        invisible(write_fasta_fa(file_name, reference$genome, text_width))
     }
     return(invisible(NULL))
 }
+
+
+
+
+
+
+
+
+# VCF ----
+
+
+#' Read VCF file using package `vcfR`
+#'
+#' @inheritParams write_fasta
+#' @param vcf_file File name of VCF file.
+#' @param print_chroms Boolean for whether to print chromosomes present in the VCF file.
+#' @param ... Other parameters passed to \code{\link[vcfR]{read.vcfR}}.
+#'
+#' @noRd
+#'
+read_vcf <- function(reference, vcf_file, print_chroms, ...) {
+
+    if (!requireNamespace("vcfR", quietly = TRUE)) {
+        stop("\nPackage \"vcfR\" is needed for reading VCF files. ",
+             "Please install it.",
+             call. = FALSE)
+    }
+    vcf <- vcfR::read.vcfR(file = vcf_file, verbose = FALSE, ...)
+
+    chrom <- vcf@fix[,"CHROM"]
+    pos <- as.integer(vcf@fix[,"POS"]) - 1  # -1 is to convert to C++ indices
+    ref_seq <- vcf@fix[,"REF"]
+
+    if (length(chrom) != length(pos) | length(chrom) != length(ref_seq)) {
+        stop("\nVCF not parsing correctly. ",
+             "Vectors of chromosomes, positions, and reference-sequences aren't ",
+             "all the same length.",
+             call. = FALSE)
+    }
+
+    seq_names <- view_ref_genome_seq_names(reference$genome)
+    unq_chrom <- unique(chrom)
+
+    if (!all(unq_chrom %in% seq_names)) {
+        if (verbose) print(unq_chrom)
+        stop("\nSequence name(s) in VCF file don't match those in the ",
+             "`ref_genome` object. ",
+             "It's probably easiest to manually change the `ref_genome` object ",
+             "(using `$change_names()` method) to have the same names as the VCF file. ",
+             "Re-run this function with `print_chroms = TRUE` to see the VCF-file names.",
+             call. = FALSE)
+    }
+
+    # Converts items in `chrom` to 0-based indices of sequences in ref. genome
+    chrom_inds <- match(chrom, seq_names) - 1
+
+    haps <- vcfR::extract.haps(vcf, unphased_as_NA = FALSE, verbose = FALSE)
+
+    var_names <- colnames(haps)
+    colnames(haps) <- NULL
+    rownames(haps) <- NULL
+
+    # So I don't have to deal with NAs:
+    haps[is.na(haps)] <- ""
+
+    if (nrow(haps) != length(pos)) {
+        stop("\nVCF not parsing correctly. ",
+             "Number of haplotypes doesn't match with number of positions.",
+             call. = FALSE)
+    }
+
+    # Split into list for easier processing in `read_vcfr`
+    haps <- split(haps, row(haps))
+
+    variants_ptr <- read_vcfr(reference$genome, var_names,
+                              haps, chrom_inds, pos, ref_seq)
+
+    return(variants_ptr)
+
+}
+
+
+
+

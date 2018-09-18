@@ -4,10 +4,10 @@
 \alias{write_fasta}
 \title{Write a \code{ref_genome} object to a FASTA file.}
 \usage{
-write_fasta(ref_obj, file_name, text_width = 80, compress = FALSE)
+write_fasta(reference, file_name, text_width = 80, compress = FALSE)
 }
 \arguments{
-\item{ref_obj}{A \code{ref_genome} object.}
+\item{reference}{A \code{ref_genome} object.}
 
 \item{file_name}{File name of the output fasta file.}
 

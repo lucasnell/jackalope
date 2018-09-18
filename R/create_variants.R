@@ -192,11 +192,6 @@ create_variants <- function(reference,
 
         stop("\nVCF files not yet implemented in `create_variants`.", call. = TRUE)
 
-        if (!requireNamespace("vcfR", quietly = TRUE)) {
-            stop("\nPackage \"vcfR\" is needed for reading VCF files. ",
-                 "Please install it.",
-                 call. = FALSE)
-        }
         if (!single_string(method_info)) {
             stop("\nIf method = \"vcf\" in `create_variants`, ",
                  "the `method_info` arg must be a single string specifying the ",
