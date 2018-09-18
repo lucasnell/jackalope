@@ -27,6 +27,7 @@ yet been a stable, usable release suitable for the public.](http://www.repostatu
 
 __An efficient, flexible molecular evolution and sequencing simulator__
 
+## Overview
 
 `gemino` efficiently (i) reads and simulates reference genomes;
 (ii) generates variants using summary statistics, phylogenies, Variant
@@ -41,12 +42,23 @@ double-digest RADseq, and genotyping-by-sequencing), and sequencing technologies
 (e.g., Pacific BioSciences, Oxford Nanopore Technologies).
 
 
-## Overview
-
-
-
 ## Installation
+
+The package is not yet on CRAN, so to install...
+
+```{r, eval = FALSE}
+devtools::install_github("lucasnell/gemino")
+```
+
 
 
 ## Usage
 
+```{r, eval = TRUE}
+library(gemino)
+reference <- create_genome(n_seqs = 10, len_mean = 1000)
+phy <- ape::rcoal(5)
+mevo_info <- make_mevo(reference, list(model = "JC69", lambda = 0.1))
+ref_variants <- create_variants(reference, "phylo", phy, mevo_info)
+ref_variants
+```
