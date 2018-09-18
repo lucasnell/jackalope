@@ -326,6 +326,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// read_vcfr
+SEXP read_vcfr(SEXP reference_ptr, const std::vector<std::string>& var_names, const std::vector<std::vector<std::string>>& haps_list, const std::vector<uint32>& seq_inds, const std::vector<uint32>& pos, const std::vector<std::string>& ref_seq);
+RcppExport SEXP _gemino_read_vcfr(SEXP reference_ptrSEXP, SEXP var_namesSEXP, SEXP haps_listSEXP, SEXP seq_indsSEXP, SEXP posSEXP, SEXP ref_seqSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type reference_ptr(reference_ptrSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type var_names(var_namesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::vector<std::string>>& >::type haps_list(haps_listSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type seq_inds(seq_indsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type pos(posSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type ref_seq(ref_seqSEXP);
+    rcpp_result_gen = Rcpp::wrap(read_vcfr(reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq));
+    return rcpp_result_gen;
+END_RCPP
+}
 // read_fasta_noind
 SEXP read_fasta_noind(const std::string& fasta_file, const bool& cut_names, const bool& remove_soft_mask);
 RcppExport SEXP _gemino_read_fasta_noind(SEXP fasta_fileSEXP, SEXP cut_namesSEXP, SEXP remove_soft_maskSEXP) {
@@ -681,6 +697,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_GTR_rate_matrix", (DL_FUNC) &_gemino_GTR_rate_matrix, 2},
     {"_gemino_UNREST_rate_matrix", (DL_FUNC) &_gemino_UNREST_rate_matrix, 1},
     {"_gemino_read_ms_output_", (DL_FUNC) &_gemino_read_ms_output_, 1},
+    {"_gemino_read_vcfr", (DL_FUNC) &_gemino_read_vcfr, 6},
     {"_gemino_read_fasta_noind", (DL_FUNC) &_gemino_read_fasta_noind, 3},
     {"_gemino_read_fasta_ind", (DL_FUNC) &_gemino_read_fasta_ind, 3},
     {"_gemino_write_fasta_fa", (DL_FUNC) &_gemino_write_fasta_fa, 3},

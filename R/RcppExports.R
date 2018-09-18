@@ -367,6 +367,15 @@ read_ms_output_ <- function(ms_file) {
     .Call(`_gemino_read_ms_output_`, ms_file)
 }
 
+#' Read VCF from a vcfR object.
+#'
+#'
+#' @noRd
+#'
+read_vcfr <- function(reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq) {
+    .Call(`_gemino_read_vcfr`, reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq)
+}
+
 #' Read a non-indexed fasta file to a \code{RefGenome} object.
 #'
 #' @param file_name File name of the fasta file.

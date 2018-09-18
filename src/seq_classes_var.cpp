@@ -267,6 +267,29 @@ char VarSequence::get_char_(const uint32& new_pos,
  Re-calculate new positions (and total sequence size)
  ------------------
  */
+
+/*
+ For ALL Mutation objects (this is only used when reading VCF files)
+ */
+void VarSequence::calc_positions() {
+
+    if (mutations.size() == 0) return;
+
+    uint32 mut_i = 0;
+
+    sint32 modifier = mutations[mut_i].size_modifier;
+    ++mut_i;
+
+    // Updating individual Mutation objects
+    for (; mut_i < mutations.size(); mut_i++) {
+        mutations[mut_i].new_pos += modifier;
+        modifier += mutations[mut_i].size_modifier;
+    }
+    // Updating full sequence size
+    seq_size += modifier;
+
+    return;
+}
 /*
  For all Mutation objects after a given Mutation object
  (this is for after you insert a NEW Mutation, where `mut_i` below points to

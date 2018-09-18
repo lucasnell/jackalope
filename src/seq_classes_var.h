@@ -217,6 +217,7 @@ public:
      Re-calculate new positions (and total sequence size)
      ------------------
      */
+    void calc_positions();
     void calc_positions(uint32 mut_i);
     void calc_positions(uint32 mut_i, const sint32& modifier);
 
