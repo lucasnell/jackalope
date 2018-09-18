@@ -5,6 +5,8 @@ context("Testing making of mevo (molecular evolution info) object")
 # library(testthat)
 
 
+set.seed(4616515)
+
 
 # Set all needed molecular evolution parameters inside an environment
 pars <- new.env()
@@ -247,12 +249,9 @@ test_that("proper gamma distance values with `shape` and `region_size` inputs", 
     expect_equal(mean(sapply(M$gamma_mats, function(x) mean(x[,2]))), 1)
     # Looking at variance:
     G <- do.call(c, lapply(M$gamma_mats, function(x) x[,2]))
-    N <- length(G)              # N
-    s <- sd(G)                  # observed SD
-    sd0 <- sqrt(1 / pars$shape) # expected SD
-    t <- (N - 1) * (s / sd0)^2  # test statistic
-    expect_gte(t, qchisq(0.025, df = N-1))
-    expect_lte(t, qchisq(1 - 0.025, df = N-1))
+    v <- var(G)                 # observed variance
+    var0 <- 1 / pars$shape      # expected variance
+    expect_lte((v - var0) / var0, 0.5)
 })
 
 # *  custom ----

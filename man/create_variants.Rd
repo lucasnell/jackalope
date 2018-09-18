@@ -96,8 +96,8 @@ This method won't work if the package \code{vcfR} isn't installed.}
 
 \examples{
 r <- create_genome(10, 1000)
-m <- make_mevo(r, list(model = "JC69", lambda = 1))
 p <- ape::rcoal(5)
+m <- make_mevo(r, list(model = "JC69", lambda = 0.1))
 v <- create_variants(r, "phylo", p, m)
 
 

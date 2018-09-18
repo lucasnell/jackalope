@@ -3,7 +3,9 @@ context("Testing mutation accuracy")
 # Simulating mutations in R and gemino's C++ code and making sure they produce
 # the same output
 
-library(gemino)
+# library(gemino)
+# library(testthat)
+
 
 n_seqs <- 10
 n_vars <- 10
@@ -11,39 +13,40 @@ n_muts <- 500
 len <- 100
 
 
-seqs <- gemino:::rando_seqs(n_seqs, len)
+ref <- create_genome(n_seqs, len)
 
-# Make pointer to RefGenome object based on `seqs`
-ref <- gemino:::make_ref_genome(seqs)
+# Extract vector of sequence strings:
+seqs <- sapply(1:n_seqs, function(i) gemino:::view_ref_genome_seq(ref$genome, i-1))
 
-test_that("Random sequences using `rando_seqs` have the correct lengths.", {
+
+test_that("Random sequences using `create_genome` have the correct lengths.", {
     expect_equal(nchar(seqs), rep(len, n_seqs))
 })
 
 
+# Frequency of `char` in string `s`
 char_frequencies <- function(char, s) {
     s2 <- gsub(char,"",s)
     return((nchar(s) - nchar(s2)) / nchar(s))
 }
-# Combined P value for all items in matrix (using Fisher's method):
-combine_pvals <- function(pvals) {
-    p <- pchisq(-2 * sum(log(pvals)), df = 2 * length(pvals))
-}
 
 
-test_that(paste("Random sequences using `rando_seqs` aren't significantly different",
-                "from expectation."),
-{
-    freqs <- t(sapply(1:n_seqs, function(i) sapply(c("T", "C", "A", "G"), char_frequencies,
-                                                   s = seqs[i])))
-    pvals <- apply(freqs, 2, function(x) t.test(x, mu = 0.25)$p.value)
-    p <- combine_pvals(pvals)
+test_that(paste("Random sequences using `create_genome` aren't significantly different",
+                "from expectation."), {
+                    freq_obs <- t(sapply(1:n_seqs,
+                                         function(i) sapply(c("T", "C", "A", "G"),
+                                                            char_frequencies,
+                                                            s = seqs[i])))
+                    freq_exp <- matrix(rep(0.25, n_seqs * 4), n_seqs)
+                    p <- chisq.test(freq_obs, freq_exp, simulate.p.value = TRUE)$p.value
+                    expect_gt(p, 0.05)
+                }
+)
 
-    expect_gt(p, 0.05)
-})
 
 
-vars <- gemino:::make_var_set(ref, n_vars)
+
+vars <- gemino:::make_var_set(ref$genome, n_vars)
 vars_R <- replicate(n_vars, seqs, simplify = FALSE)
 
 
@@ -75,6 +78,7 @@ for (v in 0:(n_vars-1)) {
                 size = as.integer(rexp(1, 2.0) + 1.0)
                 if (size > 10) size = 10
                 if (size > (max_size - pos)) size = max_size - pos;
+                if (size < 0) stop("size < 0")
                 gemino:::add_deletion(vars, var_ind = v, seq_ind = s,
                                       size_ = size, new_pos_ = pos)
                 ts[(s+1)] <- paste0(substr(ts[(s+1)], 1, pos),
@@ -91,8 +95,6 @@ for (v in 0:(n_vars-1)) {
 
 # Converting to list like vars_R:
 vars_cpp <- lapply(1:n_vars, function(i) gemino:::view_var_genome(vars, i-1))
-
-# identical(vars_R, vars_cpp)
 
 test_that("Mutations produced are accurate", {
     expect_identical(vars_R, vars_cpp)

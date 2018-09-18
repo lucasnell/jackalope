@@ -89,7 +89,8 @@ write_fasta <- function(reference, file_name, text_width = 80, compress = FALSE)
              call. = FALSE)
     }
     if (!inherits(reference, "ref_genome")) {
-        stop("\nThe reference argument supplied to write_fasta is not a ref_genome object.",
+        stop("\nThe reference argument supplied to write_fasta is not a ref_genome ",
+             "object.",
              call. = FALSE)
     }
     if (!inherits(reference$genome, "externalptr")) {

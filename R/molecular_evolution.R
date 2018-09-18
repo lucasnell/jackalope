@@ -260,6 +260,7 @@ site_variability <- function(site_var, seq_sizes) {
 #' }
 #'
 #'
+#' @param reference A \code{ref_genome} object from which you will generate variants.
 #' @param sub A list containing the parameters for substitutions.
 #'     The `model` field is always required within this list, and this specifies
 #'     the model used for substitutions.

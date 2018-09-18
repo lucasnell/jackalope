@@ -8,6 +8,8 @@ make_mevo(reference, sub, ins = NULL, del = NULL, site_var = NULL,
   chunk_size = 100)
 }
 \arguments{
+\item{reference}{A \code{ref_genome} object from which you will generate variants.}
+
 \item{sub}{A list containing the parameters for substitutions.
 The \code{model} field is always required within this list, and this specifies
 the model used for substitutions.
