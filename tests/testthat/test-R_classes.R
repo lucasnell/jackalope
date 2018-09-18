@@ -125,3 +125,57 @@ test_that("variants class methods", {
 
 
 
+# Make empty var_set to compare mutations
+vars <- variants$new(gemino:::make_var_set(ref$genome, n_vars), ref$genome)
+vars_R <- replicate(n_vars, seqs, simplify = FALSE)
+
+
+for (v in 1:n_vars) {
+    ts <- vars_R[[v]]
+    for (s in 1:length(seqs)) {
+        m = 0;
+        max_size = vars$sizes(v)[s]
+        while (m < n_muts && max_size > 0) {
+            pos = as.integer(runif(1) * max_size) + 1
+            rnd = runif(1);
+            if (rnd < 0.5) {
+                str = gemino:::rando_seqs(1, 1)
+                if (nchar(str) != 1) stop("Improper size in sub")
+                vars$add_sub(v, s, pos, str)
+                substr(ts[s], pos, pos) <- str
+            } else if (rnd < 0.75) {
+                size = as.integer(rexp(1, 2.0) + 1.0)
+                if (size > 10) size = 10
+                str = gemino:::rando_seqs(1, size)
+                if (nchar(str) != size) stop("Improper size in insertion")
+                vars$add_ins(v, s, pos, str)
+                ts[s] <- paste0(substr(ts[s], 1, pos), str,
+                                    substr(ts[s], pos + 1, nchar(ts[s])))
+                max_size <- max_size + size
+            } else {
+                size = as.integer(rexp(1, 2.0) + 1.0)
+                if (size > 10) size = 10
+                if (size > (max_size - pos)) size = max_size - pos;
+                if (size < 0) stop("size < 0")
+                vars$add_del(v, s, pos, size)
+                ts[s] <- paste0(substr(ts[s], 1, pos - 1),
+                                    substr(ts[s], pos + size, nchar(ts[s])))
+                max_size <- max_size - size
+            }
+            m <- m + 1
+            prev_rnd <- rnd
+        }
+    }
+    vars_R[[v]] <- ts
+}
+
+# Converting to list like vars_R:
+vars_cpp <- lapply(1:n_vars,
+                   function(v) sapply(1:n_seqs,
+                                      function(s) vars$extract_seq(v, s)))
+
+test_that("Mutations produced are accurate", {
+    expect_identical(vars_R, vars_cpp)
+})
+
+
