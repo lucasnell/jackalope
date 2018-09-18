@@ -19,10 +19,12 @@
 #include <deque>  // deque
 #include <random>  // exponential_distribution
 #include <progress.hpp>  // for the progress bar
-
+#ifdef _OPENMP
+#include <omp.h>  // omp
+#endif
 
 #include "gemino_types.h"  // integer types
-#include "sequence_classes.h"  // Var* and Ref* classes
+#include "seq_classes_var.h"  // Var* classes
 #include "mevo.h"  // samplers
 #include "table_sampler.h" // table sampling
 #include "pcg.h" // pcg sampler types
@@ -49,7 +51,11 @@ inline std::vector<uint32> match_(const std::vector<std::string>& ordered_tip_la
     for (uint32 i = 0; i < spp_order.size(); i++) {
         auto iter = std::find(tip_labels.begin(), tip_labels.end(),
                               ordered_tip_labels[i]);
-        if (iter == tip_labels.end()) stop("item in `tip_labels` not found.");
+        if (iter == tip_labels.end()) {
+            std::string err_msg = ordered_tip_labels[i];
+            err_msg += " not found in `tip_labels`.";
+            stop(err_msg.c_str());
+        }
         spp_order[i] = iter - tip_labels.begin();
     }
 
@@ -139,6 +145,7 @@ public:
     std::vector<VarSequence> var_seqs;  // blank VarSequence objects to evolve across tree
     std::vector<T> samplers;         // samplers to do the mutation additions across tree
     std::vector<double> seq_rates;   // sequence rates
+    uint32 n_tips;                  // number of tips (i.e., variants)
 
     PhyloOneSeq() {}
     PhyloOneSeq(
@@ -156,6 +163,7 @@ public:
           var_seqs(),
           samplers(),
           seq_rates(edges_[0].max()),
+          n_tips(tip_labels_[0].size()),
           gamma_mat(gamma_mat_),
           ordered_tip_labels(),
           recombination(branch_lens_.size() > 1)
@@ -193,7 +201,7 @@ public:
 
         // Fill in blank VarSequence objects:
         var_seqs = std::vector<VarSequence>(tree_size,
-                                            VarSequence(var_set.reference[seq_ind]));
+                                            VarSequence((*var_set.reference)[seq_ind]));
 
         // Fill in samplers:
         samplers = std::vector<T>(tree_size, sampler_base);
@@ -219,6 +227,7 @@ public:
           var_seqs(),
           samplers(),
           seq_rates(edges_[0].max()),
+          n_tips(tip_labels_[0].size()),
           gamma_mat(),
           ordered_tip_labels(),
           recombination(branch_lens_.size() > 1)
@@ -257,20 +266,20 @@ public:
         uint32 tree_size = trees[0].tree_size;
         uint32 n_vars = var_set.size();
 
-        var_seq_ptrs.resize(var_set.size());
         gamma_mat = gamma_mat_;
 
-        ordered_tip_labels = std::vector<std::string>(n_vars);
+        ordered_tip_labels.resize(n_vars);
         for (uint32 i = 0; i < n_vars; i++) ordered_tip_labels[i] = var_set[i].name;
 
         // Filling in pointers:
+        var_seq_ptrs.resize(n_vars);
         for (uint32 i = 0; i < n_vars; i++) {
             var_seq_ptrs[i] = &var_set[i][seq_ind];
         }
 
         // Fill in blank VarSequence objects:
         var_seqs = std::vector<VarSequence>(tree_size,
-                                            VarSequence(var_set.reference[seq_ind]));
+                                            VarSequence((*var_set.reference)[seq_ind]));
 
         // Fill in samplers:
         samplers = std::vector<T>(tree_size, sampler_base);
@@ -284,7 +293,6 @@ public:
     }
 
 
-
     /*
      Evolve all trees.
      */
@@ -296,6 +304,69 @@ public:
         }
         return 0;
     }
+
+
+
+    /*
+     Fill a PhyloOneSeq object from an input list
+    */
+    void fill_from_list(const List& genome_phylo_info, const uint32& i) {
+
+        std::string err_msg;
+
+        const List& seq_phylo_info(genome_phylo_info[i]);
+
+        uint32 n_trees = seq_phylo_info.size();
+        if (n_trees == 0) {
+            err_msg = "\nNo trees supplied on sequence " + std::to_string(i+1);
+            throw(Rcpp::exception(err_msg.c_str(), false));
+        }
+
+        std::vector<uint32> n_bases_(n_trees);
+        std::vector<std::vector<double>> branch_lens_(n_trees);
+        std::vector<arma::Mat<uint32>> edges_(n_trees);
+        std::vector<std::vector<std::string>> tip_labels_(n_trees);
+
+        for (uint32 j = 0; j < n_trees; j++) {
+
+            const List& phylo_info(seq_phylo_info[j]);
+            std::vector<double> branch_lens = as<std::vector<double>>(
+                phylo_info["branch_lens"]);
+            arma::Mat<uint32> edges = as<arma::Mat<uint32>>(phylo_info["edges"]);
+            std::vector<std::string> tip_labels = as<std::vector<std::string>>(
+                phylo_info["labels"]);
+            if (branch_lens.size() != edges.n_rows) {
+                err_msg = "\nBranch lengths and edges don't have the same ";
+                err_msg += "size on sequence " + std::to_string(i+1) + " and tree ";
+                err_msg += std::to_string(j+1);
+                throw(Rcpp::exception(err_msg.c_str(), false));
+            }
+            if (branch_lens.size() == 0) {
+                err_msg = "\nEmpty tree on sequence " + std::to_string(i+1);
+                err_msg += " and tree " + std::to_string(j+1);
+                throw(Rcpp::exception(err_msg.c_str(), false));
+            }
+            uint32 start = as<uint32>(phylo_info["start"]);
+            sint64 end = as<sint64>(phylo_info["end"]);
+            if (end < start) {
+                err_msg = "\nEnd position < start position on sequence ";
+                err_msg += std::to_string(i+1) + " and tree " + std::to_string(j+1);
+                throw(Rcpp::exception(err_msg.c_str(), false));
+            }
+
+            n_bases_[j] = end - start + 1;
+            branch_lens_[j] = branch_lens;
+            edges_[j] = edges;
+            tip_labels_[j] = tip_labels;
+        }
+
+
+        *this = PhyloOneSeq<T>(n_bases_, branch_lens_, edges_, tip_labels_);
+
+        return;
+
+    }
+
 
 
 
@@ -403,7 +474,7 @@ private:
     /*
      Update final `VarSequence` objects in the same order as `ordered_tip_labels`:
      */
-    void fill(const PhyloTree& tree) {
+    void update_var_seq(const PhyloTree& tree) {
 
         std::vector<uint32> spp_order = match_(ordered_tip_labels,
                                                tree.tip_labels);
@@ -423,6 +494,8 @@ private:
     }
 
 };
+
+
 
 
 
@@ -522,7 +595,7 @@ int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
     /*
      Update final `VarSequence` objects:
      */
-    fill(tree);
+    update_var_seq(tree);
 
     // Update progress bar:
     if (recombination) {
@@ -535,7 +608,43 @@ int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
 
 
 
+/*
+ Phylogenetic tree info for all sequences in a genome.
 
+ `T` should be `MutationSampler` or `ChunkMutationSampler`.
+ */
+template <typename T>
+class PhyloInfo {
+public:
+
+    std::vector<PhyloOneSeq<T>> phylo_one_seqs;
+
+    PhyloInfo(const List& genome_phylo_info) {
+
+        uint32 n_seqs = genome_phylo_info.size();
+
+        if (n_seqs == 0) {
+            throw(Rcpp::exception("\nEmpty list provided for phylogenetic information.",
+                                  false));
+        }
+
+        phylo_one_seqs = std::vector<PhyloOneSeq<T>>(n_seqs);
+
+        for (uint32 i = 0; i < n_seqs; i++) {
+            phylo_one_seqs[i].fill_from_list(genome_phylo_info, i);
+        }
+    }
+
+    XPtr<VarSet> evolve_seqs(
+            SEXP& ref_genome_ptr,
+            SEXP& sampler_base_ptr,
+            const std::vector<arma::mat>& gamma_mats,
+            const uint32& n_cores,
+            const bool& show_progress);
+
+
+
+};
 
 
 
@@ -543,20 +652,24 @@ int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
  `T` should be `MutationSampler` or `ChunkMutationSampler`.
  */
 template <typename T>
-void evolve_seqs_(
-        SEXP& var_set_ptr,
+XPtr<VarSet> PhyloInfo<T>::evolve_seqs(
+        SEXP& ref_genome_ptr,
         SEXP& sampler_base_ptr,
-        SEXP& phylo_info_ptr,
-        const std::vector<uint32>& seq_inds,
         const std::vector<arma::mat>& gamma_mats,
+        const uint32& n_cores,
         const bool& show_progress) {
 
-    XPtr<VarSet> var_set(var_set_ptr);
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
     XPtr<T> sampler_base(sampler_base_ptr);
-    XPtr<std::vector<PhyloOneSeq<T>>> phylo_info(phylo_info_ptr);
 
-    uint32 n_seqs = var_set->reference.size();
-    uint64 total_seq = var_set->reference.total_size;
+    // Extract tip labels from the first tree:
+    const PhyloTree& first_tree(phylo_one_seqs[0].trees[0]);
+    std::vector<std::string> var_names = first_tree.tip_labels;
+
+    XPtr<VarSet> var_set(new VarSet(*ref_genome, var_names), true);
+
+    uint32 n_seqs = var_set->reference->size();
+    uint64 total_seq = ref_genome->total_size;
 
     Progress prog_bar(total_seq, show_progress);
 
@@ -565,28 +678,44 @@ void evolve_seqs_(
         err_msg += "reference";
         throw(Rcpp::exception(err_msg.c_str(), false));
     }
-    if (n_seqs != seq_inds.size()) {
-        std::string err_msg = "\nseq_inds must be of same length as # sequences in ";
-        err_msg += "reference";
-        throw(Rcpp::exception(err_msg.c_str(), false));
-    }
-    if (n_seqs != phylo_info->size()) {
-        std::string err_msg = "\nphylo_info must be of same length as # sequences in ";
-        err_msg += "reference";
+    if (n_seqs != phylo_one_seqs.size()) {
+        std::string err_msg = "\n# tips in phylo. info must be of same length as ";
+        err_msg += "# sequences in reference genome";
         throw(Rcpp::exception(err_msg.c_str(), false));
     }
 
 
-    pcg32 eng = seeded_pcg();
+    // Generate seeds for random number generators (1 RNG per core)
+    const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
 
+    #ifdef _OPENMP
+    #pragma omp parallel default(shared) num_threads(n_cores) if (n_cores > 1)
+    {
+    #endif
+
+    std::vector<uint64> active_seeds;
+
+    // Write the active seed per core or just write one of the seeds.
+    #ifdef _OPENMP
+    uint32 active_thread = omp_get_thread_num();
+    active_seeds = seeds[active_thread];
+    #else
+    active_seeds = seeds[0];
+    #endif
+
+    pcg32 eng = seeded_pcg(active_seeds);
+
+    // Parallelize the Loop
+    #ifdef _OPENMP
+    #pragma omp for schedule(static)
+    #endif
     for (uint32 i = 0; i < n_seqs; i++) {
 
-        PhyloOneSeq<T>& seq_phylo((*phylo_info)[i]);
+        PhyloOneSeq<T>& seq_phylo(phylo_one_seqs[i]);
 
         const arma::mat& gamma_mat(gamma_mats[i]);
-        const uint32& seq_ind(seq_inds[i]);
 
-        if (gamma_mat(gamma_mat.n_rows-1,0) != (*var_set)[0][seq_ind].size()) {
+        if (gamma_mat(gamma_mat.n_rows-1,0) != (*var_set)[0][i].size()) {
             std::string err_msg = "\nGamma matrices must have max values equal to ";
             err_msg += "the respective sequence's length.\n";
             err_msg += "This error occurred on Gamma matrix number ";
@@ -595,7 +724,7 @@ void evolve_seqs_(
         }
 
         // Set values for variant info and sampler:
-        seq_phylo.set_samp_var_info(*var_set, *sampler_base, seq_ind, gamma_mat);
+        seq_phylo.set_samp_var_info(*var_set, *sampler_base, i, gamma_mat);
 
         // Evolve the sequence using the seq_phylo object:
         int code = seq_phylo.evolve(eng, prog_bar);
@@ -607,12 +736,18 @@ void evolve_seqs_(
             warn_msg += "Note that changes occur in place, so your variants have ";
             warn_msg += "already been partially added.";
             Rcpp::warning(warn_msg.c_str());
-            return;
+            return var_set;
         }
     }
 
-    return;
+    #ifdef _OPENMP
+    }
+    #endif
+
+    return var_set;
+
 }
+
 
 
 

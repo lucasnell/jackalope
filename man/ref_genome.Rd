@@ -3,7 +3,7 @@
 \docType{class}
 \name{ref_genome}
 \alias{ref_genome}
-\title{An R6 class representing a reference genome}
+\title{An R6 class representing a reference genome.}
 \format{An \code{\link[R6]{R6Class}} generator object}
 \usage{
 ref_genome
@@ -12,10 +12,11 @@ ref_genome
 An object of class \code{ref_genome}.
 }
 \description{
-\emph{Note:} Do NOT change fields in this class directly. It will cause your
-R session to do bad things.
+\emph{Note:} Do NOT change fields in this class directly.
+It will cause your R session to do bad things.
 (Ever seen the bomb popup on RStudio? Manually mess with these fields and you
 surely will.)
+For safe ways of manipulating the reference genome, see the "Methods" section.
 }
 \section{Fields}{
 
@@ -27,4 +28,28 @@ representing the genome.}
 genome, if a digestion has been carried out. It's \code{NULL} otherwise.}
 }}
 
+\section{Methods}{
+
+\describe{
+\item{\code{n_seqs()}}{View the number of sequences.}
+\item{\code{sizes()}}{View vector of sequence sizes.}
+\item{\code{names()}}{View vector of sequence names.}
+\item{\code{extract_seq(seq_ind)}}{Extract a sequence string based on an index,
+\code{seq_ind}.}
+\item{\code{set_names(names)}}{Set names for all sequences.}
+\item{\code{rm_seqs(seq_names)}}{Remove one or more sequences based on names in
+the \code{seq_names} vector.}
+\item{\code{merge_seqs()}}{Merge all sequences into one.}
+\item{\code{filter_seqs(threshold, method)}}{Filter sequences by size
+(\code{method = "size"}) or for a proportion of total bases \code{method = "prop"}.
+For the latter, sequences are first size-sorted, then the largest \code{N}
+sequences are retained that allow at least
+\code{threshold * sum(<all sequence sizes>)} base pairs remaining after
+filtering.}
+}
+}
+
+\seealso{
+\code{\link{read_fasta}} \code{\link{create_genome}}
+}
 \keyword{datasets}

@@ -4,25 +4,101 @@
 \alias{create_variants}
 \title{Create variants from a reference genome.}
 \usage{
-create_variants(reference, n_variants, phylo_control, vcf_file, random_control,
-  n_cores = 1)
+create_variants(reference, method, method_info, mevo_obj, n_cores = 1,
+  show_progress = FALSE)
 }
 \arguments{
 \item{reference}{A \code{ref_genome} object from which to generate variants.
 This argument is required.}
 
-\item{n_variants}{The number of haploid variants to create.
-This argument is required.}
+\item{method}{Method to use for generating variants.
+Options are as follows:
+\describe{
+\item{\code{"phylo"}}{phylogenetic tree(s) from \code{phylo} object(s).}
+\item{\code{"coal_obj"}}{coalescent-simulator object(s) from the \code{scrm} or \code{coala}
+package.}
+\item{\code{"ms_file"}}{a file containing output from a coalescent simulator in the
+format of the \code{ms} program.}
+\item{\code{"newick"}}{NEWICK file(s) containing a phylogenetic tree(s).}
+\item{\code{"theta"}}{an estimate for theta, the population-scaled mutation rate.}
+\item{\code{"vcf"}}{a variant call format (VCF) file that directly specifies
+variants. This method does not work if the \code{vcfR} package isn't installed.
+\strong{\emph{NOTE:}} If this method is chosen, all arguments other than
+\code{reference}, \code{method}, and \code{method_info} are ignored.}
+}}
 
-\item{phylo_control}{A list containing parameters for phylogenetic evolution.}
+\item{method_info}{Object containing information used for the given method.
+See "Method arguments" section for which arguments are used for each method.}
 
-\item{vcf_file}{The file name for a VCF file to read from.}
+\item{mevo_obj}{A \code{mevo} object that stores molecular-evolution information.
+See \code{\link{make_mevo}} for more information.}
 
-\item{random_control}{A list containing parameters for random mutation addition.}
+\item{n_cores}{Number of cores to use for parallel processing.
+This argument is ignored if OpenMP is not enabled.
+Cores are spread across sequences, so it
+doesn't make sense to supply more cores than sequences in the reference genome.
+Defaults to \code{1}.}
 
-\item{n_cores}{Number of cores to use for parallel processing. This argument is
-ignored if OpenMP is not enabled. Defaults to \code{1}.}
+\item{show_progress}{Boolean for whether to show a progress bar during processing.
+Defaults to \code{FALSE}.}
 }
 \description{
 Create variants from a reference genome.
+}
+\section{Method arguments}{
+
+Below, I describe what the \code{method_info} should look like for each possible method.
+\describe{
+\item{\code{method = "phylo"}}{One of the following object types is allowed:
+\itemize{
+\item A single \code{\link[ape]{phylo}} object that represents all
+sequences in the genome.
+\item A \code{list} or \code{multiPhylo} object containing a \code{phylo} object for
+each reference sequence.
+Phylogenies will be assigned to sequences in the order provided.
+}
+}
+\item{\code{method = "coal_obj"}}{One of the following object types is allowed:
+\itemize{
+\item A single \code{list} with a \code{trees} field inside. This field must
+contain a set of gene trees for each sequence.
+\item A list of lists, each sub-list containing a \code{trees} field of
+length 1. The top-level list must be of the same length as the
+number of sequences.
+}
+For what all \code{trees} fields should look like, see output from the
+\code{scrm} or \code{coala} package.
+(These packages are not required to be installed when installing
+\code{gemino}.)
+To get gene trees in \code{coala}, make sure to add \code{+ sumstat_trees()}
+to the \code{coalmodel}.
+In \code{scrm}, make sure that \code{"-T"} is present in \code{args}.
+}
+\item{\code{method = "ms_file"}}{A single string specifying the name of the file
+containing the \code{ms}-style coalescent output.}
+\item{\code{method = "newick"}}{One or more string(s), each of which specifies
+a name of a NEWICK file containing a phylogeny.
+If one name is provided, that phylogeny will be used for all sequences.
+If more than one is provided, there must be a phylogeny for each sequence,
+and phylogenies will be assigned to sequences in the order provided.}
+\item{\code{method = "theta"}}{A named vector or list containing the fields \code{theta}
+and \code{n_vars}, specifying the theta parameter (population-scaled mutation rate)
+and number of desired variants, respectively.}
+\item{\code{method = "vcf"}}{Either (a) a single string specifying the name of
+the VCF file or (b) a list of arguments to pass to \code{vcfR::read.vcfR}.
+For the latter, the list can also contain the \code{print_chroms} field, which,
+if set to \code{TRUE}, prints all unique sequence names from the VCF file
+when VCF sequence names don't match those from the reference genome.
+This can be useful for troubleshooting.
+This method won't work if the package \code{vcfR} isn't installed.}
+}
+}
+
+\examples{
+r <- create_genome(10, 1000)
+p <- ape::rcoal(5)
+m <- make_mevo(r, list(model = "JC69", lambda = 0.1))
+v <- create_variants(r, "phylo", p, m)
+
+
 }

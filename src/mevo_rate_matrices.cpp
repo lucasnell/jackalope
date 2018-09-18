@@ -15,7 +15,6 @@
 #include <RcppArmadillo.h>
 
 #include "gemino_types.h" // integer types
-#include "mevo_rate_matrices.h"
 
 using namespace Rcpp;
 
@@ -28,7 +27,7 @@ using namespace Rcpp;
 //[[Rcpp::export]]
 arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag,
                            const double& alpha_1, const double& alpha_2,
-                           const double& beta, const double& xi) {
+                           const double& beta) {
 
     arma::mat Q(4,4);
     Q.fill(beta);
@@ -36,12 +35,8 @@ arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag,
     Q.submat(arma::span(2,3), arma::span(2,3)).fill(alpha_2);
     for (uint32 i = 0; i < 4; i++) Q.col(i) *= pi_tcag[i];
 
-    // Filling in diagonals
-    Q.diag().fill(0.0);  // reset to zero so summing by row works
-    arma::vec rowsums = arma::sum(Q, 1);
-    rowsums += xi * 0.25;
-    rowsums *= -1;
-    Q.diag() = rowsums;
+    // Reset diagonals to zero
+    Q.diag().fill(0.0);
 
     return Q;
 }
@@ -55,11 +50,11 @@ arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag,
 //' @noRd
 //'
 //[[Rcpp::export]]
-arma::mat JC69_rate_matrix(const double& lambda, const double& xi) {
+arma::mat JC69_rate_matrix(const double& lambda) {
 
     std::vector<double> pi_tcag = {1, 1, 1, 1};
 
-    arma::mat Q = TN93_rate_matrix(pi_tcag, lambda, lambda, lambda, xi);
+    arma::mat Q = TN93_rate_matrix(pi_tcag, lambda, lambda, lambda);
 
     return Q;
 }
@@ -72,12 +67,11 @@ arma::mat JC69_rate_matrix(const double& lambda, const double& xi) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-arma::mat K80_rate_matrix(const double& alpha, const double& beta,
-                          const double& xi) {
+arma::mat K80_rate_matrix(const double& alpha, const double& beta) {
 
     std::vector<double> pi_tcag = {1, 1, 1, 1};
 
-    arma::mat Q = TN93_rate_matrix(pi_tcag, alpha, alpha, beta, xi);
+    arma::mat Q = TN93_rate_matrix(pi_tcag, alpha, alpha, beta);
 
     return Q;
 }
@@ -90,9 +84,9 @@ arma::mat K80_rate_matrix(const double& alpha, const double& beta,
 //' @noRd
 //'
 //[[Rcpp::export]]
-arma::mat F81_rate_matrix(const std::vector<double>& pi_tcag, const double& xi) {
+arma::mat F81_rate_matrix(const std::vector<double>& pi_tcag) {
 
-    arma::mat Q = TN93_rate_matrix(pi_tcag, 1, 1, 1, xi);
+    arma::mat Q = TN93_rate_matrix(pi_tcag, 1, 1, 1);
 
     return Q;
 }
@@ -106,10 +100,9 @@ arma::mat F81_rate_matrix(const std::vector<double>& pi_tcag, const double& xi) 
 //'
 //[[Rcpp::export]]
 arma::mat HKY85_rate_matrix(const std::vector<double>& pi_tcag,
-                            const double& alpha, const double& beta,
-                            const double& xi) {
+                            const double& alpha, const double& beta) {
 
-    arma::mat Q = TN93_rate_matrix(pi_tcag, alpha, alpha, beta, xi);
+    arma::mat Q = TN93_rate_matrix(pi_tcag, alpha, alpha, beta);
 
     return Q;
 }
@@ -123,16 +116,15 @@ arma::mat HKY85_rate_matrix(const std::vector<double>& pi_tcag,
 //'
 //[[Rcpp::export]]
 arma::mat F84_rate_matrix(const std::vector<double>& pi_tcag,
-                          const double& beta, const double& kappa,
-                          const double& xi) {
+                          const double& beta, const double& kappa) {
 
     double pi_y = pi_tcag[0] + pi_tcag[1];
     double pi_r = pi_tcag[2] + pi_tcag[3];
 
-    double alpha_1 = 1 + kappa / pi_y;
-    double alpha_2 = 1 + kappa / pi_r;
+    double alpha_1 = (1 + kappa / pi_y) * beta;
+    double alpha_2 = (1 + kappa / pi_r) * beta;
 
-    arma::mat Q = TN93_rate_matrix(pi_tcag, alpha_1, alpha_2, beta, xi);
+    arma::mat Q = TN93_rate_matrix(pi_tcag, alpha_1, alpha_2, beta);
 
     return Q;
 }
@@ -146,8 +138,7 @@ arma::mat F84_rate_matrix(const std::vector<double>& pi_tcag,
 //'
 //[[Rcpp::export]]
 arma::mat GTR_rate_matrix(const std::vector<double>& pi_tcag,
-                          const std::vector<double>& abcdef,
-                          const double& xi) {
+                          const std::vector<double>& abcdef) {
 
     arma::mat Q(4, 4, arma::fill::zeros);
 
@@ -161,12 +152,6 @@ arma::mat GTR_rate_matrix(const std::vector<double>& pi_tcag,
         }
     }
     for (uint32 i = 0; i < 4; i++) Q.col(i) *= pi_tcag[i];
-
-    // Filling in diagonals
-    arma::vec rowsums = arma::sum(Q, 1);
-    rowsums += xi * 0.25;
-    rowsums *= -1;
-    Q.diag() = rowsums;
 
     return Q;
 
@@ -230,26 +215,23 @@ inline void est_pi_tcag(const arma::mat& Q, std::vector<double>& pi_tcag) {
 //'
 //' @noRd
 //'
-void UNREST_rate_matrix_(arma::mat& Q, std::vector<double>& pi_tcag, const double& xi) {
+void UNREST_rate_matrix_(arma::mat& Q, std::vector<double>& pi_tcag) {
 
     if (Q.n_rows != 4 || Q.n_cols != 4) stop("Q matrix should be 4 x 4");
 
-    // reset to zero so summing by row works
+    // Make sure diagonals are set to zero so summing by row works
     Q.diag().fill(0.0);
     // Filling in diagonals
     arma::vec rowsums = arma::sum(Q, 1);
     rowsums *= -1;
     Q.diag() = rowsums;
 
-    // Estimate pi_tcag before incorporating indels:
+    // Estimate pi_tcag:
     est_pi_tcag(Q, pi_tcag);
 
-    /*
-     Now include indel rates
-     (I'm subtracting bc diagonals are negative)
-     (Also, I'm doing this here so it doesn't affect pi_tcag estimates)
-     */
-    Q.diag() -= xi * 0.25;
+    // Now reset diagonal to zero for later steps
+    Q.diag().fill(0.0);
+
 
     return;
 }
@@ -267,11 +249,11 @@ void UNREST_rate_matrix_(arma::mat& Q, std::vector<double>& pi_tcag, const doubl
 //'
 //'
 //[[Rcpp::export]]
-List UNREST_rate_matrix(arma::mat Q, const double& xi) {
+List UNREST_rate_matrix(arma::mat Q) {
 
     std::vector<double> pi_tcag;
 
-    UNREST_rate_matrix_(Q, pi_tcag, xi);
+    UNREST_rate_matrix_(Q, pi_tcag);
 
     List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag);
 

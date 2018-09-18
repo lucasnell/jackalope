@@ -7,14 +7,14 @@
 \alias{add_deletion}
 \title{Add mutations manually from R.}
 \usage{
-add_substitution(var_set_, var_ind, seq_ind, nucleo_, new_pos_)
+add_substitution(var_set_ptr, var_ind, seq_ind, nucleo_, new_pos_)
 
-add_insertion(var_set_, var_ind, seq_ind, nucleos_, new_pos_)
+add_insertion(var_set_ptr, var_ind, seq_ind, nucleos_, new_pos_)
 
-add_deletion(var_set_, var_ind, seq_ind, size_, new_pos_)
+add_deletion(var_set_ptr, var_ind, seq_ind, size_, new_pos_)
 }
 \arguments{
-\item{var_set_}{External pointer to a C++ \code{VarSet} object}
+\item{var_set_ptr}{External pointer to a C++ \code{VarSet} object}
 
 \item{var_ind}{Integer index to the desired variant. Uses 0-based indexing!}
 

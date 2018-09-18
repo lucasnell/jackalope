@@ -5,7 +5,9 @@
 #include <vector>
 #include <zlib.h>
 
-#include "sequence_classes.h"  // RefGenome and RefSequence classes
+#include "gemino_types.h"  // integer types
+#include "seq_classes_ref.h"  // Ref* classes
+#include "seq_classes_var.h"  // Var* classes
 #include "str_manip.h"  // filter_nucleos
 
 using namespace Rcpp;
@@ -113,6 +115,99 @@ std::vector<std::vector<std::string>> read_ms_output_(std::string ms_file) {
 
     return newick_strings;
 }
+
+
+
+
+
+
+/*
+ ==================================================================
+ ==================================================================
+
+                READ VCF
+
+ ==================================================================
+ ==================================================================
+ */
+
+//' Read VCF from a vcfR object.
+//'
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+SEXP read_vcfr(SEXP reference_ptr,
+               const std::vector<std::string>& var_names,
+               const std::vector<std::vector<std::string>>& haps_list,
+               const std::vector<uint32>& seq_inds,
+               const std::vector<uint32>& pos,
+               const std::vector<std::string>& ref_seq) {
+
+    XPtr<RefGenome> reference(reference_ptr);
+    uint32 n_muts = haps_list.size();
+    uint32 n_vars = var_names.size();
+    uint32 n_seqs = reference->size();
+
+    XPtr<VarSet> var_set(new VarSet(*reference, var_names));
+
+    for (uint32 mut_i = 0; mut_i < n_muts; mut_i++) {
+
+        const std::string& ref(ref_seq[mut_i]);
+        const std::vector<std::string>& haps(haps_list[mut_i]);
+        const uint32& seq_i(seq_inds[mut_i]);
+
+        for (uint32 var_i = 0; var_i < n_vars; var_i++) {
+
+            // If it's blank or if it's the same as the reference, move on:
+            if (haps[var_i].size() == 0 || haps[var_i] == ref) continue;
+
+            VarSequence& var_seq((*var_set)[var_i][seq_i]);
+
+            // Else, mutate accordingly:
+            Mutation new_mut;
+            if (ref.size() <= haps[var_i].size()) {
+                /*
+                ------------
+                substitution and/or insertion
+                ------------
+                */
+                new_mut = Mutation(pos[mut_i], pos[mut_i], haps[var_i]);
+            } else {
+                /*
+                ------------
+                deletion
+                ------------
+                */
+                // size modifier:
+                sint32 sm = static_cast<sint32>(haps[var_i].size()) -
+                    static_cast<sint32>(ref.size());
+                /* Position (have to do this bc VCFs include non-deleted nucleotide when
+                calculating deltion positions) */
+                uint32 np = pos[mut_i] + 1;
+                new_mut = Mutation(np, np, sm);
+            }
+            var_seq.mutations.push_back(new_mut);
+
+        }
+
+    }
+
+
+    /*
+    Go back and re-calculate positions and variant sequence sizes
+    */
+    for (uint32 seq_i = 0; seq_i < n_seqs; seq_i++) {
+        for (uint32 var_i = 0; var_i < n_vars; var_i++) {
+            VarSequence& var_seq((*var_set)[var_i][seq_i]);
+            var_seq.calc_positions();
+        }
+    }
+
+    return var_set;
+}
+
+
 
 
 // ==================================================================
@@ -492,7 +587,7 @@ SEXP read_fasta_ind(const std::string& fasta_file,
 //' Write \code{RefGenome} to an uncompressed fasta file.
 //'
 //' @param file_name File name of output fasta file.
-//' @param ref_ An external pointer to a \code{RefGenome} C++ object.
+//' @param ref_genome_ptr An external pointer to a \code{RefGenome} C++ object.
 //' @param text_width The number of characters per line in the output fasta file.
 //'
 //' @return Nothing.
@@ -502,10 +597,10 @@ SEXP read_fasta_ind(const std::string& fasta_file,
 //'
 //[[Rcpp::export]]
 void write_fasta_fa(std::string file_name,
-                    SEXP ref_,
+                    SEXP ref_genome_ptr,
                     const uint32& text_width){
 
-    XPtr<RefGenome> ref_xptr(ref_);
+    XPtr<RefGenome> ref_xptr(ref_genome_ptr);
     RefGenome& ref(*ref_xptr);
 
     std::ofstream out_file(file_name);
@@ -547,10 +642,10 @@ void write_fasta_fa(std::string file_name,
 //'
 //[[Rcpp::export]]
 void write_fasta_gz(const std::string& file_name,
-                    SEXP ref_,
+                    SEXP ref_genome_ptr,
                     const uint32& text_width){
 
-    XPtr<RefGenome> ref_xptr(ref_);
+    XPtr<RefGenome> ref_xptr(ref_genome_ptr);
     RefGenome& ref(*ref_xptr);
 
     // Initialize filehandle.

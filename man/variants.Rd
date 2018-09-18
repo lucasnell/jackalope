@@ -3,7 +3,7 @@
 \docType{class}
 \name{variants}
 \alias{variants}
-\title{An R6 class representing haploid variants from a reference genome}
+\title{An R6 class representing haploid variants from a reference genome.}
 \format{An \code{\link[R6]{R6Class}} generator object}
 \usage{
 variants
@@ -16,6 +16,7 @@ An object of class \code{variants}.
 R session to do bad things.
 (Ever seen the bomb popup on RStudio? Manually mess with these fields and you
 surely will.)
+For safe ways of manipulating the variants' information, see the "Methods" section.
 }
 \section{Fields}{
 
@@ -45,4 +46,24 @@ don't worry about later deleting the \code{ref_genome} object.
 }}
 }}
 
+\section{Methods}{
+
+\describe{
+\item{\code{n_seqs()}}{View the number of sequences.}
+\item{\code{n_vars()}}{View the number of variants.}
+\item{\code{sizes(var_ind)}}{View vector of sequence sizes for a given variant.}
+\item{\code{seq_names()}}{View vector of sequence names.}
+\item{\code{var_names()}}{View vector of variant names.}
+\item{\code{extract_seq(var_ind, seq_ind)}}{Extract a sequence string based on
+indices for the sequence (\code{seq_ind}) and variant (\code{var_ind}).}
+\item{\code{set_names(names)}}{Set names for all variants.}
+\item{\code{rm_vars(var_names)}}{Remove one or more variants based on names in
+the \code{var_names} vector.}
+
+}
+}
+
+\seealso{
+\code{\link{create_variants}}
+}
 \keyword{datasets}

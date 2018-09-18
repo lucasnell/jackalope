@@ -20,7 +20,6 @@
 #include <random>               // gamma_distribution
 
 #include "gemino_types.h"       // integer types
-#include "sequence_classes.h"   // Var* and Ref* classes
 #include "pcg.h"                // pcg seeding
 
 
@@ -172,10 +171,6 @@ public:
 
 };
 
-
-
-arma::mat make_gamma_mat(const uint32& seq_size_, const uint32& gamma_size_,
-                         const double& alpha, pcg32& eng);
 
 
 #endif

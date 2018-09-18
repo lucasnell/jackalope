@@ -7,8 +7,8 @@
 #include <deque> // deque class
 #include <unordered_map> // unordered_map
 
-#include "sequence_classes.h" // classes RefGenome, VarSet, VarSequence
-
+#include "seq_classes_ref.h"  // Ref* classes
+#include "seq_classes_var.h"  // Var* classes
 
 
 namespace digest {

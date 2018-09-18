@@ -7,6 +7,7 @@
 
 # Check for a single, whole number, perhaps in range
 single_whole_number <- function(x, .min, .max) {
+    if (is.null(x)) return(FALSE)
     bool <- is.numeric(x) & length(x) == 1 & x %% 1 == 0
     if (!missing(.min)) bool <- bool & x >= .min
     if (!missing(.max)) bool <- bool & x <= .max
@@ -14,8 +15,21 @@ single_whole_number <- function(x, .min, .max) {
 }
 # Check for a single number, perhaps in range
 single_number <- function(x, .min, .max) {
+    if (is.null(x)) return(FALSE)
     bool <- is.numeric(x) & length(x) == 1
     if (!missing(.min)) bool <- bool & x >= .min
     if (!missing(.max)) bool <- bool & x <= .max
+    return(bool)
+}
+# Check for a single string
+single_string <- function(x) {
+    if (is.null(x)) return(FALSE)
+    bool <- is.character(x) & length(x) == 1
+    return(bool)
+}
+# Check for a character vector of given length(s)
+vec_string <- function(x, L = 1) {
+    if (is.null(x)) return(FALSE)
+    bool <- is.character(x) & (length(x) %in% L)
     return(bool)
 }

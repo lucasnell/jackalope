@@ -12,7 +12,7 @@ process_coal_tree_string <- function(str, seq_size) {
 
     if (length(str) > 1) {
         if (!all(grepl("^\\[", str))) {
-            stop("\nThe coalescent string appears to include ",
+            stop("\nA coalescent string appears to include ",
                  "recombination but does not include sizes for each region.",
                  call. = FALSE)
         }
@@ -66,32 +66,54 @@ process_coal_tree_string <- function(str, seq_size) {
 
 #' Read info from a `phylo` object.
 #'
-#' @param phy The `phylo` object.
-#' @param n_seqs The number of sequences in the reference genome.
-#' @param chunked Boolean for whether the sampling for mutation locations
-#'     will be done in chunks.
+#' @inheritParams make_phylo_info
 #'
-#' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
+#' @return An external pointer to the phylogenetic info needed to do the sequence
+#'     simulations.
 #'
 #' @noRd
 #'
-read_phy_obj <- function(phy, n_seqs, chunked) {
+read_phy_obj <- function(phy, n_seqs, chunked, err_msg = "") {
 
-    phy <- ape::reorder.phylo(phy, order = "cladewise")
-    labels <- paste(phy$tip.label) # used paste to make sure they're characters
-    branch_lens <- phy$edge.length
-    edges <- phy$edge
-    phy_info <- list(branch_lens = branch_lens, edges = edges, labels = labels,
-                     start = 0, end = 0)
+    if (!inherits(phy, "phylo") & !inherits(phy, "multiPhylo") &
+        !inherits(phy, "list")) {
+        stop(sprintf(err_msg, "of class phylo, multiPhylo, or list"), call. = FALSE)
+    }
+    if (inherits(phy, "list")) {
+        if (!all(sapply(phy, inherits, what = "phylo"))) {
+            stop(paste0("\nFor `create_variants` method \"phy\", ",
+                        "if providing a list, the list must only contain `phylo` ",
+                        "objects."),
+                 call. = FALSE)
+        }
+    }
+    if (inherits(phy, "multiPhylo") | inherits(phy, "list")) {
+        if (length(phy) != n_seqs) {
+            stop(paste0("\nFor `create_variants` method \"phy\", ",
+                        "if providing a list or `multiPhylo` object, its length ",
+                        "must equal the number of sequences."),
+                 call. = FALSE)
+        }
+    }
+    # So all inputs are lists of the proper length:
+    if (inherits(phy, "phylo")) phy <- rep(list(phy), n_seqs)
+    if (inherits(phy, "multiPhylo")) class(phy) <- "list"
 
-    # I'm repeating this information to make one set of phylo. info per sequence
-    # I'm doing `list(list(...))` to keep nestedness the same among the different methods
-    tree_info <- rep(list(list(phy_info)), n_seqs)
+    phylo_info <- lapply(phy,
+                         function(p) {
+                             p <- ape::reorder.phylo(p, order = "cladewise")
+                             labels <- paste(p$tip.label)  # <-- making sure they're strings
+                             branch_lens <- p$edge.length
+                             edges <- p$edge
+                             phy_info <- list(branch_lens = branch_lens, edges = edges,
+                                              labels = labels, start = 0, end = 0)
+                             return(list(phy_info))
+                         })
 
     if (!chunked) {
-        trees_ptr <- phylo_info_to_trees(tree_info)
+        trees_ptr <- phylo_info_to_trees(phylo_info)
     } else {
-        trees_ptr <- phylo_info_to_trees_chunk(tree_info)
+        trees_ptr <- phylo_info_to_trees_chunk(phylo_info)
     }
 
     return(trees_ptr)
@@ -105,33 +127,57 @@ read_phy_obj <- function(phy, n_seqs, chunked) {
 
 #' Read info from a coalescent object from scrm or coala.
 #'
-#' @param coal_obj The coalescent-simulation object.
-#' @param seq_sizes Vector of sequence sizes.
-#' @inheritParams read_phy_obj
+#' @inheritParams make_phylo_info
 #'
-#' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
+#' @return An XPtr to the info needed from the phylogenies to do the sequence
+#'     simulations.
 #'
 #' @noRd
 #'
 #'
-read_coal_obj <- function(coal_obj, seq_sizes, chunked) {
+read_coal_obj <- function(coal_obj, seq_sizes, chunked, err_msg) {
 
-    if (is.null(coal_obj$trees) | !inherits(coal_obj, "list")) {
-        stop("\nWhen reading trees from a coalescent object from the scrm or coala ",
-             "packages, the object must be a list with a `trees` field present. ",
-             "In coala, make sure to add `+ sumstat_trees()` to the coalmodel, ",
-             "and in scrm, make sure to add the `-T` option.",
+    # Check for coal_obj begin a list and either having a `trees` field or all its
+    # items within having `trees` fields
+    err <- FALSE
+    nested <- FALSE
+    if (!inherits(coal_obj, "list")) {
+        err <- TRUE
+    } else if (is.null(coal_obj$trees)) {
+        if (any(sapply(coal_obj, function(x) is.null(x$trees)))) {
+            err <- TRUE
+        } else {
+            nested <- TRUE
+            if (any(sapply(coal_obj, function(x) length(x$trees)) != 1)) err <- TRUE
+            if (any(!sapply(coal_obj, function(x) inherits(x$trees, "list")))) err <- TRUE
+        }
+    }
+    if (err) {
+        stop(sprintf(err_msg,
+                     paste("(1) a list with a `trees` field present or",
+                           "(2) a list of lists, each sub-list containing a `trees`",
+                           "field of length 1. For more, see `?create_variants`.")),
              call. = FALSE)
     }
 
-    trees <- coal_obj$trees
+    if (nested) {
+        trees <- lapply(coal_obj, function(x) x$trees[[1]])
+    } else trees <- coal_obj$trees
 
-    tree_info <- mapply(process_coal_tree_string, trees, seq_sizes,
+    if (length(trees) != length(seq_sizes)) {
+        stop(sprintf(err_msg,
+                     paste("result in a number of trees that's the same as the number",
+                           "of sequences.",
+                           "For more, see `?create_variants`.")),
+             call. = FALSE)
+    }
+
+    phylo_info <- mapply(process_coal_tree_string, trees, seq_sizes,
                         SIMPLIFY = FALSE, USE.NAMES = FALSE)
 
     # Making sure all labels are the same
     label_mat <- do.call(rbind,
-                         lapply(tree_info, function(x) {
+                         lapply(phylo_info, function(x) {
                              t(sapply(x, function(xx) xx$labels))
                          }))
     label_mat <- t(apply(label_mat, 1, sort))
@@ -143,9 +189,9 @@ read_coal_obj <- function(coal_obj, seq_sizes, chunked) {
     }
 
     if (!chunked) {
-        trees_ptr <- phylo_info_to_trees(tree_info)
+        trees_ptr <- phylo_info_to_trees(phylo_info)
     } else {
-        trees_ptr <- phylo_info_to_trees_chunk(tree_info)
+        trees_ptr <- phylo_info_to_trees_chunk(phylo_info)
     }
 
     return(trees_ptr)
@@ -157,25 +203,28 @@ read_coal_obj <- function(coal_obj, seq_sizes, chunked) {
 
 #' Read info from ms-style output file.
 #'
-#' @param ms_filename The filename for ms-style output.
-#' @inheritParams read_coal_obj
-#' @inheritParams read_phy_obj
+#' @inheritParams make_phylo_info
 #'
-#' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
+#' @return An external pointer to the phylogenetic info needed to do the sequence
+#'     simulations.
 #'
 #' @noRd
 #'
 #'
-read_ms_output <- function(ms_filename, seq_sizes, chunked) {
+read_ms_output <- function(ms_filename, seq_sizes, chunked, err_msg) {
+
+    if (!single_string(ms_filename)) {
+        stop(sprintf(err_msg, "a single string"), call. = FALSE)
+    }
 
     trees <- read_ms_output_(ms_filename)
 
-    tree_info <- mapply(process_coal_tree_string, trees, seq_sizes,
+    phylo_info <- mapply(process_coal_tree_string, trees, seq_sizes,
                         SIMPLIFY = FALSE, USE.NAMES = FALSE)
 
     # Making sure all labels are the same
     label_mat <- do.call(rbind,
-                         lapply(tree_info, function(x) {
+                         lapply(phylo_info, function(x) {
                              t(sapply(x, function(xx) xx$labels))
                          }))
     label_mat <- t(apply(label_mat, 1, sort))
@@ -187,9 +236,9 @@ read_ms_output <- function(ms_filename, seq_sizes, chunked) {
     }
 
     if (!chunked) {
-        trees_ptr <- phylo_info_to_trees(tree_info)
+        trees_ptr <- phylo_info_to_trees(phylo_info)
     } else {
-        trees_ptr <- phylo_info_to_trees_chunk(tree_info)
+        trees_ptr <- phylo_info_to_trees_chunk(phylo_info)
     }
 
     return(trees_ptr)
@@ -201,18 +250,26 @@ read_ms_output <- function(ms_filename, seq_sizes, chunked) {
 
 #' Read info from a NEWICK file.
 #'
-#' @param newick_filename The filename for the NEWICK phylogeny.
-#' @inheritParams read_phy_obj
+#' @inheritParams make_phylo_info
 #'
-#' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
+#' @return An external pointer to the phylogenetic info needed to do the sequence
+#'     simulations.
 #'
 #' @noRd
 #'
-read_newick <- function(newick_filename, n_seqs, chunked) {
+read_newick <- function(newick_filename, n_seqs, chunked, err_msg) {
 
-    phy <- ape::read.tree(file = newick_filename)
+    if (!vec_string(newick_filename, c(1, n_seqs))) {
+        stop(sprintf(err_msg, paste("a single string or a vector of strings of the",
+                                    "same length as the number of sequences")),
+             call. = FALSE)
+    }
 
-    trees_ptr <- read_phy_obj(phy, n_seqs, chunked)
+    phy <- lapply(newick_filename, ape::read.tree)
+
+    if (length(phy) == 1) phy <- rep(phy, n_seqs)
+
+    trees_ptr <- read_phy_obj(phy, n_seqs, chunked, err_msg)
 
     return(trees_ptr)
 }
@@ -224,15 +281,29 @@ read_newick <- function(newick_filename, n_seqs, chunked) {
 #' Note that mu should be derived from the mutation object, not passed to the function
 #' by the user.
 #'
-#' @param theta Theta parameter, population-scaled mutation rate.
-#' @param mu Average mutation rate (per bp per generation).
-#' @inheritParams read_phy_obj
+#' @inheritParams make_phylo_info
 #'
-#' @return An XPtr to the info needed from the phylogenies to do the sequence simulations.
+#' @return An external pointer to the phylogenetic info needed to do the sequence
+#'     simulations.
 #'
 #' @noRd
 #'
-read_theta <- function(theta, mu, n_vars, n_seqs, chunked) {
+read_theta <- function(theta_n_vars, mu, n_seqs, chunked, err_msg) {
+
+    err_msg <- sprintf(err_msg,
+                       paste("a named list or numeric vector, with the names",
+                             "\"theta\" and \"n_vars\".",
+                             "\"theta\" must be single number, and",
+                             "\"n_vars\" must be a single whole number."))
+    if ((!inherits(theta_n_vars, "list") & !inherits(theta_n_vars, "numeric")) |
+        is.null(names(theta_n_vars))) {
+        stop(err_msg, call. = FALSE)
+    }
+    if (!single_number(theta_n_vars[["theta"]])) stop(err_msg, call. = FALSE)
+    if (!single_whole_number(theta_n_vars[["n_vars"]])) stop(err_msg, call. = FALSE)
+
+    theta <- theta_n_vars[["theta"]]
+    n_vars <- theta_n_vars[["n_vars"]]
 
     # Generate random coalescent tree:
     phy <- ape::rcoal(n_vars)
@@ -252,4 +323,66 @@ read_theta <- function(theta, mu, n_vars, n_seqs, chunked) {
     return(trees_ptr)
 
 }
+
+
+
+
+#' Create phylogenetic information object from one of multiple methods.
+#'
+#'
+#' @inheritParams create_variants
+#' @param seq_sizes Vector of sequence sizes.
+#' @param n_seqs The number of sequences in the reference genome.
+#' @param mu Average mutation rate (per bp per generation).
+#'
+#' @return An external pointer to the phylogenetic info needed to do the sequence
+#'     simulations.
+#'
+#' @noRd
+#'
+make_phylo_info <- function(method,
+                            method_info,
+                            seq_sizes,
+                            n_seqs,
+                            mu,
+                            chunk_size) {
+
+    chunked <- chunk_size > 0
+
+    err_msg <- paste0("\nFor `create_variants` method \"", method,
+                      "\", `method_info` must be %s.")
+
+
+    if (method == "phylo") {
+
+        trees_ptr <- read_phy_obj(method_info, n_seqs, chunked, err_msg)
+
+    } else if (method == "coal_obj") {
+
+        trees_ptr <- read_coal_obj(method_info, seq_sizes, chunked, err_msg)
+
+    } else if (method == "ms_file") {
+
+        trees_ptr <- read_ms_output(method_info, seq_sizes, chunked, err_msg)
+
+    } else if (method == "newick") {
+
+        trees_ptr <- read_newick(method_info, n_seqs, chunked, err_msg)
+
+    } else if (method == "theta") {
+
+        trees_ptr <- read_theta(method_info, mu, n_seqs, chunked, err_msg)
+
+    } else {
+        stop("\nAn improper method argument was input to the `make_phylo_info` function",
+             call. = FALSE)
+    }
+
+    return(trees_ptr)
+}
+
+
+
+
+
 

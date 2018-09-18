@@ -13,7 +13,8 @@
 
 
 #include "gemino_types.h" // integer types
-#include "sequence_classes.h" // classes RefGenome and VarSet
+#include "seq_classes_ref.h"  // Ref* classes
+#include "seq_classes_var.h"  // Var* classes
 #include "digest.h" // DigestInfo, MultiOut,
 
 using namespace Rcpp;
@@ -302,7 +303,7 @@ void VarSeqDigest::digest(const DigestInfo& dinfo) {
 //'
 //'
 //'
-//' @param var_set_ An external pointer to a C++ \code{VarSet} object
+//' @param var_set_ptr An external pointer to a C++ \code{VarSet} object
 //'     representing variants from the reference genome.
 //' @inheritParams bind_sites digest_ref
 //' @inheritParams len5s digest_ref
@@ -318,16 +319,16 @@ void VarSeqDigest::digest(const DigestInfo& dinfo) {
 //'
 // [[Rcpp::export]]
 SEXP digest_var_set(
-        SEXP var_set_,
+        SEXP var_set_ptr,
         const std::vector<std::string>& bind_sites,
         const std::vector<uint32>& len5s,
         const uint32& chunk_size,
         const uint32& n_cores = 1) {
 
-    XPtr<VarSet> var_set(var_set_);
+    XPtr<VarSet> var_set(var_set_ptr);
 
     const uint32 n_vars = var_set->size();
-    const uint32 n_seqs = var_set->reference.size();
+    const uint32 n_seqs = var_set->reference->size();
 
     XPtr<GenomeSetDigest> out_digests(new GenomeSetDigest(n_vars, n_seqs));
 
@@ -456,7 +457,7 @@ void RefSeqChunk::merge_seam(const RefSeqChunk& prev, const DigestInfo& dinfo) {
 //'
 //'
 //'
-//' @param ref_genome_ An external pointer to a C++ \code{RefGenome} object
+//' @param ref_genome_ptr An external pointer to a C++ \code{RefGenome} object
 //'     representing the reference genome.
 //' @param bind_sites Vector of enzyme full recognition site(s).
 //' @param len5s A vector of the numbers of characters of the prime5 sites for each
@@ -485,13 +486,13 @@ void RefSeqChunk::merge_seam(const RefSeqChunk& prev, const DigestInfo& dinfo) {
 //'
 //[[Rcpp::export]]
 SEXP digest_ref(
-        SEXP ref_genome_,
+        SEXP ref_genome_ptr,
         const std::vector<std::string>& bind_sites,
         const std::vector<uint32>& len5s,
         const uint32& chunk_size = 0,
         const uint32& n_cores = 1) {
 
-    const XPtr<RefGenome> ref_genome(ref_genome_);
+    const XPtr<RefGenome> ref_genome(ref_genome_ptr);
 
     XPtr<GenomeDigest> out_digest_xptr(new GenomeDigest(ref_genome->size()));
     GenomeDigest& out_digest(*out_digest_xptr);
