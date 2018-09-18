@@ -61,7 +61,7 @@ ref_genome <- R6::R6Class(
         },
 
         print = function(...) {
-            stopifnot(inherits(self$genome, "externalptr"))
+            private$check_ptr()
             print_ref_genome(self$genome)
             invisible(self)
         },
@@ -71,25 +71,25 @@ ref_genome <- R6::R6Class(
         # ----------*
         # Get # sequences
         n_seqs = function() {
-            stopifnot(inherits(self$genome, "externalptr"))
+            private$check_ptr()
             return(view_ref_genome_nseqs(self$genome))
         },
 
         # Get vector of sequence sizes
         sizes = function() {
-            stopifnot(inherits(self$genome, "externalptr"))
+            private$check_ptr()
             return(view_ref_genome_seq_sizes(self$genome))
         },
 
         # Get vector of sequence names
         names = function() {
-            stopifnot(inherits(self$genome, "externalptr"))
+            private$check_ptr()
             return(view_ref_genome_seq_names(self$genome))
         },
 
         # Extract one reference sequence
         extract_seq = function(seq_ind) {
-            stopifnot(inherits(self$genome, "externalptr"))
+            private$check_ptr()
             if (seq_ind > self$n_seqs() | seq_ind < 1) {
                 stop("seq_ind arg must be in range [1, <# sequences>]", call. = FALSE)
             }
@@ -101,7 +101,7 @@ ref_genome <- R6::R6Class(
         # ----------*
         # Change sequence names
         set_names = function(names) {
-            stopifnot(inherits(self$genome, "externalptr"))
+            private$check_ptr()
             if (length(names) != self$n_seqs()) {
                 stop("names arg must be the same length as # sequences", call. = FALSE)
             }
@@ -112,7 +112,7 @@ ref_genome <- R6::R6Class(
 
         # Remove one or more sequences by name
         rm_seqs = function(seq_names) {
-            stopifnot(inherits(self$genome, "externalptr"))
+            private$check_ptr()
             self_names <- self$names()
             if (!all(seq_names %in% self_names)) {
                 stop("not all provided seq_names are in this genome.", call. = FALSE)
@@ -127,14 +127,14 @@ ref_genome <- R6::R6Class(
 
         # Merge all ref_genome genome sequences into one
         merge_seqs = function() {
-            stopifnot(inherits(self$genome, "externalptr"))
+            private$check_ptr()
             merge_sequences(self$genome)
             invisible(self)
         },
 
         # Filter ref_genome sequences by size or for a proportion of total bases
         filter_seqs = function(threshold, method) {
-            stopifnot(inherits(self$genome, "externalptr"))
+            private$check_ptr()
             method <- match.arg(method, c("size", "prop"))
             min_seq_size <- 0
             out_seq_prop <- 0
@@ -161,6 +161,12 @@ ref_genome <- R6::R6Class(
             filter_sequences(self$genome, min_seq_size, out_seq_prop)
             invisible(self)
         }
+
+    ),
+
+    private = list(
+
+        check_ptr = function() stopifnot(inherits(self$genome, "externalptr"))
 
     )
 
@@ -417,6 +423,7 @@ variants <- R6::R6Class(
         },
 
         print = function() {
+            private$check_ptr()
             print_var_set(self$genomes)
             invisible(self)
         },
@@ -427,46 +434,40 @@ variants <- R6::R6Class(
         # ----------*
         # Get # sequences
         n_seqs = function() {
-            stopifnot(inherits(self$genomes, "externalptr"))
+            private$check_ptr()
             return(view_var_set_nseqs(self$genomes))
         },
 
         # Get # variants
         n_vars = function() {
-            stopifnot(inherits(self$genomes, "externalptr"))
+            private$check_ptr()
             return(view_var_set_nvars(self$genomes))
         },
 
         # Get vector of sequence sizes for one variant
         sizes = function(var_ind) {
-            stopifnot(inherits(self$genomes, "externalptr"))
-            if (var_ind > self$n_vars() | var_ind < 1) {
-                stop("var_ind arg must be in range [1, <# variants>]", call. = FALSE)
-            }
+            private$check_ptr()
+            private$check_var_ind(var_ind)
             return(view_var_genome_seq_sizes(self$genomes, var_ind - 1))
         },
 
         # Get vector of sequence names
         seq_names = function() {
-            stopifnot(inherits(self$reference, "externalptr"))
-            return(view_ref_genome_seq_names(self$reference))
+            stopifnot(inherits(private$reference, "externalptr"))
+            return(view_ref_genome_seq_names(private$reference))
         },
 
         # Get vector of variant names
         var_names = function() {
-            stopifnot(inherits(self$genomes, "externalptr"))
+            private$check_ptr()
             return(view_var_set_var_names(self$genomes))
         },
 
         # Extract one variant sequence
         extract_seq = function(var_ind, seq_ind) {
-            stopifnot(inherits(self$genomes, "externalptr"))
-            if (seq_ind > self$n_seqs() | seq_ind < 1) {
-                stop("seq_ind arg must be in range [1, <# sequences>]", call. = FALSE)
-            }
-            if (var_ind > self$n_vars() | var_ind < 1) {
-                stop("var_ind arg must be in range [1, <# variants>]", call. = FALSE)
-            }
+            private$check_ptr()
+            private$check_var_ind(var_ind)
+            private$check_seq_ind(seq_ind)
             return(view_var_genome_seq(self$genomes, var_ind - 1, seq_ind - 1))
         },
 
@@ -477,7 +478,7 @@ variants <- R6::R6Class(
 
         # Change variant names
         set_names = function(names) {
-            stopifnot(inherits(self$genomes, "externalptr"))
+            private$check_ptr()
             if (length(names) != self$n_vars()) {
                 stop("names arg must be the same length as # variants", call. = FALSE)
             }
@@ -488,7 +489,7 @@ variants <- R6::R6Class(
 
         # Remove one or more variants by name
         rm_vars = function(var_names) {
-            stopifnot(inherits(self$genomes, "externalptr"))
+            private$check_ptr()
             self_names <- self$var_names()
             if (!all(var_names %in% self_names)) {
                 stop("not all provided var_names are in this genome.", call. = FALSE)
@@ -499,6 +500,43 @@ variants <- R6::R6Class(
             var_inds <- match(var_names, self_names) - 1
             remove_var_set_vars(self$genomes, var_inds)
             invisible(self)
+        },
+
+
+        # Mutations:
+        add_sub = function(var_ind, seq_ind, pos, nt) {
+            private$check_pos(var_ind, seq_ind, pos)
+            if (length(nt) != 1 | nchar(nt) != 1) {
+                stop("nt arg must be a single character", call. = FALSE)
+            }
+            if (! nt %in% c("T", "C", "A", "G", "N")) {
+                stop("nt arg must be one of \"T\", \"C\", \"A\", \"G\", or \"N\"",
+                     call. = FALSE)
+            }
+            add_substitution(self$genomes, var_ind - 1, seq_ind - 1, nt, pos - 1)
+            invisible(self)
+        },
+
+        add_ins = function(var_ind, seq_ind, pos, nts) {
+            private$check_pos(var_ind, seq_ind, pos)
+            if (length(nts) != 1) {
+                stop("nts arg must be a single string", call. = FALSE)
+            }
+            if (! all(strsplit(nts, "")[[1]] %in% c("T", "C", "A", "G", "N"))) {
+                stop("nts arg must only contain \"T\", \"C\", \"A\", \"G\", or \"N\"",
+                     call. = FALSE)
+            }
+            add_insertion(self$genomes, var_ind - 1, seq_ind - 1, nts, pos - 1)
+            invisible(self)
+        },
+
+        add_del = function(var_ind, seq_ind, pos, n_nts) {
+            private$check_pos(var_ind, seq_ind, pos)
+            if (!single_whole_number(n_nts)) {
+                stop("n_nts arg must be a single whole number", call. = FALSE)
+            }
+            add_deletion(self$genomes, var_ind - 1, seq_ind - 1, n_nts, pos - 1)
+            invisible(self)
         }
 
     ),
@@ -507,7 +545,34 @@ variants <- R6::R6Class(
     private = list(
         # This should store a `XPtr<RefGenome>` to make sure it doesn't
         # go out of scope:
-        reference = NULL
+        reference = NULL,
+
+        check_ptr = function() stopifnot(inherits(self$genomes, "externalptr")),
+
+        check_seq_ind = function(seq_ind) {
+            stopifnot(inherits(self$genomes, "externalptr"))
+            if (seq_ind > self$n_seqs() | seq_ind < 1) {
+                stop("seq_ind arg must be in range [1, <# sequences>]", call. = FALSE)
+            }
+        },
+        check_var_ind = function(var_ind) {
+            stopifnot(inherits(self$genomes, "externalptr"))
+            if (var_ind > self$n_vars() | var_ind < 1) {
+                stop("var_ind arg must be in range [1, <# variants>]", call. = FALSE)
+            }
+        },
+        check_pos = function(var_ind, seq_ind, pos) {
+            stopifnot(inherits(self$genomes, "externalptr"))
+            if (seq_ind > self$n_seqs() | seq_ind < 1) {
+                stop("seq_ind arg must be in range [1, <# sequences>]", call. = FALSE)
+            }
+            if (var_ind > self$n_vars() | var_ind < 1) {
+                stop("var_ind arg must be in range [1, <# variants>]", call. = FALSE)
+            }
+            if (pos > self$sizes(var_ind)[seq_ind] | pos < 1) {
+                stop("pos arg must be in range [1, <sequence size>]", call. = FALSE)
+            }
+        }
     )
 
 )

@@ -389,12 +389,20 @@ void remove_ref_genome_seqs(
         stop("duplicates detected in seq_inds");
     }
 
+    // Number of deleted nucleotides:
+    uint64 n_del = 0;
+
     for (uint32 i = 1; i <= seq_inds.size(); i++) {
         // Going backward so I don't have to update later ones each time:
         uint32 j = seq_inds[(seq_inds.size() - i)];
+        n_del += sequences[j].size();
         sequences.erase(sequences.begin() + j);
     }
     clear_memory<std::deque<RefSequence>>(sequences);
+
+    // Update total size:
+    ref_genome->total_size -= n_del;
+
     return;
 }
 

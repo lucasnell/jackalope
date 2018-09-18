@@ -344,7 +344,7 @@ make_mevo <- function(reference,
     # -------+
     # Process info for mutation-rate variability among sites:
     # -------+
-    gamma_mats <- site_variability(site_var, seq_sizes = reference$sizes)
+    gamma_mats <- site_variability(site_var, seq_sizes = reference$sizes())
 
 
     # -------+
