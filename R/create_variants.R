@@ -40,7 +40,12 @@
 #'     \item{`method = "theta"`}{A named vector or list containing the fields `theta`
 #'         and `n_vars`, specifying the theta parameter (population-scaled mutation rate)
 #'         and number of desired variants, respectively.}
-#'     \item{`method = "vcf"`}{A single string specifying the name of the VCF file.
+#'     \item{`method = "vcf"`}{Either (a) a single string specifying the name of
+#'         the VCF file or (b) a list of arguments to pass to `vcfR::read.vcfR`.
+#'         For the latter, the list can also contain the `print_chroms` field, which,
+#'         if set to `TRUE`, prints all unique sequence names from the VCF file
+#'         when VCF sequence names don't match those from the reference genome.
+#'         This can be useful for troubleshooting.
 #'         This method won't work if the package `vcfR` isn't installed.}
 #' }
 #'
@@ -190,14 +195,7 @@ create_variants <- function(reference,
 
     } else {
 
-        stop("\nVCF files not yet implemented in `create_variants`.", call. = TRUE)
-
-        if (!single_string(method_info)) {
-            stop("\nIf method = \"vcf\" in `create_variants`, ",
-                 "the `method_info` arg must be a single string specifying the ",
-                 "filename for the VCF file.",
-                 call. = FALSE)
-        }
+        variants_ptr <- read_vcf(reference, method_info)
 
     }
 

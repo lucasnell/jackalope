@@ -115,23 +115,66 @@ write_fasta <- function(reference, file_name, text_width = 80, compress = FALSE)
 # VCF ----
 
 
-#' Read VCF file using package `vcfR`
+#' Read VCF file using package `vcfR`.
+#'
+#' This function is only to be used inside `create_variants`.
 #'
 #' @inheritParams write_fasta
-#' @param vcf_file File name of VCF file.
-#' @param print_chroms Boolean for whether to print chromosomes present in the VCF file.
-#' @param ... Other parameters passed to \code{\link[vcfR]{read.vcfR}}.
+#' @param method_info List or string passed from `create_variants`. If a string, it
+#'     should be the file name of VCF file.
+#'     If a list, it must contain the VCF file name in the `file` field.
+#'     The list can also optionally contain
+#'     a boolean for whether to print chromosomes present in the VCF file
+#'     (`print_names`),
+#'     and other parameters passed to \code{\link[vcfR]{read.vcfR}}.
 #'
 #' @noRd
 #'
-read_vcf <- function(reference, vcf_file, print_chroms, ...) {
+read_vcf <- function(reference, method_info) {
 
     if (!requireNamespace("vcfR", quietly = TRUE)) {
         stop("\nPackage \"vcfR\" is needed for reading VCF files. ",
              "Please install it.",
              call. = FALSE)
     }
-    vcf <- vcfR::read.vcfR(file = vcf_file, verbose = FALSE, ...)
+
+    err <- FALSE
+    if (single_string(method_info)) {
+
+        print_names <- FALSE
+        read_args <- list(file = method_info, verbose = FALSE)
+
+    } else if (inherits(method_info, "list")) {
+
+        if (is.null(method_info$file)) {
+            err <- TRUE
+        } else {
+
+            if (is.null(method_info$print_names)) {
+                print_names <- FALSE
+            } else print_names <- method_info$print_names
+
+            read_args <- method_info
+            # No longer needed in list (bc not used in `vcfR::readvcfR`):
+            read_args$print_names <- NULL
+            if (is.null(read_args$verbose)) read_args$verbose <- FALSE
+            if (!all(names(read_args) %in% names(formals(vcfR::read.vcfR)))) {
+                err <- TRUE
+            }
+        }
+
+    } else err <- TRUE
+
+    if (err) {
+        stop("\nIf method = \"vcf\" in `create_variants`, ",
+             "the `method_info` arg must be a single string specifying the ",
+             "filename for the VCF file, or a list with the vcf file and arguments ",
+             "for `vcfR::read.vcfR`. ",
+             "See \"Method arguments\" section under `?create_variants`.",
+             call. = FALSE)
+    }
+
+    vcf <- do.call(vcfR::read.vcfR, read_args)
 
     chrom <- vcf@fix[,"CHROM"]
     pos <- as.integer(vcf@fix[,"POS"]) - 1  # -1 is to convert to C++ indices
@@ -148,12 +191,12 @@ read_vcf <- function(reference, vcf_file, print_chroms, ...) {
     unq_chrom <- unique(chrom)
 
     if (!all(unq_chrom %in% seq_names)) {
-        if (verbose) print(unq_chrom)
+        if (print_names) print(unq_chrom)
         stop("\nSequence name(s) in VCF file don't match those in the ",
              "`ref_genome` object. ",
              "It's probably easiest to manually change the `ref_genome` object ",
              "(using `$change_names()` method) to have the same names as the VCF file. ",
-             "Re-run this function with `print_chroms = TRUE` to see the VCF-file names.",
+             "Re-run this function with `print_names = TRUE` to see the VCF-file names.",
              call. = FALSE)
     }
 

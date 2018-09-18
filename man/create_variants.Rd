@@ -84,7 +84,12 @@ and phylogenies will be assigned to sequences in the order provided.}
 \item{\code{method = "theta"}}{A named vector or list containing the fields \code{theta}
 and \code{n_vars}, specifying the theta parameter (population-scaled mutation rate)
 and number of desired variants, respectively.}
-\item{\code{method = "vcf"}}{A single string specifying the name of the VCF file.
+\item{\code{method = "vcf"}}{Either (a) a single string specifying the name of
+the VCF file or (b) a list of arguments to pass to \code{vcfR::read.vcfR}.
+For the latter, the list can also contain the \code{print_chroms} field, which,
+if set to \code{TRUE}, prints all unique sequence names from the VCF file
+when VCF sequence names don't match those from the reference genome.
+This can be useful for troubleshooting.
 This method won't work if the package \code{vcfR} isn't installed.}
 }
 }
