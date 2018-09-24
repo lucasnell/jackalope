@@ -192,8 +192,9 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
         ++mut_i;
     }
     if (mut_i != 0) --mut_i;
-    // Adjust input string size if necessary
-    if (chunk_str.size() != out_length) chunk_str.resize(out_length, 'x');
+    // Reserve memory for input string
+    if (chunk_str.size() > 0) chunk_str.clear();
+    chunk_str.reserve(out_length);
 
     uint32 pos = start;
     uint32 next_mut_i = mut_i + 1;
@@ -203,7 +204,7 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
      `mut == mutations.begin()` and `start` is before the first mutation)
      */
     while (pos < mutations[mut_i].new_pos && pos <= end) {
-        chunk_str[pos - start] = (*ref_seq)[pos];
+        chunk_str += (*ref_seq)[pos];
         ++pos;
     }
     if (pos > end) return;
@@ -227,7 +228,7 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
      I've made sure that `end < seq_size`).
      */
     while (pos <= end) {
-        chunk_str[pos - start] = get_char_(pos, mut_i);
+        chunk_str += get_char_(pos, mut_i);
         ++pos;
     }
 

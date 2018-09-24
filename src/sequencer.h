@@ -37,16 +37,16 @@
  Author: Manuel Holtgrewe <manuel.holtgrewe@fu-berlin.de>
  ==========================================================================
 
- Edited for use in gemino by Lucas Nell, 2017
+ Edited for use in gemino by Lucas Nell, 2018
 
-*/
+ */
 
 #include <RcppArmadillo.h>
 #include <algorithm> // lower_bound
 #include <vector>  // vector class
 #include <pcg/pcg_random.hpp> // pcg prng
-#include <unordered_map> // unordered_map
 #include <string>  // string class
+#include <random>  // distributions
 
 #include "gemino_types.h"  // uint32
 

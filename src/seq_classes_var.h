@@ -369,6 +369,12 @@ public:
     uint32 size() const noexcept {
         return var_genome.size();
     }
+    // To return all the sequence sizes
+    std::vector<uint32> seq_sizes() const noexcept {
+        std::vector<uint32> out(size());
+        for (uint32 i = 0; i < out.size(); i++) out[i] = var_genome[i].size();
+        return out;
+    }
 
 private:
 
