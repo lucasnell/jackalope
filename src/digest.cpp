@@ -16,6 +16,7 @@
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 #include "digest.h" // DigestInfo, MultiOut,
+#include "str_manip.h" // rev_comp
 
 using namespace Rcpp;
 
@@ -32,25 +33,6 @@ void unique_(std::vector<std::string>& x) {
 }
 
 
-
-/*
- Reverse complement of a DNA sequence.
-
- Make sure that `seq` contains only T, C, A, or G!
- */
-std::string rev_comp(const std::string& seq) {
-
-    uint32 N = seq.size();
-
-    std::string out;
-    out.reserve(N);
-
-    for (uint32 j = 1; j <= N; j++) {
-        out.push_back(digest::cmp_map[seq[N - j]]);
-    }
-
-    return out;
-}
 
 
 //' Calculate how many bases come before a cleavage site.
