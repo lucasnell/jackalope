@@ -269,8 +269,9 @@ private:
  It's organized as such:
  @<instrument>:<run number>:<flowcell ID>:<lane>:<tile>:<x-pos>:<y-pos>
     <read>:<is filtered>:<control number>:<sample number>
- (where the newline and tab are, just have one space)
+ (where the newline and tab are ' ')
  (from https://help.basespace.illumina.com/articles/descriptive/fastq-files/)
+ Example: "@SIM:1:FCX:1:15:6329:1045 1:N:0:2"
  */
 struct SequenceIdentifierInfo {
 
@@ -377,48 +378,6 @@ public:
 
 
 
-// for Illumina read lengths: return constant value unless fragment length < constant
-struct IlluminaReads {
-
-    uint32 read_length;         // read length (constant)
-
-    IlluminaReads() {};
-    IlluminaReads(const uint32& read_length_) : read_length(read_length_) {};
-    // Copy constructor
-    IlluminaReads(const IlluminaReads& other)
-        : read_length(other.read_length) {};
-    // Assignment operator
-    IlluminaReads& operator=(const IlluminaReads& other) {
-        read_length = other.read_length;
-        return *this;
-    }
-
-    inline uint32 sample(const uint32& frag_len) const {
-        if (frag_len < read_length) return frag_len;
-        return read_length;
-    }
-
-};
-
-
-// for long-read sequencing (PacBio or Nanopore) read lengths: simply return fragment length
-struct LongReadReads {
-
-    LongReadReads() {};
-    LongReadReads(const uint32& read_length_) {};
-    // Copy constructor
-    LongReadReads(const LongReadReads& other) {};
-    // Assignment operator
-    LongReadReads& operator=(const LongReadReads& other) {
-        return *this;
-    }
-
-    inline uint32 sample(const uint32& frag_len) const {
-        return frag_len;
-    }
-
-};
-
 
 
 /*
@@ -472,9 +431,9 @@ public:
         // Adjust so rnd ~ N(means[pos], sds[pos])
         rnd *= sds[pos];
         rnd += means[pos];
-        // Limit quality to [0, 40]
+        // Limit quality to [0, 41] (Illumina 1.8+ allows up to 41 instead of 40)
         if (rnd < 0) rnd = 0;
-        if (rnd > 40) rnd = 40;
+        if (rnd > 41) rnd = 41;
         // Convert to int, then char
         char q = static_cast<char>('!' + static_cast<int>(rnd));
         return q;
