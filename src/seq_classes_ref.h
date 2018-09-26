@@ -85,6 +85,14 @@ struct RefSequence {
     bool operator > (const RefSequence& other) const noexcept {
         return size() > other.size();
     }
+
+    // For filling a sequence of a given starting position and size
+    void fill_seq(std::string& seq, const uint32& start, const uint32& size_) const {
+        if (seq.size() > 0) seq.clear();
+        seq.reserve(size_);
+        for (uint32 i = start; i < (start + size_); i++) seq += this->nucleos[i];
+        return;
+    }
 };
 
 

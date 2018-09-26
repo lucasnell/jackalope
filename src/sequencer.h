@@ -53,6 +53,8 @@
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // runif_01
 #include "table_sampler.h"  // TableSampler
+#include "util.h"  // clear_memory
+#include "str_manip.h"  // rev_comp
 
 using namespace Rcpp;
 
@@ -267,6 +269,72 @@ private:
 
 
 
+/*
+ Way to store info for the sequence identifier line in FASTQ file.
+ It's organized as such:
+ @<instrument>:<run number>:<flowcell ID>:<lane>:<tile>:<x-pos>:<y-pos>
+    <read>:<is filtered>:<control number>:<sample number>
+ (where the newline and tab are, just have one space)
+ (from https://help.basespace.illumina.com/articles/descriptive/fastq-files/)
+ */
+struct SequenceIdentifierInfo {
+
+    // (Characters allowed: a–z, A–Z, 0–9 and underscore) Instrument ID:
+    std::string instrument;
+    // (Numerical) Run number on instrument:
+    uint32 run_number;
+    // (Characters allowed: a–z, A–Z, 0–9):
+    std::string flowcell_ID;
+    // (Numerical) Lane number:
+    uint32 lane;
+    // (Numerical) Tile number:
+    uint32 tile;
+    // (Numerical) Run number on instrument:
+    uint32 x_pos;
+    // (Numerical) X coordinate of cluster:
+    uint32 y_pos;
+    // (Numerical) Read number. 1 can be single read or Read 2 of paired-end:
+    uint32 read;
+    // (Y or N) Y if the read is filtered (did not pass), N otherwise:
+    std::string is_filtered;
+    // (Numerical) 0 when none of the control bits are on, otherwise even number:
+    uint32 control_number;
+    // (Numerical) Sample number from sample sheet:
+    uint32 sample_number;
+
+    SequenceIdentifierInfo() {}
+    SequenceIdentifierInfo(
+        const std::string& instrument_,
+        const uint32& run_number_,
+        const std::string& flowcell_ID_,
+        const uint32& lane_,
+        const uint32& tile_,
+        const uint32& x_pos_,
+        const uint32& y_pos_,
+        const uint32& read_,
+        const std::string& is_filtered_,
+        const uint32& control_number_,
+        const uint32& sample_number_
+    )
+        : instrument(instrument_), run_number(run_number_),
+          flowcell_ID(flowcell_ID_), lane(lane_),
+          tile(tile_), x_pos(x_pos_),
+          y_pos(y_pos_), read(read_),
+          is_filtered(is_filtered_), control_number(control_number_),
+          sample_number(sample_number_) {};
+
+    std::string get_id_line() {
+        std::string out = "@";
+        out += instrument + ':' + std::to_string(run_number) + ':' + flowcell_ID + ':';
+        out += std::to_string(lane) + ':' + std::to_string(tile) + ':';
+        out += std::to_string(x_pos) + ':' + std::to_string(y_pos) + ' ';
+        out += std::to_string(read) + ':' + is_filtered + ':';
+        out += std::to_string(control_number) + ':' + std::to_string(sample_number);
+    }
+
+};
+
+
 
 
 
@@ -274,30 +342,29 @@ private:
 
 
 /*
- Sample for lengths that can be quite long.
- This is used to avoid having to store a probability for every single potential length,
- if the lengths can extend to something like 1 Mbp.
- This class is used to sample fragment lengths and Nanopore/PacBio read lengths.
+ Sample for fragment lengths.
+ This class is used to avoid having to store a probability for every single
+ potential length, if the lengths can extend to something like 1 Mbp.
 
  It does weighted sampling using a vector of probabilities for each bin of lengths.
  Once it chooses a bin, it then uniformly samples within that bin if bin length > 1.
  */
-class LongLenSampler {
+class FragLenSampler {
 
 public:
 
     uint32 region_len;                  // length of each region
     TableSampler sampler;               // sampler that chooses a region
 
-    LongLenSampler() {};
-    LongLenSampler(const std::vector<double>& probs,
+    FragLenSampler() {};
+    FragLenSampler(const std::vector<double>& probs,
                     const uint32& region_len_)
         : region_len(region_len_), sampler(probs) {}
     // Copy constructor
-    LongLenSampler(const LongLenSampler& other)
+    FragLenSampler(const FragLenSampler& other)
         : region_len(other.region_len), sampler(other.sampler) {};
     // Assignment operator
-    LongLenSampler& operator=(const LongLenSampler& other) {
+    FragLenSampler& operator=(const FragLenSampler& other) {
         region_len = other.region_len;
         sampler = other.sampler;
         return *this;
@@ -312,34 +379,46 @@ public:
 
 };
 
-typedef LongLenSampler FragLenSampler;  // for fragment lengths
-typedef LongLenSampler LongReadSampler; // for PacBio or Nanopore read lengths
 
 
-
-
-class IlluminaReadSampler {
-
-public:
+// for Illumina read lengths: return constant value unless fragment length < constant
+struct IlluminaReads {
 
     uint32 read_length;         // read length (constant)
 
-    IlluminaReadSampler() {};
-    IlluminaReadSampler(const uint32& read_length_) : read_length(read_length_) {};
+    IlluminaReads() {};
+    IlluminaReads(const uint32& read_length_) : read_length(read_length_) {};
     // Copy constructor
-    IlluminaReadSampler(const IlluminaReadSampler& other)
+    IlluminaReads(const IlluminaReads& other)
         : read_length(other.read_length) {};
     // Assignment operator
-    IlluminaReadSampler& operator=(const IlluminaReadSampler& other) {
+    IlluminaReads& operator=(const IlluminaReads& other) {
         read_length = other.read_length;
         return *this;
     }
 
-    inline uint32 sample() const {
+    inline uint32 sample(const uint32& frag_len) const {
+        if (frag_len < read_length) return frag_len;
         return read_length;
     }
-    inline uint32 sample(pcg32& eng) const {
-        return read_length;
+
+};
+
+
+// for long-read sequencing (PacBio or Nanopore) read lengths: simply return fragment length
+struct LongReadReads {
+
+    LongReadReads() {};
+    LongReadReads(const uint32& read_length_) {};
+    // Copy constructor
+    LongReadReads(const LongReadReads& other) {};
+    // Assignment operator
+    LongReadReads& operator=(const LongReadReads& other) {
+        return *this;
+    }
+
+    inline uint32 sample(const uint32& frag_len) const {
+        return frag_len;
     }
 
 };
@@ -360,15 +439,15 @@ public:
     std::vector<double> means;          // means for each region
     std::vector<double> sds;            // SDs for each region
 
-    QualitySampler() : region_len(), means(), sds(), distr(1.0, 0) {};
+    QualitySampler() : region_len(), means(), sds(), distr(0, 1) {};
     QualitySampler(const std::vector<double>& means_,
                    const std::vector<double>& sds_,
                    const uint32& region_len_)
-        : region_len(region_len_), means(means_), sds(sds_), distr(1.0, 0) {
+        : region_len(region_len_), means(means_), sds(sds_), distr(0, 1) {
         if (means_.size() != sds_.size()) stop("means and sds must be the same length.");
     }
     QualitySampler(const List& qual_info)
-        : region_len(), means(), sds(), distr(1.0, 0) {
+        : region_len(), means(), sds(), distr(0, 1) {
         const std::vector<double>& means_(qual_info["means"]);
         const std::vector<double>& sds_(qual_info["sds"]);
         const uint32& region_len_(qual_info["region_len"]);
@@ -489,11 +568,10 @@ public:
 
     /*
      Sample for error events for a read.
-     Returns 0 for match, 1 for mismatch, 2 for insertion, 3 for deletion
+     Returns 0 for match, 1 for mismatch, 2 for insertion, 3 for deletion.
+     Only 8-bit integer used to save on memory.
      */
-    inline uint32 sample(uint32 pos, pcg32& eng) const {
-
-        uint32 out;
+    inline uint8 sample(uint32 pos, pcg32& eng) const {
 
         // Adjust pos to point to inside `probs` vector
         pos /= region_len;
@@ -502,6 +580,8 @@ public:
             Rcout << std::endl;
             pos = probs.size() - 1;
         }
+
+        uint8 out;
         double u = runif_01(eng);
         if (u < probs[pos][1]) { // match
             out = 0;
@@ -521,55 +601,58 @@ public:
 
 
 /*
- Class to do everything for whole-genome sequencing.
+ Incomplete template class to combine everything for whole-genome sequencing.
 
- `T` should be `IlluminaReadSampler` or `LongReadSampler`.
+ `T` should be `VarGenome` or `RefGenome`
 
- `U` should be `VarGenome` or `RefGenome`
+ For full classes based on this template, you need to add a way to get read lengths.
+ For Illumina, it will be a constant read length, and for long-read sequencing, it
+ will be simply the fragment length.
  */
-template <typename T, typename U>
-class WholeGenomeSequencerType {
+template <typename T>
+class WGS_t {
 public:
 
-    // Samplers:                       Returns:
-    T read_lengths;                 // read lengths
-    TableSampler seqs;              // index for which genome-sequence to sequence
-    FragLenSampler frag_lengths;    // fragment lengths
-    SequencingErrorSampler errors;  // sequencing errors
-    TableSampler ins_sizes;         // insertion sizes
-    TableSampler del_sizes;         // deletion sizes
-    QualitySampler quals;           // qualities for matches
-    QualitySampler mis_quals;       // qualities for mismatches
+    // __Sampler__                         __What it returns__
+    TableSampler seqs;                  // index for which genome-sequence to sequence
+    FragLenSampler frag_lengths;        // fragment lengths
+    SequencingErrorSampler errors;      // sequencing errors
+    TableSampler ins_lengths;           // insertion lengths
+    TableSampler del_lengths;           // deletion lengths
+    QualitySampler quals;               // qualities for matches
+    QualitySampler mis_quals;           // qualities for mismatches
 
     // Info:
-    std::vector<uint32> seq_sizes;  // genome-sequence sizes
-    const U* sequences;             // pointer to `const U`//
-    std::vector<std::string> mm;    // mismatch vector
+    std::vector<uint32> seq_lengths;    // genome-sequence lengths
+    const T* sequences;                 // pointer to `const T`
+    std::vector<std::string> mm;        // mismatch vector
 
-    WholeGenomeSequencerType() {};
-    WholeGenomeSequencerType(const U& seq_object,
-                             const std::vector<double>& read_len_probs,
-                             const uint32& read_len_region_len,
-                             const std::vector<double>& frag_len_probs,
-                             const uint32& frag_len_region_len,
-                             const List& seq_error_info,
-                             const std::vector<double>& ins_size_probs,
-                             const std::vector<double>& del_size_probs,
-                             const List& qual_info,
-                             const List& mis_qual_info)
-        : read_lengths(read_len_probs, read_len_region_len),
-          seqs(),
+    WGS_t() {};
+    WGS_t(const T& seq_object,
+          const std::vector<double>& frag_len_probs,
+          const uint32& frag_len_region_len,
+          const List& seq_error_info,
+          const std::vector<double>& ins_length_probs,
+          const std::vector<double>& del_length_probs,
+          const List& qual_info,
+          const List& mis_qual_info)
+        : seqs(),
           frag_lengths(frag_len_probs, frag_len_region_len),
           errors(seq_error_info),
-          ins_sizes(ins_size_probs),
-          del_sizes(del_size_probs),
+          ins_lengths(ins_length_probs),
+          del_lengths(del_length_probs),
           quals(qual_info),
           mis_quals(mis_qual_info),
-          seq_sizes(seq_object.seq_sizes()),
+          seq_lengths(seq_object.seq_sizes()),
           sequences(&seq_object),
           mm(256, "") {
-        std::vector<double> probs = static_cast<std::vector<double>>(seq_sizes);
-        seqs = TableSampler(probs);
+
+        std::vector<double> probs_;
+        probs_.reserve(seq_lengths.size());
+        for (uint i = 0; i < seq_lengths.size(); i++) {
+            probs_.push_back(static_cast<double>(seq_lengths[i]));
+        }
+        seqs = TableSampler(probs_);
 
         // For mismatches. Converts input char to uint, then uses that as index.
         mm[static_cast<uint32>('T')] = "CAG";
@@ -592,10 +675,86 @@ protected:
         return pos;
     }
 
+    // Adjust one character for a mismatch
     void mismatch(char& input, pcg32& eng) {
         const std::string& str(mm[static_cast<uint32>(input)]);
         uint32 ind = static_cast<uint32>(runif_01(eng) * str.size());
         input = str[ind];
+        return;
+    }
+
+    // Adjust string and qualities for an insertion
+    void insertion(const sint32& size, const uint32& read_pos,
+                   std::string& read, std::string& qual,
+                   pcg32& eng) {
+        uint32 size_ = static_cast<uint32>(size);
+        std::string nts;
+        nts.reserve(size_);
+        for (uint32 j = 0; j < size_; j++) {
+            uint32 k = runif_01(eng) * 4;
+            nts += sequencer::bases[k];
+            qual += this->mis_quals.sample(read_pos, eng);
+        }
+        read.insert(read_pos + 1, nts);
+        return;
+    }
+
+    /*
+     Fill in vectors of error codes and sizes, plus add up how much total
+     "sequence space" the read takes up.
+     The latter is the read length plus the sum of all indel-error lengths.
+     This number is increased by deletions (bc they skip sequence) and decreased
+     by insertions.
+    */
+    void fill_errors(std::vector<uint8>& err_codes,
+                     std::vector<sint32>& err_lengths,
+                     uint32& read_seq_space,
+                     const uint32& read_len,
+                     const uint32& frag_len,
+                     pcg32& eng) {
+
+        // Restart all these:
+        if (err_codes.size() > 0) err_codes.clear();
+        if (err_lengths.size() > 0) err_lengths.clear();
+        read_seq_space = read_len;
+
+        // Reserve memory (`* 1.1` in case of more deletions than insertions)
+        err_codes.reserve(static_cast<uint32>(read_len * 1.1));
+        err_lengths.reserve(static_cast<uint32>(read_len * 1.1));
+
+        uint32 i = 0;
+        while (i < read_len) {
+            uint8 err_code = this->errors.sample(i, eng);
+            err_codes.push_back(err_code);
+            if (err_code == 0) { // ----------------------------------- match
+                i++;
+                err_lengths.push_back(0);
+            } else if (err_code == 1) { // ---------------------------- mismatch
+                i++;
+                err_lengths.push_back(0);
+            } else if (err_code == 2) { // ---------------------------- insertion
+                sint32 size_ = static_cast<sint32>(this->ins_lengths.sample(eng) + 1);
+                i += (size_ + 1);
+                // Adjust for an insert going beyond read length:
+                if (i > read_len) size_ -= (i - read_len);
+                err_lengths.push_back(size_);
+                read_seq_space -= size_;
+            } else if (err_code == 3) { // ---------------------------- deletion
+                sint32 size_ = static_cast<sint32>(this->del_lengths.sample(eng) + 1);
+                size_ *= -1;
+                err_lengths.push_back(size_);
+                read_seq_space -= size_;
+                /*
+                 If, because of this deletion, the read goes past the fragment length,
+                 then we set the sequence space to the fragment length and stop here.
+                 */
+                if (read_seq_space >= frag_len) {
+                    read_seq_space = frag_len;
+                    break;
+                }
+            }
+        }
+
         return;
     }
 
@@ -604,86 +763,188 @@ protected:
 
 };
 
+
+
+
+/*
+ Sequencing object for whole genome sequencing of one reference/variant using Illumina
+ */
+
 template <typename T>
-class VarWholeGenomeSequencer: public WholeGenomeSequencerType<T, VarGenome> {
+class IlluminaWGS_t: public WGS_t<T> {
 public:
 
+    uint32 read_length;
+    uint32 n_reads;
+
     // Constructors:
-    VarWholeGenomeSequencer() : WholeGenomeSequencerType<T, VarGenome>() {}
-    VarWholeGenomeSequencer(const MutationRates& mr_)
-        : WholeGenomeSequencerType<T, VarGenome>(mr_, 0) {};
+    IlluminaWGS_t() : WGS_t<T>(), read_length(), n_reads() {}
+    IlluminaWGS_t(const T& seq_object,
+                  const std::vector<double>& frag_len_probs,
+                  const uint32& frag_len_region_len,
+                  const List& seq_error_info,
+                  const std::vector<double>& ins_length_probs,
+                  const std::vector<double>& del_length_probs,
+                  const List& qual_info,
+                  const List& mis_qual_info,
+                  const uint32& read_length_,
+                  const bool& paired)
+        : WGS_t<T>(
+                seq_object, frag_len_probs,
+                frag_len_region_len, seq_error_info, ins_length_probs, del_length_probs,
+                qual_info, mis_qual_info), read_length(read_length_), n_reads(1) {
+                    if (paired) n_reads = 2;
+                };
     // Copy constructor
-    VarWholeGenomeSequencer(const VarWholeGenomeSequencer<T>& other)
-        : WholeGenomeSequencerType<T, VarGenome>(other) {};
+    IlluminaWGS_t<T>(const IlluminaWGS_t<T>& other)
+        : WGS_t<T>(other),
+          read_length(other.read_length),
+          n_reads(other.n_reads) {};
     // Assignment operator
-    VarWholeGenomeSequencer<T>& operator=(const VarWholeGenomeSequencer<T>& other) {
-        WholeGenomeSequencerType<T, VarGenome>::operator=(other);
+    IlluminaWGS_t<T>& operator=(const IlluminaWGS_t<T>& other) {
+        WGS_t<T>::operator=(other);
+        this->read_length = other.read_length;
+        this->n_reads = other.n_reads;
         return *this;
     }
 
 
-    void sample(std::string& read, std::string& qual, pcg32& eng) {
+    // Sample one set of read strings (4 lines: ID, sequence, "+", quality)
+    std::vector<std::string> sample(pcg32& eng, SequenceIdentifierInfo& ID_info) {
 
-        uint32 read_len = this->read_lengths.sample(eng);
-        uint32 seq_ind = this->seqs.sample(eng);
-        uint32 frag_len = this->frag_lengths.sample(eng);
-        const VarSequence& var_seq((*(this->sequences))[seq_ind]);
-        uint32 seq_len = var_seq.size();
-        // Clear read and quality strings, in case they were previously altered:
-        read.clear();
-        qual.clear();
-        // Now fill `read` from `var_seq`:
-        uint32 mut_i = 0;
-        uint32 start = frag_loc_sample(frag_len, this->seq_sizes[seq_ind], eng);
-        var_seq.set_seq_chunk(read, start, read_len, mut_i);
-        // Adjust in case it's at the end of the sequence:
-        read_len = read.size();
-        // Reserve memory for quality:
-        qual.reserve(read_len);
-        // Position on the `var_seq` sequence of the last nucleotide in `read`:
-        uint32 seq_pos = start + read_len - 1;
-        // For current position on `read`:
-        uint32 i = 0;
-        while (i < read_len && seq_pos < seq_len) {
-            uint32 err_code = this->errors.sample(i, eng);
-            if (err_code == 0) { // -------------------- match
-                qual += this->quals.sample(i, eng);
-                i++;
-                seq_pos++;
-            } else if (err_code == 1) { // ------------- mismatch
-                this->mismatch(read[i], eng);
-                qual += this->mis_quals.sample(i, eng);
-                i++;
-                seq_pos++;
-            } else if (err_code == 2) { // ------------- insertion
-                uint32 size_ = this->ins_sizes(eng) + 1;
-                std::string nts;
-                nts.reserve(size_);
-                for (uint32 j = 0; j < size_; j++) {
-                    uint32 k = runif_01(eng) * 4;
-                    nts += sequencer::bases[k];
-                    qual += this->mis_quals.sample(i, eng);
-                }
-                read.resize(read_len - size_);  // <-- so `read` remains the same size
-                read.insert(i + 1, nts);
-                i += (size_ + 1);
-                seq_pos++;
-            } else if (err_code == 3) { // ------------- deletion
-                uint32 size_ = this->del_sizes(eng) + 1;
-                if (size_ > (seq_len - i)) size_ = seq_len - i;
-                read.erase(i, size_);
-                // char get_nt(const uint32& new_pos)
-                // So `read` remains the same size:
-                for (uint32 j = 0; j < size_; j++) {
-                    if (seq_pos >= seq_len) break;
-                    read += var_seq.get_nt(seq_pos);
-                    seq_pos++;
-                }
-            }
+        // Initiate objects
+        uint32 seq_ind;
+        uint32 frag_len;
+        uint32 frag_start;
+        std::vector<std::string> reads;
+        std::vector<std::string> quals;
+        std::vector<std::vector<uint8>> err_codes;
+        std::vector<std::vector<sint32>> err_lengths;
+        std::vector<uint32> read_seq_spaces;
+
+        /*
+        Fill all objects but `reads` and `quals` (those have vector-lengths set, but
+        their inner strings are not set):
+        */
+        fill_info(seq_ind, frag_len, frag_start, reads, quals, err_codes,
+                  err_lengths, read_seq_spaces, eng);
+
+        std::vector<std::string> output(this->n_reads);
+
+        // Boolean for whether we take the reverse side first:
+        bool reverse = runif_01(eng) < 0.5;
+        for (uint32 i = 0; i < this->n_reads; i++) {
+            ID_info.read = i + 1;
+            std::string& read(reads[i]);
+            std::string& qual(quals[i]);
+            qual.reserve(std::max(read_seq_spaces[i], this->read_length));
+            // Read starting location:
+            uint32 start = frag_start;
+            if (reverse) start += (frag_len - read_seq_spaces[i]);
+
+            // Now fill `read` from `sequences` field:
+            (*(this->sequences))[seq_ind].fill_seq(read, start, read_seq_spaces[i]);
+
+            // Reverse-complement `read` if taking reverse side:
+            if (reverse) rev_comp(read);
+
+            // Adjust for errors:
+            adjust_for_errors(err_codes[i], err_lengths[i], read, qual, eng);
+
+            // If doing paired reads, the second one should be the reverse of the first
+            reverse = !reverse;
+
+            // Combine into 4 lines of output per read:
+            output[i] = ID_info.get_id_line() + '\n' + read + "\n+\n" + qual;
         }
 
+        return output;
+
+    }
+
+
+protected:
+
+    /*
+     Do most things except for actually filling in the sequence.
+     Filling in the sequence will be dependent on the class used in the `sequences`
+     field (i.e., as the `T` argument to this template)
+     */
+    void fill_info(uint32& seq_ind,
+                   uint32& frag_len,
+                   uint32& frag_start,
+                   std::vector<std::string>& reads,
+                   std::vector<std::string>& quals,
+                   std::vector<std::vector<uint8>>& err_codes,
+                   std::vector<std::vector<sint32>>& err_lengths,
+                   std::vector<uint32>& read_seq_spaces,
+                   pcg32& eng) {
+
+        seq_ind = this->seqs.sample(eng);
+        uint32 seq_len = (*(this->sequences))[seq_ind].size();
+
+        frag_len = this->frag_lengths.sample(eng);
+        if (frag_len > seq_len) frag_len = seq_len;
+        frag_start = this->frag_loc_sample(frag_len, seq_len, eng);
+
+        uint32 read_len = this->read_length;
+        if (read_len > frag_len) read_len = frag_len;
+
+        // Create read and quality strings
+        reads = std::vector<std::string>(this->n_reads);
+        quals = std::vector<std::string>(this->n_reads);
+        /*
+         Start and fill vectors of error codes and sizes, to know how much
+         "sequence space" (read length + sum(indel lengths)) we'll need.
+         */
+        err_codes = std::vector<std::vector<uint8>>(this->n_reads);
+        err_lengths = std::vector<std::vector<sint32>>(this->n_reads);
+        read_seq_spaces = std::vector<uint32>(this->n_reads);
+        for (uint32 i = 0; i < this->n_reads; i++) {
+            this->fill_errors(err_codes[i], err_lengths[i], read_seq_spaces[i],
+                              read_len, frag_len, eng);
+        }
+
+        return;
+
+    }
+
+
+    // Adjust for sequencing errors:
+    void adjust_for_errors(const std::vector<uint8>& err_codes,
+                           const std::vector<sint32>& err_lengths,
+                           std::string& read,
+                           std::string& qual,
+                           pcg32& eng) {
+        uint32 read_pos = 0;
+        for (uint32 j = 0; j < err_codes.size(); j++) {
+            const uint8& err_code(err_codes[j]);
+            if (err_code == 0) { // -------------------- match
+                qual += this->quals.sample(read_pos, eng);
+                read_pos++;
+            } else if (err_code == 1) { // ------------- mismatch
+                this->mismatch(read[read_pos], eng);
+                qual += this->mis_quals.sample(read_pos, eng);
+                read_pos++;
+            } else if (err_code == 2) { // ------------- insertion
+                const sint32& size_(err_lengths[j]);
+                // Adjust string and qualities:
+                this->insertion(size_, read_pos, read, qual, eng);
+                read_pos += (size_ + 1);
+            } else if (err_code == 3) { // ------------- deletion
+                const sint32& size_(err_lengths[j]);
+                // (below, it won't try to delete past read size)
+                read.erase(read_pos, size_);
+            }
+        }
     }
 };
+
+
+typedef IlluminaWGS_t<VarGenome> VariantIlluminaWGS;
+typedef IlluminaWGS_t<RefGenome> ReferenceIlluminaWGS;
+
+
 
 
 

@@ -212,6 +212,7 @@ public:
         return *this;
     }
 
+
     /*
      ------------------
      Re-calculate new positions (and total sequence size)
@@ -265,6 +266,17 @@ public:
     void add_deletion(const uint32& size_, const uint32& new_pos_);
     void add_insertion(const std::string& nucleos_, const uint32& new_pos_);
     void add_substitution(const char& nucleo, const uint32& new_pos_);
+
+
+    /*
+     For filling a sequence of a given starting position and size.
+     Used only for sequencer.
+     */
+    void fill_seq(std::string& seq, const uint32& start, const uint32& size_) const {
+        uint32 mut_i = 0;
+        this->set_seq_chunk(seq, start, size_, mut_i);
+        return;
+    }
 
 
 
