@@ -700,67 +700,6 @@ protected:
         return;
     }
 
-    /*
-     Fill in vectors of error codes and sizes, plus add up how much total
-     "sequence space" the read takes up.
-     The latter is the read length plus the sum of all indel-error lengths.
-     This number is increased by deletions (bc they skip sequence) and decreased
-     by insertions.
-    */
-    void fill_errors(std::vector<uint8>& err_codes,
-                     std::vector<sint32>& err_lengths,
-                     uint32& read_seq_space,
-                     const uint32& read_len,
-                     const uint32& frag_len,
-                     pcg32& eng) {
-
-        // Restart all these:
-        if (err_codes.size() > 0) err_codes.clear();
-        if (err_lengths.size() > 0) err_lengths.clear();
-        read_seq_space = read_len;
-
-        // Reserve memory (`* 1.1` in case of more deletions than insertions)
-        err_codes.reserve(static_cast<uint32>(read_len * 1.1));
-        err_lengths.reserve(static_cast<uint32>(read_len * 1.1));
-
-        uint32 i = 0;
-        while (i < read_len) {
-            uint8 err_code = this->errors.sample(i, eng);
-            err_codes.push_back(err_code);
-            if (err_code == 0) { // ----------------------------------- match
-                i++;
-                err_lengths.push_back(0);
-            } else if (err_code == 1) { // ---------------------------- mismatch
-                i++;
-                err_lengths.push_back(0);
-            } else if (err_code == 2) { // ---------------------------- insertion
-                sint32 size_ = static_cast<sint32>(this->ins_lengths.sample(eng) + 1);
-                i += (size_ + 1);
-                // Adjust for an insert going beyond read length:
-                if (i > read_len) size_ -= (i - read_len);
-                err_lengths.push_back(size_);
-                read_seq_space -= size_;
-            } else if (err_code == 3) { // ---------------------------- deletion
-                sint32 size_ = static_cast<sint32>(this->del_lengths.sample(eng) + 1);
-                size_ *= -1;
-                err_lengths.push_back(size_);
-                read_seq_space -= size_;
-                /*
-                 If, because of this deletion, the read goes past the fragment length,
-                 then we set the sequence space to the fragment length and stop here.
-                 */
-                if (read_seq_space >= frag_len) {
-                    read_seq_space = frag_len;
-                    break;
-                }
-            }
-        }
-
-        return;
-    }
-
-
-
 
 };
 
@@ -810,8 +749,8 @@ public:
     }
 
 
-    // Sample one set of read strings (4 lines: ID, sequence, "+", quality)
-    std::vector<std::string> sample(pcg32& eng, SequenceIdentifierInfo& ID_info) {
+    // Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality)
+    std::vector<std::string> one_read(pcg32& eng, SequenceIdentifierInfo& ID_info) {
 
         // Initiate objects
         uint32 seq_ind;
@@ -865,6 +804,68 @@ public:
 
 
 protected:
+
+
+    /*
+     Fill in vectors of error codes and sizes, plus add up how much total
+     "sequence space" the read takes up.
+     The latter is the read length plus the sum of all indel-error lengths.
+     This number is increased by deletions (bc they skip sequence) and decreased
+     by insertions.
+     */
+    void fill_errors(std::vector<uint8>& err_codes,
+                     std::vector<sint32>& err_lengths,
+                     uint32& read_seq_space,
+                     const uint32& read_len,
+                     const uint32& frag_len,
+                     pcg32& eng) {
+
+        // Restart all these:
+        if (err_codes.size() > 0) err_codes.clear();
+        if (err_lengths.size() > 0) err_lengths.clear();
+        read_seq_space = read_len;
+
+        // Reserve memory (`* 1.1` in case of more deletions than insertions)
+        err_codes.reserve(static_cast<uint32>(read_len * 1.1));
+        err_lengths.reserve(static_cast<uint32>(read_len * 1.1));
+
+        uint32 i = 0;
+        while (i < read_len) {
+            uint8 err_code = this->errors.sample(i, eng);
+            err_codes.push_back(err_code);
+            if (err_code == 0) { // ----------------------------------- match
+                i++;
+                err_lengths.push_back(0);
+            } else if (err_code == 1) { // ---------------------------- mismatch
+                i++;
+                err_lengths.push_back(0);
+            } else if (err_code == 2) { // ---------------------------- insertion
+                sint32 size_ = static_cast<sint32>(this->ins_lengths.sample(eng) + 1);
+                i += (size_ + 1);
+                // Adjust for an insert going beyond read length:
+                if (i > read_len) size_ -= (i - read_len);
+                err_lengths.push_back(size_);
+                read_seq_space -= size_;
+            } else if (err_code == 3) { // ---------------------------- deletion
+                sint32 size_ = static_cast<sint32>(this->del_lengths.sample(eng) + 1);
+                size_ *= -1;
+                err_lengths.push_back(size_);
+                read_seq_space -= size_;
+                /*
+                If, because of this deletion, the read goes past the fragment length,
+                then we set the sequence space to the fragment length and stop here.
+                */
+                if (read_seq_space >= frag_len) {
+                    read_seq_space = frag_len;
+                    break;
+                }
+            }
+        }
+
+        return;
+    }
+
+
 
     /*
      Do most things except for actually filling in the sequence.
@@ -950,7 +951,112 @@ typedef IlluminaWGS_t<RefGenome> ReferenceIlluminaWGS;
 
 
 
+/*
+ Sequencing object for whole genome sequencing of one reference/variant using long-read
+ sequencing (Nanopore/PacBio)
+*/
 
+template <typename T>
+class LongReadWGS_t: public WGS_t<T> {
+public:
+
+    // Constructors:
+    LongReadWGS_t() : WGS_t<T>() {}
+    LongReadWGS_t(const T& seq_object,
+                  const std::vector<double>& frag_len_probs,
+                  const uint32& frag_len_region_len,
+                  const List& seq_error_info,
+                  const std::vector<double>& ins_length_probs,
+                  const std::vector<double>& del_length_probs,
+                  const List& qual_info,
+                  const List& mis_qual_info)
+        : WGS_t<T>(
+                seq_object, frag_len_probs,
+                frag_len_region_len, seq_error_info, ins_length_probs, del_length_probs,
+                qual_info, mis_qual_info) {};
+    // Copy constructor
+    LongReadWGS_t<T>(const LongReadWGS_t<T>& other)
+        : WGS_t<T>(other) {};
+    // Assignment operator
+    LongReadWGS_t<T>& operator=(const LongReadWGS_t<T>& other) {
+        WGS_t<T>::operator=(other);
+        return *this;
+    }
+
+
+    // Sample one read string (with 4 lines: ID, sequence, "+", quality)
+    std::string one_read(pcg32& eng, SequenceIdentifierInfo& ID_info) {
+
+        uint32 seq_ind = this->seqs.sample(eng);
+        uint32 seq_len = (*(this->sequences))[seq_ind].size();
+
+        uint32 frag_len = this->frag_lengths.sample(eng);
+        if (frag_len > seq_len) frag_len = seq_len;
+        uint32 frag_start = this->frag_loc_sample(frag_len, seq_len, eng);
+
+        std::string read;
+        std::string qual;
+        std::string output;  // This will combine both, plus have ID and separator line
+        ID_info.read = 1;
+
+        qual.reserve(static_cast<uint32>(frag_len * 1.1)); // `*1.1` in case of insertions
+
+        // Boolean for whether we take the reverse side:
+        bool reverse = runif_01(eng) < 0.5;
+
+        // Now fill `read` from `sequences` field:
+        (*(this->sequences))[seq_ind].fill_seq(read, frag_start, frag_len);
+
+        // Reverse-complement `read` if taking reverse side:
+        if (reverse) rev_comp(read);
+
+        // Add in sequencing errors:
+        add_errors(read, qual, eng);
+
+        // Combine into 4 lines of output per read:
+        output = ID_info.get_id_line() + '\n' + read + "\n+\n" + qual;
+
+        return output;
+
+    }
+
+
+protected:
+
+
+
+    // Add sequencing errors to read:
+    void add_errors(std::string& read, std::string& qual, pcg32& eng) {
+
+        uint32 read_pos = 0;
+        while (read_pos < read.size()) {
+            uint8 err_code = this->errors.sample(read_pos, eng);
+            if (err_code == 0) { // -------------------------------------- match
+                qual += this->quals.sample(read_pos, eng);
+                read_pos++;
+            } else if (err_code == 1) { // ------------------------------- mismatch
+                this->mismatch(read[read_pos], eng);
+                qual += this->mis_quals.sample(read_pos, eng);
+                read_pos++;
+            } else if (err_code == 2) { // ------------------------------- insertion
+                sint32 size_ = static_cast<sint32>(this->ins_lengths.sample(eng) + 1);
+                // Adjust string and qualities:
+                this->insertion(size_, read_pos, read, qual, eng);
+                read_pos += (size_ + 1);
+            } else if (err_code == 3) { // ------------------------------- deletion
+                sint32 size_ = static_cast<sint32>(this->del_lengths.sample(eng) + 1);
+                size_ *= -1;
+                // (below, it won't try to delete past read size)
+                read.erase(read_pos, size_);
+            }
+        }
+
+        return;
+    }
+};
+
+typedef LongReadWGS_t<VarGenome> VariantLongReadWGS;
+typedef LongReadWGS_t<RefGenome> ReferenceLongReadWGS;
 
 
 
