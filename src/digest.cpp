@@ -85,7 +85,8 @@ void expand_sites(const std::vector<std::string>& sites,
     if (add_rev_comp) {
         seqs_out.reserve(n_combs * 2);
         for (uint32 i = 0; i < n_combs; i++) {
-            std::string rc = rev_comp(seqs_out[i]);
+            std::string rc = seqs_out[i];
+            rev_comp(rc);
             seqs_out.push_back(rc);
         }
     }
@@ -116,7 +117,8 @@ std::vector<std::string> expand_seqs(const std::vector<std::string>& seqs) {
         }
         if (!degenerate) {
             out.push_back(seq);
-            std::string rc = rev_comp(seq);
+            std::string rc = seq;
+            rev_comp(rc);
             if (rc != seq) out.push_back(rc);
         } else {
             std::vector<std::string> sites(seq.size());

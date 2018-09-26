@@ -52,13 +52,13 @@ const std::vector<uint32> filter_table = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-// For complements
-std::vector<uint32> cmp_map = {
+// For complements (Ns stay as Ns)
+const std::vector<uint32> cmp_map = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 84, 0, 71, 0, 0, 0, 67, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 65, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 84, 0, 71, 0, 0, 0, 67, 0, 0, 0, 0, 0, 0, 78, 0,
+    0, 0, 0, 0, 65, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -66,7 +66,7 @@ std::vector<uint32> cmp_map = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 }
@@ -129,24 +129,7 @@ inline std::vector<std::string> cpp_str_split_delim(const std::string& in_string
 
  Make sure that `seq` contains only T, C, A, or G!
  */
-std::string rev_comp(const std::string& seq) {
-
-    uint32 N = seq.size();
-
-    std::string out;
-    out.reserve(N);
-
-    for (uint32 j = 1; j <= N; j++) {
-        out.push_back(str_manip::cmp_map[seq[N - j]]);
-    }
-
-    return out;
-}
-
-/*
- Doing it in place
- */
-void rev_comp(std::string& seq) {
+inline void rev_comp(std::string& seq) {
 
     for (uint32 j = 0; j < seq.size(); j++) {
         seq[j] = str_manip::cmp_map[seq[j]];
