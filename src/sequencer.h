@@ -700,8 +700,9 @@ protected:
 };
 
 
-typedef IlluminaWGS_t<VarGenome> VariantIlluminaWGS;
 typedef IlluminaWGS_t<RefGenome> ReferenceIlluminaWGS;
+typedef IlluminaWGS_t<VarGenome> VariantIlluminaWGS;
+
 
 
 
@@ -812,8 +813,8 @@ protected:
     }
 };
 
-typedef LongReadWGS_t<VarGenome> VariantLongReadWGS;
 typedef LongReadWGS_t<RefGenome> ReferenceLongReadWGS;
+typedef LongReadWGS_t<VarGenome> VariantLongReadWGS;
 
 
 

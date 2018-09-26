@@ -115,3 +115,59 @@ Mason_illumina_info <- function(read_length = 100,
 
 }
 
+
+
+
+# LEFT OFF -----------
+#'
+#' The next thing you need to figure out is how to input sequencing parameters to
+#' the C++ code.
+#' In `Mason_illumina_info` above, it creates much of the necessary info for Illumina
+#' reads using default parameters in Mason.
+#' You need to make a function that can use the Mason parameterization or can take
+#' as inputs arguments that allow total control.
+#' You need to do this for both Illumina and long-read sequencing (Nanopore and PacBio).
+#'
+#' You also need to provide a way for the user to control the fragmentation
+#' process.
+#' (Fragment sizes = read sizes in long-read sequencing.)
+#'
+#' You also need to organize higher-level stuff like barcodes for multiplexing and
+#' for which reads belong on which flow cell, lane, etc.
+#' See `SequenceIdentifierInfo` class inside `sequencer.h` to see the info required
+#' for the FASTQ file identifier lines. (Much of this can probably be ignored.)
+#'
+#'
+#' The template classes `IlluminaWGS_t` and `LongReadWGS_t` are what you'll work with
+#' to do the sampling.
+#' They've each been `typedef`ed for `RefGenome` and `VarGenome` classes, resulting in
+#' `VariantIlluminaWGS` and `ReferenceIlluminaWGS` for `IlluminaWGS_t`, and
+#' `VariantLongReadWGS` and `ReferenceLongReadWGS` for `LongReadWGS_t`.
+#' You want to focus on each class's `one_read` method.
+#'
+#' This is the most info you'd need for a sequencing object in `sequencer.h`
+#'   (last two not needed for long-reads):
+#'
+#'     const T& seq_object,
+#'     const std::vector<double>& frag_len_probs,
+#'     const uint32& frag_len_region_len,
+#'     const List& seq_error_info,
+#'         In this, there's...
+#'         - const std::vector<double>& match_probs(seq_error_info["match_probs"]);
+#'         - const std::vector<double>& mis_probs(seq_error_info["mis_probs"]);
+#'         - const std::vector<double>& ins_probs(seq_error_info["ins_probs"]);
+#'         - const std::vector<double>& del_probs(seq_error_info["del_probs"]);
+#'         - const uint32& region_len_(seq_error_info["region_len"]);
+#'     const std::vector<double>& ins_length_probs,
+#'     const std::vector<double>& del_length_probs,
+#'     const List& qual_info,
+#'         In this, there's...
+#'         - const std::vector<double>& means_(qual_info["means"]);
+#'         - const std::vector<double>& sds_(qual_info["sds"]);
+#'         - const uint32& region_len_(qual_info["region_len"]);
+#'     const List& mis_qual_info,
+#'         Same as above
+#'     const uint32& read_length_,
+#'     const bool& paired
+#'
+
