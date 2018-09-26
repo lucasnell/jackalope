@@ -59,11 +59,6 @@
 using namespace Rcpp;
 
 
-namespace sequencer {
-    std::string bases = "TCAGN";
-}
-
-
 
 class SeqOptions {
 
@@ -330,6 +325,7 @@ struct SequenceIdentifierInfo {
         out += std::to_string(x_pos) + ':' + std::to_string(y_pos) + ' ';
         out += std::to_string(read) + ':' + is_filtered + ':';
         out += std::to_string(control_number) + ':' + std::to_string(sample_number);
+        return out;
     }
 
 };
@@ -627,7 +623,9 @@ public:
     const T* sequences;                 // pointer to `const T`
     std::vector<std::string> mm;        // mismatch vector
 
-    WGS_t() {};
+    WGS_t()
+        : seqs(), frag_lengths(), errors(), ins_lengths(), del_lengths(), quals(),
+          mis_quals(), seq_lengths(), sequences(), mm(256, ""), bases("TCAGN") {};
     WGS_t(const T& seq_object,
           const std::vector<double>& frag_len_probs,
           const uint32& frag_len_region_len,
@@ -645,7 +643,8 @@ public:
           mis_quals(mis_qual_info),
           seq_lengths(seq_object.seq_sizes()),
           sequences(&seq_object),
-          mm(256, "") {
+          mm(256, ""),
+          bases("TCAGN") {
 
         std::vector<double> probs_;
         probs_.reserve(seq_lengths.size());
@@ -664,6 +663,8 @@ public:
 
 
 protected:
+
+    std::string bases;
 
     // Sample a starting location for a fragment
     inline uint32 frag_loc_sample(const uint32& frag_len,
@@ -692,7 +693,7 @@ protected:
         nts.reserve(size_);
         for (uint32 j = 0; j < size_; j++) {
             uint32 k = runif_01(eng) * 4;
-            nts += sequencer::bases[k];
+            nts += this->bases[k];
             qual += this->mis_quals.sample(read_pos, eng);
         }
         read.insert(read_pos + 1, nts);

@@ -37,5 +37,9 @@
 
 */
 
-#include "sequencer.h"  // namespace sequencer, seq_values structure
+#include "sequencer.h"  // sequencer classes
+
+
+
+
 
