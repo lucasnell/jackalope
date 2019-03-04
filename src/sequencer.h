@@ -196,18 +196,8 @@ public:
     QualitySampler(const std::vector<double>& means_,
                    const std::vector<double>& sds_,
                    const uint32& region_len_)
-        : region_len(region_len_), means(means_), sds(sds_), distr(0, 1) {
-        if (means_.size() != sds_.size()) stop("means and sds must be the same length.");
-    }
-    QualitySampler(const List& qual_info)
-        : region_len(), means(), sds(), distr(0, 1) {
-        const std::vector<double>& means_(qual_info["means"]);
-        const std::vector<double>& sds_(qual_info["sds"]);
-        const uint32& region_len_(qual_info["region_len"]);
-        if (means_.size() != sds_.size()) stop("means and sds must be the same length.");
-        QualitySampler other(means_, sds_, region_len_);
-        *this = other;
-    }
+        : region_len(region_len_), means(means_), sds(sds_), distr(0, 1) {}
+
     QualitySampler& operator=(const QualitySampler& other) {
         region_len = other.region_len;
         means = other.means;
@@ -250,6 +240,8 @@ private:
 
 /*
  Sample for sequencing error when rates vary by position on read.
+ You should check that mismatch, insertion, and deletion probs never sum to > 1 outside
+ this function!
  */
 class SequencingErrorSampler {
 
@@ -263,52 +255,30 @@ public:
     std::vector<std::vector<double>> probs;
 
     SequencingErrorSampler() : region_len(), probs() {};
-    SequencingErrorSampler(const std::vector<double>& match_probs,
-                           const std::vector<double>& mis_probs,
+    SequencingErrorSampler(const std::vector<double>& mis_probs,
                            const std::vector<double>& ins_probs,
                            const std::vector<double>& del_probs,
                            const uint32& region_len_)
         : region_len(region_len_), probs() {
-        if (match_probs.size() != mis_probs.size() ||
-            match_probs.size() != ins_probs.size() ||
-            match_probs.size() != del_probs.size()) {
+        if (mis_probs.size() != ins_probs.size() ||
+            mis_probs.size() != del_probs.size()) {
             stop("all input probs must be the same length.");
         }
 
-        probs.reserve(match_probs.size());
+        probs.reserve(mis_probs.size());
         std::vector<double> new_probs(3);
 
         for (uint32 i = 0; i < mis_probs.size(); i++) {
-            double mat_i = match_probs[i];
             double mis_i = mis_probs[i];
             double ins_i = ins_probs[i];
             double del_i = del_probs[i];
-            /*
-             Making sure they sum to 1 (deletion don't need to be corrected bc they're
-             not included in probs, they're implicitly known once each set of
-             probs sum to 1):
-             */
-            double sum_i = mat_i + mis_i + ins_i + del_i;
-            mat_i /= sum_i;
-            mis_i /= sum_i;
-            ins_i /= sum_i;
+            double mat_i = 1 - (mis_i + ins_i + del_i);
             new_probs[0] = mat_i;
             new_probs[1] = mat_i + mis_i;
             new_probs[2] = mat_i + mis_i + ins_i;
             probs.push_back(new_probs);
         }
 
-    }
-
-    SequencingErrorSampler(const List& seq_error_info) {
-        const std::vector<double>& match_probs(seq_error_info["match_probs"]);
-        const std::vector<double>& mis_probs(seq_error_info["mis_probs"]);
-        const std::vector<double>& ins_probs(seq_error_info["ins_probs"]);
-        const std::vector<double>& del_probs(seq_error_info["del_probs"]);
-        const uint32& region_len_(seq_error_info["region_len"]);
-        SequencingErrorSampler other(match_probs, mis_probs, ins_probs, del_probs,
-                                     region_len_);
-        *this = other;
     }
 
     SequencingErrorSampler& operator=(const SequencingErrorSampler& other) {
@@ -336,7 +306,7 @@ public:
 
         uint8 out;
         double u = runif_01(eng);
-        if (u < probs[pos][1]) { // match
+        if (u < probs[pos][0]) { // match
             out = 0;
         } else if (u < probs[pos][1]) { // mismatch
             out = 1;
@@ -386,18 +356,25 @@ public:
     WGS_t(const T& seq_object,
           const std::vector<double>& frag_len_probs,
           const uint32& frag_len_region_len,
-          const List& seq_error_info,
+          const std::vector<double>& mis_probs,
+          const std::vector<double>& ins_probs,
+          const std::vector<double>& del_probs,
+          const uint32& error_region_len,
           const std::vector<double>& ins_length_probs,
           const std::vector<double>& del_length_probs,
-          const List& qual_info,
-          const List& mis_qual_info)
+          const std::vector<double>& qual_means,
+          const std::vector<double>& qual_sds,
+          const uint32& qual_region_len,
+          const std::vector<double>& mis_qual_means,
+          const std::vector<double>& mis_qual_sds,
+          const uint32& mis_qual_region_len)
         : seqs(),
           frag_lengths(frag_len_probs, frag_len_region_len),
-          errors(seq_error_info),
+          errors(mis_probs, ins_probs, del_probs, error_region_len),
           ins_lengths(ins_length_probs),
           del_lengths(del_length_probs),
-          quals(qual_info),
-          mis_quals(mis_qual_info),
+          quals(qual_means, qual_sds, qual_region_len),
+          mis_quals(mis_qual_means, mis_qual_sds, mis_qual_region_len),
           seq_lengths(seq_object.seq_sizes()),
           sequences(&seq_object),
           mm(256, ""),
@@ -479,19 +456,26 @@ public:
     IlluminaWGS_t(const T& seq_object,
                   const std::vector<double>& frag_len_probs,
                   const uint32& frag_len_region_len,
-                  const List& seq_error_info,
+                  const std::vector<double>& mis_probs,
+                  const std::vector<double>& ins_probs,
+                  const std::vector<double>& del_probs,
+                  const uint32& error_region_len,
                   const std::vector<double>& ins_length_probs,
                   const std::vector<double>& del_length_probs,
-                  const List& qual_info,
-                  const List& mis_qual_info,
+                  const std::vector<double>& qual_means,
+                  const std::vector<double>& qual_sds,
+                  const uint32& qual_region_len,
+                  const std::vector<double>& mis_qual_means,
+                  const std::vector<double>& mis_qual_sds,
+                  const uint32& mis_qual_region_len,
                   const uint32& read_length_,
-                  const bool& paired)
-        : WGS_t<T>(
-                seq_object, frag_len_probs,
-                frag_len_region_len, seq_error_info, ins_length_probs, del_length_probs,
-                qual_info, mis_qual_info), read_length(read_length_), n_reads(1) {
-                    if (paired) n_reads = 2;
-                };
+                  const bool& paired) :
+        WGS_t<T>(seq_object, frag_len_probs, frag_len_region_len,
+                 mis_probs, ins_probs, del_probs, error_region_len,
+                 ins_length_probs, del_length_probs,
+                 qual_means, qual_sds, qual_region_len,
+                 mis_qual_means, mis_qual_sds, mis_qual_region_len),
+        read_length(read_length_), n_reads(paired ? uint32(2) : uint32(1)) {};
     // Copy constructor
     IlluminaWGS_t<T>(const IlluminaWGS_t<T>& other)
         : WGS_t<T>(other),
@@ -723,15 +707,23 @@ public:
     LongReadWGS_t(const T& seq_object,
                   const std::vector<double>& frag_len_probs,
                   const uint32& frag_len_region_len,
-                  const List& seq_error_info,
+                  const std::vector<double>& mis_probs,
+                  const std::vector<double>& ins_probs,
+                  const std::vector<double>& del_probs,
+                  const uint32& error_region_len,
                   const std::vector<double>& ins_length_probs,
                   const std::vector<double>& del_length_probs,
-                  const List& qual_info,
-                  const List& mis_qual_info)
-        : WGS_t<T>(
-                seq_object, frag_len_probs,
-                frag_len_region_len, seq_error_info, ins_length_probs, del_length_probs,
-                qual_info, mis_qual_info) {};
+                  const std::vector<double>& qual_means,
+                  const std::vector<double>& qual_sds,
+                  const uint32& qual_region_len,
+                  const std::vector<double>& mis_qual_means,
+                  const std::vector<double>& mis_qual_sds,
+                  const uint32& mis_qual_region_len) :
+    WGS_t<T>(seq_object, frag_len_probs, frag_len_region_len,
+             mis_probs, ins_probs, del_probs, error_region_len,
+             ins_length_probs, del_length_probs,
+             qual_means, qual_sds, qual_region_len,
+             mis_qual_means, mis_qual_sds, mis_qual_region_len) {};
     // Copy constructor
     LongReadWGS_t<T>(const LongReadWGS_t<T>& other)
         : WGS_t<T>(other) {};
