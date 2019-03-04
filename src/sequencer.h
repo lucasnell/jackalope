@@ -685,8 +685,74 @@ protected:
 
 
 typedef IlluminaWGS_t<RefGenome> ReferenceIlluminaWGS;
-typedef IlluminaWGS_t<VarGenome> VariantIlluminaWGS;
 
+
+
+/*
+ To process a `VarSet` object, I need to wrap IlluminaWGS_t<VarGenome> inside
+ another class.
+ */
+class VariantIlluminaWGS {
+
+public:
+
+    const VarSet* variants;                 // pointer to `const VarSet`
+    TableSampler variant_sampler;           // chooses which variant to use
+    IlluminaWGS_t<VarGenome> read_maker;    // makes Illumina reads
+
+    VariantIlluminaWGS() {}
+    VariantIlluminaWGS(const VarSet& var_set,
+                       const std::vector<double>& variant_probs,
+                       const std::vector<double>& frag_len_probs,
+                       const uint32& frag_len_region_len,
+                       const std::vector<double>& mis_probs,
+                       const std::vector<double>& ins_probs,
+                       const std::vector<double>& del_probs,
+                       const uint32& error_region_len,
+                       const std::vector<double>& ins_length_probs,
+                       const std::vector<double>& del_length_probs,
+                       const std::vector<double>& qual_means,
+                       const std::vector<double>& qual_sds,
+                       const uint32& qual_region_len,
+                       const std::vector<double>& mis_qual_means,
+                       const std::vector<double>& mis_qual_sds,
+                       const uint32& mis_qual_region_len,
+                       const uint32& read_length_,
+                       const bool& paired) :
+        variants(&var_set),
+        variant_sampler(variant_probs),
+        read_maker(var_set[0], frag_len_probs, frag_len_region_len,
+                   mis_probs, ins_probs, del_probs, error_region_len,
+                   ins_length_probs, del_length_probs,
+                   qual_means, qual_sds, qual_region_len,
+                   mis_qual_means, mis_qual_sds, mis_qual_region_len,
+                   read_length_, paired) {};
+
+
+    /*
+     -------------
+     `one_read` methods
+     -------------
+     */
+    // If only providing rng and id info, sample for a variant, then make read(s):
+    std::vector<std::string> one_read(pcg32& eng,
+                                      SequenceIdentifierInfo& ID_info) {
+        uint32 var = variant_sampler.sample(eng);
+        read_maker.sequences = &((*variants)[var]);
+        std::vector<std::string> out = read_maker.one_read(eng, ID_info);
+        return out;
+    }
+    // If you provide a specific variant, then make read(s) from that:
+    std::vector<std::string> one_read(const uint32& var,
+                                      pcg32& eng,
+                                      SequenceIdentifierInfo& ID_info) {
+        read_maker.sequences = &((*variants)[var]);
+        std::vector<std::string> out = read_maker.one_read(eng, ID_info);
+        return out;
+    }
+
+
+};
 
 
 
@@ -806,9 +872,68 @@ protected:
 };
 
 typedef LongReadWGS_t<RefGenome> ReferenceLongReadWGS;
-typedef LongReadWGS_t<VarGenome> VariantLongReadWGS;
 
 
+
+
+/*
+ To process a `VarSet` object, I need to wrap LongReadWGS_t<VarGenome> inside
+ another class.
+ */
+class VariantLongReadWGS {
+
+public:
+
+    const VarSet* variants;                 // pointer to `const VarSet`
+    TableSampler variant_sampler;           // chooses which variant to use
+    LongReadWGS_t<VarGenome> read_maker;    // makes Illumina reads
+
+    VariantLongReadWGS() {}
+    VariantLongReadWGS(const VarSet& var_set,
+                       const std::vector<double>& variant_probs,
+                       const std::vector<double>& frag_len_probs,
+                       const uint32& frag_len_region_len,
+                       const std::vector<double>& mis_probs,
+                       const std::vector<double>& ins_probs,
+                       const std::vector<double>& del_probs,
+                       const uint32& error_region_len,
+                       const std::vector<double>& ins_length_probs,
+                       const std::vector<double>& del_length_probs,
+                       const std::vector<double>& qual_means,
+                       const std::vector<double>& qual_sds,
+                       const uint32& qual_region_len,
+                       const std::vector<double>& mis_qual_means,
+                       const std::vector<double>& mis_qual_sds,
+                       const uint32& mis_qual_region_len) :
+        variants(&var_set),
+        variant_sampler(variant_probs),
+        read_maker(var_set[0], frag_len_probs, frag_len_region_len,
+                   mis_probs, ins_probs, del_probs, error_region_len,
+                   ins_length_probs, del_length_probs,
+                   qual_means, qual_sds, qual_region_len,
+                   mis_qual_means, mis_qual_sds, mis_qual_region_len) {};
+
+    /*
+     -------------
+     `one_read` methods
+     -------------
+     */
+    // If only providing rng and id info, sample for a variant, then make read:
+    std::string one_read(pcg32& eng, SequenceIdentifierInfo& ID_info) {
+        uint32 var = variant_sampler.sample(eng);
+        read_maker.sequences = &((*variants)[var]);
+        std::string out = read_maker.one_read(eng, ID_info);
+        return out;
+    }
+    // If you provide a specific variant, then make read from that:
+    std::string one_read(const uint32& var, pcg32& eng, SequenceIdentifierInfo& ID_info) {
+        read_maker.sequences = &((*variants)[var]);
+        std::string out = read_maker.one_read(eng, ID_info);
+        return out;
+    }
+
+
+};
 
 
 
