@@ -369,12 +369,13 @@ public:
     };
 
     // For easily outputting a reference to a VarSequence
-    VarSequence operator[](const uint32& idx) const {
-        return var_genome[idx];
-    }
-    // For easily outputting a reference to a VarSequence
     VarSequence& operator[](const uint32& idx) {
         VarSequence& var_seq(var_genome[idx]);
+        return var_seq;
+    }
+    // const version
+    const VarSequence& operator[](const uint32& idx) const {
+        const VarSequence& var_seq(var_genome[idx]);
         return var_seq;
     }
     // To return the number of sequences
@@ -429,6 +430,14 @@ public:
             stop("trying to access a VarGenome that doesn't exist");
         }
         VarGenome& vg(variants[idx]);
+        return vg;
+    }
+    // const version of above
+    const VarGenome& operator[](const uint32& idx) const {
+        if (idx >= variants.size()) {
+            stop("trying to access a VarGenome that doesn't exist");
+        }
+        const VarGenome& vg(variants[idx]);
         return vg;
     }
     // To return the number of variants
