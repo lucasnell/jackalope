@@ -140,7 +140,7 @@ read_vcf <- function(reference, method_info) {
     }
 
     err <- FALSE
-    if (single_string(method_info)) {
+    if (is_type(method_info, "character", 1)) {
 
         print_names <- FALSE
         read_args <- list(file = method_info, verbose = FALSE)

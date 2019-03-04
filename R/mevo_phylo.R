@@ -213,7 +213,7 @@ read_coal_obj <- function(coal_obj, seq_sizes, chunked, err_msg) {
 #'
 read_ms_output <- function(ms_filename, seq_sizes, chunked, err_msg) {
 
-    if (!single_string(ms_filename)) {
+    if (!is_type(ms_filename, "character", 1)) {
         stop(sprintf(err_msg, "a single string"), call. = FALSE)
     }
 
@@ -259,7 +259,7 @@ read_ms_output <- function(ms_filename, seq_sizes, chunked, err_msg) {
 #'
 read_newick <- function(newick_filename, n_seqs, chunked, err_msg) {
 
-    if (!vec_string(newick_filename, c(1, n_seqs))) {
+    if (!is_type(newick_filename, "character", c(1, n_seqs))) {
         stop(sprintf(err_msg, paste("a single string or a vector of strings of the",
                                     "same length as the number of sequences")),
              call. = FALSE)
