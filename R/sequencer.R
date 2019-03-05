@@ -12,7 +12,7 @@
 #'
 #' @noRd
 #'
-Mason_illumina_info <- function(read_length = 100,
+mason_illumina_info <- function(read_length = 100,
                                 prob_insert = 0.001,
                                 prob_delete = 0.001,
                                 prob_mismatch_scale = 1.0,
@@ -65,19 +65,15 @@ Mason_illumina_info <- function(read_length = 100,
     # ---------*
     # Sequence-error info:
     # ---------*
-    seq_error_info <- list()
-    seq_error_info$mis_probs <- by_pos_pw_(
+    mis_probs <- by_pos_pw_(
         x_begin = prob_mismatch_begin, x_avg = prob_mismatch,
         x_end = prob_mismatch_end, read_len = read_length,
         pos_raise = position_raise)
-    seq_error_info$mis_probs <- seq_error_info$mis_probs * prob_mismatch_scale
+    mis_probs <- mis_probs * prob_mismatch_scale
 
-    seq_error_info$ins_probs <- rep(prob_insert, read_length)
-    seq_error_info$del_probs <- rep(prob_delete, read_length)
-    seq_error_info$region_len <- 1
-
-    seq_error_info$match_probs <- 1 - seq_error_info$mis_probs -
-        seq_error_info$ins_probs - seq_error_info$del_probs
+    ins_probs <- rep(prob_insert, read_length)
+    del_probs <- rep(prob_delete, read_length)
+    error_region_len <- 1
 
     # Indels are always of size 1
     ins_length_probs <- 1
@@ -86,29 +82,34 @@ Mason_illumina_info <- function(read_length = 100,
     # ---------*
     # Quality info
     # ---------*
-    qual_info <- list()
-    qual_info$means <- by_pos_(x_begin = mean_qual_begin, x_end = mean_qual_end,
-                               read_len = read_length)
-    qual_info$sds <- by_pos_(x_begin = sd_qual_begin, x_end = sd_qual_end,
-                             read_len = read_length)
-    qual_info$region_len <- 1
+    qual_means <- by_pos_(x_begin = mean_qual_begin, x_end = mean_qual_end,
+                          read_len = read_length)
+    qual_sds <- by_pos_(x_begin = sd_qual_begin, x_end = sd_qual_end,
+                        read_len = read_length)
+    qual_region_len <- 1
 
-    mis_qual_info <- list()
-    mis_qual_info$means <- by_pos_(x_begin = mean_mismatch_qual_begin,
-                                   x_end = mean_mismatch_qual_end,
-                                   read_len = read_length)
-    mis_qual_info$sds <- by_pos_(x_begin = sd_mismatch_qual_begin,
-                                 x_end = sd_mismatch_qual_end,
-                                 read_len = read_length)
-    mis_qual_info$region_len <- 1
+    mis_qual_means <- by_pos_(x_begin = mean_mismatch_qual_begin,
+                              x_end = mean_mismatch_qual_end,
+                              read_len = read_length)
+    mis_qual_sds <- by_pos_(x_begin = sd_mismatch_qual_begin,
+                            x_end = sd_mismatch_qual_end,
+                            read_len = read_length)
+    mis_qual_region_len <- 1
 
 
     output <- list(
-        seq_error_info = seq_error_info,
+        mis_probs = mis_probs,
+        ins_probs = ins_probs,
+        del_probs = del_probs,
+        error_region_len = error_region_len,
         ins_length_probs = ins_length_probs,
         del_length_probs = del_length_probs,
-        qual_info = qual_info,
-        mis_qual_info = mis_qual_info,
+        qual_means = qual_means,
+        qual_sds = qual_sds,
+        qual_region_len = qual_region_len,
+        mis_qual_means = mis_qual_means,
+        mis_qual_sds = mis_qual_sds,
+        mis_qual_region_len = mis_qual_region_len,
         read_length = read_length)
 
     return(output)
@@ -151,22 +152,18 @@ Mason_illumina_info <- function(read_length = 100,
 #'     const T& seq_object,
 #'     const std::vector<double>& frag_len_probs,
 #'     const uint32& frag_len_region_len,
-#'     const List& seq_error_info,
-#'         In this, there's...
-#'         - const std::vector<double>& match_probs(seq_error_info["match_probs"]);
-#'         - const std::vector<double>& mis_probs(seq_error_info["mis_probs"]);
-#'         - const std::vector<double>& ins_probs(seq_error_info["ins_probs"]);
-#'         - const std::vector<double>& del_probs(seq_error_info["del_probs"]);
-#'         - const uint32& region_len_(seq_error_info["region_len"]);
+#'     const std::vector<double>& mis_probs,
+#'     const std::vector<double>& ins_probs,
+#'     const std::vector<double>& del_probs,
+#'     const uint32& error_region_len,
 #'     const std::vector<double>& ins_length_probs,
 #'     const std::vector<double>& del_length_probs,
-#'     const List& qual_info,
-#'         In this, there's...
-#'         - const std::vector<double>& means_(qual_info["means"]);
-#'         - const std::vector<double>& sds_(qual_info["sds"]);
-#'         - const uint32& region_len_(qual_info["region_len"]);
-#'     const List& mis_qual_info,
-#'         Same as above
+#'     const std::vector<double>& qual_means,
+#'     const std::vector<double>& qual_sds,
+#'     const uint32& qual_region_len,
+#'     const std::vector<double>& mis_qual_means,
+#'     const std::vector<double>& mis_qual_sds,
+#'     const uint32& mis_qual_region_len,
 #'     const uint32& read_length_,
 #'     const bool& paired
 #'
