@@ -21,12 +21,15 @@ Encoding: UTF-8
 LazyData: true
 Depends: R (>= 2.10)
 Imports:
+    ape,
+    R6,
     Rcpp (>= 0.12.11),
     RcppArmadillo,
-    R6,
-    RcppProgress (>= 0.1),
-    ape
-LinkingTo: Rcpp, RcppArmadillo, RcppProgress
+    RcppProgress (>= 0.1)
+LinkingTo:
+    Rcpp,
+    RcppArmadillo,
+    RcppProgress
 SystemRequirements: C++11
 RoxygenNote: 6.1.0
 Roxygen: list(markdown = TRUE)
