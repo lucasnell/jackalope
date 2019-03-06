@@ -232,3 +232,57 @@ read_vcf <- function(reference, method_info) {
 
 
 
+
+# Illumina profile ----
+
+#' Read an ART-style Illumina profile file.
+#'
+#' @param profile_file File name of ART-style profile file for Illumina reads.
+#'
+#' @return A list of profile information. I wouldn't recommend printing this list
+#'     because it's quite lengthy.
+#'
+#' @export
+#'
+#' @examples
+read_profile <- function(profile_file) {
+
+    profile_str <- readLines(profile_file)
+    profile_str <- profile_str[profile_str != ""]
+    profile_str <- profile_str[!grepl("^\\.|^#|^N", profile_str)]
+    profile_str <- strsplit(profile_str, "\t")
+    profile_info <-
+        lapply(seq(1, length(profile_str), 2),
+               function(i) {
+                   nn <- length(profile_str[[i]])
+                   probs_ <- as.numeric(profile_str[[i+1]][3:nn])
+                   probs_ <- probs_ - c(0, probs_[1:(nn-3)])
+                   probs_ <- probs_ / sum(probs_)
+                   quals_ <- as.integer(profile_str[[i]][3:nn])
+                   if (!identical(profile_str[[i]][1:2], profile_str[[i+1]][1:2])) {
+                       stop("\nInput profile file does not have proper format. ",
+                            "The two lines specifying quality and distances should ",
+                            "always have the same values for nucleotide and position.",
+                            call. = FALSE)
+                   }
+                   if (length(profile_str[[i]]) != length(profile_str[[i+1]])) {
+                       stop("\nInput profile file does not have proper format. ",
+                            "The two lines specifying quality and distances should ",
+                            "always have the same number of tab-delimited columns.",
+                            call. = FALSE)
+                   }
+                   list(nt = profile_str[[i]][1],
+                        pos = as.integer(profile_str[[i]][2]),
+                        quals = quals_,
+                        probs = probs_)
+               })
+    pos <- sapply(profile_info, function(x) x$pos)
+    nts <- sapply(profile_info, function(x) x$nt)
+    if (unique(table(pos)) != 4 || unique(table(nts)) != (diff(range(pos)) + 1)) {
+        stop("\nThe input profile file doesn't have exactly one entry per position ",
+             "per nucleotide.", call. = FALSE)
+    }
+
+    return(profile_info)
+
+}
