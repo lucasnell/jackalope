@@ -3,9 +3,11 @@
 #include <deque>
 #include <string>
 #include <algorithm>  // lower_bound
+#include <numeric>  // accumulate
 
 #include "pcg/pcg_extras.hpp" // pcg prng
 #include "pcg/pcg_random.hpp" // pcg prng
+#include "../../src/util.h"  // decreasing_indices
 
 
 //[[Rcpp::plugins(cpp11)]]
@@ -18,7 +20,7 @@ using namespace Rcpp;
 #define MAX_UINT 4294967295
 
 typedef uint_fast16_t uint16;
-typedef uint_fast32_t uint;
+typedef uint_fast32_t uint32;
 typedef uint_fast64_t uint64;
 typedef pcg_extras::pcg128_t uint128;
 
@@ -43,7 +45,8 @@ inline double runif_01(pcg32& eng) {
 
 
 //[[Rcpp::export]]
-std::vector<long double> test_fast64(const uint64& n, const std::vector<long double>& seeds) {
+std::vector<long double> test_fast64(const uint64& n,
+                                     const std::vector<long double>& seeds) {
 
     std::vector<double> out(n);
 
@@ -64,7 +67,8 @@ std::vector<long double> test_fast64(const uint64& n, const std::vector<long dou
 
 
 //[[Rcpp::export]]
-std::vector<long double> test_pcg64(const uint64& n, const std::vector<long double>& seeds) {
+std::vector<long double> test_pcg64(const uint64& n,
+                                    const std::vector<long double>& seeds) {
 
     uint128 seed1 = samplers::pcg_max64 * seeds[0];
     uint128 seed2 = samplers::pcg_max64 * seeds[1];
@@ -95,16 +99,16 @@ pcg32 seeded_pcg() {
 }
 
 template <typename T>
-uint sample_rare_(SEXP xptr_sexp, const uint64& N, const uint& rare) {
+uint32 sample_rare_(SEXP xptr_sexp, const uint64& N, const uint32& rare) {
 
     XPtr<T> xptr(xptr_sexp);
 
-    uint rares = 0;
+    uint32 rares = 0;
 
     pcg32 eng = seeded_pcg();
 
     for (uint64 i = 0; i < N; i++) {
-        uint k = xptr->sample(eng);
+        uint32 k = xptr->sample(eng);
         if (k == rare) rares++;
     }
 
@@ -133,7 +137,8 @@ RNG seeded_pcg64() {
     // uint64 seed64_4 = (sub_seeds[6]<<32) + sub_seeds[7];
 
     uint128 seed1 = (static_cast<uint128>(seed64_1)<<64) + static_cast<uint128>(seed64_2);
-    // uint128 seed2 = (static_cast<uint128>(seed64_3)<<64) + static_cast<uint128>(seed64_4);
+    // uint128 seed2 = (static_cast<uint128>(seed64_3)<<64) +
+    //     static_cast<uint128>(seed64_4);
 
     RNG out(seed1);
     return out;
@@ -169,7 +174,7 @@ RNG seeded_pcg64() {
  I did it this way because larger probabilities should be less affected by changing
  their respective values in `ints`.
  */
-void fill_ints(const std::vector<double>& p, std::vector<uint>& ints) {
+void fill_ints(const std::vector<double>& p, std::vector<uint32>& ints) {
 
     // Vector holding the transitory values that will eventually be inserted into `int`
     arma::vec pp(p);
@@ -178,7 +183,7 @@ void fill_ints(const std::vector<double>& p, std::vector<uint>& ints) {
     pp = arma::round(pp);
 
     // Converting to `ints`
-    ints = arma::conv_to<std::vector<uint>>::from(pp);
+    ints = arma::conv_to<std::vector<uint32>>::from(pp);
 
     double d = static_cast<double>(1L<<32) - arma::accu(pp);
 
@@ -196,7 +201,7 @@ void fill_ints(const std::vector<double>& p, std::vector<uint>& ints) {
      `2^-x` until we would no longer be setting all probabilities to zero
      */
     while (iv.n_elem == p2.n_elem) {
-        for (uint zz = 0; zz < 8; zz++) z *= 0.5;
+        for (uint32 zz = 0; zz < 8; zz++) z *= 0.5;
         iv = arma::find(p2 < z);
     }
     p2(iv).fill(0);
@@ -224,51 +229,51 @@ void fill_ints(const std::vector<double>& p, std::vector<uint>& ints) {
 class TableTable {
 public:
     // Stores vectors of each category's Pr(sampled):
-    std::vector<std::vector<uint>> T;
+    std::vector<std::vector<uint32>> T;
     // Stores values at which to transitiion between vectors of `T`:
-    std::vector<uint> t;
+    std::vector<uint32> t;
 
     TableTable(const std::vector<double>& probs) : T(4), t(3, 0) {
 
-        uint n_tables = T.size();
+        uint32 n_tables = T.size();
 
-        uint n = probs.size();
-        std::vector<uint> ints(n);
+        uint32 n = probs.size();
+        std::vector<uint32> ints(n);
         // Filling the `ints` vector based on `probs`
         fill_ints(probs, ints);
 
-        std::vector<uint> sizes(n_tables, 0);
+        std::vector<uint32> sizes(n_tables, 0);
         // Adding up sizes of `T` vectors:
-        for (uint i = 0; i < n; i++) {
-            for (uint k = 1; k <= n_tables; k++) {
+        for (uint32 i = 0; i < n; i++) {
+            for (uint32 k = 1; k <= n_tables; k++) {
                 sizes[k-1] += dg(ints[i], k);
             }
         }
         // Adding up thresholds in the `t` vector
-        for (uint k = 0; k < (n_tables - 1); k++) {
+        for (uint32 k = 0; k < (n_tables - 1); k++) {
             t[k] = sizes[k]<<(32-8*(1+k));
             if (k > 0) t[k] += t[k-1];
         }
         // Re-sizing `T` vectors:
-        for (uint i = 0; i < n_tables; i++) T[i].resize(sizes[i]);
+        for (uint32 i = 0; i < n_tables; i++) T[i].resize(sizes[i]);
 
         // Filling `T` vectors
-        for (uint k = 1; k <= n_tables; k++) {
-            uint ind = 0; // index inside `T[k-1]`
-            for (uint i = 0; i < n; i++) {
-                uint z = dg(ints[i], k);
-                for (uint j = 0; j < z; j++) T[k-1][ind + j] = i;
+        for (uint32 k = 1; k <= n_tables; k++) {
+            uint32 ind = 0; // index inside `T[k-1]`
+            for (uint32 i = 0; i < n; i++) {
+                uint32 z = dg(ints[i], k);
+                for (uint32 j = 0; j < z; j++) T[k-1][ind + j] = i;
                 ind += z;
             }
         }
     }
 
-    uint sample(pcg32& eng) {
-        uint j = eng();
+    uint32 sample(pcg32& eng) {
+        uint32 j = eng();
         if (j<t[0]) return T[0][j>>24];
         if (j<t[1]) return T[1][(j-t[0])>>(32-8*2)];
         if (j<t[2]) return T[2][(j-t[1])>>(32-8*3)];
-        // for (uint i = 1; i < (T.size() - 1); i++) {
+        // for (uint32 i = 1; i < (T.size() - 1); i++) {
         //     if (j<t[i]) return T[i][(j-t[i-1])>>(32-8*(i+1))];
         // }
         return T[3][j-t[2]];
@@ -277,7 +282,7 @@ public:
     void print() const {
         // names coincide with names from Marsaglia (2004)
         std::vector<std::string> names = {"AA", "BB", "CC", "DD"};
-        for (uint i = 0; i < T.size(); i++) {
+        for (uint32 i = 0; i < T.size(); i++) {
             arma::urowvec x(T[i]);
             x.print(names[i] + ":");
         }
@@ -286,8 +291,8 @@ public:
     }
 
 private:
-    static uint dg(const uint& m, const uint& k) {
-        uint x = ((m>>(32-8*k))&255);
+    static uint32 dg(const uint32& m, const uint32& k) {
+        uint32 x = ((m>>(32-8*k))&255);
         return x;
     }
 };
@@ -302,96 +307,140 @@ private:
  ---------------------------------------------------------------------------
  */
 // Check for less than in a long double vector
-inline std::vector<uint> ld_lessthan(const std::vector<long double>& v,
+inline std::vector<uint32> ld_lessthan(const std::vector<long double>& v,
                                      const long double& x) {
-    std::vector<uint> out;
-    for (uint i = 0; i < v.size(); i++) {
+    std::vector<uint32> out;
+    for (uint32 i = 0; i < v.size(); i++) {
         if (v[i] < x) out.push_back(i);
     }
     return out;
 }
 
-template <typename RNG>
-void fill_ints64(const std::vector<long double>& p, std::vector<uint128>& ints,
-                 RNG& eng) {
+// template <typename RNG>
+// void fill_ints64(const std::vector<long double>& p, std::vector<uint128>& ints,
+//                  RNG& eng) {
+//
+//     // Vector holding the transitory values that will eventually be inserted into `int`
+//     std::vector<long double> pp(p);
+//     ints.resize(pp.size());
+//     long double pp_sum = std::accumulate(pp.begin(), pp.end(), 0.0L);
+//     for (uint32 i = 0; i < pp.size(); i++) {
+//         pp[i] /= pp_sum;
+//         pp[i] *= samplers::max64;
+//         pp[i] = std::round(pp[i]);
+//         ints[i] = static_cast<uint128>(pp[i]);
+//     }
+//     pp_sum = std::accumulate(pp.begin(), pp.end(), 0.0L);
+//
+//     long double d = samplers::max64 + 1 - pp_sum;
+//
+//     // Vector for weighted sampling from vector of probabilities
+//     std::vector<long double> p2(p);
+//     long double p2_sum = std::accumulate(p2.begin(), p2.end(), 0.0L);
+//     for (uint32 i = 0; i < p2.size(); i++) p2[i] /= p2_sum;
+//     /*
+//     I'm not going to sample rare probabilities so anything < 2^-8 is set to zero
+//     for this sampling
+//     */
+//     long double z = 1 / std::pow(2, 8);
+//     std::vector<uint32> iv = ld_lessthan(p2, z);
+//     /*
+//     If there aren't any *above* this threshold, keep adding 8 to `x` in the expression
+//     `2^-x` until we would no longer be setting all probabilities to zero
+//     */
+//     while (iv.size() == p2.size()) {
+//         for (uint32 zz = 0; zz < 8; zz++) z *= 0.5L;
+//         iv = ld_lessthan(p2, z);
+//     }
+//     for (uint32& i : iv) p2[i] = 0.0L;
+//     p2_sum = std::accumulate(p2.begin(), p2.end(), 0.0L);
+//     for (uint32 i = 0; i < p2.size(); i++) p2[i] /= p2_sum;
+//     for (uint32 i = 1; i < p2.size(); i++) p2[i] += p2[i-1];  // cumulative sum
+//
+//     // We need to remove from `ints`
+//     while (d < 0) {
+//         long double u = static_cast<long double>(eng()) / samplers::pcg_max64;
+//         uint32 ind = std::lower_bound(p2.begin(), p2.end(), u) - p2.begin();
+//         ints[ind]--;
+//         d++;
+//     }
+//     // We need to add to `ints`
+//     while (d > 0) {
+//         long double u = static_cast<long double>(eng()) / samplers::pcg_max64;
+//         uint32 ind = std::lower_bound(p2.begin(), p2.end(), u) - p2.begin();
+//         ints[ind]++;
+//         d--;
+//     }
+//
+//     return;
+// }
 
-    // Vector holding the transitory values that will eventually be inserted into `int`
-    std::vector<long double> pp(p);
-    ints.resize(pp.size());
-    long double pp_sum = std::accumulate(pp.begin(), pp.end(), 0.0L);
-    for (uint i = 0; i < pp.size(); i++) {
-        pp[i] /= pp_sum;
-        pp[i] *= samplers::max64;
-        pp[i] = std::round(pp[i]);
-        ints[i] = static_cast<uint128>(pp[i]);
+void fill_ints64(const std::vector<long double>& p,
+                 std::vector<uint128>& ints) {
+
+    long double max_int = 18446744073709551616.0;  // 2^64
+
+    uint32 n = p.size();
+
+    std::vector<long double> pp(n);
+    long double p_sum = std::accumulate(p.begin(), p.end(), 0.0);
+    for (uint32 i = 0; i < n; i++) {
+        long double x = max_int * p[i] / p_sum;
+        pp[i] = std::round(x);
     }
-    pp_sum = std::accumulate(pp.begin(), pp.end(), 0.0L);
 
-    long double d = samplers::max64 + 1 - pp_sum;
+    std::vector<uint32> inds = decreasing_indices<long double>(p);
 
-    // Vector for weighted sampling from vector of probabilities
-    std::vector<long double> p2(p);
-    long double p2_sum = std::accumulate(p2.begin(), p2.end(), 0.0L);
-    for (uint i = 0; i < p2.size(); i++) p2[i] /= p2_sum;
-    /*
-    I'm not going to sample rare probabilities so anything < 2^-8 is set to zero
-    for this sampling
-    */
-    long double z = 1 / std::pow(2, 8);
-    std::vector<uint> iv = ld_lessthan(p2, z);
-    /*
-    If there aren't any *above* this threshold, keep adding 8 to `x` in the expression
-    `2^-x` until we would no longer be setting all probabilities to zero
-    */
-    while (iv.size() == p2.size()) {
-        for (uint zz = 0; zz < 8; zz++) z *= 0.5L;
-        iv = ld_lessthan(p2, z);
-    }
-    for (uint& i : iv) p2[i] = 0.0L;
-    p2_sum = std::accumulate(p2.begin(), p2.end(), 0.0L);
-    for (uint i = 0; i < p2.size(); i++) p2[i] /= p2_sum;
-    for (uint i = 1; i < p2.size(); i++) p2[i] += p2[i-1];  // cumulative sum
+    long double pp_sum = std::accumulate(pp.begin(), pp.end(), 0.0);
+    long double d = max_int - pp_sum;
 
-    // We need to remove from `ints`
+    uint32_t i = 0;
+    // We need to remove from `pp`
     while (d < 0) {
-        long double u = static_cast<long double>(eng()) / samplers::pcg_max64;
-        uint ind = std::lower_bound(p2.begin(), p2.end(), u) - p2.begin();
-        ints[ind]--;
+        pp[inds[i]]--;
+        i++;
+        if (i == inds.size()) i = 0;
         d++;
     }
-    // We need to add to `ints`
+    // We need to add to `pp`
     while (d > 0) {
-        long double u = static_cast<long double>(eng()) / samplers::pcg_max64;
-        uint ind = std::lower_bound(p2.begin(), p2.end(), u) - p2.begin();
-        ints[ind]++;
+        pp[inds[i]]++;
+        i++;
+        if (i == inds.size()) i = 0;
         d--;
+    }
+
+    // Now fill `ints`:
+    ints.reserve(n);
+    for (uint32 i = 0; i < n; i++) {
+        ints.push_back(static_cast<uint128>(pp[i]));
     }
 
     return;
 }
 
 
-template<typename RNG>
+
 class TableTable64 {
 public:
     // Stores vectors of each category's Pr(sampled):
-    std::vector<std::vector<uint>> T;
+    std::vector<std::vector<uint32>> T;
     // Stores values at which to transition between vectors of `T`:
     std::vector<uint128> t;
 
-    TableTable64(const std::vector<long double>& probs, RNG& eng) : T(4), t(3, 0) {
+    TableTable64(const std::vector<long double>& probs) : T(4), t(3, 0) {
 
-        uint n_tables = T.size();
+        uint32 n_tables = T.size();
 
-        uint n = probs.size();
-        std::vector<uint128> ints(n);
+        uint32 n = probs.size();
+        std::vector<uint128> ints;
         // Filling the `ints` vector based on `probs`
-        fill_ints64<RNG>(probs, ints, eng);
+        fill_ints64(probs, ints);
 
-        std::vector<uint> sizes(n_tables, 0);
+        std::vector<uint32> sizes(n_tables, 0);
         // Adding up sizes of `T` vectors:
-        for (uint i = 0; i < n; i++) {
-            for (uint k = 1; k <= n_tables; k++) {
+        for (uint32 i = 0; i < n; i++) {
+            for (uint32 k = 1; k <= n_tables; k++) {
                 sizes[k-1] += dg64(ints[i], k);
             }
         }
@@ -402,21 +451,43 @@ public:
             t[k] <<= (64 - 16 * (1 + k));
             if (k > 0) t[k] += t[k-1];
         }
-        // Re-sizing `T` vectors:
-        for (uint i = 0; i < n_tables; i++) T[i].resize(sizes[i]);
 
-        // Filling `T` vectors
-        for (uint k = 1; k <= n_tables; k++) {
-            uint ind = 0; // index inside `T[k-1]`
-            for (uint i = 0; i < n; i++) {
-                uint z = dg64(ints[i], k);
-                for (uint j = 0; j < z; j++) T[k-1][ind + j] = i;
-                ind += z;
+
+        // Taking care of scenario when just one output is possible
+        if (std::accumulate(sizes.begin(), sizes.end(), 0ULL) == 0ULL) {
+            // So it's always TRUE for the first `if ()` statement in sample:
+            t[0] = (1ULL<<63);
+            t[0] *= 2;
+            /*
+             Now filling in the index to the output with P = 1 so that sample
+             always returns it. Bc we're iterating by 2^16, that's the number of
+             items I have to fill in for the T[0] vector.
+             */
+            uint32 max_ind = 0;
+            for (uint32 i = 0; i < ints.size(); i++) {
+                if (ints[i] == t[0]) {
+                    max_ind = i;
+                    break;
+                }
+            }
+            T[0] = std::vector<uint32>((1UL<<16), max_ind);
+        } else {
+            // Re-sizing `T` vectors:
+            for (uint32 i = 0; i < n_tables; i++) T[i].resize(sizes[i]);
+            // Filling `T` vectors
+            for (uint32 k = 1; k <= n_tables; k++) {
+                uint32 ind = 0; // index inside `T[k-1]`
+                for (uint32 i = 0; i < n; i++) {
+                    uint32 z = dg64(ints[i], k);
+                    for (uint32 j = 0; j < z; j++) T[k-1][ind + j] = i;
+                    ind += z;
+                }
             }
         }
+
     }
 
-    uint sample(RNG& eng) {
+    uint32 sample(pcg64& eng) {
         uint64 j = eng();
         if (j<t[0]) return T[0][j>>(64-16*1)];
         if (j<t[1]) return T[1][(j-t[0])>>(64-16*2)];
@@ -425,9 +496,9 @@ public:
     }
 
 private:
-    static uint dg64(const uint128& m, const uint& k) {
+    static uint32 dg64(const uint128& m, const uint32& k) {
         uint128 x = ((m>>(64ULL-16ULL*static_cast<uint128>(k)))&65535ULL);
-        uint y = static_cast<uint>(x);
+        uint32 y = static_cast<uint32>(x);
         return y;
     }
 };
@@ -436,58 +507,45 @@ private:
 //[[Rcpp::export]]
 SEXP make_table64(const std::vector<long double>& probs) {
 
-    pcg64 eng = seeded_pcg64<pcg64>();
-
-    XPtr<TableTable64<pcg64>> tt(new TableTable64<pcg64>(probs, eng), true);
+    XPtr<TableTable64> tt(new TableTable64(probs), true);
 
     return tt;
 
 }
 
 //[[Rcpp::export]]
-SEXP make_table64_fast(const std::vector<long double>& probs) {
+std::vector<uint32> sample_table64(SEXP tt_, const uint64& N) {
+    XPtr<TableTable64> tt(tt_);
 
-    pcg64_fast eng = seeded_pcg64<pcg64_fast>();
+    std::vector<uint32> out(N);
 
-    XPtr<TableTable64<pcg64_fast>> tt(new TableTable64<pcg64_fast>(probs, eng), true);
+    pcg64 eng = seeded_pcg64<pcg64>();
 
-    return tt;
+    for (uint64 i = 0; i < N; i++) {
+        out[i] = tt->sample(eng);
+    }
+
+    return out;
 }
 
 
-template <typename RNG>
-uint sample_table_rare64_(SEXP xptr_sexp, const uint64& N, const uint& rare) {
+//[[Rcpp::export]]
+uint32 sample_table_rare64(SEXP xptr_sexp, const uint64& N, const uint32& rare) {
 
-    XPtr<TableTable64<RNG>> xptr(xptr_sexp);
+    XPtr<TableTable64> xptr(xptr_sexp);
 
-    uint rares = 0;
+    uint32 rares = 0;
 
-    RNG eng = seeded_pcg64<RNG>();
+    pcg64 eng = seeded_pcg64<pcg64>();
 
     for (uint64 i = 0; i < N; i++) {
-        uint k = xptr->sample(eng);
+        uint32 k = xptr->sample(eng);
         if (k == rare) rares++;
     }
 
     return rares;
 }
 
-
-//[[Rcpp::export]]
-uint sample_table_rare64(SEXP tt_, const uint64& N, const uint& rare) {
-
-    uint rares = sample_table_rare64_<pcg64>(tt_, N, rare);
-
-    return rares;
-}
-
-//[[Rcpp::export]]
-uint sample_table_rare64_fast(SEXP tt_, const uint64& N, const uint& rare) {
-
-    uint rares = sample_table_rare64_<pcg64_fast>(tt_, N, rare);
-
-    return rares;
-}
 
 
 
@@ -509,13 +567,13 @@ SEXP make_table(const std::vector<double>& probs) {
 }
 
 //[[Rcpp::export]]
-std::vector<uint> sample_table(SEXP tt_, const uint64& N) {
+std::vector<uint32> sample_table(SEXP tt_, const uint64& N) {
     XPtr<TableTable> tt(tt_);
 
-    std::vector<uint> out(N);
-    // uint max_j = 0;
+    std::vector<uint32> out(N);
+    // uint32 max_j = 0;
 
-    pcg32 eng(static_cast<uint>(R::runif(0,1) * 2147483647));
+    pcg32 eng(static_cast<uint32>(R::runif(0,1) * 2147483647));
 
     for (uint64 i = 0; i < N; i++) {
         out[i] = tt->sample(eng);
@@ -528,9 +586,9 @@ std::vector<uint> sample_table(SEXP tt_, const uint64& N) {
 
 
 //[[Rcpp::export]]
-uint sample_table_rare(SEXP tt_, const uint64& N, const uint& rare) {
+uint32 sample_table_rare(SEXP tt_, const uint64& N, const uint32& rare) {
 
-    uint rares = sample_rare_<TableTable>(tt_, N, rare);
+    uint32 rares = sample_rare_<TableTable>(tt_, N, rare);
 
     return rares;
 }
@@ -556,23 +614,23 @@ public:
     AliasUInts() : F(), L(), n(0) {};
     AliasUInts(const std::vector<double>& p, const double& tol = SMALL_TOLERANCE);
     // To get the length of F (and L bc they should always be the same)
-    uint size() const noexcept {
+    uint32 size() const noexcept {
         return n;
     }
     // Actual alias sampling
-    inline uint sample(pcg32& eng) const {
+    inline uint32 sample(pcg32& eng) const {
         // uniform in range [0,1)
         double u = runif_01(eng);
         // Not doing +1 [as is done in Yang (2006)] to keep it in 0-based indexing
-        uint k = n * u;
+        uint32 k = n * u;
         double r = n * u - k;
         if (r >= F[k]) k = L[k];
         return k;
     };
 private:
     std::vector<double> F;
-    std::vector<uint> L;
-    uint n;
+    std::vector<uint32> L;
+    uint32 n;
 };
 
 AliasUInts::AliasUInts(const std::vector<double>& probs, const double& tol) {
@@ -586,7 +644,7 @@ AliasUInts::AliasUInts(const std::vector<double>& probs, const double& tol) {
     arma::vec F_ = n * p;
     arma::uvec L_ = arma::regspace<arma::uvec>(0, n - 1);
     arma::ivec I(n);
-    for (uint i = 0; i < n; i++) {
+    for (uint32 i = 0; i < n; i++) {
         if (F_(i) == 1) {
             L_(i) = i;
             I(i) = 0;
@@ -601,12 +659,12 @@ AliasUInts::AliasUInts(const std::vector<double>& probs, const double& tol) {
 
         arma::uvec jv = arma::find(I == -1);  // underfull (i.e., F_ < 1)
         arma::uvec kv = arma::find(I == 1);  // overfull (i.e. F_ > 1)
-        uint j = jv(0);
+        uint32 j = jv(0);
         if (kv.n_elem == 0) {
             stop("Numerical issue. Difference between one of the entries ",
                  "and 1 is " + std::to_string(F_(j) - 1));
         }
-        uint k = kv(0);
+        uint32 k = kv(0);
         L_(j) = k;
         F_(k) = F_(k) - (1 - F_(j));
         I(j) = 0;
@@ -619,7 +677,7 @@ AliasUInts::AliasUInts(const std::vector<double>& probs, const double& tol) {
     }
 
     F = arma::conv_to<std::vector<double>>::from(F_);
-    L = arma::conv_to<std::vector<uint>>::from(L_);
+    L = arma::conv_to<std::vector<uint32>>::from(L_);
 
     return;
 
@@ -638,22 +696,22 @@ public:
 
         std::vector<double> p(p_);
 
-        for (uint i = 0; i < m; i++) {
+        for (uint32 i = 0; i < m; i++) {
             p[i] /= sum_p;
             P[i] = p[i];
             if (i > 0) P[i] += P[i-1];
         }
-        uint i = 0;
-        for (uint j = 0; j < m; j++) {
+        uint32 i = 0;
+        for (uint32 j = 0; j < m; j++) {
             while (P[i] < static_cast<double>(j) / static_cast<double>(m)) i++;
             Q[j] = i;
         }
     };
 
-    uint sample(pcg32& eng) {
+    uint32 sample(pcg32& eng) {
         double U = static_cast<double>(eng()) / samplers::pcg_max;
-        uint j = m * U;
-        uint i = Q[j];
+        uint32 j = m * U;
+        uint32 i = Q[j];
         while (U >= P[i]) i++;
         return i;
     }
@@ -668,8 +726,8 @@ public:
 
 private:
     std::vector<double> P;
-    std::vector<uint> Q;
-    uint m;
+    std::vector<uint32> Q;
+    uint32 m;
 };
 
 
@@ -680,12 +738,12 @@ SEXP make_index(const std::vector<double>& p) {
 }
 
 //[[Rcpp::export]]
-std::vector<uint> sample_index(SEXP it_, const uint64& N) {
+std::vector<uint32> sample_index(SEXP it_, const uint64& N) {
     XPtr<IndexTable> it(it_);
 
-    std::vector<uint> out(N);
+    std::vector<uint32> out(N);
 
-    pcg32 eng(static_cast<uint>(R::runif(0,1) * 2147483647));
+    pcg32 eng(static_cast<uint32>(R::runif(0,1) * 2147483647));
 
     for (uint64 i = 0; i < N; i++) {
         out[i] = it->sample(eng);
@@ -694,9 +752,9 @@ std::vector<uint> sample_index(SEXP it_, const uint64& N) {
 }
 
 //[[Rcpp::export]]
-uint sample_index_rare(SEXP it_, const uint64& N, const uint& rare) {
+uint32 sample_index_rare(SEXP it_, const uint64& N, const uint32& rare) {
 
-    uint rares = sample_rare_<IndexTable>(it_, N, rare);
+    uint32 rares = sample_rare_<IndexTable>(it_, N, rare);
 
     return rares;
 }
@@ -717,12 +775,12 @@ SEXP make_alias(const std::vector<double>& p, const double& tol) {
 }
 
 //[[Rcpp::export]]
-std::vector<uint> sample_alias(SEXP aup_, const uint64& N) {
+std::vector<uint32> sample_alias(SEXP aup_, const uint64& N) {
     XPtr<AliasUInts> aup(aup_);
 
-    std::vector<uint> out(N);
+    std::vector<uint32> out(N);
 
-    pcg32 eng(static_cast<uint>(R::runif(0,1) * 2147483647));
+    pcg32 eng(static_cast<uint32>(R::runif(0,1) * 2147483647));
 
     for (uint64 i = 0; i < N; i++) {
         out[i] = aup->sample(eng);
@@ -731,9 +789,9 @@ std::vector<uint> sample_alias(SEXP aup_, const uint64& N) {
 }
 
 //[[Rcpp::export]]
-uint sample_alias_rare(SEXP aup_, const uint64& N, const uint& rare) {
+uint32 sample_alias_rare(SEXP aup_, const uint64& N, const uint32& rare) {
 
-    uint rares = sample_rare_<AliasUInts>(aup_, N, rare);
+    uint32 rares = sample_rare_<AliasUInts>(aup_, N, rare);
 
     return rares;
 }
@@ -819,15 +877,41 @@ SEXP make_new_alias(const arma::vec& p) {
 }
 
 //[[Rcpp::export]]
-std::vector<uint> sample_new_alias(SEXP aup_, const uint64& N) {
+std::vector<uint32> sample_new_alias(SEXP aup_, const uint64& N) {
     XPtr<NewAlias> aup(aup_);
 
-    std::vector<uint> out(N);
+    std::vector<uint32> out(N);
 
-    pcg32 eng(static_cast<uint>(R::runif(0,1) * 2147483647));
+    pcg32 eng(static_cast<uint32>(R::runif(0,1) * 2147483647));
 
     for (uint64 i = 0; i < N; i++) {
         out[i] = aup->sample(eng);
+    }
+    return out;
+}
+
+
+
+//[[Rcpp::export]]
+SEXP make_lower_bound(const std::vector<double>& p) {
+    XPtr<std::vector<double>> pp(new std::vector<double>(p.size()), true);
+    double sum = std::accumulate(p.begin(), p.end(), 0.0);
+    for (uint32_t i = 0; i < pp->size(); i++) (*pp)[i] = p[i] / sum;
+    for (uint32_t i = 1; i < pp->size(); i++) (*pp)[i] += (*pp)[i-1];
+    return pp;
+}
+
+//[[Rcpp::export]]
+std::vector<uint32> sample_lower_bound(SEXP pp_, const uint64& N) {
+    XPtr<std::vector<double>> pp(pp_);
+
+    std::vector<uint32> out(N);
+
+    pcg32 eng(static_cast<uint32>(R::runif(0,1) * 2147483647));
+
+    for (uint64 i = 0; i < N; i++) {
+        double u = runif_01(eng);
+        out[i] = std::lower_bound(pp->begin(), pp->end(), u) - pp->begin();
     }
     return out;
 }
