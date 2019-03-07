@@ -1,5 +1,6 @@
 #include <RcppArmadillo.h>
 #include <vector>
+#include <deque>
 #include <string>
 #include <algorithm>  // lower_bound
 
@@ -27,6 +28,10 @@ namespace samplers {
     long double max64 = 18446744073709551616.0L;
 }
 
+// uniform in range (0,1)
+inline double runif_01(pcg32& eng) {
+    return (static_cast<double>(eng()) + 1) / (samplers::pcg_max + 2);
+}
 
 /*
  THIS VERSION HAS WORKING 64-BIT SAMPLERS, BUT THE `pcg64_fast` DOESN'T WORK FOR SOME
@@ -508,7 +513,7 @@ std::vector<uint> sample_table(SEXP tt_, const uint64& N) {
     XPtr<TableTable> tt(tt_);
 
     std::vector<uint> out(N);
-    uint max_j = 0;
+    // uint max_j = 0;
 
     pcg32 eng(static_cast<uint>(R::runif(0,1) * 2147483647));
 
@@ -516,7 +521,7 @@ std::vector<uint> sample_table(SEXP tt_, const uint64& N) {
         out[i] = tt->sample(eng);
     }
 
-    Rcout << max_j << std::endl;
+    // Rcout << max_j << std::endl;
 
     return out;
 }
@@ -557,7 +562,7 @@ public:
     // Actual alias sampling
     inline uint sample(pcg32& eng) const {
         // uniform in range [0,1)
-        double u = static_cast<double>(eng()) / samplers::pcg_max;
+        double u = runif_01(eng);
         // Not doing +1 [as is done in Yang (2006)] to keep it in 0-based indexing
         uint k = n * u;
         double r = n * u - k;
@@ -734,3 +739,95 @@ uint sample_alias_rare(SEXP aup_, const uint64& N, const uint& rare) {
 }
 
 
+
+
+
+
+/*
+ New method of alias-sampling unsigned integers.
+ From http://www.keithschwarz.com/darts-dice-coins/,
+ section "Algorithm: Vose's Alias Method"
+ */
+class NewAlias {
+public:
+    NewAlias() : Prob(), Alias(), n(0) {};
+    NewAlias(arma::vec p)
+        : Prob(p.n_elem), Alias(p.n_elem), n(p.n_elem) {
+
+        p /= arma::accu(p);  // make sure they sum to 1
+        p *= n;
+
+        std::deque<uint32_t> Small;
+        std::deque<uint32_t> Large;
+        for (uint32_t i = 0; i < n; i++) {
+            if (p(i) < 1) {
+                Small.push_back(i);
+            } else Large.push_back(i);
+        }
+
+        uint32_t l, g;
+        while (!Small.empty() && !Large.empty()) {
+            l = Small.front();
+            Small.pop_front();
+            g = Large.front();
+            Large.pop_front();
+            Prob[l] = p[l];
+            Alias[l] = g;
+            p(g) = (p(g) + p(l)) - 1;
+            if (p(g) < 1) {
+                Small.push_back(g);
+            } else Large.push_back(g);
+        }
+        while (!Large.empty()) {
+            g = Large.front();
+            Large.pop_front();
+            Prob[g] = 1;
+        }
+        while (!Small.empty()) {
+            l = Small.front();
+            Small.pop_front();
+            Prob[l] = 1;
+        }
+
+    }
+
+    // To get the length of Prob (and Alias bc they should always be the same)
+    uint32_t size() const noexcept {
+        return n;
+    }
+    // Actual alias sampling
+    inline uint32_t sample(pcg32& eng) const {
+        // Fair dice roll from n-sided die
+        uint32_t i = runif_01(eng) * n;
+        // uniform in range (0,1)
+        double u = runif_01(eng);
+        if (u < Prob[i]) return(i);
+        return Alias[i];
+    };
+private:
+    std::vector<double> Prob;
+    std::vector<uint32_t> Alias;
+    uint32_t n;
+};
+
+
+
+//[[Rcpp::export]]
+SEXP make_new_alias(const arma::vec& p) {
+    XPtr<NewAlias> aup(new NewAlias(p), true);
+    return aup;
+}
+
+//[[Rcpp::export]]
+std::vector<uint> sample_new_alias(SEXP aup_, const uint64& N) {
+    XPtr<NewAlias> aup(aup_);
+
+    std::vector<uint> out(N);
+
+    pcg32 eng(static_cast<uint>(R::runif(0,1) * 2147483647));
+
+    for (uint64 i = 0; i < N; i++) {
+        out[i] = aup->sample(eng);
+    }
+    return out;
+}
