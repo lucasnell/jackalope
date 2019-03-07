@@ -133,4 +133,33 @@ inline double gc_prop(const std::string& sequence,
 
 
 
+// To return indices of sorted vector `values`.
+template <typename T>
+std::vector<uint32> increasing_indices(const std::vector<T>& values) {
+
+    std::vector<uint32> indices(values.size());
+    std::iota(begin(indices), end(indices), static_cast<uint32>(0));
+
+    std::sort(
+        begin(indices), end(indices),
+        [&](size_t a, size_t b) { return values[a] < values[b]; }
+    );
+    return indices;
+}
+template <typename T>
+std::vector<uint32> decreasing_indices(const std::vector<T>& values) {
+
+    std::vector<uint32> indices(values.size());
+    std::iota(begin(indices), end(indices), static_cast<uint32>(0));
+
+    std::sort(
+        begin(indices), end(indices),
+        [&](size_t a, size_t b) { return values[a] > values[b]; }
+    );
+    return indices;
+}
+
+
+
+
 # endif
