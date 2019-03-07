@@ -63,18 +63,6 @@ public:
         return T[3][j-t[2]];
     }
 
-    inline uint32 sample(pcg32& eng) const {
-        // Generate 64-bit integer from two draws of 32-bit RNG:
-        uint64 j = eng();
-        j <<= 32;
-        j += eng();
-        // Now sample as normal:
-        if (j<t[0]) return T[0][j>>(64-16*1)];
-        if (j<t[1]) return T[1][(j-t[0])>>(64-16*2)];
-        if (j<t[2]) return T[2][(j-t[1])>>(64-16*3)];
-        return T[3][j-t[2]];
-    }
-
     void print() const {
         // names coincide with names from Marsaglia (2004)
         std::vector<std::string> names = {"AA", "BB", "CC", "DD"};
@@ -250,13 +238,6 @@ public:
         : characters(other.characters), uint_sampler(other.uint_sampler),
           n(other.n) {}
 
-    void sample(std::string& str, pcg32& eng) const {
-        for (uint32 i = 0; i < str.size(); i++) {
-            uint32 k = uint_sampler.sample(eng);
-            str[i] = characters[k];
-        }
-        return;
-    }
     void sample(std::string& str, pcg64& eng) const {
         for (uint32 i = 0; i < str.size(); i++) {
             uint32 k = uint_sampler.sample(eng);

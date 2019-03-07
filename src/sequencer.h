@@ -127,7 +127,7 @@ public:
         return *this;
     }
 
-    uint32 sample(pcg32& eng) const {
+    uint32 sample(pcg64& eng) const {
         uint32 rnd = sampler.sample(eng);
         uint32 len_ = region_len * rnd;
         if (region_len > 1) len_ += static_cast<uint32>(runif_01(eng) * region_len);
@@ -169,7 +169,7 @@ public:
 
 
 
-    char sample(uint32 pos, pcg32& eng) const {
+    char sample(uint32 pos, pcg64& eng) const {
         // rnd ~ N(0, 1)
         double rnd = distr(eng);
         // Adjust pos to point to inside `means` and `sds` vectors
@@ -256,7 +256,7 @@ public:
      Returns 0 for match, 1 for mismatch, 2 for insertion, 3 for deletion.
      Only 8-bit integer used to save on memory.
      */
-    inline uint8 sample(uint32 pos, pcg32& eng) const {
+    inline uint8 sample(uint32 pos, pcg64& eng) const {
 
         // Adjust pos to point to inside `probs` vector
         pos /= region_len;
@@ -365,7 +365,7 @@ protected:
     // Sample a starting location for a fragment
     inline uint32 frag_loc_sample(const uint32& frag_len,
                                   const uint32& seq_len,
-                                  pcg32& eng) {
+                                  pcg64& eng) {
         if (frag_len >= seq_len) return 0U;
         double u = runif_01(eng);
         uint32 pos = static_cast<uint32>(u * (seq_len - frag_len + 1));
@@ -373,7 +373,7 @@ protected:
     }
 
     // Adjust one character for a mismatch
-    void mismatch(char& input, pcg32& eng) {
+    void mismatch(char& input, pcg64& eng) {
         const std::string& str(mm[static_cast<uint32>(input)]);
         uint32 ind = static_cast<uint32>(runif_01(eng) * str.size());
         input = str[ind];
@@ -383,7 +383,7 @@ protected:
     // Adjust string and qualities for an insertion
     void insertion(const sint32& size, const uint32& read_pos,
                    std::string& read, std::string& qual,
-                   pcg32& eng) {
+                   pcg64& eng) {
         uint32 size_ = static_cast<uint32>(size);
         std::string nts;
         nts.reserve(size_);
@@ -453,7 +453,7 @@ public:
 
 
     // Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality)
-    std::vector<std::string> one_read(pcg32& eng, SequenceIdentifierInfo& ID_info) {
+    std::vector<std::string> one_read(pcg64& eng, SequenceIdentifierInfo& ID_info) {
 
         // Initiate objects
         uint32 seq_ind;
@@ -524,7 +524,7 @@ protected:
                      uint32& read_seq_space,
                      const uint32& read_len,
                      const uint32& frag_len,
-                     pcg32& eng) {
+                     pcg64& eng) {
 
         // Restart all these:
         if (err_codes.size() > 0) err_codes.clear();
@@ -586,7 +586,7 @@ protected:
                    std::vector<std::vector<uint8>>& err_codes,
                    std::vector<std::vector<sint32>>& err_lengths,
                    std::vector<uint32>& read_seq_spaces,
-                   pcg32& eng) {
+                   pcg64& eng) {
 
         seq_ind = this->seqs.sample(eng);
         uint32 seq_len = (*(this->sequences))[seq_ind].size();
@@ -623,7 +623,7 @@ protected:
                            const std::vector<sint32>& err_lengths,
                            std::string& read,
                            std::string& qual,
-                           pcg32& eng) {
+                           pcg64& eng) {
         uint32 read_pos = 0;
         for (uint32 j = 0; j < err_codes.size(); j++) {
             const uint8& err_code(err_codes[j]);
@@ -700,7 +700,7 @@ public:
      -------------
      */
     // If only providing rng and id info, sample for a variant, then make read(s):
-    std::vector<std::string> one_read(pcg32& eng,
+    std::vector<std::string> one_read(pcg64& eng,
                                       SequenceIdentifierInfo& ID_info) {
         uint32 var = variant_sampler.sample(eng);
         read_maker.sequences = &((*variants)[var]);
@@ -709,7 +709,7 @@ public:
     }
     // If you provide a specific variant, then make read(s) from that:
     std::vector<std::string> one_read(const uint32& var,
-                                      pcg32& eng,
+                                      pcg64& eng,
                                       SequenceIdentifierInfo& ID_info) {
         read_maker.sequences = &((*variants)[var]);
         std::vector<std::string> out = read_maker.one_read(eng, ID_info);
@@ -766,7 +766,7 @@ public:
 
 
     // Sample one read string (with 4 lines: ID, sequence, "+", quality)
-    std::string one_read(pcg32& eng, SequenceIdentifierInfo& ID_info) {
+    std::string one_read(pcg64& eng, SequenceIdentifierInfo& ID_info) {
 
         uint32 seq_ind = this->seqs.sample(eng);
         uint32 seq_len = (*(this->sequences))[seq_ind].size();
@@ -807,7 +807,7 @@ protected:
 
 
     // Add sequencing errors to read:
-    void add_errors(std::string& read, std::string& qual, pcg32& eng) {
+    void add_errors(std::string& read, std::string& qual, pcg64& eng) {
 
         uint32 read_pos = 0;
         while (read_pos < read.size()) {
@@ -884,14 +884,14 @@ public:
      -------------
      */
     // If only providing rng and id info, sample for a variant, then make read:
-    std::string one_read(pcg32& eng, SequenceIdentifierInfo& ID_info) {
+    std::string one_read(pcg64& eng, SequenceIdentifierInfo& ID_info) {
         uint32 var = variant_sampler.sample(eng);
         read_maker.sequences = &((*variants)[var]);
         std::string out = read_maker.one_read(eng, ID_info);
         return out;
     }
     // If you provide a specific variant, then make read from that:
-    std::string one_read(const uint32& var, pcg32& eng, SequenceIdentifierInfo& ID_info) {
+    std::string one_read(const uint32& var, pcg64& eng, SequenceIdentifierInfo& ID_info) {
         read_maker.sequences = &((*variants)[var]);
         std::string out = read_maker.one_read(eng, ID_info);
         return out;

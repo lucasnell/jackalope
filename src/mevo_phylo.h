@@ -296,7 +296,7 @@ public:
     /*
      Evolve all trees.
      */
-    int evolve(pcg32& eng, Progress& prog_bar) {
+    int evolve(pcg64& eng, Progress& prog_bar) {
 
         for (PhyloTree& tree : trees) {
             int code = one_tree(tree, eng, prog_bar);
@@ -379,7 +379,7 @@ private:
     /*
      Evolve one tree.
      */
-    int one_tree(PhyloTree& tree, pcg32& eng, Progress& prog_bar);
+    int one_tree(PhyloTree& tree, pcg64& eng, Progress& prog_bar);
 
 
     /*
@@ -511,7 +511,7 @@ private:
  */
 template<typename T>
 int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
-                             pcg32& eng,
+                             pcg64& eng,
                              Progress& prog_bar) {
 
     // Reset tree of samplers and VarSequence objects representing nodes and tips:
@@ -703,7 +703,7 @@ XPtr<VarSet> PhyloInfo<T>::evolve_seqs(
     active_seeds = seeds[0];
     #endif
 
-    pcg32 eng = seeded_pcg(active_seeds);
+    pcg64 eng = seeded_pcg(active_seeds);
 
     // Parallelize the Loop
     #ifdef _OPENMP

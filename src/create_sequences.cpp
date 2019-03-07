@@ -89,7 +89,7 @@ OuterClass create_sequences_(const uint32& n_seqs,
     active_seeds = seeds[0];
     #endif
 
-    pcg32 engine = seeded_pcg(active_seeds);
+    pcg64 engine = seeded_pcg(active_seeds);
     // Gamma distribution to be used for size selection (doi: 10.1093/molbev/msr011):
     std::gamma_distribution<double> distr;
     if (len_sd > 0) {

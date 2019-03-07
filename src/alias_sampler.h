@@ -76,7 +76,7 @@ public:
         : Prob(other.Prob), Alias(other.Alias), n(other.n) {}
 
     // Actual alias sampling
-    inline uint32_t sample(pcg32& eng) const {
+    inline uint32_t sample(pcg64& eng) const {
         // Fair dice roll from n-sided die
         uint32_t i = runif_01(eng) * n;
         // uniform in range (0,1)

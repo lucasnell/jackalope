@@ -157,7 +157,7 @@ void SequenceGammas::update(const uint32& pos, const sint32& size_change) {
 //'
 void fill_gamma_mat_(arma::mat& gamma_mat, double& gammas_x_sizes,
                      const uint32& seq_size_, const uint32& gamma_size_,
-                     const double& shape, pcg32& eng) {
+                     const double& shape, pcg64& eng) {
 
     // If gamma_size_ is set to zero, then we'll assume everything's the same
     if (gamma_size_ == 0) {
@@ -219,7 +219,7 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
                                        const uint32& gamma_size_,
                                        const double& shape) {
 
-    pcg32 eng = seeded_pcg();
+    pcg64 eng = seeded_pcg();
 
     uint32 n_seqs = seq_sizes.size();
 

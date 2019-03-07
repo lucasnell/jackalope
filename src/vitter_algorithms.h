@@ -55,7 +55,7 @@ inline double f(const double& s, const double& n, const double& N) {
 // --------
 // One S value using Algorithm A (used in Algorithm D if n >= alpha * N)
 // --------
-inline uint32 vitter_a_S(double n, double N, pcg32& engine) {
+inline uint32 vitter_a_S(double n, double N, pcg64& engine) {
     double V = runif_01(engine);
     uint32 s = 0;
     double lhs = N - n;
@@ -97,7 +97,7 @@ inline double x1(const double& U, const double& n, const double& N) {
 // --------
 // One S value for Algorithm D_1
 // --------
-inline uint32 algorithm_d1_S(const sint32& n, const uint32& N, pcg32& engine,
+inline uint32 algorithm_d1_S(const sint32& n, const uint32& N, pcg64& engine,
                              const double alpha) {
 
     double U, X, c, comp_denom;
@@ -159,7 +159,7 @@ inline double x2(const double& U, const double& n, const double& N) {
 // --------
 // One S value for Algorithm D_2
 // --------
-inline uint32 algorithm_d2_S(const sint32& n, const uint32& N, pcg32& engine,
+inline uint32 algorithm_d2_S(const sint32& n, const uint32& N, pcg64& engine,
                              const double& alpha) {
 
     double U, X, c, comp_denom;
@@ -225,7 +225,7 @@ inline uint32 algorithm_d2_S(const sint32& n, const uint32& N, pcg32& engine,
 //'
 //'
 template <typename T>
-void vitter_d(T& samples, uint32 N, pcg32& engine,
+void vitter_d(T& samples, uint32 N, pcg64& engine,
               const uint32& start = 0,
               const double n2N = 50, const double alpha = 0.8) {
 
