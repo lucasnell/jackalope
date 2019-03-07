@@ -13,8 +13,6 @@
 using namespace Rcpp;
 
 
-typedef pcg_extras::pcg128_t uint128;
-
 
 
 namespace pcg {
