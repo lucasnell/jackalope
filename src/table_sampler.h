@@ -257,6 +257,13 @@ public:
         }
         return;
     }
+    void sample(std::string& str, pcg64& eng) const {
+        for (uint32 i = 0; i < str.size(); i++) {
+            uint32 k = uint_sampler.sample(eng);
+            str[i] = characters[k];
+        }
+        return;
+    }
 
 private:
     TableSampler uint_sampler;
