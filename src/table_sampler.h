@@ -41,62 +41,16 @@ public:
     std::vector<uint128> t;
 
     TableSampler() {};
-    TableSampler(const std::vector<long double>& probs)
-        : T(4), t(3, 0) {
-
-        uint32 n_tables = T.size();
-
-        uint32 n = probs.size();
-        std::vector<uint128> ints;
-        // Filling the `ints` vector based on `probs`
-        this->fill_ints(probs, ints);
-
-        std::vector<uint32> sizes(n_tables, 0);
-        // Adding up sizes of `T` vectors:
-        for (uint32 i = 0; i < n; i++) {
-            for (uint32 k = 1; k <= n_tables; k++) {
-                sizes[k-1] += this->dg(ints[i], k);
-            }
+    TableSampler(const std::vector<long double>& probs) : T(4), t(3, 0) {
+        construct(probs);
+    }
+    TableSampler(const std::vector<double>& probs) : T(4), t(3, 0) {
+        std::vector<long double> probs_;
+        probs_.reserve(probs.size());
+        for (uint32 i = 0; i < probs.size(); i++) {
+            probs_.push_back(static_cast<long double>(probs[i]));
         }
-
-        // Adding up thresholds in the `t` vector
-        for (uint64 k = 0; k < (n_tables - 1); k++) {
-            t[k] = sizes[k];
-            t[k] <<= (64 - 16 * (1 + k));
-            if (k > 0) t[k] += t[k-1];
-        }
-
-        // Taking care of scenario when just one output is possible
-        if (std::accumulate(sizes.begin(), sizes.end(), 0ULL) == 0ULL) {
-            // So it's always TRUE for the first `if ()` statement in sample:
-            t[0] = (1ULL<<63);
-            t[0] *= 2;
-            /*
-            Now filling in the index to the output with P = 1 so that sample
-            always returns it. Bc we're iterating by 2^16, that's the number of
-            items I have to fill in for the T[0] vector.
-            */
-            uint32 max_ind = 0;
-            for (uint32 i = 0; i < ints.size(); i++) {
-                if (ints[i] == t[0]) {
-                    max_ind = i;
-                    break;
-                }
-            }
-            T[0] = std::vector<uint32>((1UL<<16), max_ind);
-        } else {
-            // Re-sizing `T` vectors:
-            for (uint32 i = 0; i < n_tables; i++) T[i].resize(sizes[i]);
-            // Filling `T` vectors
-            for (uint32 k = 1; k <= n_tables; k++) {
-                uint32 ind = 0; // index inside `T[k-1]`
-                for (uint32 i = 0; i < n; i++) {
-                    uint32 z = this->dg(ints[i], k);
-                    for (uint32 j = 0; j < z; j++) T[k-1][ind + j] = i;
-                    ind += z;
-                }
-            }
-        }
+        construct(probs_);
     }
     // Copy constructor
     TableSampler(const TableSampler& other) : T(other.T), t(other.t) {}
@@ -181,6 +135,66 @@ private:
         ints.reserve(n);
         for (uint32 i = 0; i < n; i++) {
             ints.push_back(static_cast<uint128>(pp[i]));
+        }
+
+        return;
+    }
+
+    // Most of the construction of the TableSampler object:
+    inline void construct(const std::vector<long double>& probs) {
+
+        uint32 n_tables = T.size();
+
+        uint32 n = probs.size();
+        std::vector<uint128> ints;
+        // Filling the `ints` vector based on `probs`
+        this->fill_ints(probs, ints);
+
+        std::vector<uint32> sizes(n_tables, 0);
+        // Adding up sizes of `T` vectors:
+        for (uint32 i = 0; i < n; i++) {
+            for (uint32 k = 1; k <= n_tables; k++) {
+                sizes[k-1] += this->dg(ints[i], k);
+            }
+        }
+
+        // Adding up thresholds in the `t` vector
+        for (uint64 k = 0; k < (n_tables - 1); k++) {
+            t[k] = sizes[k];
+            t[k] <<= (64 - 16 * (1 + k));
+            if (k > 0) t[k] += t[k-1];
+        }
+
+        // Taking care of scenario when just one output is possible
+        if (std::accumulate(sizes.begin(), sizes.end(), 0ULL) == 0ULL) {
+            // So it's always TRUE for the first `if ()` statement in sample:
+            t[0] = (1ULL<<63);
+            t[0] *= 2;
+            /*
+            Now filling in the index to the output with P = 1 so that sample
+            always returns it. Bc we're iterating by 2^16, that's the number of
+            items I have to fill in for the T[0] vector.
+            */
+            uint32 max_ind = 0;
+            for (uint32 i = 0; i < ints.size(); i++) {
+                if (ints[i] == t[0]) {
+                    max_ind = i;
+                    break;
+                }
+            }
+            T[0] = std::vector<uint32>((1UL<<16), max_ind);
+        } else {
+            // Re-sizing `T` vectors:
+            for (uint32 i = 0; i < n_tables; i++) T[i].resize(sizes[i]);
+            // Filling `T` vectors
+            for (uint32 k = 1; k <= n_tables; k++) {
+                uint32 ind = 0; // index inside `T[k-1]`
+                for (uint32 i = 0; i < n; i++) {
+                    uint32 z = this->dg(ints[i], k);
+                    for (uint32 j = 0; j < z; j++) T[k-1][ind + j] = i;
+                    ind += z;
+                }
+            }
         }
 
         return;
