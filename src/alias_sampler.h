@@ -25,6 +25,14 @@
 using namespace Rcpp;
 
 
+namespace alias_sampler {
+
+    const std::string bases = "TCAG";
+
+}
+
+
+
 
 
 

@@ -28,7 +28,6 @@ namespace table_sampler {
 
     const std::string bases = "TCAG";
 
-
 }
 
 
