@@ -55,8 +55,8 @@ struct ReadConstructInfo {
 
 
 /*
- Sample for quality score when they vary by nucleotide.
- You'll want one of these objects for each position on the read.
+ Sample for quality score when they vary by position on read.
+ You'll want one of these objects for each nucleotide.
  */
 class IllQualPos {
 

@@ -233,21 +233,115 @@ read_vcf <- function(reference, method_info) {
 
 
 
+
 # Illumina profile ----
+
+
+#' Find a package-supplied ART-style Illumina profile file.
+#'
+#' @inheritParams read_profile
+#'
+#' @return The filename to be read from `read_profile`.
+#'
+#' @noRd
+#'
+find_profile_file <- function(profile_name, read_length, read) {
+
+    abbrevs <- list(GA1 = "Genome Analyzer I",
+                    GA2 = "Genome Analyzer II",
+                    HS10 = "HiSeq 1000",
+                    HS20 = "HiSeq 2000",
+                    HS25 = "HiSeq 2500",
+                    MSv1 = "MiSeq v1",
+                    MSv3 = "MiSeq v3",
+                    MinS = "MiniSeq TruSeq",
+                    NS50 = "NextSeq 500 v2",
+                    HSXn = "HiSeqX v2.5 PCR free",
+                    HSXt = "HiSeqX v2.5 TruSeq")
+    if (profile_name %in% names(abbrevs)) {
+        profile_name <- abbrevs[[profile_name]]
+    }
+    profile_lookup <- read.csv(text =
+                                   "name,read_length,read,file_name
+                               Genome Analyzer I,36,1,QUAL_DIST_ONE36
+                               Genome Analyzer I,36,2,QUAL_DIST_TWO36
+                               Genome Analyzer I,44,1,QUAL_DIST_ONE44
+                               Genome Analyzer I,44,2,QUAL_DIST_TWO44
+                               Genome Analyzer II,50,1,QUAL_DIST_ONE50
+                               Genome Analyzer II,50,2,QUAL_DIST_TWO50
+                               Genome Analyzer II,75,1,QUAL_DIST_ONE75
+                               Genome Analyzer II,75,2,QUAL_DIST_TWO75
+                               HiSeq 1000,100,1,QUAL_DIST_ONE100
+                               HiSeq 1000,100,2,QUAL_DIST_TWO100
+                               MiSeq v1,250,1,QUAL_DIST_ONE250
+                               MiSeq v1,250,2,QUAL_DIST_TWO250
+                               HiSeq 2000,100,1,HiSeq2000L100R1
+                               HiSeq 2000,100,2,HiSeq2000L100R2
+                               HiSeq 2500,125,1,HiSeq2500L125R1
+                               HiSeq 2500,125,2,HiSeq2500L125R2
+                               HiSeq 2500,150,1,HiSeq2500L150R1
+                               HiSeq 2500,150,2,HiSeq2500L150R2
+                               MiniSeq TruSeq,50,1,MiniSeqTruSeq_L50
+                               MiSeq v3,250,1,MiSeqv3_L250_R1
+                               MiSeq v3,250,2,MiSeqv3_L250_R2
+                               NextSeq 500 v2,75,1,NextSeq500v2_L75_R1
+                               NextSeq 500 v2,75,2,NextSeq500v2_L75_R2
+                               HiSeqX v2.5 PCR free,150,1,HiSeqXPCRfree_L150_R1
+                               HiSeqX v2.5 PCR free,150,2,HiSeqXPCRfree_L150_R2
+                               HiSeqX v2.5 TruSeq,150,1,HiSeqXtruSeq_L150_R1
+                               HiSeqX v2.5 TruSeq,150,2,HiSeqXtruSeq_L150_R2",
+                     stringsAsFactors = FALSE)
+        profile_lookup$name <- trimws(profile_lookup$name)
+        profile_lookup <- profile_lookup[order(profile_lookup$read_length),]
+        criteria <- profile_lookup$name == profile_name
+        if (sum(criteria) == 0) {
+            stop("\nThe desired Illumina platform name isn't available.", call. = FALSE)
+        }
+        criteria <- criteria & profile_lookup$read_length >= read_length
+        if (sum(criteria) == 0) {
+            stop("\nFor the desired Illumina platform, this package doesn't have ",
+                 "a read length that's as long as you want.", call. = FALSE)
+        }
+        criteria <- criteria & profile_lookup$read == read
+        if (sum(criteria) == 0) {
+            stop("\nFor the desired Illumina platform of read length ",
+                 paste(read_length), ", this package only has ",
+                 "a profile for read number ",
+                 paste(ifelse(read == 1, 2, 1)), ".", call. = FALSE)
+        }
+        profile_name <- paste0(profile_lookup$file_name[criteria][1], ".txt")
+        profile_name <- system.file("art_profiles", profile_name, package = "gemino",
+                                    mustWork = TRUE)
+}
+
+
+
+
+
 
 #' Read an ART-style Illumina profile file.
 #'
-#' @param profile_file File name of ART-style profile file for Illumina reads.
+#' @param profile_name File name of ART-style profile file for Illumina reads.
+#'     If this argument doesn't end in `.txt`, then it's assumed it's the name of
+#'     an Illumina platform with profile(s) saved in the package.
+#' @param read_length Desired read length. Used to shorten the output vectors of
+#'     qualities and quality-probabilities if `read_length` is less than the number of
+#'     positions specified in the profile.
+#' @param read Which read to get the profile from.
 #'
-#' @return A list of profile information. I wouldn't recommend printing this list
+#' @return A list of qualities and quality-probabilities for each nucleotide and
+#'     position on read. I wouldn't recommend printing this list
 #'     because it's quite lengthy.
 #'
-#' @export
+#' @noRd
 #'
-#' @examples
-read_profile <- function(profile_file) {
+read_profile <- function(profile_name, read_length, read) {
 
-    profile_str <- readLines(profile_file)
+    if (!grepl(".txt$", profile_name)) {
+        profile_name <- find_profile_file(profile_name, read_length, read)
+    }
+
+    profile_str <- readLines(profile_name)
     profile_str <- profile_str[profile_str != ""]
     profile_str <- profile_str[!grepl("^\\.|^#|^N", profile_str)]
     profile_str <- strsplit(profile_str, "\t")
@@ -276,13 +370,58 @@ read_profile <- function(profile_file) {
                         quals = quals_,
                         probs = probs_)
                })
+
+
     pos <- sapply(profile_info, function(x) x$pos)
-    nts <- sapply(profile_info, function(x) x$nt)
-    if (unique(table(pos)) != 4 || unique(table(nts)) != (diff(range(pos)) + 1)) {
-        stop("\nThe input profile file doesn't have exactly one entry per position ",
-             "per nucleotide.", call. = FALSE)
+    if (min(pos) > 0) stop("\nMinimum profile position should be zero.", call. = FALSE)
+    if (max(pos) < (read_length-1)) {
+        stop("\nMaximum profile position should be >= read_length - 1.", call. = FALSE)
     }
 
-    return(profile_info)
+    nts <- sapply(profile_info, function(x) x$nt)
+
+    mis_probs <- rep(list(NA), 4)
+    quals <- rep(list(NA), 4)
+    names(mis_probs) <- names(quals) <- c("T", "C", "A", "G")
+
+    for (nt in names(mis_probs)) {
+        probs_nt <- lapply(profile_info[nts == nt], function(x) x$probs)
+        qual_nt <- lapply(profile_info[nts == nt], function(x) x$quals)
+        pos_nt <- sapply(profile_info[nts == nt], function(x) x$pos)
+        if (!identical(0:(length(pos_nt) - 1), pos_nt)) {
+            stop("\nFor nucleotide ", nt, " in the profile, the positions ",
+                 "aren't a vector from 0 to length(positions) - 1.", call. = FALSE)
+        }
+        if (length(probs_nt) != length(qual_nt)) {
+            stop("\nFor nucleotide ", nt, " in the profile, the number of ",
+                 "positions for qualities isn't the same as for the quality ",
+                 "probabilities.", call. = FALSE)
+        }
+        if (length(probs_nt) < read_length) {
+            stop("\nFor nucleotide ", nt, " in the profile, it doesn't provide at ",
+                 "least as many positions as your desired read length.", call. = FALSE)
+        }
+        if (any(sapply(probs_nt, length) != sapply(qual_nt, length))) {
+            stop("\nFor nucleotide ", nt, " in the profile, at least ",
+                 "one of the positions has a number of qualities that doesn't ",
+                 "match with the number of quality probabilities.", call. = FALSE)
+        }
+        # Order by position:
+        probs_nt <- probs_nt[order(pos_nt)]
+        qual_nt <- qual_nt[order(pos_nt)]
+        # Remove unnecessary positions if necessary:
+        if (length(probs_nt) > read_length) {
+            probs_nt <- probs_nt[1:read_length]
+            qual_nt <- qual_nt[1:read_length]
+        }
+        mis_probs[[nt]] <- probs_nt
+        quals[[nt]] <- qual_nt
+    }
+
+    # Names no longer needed
+    names(mis_probs) <- names(quals) <- NULL
+
+    return(list(mis_probs = mis_probs, quals = quals))
 
 }
+
