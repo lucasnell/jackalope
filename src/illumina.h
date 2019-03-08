@@ -26,6 +26,32 @@ using namespace Rcpp;
 
 
 
+// Basic information to construct reads
+struct ReadConstructInfo {
+    uint32 read_length;
+    uint32 seq_ind;
+    uint32 frag_len;
+    uint32 frag_start;
+    std::vector<std::string> reads;
+    std::vector<std::string> quals;
+    std::vector<uint32> read_seq_spaces;
+
+    ReadConstructInfo() {}
+    ReadConstructInfo(const bool& paired, const uint32& read_length_) {
+        this->read_length = read_length_;
+        if (paired) {
+            reads = std::vector<std::string>(2);
+            quals = std::vector<std::string>(2);
+            read_seq_spaces = std::vector<uint32>(2);
+        } else {
+            reads = std::vector<std::string>(1);
+            quals = std::vector<std::string>(1);
+            read_seq_spaces = std::vector<uint32>(1);
+        }
+    }
+};
+
+
 
 
 /*
@@ -93,7 +119,8 @@ public:
 
 /*
  Sample for (1) quality score and (2) whether a mismatch error is produced.
- It then adds that error and outputs the quality string.
+ It does NOT sample for indels, but it does add indels to the read string.
+ It also adds mismatch errors to the read string and outputs the quality string.
  For paired reads, you'll need two of these objects.
  */
 class IlluminaQualityError {
@@ -101,17 +128,15 @@ class IlluminaQualityError {
 public:
 
     std::vector<IllQualPos> by_nt; // One IllQualPos object per nucleotide type
-    uint32 read_length;
 
     IlluminaQualityError() {};
     IlluminaQualityError(const std::vector<std::vector<std::vector<double>>>& probs_,
-                         const std::vector<std::vector<std::vector<uint8>>>& quals_,
-                         const double& ins_prob_,
-                         const double& del_prob_)
-        : by_nt(), read_length(probs_[0].size()),
+                         const std::vector<std::vector<std::vector<uint8>>>& quals_)
+        : by_nt(),
           qual_prob_map(), nt_map(256, 4U), mm_nucleos(4),
-          ins_prob(ins_prob_), del_prob(del_prob_),
           qual_start(static_cast<uint8>('!')) {
+
+        uint32 read_length(probs_[0].size());
 
         if (probs_.size() != 4 || quals_.size() != 4) {
             stop("All probs and quals for IlluminaQualityError must be of length 4");
@@ -153,37 +178,20 @@ public:
 
     }
 
-    // Sample for insertion and deletion positions
-    void fill_indels(std::deque<uint32>& insertions,
-                     std::deque<uint32>& deletions,
-                     pcg64& eng) {
-        uint32 i = 0, r = 0;
-        double u;
-        insertions.clear();
-        deletions.clear();
-        while (r < read_length) {
-            u = runif_01(eng);
-            if (u > (ins_prob + del_prob)) {
-                r++;
-            } else if (u > ins_prob) {
-                deletions.push_back(i);
-            } else {
-                insertions.push_back(i);
-                r += 2;
-            }
-            i++;
-        }
-        return;
-    }
 
-    // Fill read and quality strings
+    /*
+     Fill read and quality strings.
+     Because small fragments could cause the read length to be less than normal,
+     I'm requiring it as input to this function.
+     */
     void fill_read_qual(std::string& read,
                         std::string& qual,
                         std::deque<uint32>& insertions,
                         std::deque<uint32>& deletions,
+                        const uint32& read_length,
                         pcg64& eng) const {
+
         uint32 seq_space = read_length + insertions.size() - deletions.size();
-        if (read.size() != seq_space) stop("read.size() != seq_space");
         if (qual.size() != read_length) qual.resize(read_length);
         double mis_prob, u;
         uint8 nt_ind, qint;
@@ -244,9 +252,6 @@ private:
      to sample from for a mismatch
      */
     std::vector<std::string> mm_nucleos;
-    // Indel probabilities
-    double ins_prob;
-    double del_prob;
     /*
      Starting value of qualities (for use in converting integers to chars
      (e.g., 0 to '!'))
@@ -257,62 +262,41 @@ private:
 
 
 
-struct IlluminaFragLengths {
-
-    std::gamma_distribution<double> distr;
-    uint32 min;
-    uint32 max;
-
-    IlluminaFragLengths() {}
-    IlluminaFragLengths(const double& shape, const double& scale,
-                        const uint32& min_, const uint32& max_)
-        : distr(shape, scale), min(min_), max(max_) {}
-
-    uint32 sample(pcg64& eng) {
-        double len_ = std::round(distr(eng));
-        uint32 len = static_cast<uint32>(len_);
-        if (len < min) len = min;
-        if (len > max) len = max;
-        return len;
-    }
-
-};
-
-
 
 /*
- Incomplete template class to combine everything for Illumina sequencing.
+ Template class to combine everything for Illumina sequencing.
 
  `T` should be `VarGenome` or `RefGenome`
 
- For full classes based on this template, you need to add a way to get read lengths.
- For Illumina, it will be a constant read length, and for long-read sequencing, it
- will be simply the fragment length.
  */
 template <typename T>
 class Illumina_t {
 public:
 
-    // __Sampler__                         __What it returns__
-    TableSampler seqs;                  // index for which genome-sequence to sequence
-    IlluminaFragLengths frag_lengths;   // fragment lengths
-    IlluminaQualityError qual_errors1;  // Illumina qualities and errors, read 1
-    IlluminaQualityError qual_errors2;  // Illumina qualities and errors, read 2
+    /* __ Samplers __ */
+    // Samples index for which genome-sequence to sequence
+    TableSampler seqs;
+    // Samples Illumina qualities and errors, one `IlluminaQualityError` for each read
+    std::vector<IlluminaQualityError> qual_errors;
+    // Samples fragment lengths:
+    std::gamma_distribution<double> frag_lengths;   // fragment lengths
 
 
-    // Info:
+    /* __ Info __ */
     std::vector<uint32> seq_lengths;    // genome-sequence lengths
     const T* sequences;                 // pointer to `const T`
     uint32 read_length;                 // Length of reads
     bool paired;                        // Boolean for whether to do paired-end reads
+    std::vector<double> ins_probs;      // Per-base prob. of an insertion, reads 1 and 2
+    std::vector<double> del_probs;      // Per-base prob. of a deletion, reads 1 and 2
 
     Illumina_t() {};
     // For paired-end reads:
     Illumina_t(const T& seq_object,
           const double& frag_len_shape,
           const double& frag_len_scale,
-          const uint32& frag_len_min,
-          const uint32& frag_len_max,
+          const uint32& frag_len_min_,
+          const uint32& frag_len_max_,
           const std::vector<std::vector<std::vector<double>>>& mis_probs1,
           const std::vector<std::vector<std::vector<uint8>>>& quals1,
           const double& ins_prob1,
@@ -322,13 +306,20 @@ public:
           const double& ins_prob2,
           const double& del_prob2)
         : seqs(),
-          frag_lengths(frag_len_shape, frag_len_scale, frag_len_min, frag_len_max),
-          qual_errors1(mis_probs1, quals1, ins_prob1, del_prob1),
-          qual_errors2(mis_probs2, quals2, ins_prob2, del_prob2),
+          qual_errors{IlluminaQualityError(mis_probs1, quals1),
+                      IlluminaQualityError(mis_probs2, quals2)},
+          frag_lengths(frag_len_shape, frag_len_scale),
           seq_lengths(seq_object.seq_sizes()),
           sequences(&seq_object),
           read_length(mis_probs1[0].size()),
-          paired(true) {
+          paired(true),
+          ins_probs{ins_prob1, ins_prob2},
+          del_probs{del_prob1, del_prob2},
+          insertions(2),
+          deletions(2),
+          frag_len_min(frag_len_min_),
+          frag_len_max(frag_len_max_),
+          constr_info(paired, read_length) {
         if (mis_probs1[0].size() != mis_probs2[0].size()) {
             stop("In Illumina_t constr., read lengths for R1 and R2 don't match.");
         }
@@ -338,28 +329,87 @@ public:
     Illumina_t(const T& seq_object,
                const double& frag_len_shape,
                const double& frag_len_scale,
-               const uint32& frag_len_min,
-               const uint32& frag_len_max,
+               const uint32& frag_len_min_,
+               const uint32& frag_len_max_,
                const std::vector<std::vector<std::vector<double>>>& mis_probs,
                const std::vector<std::vector<std::vector<uint8>>>& quals,
                const double& ins_prob,
                const double& del_prob)
         : seqs(),
-          frag_lengths(frag_len_shape, frag_len_scale, frag_len_min, frag_len_max),
-          qual_errors1(mis_probs, quals, ins_prob, del_prob),
-          qual_errors2(),
+          qual_errors{IlluminaQualityError(mis_probs, quals)},
+          frag_lengths(frag_len_shape, frag_len_scale),
           seq_lengths(seq_object.seq_sizes()),
           sequences(&seq_object),
           read_length(mis_probs[0].size()),
-          paired(false) {
+          paired(false),
+          ins_probs{ins_prob},
+          del_probs{del_prob},
+          insertions(1),
+          deletions(1),
+          frag_len_min(frag_len_min_),
+          frag_len_max(frag_len_max_),
+          constr_info(paired, read_length) {
         this->construct_seqs();
     }
 
 
-private:
 
-    std::deque<uint32> insertions;
-    std::deque<uint32> deletions;
+    // Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality)
+    void one_read(std::vector<std::string>& read_quals,
+                  pcg64& eng,
+                  SequenceIdentifierInfo& ID_info) {
+
+        uint32 n_reads = this->ins_probs.size();
+        if (read_quals.size() != n_reads) read_quals.resize(n_reads);
+
+        // If we sampled a very small fragment, it'll reduce read length:
+        uint32 real_read_length = std::min(read_length, this->constr_info.frag_len);
+
+        // Boolean for whether we take the reverse side first:
+        bool reverse = runif_01(eng) < 0.5;
+        for (uint32 i = 0; i < n_reads; i++) {
+            ID_info.read = i + 1;
+            std::string& read(this->constr_info.reads[i]);
+            std::string& qual(this->constr_info.quals[i]);
+
+            // Read starting location:
+            uint32 start = this->constr_info.frag_start;
+            if (reverse) start += (this->constr_info.frag_len -
+                this->constr_info.read_seq_spaces[i]);
+
+            // Now fill `read` from `sequences` field:
+            (*(this->sequences))[this->constr_info.seq_ind].fill_seq(read, start,
+                this->constr_info.read_seq_spaces[i]);
+
+            // Reverse-complement `read` if taking reverse side:
+            if (reverse) rev_comp(read);
+
+            // Sample mapping quality and add errors to read:
+            qual_errors[i].fill_read_qual(read, qual, insertions[i], deletions[i],
+                                          real_read_length, eng);
+
+            // If doing paired reads, the second one should be the reverse of the first
+            reverse = !reverse;
+
+            // Combine into 4 lines of output per read:
+            read_quals[i] = ID_info.get_id_line() + '\n' + read + "\n+\n" + qual;
+        }
+
+        return;
+    }
+
+
+protected:
+
+    // To store indel locations, where each vector will be of length 2 if paired==true
+    std::vector<std::deque<uint32>> insertions;
+    std::vector<std::deque<uint32>> deletions;
+    // Bounds for fragment sizes:
+    uint32 frag_len_min;
+    uint32 frag_len_max;
+    // Info to construct reads:
+    ReadConstructInfo constr_info;
+
 
     void construct_seqs() {
         std::vector<double> probs_;
@@ -370,37 +420,166 @@ private:
         seqs = TableSampler(probs_);
     }
 
+    // Sample for insertion and deletion positions
+    void sample_indels(pcg64& eng, const uint32& frag_len) {
+
+        for (uint32 r = 0; r < insertions.size(); r++) {
+            uint32 i = 0, read_size = 0;
+            double u;
+            std::deque<uint32>& ins(this->insertions[r]);
+            std::deque<uint32>& del(this->deletions[r]);
+            const double& ins_prob(ins_probs[r]);
+            const double& del_prob(del_probs[r]);
+            ins.clear();
+            del.clear();
+            while (read_size < read_length && read_size < frag_len) {
+                u = runif_01(eng);
+                if (u > (ins_prob + del_prob)) {
+                    read_size++;
+                } else if (u > ins_prob) {
+                    del.push_back(i);
+                } else {
+                    ins.push_back(i);
+                    read_size += 2;
+                }
+                i++;
+            }
+        }
+
+        return;
+    }
+
 
     /*
-
-     LEFT OFF:  TURN THE BELOW FUNCTION INTO ONE THAT SAMPLES WHICH SEQUENCE TO USE,
-     SAMPLE FOR INDELS, THEN SAMPLE WHERE TO PUT THE FRAGMENT
-     [making sure the fragment size isn't less than the length required for the read:
-     read_length + sum(indel sizes)]
-
+     Sample a sequence, indels, fragment length, and starting position for the fragment.
+     Lastly, it sets the sequence spaces required for these reads.
      */
+    inline void seq_indels_frag(pcg64& eng) {
 
-    // Sample a starting location for a fragment
-    inline uint32 frag_loc_sample(const uint32& frag_len,
-                                  const uint32& seq_len,
-                                  pcg64& eng) {
-        if (frag_len >= seq_len) return 0U;
-        double u = runif_01(eng);
-        uint32 pos = static_cast<uint32>(u * (seq_len - frag_len + 1));
-        return pos;
+        uint32& seq_ind(this->constr_info.seq_ind);
+        uint32& frag_len(this->constr_info.frag_len);
+        uint32& frag_start(this->constr_info.frag_start);
 
-        /*
-         seq_ind = this->seqs.sample(eng);
-         uint32 seq_len = (*(this->sequences))[seq_ind].size();
+        // Sample sequence:
+        seq_ind = this->seqs.sample(eng);
+        uint32 seq_len = (*(this->sequences))[seq_ind].size();
 
-         frag_len = this->frag_lengths.sample(eng);
-         if (frag_len > seq_len) frag_len = seq_len;
-         frag_start = this->frag_loc_sample(frag_len, seq_len, eng);
-         */
+        // Sample fragment length:
+        frag_len = static_cast<uint32>(this->frag_lengths.sample(eng));
+        if (frag_len < frag_len_min) frag_len = frag_len_min;
+        if (frag_len > frag_len_max) frag_len = frag_len_max;
+
+        // Sample fragment starting position:
+        if (frag_len >= seq_len) {
+            frag_len = seq_len;
+            frag_start = 0;
+        } else {
+            double u = runif_01(eng);
+            frag_start = static_cast<uint32>(u * (seq_len - frag_len + 1));
+        }
+        // Sample indels:
+        this->sample_indels(eng, frag_len);
+
+        // Set sequence spaces:
+        std::vector<uint32>& read_seq_spaces(this->constr_info.read_seq_spaces);
+        uint32 len_ = std::min(read_length, frag_len);
+        for (uint i = 0; i < read_seq_spaces.size(); i++) {
+            read_seq_spaces[i] = len_ + insertions[i].size() -
+                deletions[i].size();
+        }
+
+        return;
     }
 
 
 };
+
+
+typedef Illumina_t<RefGenome> ReferenceIllumina;
+
+
+
+/*
+ To process a `VarSet` object, I need to wrap Illumina_t<VarGenome> inside
+ another class.
+ */
+class VariantIllumina {
+
+public:
+
+    const VarSet* variants;                 // pointer to `const VarSet`
+    TableSampler variant_sampler;           // chooses which variant to use
+    Illumina_t<VarGenome> read_maker;       // makes Illumina reads
+
+    VariantIllumina() {}
+
+    // For paired-end reads:
+    VariantIllumina(const VarSet& var_set,
+                    const std::vector<double>& variant_probs,
+                    const double& frag_len_shape,
+                    const double& frag_len_scale,
+                    const uint32& frag_len_min_,
+                    const uint32& frag_len_max_,
+                    const std::vector<std::vector<std::vector<double>>>& mis_probs1,
+                    const std::vector<std::vector<std::vector<uint8>>>& quals1,
+                    const double& ins_prob1,
+                    const double& del_prob1,
+                    const std::vector<std::vector<std::vector<double>>>& mis_probs2,
+                    const std::vector<std::vector<std::vector<uint8>>>& quals2,
+                    const double& ins_prob2,
+                    const double& del_prob2)
+        : variants(&var_set),
+          variant_sampler(variant_probs),
+          read_maker(var_set[0], frag_len_shape, frag_len_scale,
+                     frag_len_min_, frag_len_max_,
+                     mis_probs1, quals1, ins_prob1, del_prob1,
+                     mis_probs2, quals2, ins_prob2, del_prob2) {};
+
+    // Single-end reads
+    VariantIllumina(const VarSet& var_set,
+                    const std::vector<double>& variant_probs,
+                    const double& frag_len_shape,
+                    const double& frag_len_scale,
+                    const uint32& frag_len_min_,
+                    const uint32& frag_len_max_,
+                    const std::vector<std::vector<std::vector<double>>>& mis_probs,
+                    const std::vector<std::vector<std::vector<uint8>>>& quals,
+                    const double& ins_prob,
+                    const double& del_prob)
+                    : variants(&var_set),
+                      variant_sampler(variant_probs),
+                      read_maker(var_set[0], frag_len_shape, frag_len_scale,
+                                 frag_len_min_, frag_len_max_,
+                                 mis_probs, quals, ins_prob, del_prob) {};
+
+    /*
+    -------------
+    `one_read` methods
+    -------------
+    */
+    // If only providing rng and id info, sample for a variant, then make read(s):
+    void one_read(std::vector<std::string>& read_quals,
+                  pcg64& eng,
+                  SequenceIdentifierInfo& ID_info) {
+        uint32 var = variant_sampler.sample(eng);
+        read_maker.sequences = &((*variants)[var]);
+        read_maker.one_read(read_quals, eng, ID_info);
+        return;
+    }
+    // If you provide a specific variant, then make read(s) from that:
+    void one_read(std::vector<std::string>& read_quals,
+                  const uint32& var,
+                  pcg64& eng,
+                  SequenceIdentifierInfo& ID_info) {
+        read_maker.sequences = &((*variants)[var]);
+        read_maker.one_read(read_quals, eng, ID_info);
+        return;
+    }
+
+
+};
+
+
 
 
 
