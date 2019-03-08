@@ -340,11 +340,11 @@ extract_profile <- function(profile_info, read_length) {
 
     nts <- sapply(profile_info, function(x) x$nt)
 
-    mis_probs <- rep(list(NA), 4)
+    qual_probs <- rep(list(NA), 4)
     quals <- rep(list(NA), 4)
-    names(mis_probs) <- names(quals) <- c("T", "C", "A", "G")
+    names(qual_probs) <- names(quals) <- c("T", "C", "A", "G")
 
-    for (nt in names(mis_probs)) {
+    for (nt in names(qual_probs)) {
         probs_nt <- lapply(profile_info[nts == nt], function(x) x$probs)
         qual_nt <- lapply(profile_info[nts == nt], function(x) x$quals)
         pos_nt <- sapply(profile_info[nts == nt], function(x) x$pos)
@@ -376,14 +376,14 @@ extract_profile <- function(profile_info, read_length) {
             qual_nt <- qual_nt[1:read_length]
             pos_nt <- pos_nt[1:read_length]
         }
-        mis_probs[[nt]] <- probs_nt
+        qual_probs[[nt]] <- probs_nt
         quals[[nt]] <- qual_nt
     }
 
     # Names no longer needed
-    names(mis_probs) <- names(quals) <- NULL
+    names(qual_probs) <- names(quals) <- NULL
 
-    return(list(mis_probs = mis_probs, quals = quals))
+    return(list(qual_probs = qual_probs, quals = quals))
 
 }
 

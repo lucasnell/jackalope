@@ -297,21 +297,21 @@ public:
                const double& frag_len_scale,
                const uint32& frag_len_min_,
                const uint32& frag_len_max_,
-               const std::vector<std::vector<std::vector<double>>>& mis_probs1,
+               const std::vector<std::vector<std::vector<double>>>& qual_probs1,
                const std::vector<std::vector<std::vector<uint8>>>& quals1,
                const double& ins_prob1,
                const double& del_prob1,
-               const std::vector<std::vector<std::vector<double>>>& mis_probs2,
+               const std::vector<std::vector<std::vector<double>>>& qual_probs2,
                const std::vector<std::vector<std::vector<uint8>>>& quals2,
                const double& ins_prob2,
                const double& del_prob2)
         : seqs(),
-          qual_errors{IlluminaQualityError(mis_probs1, quals1),
-                      IlluminaQualityError(mis_probs2, quals2)},
+          qual_errors{IlluminaQualityError(qual_probs1, quals1),
+                      IlluminaQualityError(qual_probs2, quals2)},
                       frag_lengths(frag_len_shape, frag_len_scale),
                       seq_lengths(seq_object.seq_sizes()),
                       sequences(&seq_object),
-                      read_length(mis_probs1[0].size()),
+                      read_length(qual_probs1[0].size()),
                       paired(true),
                       ins_probs{ins_prob1, ins_prob2},
                       del_probs{del_prob1, del_prob2},
@@ -320,7 +320,7 @@ public:
                       frag_len_min(frag_len_min_),
                       frag_len_max(frag_len_max_),
                       constr_info(paired, read_length) {
-                          if (mis_probs1[0].size() != mis_probs2[0].size()) {
+                          if (qual_probs1[0].size() != qual_probs2[0].size()) {
                               stop("In Illumina_t constr., read lengths for R1 and R2 don't match.");
                           }
                           this->construct_seqs();
@@ -331,16 +331,16 @@ public:
                const double& frag_len_scale,
                const uint32& frag_len_min_,
                const uint32& frag_len_max_,
-               const std::vector<std::vector<std::vector<double>>>& mis_probs,
+               const std::vector<std::vector<std::vector<double>>>& qual_probs,
                const std::vector<std::vector<std::vector<uint8>>>& quals,
                const double& ins_prob,
                const double& del_prob)
         : seqs(),
-          qual_errors{IlluminaQualityError(mis_probs, quals)},
+          qual_errors{IlluminaQualityError(qual_probs, quals)},
           frag_lengths(frag_len_shape, frag_len_scale),
           seq_lengths(seq_object.seq_sizes()),
           sequences(&seq_object),
-          read_length(mis_probs[0].size()),
+          read_length(qual_probs[0].size()),
           paired(false),
           ins_probs{ins_prob},
           del_probs{del_prob},
@@ -520,11 +520,11 @@ public:
                     const double& frag_len_scale,
                     const uint32& frag_len_min_,
                     const uint32& frag_len_max_,
-                    const std::vector<std::vector<std::vector<double>>>& mis_probs1,
+                    const std::vector<std::vector<std::vector<double>>>& qual_probs1,
                     const std::vector<std::vector<std::vector<uint8>>>& quals1,
                     const double& ins_prob1,
                     const double& del_prob1,
-                    const std::vector<std::vector<std::vector<double>>>& mis_probs2,
+                    const std::vector<std::vector<std::vector<double>>>& qual_probs2,
                     const std::vector<std::vector<std::vector<uint8>>>& quals2,
                     const double& ins_prob2,
                     const double& del_prob2)
@@ -532,8 +532,8 @@ public:
           variant_sampler(variant_probs),
           read_maker(var_set[0], frag_len_shape, frag_len_scale,
                      frag_len_min_, frag_len_max_,
-                     mis_probs1, quals1, ins_prob1, del_prob1,
-                     mis_probs2, quals2, ins_prob2, del_prob2) {};
+                     qual_probs1, quals1, ins_prob1, del_prob1,
+                     qual_probs2, quals2, ins_prob2, del_prob2) {};
 
     // Single-end reads
     VariantIllumina(const VarSet& var_set,
@@ -542,7 +542,7 @@ public:
                     const double& frag_len_scale,
                     const uint32& frag_len_min_,
                     const uint32& frag_len_max_,
-                    const std::vector<std::vector<std::vector<double>>>& mis_probs,
+                    const std::vector<std::vector<std::vector<double>>>& qual_probs,
                     const std::vector<std::vector<std::vector<uint8>>>& quals,
                     const double& ins_prob,
                     const double& del_prob)
@@ -550,7 +550,7 @@ public:
           variant_sampler(variant_probs),
           read_maker(var_set[0], frag_len_shape, frag_len_scale,
                      frag_len_min_, frag_len_max_,
-                     mis_probs, quals, ins_prob, del_prob) {};
+                     qual_probs, quals, ins_prob, del_prob) {};
 
     /*
      -------------
