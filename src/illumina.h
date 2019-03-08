@@ -359,41 +359,30 @@ public:
                   pcg64& eng,
                   SequenceIdentifierInfo& ID_info) {
 
-        uint32 n_reads = this->ins_probs.size();
-        if (read_quals.size() != n_reads) read_quals.resize(n_reads);
+        /*
+         Sample fragment info, and set the sequence space(s) required for these read(s).
+         */
+        this->seq_indels_frag(eng);
 
-        // If we sampled a very small fragment, it'll reduce read length:
-        uint32 real_read_length = std::min(read_length, this->constr_info.frag_len);
+        // Fill the reads and qualities
+        this->fill_strings(read_quals, eng, ID_info);
 
-        // Boolean for whether we take the reverse side first:
-        bool reverse = runif_01(eng) < 0.5;
-        for (uint32 i = 0; i < n_reads; i++) {
-            ID_info.read = i + 1;
-            std::string& read(this->constr_info.reads[i]);
-            std::string& qual(this->constr_info.quals[i]);
+        return;
+    }
 
-            // Read starting location:
-            uint32 start = this->constr_info.frag_start;
-            if (reverse) start += (this->constr_info.frag_len -
-                this->constr_info.read_seq_spaces[i]);
+    /*
+     Same as above, but for a PCR duplicate. It's assumed that `one_read` has been
+     run once before.
+     */
+    void re_read(std::vector<std::string>& read_quals,
+                  pcg64& eng,
+                  SequenceIdentifierInfo& ID_info) {
 
-            // Now fill `read` from `sequences` field:
-            (*(this->sequences))[this->constr_info.seq_ind].fill_seq(read, start,
-             this->constr_info.read_seq_spaces[i]);
+        // Here I'm just re-doing indels bc it's a PCR duplicate.
+        this->just_indels(eng);
 
-            // Reverse-complement `read` if taking reverse side:
-            if (reverse) rev_comp(read);
-
-            // Sample mapping quality and add errors to read:
-            qual_errors[i].fill_read_qual(read, qual, insertions[i], deletions[i],
-                                          real_read_length, eng);
-
-            // If doing paired reads, the second one should be the reverse of the first
-            reverse = !reverse;
-
-            // Combine into 4 lines of output per read:
-            read_quals[i] = ID_info.get_id_line() + '\n' + read + "\n+\n" + qual;
-        }
+        // Fill the reads and qualities
+        this->fill_strings(read_quals, eng, ID_info);
 
         return;
     }
@@ -465,7 +454,7 @@ protected:
         uint32 seq_len = (*(this->sequences))[seq_ind].size();
 
         // Sample fragment length:
-        frag_len = static_cast<uint32>(this->frag_lengths.sample(eng));
+        frag_len = static_cast<uint32>(this->frag_lengths(eng));
         if (frag_len < frag_len_min) frag_len = frag_len_min;
         if (frag_len > frag_len_max) frag_len = frag_len_max;
 
@@ -486,6 +475,78 @@ protected:
         for (uint i = 0; i < read_seq_spaces.size(); i++) {
             read_seq_spaces[i] = len_ + insertions[i].size() -
                 deletions[i].size();
+        }
+
+        return;
+    }
+
+
+    /*
+     Same as above, but for PCR duplicates.
+     This means skipping the sequence and fragment info parts.
+     */
+    inline void just_indels(pcg64& eng) {
+
+        const uint32& frag_len(this->constr_info.frag_len);
+        // Sample indels:
+        this->sample_indels(eng, frag_len);
+
+        // Set sequence spaces:
+        std::vector<uint32>& read_seq_spaces(this->constr_info.read_seq_spaces);
+        uint32 len_ = std::min(read_length, frag_len);
+        for (uint i = 0; i < read_seq_spaces.size(); i++) {
+            read_seq_spaces[i] = len_ + insertions[i].size() -
+                deletions[i].size();
+        }
+
+        return;
+    }
+
+
+
+    /*
+     Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality).
+     This function does NOT do anything with fragments.
+     That should be done outside this function.
+     */
+    void fill_strings(std::vector<std::string>& read_quals,
+                      pcg64& eng,
+                      SequenceIdentifierInfo& ID_info) {
+
+        uint32 n_reads = this->ins_probs.size();
+        if (read_quals.size() != n_reads) read_quals.resize(n_reads);
+
+        // If we sampled a very small fragment, it'll reduce read length:
+        uint32 real_read_length = std::min(read_length, this->constr_info.frag_len);
+
+        // Boolean for whether we take the reverse side first:
+        bool reverse = runif_01(eng) < 0.5;
+        for (uint32 i = 0; i < n_reads; i++) {
+            ID_info.read = i + 1;
+            std::string& read(this->constr_info.reads[i]);
+            std::string& qual(this->constr_info.quals[i]);
+
+            // Read starting location:
+            uint32 start = this->constr_info.frag_start;
+            if (reverse) start += (this->constr_info.frag_len -
+                this->constr_info.read_seq_spaces[i]);
+
+            // Now fill `read` from `sequences` field:
+            (*(this->sequences))[this->constr_info.seq_ind].fill_seq(read, start,
+             this->constr_info.read_seq_spaces[i]);
+
+            // Reverse-complement `read` if taking reverse side:
+            if (reverse) rev_comp(read);
+
+            // Sample mapping quality and add errors to read:
+            qual_errors[i].fill_read_qual(read, qual, insertions[i], deletions[i],
+                                          real_read_length, eng);
+
+            // If doing paired reads, the second one should be the reverse of the first
+            reverse = !reverse;
+
+            // Combine into 4 lines of output per read:
+            read_quals[i] = ID_info.get_id_line() + '\n' + read + "\n+\n" + qual;
         }
 
         return;
@@ -573,6 +634,27 @@ public:
                   SequenceIdentifierInfo& ID_info) {
         read_maker.sequences = &((*variants)[var]);
         read_maker.one_read(read_quals, eng, ID_info);
+        return;
+    }
+    /*
+     -------------
+     `re_read` methods (for PCR duplicates)
+     -------------
+     */
+    void re_read(std::vector<std::string>& read_quals,
+                  pcg64& eng,
+                  SequenceIdentifierInfo& ID_info) {
+        uint32 var = variant_sampler.sample(eng);
+        read_maker.sequences = &((*variants)[var]);
+        read_maker.re_read(read_quals, eng, ID_info);
+        return;
+    }
+    void re_read(std::vector<std::string>& read_quals,
+                  const uint32& var,
+                  pcg64& eng,
+                  SequenceIdentifierInfo& ID_info) {
+        read_maker.sequences = &((*variants)[var]);
+        read_maker.re_read(read_quals, eng, ID_info);
         return;
     }
 
