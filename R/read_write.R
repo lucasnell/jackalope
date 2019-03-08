@@ -312,9 +312,80 @@ find_profile_file <- function(profile_name, read_length, read) {
         profile_name <- paste0(profile_lookup$file_name[criteria][1], ".txt")
         profile_name <- system.file("art_profiles", profile_name, package = "gemino",
                                     mustWork = TRUE)
+
+        return(profile_name)
 }
 
 
+
+
+
+
+
+
+#' Extract needed info from profile's information and check it for validity.
+#'
+#' @param profile_info List of info read from the profile file.
+#' @inheritParams read_profile
+#'
+#' @noRd
+#'
+extract_profile <- function(profile_info, read_length) {
+
+    pos <- sapply(profile_info, function(x) x$pos)
+    if (min(pos) > 0) stop("\nMinimum profile position should be zero.", call. = FALSE)
+    if (max(pos) < (read_length-1)) {
+        stop("\nMaximum profile position should be >= read_length - 1.", call. = FALSE)
+    }
+
+    nts <- sapply(profile_info, function(x) x$nt)
+
+    mis_probs <- rep(list(NA), 4)
+    quals <- rep(list(NA), 4)
+    names(mis_probs) <- names(quals) <- c("T", "C", "A", "G")
+
+    for (nt in names(mis_probs)) {
+        probs_nt <- lapply(profile_info[nts == nt], function(x) x$probs)
+        qual_nt <- lapply(profile_info[nts == nt], function(x) x$quals)
+        pos_nt <- sapply(profile_info[nts == nt], function(x) x$pos)
+        if (!identical(0:(length(pos_nt) - 1), pos_nt)) {
+            stop("\nFor nucleotide ", nt, " in the profile, the positions ",
+                 "aren't a vector from 0 to length(positions) - 1.", call. = FALSE)
+        }
+        if (length(probs_nt) != length(qual_nt)) {
+            stop("\nFor nucleotide ", nt, " in the profile, the number of ",
+                 "positions for qualities isn't the same as for the quality ",
+                 "probabilities.", call. = FALSE)
+        }
+        if (length(probs_nt) < read_length) {
+            stop("\nFor nucleotide ", nt, " in the profile, it doesn't provide at ",
+                 "least as many positions as your desired read length.", call. = FALSE)
+        }
+        if (any(sapply(probs_nt, length) != sapply(qual_nt, length))) {
+            stop("\nFor nucleotide ", nt, " in the profile, at least ",
+                 "one of the positions has a number of qualities that doesn't ",
+                 "match with the number of quality probabilities.", call. = FALSE)
+        }
+        # Order by position:
+        probs_nt <- probs_nt[order(pos_nt)]
+        qual_nt <- qual_nt[order(pos_nt)]
+        pos_nt <- pos_nt[order(pos_nt)]
+        # Remove unnecessary positions if necessary:
+        if (length(probs_nt) > read_length) {
+            probs_nt <- probs_nt[1:read_length]
+            qual_nt <- qual_nt[1:read_length]
+            pos_nt <- pos_nt[1:read_length]
+        }
+        mis_probs[[nt]] <- probs_nt
+        quals[[nt]] <- qual_nt
+    }
+
+    # Names no longer needed
+    names(mis_probs) <- names(quals) <- NULL
+
+    return(list(mis_probs = mis_probs, quals = quals))
+
+}
 
 
 
@@ -372,56 +443,10 @@ read_profile <- function(profile_name, read_length, read) {
                })
 
 
-    pos <- sapply(profile_info, function(x) x$pos)
-    if (min(pos) > 0) stop("\nMinimum profile position should be zero.", call. = FALSE)
-    if (max(pos) < (read_length-1)) {
-        stop("\nMaximum profile position should be >= read_length - 1.", call. = FALSE)
-    }
+    final_info <- extract_profile(profile_info, read_length)
 
-    nts <- sapply(profile_info, function(x) x$nt)
-
-    mis_probs <- rep(list(NA), 4)
-    quals <- rep(list(NA), 4)
-    names(mis_probs) <- names(quals) <- c("T", "C", "A", "G")
-
-    for (nt in names(mis_probs)) {
-        probs_nt <- lapply(profile_info[nts == nt], function(x) x$probs)
-        qual_nt <- lapply(profile_info[nts == nt], function(x) x$quals)
-        pos_nt <- sapply(profile_info[nts == nt], function(x) x$pos)
-        if (!identical(0:(length(pos_nt) - 1), pos_nt)) {
-            stop("\nFor nucleotide ", nt, " in the profile, the positions ",
-                 "aren't a vector from 0 to length(positions) - 1.", call. = FALSE)
-        }
-        if (length(probs_nt) != length(qual_nt)) {
-            stop("\nFor nucleotide ", nt, " in the profile, the number of ",
-                 "positions for qualities isn't the same as for the quality ",
-                 "probabilities.", call. = FALSE)
-        }
-        if (length(probs_nt) < read_length) {
-            stop("\nFor nucleotide ", nt, " in the profile, it doesn't provide at ",
-                 "least as many positions as your desired read length.", call. = FALSE)
-        }
-        if (any(sapply(probs_nt, length) != sapply(qual_nt, length))) {
-            stop("\nFor nucleotide ", nt, " in the profile, at least ",
-                 "one of the positions has a number of qualities that doesn't ",
-                 "match with the number of quality probabilities.", call. = FALSE)
-        }
-        # Order by position:
-        probs_nt <- probs_nt[order(pos_nt)]
-        qual_nt <- qual_nt[order(pos_nt)]
-        # Remove unnecessary positions if necessary:
-        if (length(probs_nt) > read_length) {
-            probs_nt <- probs_nt[1:read_length]
-            qual_nt <- qual_nt[1:read_length]
-        }
-        mis_probs[[nt]] <- probs_nt
-        quals[[nt]] <- qual_nt
-    }
-
-    # Names no longer needed
-    names(mis_probs) <- names(quals) <- NULL
-
-    return(list(mis_probs = mis_probs, quals = quals))
+    return(final_info)
 
 }
+
 
