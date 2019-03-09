@@ -6,7 +6,7 @@
 }
 
 # Check for a single, whole number, perhaps in range
-single_whole_number <- function(x, .min, .max) {
+single_integer <- function(x, .min, .max) {
     if (is.null(x) || any(is.na(x))) return(FALSE)
     bool <- is.numeric(x) & length(x) == 1 & x %% 1 == 0
     if (!missing(.min)) bool <- bool & x >= .min

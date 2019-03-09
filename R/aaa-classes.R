@@ -532,8 +532,8 @@ variants <- R6::R6Class(
 
         add_del = function(var_ind, seq_ind, pos, n_nts) {
             private$check_pos(var_ind, seq_ind, pos)
-            if (!single_whole_number(n_nts)) {
-                stop("n_nts arg must be a single whole number", call. = FALSE)
+            if (!single_integer(n_nts)) {
+                stop("n_nts arg must be a single integer", call. = FALSE)
             }
             add_deletion(self$genomes, var_ind - 1, seq_ind - 1, n_nts, pos - 1)
             invisible(self)

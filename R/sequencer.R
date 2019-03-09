@@ -142,8 +142,8 @@ check_seq_info_inputs <- function(seq_type,
         # If set to NULL, change to 1L
         if (is.null(z)) {
             assign(x, 1L)
-        } else if (!single_whole_number(z)) {
-            stop(sprintf(err_msg, x, "NULL or a single whole number"), call. = FALSE)
+        } else if (!single_integer(z, 1)) {
+            stop(sprintf(err_msg, x, "NULL or a single whole number >= 1"), call. = FALSE)
         }
     }
     # Check that [mis_]qual_means and [mis_]qual_sds are the same size if both
@@ -162,8 +162,8 @@ check_seq_info_inputs <- function(seq_type,
 
     if (seq_type == "Illumina") {
 
-        if (!single_whole_number(read_length)) {
-            stop(sprintf(err_msg, "read_length", "a single whole number"), call. = FALSE)
+        if (!single_integer(read_length, 1)) {
+            stop(sprintf(err_msg, "read_length", "a single whole number >= 1"), call. = FALSE)
         }
         if (!is_type(paired, "logical", 1)) {
             stop(sprintf(err_msg, "paired", "a single logical"), call. = FALSE)

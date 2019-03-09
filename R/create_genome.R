@@ -30,7 +30,7 @@ create_genome <- function(n_seqs,
                           n_cores = 1) {
 
 
-    if (!single_whole_number(n_seqs, .min = 1)) {
+    if (!single_integer(n_seqs, .min = 1)) {
         stop("\nThe n_seqs argument supplied to create_genome is not a single",
              "whole number greater than 0.",
              call. = FALSE)
@@ -51,7 +51,7 @@ create_genome <- function(n_seqs,
              "vector of exactly 4 non-negative numbers.",
              call. = FALSE)
     }
-    if (!single_whole_number(n_cores, .min = 1)) {
+    if (!single_integer(n_cores, .min = 1)) {
         stop("\nThe n_cores argument supplied to create_genome is not a single",
              "whole number greater than or equal to 1.",
              call. = FALSE)
