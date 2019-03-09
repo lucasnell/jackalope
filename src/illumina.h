@@ -4,20 +4,20 @@
 
 
 #include <RcppArmadillo.h>
-#include <algorithm> // lower_bound
 #include <vector>  // vector class
 #include <string>  // string class
 #include <pcg/pcg_random.hpp> // pcg prng
 #include <random>  // distributions
 
-#include "gemino_types.h"  // uint32
+#include "gemino_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // runif_01
 #include "alias_sampler.h"  // AliasSampler
+#include "table_sampler.h"  // TableSampler
 #include "util.h"  // clear_memory
 #include "str_manip.h"  // rev_comp
-#include "sequencer.h"  // other classes
+#include "sequencer.h"  // SequenceIdentifierInfo class
 
 using namespace Rcpp;
 
@@ -263,6 +263,9 @@ private:
 
 
 
+
+
+
 /*
  Template class to combine everything for Illumina sequencing.
 
@@ -275,7 +278,7 @@ public:
 
     /* __ Samplers __ */
     // Samples index for which genome-sequence to sequence
-    TableSampler seqs;
+    AliasSampler seqs;
     // Samples Illumina qualities and errors, one `IlluminaQualityError` for each read
     std::vector<IlluminaQualityError> qual_errors;
     // Samples fragment lengths:
