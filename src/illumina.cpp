@@ -20,6 +20,7 @@ using namespace Rcpp;
 //'
 //[[Rcpp::export]]
 SEXP create_ref_ill_pe(
+        SEXP ref_genome_ptr,
         const double& frag_len_shape,
         const double& frag_len_scale,
         const uint32& frag_len_min,
@@ -32,7 +33,9 @@ SEXP create_ref_ill_pe(
         const std::vector<std::vector<std::vector<uint8>>>& quals2,
         const double& ins_prob2,
         const double& del_prob2) {
-    XPtr<ReferenceIllumina> xptr (new ReferenceIllumina(frag_len_shape, frag_len_scale,
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
+    XPtr<ReferenceIllumina> xptr (new ReferenceIllumina(*ref_genome,
+                                                        frag_len_shape, frag_len_scale,
                                                         frag_len_min, frag_len_max,
                                                         qual_probs1, quals1,
                                                         ins_prob1, del_prob1,
@@ -48,6 +51,7 @@ SEXP create_ref_ill_pe(
 //'
 //[[Rcpp::export]]
 SEXP create_ref_ill_se(
+        SEXP ref_genome_ptr,
         const double& frag_len_shape,
         const double& frag_len_scale,
         const uint32& frag_len_min,
@@ -56,7 +60,9 @@ SEXP create_ref_ill_se(
         const std::vector<std::vector<std::vector<uint8>>>& quals,
         const double& ins_prob,
         const double& del_prob) {
-    XPtr<ReferenceIllumina> xptr(new ReferenceIllumina(frag_len_shape, frag_len_scale,
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
+    XPtr<ReferenceIllumina> xptr(new ReferenceIllumina(*ref_genome,
+                                                       frag_len_shape, frag_len_scale,
                                                        frag_len_min, frag_len_max,
                                                        qual_probs, quals,
                                                        ins_prob, del_prob));
@@ -70,6 +76,7 @@ SEXP create_ref_ill_se(
 //'
 //[[Rcpp::export]]
 SEXP create_var_ill_pe(
+        SEXP var_set_ptr,
         const std::vector<double>& variant_probs,
         const double& frag_len_shape,
         const double& frag_len_scale,
@@ -83,7 +90,8 @@ SEXP create_var_ill_pe(
         const std::vector<std::vector<std::vector<uint8>>>& quals2,
         const double& ins_prob2,
         const double& del_prob2) {
-    XPtr<VariantIllumina> xptr(new VariantIllumina(variant_probs,
+    XPtr<VarSet> var_set(var_set_ptr);
+    XPtr<VariantIllumina> xptr(new VariantIllumina(*var_set, variant_probs,
                                                    frag_len_shape, frag_len_scale,
                                                    frag_len_min, frag_len_max,
                                                    qual_probs1, quals1,
@@ -102,6 +110,7 @@ SEXP create_var_ill_pe(
 //'
 //[[Rcpp::export]]
 SEXP create_var_ill_se(
+        SEXP var_set_ptr,
         const std::vector<double>& variant_probs,
         const double& frag_len_shape,
         const double& frag_len_scale,
@@ -111,7 +120,8 @@ SEXP create_var_ill_se(
         const std::vector<std::vector<std::vector<uint8>>>& quals,
         const double& ins_prob,
         const double& del_prob) {
-    XPtr<VariantIllumina> xptr(new VariantIllumina(variant_probs,
+    XPtr<VarSet> var_set(var_set_ptr);
+    XPtr<VariantIllumina> xptr(new VariantIllumina(*var_set, variant_probs,
                                                    frag_len_shape, frag_len_scale,
                                                    frag_len_min, frag_len_max,
                                                    qual_probs, quals,

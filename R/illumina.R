@@ -342,8 +342,8 @@ check_illumina_args <- function(seq_object,
     for (x in c("frag_mean", "frag_sd", "ins_prob1", "del_prob1",
                 "ins_prob2", "del_prob2")) {
         z <- eval(parse(text = x))
-        if (!is.null(z) && (!single_number(z) || z <= 0)) {
-            stop(sprintf(err_msg, x, "NULL or a single number > 0"), call. = FALSE)
+        if (!single_number(z) || z <= 0) {
+            stop(sprintf(err_msg, x, "a single number > 0"), call. = FALSE)
         }
     }
     for (x in c("seq_sys", "profile1", "profile2")) {
@@ -439,16 +439,36 @@ make_illumina_sampler <- function(seq_object,
         prof_info1 <- read_profile(profile1, seq_sys, read_length, 1)
         prof_info2 <- read_profile(profile2, seq_sys, read_length, 2)
         if (inherits(seq_object, "ref_genome")) {
-            # seq_object$genome
+            sampler <- create_ref_ill_pe(seq_object$genome,
+                                         frag_len_shape, frag_len_scale,
+                                         frag_len_min, frag_len_max,
+                                         prof_info1$qual_probs, prof_info1$quals,
+                                         ins_prob1, del_prob1,
+                                         prof_info2$qual_probs, prof_info2$quals,
+                                         ins_prob2, del_prob2)
         } else if (inherits(seq_object, "variants")) {
-            # seq_object$genomes
+            sampler <- create_var_ill_pe(seq_object$genomes, variant_probs,
+                                         frag_len_shape, frag_len_scale,
+                                         frag_len_min, frag_len_max,
+                                         prof_info1$qual_probs, prof_info1$quals,
+                                         ins_prob1, del_prob1,
+                                         prof_info2$qual_probs, prof_info2$quals,
+                                         ins_prob2, del_prob2)
         }
     } else {
         prof_info <- list(read_profile(profile1, seq_sys, read_length, 1))
         if (inherits(seq_object, "ref_genome")) {
-            # seq_object$genome
+            sampler <- create_ref_ill_se(seq_object$genome,
+                                         frag_len_shape, frag_len_scale,
+                                         frag_len_min, frag_len_max,
+                                         prof_info$qual_probs, prof_info$quals,
+                                         ins_prob1, del_prob1)
         } else if (inherits(seq_object, "variants")) {
-            # seq_object$genomes
+            sampler <- create_var_ill_se(seq_object$genomes, variant_probs,
+                                         frag_len_shape, frag_len_scale,
+                                         frag_len_min, frag_len_max,
+                                         prof_info$qual_probs, prof_info$quals,
+                                         ins_prob1, del_prob1)
         }
     }
 
