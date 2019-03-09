@@ -4,7 +4,7 @@
 #'
 #' @noRd
 #'
-builtin_ill_profiles <- function() {
+builtin_illumina_profiles <- function() {
     profiles <- read.csv(
         text = paste('"name","read_length","read","file_name","abbrev"',
                      '"Genome Analyzer I",36,1,"EmpR36R1","GA1"',
@@ -82,7 +82,7 @@ seq_sys_by_read_length <- function(read_length) {
 #'
 find_profile_file <- function(seq_sys, read_length, read) {
 
-    profile_df <- builtin_ill_profiles()
+    profile_df <- builtin_illumina_profiles()
 
     criteria1 <- profile_df$name == seq_sys | profile_df$abbrev == seq_sys
     if (sum(criteria1) == 0) {
@@ -284,61 +284,17 @@ read_profile <- function(profile_fn, seq_sys, read_length, read) {
 #'
 #' - const RefGenome& seq_object
 #'
-#' For both, paired reads:
-#'
-#' - const double& frag_len_shape
-#' - const double& frag_len_scale
-#' - const uint32& frag_len_min_
-#' - const uint32& frag_len_max_
-#' - const std::vector<std::vector<std::vector<double>>>& qual_probs1
-#' - const std::vector<std::vector<std::vector<uint8>>>& quals1
-#' - const double& ins_prob1
-#' - const double& del_prob1
-#' - const std::vector<std::vector<std::vector<double>>>& qual_probs2
-#' - const std::vector<std::vector<std::vector<uint8>>>& quals2
-#' - const double& ins_prob2
-#' - const double& del_prob2
-#'
-#' For both, single-end reads:
-#'
-#' - const double& frag_len_shape
-#' - const double& frag_len_scale
-#' - const uint32& frag_len_min_
-#' - const uint32& frag_len_max_
-#' - const std::vector<std::vector<std::vector<double>>>& qual_probs
-#' - const std::vector<std::vector<std::vector<uint8>>>& quals
-#' - const double& ins_prob
-#' - const double& del_prob
-#'
-#'
-
 
 #'
-# make_illumina_info <- function(read_length = 100,
-#                                paired = FALSE,
-#                                frag_len_probs = NULL,
-#                                frag_len_region_len = NULL,
-#                                qual_probs = NULL,
-#                                ins_probs = NULL,
-#                                del_probs = NULL,
-#                                error_region_len = NULL,
-#                                ins_length_probs = NULL,
-#                                del_length_probs = NULL,
-#                                qual_means = NULL,
-#                                qual_sds = NULL,
-#                                qual_region_len = NULL,
-#                                mis_qual_means = NULL,
-#                                mis_qual_sds = NULL,
-#                                mis_qual_region_len = NULL) {
-
-source(textConnection(readLines("R/util.R")[8:30]))
-source(textConnection(readLines("R/read_write.R")[240:452]))
-
+#' ARGUMENTS FOR FULL ILLUMINA SEQUENCING FUNCTION:
+#'
+#' seq_object
 #' read_length,
 #' paired,
 #' frag_mean,
 #' frag_sd,
-#' profile1,
+#' seq_sys = NULL,
+#' profile1 = NULL,
 #' profile2 = NULL,
 #' ins_prob1 = 0.00009
 #' del_prob1 = 0.00011
@@ -346,56 +302,163 @@ source(textConnection(readLines("R/read_write.R")[240:452]))
 #' del_prob2 = 0.00023
 #' frag_len_min = NULL,
 #' frag_len_max = NULL
+#' variant_probs = NULL
+#'
 
-err_msg <- sprintf(paste("\nWhen providing info for the Illumina sequencer,",
-                         "the `%s` argument must be %s."), "%s", "%s")
 
-if (!single_integer(read_length, 1)) {
-    stop(sprintf(err_msg, "read_length", "a single whole number >= 1"), call. = FALSE)
-}
-for (x in c("frag_len_min", "frag_len_max")) {
-    z <- eval(parse(text = x))
-    if (!is.null(z) && !single_integer(z, 1)) {
-        stop(sprintf(err_msg, x, "NULL or a single whole number >= 1"), call. = FALSE)
+
+#' Check Illumina arguments for validity.
+#'
+#' @inheritParams make_illumina_sampler
+#'
+#'
+#' @noRd
+#'
+check_illumina_args <- function(seq_object,
+                                read_length, paired,
+                                frag_mean, frag_sd,
+                                seq_sys, profile1, profile2,
+                                ins_prob1, del_prob1,
+                                ins_prob2, del_prob2,
+                                frag_len_min, frag_len_max,
+                                variant_probs) {
+
+    # Checking types:
+    err_msg <- sprintf(paste("\nWhen providing info for the Illumina sequencer,",
+                             "the `%s` argument must be %s."), "%s", "%s")
+
+    if (!inherits(seq_object, c("ref_genome", "variants"))) {
+        stop("\nWhen providing info for the Illumina sequencer, ",
+             "the object providing the sequence information should be ",
+             "of class \"ref_genome\" or \"variants\".", call. = FALSE)
     }
-}
-for (x in c("frag_mean",
-            "frag_sd",
-            "ins_prob1",
-            "del_prob1",
-            "ins_prob2",
-            "del_prob2")) {
-    z <- eval(parse(text = x))
-    if (!is.null(z) && !single_number(z, 0)) {
-        stop(sprintf(err_msg, x, "NULL or a single number >= 0"), call. = FALSE)
+
+    if (!single_integer(read_length, 1)) {
+        stop(sprintf(err_msg, "read_length", "a single integer >= 1"), call. = FALSE)
     }
+    if (!is_type(paired, "logical", 1)) {
+        stop(sprintf(err_msg, "paired", "a single logical"), call. = FALSE)
+    }
+    for (x in c("frag_mean", "frag_sd", "ins_prob1", "del_prob1",
+                "ins_prob2", "del_prob2")) {
+        z <- eval(parse(text = x))
+        if (!is.null(z) && (!single_number(z) || z <= 0)) {
+            stop(sprintf(err_msg, x, "NULL or a single number > 0"), call. = FALSE)
+        }
+    }
+    for (x in c("seq_sys", "profile1", "profile2")) {
+        z <- eval(parse(text = x))
+        if (!is.null(z) && !is_type(z, "character", 1)) {
+            stop(sprintf(err_msg, x, "NULL or a single string"), call. = FALSE)
+        }
+    }
+    for (x in c("frag_len_min", "frag_len_max")) {
+        z <- eval(parse(text = x))
+        if (!is.null(z) && !single_integer(z, 1)) {
+            stop(sprintf(err_msg, x, "NULL or a single integer >= 1"), call. = FALSE)
+        }
+    }
+    if (!is.null(variant_probs) && !is_type(variant_probs, c("numeric", "integer"))) {
+        stop(sprintf(err_msg, "variant_probs", "NULL or a numeric/integer vector"),
+             call. = FALSE)
+    }
+
+    # Checking for proper profile info:
+    if (paired) {
+        if (!is.null(profile1) && is.null(profile2)) {
+            stop("\nFor Illumina paired-end reads, if you provide a custom profile for ",
+                 "read 1, you must also provide a file for read 2.", call. = FALSE)
+        } else if (is.null(profile1) && !is.null(profile2)) {
+            stop("\nFor Illumina paired-end reads, if you provide a custom profile for ",
+                 "read 2, you must also provide a file for read 1.", call. = FALSE)
+        }
+    } else if (!is.null(profile2)) {
+        stop("\nFor Illumina single-end reads, it makes no sense to provide ",
+             "a custom profile for read 2. ",
+             "Terminating here in case this was a mistake.", call. = FALSE)
+    }
+
+    # Checking proper variant_probs
+    if (!is.null(variant_probs) && !inherits(seq_object, "variants")) {
+        stop("\nFor Illumina sequencing, it makes no sense to provide ",
+             "a vector of probabilities of sequencing each variant if the ",
+             "`seq_object` argument is of class \"ref_genome\". ",
+             "Terminating here in case this was a mistake.", call. = FALSE)
+    }
+    if (!is.null(variant_probs) && inherits(seq_object, "variants") &&
+        length(variant_probs) != seq_object$n_vars()) {
+        stop(sprintf(err_msg, "variant_probs",
+                     paste("a vector of the same length as the number of variants",
+                           "in the `seq_object` argument, if `seq_object` is",
+                           "of class \"variants\". Use `seq_object$n_vars()`",
+                           "to see the number of variants")), call. = FALSE)
+    }
+
+    invisible(NULL)
 }
 
-if ((!is.null(frag_mean) && frag_mean <= 0) || (!is.null(frag_sd) && frag_sd <= 0)) {
-    stop("\nFragment size mean and SD must both be > 0.", call. = FALSE)
+
+
+#' Organize arguments and return the pointer to the sampler object.
+#'
+#' @inheritParams sequence
+#'
+#' @noRd
+#'
+make_illumina_sampler <- function(seq_object,
+                                  read_length, paired,
+                                  frag_mean, frag_sd,
+                                  seq_sys, profile1, profile2,
+                                  ins_prob1, del_prob1, ins_prob2, del_prob2,
+                                  frag_len_min, frag_len_max,
+                                  variant_probs) {
+
+    # Check for improper argument types:
+    check_ill_args(seq_object, read_length, paired, frag_mean, frag_sd, seq_sys,
+                   profile1, profile2, ins_prob1, del_prob1, ins_prob2, del_prob2,
+                   frag_len_min, frag_len_max, variant_probs)
+
+    # Change mean and SD to shape and scale of Gamma distribution:
+    frag_len_shape <- (frag_mean / frag_sd)^2
+    frag_len_scale <- frag_sd^2 / frag_mean
+
+    if (is.null(frag_len_min)) frag_len_min <- read_length
+    # (Because it's coerced to an unsigned 32-bit integer, values >= 2^32 will
+    #  make the integer "overflow" and change to something you don't want.)
+    if (is.null(frag_len_max) || frag_len_max > 2^32 - 1) frag_len_max <- 2^32 - 1
+    if (frag_len_min > frag_len_max) {
+        stop("\nFragment length min can't be less than the max. ",
+             "For computational reasons, it should also be < 2^32.", call. = FALSE)
+    }
+    if (is.null(variant_probs) && inherits(seq_object, "variants")) {
+        variant_probs <- rep(1, seq_object$n_vars())
+    }
+
+    sampler <- NULL
+    if (paired) {
+        prof_info1 <- read_profile(profile1, seq_sys, read_length, 1)
+        prof_info2 <- read_profile(profile2, seq_sys, read_length, 2)
+        if (inherits(seq_object, "ref_genome")) {
+            # seq_object$genome
+        } else if (inherits(seq_object, "variants")) {
+            # seq_object$genomes
+        }
+    } else {
+        prof_info <- list(read_profile(profile1, seq_sys, read_length, 1))
+        if (inherits(seq_object, "ref_genome")) {
+            # seq_object$genome
+        } else if (inherits(seq_object, "variants")) {
+            # seq_object$genomes
+        }
+    }
+
+    return(sampler)
 }
 
-frag_len_shape <- (frag_mean / frag_sd)^2
-frag_len_scale <- frag_sd^2 / frag_mean
 
-if (is.null(frag_len_min)) frag_len_min <- read_length
-if (is.null(frag_len_max) || frag_len_max > 2^32 - 1) frag_len_max <- 2^32 - 1
-if (frag_len_min > frag_len_max) {
-    stop("\nFragment length min can't be less than the max.", call. = FALSE)
-}
-#' seq_system = NULL,
-#' profile1 = NULL,
-#' profile2 = NULL,
 
-# LEFT OFF -----
-if (!is_type(profile1, "character", 1)) {
-    stop(sprintf(err_msg, "profile1", "a single string."), call. = FALSE)
-}
-if (!is.null(profile2) && !is_type(profile2, "character", 1)) {
-    stop(sprintf(err_msg, "profile2", "NULL or a single string."), call. = FALSE)
-}
 
-if (paired && is.null(profile2)) {
-    profile2 <- profile1
-}
+
+
+
 
