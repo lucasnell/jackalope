@@ -295,8 +295,7 @@ public:
 
     Illumina_t() {};
     // For paired-end reads:
-    Illumina_t(const T& seq_object,
-               const double& frag_len_shape,
+    Illumina_t(const double& frag_len_shape,
                const double& frag_len_scale,
                const uint32& frag_len_min_,
                const uint32& frag_len_max_,
@@ -309,28 +308,27 @@ public:
                const double& ins_prob2,
                const double& del_prob2)
         : seqs(),
-          qual_errors{IlluminaQualityError(qual_probs1, quals1),
-                      IlluminaQualityError(qual_probs2, quals2)},
-                      frag_lengths(frag_len_shape, frag_len_scale),
-                      seq_lengths(seq_object.seq_sizes()),
-                      sequences(&seq_object),
-                      read_length(qual_probs1[0].size()),
-                      paired(true),
-                      ins_probs{ins_prob1, ins_prob2},
-                      del_probs{del_prob1, del_prob2},
-                      insertions(2),
-                      deletions(2),
-                      frag_len_min(frag_len_min_),
-                      frag_len_max(frag_len_max_),
-                      constr_info(paired, read_length) {
-                          if (qual_probs1[0].size() != qual_probs2[0].size()) {
-                              stop("In Illumina_t constr., read lengths for R1 and R2 don't match.");
-                          }
-                          this->construct_seqs();
-                      }
+          qual_errors(),
+          frag_lengths(frag_len_shape, frag_len_scale),
+          seq_lengths(),
+          sequences(),
+          read_length(qual_probs1[0].size()),
+          paired(true),
+          ins_probs{ins_prob1, ins_prob2},
+          del_probs{del_prob1, del_prob2},
+          insertions(2),
+          deletions(2),
+          frag_len_min(frag_len_min_),
+          frag_len_max(frag_len_max_),
+          constr_info(paired, read_length) {
+              if (qual_probs1[0].size() != qual_probs2[0].size()) {
+                  stop("In Illumina_t constr., read lengths for R1 and R2 don't match.");
+              }
+              this->qual_errors = {IlluminaQualityError(qual_probs1, quals1),
+                                   IlluminaQualityError(qual_probs2, quals2)};
+          };
     // Single-end reads
-    Illumina_t(const T& seq_object,
-               const double& frag_len_shape,
+    Illumina_t(const double& frag_len_shape,
                const double& frag_len_scale,
                const uint32& frag_len_min_,
                const uint32& frag_len_max_,
@@ -341,8 +339,8 @@ public:
         : seqs(),
           qual_errors{IlluminaQualityError(qual_probs, quals)},
           frag_lengths(frag_len_shape, frag_len_scale),
-          seq_lengths(seq_object.seq_sizes()),
-          sequences(&seq_object),
+          seq_lengths(),
+          sequences(),
           read_length(qual_probs[0].size()),
           paired(false),
           ins_probs{ins_prob},
@@ -351,10 +349,24 @@ public:
           deletions(1),
           frag_len_min(frag_len_min_),
           frag_len_max(frag_len_max_),
-          constr_info(paired, read_length) {
-              this->construct_seqs();
-          }
+          constr_info(paired, read_length) {};
 
+
+    // Add information about a RefGenome or VarGenome object
+    void add_seq_info(const T& seq_object) {
+
+        this->seq_lengths = seq_object.seq_sizes();
+        this->sequences = &seq_object;
+
+        std::vector<double> probs_;
+        probs_.reserve(this->seq_lengths.size());
+        for (uint i = 0; i < seq_lengths.size(); i++) {
+            probs_.push_back(static_cast<double>(seq_lengths[i]));
+        }
+        this->seqs = AliasSampler(probs_);
+
+        return;
+    }
 
 
     // Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality)
@@ -402,15 +414,6 @@ protected:
     // Info to construct reads:
     ReadConstructInfo constr_info;
 
-
-    void construct_seqs() {
-        std::vector<double> probs_;
-        probs_.reserve(seq_lengths.size());
-        for (uint i = 0; i < seq_lengths.size(); i++) {
-            probs_.push_back(static_cast<double>(seq_lengths[i]));
-        }
-        seqs = TableSampler(probs_);
-    }
 
     // Sample for insertion and deletion positions
     void sample_indels(pcg64& eng, const uint32& frag_len) {
@@ -571,15 +574,23 @@ class VariantIllumina {
 
 public:
 
-    const VarSet* variants;                 // pointer to `const VarSet`
-    TableSampler variant_sampler;           // chooses which variant to use
-    Illumina_t<VarGenome> read_maker;       // makes Illumina reads
+    const VarSet* variants;                         // pointer to `const VarSet`
+    TableSampler variant_sampler;                   // chooses which variant to use
+    std::vector<Illumina_t<VarGenome>> read_makers; // makes Illumina reads
 
     VariantIllumina() {}
 
+    /*
+     ------------------------
+     Initializers
+
+     Initialization doesn't include VarSet information, so it just starts `read_makers`
+     with one item that includes all info but the `VarSet` info that will come later.
+     ------------------------
+     */
+
     // For paired-end reads:
-    VariantIllumina(const VarSet& var_set,
-                    const std::vector<double>& variant_probs,
+    VariantIllumina(const std::vector<double>& variant_probs,
                     const double& frag_len_shape,
                     const double& frag_len_scale,
                     const uint32& frag_len_min_,
@@ -592,16 +603,15 @@ public:
                     const std::vector<std::vector<std::vector<uint8>>>& quals2,
                     const double& ins_prob2,
                     const double& del_prob2)
-        : variants(&var_set),
+        : variants(),
           variant_sampler(variant_probs),
-          read_maker(var_set[0], frag_len_shape, frag_len_scale,
-                     frag_len_min_, frag_len_max_,
-                     qual_probs1, quals1, ins_prob1, del_prob1,
-                     qual_probs2, quals2, ins_prob2, del_prob2) {};
+          read_makers{Illumina_t<VarGenome>(frag_len_shape, frag_len_scale,
+                                            frag_len_min_, frag_len_max_,
+                                            qual_probs1, quals1, ins_prob1, del_prob1,
+                                            qual_probs2, quals2, ins_prob2, del_prob2)}{};
 
     // Single-end reads
-    VariantIllumina(const VarSet& var_set,
-                    const std::vector<double>& variant_probs,
+    VariantIllumina(const std::vector<double>& variant_probs,
                     const double& frag_len_shape,
                     const double& frag_len_scale,
                     const uint32& frag_len_min_,
@@ -610,11 +620,28 @@ public:
                     const std::vector<std::vector<std::vector<uint8>>>& quals,
                     const double& ins_prob,
                     const double& del_prob)
-        : variants(&var_set),
+        : variants(),
           variant_sampler(variant_probs),
-          read_maker(var_set[0], frag_len_shape, frag_len_scale,
-                     frag_len_min_, frag_len_max_,
-                     qual_probs, quals, ins_prob, del_prob) {};
+          read_makers{Illumina_t<VarGenome>(frag_len_shape, frag_len_scale,
+                                            frag_len_min_, frag_len_max_,
+                                            qual_probs, quals, ins_prob, del_prob)} {};
+
+
+    // Add VarSet information:
+    void add_seq_info(const VarSet& var_set) {
+        this->variants = &var_set;
+        Illumina_t<VarGenome>& initial_info(read_makers[0]);
+        uint32 n_vars = var_set.size();
+        read_makers.reserve(n_vars);
+        // Add all but the first read maker:
+        for (uint32 i = 1; i < n_vars; i++) {
+            read_makers.push_back(initial_info);
+            read_makers.back().add_seq_info(var_set[i]);
+        }
+        // Now update the first read maker:
+        initial_info.add_seq_info(var_set[0]);
+        return;
+    }
 
     /*
      -------------
@@ -625,18 +652,17 @@ public:
     void one_read(std::vector<std::string>& read_quals,
                   pcg64& eng,
                   SequenceIdentifierInfo& ID_info) {
-        uint32 var = variant_sampler.sample(eng);
-        read_maker.sequences = &((*variants)[var]);
-        read_maker.one_read(read_quals, eng, ID_info);
+        this->var = variant_sampler.sample(eng);
+        read_makers[this->var].one_read(read_quals, eng, ID_info);
         return;
     }
     // If you provide a specific variant, then make read(s) from that:
     void one_read(std::vector<std::string>& read_quals,
-                  const uint32& var,
+                  const uint32& var_,
                   pcg64& eng,
                   SequenceIdentifierInfo& ID_info) {
-        read_maker.sequences = &((*variants)[var]);
-        read_maker.one_read(read_quals, eng, ID_info);
+        this->var = var_;
+        read_makers[this->var].one_read(read_quals, eng, ID_info);
         return;
     }
     /*
@@ -647,20 +673,15 @@ public:
     void re_read(std::vector<std::string>& read_quals,
                   pcg64& eng,
                   SequenceIdentifierInfo& ID_info) {
-        uint32 var = variant_sampler.sample(eng);
-        read_maker.sequences = &((*variants)[var]);
-        read_maker.re_read(read_quals, eng, ID_info);
-        return;
-    }
-    void re_read(std::vector<std::string>& read_quals,
-                  const uint32& var,
-                  pcg64& eng,
-                  SequenceIdentifierInfo& ID_info) {
-        read_maker.sequences = &((*variants)[var]);
-        read_maker.re_read(read_quals, eng, ID_info);
+        read_makers[this->var].re_read(read_quals, eng, ID_info);
         return;
     }
 
+
+private:
+
+    // Variant to sample from. It's saved in this class in case of PCR duplicates.
+    uint32 var;
 
 };
 
