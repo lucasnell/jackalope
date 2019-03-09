@@ -236,8 +236,79 @@ read_vcf <- function(reference, method_info) {
 
 # Illumina profile ----
 
+#' Return table of information about built-in Illumina profiles.
+#'
+#' @noRd
+#'
+builtin_ill_profiles <- function() {
+    profiles <- read.csv(
+        text = paste('"name","read_length","read","file_name","abbrev"',
+                     '"Genome Analyzer I",36,1,"EmpR36R1","GA1"',
+                     '"Genome Analyzer I",36,2,"EmpR36R2","GA1"',
+                     '"Genome Analyzer I",44,1,"EmpR44R1","GA1"',
+                     '"Genome Analyzer I",44,2,"EmpR44R2","GA1"',
+                     '"Genome Analyzer II",50,1,"EmpR50R1","GA2"',
+                     '"Genome Analyzer II",50,2,"EmpR50R2","GA2"',
+                     '"MiniSeq TruSeq",50,1,"MiniSeqTruSeqL50","MinS"',
+                     '"Genome Analyzer II",75,1,"EmpR75R1","GA2"',
+                     '"Genome Analyzer II",75,2,"EmpR75R2","GA2"',
+                     '"NextSeq 500 v2",75,1,"NextSeq500v2L75R1","NS50"',
+                     '"NextSeq 500 v2",75,2,"NextSeq500v2L75R2","NS50"',
+                     '"HiSeq 1000",100,1,"Emp100R1","HS10"',
+                     '"HiSeq 1000",100,2,"Emp100R2","HS10"',
+                     '"HiSeq 2000",100,1,"HiSeq2000L100R1","HS20"',
+                     '"HiSeq 2000",100,2,"HiSeq2000L100R2","HS20"',
+                     '"HiSeq 2500",125,1,"HiSeq2500L125R1","HS25"',
+                     '"HiSeq 2500",125,2,"HiSeq2500L125R2","HS25"',
+                     '"HiSeq 2500",150,1,"HiSeq2500L150R1filter","HS25"',
+                     '"HiSeq 2500",150,2,"HiSeq2500L150R2filter","HS25"',
+                     '"HiSeqX v2.5 PCR free",150,1,"HiSeqXPCRfreeL150R1","HSXn"',
+                     '"HiSeqX v2.5 PCR free",150,2,"HiSeqXPCRfreeL150R2","HSXn"',
+                     '"HiSeqX v2.5 TruSeq",150,1,"HiSeqXtruSeqL150R1","HSXt"',
+                     '"HiSeqX v2.5 TruSeq",150,2,"HiSeqXtruSeqL150R2","HSXt"',
+                     '"MiSeq v1",250,1,"EmpMiSeq250R1","MSv1"',
+                     '"MiSeq v1",250,2,"EmpMiSeq250R2","MSv1"',
+                     '"MiSeq v3",250,1,"MiSeqv3L250R1","MSv3"',
+                     '"MiSeq v3",250,2,"MiSeqv3L250R2","MSv3"', sep = "\n"),
+        stringsAsFactors = FALSE)
+    profiles <- profiles[order(profiles$read_length),]
+    return(profiles)
+}
 
-#' Find a package-supplied ART-style Illumina profile file.
+
+
+
+#' Find a sequencing system for a built-in profile file for a given read length.
+#'
+#' @inheritParams read_profile
+#'
+#' @noRd
+#'
+seq_sys_by_read_length <- function(read_length) {
+
+    seq_sys <- ""
+    if (read_length <= 44){
+        seq_sys <- "GA1"
+    } else if (read_length <= 75){
+        seq_sys <- "GA2"
+    } else if (read_length <= 100){
+        seq_sys <- "HS20"
+    } else if (read_length <= 150){
+        seq_sys <- "HS25"
+    } else if (read_length <= 250){
+        seq_sys <- "MSv1"
+    } else {
+        stop("\nNo built-in Illumina profile can generate reads of length ",
+             paste(read_length), ".", call. = FALSE)
+    }
+
+    return(seq_sys)
+}
+
+
+
+
+#' Find a built-in, ART-style Illumina profile file.
 #'
 #' @inheritParams read_profile
 #'
@@ -245,75 +316,38 @@ read_vcf <- function(reference, method_info) {
 #'
 #' @noRd
 #'
-find_profile_file <- function(profile_name, read_length, read) {
+find_profile_file <- function(seq_sys, read_length, read) {
 
-    abbrevs <- list(GA1 = "Genome Analyzer I",
-                    GA2 = "Genome Analyzer II",
-                    HS10 = "HiSeq 1000",
-                    HS20 = "HiSeq 2000",
-                    HS25 = "HiSeq 2500",
-                    MSv1 = "MiSeq v1",
-                    MSv3 = "MiSeq v3",
-                    MinS = "MiniSeq TruSeq",
-                    NS50 = "NextSeq 500 v2",
-                    HSXn = "HiSeqX v2.5 PCR free",
-                    HSXt = "HiSeqX v2.5 TruSeq")
-    if (profile_name %in% names(abbrevs)) {
-        profile_name <- abbrevs[[profile_name]]
+    profile_df <- builtin_ill_profiles()
+
+    criteria1 <- profile_df$name == seq_sys | profile_df$abbrev == seq_sys
+    if (sum(criteria1) == 0) {
+        print(profile_df[!duplicated(profile_df$name), c("name", "abbrev")],
+              row.names = FALSE)
+        stop("\nThe desired Illumina platform name isn't available. ",
+             "See printed data frame above for names and abbreviations of ",
+             "those available.", call. = FALSE)
     }
-    profile_lookup <- read.csv(text =
-                                   "name,read_length,read,file_name
-                               Genome Analyzer I,36,1,EmpR36R1
-                               Genome Analyzer I,36,2,EmpR36R2
-                               Genome Analyzer I,44,1,EmpR44R1
-                               Genome Analyzer I,44,2,EmpR44R2
-                               Genome Analyzer II,50,1,EmpR50R1
-                               Genome Analyzer II,50,2,EmpR50R2
-                               Genome Analyzer II,75,1,EmpR75R1
-                               Genome Analyzer II,75,2,EmpR75R2
-                               HiSeq 1000,100,1,Emp100R1
-                               HiSeq 1000,100,2,Emp100R2
-                               MiSeq v1,250,1,EmpMiSeq250R1
-                               MiSeq v1,250,2,EmpMiSeq250R2
-                               HiSeq 2000,100,1,HiSeq2000L100R1
-                               HiSeq 2000,100,2,HiSeq2000L100R2
-                               HiSeq 2500,125,1,HiSeq2500L125R1
-                               HiSeq 2500,125,2,HiSeq2500L125R2
-                               HiSeq 2500,150,1,HiSeq2500L150R1filter
-                               HiSeq 2500,150,2,HiSeq2500L150R2filter
-                               MiniSeq TruSeq,50,1,MiniSeqTruSeqL50
-                               MiSeq v3,250,1,MiSeqv3L250R1
-                               MiSeq v3,250,2,MiSeqv3L250R2
-                               NextSeq 500 v2,75,1,NextSeq500v2L75R1
-                               NextSeq 500 v2,75,2,NextSeq500v2L75R2
-                               HiSeqX v2.5 PCR free,150,1,HiSeqXPCRfreeL150R1
-                               HiSeqX v2.5 PCR free,150,2,HiSeqXPCRfreeL150R2
-                               HiSeqX v2.5 TruSeq,150,1,HiSeqXtruSeqL150R1
-                               HiSeqX v2.5 TruSeq,150,2,HiSeqXtruSeqL150R2",
-                     stringsAsFactors = FALSE)
-        profile_lookup$name <- trimws(profile_lookup$name)
-        profile_lookup <- profile_lookup[order(profile_lookup$read_length),]
-        criteria <- profile_lookup$name == profile_name
-        if (sum(criteria) == 0) {
-            stop("\nThe desired Illumina platform name isn't available.", call. = FALSE)
-        }
-        criteria <- criteria & profile_lookup$read_length >= read_length
-        if (sum(criteria) == 0) {
-            stop("\nFor the desired Illumina platform, this package doesn't have ",
-                 "a read length that's as long as you want.", call. = FALSE)
-        }
-        criteria <- criteria & profile_lookup$read == read
-        if (sum(criteria) == 0) {
-            stop("\nFor the desired Illumina platform of read length ",
-                 paste(read_length), ", this package only has ",
-                 "a profile for read number ",
-                 paste(ifelse(read == 1, 2, 1)), ".", call. = FALSE)
-        }
-        profile_name <- paste0(profile_lookup$file_name[criteria][1], ".txt")
-        profile_name <- system.file("art_profiles", profile_name, package = "gemino",
-                                    mustWork = TRUE)
+    criteria2 <- criteria1 & profile_df$read_length >= read_length
+    if (sum(criteria2) == 0) {
+        cat(paste(unique(profile_df$read_length[criteria1]), collapse = " "), "\n")
+        stop("\nFor the desired Illumina platform, this package doesn't have ",
+             "a read length that's as long as you want. ",
+             "See printed values above for lengths that are available.",
+             call. = FALSE)
+    }
+    criteria3 <- criteria2 & profile_df$read == read
+    if (sum(criteria3) == 0) {
+        stop("\nFor the desired Illumina platform and read length, ",
+             "this package only has a profile for read number ",
+             paste(ifelse(read == 1, 2, 1)), ".", call. = FALSE)
+    }
 
-        return(profile_name)
+    profile_fn <- paste0(profile_df$file_name[criteria3][1], ".txt")
+    profile_fn <- system.file("art_profiles", profile_fn, package = "gemino",
+                                mustWork = TRUE)
+
+    return(profile_fn)
 }
 
 
@@ -323,14 +357,14 @@ find_profile_file <- function(profile_name, read_length, read) {
 
 
 
-#' Extract needed info from profile's information and check it for validity.
+#' Check profile's information for validity and format it for use in a sampler class.
 #'
 #' @param profile_info List of info read from the profile file.
 #' @inheritParams read_profile
 #'
 #' @noRd
 #'
-extract_profile <- function(profile_info, read_length) {
+format_profile <- function(profile_info, read_length) {
 
     pos <- sapply(profile_info, function(x) x$pos)
     if (min(pos) > 0) stop("\nMinimum profile position should be zero.", call. = FALSE)
@@ -392,9 +426,11 @@ extract_profile <- function(profile_info, read_length) {
 
 #' Read an ART-style Illumina profile file.
 #'
-#' @param profile_name File name of ART-style profile file for Illumina reads.
-#'     If this argument doesn't end in `.txt`, then it's assumed it's the name of
-#'     an Illumina platform with profile(s) saved in the package.
+#' Note: this function will need to be run twice for paired-end reads.
+#'
+#' @param profile_fn File name of custom ART-style profile file for Illumina reads.
+#'     If this argument must end in `.txt`.
+#' @param seq_sys The name of an Illumina platform with profile(s) saved in the package.
 #' @param read_length Desired read length. Used to shorten the output vectors of
 #'     qualities and quality-probabilities if `read_length` is less than the number of
 #'     positions specified in the profile.
@@ -406,15 +442,17 @@ extract_profile <- function(profile_info, read_length) {
 #'
 #' @noRd
 #'
-read_profile <- function(profile_name, read_length, read) {
+read_profile <- function(profile_fn, seq_sys, read_length, read) {
 
-    if (!grepl(".txt$", profile_name)) {
-        profile_name <- find_profile_file(profile_name, read_length, read)
+    if (is.null(profile_fn) && is.null(seq_sys)) {
+        seq_sys <- seq_sys_by_read_length(read_length)
+    }
+    if (is.null(profile_fn)) {
+        profile_fn <- find_profile_file(seq_sys, read_length, read)
     }
 
-    profile_str <- readLines(profile_name)
-    profile_str <- profile_str[profile_str != ""]
-    profile_str <- profile_str[!grepl("^\\.|^#|^N", profile_str)]
+    profile_str <- readLines(profile_fn)
+    profile_str <- profile_str[grepl("^T|^C|^A|^G", profile_str)]
     profile_str <- strsplit(profile_str, "\t")
     profile_info <-
         lapply(seq(1, length(profile_str), 2),
@@ -443,7 +481,7 @@ read_profile <- function(profile_name, read_length, read) {
                })
 
 
-    final_info <- extract_profile(profile_info, read_length)
+    final_info <- format_profile(profile_info, read_length)
 
     return(final_info)
 
