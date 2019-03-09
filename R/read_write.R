@@ -263,33 +263,33 @@ find_profile_file <- function(profile_name, read_length, read) {
     }
     profile_lookup <- read.csv(text =
                                    "name,read_length,read,file_name
-                               Genome Analyzer I,36,1,QUAL_DIST_ONE36
-                               Genome Analyzer I,36,2,QUAL_DIST_TWO36
-                               Genome Analyzer I,44,1,QUAL_DIST_ONE44
-                               Genome Analyzer I,44,2,QUAL_DIST_TWO44
-                               Genome Analyzer II,50,1,QUAL_DIST_ONE50
-                               Genome Analyzer II,50,2,QUAL_DIST_TWO50
-                               Genome Analyzer II,75,1,QUAL_DIST_ONE75
-                               Genome Analyzer II,75,2,QUAL_DIST_TWO75
-                               HiSeq 1000,100,1,QUAL_DIST_ONE100
-                               HiSeq 1000,100,2,QUAL_DIST_TWO100
-                               MiSeq v1,250,1,QUAL_DIST_ONE250
-                               MiSeq v1,250,2,QUAL_DIST_TWO250
+                               Genome Analyzer I,36,1,EmpR36R1
+                               Genome Analyzer I,36,2,EmpR36R2
+                               Genome Analyzer I,44,1,EmpR44R1
+                               Genome Analyzer I,44,2,EmpR44R2
+                               Genome Analyzer II,50,1,EmpR50R1
+                               Genome Analyzer II,50,2,EmpR50R2
+                               Genome Analyzer II,75,1,EmpR75R1
+                               Genome Analyzer II,75,2,EmpR75R2
+                               HiSeq 1000,100,1,Emp100R1
+                               HiSeq 1000,100,2,Emp100R2
+                               MiSeq v1,250,1,EmpMiSeq250R1
+                               MiSeq v1,250,2,EmpMiSeq250R2
                                HiSeq 2000,100,1,HiSeq2000L100R1
                                HiSeq 2000,100,2,HiSeq2000L100R2
                                HiSeq 2500,125,1,HiSeq2500L125R1
                                HiSeq 2500,125,2,HiSeq2500L125R2
-                               HiSeq 2500,150,1,HiSeq2500L150R1
-                               HiSeq 2500,150,2,HiSeq2500L150R2
-                               MiniSeq TruSeq,50,1,MiniSeqTruSeq_L50
-                               MiSeq v3,250,1,MiSeqv3_L250_R1
-                               MiSeq v3,250,2,MiSeqv3_L250_R2
-                               NextSeq 500 v2,75,1,NextSeq500v2_L75_R1
-                               NextSeq 500 v2,75,2,NextSeq500v2_L75_R2
-                               HiSeqX v2.5 PCR free,150,1,HiSeqXPCRfree_L150_R1
-                               HiSeqX v2.5 PCR free,150,2,HiSeqXPCRfree_L150_R2
-                               HiSeqX v2.5 TruSeq,150,1,HiSeqXtruSeq_L150_R1
-                               HiSeqX v2.5 TruSeq,150,2,HiSeqXtruSeq_L150_R2",
+                               HiSeq 2500,150,1,HiSeq2500L150R1filter
+                               HiSeq 2500,150,2,HiSeq2500L150R2filter
+                               MiniSeq TruSeq,50,1,MiniSeqTruSeqL50
+                               MiSeq v3,250,1,MiSeqv3L250R1
+                               MiSeq v3,250,2,MiSeqv3L250R2
+                               NextSeq 500 v2,75,1,NextSeq500v2L75R1
+                               NextSeq 500 v2,75,2,NextSeq500v2L75R2
+                               HiSeqX v2.5 PCR free,150,1,HiSeqXPCRfreeL150R1
+                               HiSeqX v2.5 PCR free,150,2,HiSeqXPCRfreeL150R2
+                               HiSeqX v2.5 TruSeq,150,1,HiSeqXtruSeqL150R1
+                               HiSeqX v2.5 TruSeq,150,2,HiSeqXtruSeqL150R2",
                      stringsAsFactors = FALSE)
         profile_lookup$name <- trimws(profile_lookup$name)
         profile_lookup <- profile_lookup[order(profile_lookup$read_length),]
