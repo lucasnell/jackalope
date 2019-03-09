@@ -267,13 +267,15 @@ private:
 
 
 /*
- Template class to combine everything for Illumina sequencing.
+ Template class to combine everything for Illumina sequencing of a single genome.
+ (We will need multiple of these objects to sequence a `VarSet` class.
+  See `IlluminaVariants` class below.)
 
  `T` should be `VarGenome` or `RefGenome`
 
  */
 template <typename T>
-class Illumina_t {
+class IlluminaOneGenome {
 public:
 
     /* __ Samplers __ */
@@ -293,21 +295,21 @@ public:
     std::vector<double> ins_probs;      // Per-base prob. of an insertion, reads 1 and 2
     std::vector<double> del_probs;      // Per-base prob. of a deletion, reads 1 and 2
 
-    Illumina_t() {};
+    IlluminaOneGenome() {};
     // For paired-end reads:
-    Illumina_t(const T& seq_object,
-               const double& frag_len_shape,
-               const double& frag_len_scale,
-               const uint32& frag_len_min_,
-               const uint32& frag_len_max_,
-               const std::vector<std::vector<std::vector<double>>>& qual_probs1,
-               const std::vector<std::vector<std::vector<uint8>>>& quals1,
-               const double& ins_prob1,
-               const double& del_prob1,
-               const std::vector<std::vector<std::vector<double>>>& qual_probs2,
-               const std::vector<std::vector<std::vector<uint8>>>& quals2,
-               const double& ins_prob2,
-               const double& del_prob2)
+    IlluminaOneGenome(const T& seq_object,
+                      const double& frag_len_shape,
+                      const double& frag_len_scale,
+                      const uint32& frag_len_min_,
+                      const uint32& frag_len_max_,
+                      const std::vector<std::vector<std::vector<double>>>& qual_probs1,
+                      const std::vector<std::vector<std::vector<uint8>>>& quals1,
+                      const double& ins_prob1,
+                      const double& del_prob1,
+                      const std::vector<std::vector<std::vector<double>>>& qual_probs2,
+                      const std::vector<std::vector<std::vector<uint8>>>& quals2,
+                      const double& ins_prob2,
+                      const double& del_prob2)
         : seqs(),
           qual_errors(),
           frag_lengths(frag_len_shape, frag_len_scale),
@@ -323,22 +325,24 @@ public:
           frag_len_max(frag_len_max_),
           constr_info(paired, read_length) {
               if (qual_probs1[0].size() != qual_probs2[0].size()) {
-                  stop("In Illumina_t constr., read lengths for R1 and R2 don't match.");
+                  std::string err = "In IlluminaOneGenome constr., read lengths for ";
+                  err += "R1 and R2 don't match.";
+                  stop(err.c_str());
               }
               this->qual_errors = {IlluminaQualityError(qual_probs1, quals1),
                                    IlluminaQualityError(qual_probs2, quals2)};
               this->construct_seqs();
           };
     // Single-end reads
-    Illumina_t(const T& seq_object,
-               const double& frag_len_shape,
-               const double& frag_len_scale,
-               const uint32& frag_len_min_,
-               const uint32& frag_len_max_,
-               const std::vector<std::vector<std::vector<double>>>& qual_probs,
-               const std::vector<std::vector<std::vector<uint8>>>& quals,
-               const double& ins_prob,
-               const double& del_prob)
+    IlluminaOneGenome(const T& seq_object,
+                      const double& frag_len_shape,
+                      const double& frag_len_scale,
+                      const uint32& frag_len_min_,
+                      const uint32& frag_len_max_,
+                      const std::vector<std::vector<std::vector<double>>>& qual_probs,
+                      const std::vector<std::vector<std::vector<uint8>>>& quals,
+                      const double& ins_prob,
+                      const double& del_prob)
         : seqs(),
           qual_errors{IlluminaQualityError(qual_probs, quals)},
           frag_lengths(frag_len_shape, frag_len_scale),
@@ -582,23 +586,24 @@ protected:
 };
 
 
-typedef Illumina_t<RefGenome> ReferenceIllumina;
+typedef IlluminaOneGenome<RefGenome> IlluminaReference;
+typedef IlluminaOneGenome<VarGenome> IlluminaOneVariant;
 
 
 
 /*
- To process a `VarSet` object, I need to wrap Illumina_t<VarGenome> inside
+ To process a `VarSet` object, I need to wrap IlluminaOneVariant inside
  another class.
  */
-class VariantIllumina {
+class IlluminaVariants {
 
 public:
 
     const VarSet* variants;                         // pointer to `const VarSet`
     TableSampler variant_sampler;                   // chooses which variant to use
-    std::vector<Illumina_t<VarGenome>> read_makers; // makes Illumina reads
+    std::vector<IlluminaOneVariant> read_makers;    // makes Illumina reads
 
-    VariantIllumina() {}
+    IlluminaVariants() {}
 
     /*
      ------------------------
@@ -610,20 +615,20 @@ public:
      */
 
     // For paired-end reads:
-    VariantIllumina(const VarSet& var_set,
-                    const std::vector<double>& variant_probs,
-                    const double& frag_len_shape,
-                    const double& frag_len_scale,
-                    const uint32& frag_len_min_,
-                    const uint32& frag_len_max_,
-                    const std::vector<std::vector<std::vector<double>>>& qual_probs1,
-                    const std::vector<std::vector<std::vector<uint8>>>& quals1,
-                    const double& ins_prob1,
-                    const double& del_prob1,
-                    const std::vector<std::vector<std::vector<double>>>& qual_probs2,
-                    const std::vector<std::vector<std::vector<uint8>>>& quals2,
-                    const double& ins_prob2,
-                    const double& del_prob2)
+    IlluminaVariants(const VarSet& var_set,
+                     const std::vector<double>& variant_probs,
+                     const double& frag_len_shape,
+                     const double& frag_len_scale,
+                     const uint32& frag_len_min_,
+                     const uint32& frag_len_max_,
+                     const std::vector<std::vector<std::vector<double>>>& qual_probs1,
+                     const std::vector<std::vector<std::vector<uint8>>>& quals1,
+                     const double& ins_prob1,
+                     const double& del_prob1,
+                     const std::vector<std::vector<std::vector<double>>>& qual_probs2,
+                     const std::vector<std::vector<std::vector<uint8>>>& quals2,
+                     const double& ins_prob2,
+                     const double& del_prob2)
         : variants(&var_set),
           variant_sampler(variant_probs),
           read_makers(),
@@ -634,11 +639,11 @@ public:
          */
         uint32 n_vars = var_set.size();
         // Read maker for the first variant:
-        Illumina_t<VarGenome> read_maker1(var_set[0],
-                                          frag_len_shape, frag_len_scale,
-                                          frag_len_min_, frag_len_max_,
-                                          qual_probs1, quals1, ins_prob1, del_prob1,
-                                          qual_probs2, quals2, ins_prob2, del_prob2);
+        IlluminaOneVariant read_maker1(var_set[0],
+                                       frag_len_shape, frag_len_scale,
+                                       frag_len_min_, frag_len_max_,
+                                       qual_probs1, quals1, ins_prob1, del_prob1,
+                                       qual_probs2, quals2, ins_prob2, del_prob2);
         read_makers.reserve(n_vars);
         read_makers.push_back(read_maker1);
         for (uint32 i = 1; i < n_vars; i++) {
@@ -649,16 +654,16 @@ public:
     };
 
     // Single-end reads
-    VariantIllumina(const VarSet& var_set,
-                    const std::vector<double>& variant_probs,
-                    const double& frag_len_shape,
-                    const double& frag_len_scale,
-                    const uint32& frag_len_min_,
-                    const uint32& frag_len_max_,
-                    const std::vector<std::vector<std::vector<double>>>& qual_probs,
-                    const std::vector<std::vector<std::vector<uint8>>>& quals,
-                    const double& ins_prob,
-                    const double& del_prob)
+    IlluminaVariants(const VarSet& var_set,
+                     const std::vector<double>& variant_probs,
+                     const double& frag_len_shape,
+                     const double& frag_len_scale,
+                     const uint32& frag_len_min_,
+                     const uint32& frag_len_max_,
+                     const std::vector<std::vector<std::vector<double>>>& qual_probs,
+                     const std::vector<std::vector<std::vector<uint8>>>& quals,
+                     const double& ins_prob,
+                     const double& del_prob)
         : variants(&var_set),
           variant_sampler(variant_probs),
           read_makers(),
@@ -669,10 +674,10 @@ public:
          */
         uint32 n_vars = var_set.size();
         // Read maker for the first variant:
-        Illumina_t<VarGenome> read_maker1(var_set[0],
-                                          frag_len_shape, frag_len_scale,
-                                          frag_len_min_, frag_len_max_,
-                                          qual_probs, quals, ins_prob, del_prob);
+        IlluminaOneVariant read_maker1(var_set[0],
+                                       frag_len_shape, frag_len_scale,
+                                       frag_len_min_, frag_len_max_,
+                                       qual_probs, quals, ins_prob, del_prob);
         read_makers.reserve(n_vars);
         read_makers.push_back(read_maker1);
         for (uint32 i = 1; i < n_vars; i++) {

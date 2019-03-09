@@ -34,7 +34,7 @@ SEXP create_ref_ill_pe(
         const double& ins_prob2,
         const double& del_prob2) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    XPtr<ReferenceIllumina> xptr (new ReferenceIllumina(*ref_genome,
+    XPtr<IlluminaReference> xptr (new IlluminaReference(*ref_genome,
                                                         frag_len_shape, frag_len_scale,
                                                         frag_len_min, frag_len_max,
                                                         qual_probs1, quals1,
@@ -61,7 +61,7 @@ SEXP create_ref_ill_se(
         const double& ins_prob,
         const double& del_prob) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    XPtr<ReferenceIllumina> xptr(new ReferenceIllumina(*ref_genome,
+    XPtr<IlluminaReference> xptr(new IlluminaReference(*ref_genome,
                                                        frag_len_shape, frag_len_scale,
                                                        frag_len_min, frag_len_max,
                                                        qual_probs, quals,
@@ -91,13 +91,13 @@ SEXP create_var_ill_pe(
         const double& ins_prob2,
         const double& del_prob2) {
     XPtr<VarSet> var_set(var_set_ptr);
-    XPtr<VariantIllumina> xptr(new VariantIllumina(*var_set, variant_probs,
-                                                   frag_len_shape, frag_len_scale,
-                                                   frag_len_min, frag_len_max,
-                                                   qual_probs1, quals1,
-                                                   ins_prob1, del_prob1,
-                                                   qual_probs2, quals2,
-                                                   ins_prob2, del_prob2));
+    XPtr<IlluminaVariants> xptr(new IlluminaVariants(*var_set, variant_probs,
+                                                     frag_len_shape, frag_len_scale,
+                                                     frag_len_min, frag_len_max,
+                                                     qual_probs1, quals1,
+                                                     ins_prob1, del_prob1,
+                                                     qual_probs2, quals2,
+                                                     ins_prob2, del_prob2));
     return xptr;
 }
 
@@ -121,11 +121,11 @@ SEXP create_var_ill_se(
         const double& ins_prob,
         const double& del_prob) {
     XPtr<VarSet> var_set(var_set_ptr);
-    XPtr<VariantIllumina> xptr(new VariantIllumina(*var_set, variant_probs,
-                                                   frag_len_shape, frag_len_scale,
-                                                   frag_len_min, frag_len_max,
-                                                   qual_probs, quals,
-                                                   ins_prob, del_prob));
+    XPtr<IlluminaVariants> xptr(new IlluminaVariants(*var_set, variant_probs,
+                                                     frag_len_shape, frag_len_scale,
+                                                     frag_len_min, frag_len_max,
+                                                     qual_probs, quals,
+                                                     ins_prob, del_prob));
     return xptr;
 }
 
