@@ -672,14 +672,13 @@ protected:
             for (uint i = 0; i < barcode.size(); i++) read[i] = barcode[i];
 
             // Sample mapping quality and add errors to read:
-            qual_errors[i].fill_read_qual(read, qual, insertions[i], deletions[i],
-                                          real_read_length, eng);
+            qual_errors[i].fill_read_qual(read, qual, insertions[i], deletions[i], eng);
 
             // If doing paired reads, the second one should be the reverse of the first
             reverse = !reverse;
 
             // Combine into 4 lines of output per read:
-            fastq_chunks[i] += ID_info.get_id_line() + '\n' + read + "\n+\n" + qual;
+            fastq_chunks[i] += ID_info.get_line() + '\n' + read + "\n+\n" + qual + '\n';
         }
 
         return;
