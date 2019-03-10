@@ -8,6 +8,11 @@
 #include <string>  // string class
 #include <pcg/pcg_random.hpp> // pcg prng
 #include <random>  // distributions
+#include <fstream> // for writing FASTQ files
+#include <zlib.h>  // for writing to compressed FASTQ
+#ifdef _OPENMP
+#include <omp.h>  // omp
+#endif
 
 #include "gemino_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
@@ -19,11 +24,23 @@
 #include "str_manip.h"  // rev_comp
 #include "sequencer.h"  // SequenceIdentifierInfo class
 
+
 using namespace Rcpp;
 
 
 
 
+/*
+ ----------------------------------------------------------------
+ ----------------------------------------------------------------
+ ----------------------------------------------------------------
+
+ CREATING READS
+
+ ----------------------------------------------------------------
+ ----------------------------------------------------------------
+ ----------------------------------------------------------------
+ */
 
 
 // Basic information to construct reads
@@ -813,6 +830,281 @@ private:
 
 };
 
+
+
+
+
+/*
+ ----------------------------------------------------------------
+ ----------------------------------------------------------------
+ ----------------------------------------------------------------
+
+ WRITING TO FILES
+
+ ----------------------------------------------------------------
+ ----------------------------------------------------------------
+ ----------------------------------------------------------------
+ */
+
+/*
+
+ Info for making reads and writing them, for one core.
+
+ `T` can be `IlluminaReference` or `IlluminaVariants`.
+ */
+
+template <typename T>
+class IlluminaWriterOneCore {
+
+    T read_filler;
+    SequenceIdentifierInfo ID_info;
+    const uint32 n_reads;
+    const uint32 n_read_ends;  // (1 for single-end, 2 for paired)
+    const uint32 read_chunk_size;  // reads per chunk
+    const double prob_pcr_dup;
+    std::vector<std::string> fastq_chunks;
+    uint32 reads_made;          // Number of reads already made
+    uint32 reads_in_chunk;      // Number of reads in current chunk
+    bool do_write;            // Whether to write to file
+
+
+
+    IlluminaWriterOneCore(const T& read_filler_base,
+                          const SequenceIdentifierInfo& ID_info_base,
+                          const uint32& n_reads_,
+                          const uint32& read_chunk_size_,
+                          const double& prob_pcr_dup_)
+        : read_filler(read_filler_base),
+          ID_info(ID_info_base),
+          n_reads(n_reads_),
+          n_read_ends(read_filler_base.paired ? uint32(2) : uint32(1)),
+          read_chunk_size(read_chunk_size_),
+          prob_pcr_dup(prob_pcr_dup_),
+          fastq_chunks(n_read_ends, ""),
+          reads_made(0),
+          reads_in_chunk(0),
+          do_write(false){};
+
+
+    // Add new read(s) to `fastq_chunks`, and update bool for whether you should
+    // write to file
+    void add_to_chunks(pcg64& eng) {
+        read_filler.one_read(fastq_chunks, eng, ID_info);
+        reads_made++;
+        reads_in_chunk++;
+        double pcr = runif_01(eng);
+        while (pcr < prob_pcr_dup && reads_made < n_reads &&
+               reads_in_chunk < read_chunk_size) {
+            read_filler.re_read(fastq_chunks, eng, ID_info);
+            reads_made++;
+            reads_in_chunk++;
+            pcr = runif_01(eng);
+        }
+        do_write = reads_in_chunk >= read_chunk_size || reads_made >= n_reads;
+        return;
+    }
+
+
+    // Write contents in `fastq_chunks` to UNcompressed file(s).
+    void write_from_chunks(std::vector<std::ofstream>& files) {
+        for (uint32 i = 0; i < fastq_chunks.size(); i++) {
+            files[i] << fastq_chunks[i];
+            fastq_chunks[i].clear();
+        }
+        reads_in_chunk = 0;
+        do_write = false;
+        return;
+    }
+    // Write contents in `fastq_chunks` to compressed file(s).
+    void write_from_chunks(std::vector<gzFile>& files) {
+        for (uint32 i = 0; i < fastq_chunks.size(); i++) {
+            gzwrite(files[i], fastq_chunks[i].c_str(), fastq_chunks[i].size());
+            fastq_chunks[i].clear();
+        }
+        reads_in_chunk = 0;
+        do_write = false;
+        return;
+    }
+
+
+};
+
+
+
+
+
+
+//' Split number of reads by number of cores.
+//'
+//' @noRd
+//'
+inline std::vector<uint32> split_n_reads(const uint32& n_reads,
+                                         const uint32& n_cores) {
+    std::vector<uint32> out(n_cores, n_reads / n_cores);
+    uint32 sum_reads = std::accumulate(out.begin(), out.end(), 0U);
+    uint i = 0;
+    while (sum_reads < n_reads) {
+        out[i]++;
+        i++;
+        sum_reads++;
+    }
+    return out;
+}
+
+
+
+
+/*
+ Create and open files:
+ */
+
+// Unompressed version:
+inline void open_fastq_files(std::vector<std::ofstream>& files,
+                             const std::string& out_prefix) {
+
+    for (uint32 i = 0; i < files.size(); i++) {
+
+        std::string file_name = out_prefix + "_R" + std::to_string(i+1)+ ".fq";
+
+        files[i] = std::ofstream(file_name);
+
+        if (!files[i].is_open()) {
+            std::string e = "Unable to open file " + file_name + ".\n";
+            Rcpp::stop(e);
+        }
+
+    }
+
+    return;
+
+}
+// Compressed version:
+inline void open_fastq_files(std::vector<gzFile>& files,
+                             const std::string& out_prefix) {
+
+    for (uint32 i = 0; i < files.size(); i++) {
+
+        std::string file_name = out_prefix + "_R" + std::to_string(i+1)+ ".fq.gz";
+
+        /*
+         Initialize file.
+         Note that gzfile does not tolerate initializing an empty file.
+         Use ofstream instead.
+         */
+        if (!std::ifstream(file_name)){
+            std::ofstream myfile;
+            myfile.open(file_name, std::ios::out | std::ios::binary);
+            myfile.close();
+        }
+
+        files[i] = gzopen(file_name.c_str(), "wb");
+        if (!files[i]) {
+            std::string e = "gzopen of " + file_name + " failed: " +
+                strerror(errno) + ".\n";
+            Rcpp::stop(e);
+        }
+
+    }
+
+    return;
+}
+
+
+
+/*
+ Close FASTQ files
+ */
+
+inline void close_fastq_files(std::vector<std::ofstream>& files) {
+    for (uint32 i = 0; i < files.size(); i++) files[i].close();
+    return;
+}
+// Compressed version:
+inline void close_fastq_files(std::vector<gzFile>& files) {
+    for (uint32 i = 0; i < files.size(); i++) gzclose(files[i]);
+    return;
+}
+
+
+
+/*
+ Write Illumina reads to file(s).
+
+ `T` should be `IlluminaReference` or `IlluminaVariants`.
+ `U` should be `gzFile` or `std::ofstream`.
+
+ */
+template <typename T, typename U>
+int write_illumina_(const T& read_filler_base,
+                    const SequenceIdentifierInfo& ID_info_base,
+                    const std::string& out_prefix,
+                    const uint32& n_reads,
+                    const double& prob_pcr_dup,
+                    const uint32& read_chunk_size,
+                    uint32 n_cores) {
+
+    const uint32 n_read_ends(read_filler_base.paired ? uint32(2) : uint32(1));
+
+    // To make sure reads_per_core is still accurate if OpenMP not used:
+#ifndef _OPENMP
+    n_cores = 1;
+#endif
+
+    const std::vector<uint32> reads_per_core = split_n_reads(n_reads, n_cores);
+
+    // Generate seeds for random number generators (1 RNG per core)
+    const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
+
+    /*
+     Create and open files:
+     */
+    std::vector<U> files(n_read_ends);
+    open_fastq_files(files, out_prefix);
+
+#ifdef _OPENMP
+#pragma omp parallel
+{
+#endif
+
+    std::vector<uint64> active_seeds;
+
+    // Write the active seed per core or just write one of the seeds.
+#ifdef _OPENMP
+    uint32 active_thread = omp_get_thread_num();
+#else
+    uint32 active_thread = 0;
+#endif
+    active_seeds = seeds[active_thread];
+
+    pcg64 eng = seeded_pcg(active_seeds);
+
+    uint32 reads_this_core = reads_per_core[active_thread];
+
+    IlluminaWriterOneCore<T> writer(read_filler_base, ID_info_base,
+                                    reads_this_core, read_chunk_size, prob_pcr_dup);
+
+    while (writer.reads_made < reads_this_core) {
+
+        writer.add_to_chunks(eng);
+
+        if (writer.do_write) {
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+            writer.write_from_chunks(files);
+        }
+    }
+
+#ifdef _OPENMP
+}
+#endif
+
+
+    // Close files
+    close_fastq_files(files);
+
+    return 0;
+};
 
 
 
