@@ -35,16 +35,28 @@ struct ReadConstructInfo {
     std::vector<std::string> reads;
     std::vector<std::string> quals;
     std::vector<uint32> read_seq_spaces;
+    std::string barcode;
+
 
     ReadConstructInfo() {}
-    ReadConstructInfo(const bool& paired, const uint32& read_length_) {
-        this->read_length = read_length_;
+    ReadConstructInfo(const bool& paired,
+                      const uint32& read_length_,
+                      const std::string barcode_)
+        : read_length(read_length_),
+          seq_ind(),
+          frag_len(),
+          frag_start(),
+          reads(),
+          quals(),
+          read_seq_spaces(),
+          barcode(barcode_) {
+
         if (paired) {
-            reads = std::vector<std::string>(2);
+            reads = std::vector<std::string>(2, std::string(read_length, 'N'));
             quals = std::vector<std::string>(2);
             read_seq_spaces = std::vector<uint32>(2);
         } else {
-            reads = std::vector<std::string>(1);
+            reads = std::vector<std::string>(1, std::string(read_length, 'N'));
             quals = std::vector<std::string>(1);
             read_seq_spaces = std::vector<uint32>(1);
         }
@@ -183,23 +195,21 @@ public:
      Fill read and quality strings.
      Because small fragments could cause the read length to be less than normal,
      I'm requiring it as input to this function.
+     `read` should already be sized appropriately before this function.
      */
     void fill_read_qual(std::string& read,
                         std::string& qual,
                         std::deque<uint32>& insertions,
                         std::deque<uint32>& deletions,
-                        const uint32& read_length,
                         pcg64& eng) const {
 
-        uint32 seq_space = read_length + insertions.size() - deletions.size();
-        if (qual.size() != read_length) qual.resize(read_length);
         double mis_prob, u;
         uint8 nt_ind, qint;
         /*
          Add indels:
          */
-        uint32 seq_pos = seq_space - 1;
-        while (seq_pos > 0) {
+        uint32 seq_pos = read.size() - 1;
+        while (!insertions.empty() || !deletions.empty()) {
             if (!insertions.empty() && seq_pos == insertions.back()) {
                 char c = alias_sampler::bases[static_cast<uint32>(runif_01(eng) * 4UL)];
                 read.insert(seq_pos + 1, 1, c);
@@ -208,13 +218,14 @@ public:
                 read.erase(seq_pos, 1);
                 deletions.pop_back();
             }
+            if (seq_pos == 0) break;
             seq_pos--;
         }
-        if (read.size() != read_length) stop("read.size() != read_length after indels.");
+        if (qual.size() != read.size()) qual.resize(read.size());
         /*
          Add mismatches:
          */
-        for (uint32 pos = 0; pos < read_length; pos++) {
+        for (uint32 pos = 0; pos < read.size(); pos++) {
             char& nt(read[pos]);
             nt_ind = nt_map[nt];
             /*
@@ -240,6 +251,8 @@ public:
                 nt = mm_str[runif_aabb(eng, 0U, 2U)];
             }
         }
+
+        return;
     }
 
 private:
@@ -309,7 +322,8 @@ public:
                       const std::vector<std::vector<std::vector<double>>>& qual_probs2,
                       const std::vector<std::vector<std::vector<uint8>>>& quals2,
                       const double& ins_prob2,
-                      const double& del_prob2)
+                      const double& del_prob2,
+                      const std::string& barcode)
         : seqs(),
           qual_errors(),
           frag_lengths(frag_len_shape, frag_len_scale),
@@ -323,7 +337,7 @@ public:
           deletions(2),
           frag_len_min(frag_len_min_),
           frag_len_max(frag_len_max_),
-          constr_info(paired, read_length) {
+          constr_info(paired, read_length, barcode) {
               if (qual_probs1[0].size() != qual_probs2[0].size()) {
                   std::string err = "In IlluminaOneGenome constr., read lengths for ";
                   err += "R1 and R2 don't match.";
@@ -342,7 +356,8 @@ public:
                       const std::vector<std::vector<std::vector<double>>>& qual_probs,
                       const std::vector<std::vector<std::vector<uint8>>>& quals,
                       const double& ins_prob,
-                      const double& del_prob)
+                      const double& del_prob,
+                      const std::string& barcode)
         : seqs(),
           qual_errors{IlluminaQualityError(qual_probs, quals)},
           frag_lengths(frag_len_shape, frag_len_scale),
@@ -356,7 +371,7 @@ public:
           deletions(1),
           frag_len_min(frag_len_min_),
           frag_len_max(frag_len_max_),
-          constr_info(paired, read_length) {
+          constr_info(paired, read_length, barcode) {
               this->construct_seqs();
           };
 
@@ -440,10 +455,13 @@ protected:
 
 
     // Sample for insertion and deletion positions
-    void sample_indels(pcg64& eng, const uint32& frag_len) {
+    void sample_indels(pcg64& eng) {
+
+        const uint32& frag_len(this->constr_info.frag_len);
 
         for (uint32 r = 0; r < insertions.size(); r++) {
-            uint32 i = 0, read_size = 0;
+            uint32 frag_pos = 0;
+            uint32 length_now = 0;
             double u;
             std::deque<uint32>& ins(this->insertions[r]);
             std::deque<uint32>& del(this->deletions[r]);
@@ -451,18 +469,54 @@ protected:
             const double& del_prob(del_probs[r]);
             ins.clear();
             del.clear();
-            while (read_size < read_length && read_size < frag_len) {
+            while (length_now < read_length && frag_pos < frag_len) {
                 u = runif_01(eng);
                 if (u > (ins_prob + del_prob)) {
-                    read_size++;
+                    length_now++;
                 } else if (u > ins_prob) {
-                    del.push_back(i);
+                    del.push_back(frag_pos);
                 } else {
-                    ins.push_back(i);
-                    read_size += 2;
+                    if (length_now == (read_length - 1)) {
+                        length_now++;
+                    } else {
+                        ins.push_back(frag_pos);
+                        length_now += 2;
+                    }
                 }
-                i++;
+                frag_pos++;
             }
+        }
+
+        return;
+    }
+
+    // Adjust sequence spaces
+    void adjust_seq_spaces() {
+
+        std::vector<uint32>& read_seq_spaces(this->constr_info.read_seq_spaces);
+        std::vector<std::string>& reads(this->constr_info.reads);
+        const uint32& frag_len(this->constr_info.frag_len);
+
+        for (uint32 r = 0; r < this->insertions.size(); r++) {
+            /*
+             I'm adding deletions because more deletions mean that I need
+             more sequence bases to achieve the same read length.
+             Insertions means I need fewer.
+             */
+            sint32 indel_effect = this->deletions[r].size() - this->insertions[r].size();
+            /*
+             In addition to indels, below corrects for situation where a small
+             fragment size was sampled.
+             (Because the indel sampler stops when it reaches the fragment end,
+              we don't need to account for that.)
+             */
+            read_seq_spaces[r] = std::min(this->read_length + indel_effect, frag_len);
+            // Adjust `reads` so it can hold the necessary sequence space:
+            if (reads[r].size() != read_seq_spaces[r]) {
+                reads[r].resize(read_seq_spaces[r], 'N');
+            }
+            // Now including effect of barcode:
+            read_seq_spaces[r] -= this->constr_info.barcode.size();
         }
 
         return;
@@ -496,16 +550,12 @@ protected:
             double u = runif_01(eng);
             frag_start = static_cast<uint32>(u * (seq_len - frag_len + 1));
         }
-        // Sample indels:
-        this->sample_indels(eng, frag_len);
 
-        // Set sequence spaces:
-        std::vector<uint32>& read_seq_spaces(this->constr_info.read_seq_spaces);
-        uint32 len_ = std::min(read_length, frag_len);
-        for (uint i = 0; i < read_seq_spaces.size(); i++) {
-            read_seq_spaces[i] = len_ + insertions[i].size() -
-                deletions[i].size();
-        }
+        // Sample indels:
+        this->sample_indels(eng);
+
+        // Adjust sequence spaces:
+        this->adjust_seq_spaces();
 
         return;
     }
@@ -518,16 +568,12 @@ protected:
     inline void just_indels(pcg64& eng) {
 
         const uint32& frag_len(this->constr_info.frag_len);
-        // Sample indels:
-        this->sample_indels(eng, frag_len);
 
-        // Set sequence spaces:
-        std::vector<uint32>& read_seq_spaces(this->constr_info.read_seq_spaces);
-        uint32 len_ = std::min(read_length, frag_len);
-        for (uint i = 0; i < read_seq_spaces.size(); i++) {
-            read_seq_spaces[i] = len_ + insertions[i].size() -
-                deletions[i].size();
-        }
+        // Sample indels:
+        this->sample_indels(eng);
+
+        // Adjust sequence spaces:
+        this->adjust_seq_spaces();
 
         return;
     }
@@ -546,8 +592,8 @@ protected:
         uint32 n_reads = this->ins_probs.size();
         if (read_quals.size() != n_reads) read_quals.resize(n_reads);
 
-        // If we sampled a very small fragment, it'll reduce read length:
-        uint32 real_read_length = std::min(read_length, this->constr_info.frag_len);
+        const std::string& barcode(this->constr_info.barcode);
+        const std::vector<uint32>& read_seq_spaces(this->constr_info.read_seq_spaces);
 
         // Boolean for whether we take the reverse side first:
         bool reverse = runif_01(eng) < 0.5;
@@ -558,15 +604,33 @@ protected:
 
             // Read starting location:
             uint32 start = this->constr_info.frag_start;
-            if (reverse) start += (this->constr_info.frag_len -
-                this->constr_info.read_seq_spaces[i]);
+            if (reverse) start += (this->constr_info.frag_len - read_seq_spaces[i]);
 
-            // Now fill `read` from `sequences` field:
-            (*(this->sequences))[this->constr_info.seq_ind].fill_seq(read, start,
-             this->constr_info.read_seq_spaces[i]);
+            /*
+             Now fill `read` differently if taking forward or reverse strand:
+             */
+            if (!reverse) {
+                // Fill in read starting with position after barcode:
+                (*(this->sequences))[this->constr_info.seq_ind].fill_read(
+                        read, barcode.size(),
+                        start, read_seq_spaces[i]);
+            } else {
+                /*
+                 If doing reverse, we can add the actual sequence to the front of the
+                 read instead of starting at `barcode.size()`.
 
-            // Reverse-complement `read` if taking reverse side:
-            if (reverse) rev_comp(read);
+                 (Even though `rev_comp` requires only T, C, A, G, or N characters,
+                 `read` should already have filler 'N' chars present at initialization
+                 of the `constr_info` field, so no need to add any now.)
+                 */
+                (*(this->sequences))[this->constr_info.seq_ind].fill_read(
+                        read, 0,
+                        start, read_seq_spaces[i]);
+                // Now do reverse complement:
+                rev_comp(read);
+            }
+            // Now fill barcode:
+            for (uint i = 0; i < barcode.size(); i++) read[i] = barcode[i];
 
             // Sample mapping quality and add errors to read:
             qual_errors[i].fill_read_qual(read, qual, insertions[i], deletions[i],
@@ -605,14 +669,7 @@ public:
 
     IlluminaVariants() {}
 
-    /*
-     ------------------------
-     Initializers
-
-     Initialization doesn't include VarSet information, so it just starts `read_makers`
-     with one item that includes all info but the `VarSet` info that will come later.
-     ------------------------
-     */
+    /* Initializers */
 
     // For paired-end reads:
     IlluminaVariants(const VarSet& var_set,
