@@ -131,14 +131,20 @@ inline std::vector<std::string> cpp_str_split_delim(const std::string& in_string
  */
 inline void rev_comp(std::string& seq) {
 
-    for (uint32 j = 0; j < seq.size(); j++) {
-        seq[j] = str_manip::cmp_map[seq[j]];
+    uint32 n = seq.size();
+    uint32 half_n = n / 2;
+    char tmp;
+
+    for (uint32 j = 0; j < half_n; j++) {
+        tmp = str_manip::cmp_map[seq[j]]; // goes to `n-j-1`
+        seq[j] = str_manip::cmp_map[seq[(n-j-1)]];
+        seq[(n-j-1)] = tmp;
     }
-    std::reverse(seq.begin(), seq.end());
+
+    if (n % 2 == 1) seq[half_n] = str_manip::cmp_map[seq[half_n]];
 
     return;
 }
-
 
 
 
