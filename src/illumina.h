@@ -61,6 +61,11 @@ struct ReadConstructInfo {
             read_seq_spaces = std::vector<uint32>(1);
         }
     }
+    ReadConstructInfo(const ReadConstructInfo& other)
+        : read_length(other.read_length), seq_ind(other.seq_ind),
+          frag_len(other.frag_len), frag_start(other.frag_start),
+          reads(other.reads), quals(other.quals),
+          read_seq_spaces(other.read_seq_spaces), barcode(other.barcode) {};
 };
 
 
@@ -94,6 +99,8 @@ public:
         }
 
     }
+    IllQualPos(const IllQualPos& other)
+        : samplers(other.samplers), quals(other.quals), read_length(other.read_length) {};
 
     IllQualPos& operator=(const IllQualPos& other) {
         this->samplers = other.samplers;
@@ -189,6 +196,11 @@ public:
         mm_nucleos[nt_map[static_cast<uint8>('G')]] = "TCA";
 
     }
+
+    IlluminaQualityError(const IlluminaQualityError& other)
+        : by_nt(other.by_nt), qual_prob_map(other.qual_prob_map),
+          nt_map(other.nt_map), mm_nucleos(other.mm_nucleos),
+          qual_start(other.qual_start) {};
 
 
     /*
@@ -375,9 +387,16 @@ public:
               this->construct_seqs();
           };
 
+    IlluminaOneGenome(const IlluminaOneGenome& other)
+        : seqs(other.seqs), qual_errors(other.qual_errors),
+          frag_lengths(other.frag_lengths),
+          insertions(other.insertions), deletions(other.deletions),
+          frag_len_min(other.frag_len_min), frag_len_max(other.frag_len_max),
+          constr_info(other.constr_info) {};
+
 
     // Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality)
-    void one_read(std::vector<std::string>& read_quals,
+    void one_read(std::vector<std::string>& fastq_chunks,
                   pcg64& eng,
                   SequenceIdentifierInfo& ID_info) {
 
@@ -387,7 +406,7 @@ public:
         this->seq_indels_frag(eng);
 
         // Fill the reads and qualities
-        this->fill_strings(read_quals, eng, ID_info);
+        this->append_chunks(fastq_chunks, eng, ID_info);
 
         return;
     }
@@ -396,7 +415,7 @@ public:
      Same as above, but for a PCR duplicate. It's assumed that `one_read` has been
      run once before.
      */
-    void re_read(std::vector<std::string>& read_quals,
+    void re_read(std::vector<std::string>& fastq_chunks,
                   pcg64& eng,
                   SequenceIdentifierInfo& ID_info) {
 
@@ -404,7 +423,7 @@ public:
         this->just_indels(eng);
 
         // Fill the reads and qualities
-        this->fill_strings(read_quals, eng, ID_info);
+        this->append_chunks(fastq_chunks, eng, ID_info);
 
         return;
     }
@@ -583,23 +602,24 @@ protected:
 
 
     /*
-     Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality).
+     Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality),
+     then append that to the `fastq_chunks` vector.
      This function does NOT do anything with fragments.
      That should be done outside this function.
      */
-    void fill_strings(std::vector<std::string>& read_quals,
-                      pcg64& eng,
-                      SequenceIdentifierInfo& ID_info) {
+    void append_chunks(std::vector<std::string>& fastq_chunks,
+                       pcg64& eng,
+                       SequenceIdentifierInfo& ID_info) {
 
-        uint32 n_reads = this->ins_probs.size();
-        if (read_quals.size() != n_reads) read_quals.resize(n_reads);
+        uint32 n_read_ends = this->ins_probs.size();
+        if (fastq_chunks.size() != n_read_ends) fastq_chunks.resize(n_read_ends);
 
         const std::string& barcode(this->constr_info.barcode);
         const std::vector<uint32>& read_seq_spaces(this->constr_info.read_seq_spaces);
 
         // Boolean for whether we take the reverse side first:
         bool reverse = runif_01(eng) < 0.5;
-        for (uint32 i = 0; i < n_reads; i++) {
+        for (uint32 i = 0; i < n_read_ends; i++) {
             ID_info.read = i + 1;
             std::string& read(this->constr_info.reads[i]);
             std::string& qual(this->constr_info.quals[i]);
@@ -642,7 +662,7 @@ protected:
             reverse = !reverse;
 
             // Combine into 4 lines of output per read:
-            read_quals[i] = ID_info.get_id_line() + '\n' + read + "\n+\n" + qual;
+            fastq_chunks[i] += ID_info.get_id_line() + '\n' + read + "\n+\n" + qual;
         }
 
         return;
@@ -668,6 +688,7 @@ public:
     const VarSet* variants;                         // pointer to `const VarSet`
     TableSampler variant_sampler;                   // chooses which variant to use
     std::vector<IlluminaOneVariant> read_makers;    // makes Illumina reads
+    bool paired;                                    // Boolean for paired-end reads
 
     IlluminaVariants() {}
 
@@ -754,6 +775,10 @@ public:
 
     };
 
+    IlluminaVariants(const IlluminaVariants& other)
+        : variants(other.variants), variant_sampler(other.variant_sampler),
+          read_makers(other.read_makers), paired(other.paired), var(other.var) {};
+
 
     /*
      -------------
@@ -761,11 +786,11 @@ public:
      -------------
      */
     // If only providing rng and id info, sample for a variant, then make read(s):
-    void one_read(std::vector<std::string>& read_quals,
+    void one_read(std::vector<std::string>& fastq_chunks,
                   pcg64& eng,
                   SequenceIdentifierInfo& ID_info) {
         this->var = variant_sampler.sample(eng);
-        read_makers[this->var].one_read(read_quals, eng, ID_info);
+        read_makers[this->var].one_read(fastq_chunks, eng, ID_info);
         return;
     }
     /*
@@ -773,10 +798,10 @@ public:
      `re_read` methods (for PCR duplicates)
      -------------
      */
-    void re_read(std::vector<std::string>& read_quals,
+    void re_read(std::vector<std::string>& fastq_chunks,
                   pcg64& eng,
                   SequenceIdentifierInfo& ID_info) {
-        read_makers[this->var].re_read(read_quals, eng, ID_info);
+        read_makers[this->var].re_read(fastq_chunks, eng, ID_info);
         return;
     }
 
