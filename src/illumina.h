@@ -414,7 +414,7 @@ public:
      This is used when making multiple samplers that share most info except for
      that related to the sequence object.
      */
-    void add_seq_info(const T& seq_object) {
+    void add_seq_info(const T& seq_object, const std::string& barcode) {
 
         this->seq_lengths = seq_object.seq_sizes();
         this->sequences = &seq_object;
@@ -425,6 +425,8 @@ public:
             probs_.push_back(static_cast<double>(seq_lengths[i]));
         }
         this->seqs = AliasSampler(probs_);
+
+        this->constr_info.barcode = barcode;
 
         return;
     }
@@ -685,11 +687,14 @@ public:
                      const std::vector<std::vector<std::vector<double>>>& qual_probs2,
                      const std::vector<std::vector<std::vector<uint8>>>& quals2,
                      const double& ins_prob2,
-                     const double& del_prob2)
+                     const double& del_prob2,
+                     std::vector<std::string> barcodes)
         : variants(&var_set),
           variant_sampler(variant_probs),
           read_makers(),
           var(0) {
+
+        if (barcodes.size() < var_set.size()) barcodes.resize(var_set.size(), "");
 
         /*
          Fill `read_makers` field:
@@ -700,12 +705,13 @@ public:
                                        frag_len_shape, frag_len_scale,
                                        frag_len_min_, frag_len_max_,
                                        qual_probs1, quals1, ins_prob1, del_prob1,
-                                       qual_probs2, quals2, ins_prob2, del_prob2);
+                                       qual_probs2, quals2, ins_prob2, del_prob2,
+                                       barcodes[0]);
         read_makers.reserve(n_vars);
         read_makers.push_back(read_maker1);
         for (uint32 i = 1; i < n_vars; i++) {
             read_makers.push_back(read_maker1);
-            read_makers[i].add_seq_info(var_set[i]);
+            read_makers[i].add_seq_info(var_set[i], barcodes[i]);
         }
 
     };
@@ -720,11 +726,14 @@ public:
                      const std::vector<std::vector<std::vector<double>>>& qual_probs,
                      const std::vector<std::vector<std::vector<uint8>>>& quals,
                      const double& ins_prob,
-                     const double& del_prob)
+                     const double& del_prob,
+                     std::vector<std::string> barcodes)
         : variants(&var_set),
           variant_sampler(variant_probs),
           read_makers(),
           var(0) {
+
+        if (barcodes.size() < var_set.size()) barcodes.resize(var_set.size(), "");
 
         /*
          Fill `read_makers` field:
@@ -734,12 +743,13 @@ public:
         IlluminaOneVariant read_maker1(var_set[0],
                                        frag_len_shape, frag_len_scale,
                                        frag_len_min_, frag_len_max_,
-                                       qual_probs, quals, ins_prob, del_prob);
+                                       qual_probs, quals, ins_prob, del_prob,
+                                       barcodes[0]);
         read_makers.reserve(n_vars);
         read_makers.push_back(read_maker1);
         for (uint32 i = 1; i < n_vars; i++) {
             read_makers.push_back(read_maker1);
-            read_makers[i].add_seq_info(var_set[i]);
+            read_makers[i].add_seq_info(var_set[i], barcodes[i]);
         }
 
     };
@@ -755,15 +765,6 @@ public:
                   pcg64& eng,
                   SequenceIdentifierInfo& ID_info) {
         this->var = variant_sampler.sample(eng);
-        read_makers[this->var].one_read(read_quals, eng, ID_info);
-        return;
-    }
-    // If you provide a specific variant, then make read(s) from that:
-    void one_read(std::vector<std::string>& read_quals,
-                  const uint32& var_,
-                  pcg64& eng,
-                  SequenceIdentifierInfo& ID_info) {
-        this->var = var_;
         read_makers[this->var].one_read(read_quals, eng, ID_info);
         return;
     }

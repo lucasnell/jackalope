@@ -14,6 +14,9 @@
 
 using namespace Rcpp;
 
+
+
+
 //' Create an XPtr to object that creates paired-end Illumina reads of a reference object.
 //'
 //' @noRd
@@ -32,7 +35,8 @@ SEXP create_ref_ill_pe(
         const std::vector<std::vector<std::vector<double>>>& qual_probs2,
         const std::vector<std::vector<std::vector<uint8>>>& quals2,
         const double& ins_prob2,
-        const double& del_prob2) {
+        const double& del_prob2,
+        const std::string& barcode) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     XPtr<IlluminaReference> xptr (new IlluminaReference(*ref_genome,
                                                         frag_len_shape, frag_len_scale,
@@ -40,7 +44,8 @@ SEXP create_ref_ill_pe(
                                                         qual_probs1, quals1,
                                                         ins_prob1, del_prob1,
                                                         qual_probs2, quals2,
-                                                        ins_prob2, del_prob2));
+                                                        ins_prob2, del_prob2,
+                                                        barcode));
     return xptr;
 }
 
@@ -59,13 +64,15 @@ SEXP create_ref_ill_se(
         const std::vector<std::vector<std::vector<double>>>& qual_probs,
         const std::vector<std::vector<std::vector<uint8>>>& quals,
         const double& ins_prob,
-        const double& del_prob) {
+        const double& del_prob,
+        const std::string& barcode) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     XPtr<IlluminaReference> xptr(new IlluminaReference(*ref_genome,
                                                        frag_len_shape, frag_len_scale,
                                                        frag_len_min, frag_len_max,
                                                        qual_probs, quals,
-                                                       ins_prob, del_prob));
+                                                       ins_prob, del_prob,
+                                                       barcode));
     return xptr;
 }
 
@@ -89,7 +96,8 @@ SEXP create_var_ill_pe(
         const std::vector<std::vector<std::vector<double>>>& qual_probs2,
         const std::vector<std::vector<std::vector<uint8>>>& quals2,
         const double& ins_prob2,
-        const double& del_prob2) {
+        const double& del_prob2,
+        const std::vector<std::string>& barcodes) {
     XPtr<VarSet> var_set(var_set_ptr);
     XPtr<IlluminaVariants> xptr(new IlluminaVariants(*var_set, variant_probs,
                                                      frag_len_shape, frag_len_scale,
@@ -97,7 +105,8 @@ SEXP create_var_ill_pe(
                                                      qual_probs1, quals1,
                                                      ins_prob1, del_prob1,
                                                      qual_probs2, quals2,
-                                                     ins_prob2, del_prob2));
+                                                     ins_prob2, del_prob2,
+                                                     barcodes));
     return xptr;
 }
 
@@ -119,13 +128,15 @@ SEXP create_var_ill_se(
         const std::vector<std::vector<std::vector<double>>>& qual_probs,
         const std::vector<std::vector<std::vector<uint8>>>& quals,
         const double& ins_prob,
-        const double& del_prob) {
+        const double& del_prob,
+        const std::vector<std::string>& barcodes) {
     XPtr<VarSet> var_set(var_set_ptr);
     XPtr<IlluminaVariants> xptr(new IlluminaVariants(*var_set, variant_probs,
                                                      frag_len_shape, frag_len_scale,
                                                      frag_len_min, frag_len_max,
                                                      qual_probs, quals,
-                                                     ins_prob, del_prob));
+                                                     ins_prob, del_prob,
+                                                     barcodes));
     return xptr;
 }
 

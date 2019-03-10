@@ -436,7 +436,8 @@ make_illumina_sampler <- function(seq_object, n_reads,
                                          prof_info1$qual_probs, prof_info1$quals,
                                          ins_prob1, del_prob1,
                                          prof_info2$qual_probs, prof_info2$quals,
-                                         ins_prob2, del_prob2)
+                                         ins_prob2, del_prob2,
+                                         barcodes)
         } else if (inherits(seq_object, "variants")) {
             sampler <- create_var_ill_pe(seq_object$genomes, variant_probs,
                                          frag_len_shape, frag_len_scale,
@@ -444,7 +445,8 @@ make_illumina_sampler <- function(seq_object, n_reads,
                                          prof_info1$qual_probs, prof_info1$quals,
                                          ins_prob1, del_prob1,
                                          prof_info2$qual_probs, prof_info2$quals,
-                                         ins_prob2, del_prob2)
+                                         ins_prob2, del_prob2,
+                                         barcodes)
         }
     } else {
         prof_info <- list(read_profile(profile1, seq_sys, read_length, 1))
@@ -453,13 +455,15 @@ make_illumina_sampler <- function(seq_object, n_reads,
                                          frag_len_shape, frag_len_scale,
                                          frag_len_min, frag_len_max,
                                          prof_info$qual_probs, prof_info$quals,
-                                         ins_prob1, del_prob1)
+                                         ins_prob1, del_prob1,
+                                         barcodes)
         } else if (inherits(seq_object, "variants")) {
             sampler <- create_var_ill_se(seq_object$genomes, variant_probs,
                                          frag_len_shape, frag_len_scale,
                                          frag_len_min, frag_len_max,
                                          prof_info$qual_probs, prof_info$quals,
-                                         ins_prob1, del_prob1)
+                                         ins_prob1, del_prob1,
+                                         barcodes)
         }
     }
 
