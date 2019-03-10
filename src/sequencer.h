@@ -97,6 +97,13 @@ struct SequenceIdentifierInfo {
 
 
 
+#ifdef __GEMINO_SEQUENCER_H
+/*
+ Above line, plus extra `#endif` below should keep the rest of this file
+ from being compiled.
+ */
+
+
 
 /*
  Sample for fragment lengths.
@@ -908,6 +915,10 @@ public:
 
 
 
+
+
+
+#endif
 
 
 #endif

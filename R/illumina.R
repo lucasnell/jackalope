@@ -257,53 +257,7 @@ read_profile <- function(profile_fn, seq_sys, read_length, read) {
 
 
 
-# main info fxn -----
-#'
-#' You also need to organize higher-level stuff like...
-#' - number of reads or coverage
-#' - pooling, if any, to do
-#' - % PCR duplicates (use `re_read` methods for this)
-#' - barcodes for multiplexing and for which reads belong on which flow cell, lane, etc.
-#'
-#' See `SequenceIdentifierInfo` class inside `sequencer.h` to see the info required
-#' for the FASTQ file identifier lines. (Much of this can probably be ignored.)
-#'
-#'
-#' The classes `ReferenceIllumina` (typedef-ed from `Illumina_t<RefGenome>`)
-#' and `VariantIllumina` are what you'll work with to do the sampling.
-#' You want to focus on each class's `one_read` method.
-#'
-#' This is the most info you'd need for a sequencing object in `illumina.h`:
-#'
-#' For `VariantIllumina` only:
-#'
-#' - const VarSet& var_set
-#' - const std::vector<double>& variant_probs
-#'
-#' For `ReferenceIllumina` only:
-#'
-#' - const RefGenome& seq_object
-#'
-
-#'
-#' ARGUMENTS FOR FULL ILLUMINA SEQUENCING FUNCTION:
-#'
-#' seq_object
-#' read_length,
-#' paired,
-#' frag_mean,
-#' frag_sd,
-#' seq_sys = NULL,
-#' profile1 = NULL,
-#' profile2 = NULL,
-#' ins_prob1 = 0.00009
-#' del_prob1 = 0.00011
-#' ins_prob2 = 0.00015
-#' del_prob2 = 0.00023
-#' frag_len_min = NULL,
-#' frag_len_max = NULL
-#' variant_probs = NULL
-#'
+# info functions -----
 
 
 
@@ -314,14 +268,14 @@ read_profile <- function(profile_fn, seq_sys, read_length, read) {
 #'
 #' @noRd
 #'
-check_illumina_args <- function(seq_object,
+check_illumina_args <- function(seq_object, n_reads,
                                 read_length, paired,
                                 frag_mean, frag_sd,
                                 seq_sys, profile1, profile2,
                                 ins_prob1, del_prob1,
                                 ins_prob2, del_prob2,
                                 frag_len_min, frag_len_max,
-                                variant_probs) {
+                                variant_probs, barcodes, pcr_dups) {
 
     # Checking types:
     err_msg <- sprintf(paste("\nWhen providing info for the Illumina sequencer,",
@@ -333,8 +287,11 @@ check_illumina_args <- function(seq_object,
              "of class \"ref_genome\" or \"variants\".", call. = FALSE)
     }
 
-    if (!single_integer(read_length, 1)) {
-        stop(sprintf(err_msg, "read_length", "a single integer >= 1"), call. = FALSE)
+    for (x in c("read_length", "n_reads")) {
+        z <- eval(parse(text = x))
+        if (!single_integer(z, 1)) {
+            stop(sprintf(err_msg, x, "a single integer >= 1"), call. = FALSE)
+        }
     }
     if (!is_type(paired, "logical", 1)) {
         stop(sprintf(err_msg, "paired", "a single logical"), call. = FALSE)
@@ -361,6 +318,12 @@ check_illumina_args <- function(seq_object,
     if (!is.null(variant_probs) && !is_type(variant_probs, c("numeric", "integer"))) {
         stop(sprintf(err_msg, "variant_probs", "NULL or a numeric/integer vector"),
              call. = FALSE)
+    }
+    if (!is.null(barcodes) && !is_type(barcodes, "character")) {
+        stop(sprintf(err_msg, "barcodes", "NULL or a character vector"), call. = FALSE)
+    }
+    if (!single_number(pcr_dups, 0)) {
+        stop(sprintf(err_msg, "pcr_dups", "a single number >= 0"), call. = FALSE)
     }
 
     # Checking for proper profile info:
@@ -393,6 +356,30 @@ check_illumina_args <- function(seq_object,
                            "of class \"variants\". Use `seq_object$n_vars()`",
                            "to see the number of variants")), call. = FALSE)
     }
+    # Similar checks for barcodes
+    if (!is.null(barcodes)) {
+        if (!inherits(seq_object, "variants") && length(barcodes) != 1) {
+            stop("\nFor Illumina sequencing, it makes no sense to provide ",
+                 "a vector of multiple barcodes if the `seq_object` argument is ",
+                 "of class \"ref_genome\". ",
+                 "Terminating here in case this was a mistake.", call. = FALSE)
+        }
+        if (inherits(seq_object, "variants") && length(barcodes) != seq_object$n_vars()) {
+            stop(sprintf(err_msg, "barcodes",
+                         paste("a vector of the same length as the number of variants",
+                               "in the `seq_object` argument, if `seq_object` is",
+                               "of class \"variants\". Use `seq_object$n_vars()`",
+                               "to see the number of variants")), call. = FALSE)
+        }
+        n_weirdo_chars <- sapply(strsplit(barcodes, ""),
+                                 function(x) sum(!x %in% c("T", "C", "A", "G")))
+        if (any(n_weirdo_chars > 0)) {
+            stop(sprintf(err_msg, "barcodes",
+                         paste("NULL or a character vector with only the characters",
+                               "\"T\", \"C\", \"A\", and \"G\" present")),
+                 call. = FALSE)
+        }
+    }
 
     invisible(NULL)
 }
@@ -405,18 +392,19 @@ check_illumina_args <- function(seq_object,
 #'
 #' @noRd
 #'
-make_illumina_sampler <- function(seq_object,
+make_illumina_sampler <- function(seq_object, n_reads,
                                   read_length, paired,
                                   frag_mean, frag_sd,
                                   seq_sys, profile1, profile2,
                                   ins_prob1, del_prob1, ins_prob2, del_prob2,
                                   frag_len_min, frag_len_max,
-                                  variant_probs) {
+                                  variant_probs, barcodes, pcr_dups) {
 
     # Check for improper argument types:
-    check_ill_args(seq_object, read_length, paired, frag_mean, frag_sd, seq_sys,
-                   profile1, profile2, ins_prob1, del_prob1, ins_prob2, del_prob2,
-                   frag_len_min, frag_len_max, variant_probs)
+    check_ill_args(seq_object, n_reads, read_length, paired,
+                   frag_mean, frag_sd, seq_sys, profile1, profile2,
+                   ins_prob1, del_prob1, ins_prob2, del_prob2,
+                   frag_len_min, frag_len_max, variant_probs, barcodes, pcr_dups)
 
     # Change mean and SD to shape and scale of Gamma distribution:
     frag_len_shape <- (frag_mean / frag_sd)^2
@@ -433,6 +421,9 @@ make_illumina_sampler <- function(seq_object,
     if (is.null(variant_probs) && inherits(seq_object, "variants")) {
         variant_probs <- rep(1, seq_object$n_vars())
     }
+    if (is.null(barcodes) && inherits(seq_object, "variants")) {
+        barcodes <- rep("", seq_object$n_vars())
+    } else if (is.null(barcodes)) barcodes <- ""
 
     sampler <- NULL
     if (paired) {
@@ -478,6 +469,41 @@ make_illumina_sampler <- function(seq_object,
 
 
 
+#'
+#' You also need to organize higher-level stuff like...
+#' - number of reads or coverage
+#' - pooling, if any, to do
+#' - % PCR duplicates (use `re_read` methods for this)
+#' - barcodes for multiplexing and for which reads belong on which flow cell, lane, etc.
+#'
+#' See `SequenceIdentifierInfo` class inside `sequencer.h` to see the info required
+#' for the FASTQ file identifier lines. (Much of this can probably be ignored.)
+#'
+
+
+
+#'
+#' ARGUMENTS FOR FULL ILLUMINA SEQUENCING FUNCTION:
+#'
+#' seq_object,
+#' n_reads,
+#' read_length,
+#' paired,
+#' frag_mean,
+#' frag_sd,
+#' seq_sys = NULL,
+#' profile1 = NULL,
+#' profile2 = NULL,
+#' ins_prob1 = 0.00009,
+#' del_prob1 = 0.00011,
+#' ins_prob2 = 0.00015,
+#' del_prob2 = 0.00023,
+#' frag_len_min = NULL,
+#' frag_len_max = NULL,
+#' variant_probs = NULL,
+#' barcodes = NULL,
+#' pcr_dups = 0.02
+#'
 
 
 
