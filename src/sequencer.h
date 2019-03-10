@@ -35,59 +35,48 @@ using namespace Rcpp;
  */
 struct SequenceIdentifierInfo {
 
-    // (Characters allowed: a–z, A–Z, 0–9 and underscore) Instrument ID:
-    std::string instrument;
-    // (Numerical) Run number on instrument:
-    uint32 run_number;
-    // (Characters allowed: a–z, A–Z, 0–9):
-    std::string flowcell_ID;
-    // (Numerical) Lane number:
-    uint32 lane;
-    // (Numerical) Tile number:
-    uint32 tile;
-    // (Numerical) Run number on instrument:
-    uint32 x_pos;
-    // (Numerical) X coordinate of cluster:
-    uint32 y_pos;
-    // (Numerical) Read number. 1 can be single read or Read 2 of paired-end:
+    // (Numerical) Read number. 1 can be single read or read 2 of paired-end:
     uint32 read;
-    // (Y or N) Y if the read is filtered (did not pass), N otherwise:
-    std::string is_filtered;
-    // (Numerical) 0 when none of the control bits are on, otherwise even number:
-    uint32 control_number;
-    // (Numerical) Sample number from sample sheet:
-    uint32 sample_number;
 
     SequenceIdentifierInfo() {}
     SequenceIdentifierInfo(
-        const std::string& instrument_,
-        const uint32& run_number_,
-        const std::string& flowcell_ID_,
-        const uint32& lane_,
-        const uint32& tile_,
-        const uint32& x_pos_,
-        const uint32& y_pos_,
+        const std::string& instrument,
+        const uint32& run_number,
+        const std::string& flowcell_ID,
+        const uint32& lane,
+        const uint32& tile,
+        const uint32& x_pos,
+        const uint32& y_pos,
         const uint32& read_,
-        const std::string& is_filtered_,
-        const uint32& control_number_,
-        const uint32& sample_number_
+        const std::string& is_filtered,
+        const uint32& control_number,
+        const uint32& sample_number
     )
-        : instrument(instrument_), run_number(run_number_),
-          flowcell_ID(flowcell_ID_), lane(lane_),
-          tile(tile_), x_pos(x_pos_),
-          y_pos(y_pos_), read(read_),
-          is_filtered(is_filtered_), control_number(control_number_),
-          sample_number(sample_number_) {};
+        : before_read(),
+          read(read_),
+          after_read() {
 
-    std::string get_id_line() {
-        std::string out = "@";
-        out += instrument + ':' + std::to_string(run_number) + ':' + flowcell_ID + ':';
-        out += std::to_string(lane) + ':' + std::to_string(tile) + ':';
-        out += std::to_string(x_pos) + ':' + std::to_string(y_pos) + ' ';
-        out += std::to_string(read) + ':' + is_filtered + ':';
-        out += std::to_string(control_number) + ':' + std::to_string(sample_number);
+        // Before read:
+        before_read = "@";
+        before_read += instrument + ':' + std::to_string(run_number) + ':' + flowcell_ID + ':';
+        before_read += std::to_string(lane) + ':' + std::to_string(tile) + ':';
+        before_read += std::to_string(x_pos) + ':' + std::to_string(y_pos) + ' ';
+        // After read
+        after_read = ':' + is_filtered + ':';
+        after_read += std::to_string(control_number) + ':';
+        after_read += std::to_string(sample_number);
+
+    };
+
+    std::string get_line() {
+        std::string out = before_read + std::to_string(read) + after_read;
         return out;
     }
+
+private:
+
+    std::string before_read;
+    std::string after_read;
 
 };
 
