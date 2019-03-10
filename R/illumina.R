@@ -278,8 +278,11 @@ check_illumina_args <- function(seq_object, n_reads,
                                 variant_probs, barcodes, pcr_dups) {
 
     # Checking types:
-    err_msg <- sprintf(paste("\nWhen providing info for the Illumina sequencer,",
-                             "the `%s` argument must be %s."), "%s", "%s")
+
+    err_msg <- function(par, ...) {
+        stop(sprintf(paste("\nWhen providing info for the Illumina sequencer, the `%s`",
+                           "argument must be %s."), par, paste(...)), call. = FALSE)
+    }
 
     if (!inherits(seq_object, c("ref_genome", "variants"))) {
         stop("\nWhen providing info for the Illumina sequencer, ",
@@ -289,41 +292,34 @@ check_illumina_args <- function(seq_object, n_reads,
 
     for (x in c("read_length", "n_reads")) {
         z <- eval(parse(text = x))
-        if (!single_integer(z, 1)) {
-            stop(sprintf(err_msg, x, "a single integer >= 1"), call. = FALSE)
-        }
+        if (!single_integer(z, 1)) err_msg(x, "a single integer >= 1")
     }
-    if (!is_type(paired, "logical", 1)) {
-        stop(sprintf(err_msg, "paired", "a single logical"), call. = FALSE)
-    }
+    if (!is_type(paired, "logical", 1)) err_msg("paired", "a single logical")
     for (x in c("frag_mean", "frag_sd", "ins_prob1", "del_prob1",
                 "ins_prob2", "del_prob2")) {
         z <- eval(parse(text = x))
-        if (!single_number(z) || z <= 0) {
-            stop(sprintf(err_msg, x, "a single number > 0"), call. = FALSE)
-        }
+        if (!single_number(z) || z <= 0) err_msg(x, "a single number > 0")
     }
     for (x in c("seq_sys", "profile1", "profile2")) {
         z <- eval(parse(text = x))
         if (!is.null(z) && !is_type(z, "character", 1)) {
-            stop(sprintf(err_msg, x, "NULL or a single string"), call. = FALSE)
+            err_msg(x, "NULL or a single string")
         }
     }
     for (x in c("frag_len_min", "frag_len_max")) {
         z <- eval(parse(text = x))
         if (!is.null(z) && !single_integer(z, 1)) {
-            stop(sprintf(err_msg, x, "NULL or a single integer >= 1"), call. = FALSE)
+            err_msg(x, "NULL or a single integer >= 1")
         }
     }
     if (!is.null(variant_probs) && !is_type(variant_probs, c("numeric", "integer"))) {
-        stop(sprintf(err_msg, "variant_probs", "NULL or a numeric/integer vector"),
-             call. = FALSE)
+        err_msg("variant_probs", "NULL or a numeric/integer vector")
     }
     if (!is.null(barcodes) && !is_type(barcodes, "character")) {
-        stop(sprintf(err_msg, "barcodes", "NULL or a character vector"), call. = FALSE)
+        err_msg("barcodes", "NULL or a character vector")
     }
     if (!single_number(pcr_dups, 0)) {
-        stop(sprintf(err_msg, "pcr_dups", "a single number >= 0"), call. = FALSE)
+        err_msg("pcr_dups", "a single number >= 0")
     }
 
     # Checking for proper profile info:
@@ -350,11 +346,10 @@ check_illumina_args <- function(seq_object, n_reads,
     }
     if (!is.null(variant_probs) && inherits(seq_object, "variants") &&
         length(variant_probs) != seq_object$n_vars()) {
-        stop(sprintf(err_msg, "variant_probs",
-                     paste("a vector of the same length as the number of variants",
-                           "in the `seq_object` argument, if `seq_object` is",
-                           "of class \"variants\". Use `seq_object$n_vars()`",
-                           "to see the number of variants")), call. = FALSE)
+        err_msg("variant_probs",
+                "a vector of the same length as the number of variants in the",
+                "`seq_object` argument, if `seq_object` is of class \"variants\".",
+                "Use `seq_object$n_vars()` to see the number of variants")
     }
     # Similar checks for barcodes
     if (!is.null(barcodes)) {
@@ -365,19 +360,16 @@ check_illumina_args <- function(seq_object, n_reads,
                  "Terminating here in case this was a mistake.", call. = FALSE)
         }
         if (inherits(seq_object, "variants") && length(barcodes) != seq_object$n_vars()) {
-            stop(sprintf(err_msg, "barcodes",
-                         paste("a vector of the same length as the number of variants",
-                               "in the `seq_object` argument, if `seq_object` is",
-                               "of class \"variants\". Use `seq_object$n_vars()`",
-                               "to see the number of variants")), call. = FALSE)
+            err_msg("barcodes",
+                    "a vector of the same length as the number of variants in the",
+                    "`seq_object` argument, if `seq_object` is of class \"variants\".",
+                    "Use `seq_object$n_vars()` to see the number of variants")
         }
         n_weirdo_chars <- sapply(strsplit(barcodes, ""),
                                  function(x) sum(!x %in% c("T", "C", "A", "G")))
         if (any(n_weirdo_chars > 0)) {
-            stop(sprintf(err_msg, "barcodes",
-                         paste("NULL or a character vector with only the characters",
-                               "\"T\", \"C\", \"A\", and \"G\" present")),
-                 call. = FALSE)
+            err_msg("barcodes", "NULL or a character vector with only the characters",
+                    "\"T\", \"C\", \"A\", and \"G\" present")
         }
     }
 
@@ -386,131 +378,7 @@ check_illumina_args <- function(seq_object, n_reads,
 
 
 
-#' Organize arguments and return the pointer to the sampler object.
-#'
-#' @inheritParams sequence
-#'
-#' @noRd
-#'
-make_illumina_sampler <- function(seq_object, n_reads,
-                                  read_length, paired,
-                                  frag_mean, frag_sd,
-                                  seq_sys, profile1, profile2,
-                                  ins_prob1, del_prob1, ins_prob2, del_prob2,
-                                  frag_len_min, frag_len_max,
-                                  variant_probs, barcodes, pcr_dups) {
 
-    # Check for improper argument types:
-    check_ill_args(seq_object, n_reads, read_length, paired,
-                   frag_mean, frag_sd, seq_sys, profile1, profile2,
-                   ins_prob1, del_prob1, ins_prob2, del_prob2,
-                   frag_len_min, frag_len_max, variant_probs, barcodes, pcr_dups)
-
-    # Change mean and SD to shape and scale of Gamma distribution:
-    frag_len_shape <- (frag_mean / frag_sd)^2
-    frag_len_scale <- frag_sd^2 / frag_mean
-
-    if (is.null(frag_len_min)) frag_len_min <- read_length
-    # (Because it's coerced to an unsigned 32-bit integer, values >= 2^32 will
-    #  make the integer "overflow" and change to something you don't want.)
-    if (is.null(frag_len_max) || frag_len_max > 2^32 - 1) frag_len_max <- 2^32 - 1
-    if (frag_len_min > frag_len_max) {
-        stop("\nFragment length min can't be less than the max. ",
-             "For computational reasons, it should also be < 2^32.", call. = FALSE)
-    }
-    if (is.null(variant_probs) && inherits(seq_object, "variants")) {
-        variant_probs <- rep(1, seq_object$n_vars())
-    }
-    if (is.null(barcodes) && inherits(seq_object, "variants")) {
-        barcodes <- rep("", seq_object$n_vars())
-    } else if (is.null(barcodes)) barcodes <- ""
-
-    sampler <- NULL
-    if (paired) {
-        prof_info1 <- read_profile(profile1, seq_sys, read_length, 1)
-        prof_info2 <- read_profile(profile2, seq_sys, read_length, 2)
-        if (inherits(seq_object, "ref_genome")) {
-            sampler <- create_ref_ill_pe(seq_object$genome,
-                                         frag_len_shape, frag_len_scale,
-                                         frag_len_min, frag_len_max,
-                                         prof_info1$qual_probs, prof_info1$quals,
-                                         ins_prob1, del_prob1,
-                                         prof_info2$qual_probs, prof_info2$quals,
-                                         ins_prob2, del_prob2,
-                                         barcodes)
-        } else if (inherits(seq_object, "variants")) {
-            sampler <- create_var_ill_pe(seq_object$genomes, variant_probs,
-                                         frag_len_shape, frag_len_scale,
-                                         frag_len_min, frag_len_max,
-                                         prof_info1$qual_probs, prof_info1$quals,
-                                         ins_prob1, del_prob1,
-                                         prof_info2$qual_probs, prof_info2$quals,
-                                         ins_prob2, del_prob2,
-                                         barcodes)
-        }
-    } else {
-        prof_info <- list(read_profile(profile1, seq_sys, read_length, 1))
-        if (inherits(seq_object, "ref_genome")) {
-            sampler <- create_ref_ill_se(seq_object$genome,
-                                         frag_len_shape, frag_len_scale,
-                                         frag_len_min, frag_len_max,
-                                         prof_info$qual_probs, prof_info$quals,
-                                         ins_prob1, del_prob1,
-                                         barcodes)
-        } else if (inherits(seq_object, "variants")) {
-            sampler <- create_var_ill_se(seq_object$genomes, variant_probs,
-                                         frag_len_shape, frag_len_scale,
-                                         frag_len_min, frag_len_max,
-                                         prof_info$qual_probs, prof_info$quals,
-                                         ins_prob1, del_prob1,
-                                         barcodes)
-        }
-    }
-
-    return(sampler)
-}
-
-
-
-
-#'
-#' You also need to organize higher-level stuff like...
-#' - number of reads or coverage
-#' - pooling, if any, to do
-#' - % PCR duplicates (use `re_read` methods for this)
-#' - barcodes for multiplexing and for which reads belong on which flow cell, lane, etc.
-#'
-#' See `SequenceIdentifierInfo` class inside `sequencer.h` to see the info required
-#' for the FASTQ file identifier lines. (Much of this can probably be ignored.)
-#'
-
-
-
-#'
-#' ARGUMENTS FOR FULL ILLUMINA SEQUENCING FUNCTION:
-#'
-#' seq_object,
-#' out_prefixes,
-#' n_reads,
-#' read_length,
-#' paired,
-#' frag_mean,
-#' frag_sd,
-#' seq_sys = NULL,
-#' profile1 = NULL,
-#' profile2 = NULL,
-#' ins_prob1 = 0.00009,
-#' del_prob1 = 0.00011,
-#' ins_prob2 = 0.00015,
-#' del_prob2 = 0.00023,
-#' frag_len_min = NULL,
-#' frag_len_max = NULL,
-#' variant_probs = NULL,
-#' barcodes = NULL,
-#' pcr_dups = 0.02,
-#' id_info = list(),
-#' n_cores
-#'
 
 
 #' Organize info for ID line in FASTQ file.
@@ -601,6 +469,135 @@ id_line_info <- function(...) {
     return(out)
 
 }
+
+
+
+
+
+
+
+#' Organize arguments and return the pointer to the sampler object.
+#'
+#' @inheritParams sequence
+#'
+#' @noRd
+#'
+make_illumina_sampler <- function(seq_object, n_reads,
+                                  read_length, paired,
+                                  frag_mean, frag_sd,
+                                  seq_sys, profile1, profile2,
+                                  ins_prob1, del_prob1, ins_prob2, del_prob2,
+                                  frag_len_min, frag_len_max,
+                                  variant_probs, barcodes, pcr_dups) {
+
+    # Check for improper argument types:
+    check_ill_args(seq_object, n_reads, read_length, paired,
+                   frag_mean, frag_sd, seq_sys, profile1, profile2,
+                   ins_prob1, del_prob1, ins_prob2, del_prob2,
+                   frag_len_min, frag_len_max, variant_probs, barcodes, pcr_dups)
+
+    # Change mean and SD to shape and scale of Gamma distribution:
+    frag_len_shape <- (frag_mean / frag_sd)^2
+    frag_len_scale <- frag_sd^2 / frag_mean
+
+    if (is.null(frag_len_min)) frag_len_min <- read_length
+    # (Because it's coerced to an unsigned 32-bit integer, values >= 2^32 will
+    #  make the integer "overflow" and change to something you don't want.)
+    if (is.null(frag_len_max) || frag_len_max > 2^32 - 1) frag_len_max <- 2^32 - 1
+    if (frag_len_min > frag_len_max) {
+        stop("\nFragment length min can't be less than the max. ",
+             "For computational reasons, it should also be < 2^32.", call. = FALSE)
+    }
+    if (is.null(variant_probs) && inherits(seq_object, "variants")) {
+        variant_probs <- rep(1, seq_object$n_vars())
+    }
+    if (is.null(barcodes) && inherits(seq_object, "variants")) {
+        barcodes <- rep("", seq_object$n_vars())
+    } else if (is.null(barcodes)) barcodes <- ""
+
+    sampler <- NULL
+    if (paired) {
+        prof_info1 <- read_profile(profile1, seq_sys, read_length, 1)
+        prof_info2 <- read_profile(profile2, seq_sys, read_length, 2)
+        if (inherits(seq_object, "ref_genome")) {
+            sampler <- create_ref_ill_pe(seq_object$genome,
+                                         frag_len_shape, frag_len_scale,
+                                         frag_len_min, frag_len_max,
+                                         prof_info1$qual_probs, prof_info1$quals,
+                                         ins_prob1, del_prob1,
+                                         prof_info2$qual_probs, prof_info2$quals,
+                                         ins_prob2, del_prob2,
+                                         barcodes)
+        } else if (inherits(seq_object, "variants")) {
+            sampler <- create_var_ill_pe(seq_object$genomes, variant_probs,
+                                         frag_len_shape, frag_len_scale,
+                                         frag_len_min, frag_len_max,
+                                         prof_info1$qual_probs, prof_info1$quals,
+                                         ins_prob1, del_prob1,
+                                         prof_info2$qual_probs, prof_info2$quals,
+                                         ins_prob2, del_prob2,
+                                         barcodes)
+        }
+    } else {
+        prof_info <- list(read_profile(profile1, seq_sys, read_length, 1))
+        if (inherits(seq_object, "ref_genome")) {
+            sampler <- create_ref_ill_se(seq_object$genome,
+                                         frag_len_shape, frag_len_scale,
+                                         frag_len_min, frag_len_max,
+                                         prof_info$qual_probs, prof_info$quals,
+                                         ins_prob1, del_prob1,
+                                         barcodes)
+        } else if (inherits(seq_object, "variants")) {
+            sampler <- create_var_ill_se(seq_object$genomes, variant_probs,
+                                         frag_len_shape, frag_len_scale,
+                                         frag_len_min, frag_len_max,
+                                         prof_info$qual_probs, prof_info$quals,
+                                         ins_prob1, del_prob1,
+                                         barcodes)
+        }
+    }
+
+    return(sampler)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+#'
+#' ARGUMENTS FOR FULL ILLUMINA SEQUENCING FUNCTION:
+#'
+#' seq_object,
+#' out_prefix,
+#' n_reads,
+#' read_length,
+#' paired,
+#' frag_mean,
+#' frag_sd,
+#' seq_sys = NULL,
+#' profile1 = NULL,
+#' profile2 = NULL,
+#' ins_prob1 = 0.00009,
+#' del_prob1 = 0.00011,
+#' ins_prob2 = 0.00015,
+#' del_prob2 = 0.00023,
+#' frag_len_min = NULL,
+#' frag_len_max = NULL,
+#' variant_probs = NULL,
+#' barcodes = NULL,
+#' pcr_dups = 0.02,
+#' id_info = list(),
+#' compress = FALSE,
+#' n_cores
+#'
 
 
 
