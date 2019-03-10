@@ -86,13 +86,29 @@ struct RefSequence {
         return size() > other.size();
     }
 
-    // For filling a sequence of a given starting position and size
-    void fill_seq(std::string& seq, const uint32& start, const uint32& size_) const {
-        if (seq.size() > 0) seq.clear();
-        seq.reserve(size_);
-        for (uint32 i = start; i < (start + size_); i++) seq += this->nucleos[i];
+    /*
+     ------------------
+     For filling a read at a given starting position from a sequence of a
+     given starting position and size.
+     Used only for sequencer.
+     ------------------
+     */
+    void fill_read(std::string& read,
+                   const uint32& read_start,
+                   const uint32& seq_start,
+                   uint32 n_to_add) const {
+        // Making sure end doesn't go beyond the sequence bounds
+        if ((seq_start + n_to_add - 1) >= nucleos.size()) {
+            n_to_add = nucleos.size() - seq_start;
+        }
+        // Make sure the read is long enough (this fxn should never shorten it):
+        if (read.size() < n_to_add + read_start) read.resize(n_to_add + read_start, 'N');
+        for (uint32 i = 0; i < n_to_add; i++) {
+            read[(read_start + i)] = this->nucleos[(seq_start + i)];
+        }
         return;
     }
+
 };
 
 

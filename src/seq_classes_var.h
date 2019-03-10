@@ -269,14 +269,16 @@ public:
 
 
     /*
-     For filling a sequence of a given starting position and size.
+     ------------------
+     For filling a read at a given starting position from a sequence of a
+     given starting position and size.
      Used only for sequencer.
+     ------------------
      */
-    void fill_seq(std::string& seq, const uint32& start, const uint32& size_) const {
-        uint32 mut_i = 0;
-        this->set_seq_chunk(seq, start, size_, mut_i);
-        return;
-    }
+    void fill_read(std::string& read,
+                   const uint32& read_start,
+                   const uint32& seq_start,
+                   uint32 n_to_add) const;
 
 
 
