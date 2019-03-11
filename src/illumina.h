@@ -60,9 +60,9 @@ struct ReadConstructInfo {
                       const uint32& read_length_,
                       const std::string barcode_)
         : read_length(read_length_),
-          seq_ind(),
-          frag_len(),
-          frag_start(),
+          seq_ind(0),
+          frag_len(0),
+          frag_start(0),
           reads(),
           quals(),
           read_seq_spaces(),
@@ -322,7 +322,7 @@ public:
 
     /* __ Samplers __ */
     // Samples index for which genome-sequence to sequence
-    AliasSampler seqs;
+    AliasSampler seq_sampler;
     // Samples Illumina qualities and errors, one `IlluminaQualityError` for each read
     std::vector<IlluminaQualityError> qual_errors;
     // Samples fragment lengths:
@@ -353,7 +353,7 @@ public:
                       const double& ins_prob2,
                       const double& del_prob2,
                       const std::string& barcode)
-        : seqs(),
+        : seq_sampler(),
           qual_errors(),
           frag_lengths(frag_len_shape, frag_len_scale),
           seq_lengths(seq_object.seq_sizes()),
@@ -387,7 +387,7 @@ public:
                       const double& ins_prob,
                       const double& del_prob,
                       const std::string& barcode)
-        : seqs(),
+        : seq_sampler(),
           qual_errors{IlluminaQualityError(qual_probs, quals)},
           frag_lengths(frag_len_shape, frag_len_scale),
           seq_lengths(seq_object.seq_sizes()),
@@ -405,7 +405,7 @@ public:
           };
 
     IlluminaOneGenome(const IlluminaOneGenome& other)
-        : seqs(other.seqs), qual_errors(other.qual_errors),
+        : seq_sampler(other.seq_sampler), qual_errors(other.qual_errors),
           frag_lengths(other.frag_lengths),
           insertions(other.insertions), deletions(other.deletions),
           frag_len_min(other.frag_len_min), frag_len_max(other.frag_len_max),
@@ -415,18 +415,7 @@ public:
     // Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality)
     void one_read(std::vector<std::string>& fastq_chunks,
                   pcg64& eng,
-                  SequenceIdentifierInfo& ID_info) {
-
-        /*
-         Sample fragment info, and set the sequence space(s) required for these read(s).
-         */
-        this->seq_indels_frag(eng);
-
-        // Fill the reads and qualities
-        this->append_chunks(fastq_chunks, eng, ID_info);
-
-        return;
-    }
+                  SequenceIdentifierInfo& ID_info);
 
     /*
      Same as above, but for a PCR duplicate. It's assumed that `one_read` has been
@@ -434,38 +423,14 @@ public:
      */
     void re_read(std::vector<std::string>& fastq_chunks,
                   pcg64& eng,
-                  SequenceIdentifierInfo& ID_info) {
-
-        // Here I'm just re-doing indels bc it's a PCR duplicate.
-        this->just_indels(eng);
-
-        // Fill the reads and qualities
-        this->append_chunks(fastq_chunks, eng, ID_info);
-
-        return;
-    }
+                  SequenceIdentifierInfo& ID_info);
 
     /*
      Add information about a RefGenome or VarGenome object
      This is used when making multiple samplers that share most info except for
      that related to the sequence object.
      */
-    void add_seq_info(const T& seq_object, const std::string& barcode) {
-
-        this->seq_lengths = seq_object.seq_sizes();
-        this->sequences = &seq_object;
-
-        std::vector<double> probs_;
-        probs_.reserve(this->seq_lengths.size());
-        for (uint i = 0; i < seq_lengths.size(); i++) {
-            probs_.push_back(static_cast<double>(seq_lengths[i]));
-        }
-        this->seqs = AliasSampler(probs_);
-
-        this->constr_info.barcode = barcode;
-
-        return;
-    }
+    void add_seq_info(const T& seq_object, const std::string& barcode);
 
 
 protected:
@@ -481,140 +446,28 @@ protected:
 
 
     // Construct sequence-sampling probabilities:
-    inline void construct_seqs() {
-        std::vector<double> probs_;
-        probs_.reserve(this->seq_lengths.size());
-        for (uint i = 0; i < this->seq_lengths.size(); i++) {
-            probs_.push_back(static_cast<double>(this->seq_lengths[i]));
-        }
-        this->seqs = AliasSampler(probs_);
-        return;
-    }
+    void construct_seqs();
 
 
     // Sample for insertion and deletion positions
-    void sample_indels(pcg64& eng) {
-
-        const uint32& frag_len(this->constr_info.frag_len);
-
-        for (uint32 r = 0; r < insertions.size(); r++) {
-            uint32 frag_pos = 0;
-            uint32 length_now = 0;
-            double u;
-            std::deque<uint32>& ins(this->insertions[r]);
-            std::deque<uint32>& del(this->deletions[r]);
-            const double& ins_prob(ins_probs[r]);
-            const double& del_prob(del_probs[r]);
-            ins.clear();
-            del.clear();
-            while (length_now < read_length && frag_pos < frag_len) {
-                u = runif_01(eng);
-                if (u > (ins_prob + del_prob)) {
-                    length_now++;
-                } else if (u > ins_prob) {
-                    del.push_back(frag_pos);
-                } else {
-                    if (length_now == (read_length - 1)) {
-                        length_now++;
-                    } else {
-                        ins.push_back(frag_pos);
-                        length_now += 2;
-                    }
-                }
-                frag_pos++;
-            }
-        }
-
-        return;
-    }
+    void sample_indels(pcg64& eng);
 
     // Adjust sequence spaces
-    void adjust_seq_spaces() {
-
-        std::vector<uint32>& read_seq_spaces(this->constr_info.read_seq_spaces);
-        std::vector<std::string>& reads(this->constr_info.reads);
-        const uint32& frag_len(this->constr_info.frag_len);
-
-        for (uint32 r = 0; r < this->insertions.size(); r++) {
-            /*
-             I'm adding deletions because more deletions mean that I need
-             more sequence bases to achieve the same read length.
-             Insertions means I need fewer.
-             */
-            sint32 indel_effect = this->deletions[r].size() - this->insertions[r].size();
-            /*
-             In addition to indels, below corrects for situation where a small
-             fragment size was sampled.
-             (Because the indel sampler stops when it reaches the fragment end,
-              we don't need to account for that.)
-             */
-            read_seq_spaces[r] = std::min(this->read_length + indel_effect, frag_len);
-            // Adjust `reads` so it can hold the necessary sequence space:
-            if (reads[r].size() != read_seq_spaces[r]) {
-                reads[r].resize(read_seq_spaces[r], 'N');
-            }
-            // Now including effect of barcode:
-            read_seq_spaces[r] -= this->constr_info.barcode.size();
-        }
-
-        return;
-    }
+    void adjust_seq_spaces();
 
 
     /*
      Sample a sequence, indels, fragment length, and starting position for the fragment.
      Lastly, it sets the sequence spaces required for these reads.
      */
-    inline void seq_indels_frag(pcg64& eng) {
-
-        uint32& seq_ind(this->constr_info.seq_ind);
-        uint32& frag_len(this->constr_info.frag_len);
-        uint32& frag_start(this->constr_info.frag_start);
-
-        // Sample sequence:
-        seq_ind = this->seqs.sample(eng);
-        uint32 seq_len = (*(this->sequences))[seq_ind].size();
-
-        // Sample fragment length:
-        frag_len = static_cast<uint32>(this->frag_lengths(eng));
-        if (frag_len < frag_len_min) frag_len = frag_len_min;
-        if (frag_len > frag_len_max) frag_len = frag_len_max;
-
-        // Sample fragment starting position:
-        if (frag_len >= seq_len) {
-            frag_len = seq_len;
-            frag_start = 0;
-        } else {
-            double u = runif_01(eng);
-            frag_start = static_cast<uint32>(u * (seq_len - frag_len + 1));
-        }
-
-        // Sample indels:
-        this->sample_indels(eng);
-
-        // Adjust sequence spaces:
-        this->adjust_seq_spaces();
-
-        return;
-    }
+    void seq_indels_frag(pcg64& eng);
 
 
     /*
      Same as above, but for PCR duplicates.
      This means skipping the sequence and fragment info parts.
      */
-    inline void just_indels(pcg64& eng) {
-
-        const uint32& frag_len(this->constr_info.frag_len);
-
-        // Sample indels:
-        this->sample_indels(eng);
-
-        // Adjust sequence spaces:
-        this->adjust_seq_spaces();
-
-        return;
-    }
+    void just_indels(pcg64& eng);
 
 
 
@@ -626,63 +479,7 @@ protected:
      */
     void append_chunks(std::vector<std::string>& fastq_chunks,
                        pcg64& eng,
-                       SequenceIdentifierInfo& ID_info) {
-
-        uint32 n_read_ends = this->ins_probs.size();
-        if (fastq_chunks.size() != n_read_ends) fastq_chunks.resize(n_read_ends);
-
-        const std::string& barcode(this->constr_info.barcode);
-        const std::vector<uint32>& read_seq_spaces(this->constr_info.read_seq_spaces);
-
-        // Boolean for whether we take the reverse side first:
-        bool reverse = runif_01(eng) < 0.5;
-        for (uint32 i = 0; i < n_read_ends; i++) {
-            ID_info.read = i + 1;
-            std::string& read(this->constr_info.reads[i]);
-            std::string& qual(this->constr_info.quals[i]);
-
-            // Read starting location:
-            uint32 start = this->constr_info.frag_start;
-            if (reverse) start += (this->constr_info.frag_len - read_seq_spaces[i]);
-
-            /*
-             Now fill `read` differently if taking forward or reverse strand:
-             */
-            if (!reverse) {
-                // Fill in read starting with position after barcode:
-                (*(this->sequences))[this->constr_info.seq_ind].fill_read(
-                        read, barcode.size(),
-                        start, read_seq_spaces[i]);
-            } else {
-                /*
-                 If doing reverse, we can add the actual sequence to the front of the
-                 read instead of starting at `barcode.size()`.
-
-                 (Even though `rev_comp` requires only T, C, A, G, or N characters,
-                 `read` should already have filler 'N' chars present at initialization
-                 of the `constr_info` field, so no need to add any now.)
-                 */
-                (*(this->sequences))[this->constr_info.seq_ind].fill_read(
-                        read, 0,
-                        start, read_seq_spaces[i]);
-                // Now do reverse complement:
-                rev_comp(read);
-            }
-            // Now fill barcode:
-            for (uint i = 0; i < barcode.size(); i++) read[i] = barcode[i];
-
-            // Sample mapping quality and add errors to read:
-            qual_errors[i].fill_read_qual(read, qual, insertions[i], deletions[i], eng);
-
-            // If doing paired reads, the second one should be the reverse of the first
-            reverse = !reverse;
-
-            // Combine into 4 lines of output per read:
-            fastq_chunks[i] += ID_info.get_line() + '\n' + read + "\n+\n" + qual + '\n';
-        }
-
-        return;
-    }
+                       SequenceIdentifierInfo& ID_info);
 
 
 };
@@ -855,6 +652,8 @@ private:
 template <typename T>
 class IlluminaWriterOneCore {
 
+public:
+
     T read_filler;
     SequenceIdentifierInfo ID_info;
     const uint32 n_reads;
@@ -887,21 +686,7 @@ class IlluminaWriterOneCore {
 
     // Add new read(s) to `fastq_chunks`, and update bool for whether you should
     // write to file
-    void add_to_chunks(pcg64& eng) {
-        read_filler.one_read(fastq_chunks, eng, ID_info);
-        reads_made++;
-        reads_in_chunk++;
-        double pcr = runif_01(eng);
-        while (pcr < prob_pcr_dup && reads_made < n_reads &&
-               reads_in_chunk < read_chunk_size) {
-            read_filler.re_read(fastq_chunks, eng, ID_info);
-            reads_made++;
-            reads_in_chunk++;
-            pcr = runif_01(eng);
-        }
-        do_write = reads_in_chunk >= read_chunk_size || reads_made >= n_reads;
-        return;
-    }
+    void add_to_chunks(pcg64& eng);
 
 
     // Write contents in `fastq_chunks` to UNcompressed file(s).
@@ -1023,87 +808,6 @@ inline void close_fastq_files(std::vector<gzFile>& files) {
     for (uint32 i = 0; i < files.size(); i++) gzclose(files[i]);
     return;
 }
-
-
-
-/*
- Write Illumina reads to file(s).
-
- `T` should be `IlluminaReference` or `IlluminaVariants`.
- `U` should be `gzFile` or `std::ofstream`.
-
- */
-template <typename T, typename U>
-int write_illumina_(const T& read_filler_base,
-                    const SequenceIdentifierInfo& ID_info_base,
-                    const std::string& out_prefix,
-                    const uint32& n_reads,
-                    const double& prob_pcr_dup,
-                    const uint32& read_chunk_size,
-                    uint32 n_cores) {
-
-    const uint32 n_read_ends(read_filler_base.paired ? uint32(2) : uint32(1));
-
-    // To make sure reads_per_core is still accurate if OpenMP not used:
-#ifndef _OPENMP
-    n_cores = 1;
-#endif
-
-    const std::vector<uint32> reads_per_core = split_n_reads(n_reads, n_cores);
-
-    // Generate seeds for random number generators (1 RNG per core)
-    const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
-
-    /*
-     Create and open files:
-     */
-    std::vector<U> files(n_read_ends);
-    open_fastq_files(files, out_prefix);
-
-#ifdef _OPENMP
-#pragma omp parallel
-{
-#endif
-
-    std::vector<uint64> active_seeds;
-
-    // Write the active seed per core or just write one of the seeds.
-#ifdef _OPENMP
-    uint32 active_thread = omp_get_thread_num();
-#else
-    uint32 active_thread = 0;
-#endif
-    active_seeds = seeds[active_thread];
-
-    pcg64 eng = seeded_pcg(active_seeds);
-
-    uint32 reads_this_core = reads_per_core[active_thread];
-
-    IlluminaWriterOneCore<T> writer(read_filler_base, ID_info_base,
-                                    reads_this_core, read_chunk_size, prob_pcr_dup);
-
-    while (writer.reads_made < reads_this_core) {
-
-        writer.add_to_chunks(eng);
-
-        if (writer.do_write) {
-#ifdef _OPENMP
-#pragma omp critical
-#endif
-            writer.write_from_chunks(files);
-        }
-    }
-
-#ifdef _OPENMP
-}
-#endif
-
-
-    // Close files
-    close_fastq_files(files);
-
-    return 0;
-};
 
 
 
