@@ -1,5 +1,13 @@
 
 
+
+// This file is not finished, so I don't want it to compile yet
+
+
+#ifdef __GEMINO_ABSOLUTELY_NEVER_COMPILE_H
+
+
+
 #include "sequencer.h"  // sequencer classes
 #include "gemino_types.h"  // uint32
 #include "seq_classes_ref.h"  // Ref* classes
@@ -13,7 +21,7 @@
 //'
 //' @noRd
 //'
-//[[Rcpp::export]]
+// //[[Rcpp::export]]
 SEXP make_illumina_ref(SEXP ref_genome_ptr,
                        const std::vector<double>& frag_len_probs,
                        const uint32& frag_len_region_len,
@@ -52,7 +60,7 @@ SEXP make_illumina_ref(SEXP ref_genome_ptr,
 //'
 //' @noRd
 //'
-//[[Rcpp::export]]
+// //[[Rcpp::export]]
 SEXP make_illumina_var(SEXP var_set_ptr,
                        const std::vector<double>& variant_probs,
                        const std::vector<double>& frag_len_probs,
@@ -100,7 +108,7 @@ SEXP make_illumina_var(SEXP var_set_ptr,
 //'
 //' @noRd
 //'
-//[[Rcpp::export]]
+// //[[Rcpp::export]]
 SEXP make_longread_ref(SEXP ref_genome_ptr,
                        const std::vector<double>& frag_len_probs,
                        const uint32& frag_len_region_len,
@@ -137,7 +145,7 @@ SEXP make_longread_ref(SEXP ref_genome_ptr,
 //'
 //' @noRd
 //'
-//[[Rcpp::export]]
+// //[[Rcpp::export]]
 SEXP make_longread_var(SEXP var_set_ptr,
                        const std::vector<double>& variant_probs,
                        const std::vector<double>& frag_len_probs,
@@ -172,3 +180,7 @@ SEXP make_longread_var(SEXP var_set_ptr,
 
     return longread_var;
 }
+
+
+
+#endif

@@ -52,8 +52,8 @@ struct SequenceIdentifierInfo {
         const uint32& control_number,
         const uint32& sample_number
     )
-        : before_read(),
-          read(read_),
+        : read(read_),
+          before_read(),
           after_read() {
 
         // Before read:
@@ -86,7 +86,7 @@ private:
 
 
 
-#ifdef __GEMINO_SEQUENCER_H
+#ifdef __GEMINO_ABSOLUTELY_NEVER_COMPILE_H
 /*
  Above line, plus extra `#endif` below should keep the rest of this file
  from being compiled.
@@ -497,7 +497,7 @@ public:
             reverse = !reverse;
 
             // Combine into 4 lines of output per read:
-            output[i] = ID_info.get_id_line() + '\n' + read + "\n+\n" + qual;
+            output[i] = ID_info.get_line() + '\n' + read + "\n+\n" + qual;
         }
 
         return output;
@@ -791,7 +791,7 @@ public:
         add_errors(read, qual, eng);
 
         // Combine into 4 lines of output per read:
-        output = ID_info.get_id_line() + '\n' + read + "\n+\n" + qual;
+        output = ID_info.get_line() + '\n' + read + "\n+\n" + qual;
 
         return output;
 
