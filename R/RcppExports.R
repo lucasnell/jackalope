@@ -155,6 +155,24 @@ digest_ref <- function(ref_genome_ptr, bind_sites, len5s, chunk_size = 0L, n_cor
     .Call(`_gemino_digest_ref`, ref_genome_ptr, bind_sites, len5s, chunk_size, n_cores)
 }
 
+#' Illumina sequence for reference object.
+#'
+#'
+#' @noRd
+#'
+illumina_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, n_reads, pcr_dups, n_cores, read_chunk_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes, instrument, run_number, flowcell_ID, lane, tile, x_pos, y_pos, read, is_filtered, control_number, sample_number) {
+    invisible(.Call(`_gemino_illumina_ref_cpp`, ref_genome_ptr, out_prefix, compress, n_reads, pcr_dups, n_cores, read_chunk_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes, instrument, run_number, flowcell_ID, lane, tile, x_pos, y_pos, read, is_filtered, control_number, sample_number))
+}
+
+#' Illumina sequence for reference object.
+#'
+#'
+#' @noRd
+#'
+illumina_var_cpp <- function(var_set_ptr, out_prefix, compress, n_reads, pcr_dups, n_cores, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes, instrument, run_number, flowcell_ID, lane, tile, x_pos, y_pos, read, is_filtered, control_number, sample_number) {
+    invisible(.Call(`_gemino_illumina_var_cpp`, var_set_ptr, out_prefix, compress, n_reads, pcr_dups, n_cores, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes, instrument, run_number, flowcell_ID, lane, tile, x_pos, y_pos, read, is_filtered, control_number, sample_number))
+}
+
 make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates) {
     .Call(`_gemino_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates)
 }
@@ -638,5 +656,37 @@ add_deletion <- function(var_set_ptr, var_ind, seq_ind, size_, new_pos_) {
 #'
 test_rate <- function(start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_) {
     .Call(`_gemino_test_rate`, start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_)
+}
+
+#' Make pointer to object that simulates Illumina sequencing of a reference genome.
+#'
+#'
+#' @noRd
+#'
+NULL
+
+#' Make pointer to object that simulates Illumina sequencing of a variant set object.
+#'
+#'
+#' @noRd
+#'
+NULL
+
+#' Make pointer to object that simulates long-read sequencing of a reference genome.
+#'
+#'
+#' @noRd
+#'
+NULL
+
+#' Make pointer to object that simulates long-read sequencing of a reference genome.
+#'
+#'
+#' @noRd
+#'
+NULL
+
+using_openmp <- function() {
+    .Call(`_gemino_using_openmp`)
 }
 
