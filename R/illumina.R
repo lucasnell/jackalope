@@ -275,7 +275,8 @@ check_illumina_args <- function(seq_object, n_reads,
                                 ins_prob1, del_prob1,
                                 ins_prob2, del_prob2,
                                 frag_len_min, frag_len_max,
-                                variant_probs, barcodes, pcr_dups) {
+                                variant_probs, barcodes, pcr_dups,
+                                id_info, compress, n_cores, read_chunk_size) {
 
     # Checking types:
 
@@ -290,7 +291,7 @@ check_illumina_args <- function(seq_object, n_reads,
              "of class \"ref_genome\" or \"variants\".", call. = FALSE)
     }
 
-    for (x in c("read_length", "n_reads")) {
+    for (x in c("read_length", "n_reads", "n_cores", "read_chunk_size")) {
         z <- eval(parse(text = x))
         if (!single_integer(z, 1)) err_msg(x, "a single integer >= 1")
     }
@@ -321,6 +322,9 @@ check_illumina_args <- function(seq_object, n_reads,
     if (!single_number(pcr_dups, 0)) {
         err_msg("pcr_dups", "a single number >= 0")
     }
+    if (!is_type(id_info, "list")) err_msg("id_info", "a list.")
+    if (!is_type(compress, "logical", 1)) err_msg("compress", "a single logical.")
+
 
     # Checking for proper profile info:
     if (paired) {
@@ -476,25 +480,171 @@ id_line_info <- function(...) {
 
 
 
-#' Organize arguments and return the pointer to the sampler object.
+# Illumina doc -----
+#' Create and write Illumina reads to FASTQ file(s).
 #'
-#' @inheritParams sequence
 #'
-#' @noRd
+#' From either a reference genome or set of haploid variants, create Illumina reads
+#' from error profiles and write them to FASTQ output file(s).
 #'
-make_illumina_sampler <- function(seq_object, n_reads,
-                                  read_length, paired,
-                                  frag_mean, frag_sd,
-                                  seq_sys, profile1, profile2,
-                                  ins_prob1, del_prob1, ins_prob2, del_prob2,
-                                  frag_len_min, frag_len_max,
-                                  variant_probs, barcodes, pcr_dups) {
+#' @section Sequencing profiles:
+#' This section outlines how to use the `seq_sys`, `profile1`,
+#' and `profile2` arguments.
+#' If all arguments are `NULL` (their defaults), a sequencing system is chosen
+#' based on the read length.
+#' If, however, one or more arguments has been provided, then how they're provided
+#' should depend on whether you want single- or paired-end reads.
+#'
+#' __For single-end reads__
+#'
+#' - `profile2` should be `NULL`.
+#' - Only `seq_sys` or `profile1` should be provided, not both.
+#'
+#'  __For paired-end reads__
+#'
+#' - If providing `seq_sys`, don't provide either `profile1` or `profile2`.
+#' - If providing `profile1`, you must also provide `profile2` (they can be the
+#'   same if you want) and you cannot provide `seq_sys`.
+#'
+#'
+#' @section Sequencing systems:
+#' Sequencing system options are the following, where, for each system,
+#' "name" is the full name, "abbrev" is the abbreviated name,
+#' "max_len" indicates the maximum allowed read length,
+#' and
+#' "paired" indicates whether paired-end sequencing is allowed.
+#'
+#' | name                 | abbrev  | max_len | paired |
+#' |:---------------------|:--------|:--------|:-------|
+#' | Genome Analyzer I    | GA1     | 44      | Yes    |
+#' | Genome Analyzer II   | GA2     | 75      | Yes    |
+#' | HiSeq 1000           | HS10    | 100     | Yes    |
+#' | HiSeq 2000           | HS20    | 100     | Yes    |
+#' | HiSeq 2500           | HS25    | 150     | Yes    |
+#' | HiSeqX v2.5 PCR free | HSXn    | 150     | Yes    |
+#' | HiSeqX v2.5 TruSeq   | HSXt    | 150     | Yes    |
+#' | MiniSeq TruSeq       | MinS    | 50      | No     |
+#' | MiSeq v1             | MSv1    | 250     | Yes    |
+#' | MiSeq v3             | MSv3    | 250     | Yes    |
+#' | NextSeq 500 v2       | NS50    | 75      | Yes    |
+#'
+#'
+#' @section ID line:
+#' Possible values for the `id_line` argument are as follows:
+#' \describe{
+#' \item{instrument}{Instrument ID (string with the following characters allowed:
+#'     a–z, A–Z, 0–9 and underscore). Defaults to `"SIM"`.}
+#' \item{run_number}{Run number on instrument (numeric). Defaults to `1`.}
+#' \item{flowcell_ID}{ID for flowcell (string with the following characters allowed:
+#'     a–z, A–Z, 0–9). Defaults to `"FCX"`.}
+#' \item{lane}{Lane number (numeric). Defaults to `1`.}
+#' \item{tile}{Tile number (numeric). Defaults to `15`.}
+#' \item{x_pos}{Run number on instrument (numeric). Defaults to `6329`.}
+#' \item{y_pos}{X coordinate of cluster (numeric). Defaults to `1045`.}
+#' \item{read}{Read number (numeric). Note that changing this doesn't do anything
+#'     because it's set by the sequencing sampler as reads are created. Defaults to `1`.}
+#' \item{is_filtered}{`"Y"` if the read is filtered (did not pass), `"N"` otherwise.
+#'     Defaults to `"N"`.}
+#' \item{control_number}{`0` when none of the control bits are on, otherwise it
+#'     is an even number. On HiSeq X systems, control specification is not
+#'     performed and this number is always `0`. Defaults to `0`.}
+#' \item{sample_number}{Sample number from sample sheet (numeric). Defaults to `1`.}
+#' }
+#'
+#'
+#'
+#' @param seq_object Sequencing object of class `ref_genome` or `variants`.
+#' @param out_prefix Prefix for the output file(s), including entire path except
+#'     for the file extension.
+#' @param n_reads Number of reads you want to create.
+#' @param read_length Length of reads.
+#' @param paired Logical for whether to use paired-end reads.
+#' @param frag_mean Mean of the Gamma distribution that generates fragment sizes.
+#' @param frag_sd Standard deviation of the Gamma distribution that generates
+#'     fragment sizes.
+#' @param seq_sys Full or abbreviated name of sequencing system to use.
+#'     See "Sequencing systems" section for options.
+#'     See "Sequencing profiles" section for more information on how this argument,
+#'     `profile1`, and `profile2` are used to specify profiles.
+#'     Defaults to `NULL`.
+#' @param profile1 Custom profile file for read 1.
+#'     See "Sequencing profiles" section for more information on how this argument,
+#'     `profile2`, and `seq_sys` are used to specify profiles.
+#'     Defaults to `NULL`.
+#' @param profile2 Custom profile file for read 2.
+#'     See "Sequencing profiles" section for more information on how this argument,
+#'     `profile1`, and `seq_sys` are used to specify profiles.
+#'     Defaults to `NULL`.
+#' @param ins_prob1 Insertion probability for read 1. Defaults to `0.00009`.
+#' @param del_prob1 Deletion probability for read 1. Defaults to `0.00011`.
+#' @param ins_prob2 Insertion probability for read 2. Defaults to `0.00015`.
+#' @param del_prob2 Deletion probability for read 2. Defaults to `0.00023`.
+#' @param frag_len_min Minimum fragment size. A `NULL` value results in the read length.
+#'     Defaults to `NULL`.
+#' @param frag_len_max Maximum fragment size.
+#'     A `NULL` value results in `2^32-1`, the maximum allowed value.
+#'     Defaults to `NULL`
+#' @param variant_probs Relative probability of sampling each variant.
+#'     This is ignored if sequencing a reference genome.
+#'     `NULL` results in all having the same probability.
+#'     Defaults to `NULL`.
+#' @param barcodes Character vector of barcodes for each variant, or a single barcode
+#'     if sequencing a reference genome. `NULL` results in no barcodes.
+#'     Defaults to `NULL`.
+#' @param pcr_dups A single number indicating the probability of PCR duplicates.
+#'     Defaults to `0.02`.
+#' @param id_info A list containing information used to generate ID lines in the
+#'     FASTQ file. See "ID line" section for more information.
+#'     Defaults to `list()`.
+#' @param compress A logical for whether to compress output FASTQ files using gzip.
+#'     Defaults to `FALSE`.
+#' @param n_cores The number of cores to use in processing.
+#'     This argument is ignored if the package was not compiled with OpenMP.
+#'     Defaults to `1`.
+#' @param read_chunk_size The number of reads to store before writing to disk.
+#'     Increasing this number should improve speed but take up more memory.
+#'     Defaults to `100`.
+#'
+#' @return Nothing is returned.
+#'
+#' @export
+#'
+#' @examples
+#'
+#'
+#'
+illumina <- function(seq_object,
+                     out_prefix,
+                     n_reads,
+                     read_length,
+                     paired,
+                     frag_mean,
+                     frag_sd,
+                     seq_sys = NULL,
+                     profile1 = NULL,
+                     profile2 = NULL,
+                     ins_prob1 = 0.00009,
+                     del_prob1 = 0.00011,
+                     ins_prob2 = 0.00015,
+                     del_prob2 = 0.00023,
+                     frag_len_min = NULL,
+                     frag_len_max = NULL,
+                     variant_probs = NULL,
+                     barcodes = NULL,
+                     pcr_dups = 0.02,
+                     id_info = list(),
+                     compress = FALSE,
+                     n_cores = 1L,
+                     read_chunk_size = 100L) {
+
+    out_prefix <- path.expand(out_prefix)
 
     # Check for improper argument types:
-    check_ill_args(seq_object, n_reads, read_length, paired,
-                   frag_mean, frag_sd, seq_sys, profile1, profile2,
-                   ins_prob1, del_prob1, ins_prob2, del_prob2,
-                   frag_len_min, frag_len_max, variant_probs, barcodes, pcr_dups)
+    check_illumina_args(seq_object, n_reads, read_length, paired,
+                        frag_mean, frag_sd, seq_sys, profile1, profile2,
+                        ins_prob1, del_prob1, ins_prob2, del_prob2,
+                        frag_len_min, frag_len_max, variant_probs, barcodes, pcr_dups,
+                        id_info, compress, n_cores, read_chunk_size)
 
     # Change mean and SD to shape and scale of Gamma distribution:
     frag_len_shape <- (frag_mean / frag_sd)^2
@@ -506,7 +656,9 @@ make_illumina_sampler <- function(seq_object, n_reads,
     if (is.null(frag_len_max) || frag_len_max > 2^32 - 1) frag_len_max <- 2^32 - 1
     if (frag_len_min > frag_len_max) {
         stop("\nFragment length min can't be less than the max. ",
-             "For computational reasons, it should also be < 2^32.", call. = FALSE)
+             "For computational reasons, both should also be < 2^32, ",
+             "and if `frag_len_min` is not provided, it's automatically changed ",
+             "to the read length.", call. = FALSE)
     }
     if (is.null(variant_probs) && inherits(seq_object, "variants")) {
         variant_probs <- rep(1, seq_object$n_vars())
@@ -515,49 +667,58 @@ make_illumina_sampler <- function(seq_object, n_reads,
         barcodes <- rep("", seq_object$n_vars())
     } else if (is.null(barcodes)) barcodes <- ""
 
-    sampler <- NULL
+    id_info <- do.call(id_line_info, id_info)
+
+    prof_info1 <- read_profile(profile1, seq_sys, read_length, 1)
+    qual_probs1  <- prof_info1$qual_probs
+    quals1 <- prof_info1$quals
+
+    qual_probs2 <- NULL
+    quals2 <- NULL
     if (paired) {
-        prof_info1 <- read_profile(profile1, seq_sys, read_length, 1)
         prof_info2 <- read_profile(profile2, seq_sys, read_length, 2)
-        if (inherits(seq_object, "ref_genome")) {
-            sampler <- create_ref_ill_pe(seq_object$genome,
-                                         frag_len_shape, frag_len_scale,
-                                         frag_len_min, frag_len_max,
-                                         prof_info1$qual_probs, prof_info1$quals,
-                                         ins_prob1, del_prob1,
-                                         prof_info2$qual_probs, prof_info2$quals,
-                                         ins_prob2, del_prob2,
-                                         barcodes)
-        } else if (inherits(seq_object, "variants")) {
-            sampler <- create_var_ill_pe(seq_object$genomes, variant_probs,
-                                         frag_len_shape, frag_len_scale,
-                                         frag_len_min, frag_len_max,
-                                         prof_info1$qual_probs, prof_info1$quals,
-                                         ins_prob1, del_prob1,
-                                         prof_info2$qual_probs, prof_info2$quals,
-                                         ins_prob2, del_prob2,
-                                         barcodes)
-        }
+        qual_probs2 <- prof_info2$qual_probs
+        quals2 <- prof_info2$quals
     } else {
-        prof_info <- list(read_profile(profile1, seq_sys, read_length, 1))
-        if (inherits(seq_object, "ref_genome")) {
-            sampler <- create_ref_ill_se(seq_object$genome,
-                                         frag_len_shape, frag_len_scale,
-                                         frag_len_min, frag_len_max,
-                                         prof_info$qual_probs, prof_info$quals,
-                                         ins_prob1, del_prob1,
-                                         barcodes)
-        } else if (inherits(seq_object, "variants")) {
-            sampler <- create_var_ill_se(seq_object$genomes, variant_probs,
-                                         frag_len_shape, frag_len_scale,
-                                         frag_len_min, frag_len_max,
-                                         prof_info$qual_probs, prof_info$quals,
-                                         ins_prob1, del_prob1,
-                                         barcodes)
-        }
+        qual_probs2 <- numeric(0)
+        quals2 <- numeric(0)
     }
 
-    return(sampler)
+    # Assembling list of arguments for inner cpp function:
+    args <- c(list(out_prefix = out_prefix,
+                   compress = compress,
+                   n_reads = n_reads,
+                   pcr_dups = pcr_dups,
+                   n_cores = n_cores,
+                   read_chunk_size = read_chunk_size,
+                   frag_len_shape = frag_len_shape,
+                   frag_len_scale = frag_len_scale,
+                   frag_len_min = frag_len_min,
+                   frag_len_max = frag_len_max,
+                   qual_probs1 = as.name(quote(qual_probs1)),
+                   quals1 = as.name(quote(quals1)),
+                   ins_prob1 = ins_prob1,
+                   del_prob1 = del_prob1,
+                   qual_probs2 = as.name(quote(qual_probs2)),
+                   quals2 = as.name(quote(quals2)),
+                   ins_prob2 = ins_prob2,
+                   del_prob2 = del_prob2,
+                   barcodes = barcodes),
+              id_info)
+
+    if (inherits(seq_object, "ref_genome")) {
+        args <- c(args, list(ref_genome_ptr = seq_object$genome))
+        do.call(illumina_ref_cpp, args)
+    } else if (inherits(seq_object, "variants")) {
+        args <- c(args, list(var_set_ptr = seq_object$genomes,
+                             variant_probs = variant_probs))
+        do.call(illumina_var_cpp, args)
+    } else {
+        stop(paste("\nTrying to pass a `seq_object` argument to `illumina` that's",
+                   "not a \"ref_genome\" or \"variants\" class."), call. = FALSE)
+    }
+
+    invisible(NULL)
 }
 
 
@@ -565,39 +726,6 @@ make_illumina_sampler <- function(seq_object, n_reads,
 
 
 
-
-
-
-
-
-
-
-#'
-#' ARGUMENTS FOR FULL ILLUMINA SEQUENCING FUNCTION:
-#'
-#' seq_object,
-#' out_prefix,
-#' n_reads,
-#' read_length,
-#' paired,
-#' frag_mean,
-#' frag_sd,
-#' seq_sys = NULL,
-#' profile1 = NULL,
-#' profile2 = NULL,
-#' ins_prob1 = 0.00009,
-#' del_prob1 = 0.00011,
-#' ins_prob2 = 0.00015,
-#' del_prob2 = 0.00023,
-#' frag_len_min = NULL,
-#' frag_len_max = NULL,
-#' variant_probs = NULL,
-#' barcodes = NULL,
-#' pcr_dups = 0.02,
-#' id_info = list(),
-#' compress = FALSE,
-#' n_cores
-#'
 
 
 

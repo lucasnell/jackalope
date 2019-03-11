@@ -29,7 +29,7 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                       const std::string& out_prefix,
                       const bool& compress,
                       const uint32& n_reads,
-                      const double& prob_pcr_dup,
+                      const double& pcr_dups,
                       const uint32& n_cores,
                       const uint32& read_chunk_size,
                       const double& frag_len_shape,
@@ -44,7 +44,7 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                       const std::vector<std::vector<std::vector<uint8>>>& quals2,
                       const double& ins_prob2,
                       const double& del_prob2,
-                      const std::string& barcode,
+                      const std::vector<std::string>& barcodes,
                       const std::string& instrument,
                       const uint32& run_number,
                       const std::string& flowcell_ID,
@@ -65,7 +65,7 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
             IlluminaReference(*ref_genome, frag_len_shape, frag_len_scale,
                               frag_len_min, frag_len_max,
                               qual_probs1, quals1, ins_prob1, del_prob1,
-                              barcode);
+                              barcodes[0]);
 
     } else {
         read_filler_base =
@@ -73,7 +73,7 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                               frag_len_min, frag_len_max,
                               qual_probs1, quals1, ins_prob1, del_prob1,
                               qual_probs2, quals2, ins_prob2, del_prob2,
-                              barcode);
+                              barcodes[0]);
     }
 
     SequenceIdentifierInfo ID_info_base(instrument, run_number, flowcell_ID, lane,
@@ -82,11 +82,11 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
 
     if (compress) {
         illumina_cpp_<IlluminaReference, gzFile>(
-                read_filler_base, ID_info_base, out_prefix, n_reads, prob_pcr_dup,
+                read_filler_base, ID_info_base, out_prefix, n_reads, pcr_dups,
                 read_chunk_size, n_cores);
     } else {
         illumina_cpp_<IlluminaReference, std::ofstream>(
-                read_filler_base, ID_info_base, out_prefix, n_reads, prob_pcr_dup,
+                read_filler_base, ID_info_base, out_prefix, n_reads, pcr_dups,
                 read_chunk_size, n_cores);
     }
 
@@ -109,7 +109,7 @@ void illumina_var_cpp(SEXP var_set_ptr,
                       const std::string& out_prefix,
                       const bool& compress,
                       const uint32& n_reads,
-                      const double& prob_pcr_dup,
+                      const double& pcr_dups,
                       const uint32& n_cores,
                       const uint32& read_chunk_size,
                       const std::vector<double>& variant_probs,
@@ -163,11 +163,11 @@ void illumina_var_cpp(SEXP var_set_ptr,
 
     if (compress) {
         write_illumina_<IlluminaVariants, gzFile>(
-                read_filler_base, ID_info_base, out_prefix, n_reads, prob_pcr_dup,
+                read_filler_base, ID_info_base, out_prefix, n_reads, pcr_dups,
                 read_chunk_size, n_cores);
     }else {
         write_illumina_<IlluminaVariants, std::ofstream>(
-                read_filler_base, ID_info_base, out_prefix, n_reads, prob_pcr_dup,
+                read_filler_base, ID_info_base, out_prefix, n_reads, pcr_dups,
                 read_chunk_size, n_cores);
     }
 
