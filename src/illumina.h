@@ -120,9 +120,9 @@ public:
         : samplers(other.samplers), quals(other.quals), read_length(other.read_length) {};
 
     IllQualPos& operator=(const IllQualPos& other) {
-        this->samplers = other.samplers;
-        this->quals = other.quals;
-        this->read_length = other.read_length;
+        samplers = other.samplers;
+        quals = other.quals;
+        read_length = other.read_length;
         return *this;
     }
 
@@ -262,7 +262,7 @@ public:
              than 10. This is what ART does.
              */
             if (nt_ind > 3) {
-                qint = runif_01(eng) * 10 + this->qual_start;
+                qint = runif_01(eng) * 10 + qual_start;
                 qual[pos] = static_cast<char>(qint);
                 nt = 'N';
                 continue;
@@ -271,8 +271,8 @@ public:
              Otherwise, qualities are based on the nucleotide and position,
              and Pr(mismatch) is proportional to quality:
              */
-            qint = by_nt[nt_ind].sample(pos, mis_prob, this->qual_prob_map, eng) +
-                this->qual_start;
+            qint = by_nt[nt_ind].sample(pos, mis_prob, qual_prob_map, eng) +
+                qual_start;
             qual[pos] = static_cast<char>(qint);
             u = runif_01(eng);
             if (u < mis_prob) {
@@ -360,8 +360,8 @@ public:
           sequences(&seq_object),
           read_length(qual_probs1[0].size()),
           paired(true),
-          ins_probs{ins_prob1, ins_prob2},
-          del_probs{del_prob1, del_prob2},
+          ins_probs(2),
+          del_probs(2),
           insertions(2),
           deletions(2),
           frag_len_min(frag_len_min_),
@@ -372,9 +372,13 @@ public:
                   err += "R1 and R2 don't match.";
                   stop(err.c_str());
               }
-              this->qual_errors = {IlluminaQualityError(qual_probs1, quals1),
+              qual_errors = {IlluminaQualityError(qual_probs1, quals1),
                                    IlluminaQualityError(qual_probs2, quals2)};
-              this->construct_seqs();
+              construct_seqs();
+              ins_probs[0] = ins_prob1;
+              ins_probs[1] = ins_prob2;
+              del_probs[0] = del_prob1;
+              del_probs[1] = del_prob2;
           };
     // Single-end reads
     IlluminaOneGenome(const T& seq_object,
@@ -394,22 +398,28 @@ public:
           sequences(&seq_object),
           read_length(qual_probs[0].size()),
           paired(false),
-          ins_probs{ins_prob},
-          del_probs{del_prob},
+          ins_probs(1),
+          del_probs(1),
           insertions(1),
           deletions(1),
           frag_len_min(frag_len_min_),
           frag_len_max(frag_len_max_),
           constr_info(paired, read_length, barcode) {
-              this->construct_seqs();
+              construct_seqs();
+              ins_probs[0] = ins_prob;
+              del_probs[0] = del_prob;
           };
 
     IlluminaOneGenome(const IlluminaOneGenome& other)
         : seq_sampler(other.seq_sampler), qual_errors(other.qual_errors),
           frag_lengths(other.frag_lengths),
+          seq_lengths(other.seq_lengths), sequences(other.sequences),
+          read_length(other.read_length), paired(other.paired),
+          ins_probs(other.ins_probs), del_probs(other.del_probs),
           insertions(other.insertions), deletions(other.deletions),
           frag_len_min(other.frag_len_min), frag_len_max(other.frag_len_max),
           constr_info(other.constr_info) {};
+
 
 
     // Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality)
@@ -526,6 +536,7 @@ public:
         : variants(&var_set),
           variant_sampler(variant_probs),
           read_makers(),
+          paired(true),
           var(0) {
 
         if (barcodes.size() < var_set.size()) barcodes.resize(var_set.size(), "");
@@ -565,6 +576,7 @@ public:
         : variants(&var_set),
           variant_sampler(variant_probs),
           read_makers(),
+          paired(false),
           var(0) {
 
         if (barcodes.size() < var_set.size()) barcodes.resize(var_set.size(), "");
@@ -602,8 +614,8 @@ public:
     void one_read(std::vector<std::string>& fastq_chunks,
                   pcg64& eng,
                   SequenceIdentifierInfo& ID_info) {
-        this->var = variant_sampler.sample(eng);
-        read_makers[this->var].one_read(fastq_chunks, eng, ID_info);
+        var = variant_sampler.sample(eng);
+        read_makers[var].one_read(fastq_chunks, eng, ID_info);
         return;
     }
     /*
@@ -614,7 +626,7 @@ public:
     void re_read(std::vector<std::string>& fastq_chunks,
                   pcg64& eng,
                   SequenceIdentifierInfo& ID_info) {
-        read_makers[this->var].re_read(fastq_chunks, eng, ID_info);
+        read_makers[var].re_read(fastq_chunks, eng, ID_info);
         return;
     }
 

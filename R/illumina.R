@@ -680,14 +680,15 @@ illumina <- function(seq_object,
         qual_probs2 <- prof_info2$qual_probs
         quals2 <- prof_info2$quals
     } else {
-        qual_probs2 <- numeric(0)
-        quals2 <- numeric(0)
+        qual_probs2 <- list(list(numeric(0)))
+        quals2 <- list(list(numeric(0)))
     }
 
     # Assembling list of arguments for inner cpp function:
     args <- c(list(out_prefix = out_prefix,
                    compress = compress,
                    n_reads = n_reads,
+                   paired = paired,
                    pcr_dups = pcr_dups,
                    n_cores = n_cores,
                    read_chunk_size = read_chunk_size,
