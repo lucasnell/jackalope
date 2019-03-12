@@ -8,3 +8,4 @@
 ^gfiles$
 ^methods$
 ^data-raw$
+^diagnostics
