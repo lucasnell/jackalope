@@ -373,7 +373,7 @@ void illumina_cpp_(const T& read_filler_base,
     open_fastq_files(files, out_prefix);
 
 #ifdef _OPENMP
-#pragma omp parallel
+#pragma omp parallel num_threads(n_cores) if (n_cores > 1)
 {
 #endif
 

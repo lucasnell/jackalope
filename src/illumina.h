@@ -133,19 +133,6 @@ public:
         return quals[pos][k];
     }
 
-    /*
-     Sample for a quality and update the probability of a mismatch based on that quality
-     */
-    uint8 sample(const uint32& pos,
-                 double& mis_prob,
-                 const std::vector<double>& qual_prob_map,
-                 pcg64& eng) const {
-
-        uint32 k = samplers[pos].sample(eng);
-        uint8 qual = quals[pos][k];
-        mis_prob = qual_prob_map[qual];
-        return qual;
-    }
 
 
 };
@@ -271,12 +258,13 @@ public:
              Otherwise, qualities are based on the nucleotide and position,
              and Pr(mismatch) is proportional to quality:
              */
-            qint = by_nt[nt_ind].sample(pos, mis_prob, qual_prob_map, eng) +
-                qual_start;
+            qint = by_nt[nt_ind].sample(pos, eng);
+            mis_prob = qual_prob_map[qint];
+            qint += qual_start;
             qual[pos] = static_cast<char>(qint);
             u = runif_01(eng);
             if (u < mis_prob) {
-                const std::string& mm_str(mm_nucleos[nt_map[nt]]);
+                const std::string& mm_str(mm_nucleos[nt_ind]);
                 nt = mm_str[runif_aabb(eng, 0U, 2U)];
             }
         }
