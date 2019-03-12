@@ -226,7 +226,7 @@ read_profile <- function(profile_fn, seq_sys, read_length, read) {
                function(i) {
                    nn <- length(profile_str[[i]])
                    probs_ <- as.numeric(profile_str[[i+1]][3:nn])
-                   probs_ <- probs_ - c(0, probs_[1:(nn-3)])
+                   if (nn > 3) probs_ <- probs_ - c(0, probs_[1:(nn-3)])
                    probs_ <- probs_ / sum(probs_)
                    quals_ <- as.integer(profile_str[[i]][3:nn])
                    if (!identical(profile_str[[i]][1:2], profile_str[[i+1]][1:2])) {
@@ -296,10 +296,13 @@ check_illumina_args <- function(seq_object, n_reads,
         if (!single_integer(z, 1)) err_msg(x, "a single integer >= 1")
     }
     if (!is_type(paired, "logical", 1)) err_msg("paired", "a single logical")
-    for (x in c("frag_mean", "frag_sd", "ins_prob1", "del_prob1",
-                "ins_prob2", "del_prob2")) {
+    for (x in c("frag_mean", "frag_sd")) {
         z <- eval(parse(text = x))
         if (!single_number(z) || z <= 0) err_msg(x, "a single number > 0")
+    }
+    for (x in c("ins_prob1", "del_prob1", "ins_prob2", "del_prob2", "pcr_dups")) {
+        z <- eval(parse(text = x))
+        if (!single_number(z, 0)) err_msg(x, "a single number >= 0")
     }
     for (x in c("seq_sys", "profile1", "profile2")) {
         z <- eval(parse(text = x))
@@ -318,9 +321,6 @@ check_illumina_args <- function(seq_object, n_reads,
     }
     if (!is.null(barcodes) && !is_type(barcodes, "character")) {
         err_msg("barcodes", "NULL or a character vector")
-    }
-    if (!single_number(pcr_dups, 0)) {
-        err_msg("pcr_dups", "a single number >= 0")
     }
     if (!is_type(id_info, "list")) err_msg("id_info", "a list.")
     if (!is_type(compress, "logical", 1)) err_msg("compress", "a single logical.")
