@@ -10,6 +10,10 @@ library(gemino)
 library(tidyverse)
 source(".Rprofile")
 
+Rcpp::sourceCpp("diagnostics/diagnostics-illumina.cpp")
+
+dir <- paste0(tempdir(check = TRUE), "/")
+
 # Profile I'll be using
 prof <- gemino:::read_profile(NULL, "HS25", read_length = 100, 1)
 
@@ -31,139 +35,6 @@ pred_df <- map_dfr(1:4,
 
 
 
-# Extracting integer qualities from a string:
-Rcpp::sourceCpp(code = "
-#include <Rcpp.h>
-#include <string>
-#include <vector>
-
-//[[Rcpp::plugins(cpp11)]]
-using namespace Rcpp;
-
-//[[Rcpp::export]]
-std::vector<std::vector<int>> quals_by_pos(const std::vector<std::string>& input) {
-
-    size_t n_reads = input.size();
-    size_t n_pos = input[0].size();
-    std::vector<std::vector<int>> output(n_pos);
-
-    for (size_t i = 0; i < n_pos; i++) {
-        output[i].reserve(n_reads);
-        for (size_t j = 0; j < n_reads; j++) {
-            output[i].push_back(static_cast<int>(input[j][i]) - static_cast<int>('!'));
-        }
-    }
-
-    return output;
-}
-
-/*
- Indicates which nucleotide mostly comprises each read.
- Useful for distinguishing reverse complements.
- */
-//[[Rcpp::export]]
-std::vector<int> which_nt(const std::vector<std::string>& reads) {
-
-    size_t n_reads = reads.size();
-    size_t n_pos = reads[0].size();
-    std::vector<int> output(n_reads);
-    std::vector<int> nt_map(256, 0);
-    std::string nts = \"TCAG\";
-    for (int i = 0; i < nts.size(); i++) nt_map[nts[i]] = i;
-
-    std::vector<int> nt_counts(4);
-
-    for (size_t i = 0; i < n_reads; i++) {
-        for (int& c : nt_counts) c = 0;
-        for (size_t j = 0; j < n_pos; j++) {
-            nt_counts[nt_map[reads[i][j]]]++;
-        }
-        int max_nt_ind = std::max_element(nt_counts.begin(), nt_counts.end()) -
-            nt_counts.begin();
-        output[i] = max_nt_ind;
-    }
-
-    return output;
-}
-
-/*
- Mismatches by position (assuming indel probs are zero and
- that reads are mostly the same nucleotide!)
-*/
-//[[Rcpp::export]]
-std::vector<int> mm_by_pos(const std::vector<std::string>& reads) {
-
-    size_t n_reads = reads.size();
-    size_t n_pos = reads[0].size();
-    std::vector<int> output(n_pos, 0);
-    std::vector<int> nt_map(256, 0);
-    std::string nts = \"TCAG\";
-    for (int i = 0; i < nts.size(); i++) nt_map[nts[i]] = i;
-
-    std::vector<int> nt_counts(4);
-    std::string max_nts(n_reads,'A');
-
-    for (size_t i = 0; i < n_reads; i++) {
-        for (int& c : nt_counts) c = 0;
-        for (size_t j = 0; j < n_pos; j++) {
-            nt_counts[nt_map[reads[i][j]]]++;
-        }
-        int max_nt_ind = std::max_element(nt_counts.begin(), nt_counts.end()) -
-            nt_counts.begin();
-        max_nts[i] = nts[max_nt_ind];
-    }
-
-    for (size_t i = 0; i < n_reads; i++) {
-        for (size_t j = 0; j < n_pos; j++) {
-            if (reads[i][j] != max_nts[i]) output[j]++;
-        }
-    }
-
-    return output;
-}
-
-//[[Rcpp::export]]
-std::vector<int> mm_by_qual(const std::vector<std::string>& reads,
-                            const std::vector<std::string>& quals,
-                            const int& max_qual) {
-
-    size_t n_reads = reads.size();
-    size_t n_pos = reads[0].size();
-    std::vector<int> output(max_qual, 0);
-    std::vector<int> nt_map(256, 0);
-    std::string nts = \"TCAG\";
-    for (int i = 0; i < nts.size(); i++) nt_map[nts[i]] = i;
-
-    std::vector<int> nt_counts(4);
-    std::string max_nts(n_reads,'A');
-
-    for (size_t i = 0; i < n_reads; i++) {
-        for (int& c : nt_counts) c = 0;
-        for (size_t j = 0; j < n_pos; j++) {
-            nt_counts[nt_map[reads[i][j]]]++;
-        }
-        int max_nt_ind = std::max_element(nt_counts.begin(), nt_counts.end()) -
-            nt_counts.begin();
-        max_nts[i] = nts[max_nt_ind];
-    }
-
-    for (size_t i = 0; i < n_reads; i++) {
-        for (size_t j = 0; j < n_pos; j++) {
-            if (reads[i][j] != max_nts[i]) {
-                int qual = static_cast<int>(quals[i][j]) - static_cast<int>('!');
-                output[qual]++;
-            }
-        }
-    }
-
-    return output;
-}
-")
-
-
-
-
-
 
 # ========================================================
 # ========================================================
@@ -174,8 +45,6 @@ std::vector<int> mm_by_qual(const std::vector<std::string>& reads,
 # ========================================================
 
 
-# test_mm_quals <- function(nt) {
-
 bases <- c("T", "C", "A", "G")
 
 # 1 sequence of length 100e3
@@ -184,11 +53,11 @@ seq <- sapply(bases, function(nt) paste(rep(nt, 100e3), collapse = ""))
 # Make ref_genome object from a pointer to a RefGenome object based on `seqs`
 rg <- ref_genome$new(gemino:::make_ref_genome(seq))
 
-illumina(rg, out_prefix = "~/Desktop/fq/test",
+illumina(rg, out_prefix = paste0(dir, "test"),
          n_reads = 100e3, read_length = 100, paired = FALSE, seq_sys = "HS25",
          frag_mean = 400, frag_sd = 100, ins_prob1 = 0, del_prob1 = 0)
 
-fq <- readLines("~/Desktop/fq/test_R1.fq")
+fq <- readLines(paste0(dir, "test_R1.fq"))
 reads <- fq[seq(2, length(fq), 4)]
 quals <- fq[seq(4, length(fq), 4)]
 nts <- which_nt(reads) + 1
@@ -277,59 +146,64 @@ mmbq_df %>%
 profile_df <- crossing(nucleo = bases, pos = 0:99, qual = c(255L, 1000L)) %>%
     arrange(nucleo, pos, qual)
 
-write_tsv(profile_df, path = "~/Desktop/test_prof.txt", col_names = FALSE)
+write_tsv(profile_df, path = paste0(dir, "test_prof.txt"), col_names = FALSE)
 
 
-# 10 sequences of length 100e3
-seqs <- replicate(10, paste(rep("TC", 100e3 / 2), collapse = ""))
-
+# 100e3 sequences of length 10
+seqs <- replicate(100e3, paste(rep("TA", 10 / 2), collapse = ""))
 
 # Make ref_genome object from a pointer to a RefGenome object based on `seqs`
-rg <- ref_genome$new(gemino:::make_ref_genome(seq))
-
-illumina(rg, out_prefix = "~/Desktop/fq/test",
-         n_reads = 100e3, read_length = 100, paired = FALSE,
-         profile1 = "~/Desktop/test_prof.txt",
-         frag_mean = 400, frag_sd = 100, ins_prob1 = 0.01, del_prob1 = 0.02)
+rg <- ref_genome$new(gemino:::make_ref_genome(seqs))
 
 
-fq <- readLines("~/Desktop/fq/test_R1.fq")
-reads <- fq[seq(2, length(fq), 4)]
 
-
-Rcpp::sourceCpp(code = "
-#include <Rcpp.h>
-#include <string>
-#include <vector>
-
-//[[Rcpp::plugins(cpp11)]]
-using namespace Rcpp;
-
-//[[Rcpp::export]]
-std::vector<int> count_indels(const std::string& read,
-                              const char& motif1,
-                              const char& motif2) {
-
-    size_t n_reads = input.size();
-    size_t n_pos = read.size();
-    std::vector<int> output(2, 0);
-    auto iter1 = read.begin();
-    auto iter2 = read.begin() + 1;
-
-    if (*iter1 != motif1 || *iter2 != motif2) {
-        ;
+indel_test <- function(.ins_prob, .del_prob) {
+    stopifnot(.ins_prob == 0 | .del_prob == 0)
+    stopifnot(.ins_prob > 0 | .del_prob > 0)
+    illumina(rg, out_prefix = paste0(dir, "test"),
+             n_reads = 100e3, read_length = 100, paired = FALSE,
+             profile1 = paste0(dir, "test_prof.txt"),
+             frag_mean = 400, frag_sd = 100,
+             ins_prob1 = .ins_prob,
+             del_prob1 = .del_prob)
+    fq <- readLines(paste0(dir, "test_R1.fq"))
+    .lens <- nchar(fq[seq(2, length(fq), 4)])
+    if (.ins_prob > 0) {
+        .type = "insertion"
+        .n <- sum(.lens - 10)
+        .n_pred <- .ins_prob * 10 * 100e3
+    } else if (.del_prob > 0) {
+        .type = "deletion"
+        .n <- sum(10 - .lens)
+        .n_pred <- .del_prob * 10 * 100e3
     }
-
-    while (iter2 < (read.end() - 1)) {
-
-        if (*iter1 != motif1 || *iter2 != motif2) {
-            ;
-        }
-
-        iter1 += 2;
-        iter2 += 2;
-    }
-
-    return output;
+    return(tibble(type = .type, n = .n, n_pred = .n_pred))
 }
-")
+
+
+
+
+# 20 combos takes ~ 5 sec
+indel_df <- crossing(ins_prob = c(0, 10^(seq(-1,-4,length.out = 11))),
+                     del_prob = c(0, 10^(seq(-1,-4,length.out = 11)))) %>%
+    filter((ins_prob == 0 | del_prob == 0) & (ins_prob > 0 | del_prob > 0)) %>%
+    pmap_dfr(~ indel_test(..1, ..2))
+
+lims <- log(range(c(indel_df$n, indel_df$n_pred)))
+labs <- 10^(2:5)
+
+indel_df %>%
+    ggplot(aes(log(n_pred), log(n))) +
+    geom_abline(slope = 1, intercept = 0, linetype = 2, color = "firebrick") +
+    geom_point(aes(color = type), alpha = 0.5, size = 3) +
+    scale_x_continuous("Predicted indel count", limits = lims,
+                       breaks = log(labs), labels = labs) +
+    scale_y_continuous("Observed indel count", limits = lims,
+                       breaks = log(labs), labels = labs) +
+    scale_color_brewer(NULL, palette = "Dark2") +
+    theme_classic() +
+    theme(legend.position = c(0.1, 0.9)) +
+    NULL
+
+
+
