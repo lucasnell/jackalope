@@ -19,15 +19,15 @@
 #include <string>  // string class
 #include <random>  // distributions
 
-#include "gemino_types.h"  // uint32
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
-#include "pcg.h"  // runif_01
-#include "table_sampler.h"  // TableSampler
-#include "alias_sampler.h"  // AliasSampler
-#include "util.h"  // clear_memory
-#include "str_manip.h"  // rev_comp
-#include "sequencer.h"  // SequenceIdentifierInfo
+#include "gemino_types.hpp"  // uint32
+#include "seq_classes_ref.hpp"  // Ref* classes
+#include "seq_classes_var.hpp"  // Var* classes
+#include "pcg.hpp"  // runif_01
+#include "table_sampler.hpp"  // TableSampler
+#include "alias_sampler.hpp"  // AliasSampler
+#include "util.hpp"  // clear_memory
+#include "str_manip.hpp"  // rev_comp
+#include "sequencer.hpp"  // SequenceIdentifierInfo
 
 using namespace Rcpp;
 

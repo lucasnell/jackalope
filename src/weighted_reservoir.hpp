@@ -19,9 +19,9 @@
 #include <RcppArmadillo.h>
 #include <pcg/pcg_random.hpp> // pcg prng
 
-#include "gemino_types.h" // integer types
-#include "pcg.h" // runif_* functions
-#include "vitter_algorithms.h" // vitter_d
+#include "gemino_types.hpp" // integer types
+#include "pcg.hpp" // runif_* functions
+#include "vitter_algorithms.hpp" // vitter_d
 
 
 /*

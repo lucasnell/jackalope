@@ -7,8 +7,8 @@
 #include <deque> // deque class
 #include <unordered_map> // unordered_map
 
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
+#include "seq_classes_ref.hpp"  // Ref* classes
+#include "seq_classes_var.hpp"  // Var* classes
 
 
 namespace digest {

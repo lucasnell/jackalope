@@ -17,9 +17,9 @@
 #include <string>
 #include <pcg/pcg_random.hpp> // pcg prng
 
-#include "gemino_types.h" // integer types
-#include "pcg.h"  // pcg seeding
-#include "util.h"  // decreasing_indices
+#include "gemino_types.hpp" // integer types
+#include "pcg.hpp"  // pcg seeding
+#include "util.hpp"  // decreasing_indices
 
 
 using namespace Rcpp;

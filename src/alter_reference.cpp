@@ -11,9 +11,9 @@
 #include <string>
 #include <vector>
 
-#include "seq_classes_ref.h"  // Ref* classes
-#include "gemino_types.h"  // integer types
-#include "util.h"  // clear_memory
+#include "seq_classes_ref.hpp"  // Ref* classes
+#include "gemino_types.hpp"  // integer types
+#include "util.hpp"  // clear_memory
 
 
 using namespace Rcpp;

@@ -17,9 +17,9 @@
 #include <string>  // string class
 #include <deque>  // deque class
 
-#include "gemino_types.h"  // integer types
-#include "seq_classes_ref.h"  // Ref* classes
-#include "util.h"  // clear_memory
+#include "gemino_types.hpp"  // integer types
+#include "seq_classes_ref.hpp"  // Ref* classes
+#include "util.hpp"  // clear_memory
 
 using namespace Rcpp;
 

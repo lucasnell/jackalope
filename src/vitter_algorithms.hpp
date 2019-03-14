@@ -16,9 +16,9 @@
 #include <omp.h>
 #endif
 
-#include "gemino_types.h"
-#include "util.h"  // uints_get_size
-#include "pcg.h"  // pcg::max
+#include "gemino_types.hpp"
+#include "util.hpp"  // uints_get_size
+#include "pcg.hpp"  // pcg::max
 
 
 using namespace Rcpp;

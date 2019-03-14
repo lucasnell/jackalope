@@ -15,9 +15,9 @@
 #include <deque>  // deque
 
 
-#include "gemino_types.h"  // integer types
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
+#include "gemino_types.hpp"  // integer types
+#include "seq_classes_ref.hpp"  // Ref* classes
+#include "seq_classes_var.hpp"  // Var* classes
 
 using namespace Rcpp;
 

@@ -14,15 +14,15 @@
 #include <omp.h>  // omp
 #endif
 
-#include "gemino_types.h"  // integer types
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
-#include "pcg.h"  // runif_01
-#include "alias_sampler.h"  // AliasSampler
-#include "table_sampler.h"  // TableSampler
-#include "util.h"  // clear_memory
-#include "str_manip.h"  // rev_comp
-#include "sequencer.h"  // SequenceIdentifierInfo class
+#include "gemino_types.hpp"  // integer types
+#include "seq_classes_ref.hpp"  // Ref* classes
+#include "seq_classes_var.hpp"  // Var* classes
+#include "pcg.hpp"  // runif_01
+#include "alias_sampler.hpp"  // AliasSampler
+#include "table_sampler.hpp"  // TableSampler
+#include "util.hpp"  // clear_memory
+#include "str_manip.hpp"  // rev_comp
+#include "sequencer.hpp"  // SequenceIdentifierInfo class
 
 
 using namespace Rcpp;

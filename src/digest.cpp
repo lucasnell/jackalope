@@ -12,11 +12,11 @@
 #endif
 
 
-#include "gemino_types.h" // integer types
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
-#include "digest.h" // DigestInfo, MultiOut,
-#include "str_manip.h" // rev_comp
+#include "gemino_types.hpp" // integer types
+#include "seq_classes_ref.hpp"  // Ref* classes
+#include "seq_classes_var.hpp"  // Var* classes
+#include "digest.hpp" // DigestInfo, MultiOut,
+#include "str_manip.hpp" // rev_comp
 
 using namespace Rcpp;
 

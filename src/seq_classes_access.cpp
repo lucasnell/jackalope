@@ -18,15 +18,15 @@
 #include <pcg/pcg_random.hpp> // pcg prng
 
 
-#include "gemino_types.h"  // integer types
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
-#include "mevo.h"
-#include "pcg.h"  // pcg seeding
-#include "table_sampler.h"  // table method of sampling
-#include "weighted_reservoir.h"  // weighted reservoir sampling
-#include "mevo_gammas.h"  // SequenceGammas class
-#include "mevo_phylo.h"  // match_ and template functions
+#include "gemino_types.hpp"  // integer types
+#include "seq_classes_ref.hpp"  // Ref* classes
+#include "seq_classes_var.hpp"  // Var* classes
+#include "mevo.hpp"
+#include "pcg.hpp"  // pcg seeding
+#include "table_sampler.hpp"  // table method of sampling
+#include "weighted_reservoir.hpp"  // weighted reservoir sampling
+#include "mevo_gammas.hpp"  // SequenceGammas class
+#include "mevo_phylo.hpp"  // match_ and template functions
 
 
 

@@ -16,7 +16,7 @@
 #include <vector>
 #include <string>
 
-#include "gemino_types.h"  // integer types
+#include "gemino_types.hpp"  // integer types
 
 
 using namespace Rcpp;

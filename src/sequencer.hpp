@@ -7,7 +7,7 @@
 #include <vector>  // vector class
 #include <string>  // string class
 
-#include "gemino_types.h"  // uint32
+#include "gemino_types.hpp"  // uint32
 
 using namespace Rcpp;
 

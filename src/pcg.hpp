@@ -7,7 +7,7 @@
 #include "pcg/pcg_extras.hpp"  // pcg 128-bit integer type
 #include <pcg/pcg_random.hpp> // pcg prng
 
-#include "gemino_types.h" // integer types
+#include "gemino_types.hpp" // integer types
 
 
 using namespace Rcpp;

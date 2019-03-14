@@ -8,10 +8,10 @@
 
 
 
-#include "sequencer.h"  // sequencer classes
-#include "gemino_types.h"  // uint32
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
+#include "sequencer.hpp"  // sequencer classes
+#include "gemino_types.hpp"  // uint32
+#include "seq_classes_ref.hpp"  // Ref* classes
+#include "seq_classes_var.hpp"  // Var* classes
 
 
 
