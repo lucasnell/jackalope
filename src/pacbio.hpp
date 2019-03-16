@@ -28,11 +28,12 @@ using namespace Rcpp;
 
 // Defaults from SimLoRD:
 
-#define SL_DEFAULT_S = 0.200110276521
+// Used in PacBioReadLenSampler
 #define SL_DEFAULT_S 0.200110276521
 #define SL_DEFAULT_LOC -10075.4363813
 #define SL_DEFAULT_SCALE 17922.611306
 #define SL_DEFAULT_MIN_FRAG_LEN 50.0
+// Used in PacBioPassSampler
 #define SL_DEFAULT_CHI2_N1 0.00189237136
 #define SL_DEFAULT_CHI2_N2 2.53944970
 #define SL_DEFAULT_CHI2_N3 5500.0
@@ -42,7 +43,7 @@ using namespace Rcpp;
 #define SL_DEFAULT_CHI2_S4 48303.0732881
 #define SL_DEFAULT_CHI2_S5 1.4691051212330266
 #define SL_DEFAULT_MAX_PASSES 40
-
+// Used in PacBioQualityError
 #define SL_DEFAULT_SQRT_PARAMS1 0.5
 #define SL_DEFAULT_SQRT_PARAMS2 0.2247
 #define SL_DEFAULT_NORM_PARAMS1 0.0
@@ -79,28 +80,23 @@ struct PacBioReadConstrInfo {
 
 
 
+
+
+
 /*
- Sample for fragment lengths.
+ Sample for read lengths.
 
  If providing custom fragment lengths, make sure that the vector of their
  sampling weights is the same length as the vector of lengths.
 
  */
-class PacBioFragLenSampler {
-
-
-    std::vector<uint32> frag_lens;      // optional vector of possible fragment lengths
-    TableSampler sampler;               // optional sampler that chooses from `frag_lens`
-    std::lognormal_distribution<double> distr; // optional if using a distribution
-    bool use_distr;                     // Whether to sample using `distr` field
-    double min_frag_len;                // Minimum fragment length
-    double loc;                         // Location parameter for lognormal distribution
+class PacBioReadLenSampler {
 
 public:
 
     /* Initializers */
     // Default parameters from SimLoRD:
-    PacBioFragLenSampler()
+    PacBioReadLenSampler()
         : frag_lens(),
           sampler(),
           distr(std::log(SL_DEFAULT_SCALE), SL_DEFAULT_S),
@@ -108,7 +104,7 @@ public:
           min_frag_len(SL_DEFAULT_MIN_FRAG_LEN),
           loc(SL_DEFAULT_LOC) {};
     // Same but just modifying the min fragment length:
-    PacBioFragLenSampler(const double& min_frag_len_)
+    PacBioReadLenSampler(const double& min_frag_len_)
         : frag_lens(),
           sampler(),
           distr(std::log(SL_DEFAULT_SCALE), SL_DEFAULT_S),
@@ -118,7 +114,7 @@ public:
         if (min_frag_len < 1) min_frag_len = 1;
     };
     // Using lognormal distribution with custom parameter values:
-    PacBioFragLenSampler(const double& scale_,
+    PacBioReadLenSampler(const double& scale_,
                          const double& sigma_,
                          const double& loc_,
                          const double& min_frag_len_)
@@ -131,7 +127,7 @@ public:
         if (min_frag_len < 1) min_frag_len = 1;
     };
     // Using a vector of fragment lengths, each with a sampling probability:
-    PacBioFragLenSampler(const std::vector<double>& probs,
+    PacBioReadLenSampler(const std::vector<double>& probs,
                          const std::vector<uint32>& frag_lens_)
         : frag_lens(frag_lens_),
           sampler(probs),
@@ -144,7 +140,7 @@ public:
         }
     };
     // Copy constructor
-    PacBioFragLenSampler(const PacBioFragLenSampler& other)
+    PacBioReadLenSampler(const PacBioReadLenSampler& other)
         : frag_lens(other.frag_lens),
           sampler(other.sampler),
           distr(other.distr),
@@ -152,7 +148,7 @@ public:
           min_frag_len(other.min_frag_len),
           loc(other.loc) {};
     // Assignment operator
-    PacBioFragLenSampler& operator=(const PacBioFragLenSampler& other) {
+    PacBioReadLenSampler& operator=(const PacBioReadLenSampler& other) {
         frag_lens = other.frag_lens;
         sampler = other.sampler;
         distr = other.distr;
@@ -182,6 +178,17 @@ public:
         return len_;
     }
 
+private:
+
+    std::vector<uint32> frag_lens;      // optional vector of possible fragment lengths
+    TableSampler sampler;               // optional sampler that chooses from `frag_lens`
+    std::lognormal_distribution<double> distr; // optional if using a distribution
+    bool use_distr;                     // Whether to sample using `distr` field
+    double min_frag_len;                // Minimum fragment length
+    double loc;                         // Location parameter for lognormal distribution
+
+
+
 };
 
 
@@ -192,11 +199,6 @@ public:
  Sample for number of passes.
  */
 class PacBioPassSampler {
-
-    std::chi_squared_distribution<double> distr(1);
-    uint32 max_passes;
-    std::vector<double> chi2_params_n;
-    std::vector<double> chi2_params_s;
 
 public:
 
@@ -245,13 +247,13 @@ public:
     }
 
 
-    void sample(double& passes,
-                uint32& split_pos,
-                uint32& passes_left,
-                uint32& passes_right,
-                double& prop_left,
+    void sample(uint32& split_pos,
+                double& passes_left,
+                double& passes_right,
                 pcg64& eng,
                 const double& read_length) {
+
+        double passes, prop_left;
 
         double n = chi2_params_n[0] * std::min(read_length, chi2_params_n[2]) +
             chi2_params_n[1];
@@ -303,6 +305,12 @@ public:
 
     }
 
+private:
+
+    std::chi_squared_distribution<double> distr=std::chi_squared_distribution<double>(1);
+    uint32 max_passes;
+    std::vector<double> chi2_params_n;
+    std::vector<double> chi2_params_s;
 
 };
 
