@@ -1,14 +1,5 @@
-#ifdef __GEMINO_ABSOLUTELY_NEVER_COMPILE_H
-
-/*
- Above line, plus extra `#endif` below should keep the rest of this file
- from being compiled.
- */
-
-
-
-#ifndef __GEMINO_LONGREADS_H
-#define __GEMINO_LONGREADS_H
+#ifndef __GEMINO_PACBIO_H
+#define __GEMINO_PACBIO_H
 
 
 
@@ -16,6 +7,7 @@
 #include <RcppArmadillo.h>
 #include <cmath>
 #include <vector>  // vector class
+#include <deque>  // deque class
 #include <pcg/pcg_random.hpp> // pcg prng
 #include <string>  // string class
 #include <random>  // distributions
@@ -295,7 +287,7 @@ public:
 
 
 
-#endif
+
 class PacBioQualityError {
 
 public:
