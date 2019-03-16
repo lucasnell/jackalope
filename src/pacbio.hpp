@@ -289,11 +289,204 @@ public:
 
     }
 
+
 };
 
 
 
 
 #endif
+class PacBioQualityError {
+
+public:
+
+    // Initialize with default values:
+    PacBioQualityError()
+        : sqrt_params{SL_DEFAULT_SQRT_PARAMS1, SL_DEFAULT_SQRT_PARAMS2},
+          norm_params{SL_DEFAULT_NORM_PARAMS1, SL_DEFAULT_NORM_PARAMS2},
+          prob_thresh(SL_DEFAULT_PROB_THRESH),
+          prob_ins(SL_DEFAULT_PROB_INS),
+          prob_del(SL_DEFAULT_PROB_DEL),
+          prob_subst(SL_DEFAULT_PROB_SUB),
+          min_exp(calc_min_exp()) {};
+    // Copy constructor
+    PacBioQualityError(const PacBioQualityError& other)
+        : sqrt_params(other.sqrt_params),
+          norm_params(other.norm_params),
+          prob_thresh(other.prob_thresh),
+          prob_ins(other.prob_ins),
+          prob_del(other.prob_del),
+          prob_subst(other.prob_subst),
+          min_exp(other.min_exp) {};
+    // Assignment operator
+    PacBioQualityError& operator=(const PacBioQualityError& other) {
+        sqrt_params = other.sqrt_params;
+        norm_params = other.norm_params;
+        prob_thresh = other.prob_thresh;
+        prob_ins = other.prob_ins;
+        prob_del = other.prob_del;
+        prob_subst = other.prob_subst;
+        min_exp = other.min_exp;
+        return *this;
+    }
+    // To limit the ways these can be changed:
+    void change_sqrt_params(const double& sqrt_params1, const double& sqrt_params2) {
+        sqrt_params = {sqrt_params1, sqrt_params2};
+    }
+    void change_norm_params(const double& norm_params1, const double& norm_params2) {
+        norm_params = {norm_params1, norm_params2};
+    }
+    /*
+     Change one or more error probabilities and the probability threshold.
+     If you don't want one or more of them changed, just use a value outside
+     the range [0,1).
+     */
+    void change_probs(const double& prob_thresh_,
+                      const double& prob_ins_,
+                      const double& prob_del_,
+                      const double& prob_subst_) {
+        if (prob_thresh_ >= 0 && prob_thresh_ < 1) prob_thresh = prob_thresh_;
+        if (prob_ins_ >= 0 && prob_ins_ < 1) prob_ins = prob_ins_;
+        if (prob_del_ >= 0 && prob_del_ < 1) prob_del = prob_del_;
+        if (prob_subst_ >= 0 && prob_subst_ < 1) prob_subst = prob_subst_;
+        min_exp = calc_min_exp();
+    }
+
+
+    void sample(pcg64& eng,
+                char& qual_left,
+                char& qual_right,
+                std::deque<uint32>& insertions,
+                std::deque<uint32>& deletions,
+                std::deque<uint32>& substitutions,
+                const uint32& read_length,
+                const uint32& split_pos,
+                const double& passes_left,
+                const double& passes_right) {
+        insertions.clear();
+        deletions.clear();
+        substitutions.clear();
+        // Update sampling-error probabilities:
+        modify_probs(eng, passes_left, passes_right);
+        // Update qualities
+        fill_quals(qual_left, qual_right);
+        // Now iterate through and update insertions, deletions, and substitutions:
+        uint32 current_length = 0;
+        uint32 seq_pos = 0; // position on the sequence where events occur
+        double u;
+        std::vector<double>* cum_probs = &cum_probs_left;
+        while (current_length < read_length) {
+            if (current_length == split_pos) cum_probs = &cum_probs_right;
+            u = runif_01(eng);
+            if (u > cum_probs->at(2)) { // ------------ no errors
+                current_length++;
+            } else if (u < cum_probs->at(0)) { // ----- insertion
+                // Don't add insertion if it would change read length
+                if (current_length < (read_length - 1)) {
+                    insertions.push_back(seq_pos);
+                    current_length++;
+                    if (current_length == split_pos) cum_probs = &cum_probs_right;
+                }
+                current_length++;
+            } else if (u < cum_probs->at(1)) { // ----- deletion
+                deletions.push_back(seq_pos);
+            } else { // ------------------------------- substitution
+                substitutions.push_back(seq_pos);
+                current_length++;
+            }
+            seq_pos++;
+        }
+        return;
+    }
+
+
+
+private:
+
+    // Values that change:
+    std::vector<double> cum_probs_left = std::vector<double>(3);
+    std::vector<double> cum_probs_right = std::vector<double>(3);
+    // Values that do not change:
+    std::vector<double> sqrt_params;
+    std::vector<double> norm_params;
+    double prob_thresh;
+    double prob_ins;
+    double prob_del;
+    double prob_subst;
+    double min_exp;   // always initialize last
+    uint32 max_qual = 93;
+    uint32 qual_start = static_cast<uint32>('!'); // quality of zero
+
+
+    double calc_min_exp();
+
+    inline double sigmoid(const double& x) {
+        return 1 / (1 + std::pow(2, (-2.5 / 3 * x + 6.5 / 3)));
+    }
+
+    // Normal distribution truncated with lower threshold
+    inline double trunc_norm(const double& lower_thresh,
+                             pcg64& eng) {
+        double rnd;
+        double a_bar = (lower_thresh - norm_params[0]) / norm_params[1];
+
+        /*
+         The "near" method is preferred over the "far" method unless we're truncating
+         all but the tail of the distribution:
+         */
+        if (lower_thresh < (norm_params[0] + 5 * norm_params[1])) {
+            trunc_rnorm_near(rnd, a_bar, norm_params[0], norm_params[1], eng);
+        } else {
+            trunc_rnorm_far(rnd, a_bar, norm_params[0], norm_params[1], eng);
+        }
+
+        return rnd;
+    }
+
+
+    /*
+    From SimLoRD:
+    "Modify the given subread probabilities with an increase factor based on the
+    number of passes. The increase is determined with a noisy sqare root function
+    adapted with a sigmoidal factor. For the purpose of quality trimming the
+    increase exponent is bounded with min_exp.
+    Return the cumulative modfified probabilities for the left and right part of
+    the read: (cum_probs_left, cum_probs_right) with (ins, ins+del, ins+del+subst)."
+    */
+
+    void modify_probs(pcg64& eng,
+                      const double& passes_left,
+                      const double& passes_right);
+
+
+    void fill_quals(char& qual_left, char& qual_right) {
+        uint32 tmp_l = std::round(-10.0 * std::log10(cum_probs_left.back()));
+        uint32 tmp_r = std::round(-10.0 * std::log10(cum_probs_right.back()));
+        if (tmp_l > max_qual) tmp_l = max_qual;
+        if (tmp_r > max_qual) tmp_r = max_qual;
+        qual_left = static_cast<char>(tmp_l + qual_start);
+        qual_right = static_cast<char>(tmp_r + qual_start);
+        return;
+    }
+
+
+
+
+
+};
+
+
+
+
+
+
+};
+
+
+
+
+
+
+
 
 #endif
