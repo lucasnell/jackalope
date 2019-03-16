@@ -49,6 +49,8 @@ using namespace Rcpp;
 #define SL_DEFAULT_CHI2_S4 48303.0732881
 #define SL_DEFAULT_CHI2_S5 1.4691051212330266
 #define SL_DEFAULT_MAX_PASSES 40
+
+// Not yet implemented:
 #define SL_DEFAULT_SQRT_PARAMS1 0.5
 #define SL_DEFAULT_SQRT_PARAMS2 0.2247
 #define SL_DEFAULT_NORM_PARAMS1 0
@@ -171,27 +173,63 @@ public:
 
 
 
-// SL_DEFAULT_CHI2_N1
-// SL_DEFAULT_CHI2_N2
-// SL_DEFAULT_CHI2_N3
-// SL_DEFAULT_CHI2_S1
-// SL_DEFAULT_CHI2_S2
-// SL_DEFAULT_CHI2_S3
-// SL_DEFAULT_CHI2_S4
-// SL_DEFAULT_CHI2_S5
-// SL_DEFAULT_MAX_PASSES
+
 /*
  Sample for number of passes.
-
  */
 class PacBioPassSampler {
 
-    std::vector<double> chi2_params_n(3);
-    std::vector<double> chi2_params_s(5);
+    std::chi_squared_distribution<double> distr(1);
     uint32 max_passes;
-    std::chi_squared_distribution<double> distr;
+    std::vector<double> chi2_params_n;
+    std::vector<double> chi2_params_s;
 
 public:
+
+    /* Initializers */
+    // All defaults:
+    PacBioPassSampler()
+        : max_passes(SL_DEFAULT_MAX_PASSES),
+          chi2_params_n{SL_DEFAULT_CHI2_N1, SL_DEFAULT_CHI2_N2, SL_DEFAULT_CHI2_N3},
+          chi2_params_s{SL_DEFAULT_CHI2_S1, SL_DEFAULT_CHI2_S2, SL_DEFAULT_CHI2_S3,
+                        SL_DEFAULT_CHI2_S4, SL_DEFAULT_CHI2_S5} {};
+    // Specifying for max passes only:
+    PacBioPassSampler(const uint32& max_passes_)
+        : max_passes(max_passes_),
+          chi2_params_n{SL_DEFAULT_CHI2_N1, SL_DEFAULT_CHI2_N2, SL_DEFAULT_CHI2_N3},
+          chi2_params_s{SL_DEFAULT_CHI2_S1, SL_DEFAULT_CHI2_S2, SL_DEFAULT_CHI2_S3,
+                        SL_DEFAULT_CHI2_S4, SL_DEFAULT_CHI2_S5} {};
+    // Copy constructor
+    PacBioPassSampler(const PacBioPassSampler& other)
+        : max_passes(other.max_passes),
+          chi2_params_n(other.chi2_params_n),
+          chi2_params_s(other.chi2_params_s) {};
+    // Assignment operator
+    PacBioPassSampler& operator=(const PacBioPassSampler& other) {
+        max_passes = other.max_passes;
+        chi2_params_n = other.chi2_params_n;
+        chi2_params_s = other.chi2_params_s;
+        return *this;
+    }
+
+    // Function to set just parameters for `n`
+    void set_n(const double& chi2_n1,
+               const double& chi2_n2,
+               const double& chi2_n3) {
+        chi2_params_n = {chi2_n1, chi2_n2, chi2_n3};
+        return;
+    }
+
+    // Function to set just parameters for `s`
+    void set_s(const double& chi2_s1,
+               const double& chi2_s2,
+               const double& chi2_s3,
+               const double& chi2_s4,
+               const double& chi2_s5) {
+        chi2_params_s = {chi2_s1, chi2_s2, chi2_s3, chi2_s4, chi2_s5};
+        return;
+    }
+
 
     void sample(double& passes,
                 uint32& split_pos,
