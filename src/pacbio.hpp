@@ -502,7 +502,94 @@ private:
 
 
 
+
+/*
+Template class to combine everything for Pac Bio sequencing of a single genome.
+(We will need multiple of these objects to sequence a `VarSet` class.
+See `PacBioVariants` class below.)
+
+`T` should be `VarGenome` or `RefGenome`
+
+*/
+template <typename T>
+class PacBioOneGenome {
+public:
+
+    /* __ Samplers __ */
+    // Samples index for which genome-sequence to sequence
+    AliasSampler seq_sampler;
+    // Samples Pac Bio qualities and errors
+    PacBioQualityError qe_sampler;
+    // Samples numbers of passes over read:
+    PacBioPassSampler pass_sampler;
+    // Samples read lengths:
+    PacBioReadLenSampler len_sampler;
+
+
+    /* __ Info __ */
+    std::vector<uint32> seq_lengths;    // genome-sequence lengths
+    const T* sequences;                 // pointer to `const T`
+
+
+    PacBioOneGenome() {};
+
+    PacBioOneGenome(const PacBioOneGenome& other)
+        : seq_sampler(other.seq_sampler),
+          qe_sampler(other.qe_sampler),
+          pass_sampler(other.pass_sampler),
+          len_sampler(other.len_sampler),
+          insertions(other.insertions),
+          deletions(other.deletions),
+          substitutions(other.substitutions),
+          constr_info(other.constr_info) {};
+
+
+    // Add one read string (with 4 lines: ID, sequence, "+", quality) to a FASTQ chunk
+    void one_read(std::string& fastq_chunk,
+                  pcg64& eng,
+                  SequenceIdentifierInfo& ID_info);
+
+    /*
+     Add information about a RefGenome or VarGenome object
+     This is used when making multiple samplers that share most info except for
+     that related to the sequence object.
+     */
+    void add_seq_info(const T& seq_object) {
+        seq_lengths = seq_object.seq_sizes();
+        sequences = &seq_object;
+
+        construct_seqs();
+    }
+
+
+private:
+
+    // To store indel locations, where each vector will be of length 2 if paired==true
+    std::deque<uint32> insertions;
+    std::deque<uint32> deletions;
+    std::deque<uint32> substitutions;
+    // Info to construct reads:
+    PacBioReadConstrInfo constr_info;
+
+
+    // Construct sequence-sampling probabilities:
+    void construct_seqs() {
+        std::vector<double> probs_;
+        probs_.reserve(seq_lengths.size());
+        for (uint i = 0; i < seq_lengths.size(); i++) {
+            probs_.push_back(static_cast<double>(seq_lengths[i]));
+        }
+        seq_sampler = AliasSampler(probs_);
+    }
+
 };
+
+
+typedef PacBioOneGenome<RefGenome> PacBioReference;
+typedef PacBioOneGenome<VarGenome> PacBioOneVariant;
+
+
+
 
 
 
