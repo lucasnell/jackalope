@@ -29,29 +29,51 @@ using namespace Rcpp;
 // Defaults from SimLoRD:
 
 #define SL_DEFAULT_S = 0.200110276521
-#define SL_DEFAULT_LOC = -10075.4363813
-#define SL_DEFAULT_SCALE = 17922.611306
-#define SL_DEFAULT_MIN_FRAG_LEN = 50
+#define SL_DEFAULT_S 0.200110276521
+#define SL_DEFAULT_LOC -10075.4363813
+#define SL_DEFAULT_SCALE 17922.611306
+#define SL_DEFAULT_MIN_FRAG_LEN 50.0
 #define SL_DEFAULT_CHI2_N1 0.00189237136
 #define SL_DEFAULT_CHI2_N2 2.53944970
-#define SL_DEFAULT_CHI2_N3 5500
+#define SL_DEFAULT_CHI2_N3 5500.0
 #define SL_DEFAULT_CHI2_S1 0.01214
 #define SL_DEFAULT_CHI2_S2 -5.12
-#define SL_DEFAULT_CHI2_S3 675
+#define SL_DEFAULT_CHI2_S3 675.0
 #define SL_DEFAULT_CHI2_S4 48303.0732881
 #define SL_DEFAULT_CHI2_S5 1.4691051212330266
 #define SL_DEFAULT_MAX_PASSES 40
 
-// Not yet implemented:
 #define SL_DEFAULT_SQRT_PARAMS1 0.5
 #define SL_DEFAULT_SQRT_PARAMS2 0.2247
-#define SL_DEFAULT_NORM_PARAMS1 0
+#define SL_DEFAULT_NORM_PARAMS1 0.0
 #define SL_DEFAULT_NORM_PARAMS2 0.2
 #define SL_DEFAULT_PROB_THRESH 0.2
 #define SL_DEFAULT_PROB_INS 0.11
 #define SL_DEFAULT_PROB_DEL 0.04
 #define SL_DEFAULT_PROB_SUB 0.01
 
+
+
+
+
+// Basic information to construct reads
+struct PacBioReadConstrInfo {
+
+    uint32 seq_ind;
+    uint32 frag_len;
+    uint32 frag_start;
+    std::string read;
+    std::string quals;
+    uint32 read_seq_space;
+
+
+    PacBioReadConstrInfo() {}
+    PacBioReadConstrInfo(const PacBioReadConstrInfo& other)
+        : seq_ind(other.seq_ind), frag_len(other.frag_len),
+          frag_start(other.frag_start),
+          read(other.read), quals(other.quals),
+          read_seq_space(other.read_seq_space) {};
+};
 
 
 
@@ -140,7 +162,7 @@ public:
         return *this;
     }
 
-    uint32 sample(pcg64& eng) const {
+    uint32 sample(pcg64& eng) {
         uint32 len_;
         if (use_distr) {
             double rnd = distr(eng) + loc;
@@ -246,14 +268,14 @@ public:
         // Reset distr for new `n`:
         distr.param(std::chi_squared_distribution<double>::param_type(n));
 
-        double passes = distr(eng);
+        passes = distr(eng);
 
         /*
          According to SimLoRD code, it's useful to not draw extreme outliers here
          because preventing those outliers "prevents outlier over the a/x boundary"
          */
         double outlier_threshold = R::qchisq(0.9925, n, 1, 0);
-        while (passes > outlier_threshold) pass = distr(eng);
+        while (passes > outlier_threshold) passes = distr(eng);
         // Now add scale and location parameters:
         passes *= s;
         passes += 1;
@@ -265,7 +287,7 @@ public:
         fraction = std::modf(passes, &wholes);
 
 
-        if (wholes % 2 == 0) {
+        if (static_cast<uint32>(wholes) % 2U == 0U) {
             prop_left = fraction;
             split_pos = std::round(static_cast<double>(read_length) * prop_left);
             passes_left = std::ceil(passes);
