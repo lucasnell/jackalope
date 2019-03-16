@@ -149,6 +149,10 @@ check_pacbio_args <- function(seq_object,
 #'
 #' @export
 #'
+#' @source
+#' Stöcker, B. K., J. Köster, and S. Rahmann. 2016. SimLoRD: simulation of long
+#' read data. \emph{Bioinformatics} \strong{32}:2704–2706.
+#'
 #' @examples
 #'
 #'

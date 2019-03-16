@@ -263,7 +263,6 @@ read_profile <- function(profile_fn, seq_sys, read_length, read) {
 
 #' Check Illumina arguments for validity.
 #'
-#' @inheritParams make_illumina_sampler
 #'
 #'
 #' @noRd
@@ -515,6 +514,10 @@ check_illumina_args <- function(seq_object, n_reads,
 #' @return Nothing is returned.
 #'
 #' @export
+#'
+#' @source
+#' Huang, W., L. Li, J. R. Myers, and G. T. Marth. 2012. ART: a next-generation
+#' sequencing read simulator. \emph{Bioinformatics} \strong{28}:593–594.
 #'
 #' @examples
 #'
