@@ -44,7 +44,7 @@ using namespace Rcpp;
 
 
 // Basic information to construct reads
-struct ReadConstructInfo {
+struct IlluminaReadConstrInfo {
     uint32 read_length;
     uint32 seq_ind;
     uint32 frag_len;
@@ -55,10 +55,10 @@ struct ReadConstructInfo {
     std::string barcode;
 
 
-    ReadConstructInfo() {}
-    ReadConstructInfo(const bool& paired,
-                      const uint32& read_length_,
-                      const std::string barcode_)
+    IlluminaReadConstrInfo() {}
+    IlluminaReadConstrInfo(const bool& paired,
+                           const uint32& read_length_,
+                           const std::string barcode_)
         : read_length(read_length_),
           seq_ind(0),
           frag_len(0),
@@ -78,7 +78,7 @@ struct ReadConstructInfo {
             read_seq_spaces = std::vector<uint32>(1);
         }
     }
-    ReadConstructInfo(const ReadConstructInfo& other)
+    IlluminaReadConstrInfo(const IlluminaReadConstrInfo& other)
         : read_length(other.read_length), seq_ind(other.seq_ind),
           frag_len(other.frag_len), frag_start(other.frag_start),
           reads(other.reads), quals(other.quals),
@@ -440,7 +440,7 @@ protected:
     uint32 frag_len_min;
     uint32 frag_len_max;
     // Info to construct reads:
-    ReadConstructInfo constr_info;
+    IlluminaReadConstrInfo constr_info;
 
 
     // Construct sequence-sampling probabilities:
