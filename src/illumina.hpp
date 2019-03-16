@@ -156,8 +156,9 @@ public:
     IlluminaQualityError(const std::vector<std::vector<std::vector<double>>>& probs_,
                          const std::vector<std::vector<std::vector<uint8>>>& quals_)
         : by_nt(),
-          qual_prob_map(), nt_map(256, 4U), mm_nucleos(4),
-          qual_start(static_cast<uint8>('!')) {
+          qual_prob_map(),
+          nt_map(256, 4U),
+          mm_nucleos(4) {
 
         uint32 read_length(probs_[0].size());
 
@@ -202,9 +203,10 @@ public:
     }
 
     IlluminaQualityError(const IlluminaQualityError& other)
-        : by_nt(other.by_nt), qual_prob_map(other.qual_prob_map),
-          nt_map(other.nt_map), mm_nucleos(other.mm_nucleos),
-          qual_start(other.qual_start) {};
+        : by_nt(other.by_nt),
+          qual_prob_map(other.qual_prob_map),
+          nt_map(other.nt_map),
+          mm_nucleos(other.mm_nucleos) {};
 
 
     /*
@@ -286,7 +288,7 @@ private:
      Starting value of qualities (for use in converting integers to chars
      (e.g., 0 to '!'))
      */
-    uint8 qual_start;
+    uint8 qual_start = static_cast<uint8>('!');
 
 };
 
