@@ -26,43 +26,13 @@ using namespace Rcpp;
 
 
 
-// Defaults from SimLoRD:
-
-// Used in PacBioReadLenSampler
-#define SL_DEFAULT_S 0.200110276521
-#define SL_DEFAULT_LOC -10075.4363813
-#define SL_DEFAULT_SCALE 17922.611306
-#define SL_DEFAULT_MIN_FRAG_LEN 50.0
-// Used in PacBioPassSampler
-#define SL_DEFAULT_CHI2_N1 0.00189237136
-#define SL_DEFAULT_CHI2_N2 2.53944970
-#define SL_DEFAULT_CHI2_N3 5500.0
-#define SL_DEFAULT_CHI2_S1 0.01214
-#define SL_DEFAULT_CHI2_S2 -5.12
-#define SL_DEFAULT_CHI2_S3 675.0
-#define SL_DEFAULT_CHI2_S4 48303.0732881
-#define SL_DEFAULT_CHI2_S5 1.4691051212330266
-#define SL_DEFAULT_MAX_PASSES 40
-// Used in PacBioQualityError
-#define SL_DEFAULT_SQRT_PARAMS1 0.5
-#define SL_DEFAULT_SQRT_PARAMS2 0.2247
-#define SL_DEFAULT_NORM_PARAMS1 0.0
-#define SL_DEFAULT_NORM_PARAMS2 0.2
-#define SL_DEFAULT_PROB_THRESH 0.2
-#define SL_DEFAULT_PROB_INS 0.11
-#define SL_DEFAULT_PROB_DEL 0.04
-#define SL_DEFAULT_PROB_SUB 0.01
-
-
-
-
 
 // Basic information to construct reads
 struct PacBioReadConstrInfo {
 
     uint32 seq_ind;
-    uint32 frag_len;
-    uint32 frag_start;
+    uint32 read_length;
+    uint32 read_start;
     std::string read;
     std::string quals;
     uint32 read_seq_space;
@@ -70,8 +40,9 @@ struct PacBioReadConstrInfo {
 
     PacBioReadConstrInfo() {}
     PacBioReadConstrInfo(const PacBioReadConstrInfo& other)
-        : seq_ind(other.seq_ind), frag_len(other.frag_len),
-          frag_start(other.frag_start),
+        : seq_ind(other.seq_ind),
+          read_length(other.read_length),
+          read_start(other.read_start),
           read(other.read), quals(other.quals),
           read_seq_space(other.read_seq_space) {};
 };
@@ -95,25 +66,8 @@ class PacBioReadLenSampler {
 public:
 
     /* Initializers */
-    // Default parameters from SimLoRD:
-    PacBioReadLenSampler()
-        : frag_lens(),
-          sampler(),
-          distr(std::log(SL_DEFAULT_SCALE), SL_DEFAULT_S),
-          use_distr(true),
-          min_frag_len(SL_DEFAULT_MIN_FRAG_LEN),
-          loc(SL_DEFAULT_LOC) {};
-    // Same but just modifying the min fragment length:
-    PacBioReadLenSampler(const double& min_frag_len_)
-        : frag_lens(),
-          sampler(),
-          distr(std::log(SL_DEFAULT_SCALE), SL_DEFAULT_S),
-          use_distr(true),
-          min_frag_len(std::ceil(min_frag_len_)),
-          loc(SL_DEFAULT_LOC) {
-        if (min_frag_len < 1) min_frag_len = 1;
-    };
-    // Using lognormal distribution with custom parameter values:
+    PacBioReadLenSampler() {};
+    // Using lognormal distribution:
     PacBioReadLenSampler(const double& scale_,
                          const double& sigma_,
                          const double& loc_,
@@ -127,15 +81,15 @@ public:
         if (min_frag_len < 1) min_frag_len = 1;
     };
     // Using a vector of fragment lengths, each with a sampling probability:
-    PacBioReadLenSampler(const std::vector<double>& probs,
+    PacBioReadLenSampler(const std::vector<double>& probs_,
                          const std::vector<uint32>& frag_lens_)
         : frag_lens(frag_lens_),
-          sampler(probs),
+          sampler(probs_),
           distr(),
           use_distr(false),
           min_frag_len(),
           loc() {
-        if (probs.size() != frag_lens_.size()) {
+        if (probs_.size() != frag_lens_.size()) {
             stop("Probability and fragment lengths vector should be the same length.");
         }
     };
@@ -202,19 +156,19 @@ class PacBioPassSampler {
 
 public:
 
+    uint32 max_passes;
+    std::vector<double> chi2_params_n;
+    std::vector<double> chi2_params_s;
+
+
     /* Initializers */
-    // All defaults:
-    PacBioPassSampler()
-        : max_passes(SL_DEFAULT_MAX_PASSES),
-          chi2_params_n{SL_DEFAULT_CHI2_N1, SL_DEFAULT_CHI2_N2, SL_DEFAULT_CHI2_N3},
-          chi2_params_s{SL_DEFAULT_CHI2_S1, SL_DEFAULT_CHI2_S2, SL_DEFAULT_CHI2_S3,
-                        SL_DEFAULT_CHI2_S4, SL_DEFAULT_CHI2_S5} {};
-    // Specifying for max passes only:
-    PacBioPassSampler(const uint32& max_passes_)
+    PacBioPassSampler() {};
+    PacBioPassSampler(const uint32& max_passes_,
+                      const std::vector<double>& chi2_params_n_,
+                      const std::vector<double>& chi2_params_s_)
         : max_passes(max_passes_),
-          chi2_params_n{SL_DEFAULT_CHI2_N1, SL_DEFAULT_CHI2_N2, SL_DEFAULT_CHI2_N3},
-          chi2_params_s{SL_DEFAULT_CHI2_S1, SL_DEFAULT_CHI2_S2, SL_DEFAULT_CHI2_S3,
-                        SL_DEFAULT_CHI2_S4, SL_DEFAULT_CHI2_S5} {};
+          chi2_params_n(chi2_params_n_),
+          chi2_params_s(chi2_params_s_) {};
     // Copy constructor
     PacBioPassSampler(const PacBioPassSampler& other)
         : max_passes(other.max_passes),
@@ -226,24 +180,6 @@ public:
         chi2_params_n = other.chi2_params_n;
         chi2_params_s = other.chi2_params_s;
         return *this;
-    }
-
-    // Function to set just parameters for `n`
-    void set_n(const double& chi2_n1,
-               const double& chi2_n2,
-               const double& chi2_n3) {
-        chi2_params_n = {chi2_n1, chi2_n2, chi2_n3};
-        return;
-    }
-
-    // Function to set just parameters for `s`
-    void set_s(const double& chi2_s1,
-               const double& chi2_s2,
-               const double& chi2_s3,
-               const double& chi2_s4,
-               const double& chi2_s5) {
-        chi2_params_s = {chi2_s1, chi2_s2, chi2_s3, chi2_s4, chi2_s5};
-        return;
     }
 
 
@@ -308,9 +244,6 @@ public:
 private:
 
     std::chi_squared_distribution<double> distr=std::chi_squared_distribution<double>(1);
-    uint32 max_passes;
-    std::vector<double> chi2_params_n;
-    std::vector<double> chi2_params_s;
 
 };
 
@@ -322,14 +255,28 @@ class PacBioQualityError {
 
 public:
 
-    // Initialize with default values:
-    PacBioQualityError()
-        : sqrt_params{SL_DEFAULT_SQRT_PARAMS1, SL_DEFAULT_SQRT_PARAMS2},
-          norm_params{SL_DEFAULT_NORM_PARAMS1, SL_DEFAULT_NORM_PARAMS2},
-          prob_thresh(SL_DEFAULT_PROB_THRESH),
-          prob_ins(SL_DEFAULT_PROB_INS),
-          prob_del(SL_DEFAULT_PROB_DEL),
-          prob_subst(SL_DEFAULT_PROB_SUB),
+    std::vector<double> sqrt_params;
+    std::vector<double> norm_params;
+    double prob_thresh;
+    double prob_ins;
+    double prob_del;
+    double prob_subst;
+    double min_exp;   // always initialize last
+
+    /* Initializers */
+    PacBioQualityError() {};
+    PacBioQualityError(const std::vector<double>& sqrt_params_,
+                       const std::vector<double>& norm_params_,
+                       const double& prob_thresh_,
+                       const double& prob_ins_,
+                       const double& prob_del_,
+                       const double& prob_subst_)
+        : sqrt_params(sqrt_params_),
+          norm_params(norm_params_),
+          prob_thresh(prob_thresh_),
+          prob_ins(prob_ins_),
+          prob_del(prob_del_),
+          prob_subst(prob_subst_),
           min_exp(calc_min_exp()) {};
     // Copy constructor
     PacBioQualityError(const PacBioQualityError& other)
@@ -351,28 +298,6 @@ public:
         min_exp = other.min_exp;
         return *this;
     }
-    // To limit the ways these can be changed:
-    void change_sqrt_params(const double& sqrt_params1, const double& sqrt_params2) {
-        sqrt_params = {sqrt_params1, sqrt_params2};
-    }
-    void change_norm_params(const double& norm_params1, const double& norm_params2) {
-        norm_params = {norm_params1, norm_params2};
-    }
-    /*
-     Change one or more error probabilities and the probability threshold.
-     If you don't want one or more of them changed, just use a value outside
-     the range [0,1).
-     */
-    void change_probs(const double& prob_thresh_,
-                      const double& prob_ins_,
-                      const double& prob_del_,
-                      const double& prob_subst_) {
-        if (prob_thresh_ >= 0 && prob_thresh_ < 1) prob_thresh = prob_thresh_;
-        if (prob_ins_ >= 0 && prob_ins_ < 1) prob_ins = prob_ins_;
-        if (prob_del_ >= 0 && prob_del_ < 1) prob_del = prob_del_;
-        if (prob_subst_ >= 0 && prob_subst_ < 1) prob_subst = prob_subst_;
-        min_exp = calc_min_exp();
-    }
 
 
     void sample(pcg64& eng,
@@ -381,6 +306,7 @@ public:
                 std::deque<uint32>& insertions,
                 std::deque<uint32>& deletions,
                 std::deque<uint32>& substitutions,
+                const uint32& seq_len,
                 const uint32& read_length,
                 const uint32& split_pos,
                 const double& passes_left,
@@ -389,12 +315,14 @@ public:
         deletions.clear();
         substitutions.clear();
         // Update sampling-error probabilities:
-        modify_probs(eng, passes_left, passes_right);
+        update_probs(eng, passes_left, passes_right);
         // Update qualities
         fill_quals(qual_left, qual_right);
         // Now iterate through and update insertions, deletions, and substitutions:
         uint32 current_length = 0;
-        uint32 seq_pos = 0; // position on the sequence where events occur
+        uint32 seq_pos = 0; // position on the read where events occur
+        // Amount of extra (i.e., non-read) sequence remaining:
+        uint32 extra_space = seq_len - read_length;
         double u;
         std::vector<double>* cum_probs = &cum_probs_left;
         while (current_length < read_length) {
@@ -407,11 +335,15 @@ public:
                 if (current_length < (read_length - 1)) {
                     insertions.push_back(seq_pos);
                     current_length++;
+                    extra_space++;
                     if (current_length == split_pos) cum_probs = &cum_probs_right;
                 }
                 current_length++;
             } else if (u < cum_probs->at(1)) { // ----- deletion
-                deletions.push_back(seq_pos);
+                if (extra_space > 0) {
+                    deletions.push_back(seq_pos);
+                    extra_space--;
+                }
             } else { // ------------------------------- substitution
                 substitutions.push_back(seq_pos);
                 current_length++;
@@ -429,15 +361,8 @@ private:
     std::vector<double> cum_probs_left = std::vector<double>(3);
     std::vector<double> cum_probs_right = std::vector<double>(3);
     // Values that do not change:
-    std::vector<double> sqrt_params;
-    std::vector<double> norm_params;
-    double prob_thresh;
-    double prob_ins;
-    double prob_del;
-    double prob_subst;
-    double min_exp;   // always initialize last
-    uint32 max_qual = 93;
-    uint32 qual_start = static_cast<uint32>('!'); // quality of zero
+    const uint32 max_qual = 93;
+    const uint32 qual_start = static_cast<uint32>('!'); // quality of zero
 
 
     double calc_min_exp();
@@ -476,7 +401,7 @@ private:
     the read: (cum_probs_left, cum_probs_right) with (ins, ins+del, ins+del+subst)."
     */
 
-    void modify_probs(pcg64& eng,
+    void update_probs(pcg64& eng,
                       const double& passes_left,
                       const double& passes_right);
 
@@ -504,13 +429,13 @@ private:
 
 
 /*
-Template class to combine everything for Pac Bio sequencing of a single genome.
-(We will need multiple of these objects to sequence a `VarSet` class.
-See `PacBioVariants` class below.)
+ Template class to combine everything for PacBio sequencing of a single genome.
+ (We will need multiple of these objects to sequence a `VarSet` class.
+ See `PacBioVariants` class below.)
 
-`T` should be `VarGenome` or `RefGenome`
+ `T` should be `VarGenome` or `RefGenome`
 
-*/
+ */
 template <typename T>
 class PacBioOneGenome {
 public:
@@ -518,12 +443,12 @@ public:
     /* __ Samplers __ */
     // Samples index for which genome-sequence to sequence
     AliasSampler seq_sampler;
-    // Samples Pac Bio qualities and errors
-    PacBioQualityError qe_sampler;
-    // Samples numbers of passes over read:
-    PacBioPassSampler pass_sampler;
     // Samples read lengths:
     PacBioReadLenSampler len_sampler;
+    // Samples numbers of passes over read:
+    PacBioPassSampler pass_sampler;
+    // Samples Pac Bio qualities and errors
+    PacBioQualityError qe_sampler;
 
 
     /* __ Info __ */
@@ -535,9 +460,11 @@ public:
 
     PacBioOneGenome(const PacBioOneGenome& other)
         : seq_sampler(other.seq_sampler),
-          qe_sampler(other.qe_sampler),
-          pass_sampler(other.pass_sampler),
           len_sampler(other.len_sampler),
+          pass_sampler(other.pass_sampler),
+          qe_sampler(other.qe_sampler),
+          seq_lengths(other.seq_lengths),
+          sequences(other.sequences),
           insertions(other.insertions),
           deletions(other.deletions),
           substitutions(other.substitutions),
@@ -549,6 +476,7 @@ public:
                   pcg64& eng,
                   SequenceIdentifierInfo& ID_info);
 
+
     /*
      Add information about a RefGenome or VarGenome object
      This is used when making multiple samplers that share most info except for
@@ -557,17 +485,30 @@ public:
     void add_seq_info(const T& seq_object) {
         seq_lengths = seq_object.seq_sizes();
         sequences = &seq_object;
-
         construct_seqs();
     }
 
 
 private:
 
+    uint32 split_pos = 0;
+    double passes_left = 0;
+    double passes_right = 0;
+    char qual_left = '!';
+    char qual_right = '!';
+    uint32 read_seq_space = 1;
+    std::string read = std::string(1000, 'N');
+    // Maps nucleotide char to integer from 0 to 3
+    std::vector<uint8> nt_map = sequencer::nt_map;
+    /*
+    Maps nucleotide char integer (i.e., output from nt_map) to string of chars
+    to sample from for a mismatch
+    */
+    std::vector<std::string> mm_nucleos = sequencer::mm_nucleos;
     // To store indel locations, where each vector will be of length 2 if paired==true
-    std::deque<uint32> insertions;
-    std::deque<uint32> deletions;
-    std::deque<uint32> substitutions;
+    std::deque<uint32> insertions = std::deque<uint32>(0);
+    std::deque<uint32> deletions = std::deque<uint32>(0);
+    std::deque<uint32> substitutions = std::deque<uint32>(0);
     // Info to construct reads:
     PacBioReadConstrInfo constr_info;
 
@@ -581,6 +522,12 @@ private:
         }
         seq_sampler = AliasSampler(probs_);
     }
+
+    // Append quality and read to fastq chunk
+    void append_chunk(std::string& fastq_chunk,
+                      pcg64& eng,
+                      SequenceIdentifierInfo& ID_info);
+
 
 };
 
