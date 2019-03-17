@@ -146,6 +146,25 @@ inline void rev_comp(std::string& seq) {
     return;
 }
 
+/*
+ Same thing, except that it only does it for the first `n` characters in `seq`
+ */
+inline void rev_comp(std::string& seq, const uint32& n) {
+
+    uint32 half_n = n / 2;
+    char tmp;
+
+    for (uint32 j = 0; j < half_n; j++) {
+        tmp = str_manip::cmp_map[seq[j]]; // goes to `n-j-1`
+        seq[j] = str_manip::cmp_map[seq[(n-j-1)]];
+        seq[(n-j-1)] = tmp;
+    }
+
+    if (n % 2 == 1) seq[half_n] = str_manip::cmp_map[seq[half_n]];
+
+    return;
+}
+
 
 
 # endif

@@ -11,6 +11,11 @@
 #include <pcg/pcg_random.hpp> // pcg prng
 #include <string>  // string class
 #include <random>  // distributions
+#include <fstream> // for writing FASTQ files
+#include <zlib.h>  // for writing to compressed FASTQ
+#ifdef _OPENMP
+#include <omp.h>  // omp
+#endif
 
 #include "gemino_types.hpp"  // uint32
 #include "seq_classes_ref.hpp"  // Ref* classes
@@ -23,32 +28,6 @@
 #include "sequencer.hpp"  // SequenceIdentifierInfo
 
 using namespace Rcpp;
-
-
-
-
-// Basic information to construct reads
-struct PacBioReadConstrInfo {
-
-    uint32 seq_ind;
-    uint32 read_length;
-    uint32 read_start;
-    std::string read;
-    std::string quals;
-    uint32 read_seq_space;
-
-
-    PacBioReadConstrInfo() {}
-    PacBioReadConstrInfo(const PacBioReadConstrInfo& other)
-        : seq_ind(other.seq_ind),
-          read_length(other.read_length),
-          read_start(other.read_start),
-          read(other.read), quals(other.quals),
-          read_seq_space(other.read_seq_space) {};
-};
-
-
-
 
 
 
@@ -72,7 +51,7 @@ public:
                          const double& sigma_,
                          const double& loc_,
                          const double& min_frag_len_)
-        : frag_lens(),
+        : read_lens(),
           sampler(),
           distr(std::log(scale_), sigma_),
           use_distr(true),
@@ -81,21 +60,21 @@ public:
         if (min_frag_len < 1) min_frag_len = 1;
     };
     // Using a vector of fragment lengths, each with a sampling probability:
-    PacBioReadLenSampler(const std::vector<double>& probs_,
-                         const std::vector<uint32>& frag_lens_)
-        : frag_lens(frag_lens_),
-          sampler(probs_),
+    PacBioReadLenSampler(const std::vector<double>& read_probs_,
+                         const std::vector<uint32>& read_lens_)
+        : read_lens(read_lens_),
+          sampler(read_probs_),
           distr(),
           use_distr(false),
           min_frag_len(),
           loc() {
-        if (probs_.size() != frag_lens_.size()) {
+        if (read_probs_.size() != read_lens_.size()) {
             stop("Probability and fragment lengths vector should be the same length.");
         }
     };
     // Copy constructor
     PacBioReadLenSampler(const PacBioReadLenSampler& other)
-        : frag_lens(other.frag_lens),
+        : read_lens(other.read_lens),
           sampler(other.sampler),
           distr(other.distr),
           use_distr(other.use_distr),
@@ -103,7 +82,7 @@ public:
           loc(other.loc) {};
     // Assignment operator
     PacBioReadLenSampler& operator=(const PacBioReadLenSampler& other) {
-        frag_lens = other.frag_lens;
+        read_lens = other.read_lens;
         sampler = other.sampler;
         distr = other.distr;
         use_distr = other.use_distr;
@@ -127,15 +106,15 @@ public:
             len_ = static_cast<uint32>(rnd);
         } else {
             uint64 ind = sampler.sample(eng);
-            uint32 len_ = frag_lens[ind];
+            uint32 len_ = read_lens[ind];
         }
         return len_;
     }
 
 private:
 
-    std::vector<uint32> frag_lens;      // optional vector of possible fragment lengths
-    TableSampler sampler;               // optional sampler that chooses from `frag_lens`
+    std::vector<uint32> read_lens;      // optional vector of possible read lengths
+    TableSampler sampler;               // optional sampler that chooses from `read_lens`
     std::lognormal_distribution<double> distr; // optional if using a distribution
     bool use_distr;                     // Whether to sample using `distr` field
     double min_frag_len;                // Minimum fragment length
@@ -457,6 +436,52 @@ public:
 
 
     PacBioOneGenome() {};
+    // Using lognormal distribution for read sizes:
+    PacBioOneGenome(const T& seq_object,
+                    const double& scale_,
+                    const double& sigma_,
+                    const double& loc_,
+                    const double& min_frag_len_,
+                    const uint32& max_passes_,
+                    const std::vector<double>& chi2_params_n_,
+                    const std::vector<double>& chi2_params_s_,
+                    const std::vector<double>& sqrt_params_,
+                    const std::vector<double>& norm_params_,
+                    const double& prob_thresh_,
+                    const double& prob_ins_,
+                    const double& prob_del_,
+                    const double& prob_subst_)
+        : seq_sampler(),
+          len_sampler(scale_, sigma_, loc_, min_frag_len_),
+          pass_sampler(max_passes_, chi2_params_n_, chi2_params_s_),
+          qe_sampler(sqrt_params_, norm_params_, prob_thresh_, prob_ins_,
+          prob_del_, prob_subst_),
+          seq_lengths(seq_object.seq_sizes()),
+          sequences(&seq_object) {
+        construct_seqs();
+    };
+    // Using vectors of fragment lengths and sampling weight for read lengths:
+    PacBioOneGenome(const T& seq_object,
+                    const std::vector<double>& read_probs_,
+                    const std::vector<uint32>& read_lens_,
+                    const uint32& max_passes_,
+                    const std::vector<double>& chi2_params_n_,
+                    const std::vector<double>& chi2_params_s_,
+                    const std::vector<double>& sqrt_params_,
+                    const std::vector<double>& norm_params_,
+                    const double& prob_thresh_,
+                    const double& prob_ins_,
+                    const double& prob_del_,
+                    const double& prob_subst_)
+        : seq_sampler(),
+          len_sampler(read_probs_, read_lens_),
+          pass_sampler(max_passes_, chi2_params_n_, chi2_params_s_),
+          qe_sampler(sqrt_params_, norm_params_, prob_thresh_, prob_ins_,
+          prob_del_, prob_subst_),
+          seq_lengths(seq_object.seq_sizes()),
+          sequences(&seq_object) {
+        construct_seqs();
+    };
 
     PacBioOneGenome(const PacBioOneGenome& other)
         : seq_sampler(other.seq_sampler),
@@ -464,17 +489,20 @@ public:
           pass_sampler(other.pass_sampler),
           qe_sampler(other.qe_sampler),
           seq_lengths(other.seq_lengths),
-          sequences(other.sequences),
-          insertions(other.insertions),
-          deletions(other.deletions),
-          substitutions(other.substitutions),
-          constr_info(other.constr_info) {};
+          sequences(other.sequences) {};
 
 
     // Add one read string (with 4 lines: ID, sequence, "+", quality) to a FASTQ chunk
-    void one_read(std::string& fastq_chunk,
+    void one_read(std::vector<std::string>& fastq_chunks,
                   pcg64& eng,
                   SequenceIdentifierInfo& ID_info);
+    /*
+     Same as above, but for a duplicate. It's assumed that `one_read` has been
+     run once before.
+     */
+    void re_read(std::vector<std::string>& fastq_chunks,
+                 pcg64& eng,
+                 SequenceIdentifierInfo& ID_info);
 
 
     /*
@@ -509,9 +537,9 @@ private:
     std::deque<uint32> insertions = std::deque<uint32>(0);
     std::deque<uint32> deletions = std::deque<uint32>(0);
     std::deque<uint32> substitutions = std::deque<uint32>(0);
-    // Info to construct reads:
-    PacBioReadConstrInfo constr_info;
-
+    uint32 seq_ind = 0;
+    uint32 read_length = 0;
+    uint32 read_start = 0;
 
     // Construct sequence-sampling probabilities:
     void construct_seqs() {
@@ -538,6 +566,120 @@ typedef PacBioOneGenome<VarGenome> PacBioOneVariant;
 
 
 
+/*
+ To process a `VarSet` object, I need to wrap PacBioOneVariant inside
+ another class.
+ */
+class PacBioVariants {
+
+public:
+
+    const VarSet* variants;                         // pointer to `const VarSet`
+    TableSampler variant_sampler;                   // chooses which variant to use
+    std::vector<PacBioOneVariant> read_makers;      // makes PacBio reads
+
+    /* Initializers */
+    PacBioVariants() {};
+    // Using lognormal distribution for read sizes:
+    PacBioVariants(const VarSet& var_set,
+                   const std::vector<double>& variant_probs,
+                   const double& scale_,
+                   const double& sigma_,
+                   const double& loc_,
+                   const double& min_frag_len_,
+                   const uint32& max_passes_,
+                   const std::vector<double>& chi2_params_n_,
+                   const std::vector<double>& chi2_params_s_,
+                   const std::vector<double>& sqrt_params_,
+                   const std::vector<double>& norm_params_,
+                   const double& prob_thresh_,
+                   const double& prob_ins_,
+                   const double& prob_del_,
+                   const double& prob_subst_)
+        : variants(&var_set),
+          variant_sampler(variant_probs),
+          read_makers(1, PacBioOneVariant(var_set[0],
+                                          scale_, sigma_, loc_, min_frag_len_,
+                                          max_passes_, chi2_params_n_, chi2_params_s_,
+                                          sqrt_params_, norm_params_, prob_thresh_,
+                                          prob_ins_, prob_del_, prob_subst_)) {
+        construct_makers();
+    };
+    // Using vectors of fragment lengths and sampling weight for read lengths:
+    PacBioVariants(const VarSet& var_set,
+                   const std::vector<double>& variant_probs,
+                   const std::vector<double>& read_probs_,
+                   const std::vector<uint32>& read_lens_,
+                   const uint32& max_passes_,
+                   const std::vector<double>& chi2_params_n_,
+                   const std::vector<double>& chi2_params_s_,
+                   const std::vector<double>& sqrt_params_,
+                   const std::vector<double>& norm_params_,
+                   const double& prob_thresh_,
+                   const double& prob_ins_,
+                   const double& prob_del_,
+                   const double& prob_subst_)
+        : variants(&var_set),
+          variant_sampler(variant_probs),
+          read_makers(1, PacBioOneVariant(var_set[0],
+                                          read_probs_, read_lens_,
+                                          max_passes_, chi2_params_n_, chi2_params_s_,
+                                          sqrt_params_, norm_params_, prob_thresh_,
+                                          prob_ins_, prob_del_, prob_subst_)) {
+        construct_makers();
+    };
+    // Copy constructor
+    PacBioVariants(const PacBioVariants& other)
+        : variants(other.variants),
+          variant_sampler(other.variant_sampler),
+          read_makers(other.read_makers) {};
+
+
+    /*
+     -------------
+     `one_read` methods
+     -------------
+     */
+    // If only providing rng and id info, sample for a variant, then make read(s):
+    void one_read(std::vector<std::string>& fastq_chunks,
+                  pcg64& eng,
+                  SequenceIdentifierInfo& ID_info) {
+        var = variant_sampler.sample(eng);
+        read_makers[var].one_read(fastq_chunks, eng, ID_info);
+        return;
+    }
+    /*
+     -------------
+     `re_read` methods (for duplicates)
+    -------------
+    */
+    void re_read(std::vector<std::string>& fastq_chunks,
+                 pcg64& eng,
+                 SequenceIdentifierInfo& ID_info) {
+        read_makers[var].re_read(fastq_chunks, eng, ID_info);
+        return;
+    }
+
+
+
+private:
+
+    // Variant to sample from. It's saved in this class in case of duplicates.
+    uint32 var;
+
+    // Construct read_makers field if the first item in that vector has been filled out
+    void construct_makers() {
+        uint32 n_vars = variants->size();
+        read_makers.reserve(n_vars);
+        for (uint32 i = 1; i < n_vars; i++) {
+            // Add read maker for the first variant:
+            read_makers.push_back(read_makers[0]);
+            // Now update it for the correct VarGenome info:
+            read_makers[i].add_seq_info((*variants)[i]);
+        }
+    }
+
+};
 
 
 

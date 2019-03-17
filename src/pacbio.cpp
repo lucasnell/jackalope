@@ -109,17 +109,15 @@ void PacBioQualityError::update_probs(pcg64& eng,
 
 
 template <typename T>
-void PacBioOneGenome<T>::one_read(std::string& fastq_chunk,
+void PacBioOneGenome<T>::one_read(std::vector<std::string>& fastq_chunks,
                                   pcg64& eng,
                                   SequenceIdentifierInfo& ID_info) {
+
+    std::string& fastq_chunk(fastq_chunks[0]);
 
     /*
     Sample read info, and set the sequence space(s) required for these read(s).
     */
-    uint32& seq_ind(constr_info.seq_ind);
-    uint32& read_length(constr_info.read_length);
-    uint32& read_start(constr_info.read_start);
-
     // Sample sequence:
     seq_ind = seq_sampler.sample(eng);
     uint32 seq_len = (*sequences)[seq_ind].size();
@@ -161,15 +159,59 @@ void PacBioOneGenome<T>::one_read(std::string& fastq_chunk,
 
 
 
+template <typename T>
+void PacBioOneGenome<T>::re_read(std::vector<std::string>& fastq_chunks,
+                                 pcg64& eng,
+                                 SequenceIdentifierInfo& ID_info) {
+
+    std::string& fastq_chunk(fastq_chunks[0]);
+
+    /*
+     Use the same read info as before.
+    */
+    uint32 seq_len = (*sequences)[seq_ind].size();
+
+    // Sample for # passes over read:
+    pass_sampler.sample(split_pos, passes_left, passes_right, eng, read_length);
+
+    // Sample for errors and qualities:
+    qe_sampler.sample(eng, qual_left, qual_right, insertions, deletions, substitutions,
+                      seq_len, read_length, split_pos, passes_left, passes_right);
+
+    /*
+     The amount of space on the reference/variant sequence needed to create this read.
+     I'm adding deletions because more deletions mean that I need
+     more sequence bases to achieve the same read length.
+     Insertions means I need fewer.
+     */
+    read_seq_space = read_length + deletions.size() - insertions.size();
+
+    /*
+     In the very rare situation where a duplication occurs, then enough deletions
+     happen where the required sequence space exceeds what's available, I'm going
+     to remove deletions until we have enough room.
+     */
+    while ((read_seq_space + read_start) > seq_len) {
+        if (deletions.empty()) break;
+        deletions.pop_back();
+        read_seq_space--;
+    }
+    // If that still doesn't work, I give up on the duplicate.
+    if ((read_seq_space + read_start) > seq_len) return;
+
+    // Fill the reads and qualities
+    append_chunk(fastq_chunk, eng, ID_info);
+
+    return;
+}
+
+
+
 
 template <typename T>
 void PacBioOneGenome<T>::append_chunk(std::string& fastq_chunk,
                                       pcg64& eng,
                                       SequenceIdentifierInfo& ID_info) {
-
-    uint32& seq_ind(constr_info.seq_ind);
-    uint32& read_length(constr_info.read_length);
-    uint32& read_start(constr_info.read_start);
 
     // Make sure it has enough memory reserved:
     fastq_chunk.reserve(fastq_chunk.size() + read_length * 3 + 10);
@@ -180,10 +222,10 @@ void PacBioOneGenome<T>::append_chunk(std::string& fastq_chunk,
     bool reverse = runif_01(eng) < 0.5;
 
     // Fill in read:
-    sequences->at(constr_info.seq_ind).fill_read(read, 0, read_start, read_seq_space);
+    (*sequences)[seq_ind].fill_read(read, 0, read_start, read_seq_space);
 
     // Reverse complement if necessary:
-    if (reverse) rev_comp(read);
+    if (reverse) rev_comp(read, read_seq_space);
 
     /*
      Adding read with errors:
@@ -203,7 +245,7 @@ void PacBioOneGenome<T>::append_chunk(std::string& fastq_chunk,
         } else if (!substitutions.empty() && read_pos == substitutions.front()) {
             rndi = runif_aabb(eng, static_cast<uint32>(0UL), static_cast<uint32>(2UL));
             fastq_chunk += mm_nucleos[nt_map[read[read_pos]]][rndi];
-            insertions.pop_front();
+            substitutions.pop_front();
             current_length++;
         } else {
             fastq_chunk += read[read_pos];
@@ -222,3 +264,177 @@ void PacBioOneGenome<T>::append_chunk(std::string& fastq_chunk,
     return;
 }
 
+
+
+
+
+
+/*
+ ========================================================================================
+ ========================================================================================
+
+ Writing reads
+
+ ========================================================================================
+ ========================================================================================
+ */
+
+
+
+
+//' PacBio sequence for reference object.
+//'
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+void pacbio_ref_cpp(SEXP ref_genome_ptr,
+                      const std::string& out_prefix,
+                      const bool& compress,
+                      const uint32& n_reads,
+                      const uint32& n_cores,
+                      const uint32& read_chunk_size,
+                      const double& prob_dup,
+                      const double& scale,
+                      const double& sigma,
+                      const double& loc,
+                      const double& min_frag_len,
+                      const std::vector<double>& read_probs,
+                      const std::vector<uint32>& read_lens,
+                      const uint32& max_passes,
+                      const std::vector<double>& chi2_params_n,
+                      const std::vector<double>& chi2_params_s,
+                      const std::vector<double>& sqrt_params,
+                      const std::vector<double>& norm_params,
+                      const double& prob_thresh,
+                      const double& prob_ins,
+                      const double& prob_del,
+                      const double& prob_subst,
+                      const std::string& instrument,
+                      const uint32& run_number,
+                      const std::string& flowcell_ID,
+                      const uint32& lane,
+                      const uint32& tile,
+                      const uint32& x_pos,
+                      const uint32& y_pos,
+                      const uint32& read,
+                      const std::string& is_filtered,
+                      const uint32& control_number,
+                      const uint32& sample_number) {
+
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
+    PacBioReference read_filler_base;
+
+    if (read_probs.size() == 0) {
+        read_filler_base =
+            PacBioReference(*ref_genome,
+                            scale, sigma, loc, min_frag_len,
+                            max_passes, chi2_params_n, chi2_params_s,
+                            sqrt_params, norm_params, prob_thresh,
+                            prob_ins, prob_del, prob_subst);
+    } else {
+        read_filler_base =
+            PacBioReference(*ref_genome,
+                            read_probs, read_lens,
+                            max_passes, chi2_params_n, chi2_params_s,
+                            sqrt_params, norm_params, prob_thresh,
+                            prob_ins, prob_del, prob_subst);
+    }
+
+    SequenceIdentifierInfo ID_info_base(instrument, run_number, flowcell_ID, lane,
+                                        tile, x_pos, y_pos, read, is_filtered,
+                                        control_number, sample_number);
+
+    if (compress) {
+        write_reads_cpp_<PacBioReference, gzFile>(
+                read_filler_base, ID_info_base, out_prefix, n_reads,
+                prob_dup, read_chunk_size, 1U, n_cores);
+    } else {
+        write_reads_cpp_<PacBioReference, std::ofstream>(
+                read_filler_base, ID_info_base, out_prefix, n_reads,
+                prob_dup, read_chunk_size, 1U, n_cores);
+    }
+
+
+    return;
+}
+
+
+
+
+//' PacBio sequence for reference object.
+//'
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+void pacbio_var_cpp(SEXP var_set_ptr,
+                    const std::string& out_prefix,
+                    const bool& compress,
+                    const uint32& n_reads,
+                    const uint32& n_cores,
+                    const uint32& read_chunk_size,
+                    const std::vector<double>& variant_probs,
+                    const double& prob_dup,
+                    const double& scale,
+                    const double& sigma,
+                    const double& loc,
+                    const double& min_frag_len,
+                    const std::vector<double>& read_probs,
+                    const std::vector<uint32>& read_lens,
+                    const uint32& max_passes,
+                    const std::vector<double>& chi2_params_n,
+                    const std::vector<double>& chi2_params_s,
+                    const std::vector<double>& sqrt_params,
+                    const std::vector<double>& norm_params,
+                    const double& prob_thresh,
+                    const double& prob_ins,
+                    const double& prob_del,
+                    const double& prob_subst,
+                    const std::string& instrument,
+                    const uint32& run_number,
+                    const std::string& flowcell_ID,
+                    const uint32& lane,
+                    const uint32& tile,
+                    const uint32& x_pos,
+                    const uint32& y_pos,
+                    const uint32& read,
+                    const std::string& is_filtered,
+                    const uint32& control_number,
+                    const uint32& sample_number) {
+
+    XPtr<VarSet> var_set(var_set_ptr);
+    PacBioVariants read_filler_base;
+
+    if (read_probs.size() == 0) {
+        read_filler_base =
+            PacBioVariants(*var_set, variant_probs,
+                           scale, sigma, loc, min_frag_len,
+                           max_passes, chi2_params_n, chi2_params_s,
+                           sqrt_params, norm_params, prob_thresh,
+                           prob_ins, prob_del, prob_subst);
+    } else {
+        read_filler_base =
+            PacBioVariants(*var_set, variant_probs,
+                           read_probs, read_lens,
+                           max_passes, chi2_params_n, chi2_params_s,
+                           sqrt_params, norm_params, prob_thresh,
+                           prob_ins, prob_del, prob_subst);
+    }
+
+    SequenceIdentifierInfo ID_info_base(instrument, run_number, flowcell_ID, lane,
+                                        tile, x_pos, y_pos, read, is_filtered,
+                                        control_number, sample_number);
+
+    if (compress) {
+        write_reads_cpp_<PacBioVariants, gzFile>(
+                read_filler_base, ID_info_base, out_prefix, n_reads,
+                prob_dup, read_chunk_size, 1U, n_cores);
+    } else {
+        write_reads_cpp_<PacBioVariants, std::ofstream>(
+                read_filler_base, ID_info_base, out_prefix, n_reads,
+                prob_dup, read_chunk_size, 1U, n_cores);
+    }
+
+    return;
+}
