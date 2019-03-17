@@ -275,7 +275,8 @@ check_illumina_args <- function(seq_object, n_reads,
                                 ins_prob2, del_prob2,
                                 frag_len_min, frag_len_max,
                                 variant_probs, barcodes, prob_dup,
-                                id_info, compress, n_cores, read_chunk_size) {
+                                id_info, compress, n_cores, read_chunk_size,
+                                show_progress) {
 
     # Checking types:
 
@@ -301,7 +302,7 @@ check_illumina_args <- function(seq_object, n_reads,
     }
     for (x in c("ins_prob1", "del_prob1", "ins_prob2", "del_prob2", "prob_dup")) {
         z <- eval(parse(text = x))
-        if (!single_number(z, 0)) err_msg(x, "a single number >= 0")
+        if (!single_number(z, 0, 1)) err_msg(x, "a single number in range [0,1].")
     }
     for (x in c("seq_sys", "profile1", "profile2")) {
         z <- eval(parse(text = x))
@@ -322,7 +323,10 @@ check_illumina_args <- function(seq_object, n_reads,
         err_msg("barcodes", "NULL or a character vector")
     }
     if (!is_type(id_info, "list")) err_msg("id_info", "a list.")
-    if (!is_type(compress, "logical", 1)) err_msg("compress", "a single logical.")
+    for (x in c("compress", "show_progress")) {
+        z <- eval(parse(text = x))
+        if (!is_type(z, "logical", 1)) err_msg(x, "a single logical.")
+    }
 
 
     # Checking for proper profile info:
@@ -545,7 +549,8 @@ illumina <- function(seq_object,
                      id_info = list(),
                      compress = FALSE,
                      n_cores = 1L,
-                     read_chunk_size = 100L) {
+                     read_chunk_size = 100L,
+                     show_progress = FALSE) {
 
     out_prefix <- path.expand(out_prefix)
 
@@ -554,7 +559,7 @@ illumina <- function(seq_object,
                         frag_mean, frag_sd, seq_sys, profile1, profile2,
                         ins_prob1, del_prob1, ins_prob2, del_prob2,
                         frag_len_min, frag_len_max, variant_probs, barcodes, prob_dup,
-                        id_info, compress, n_cores, read_chunk_size)
+                        id_info, compress, n_cores, read_chunk_size, show_progress)
 
     # Change mean and SD to shape and scale of Gamma distribution:
     frag_len_shape <- (frag_mean / frag_sd)^2
@@ -614,7 +619,8 @@ illumina <- function(seq_object,
                    quals2 = as.name(quote(quals2)),
                    ins_prob2 = ins_prob2,
                    del_prob2 = del_prob2,
-                   barcodes = barcodes),
+                   barcodes = barcodes,
+                   show_progress = show_progress),
               id_info)
 
     if (inherits(seq_object, "ref_genome")) {

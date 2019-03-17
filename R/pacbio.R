@@ -23,7 +23,9 @@ check_pacbio_args <- function(seq_object,
                               sub_prob,
                               min_read_length,
                               lognorm_read_length,
-                              custom_read_lengths) {
+                              custom_read_lengths,
+                              prob_dup,
+                              show_progress) {
 
     err_msg <- function(par, ...) {
         stop(sprintf(paste("\nWhen providing info for the PacBio sequencer, the `%s`",
@@ -41,7 +43,7 @@ check_pacbio_args <- function(seq_object,
         z <- eval(parse(text = x))
         if (!single_integer(z, 1)) err_msg(x, "a single integer >= 1")
     }
-    for (x in c("prob_thresh", "ins_prob", "del_prob", "sub_prob")) {
+    for (x in c("prob_thresh", "ins_prob", "del_prob", "sub_prob", "prob_dup")) {
         z <- eval(parse(text = x))
         if (!single_number(z, 0, 1)) err_msg(x, "a single number in range [0,1].")
     }
@@ -77,8 +79,10 @@ check_pacbio_args <- function(seq_object,
         err_msg("variant_probs", "NULL or a numeric/integer vector")
     }
     if (!is_type(id_info, "list")) err_msg("id_info", "a list.")
-    if (!is_type(compress, "logical", 1)) err_msg("compress", "a single logical.")
-
+    for (x in c("compress", "show_progress")) {
+        z <- eval(parse(text = x))
+        if (!is_type(z, "logical", 1)) err_msg(x, "a single logical.")
+    }
 
     # Checking proper variant_probs
     if (!is.null(variant_probs) && !inherits(seq_object, "variants")) {
@@ -93,6 +97,11 @@ check_pacbio_args <- function(seq_object,
                 "a vector of the same length as the number of variants in the",
                 "`seq_object` argument, if `seq_object` is of class \"variants\".",
                 "Use `seq_object$n_vars()` to see the number of variants")
+    }
+
+    if (lognorm_read_length[1] < 0 || lognorm_read_length[3] < 0) {
+        err_msg("lognorm_read_length",
+                "a numeric vector of length 3 where items 1 and 3 cannot be < 0.")
     }
 
     invisible(NULL)
@@ -144,6 +153,8 @@ check_pacbio_args <- function(seq_object,
 #'     If `NULL`, it samples read lengths from the lognormal distribution
 #'     using parameters in `lognorm_read_length`.
 #'     Defaults to `NULL`.
+#' @param prob_dup A single number indicating the probability of duplicates.
+#'     Defaults to `0.0`.
 #'
 #' @return Nothing is returned.
 #'
@@ -173,11 +184,13 @@ pacbio <- function(seq_object,
                    min_read_length = 50,
                    lognorm_read_length = c(0.200110276521, -10075.4363813, 17922.611306),
                    custom_read_lengths = NULL,
+                   prob_dup = 0.0,
                    variant_probs = NULL,
                    id_info = list(),
                    compress = FALSE,
                    n_cores = 1L,
-                   read_chunk_size = 100L) {
+                   read_chunk_size = 100L,
+                   show_progress = FALSE) {
 
     out_prefix <- path.expand(out_prefix)
 
@@ -187,19 +200,20 @@ pacbio <- function(seq_object,
                       chi2_params_s, chi2_params_n, max_passes,
                       sqrt_params, norm_params,
                       prob_thresh, ins_prob, del_prob, sub_prob,
-                      min_read_length, lognorm_read_length, custom_read_lengths)
+                      min_read_length, lognorm_read_length, custom_read_lengths,
+                      prob_dup, show_progress)
 
     if (!is.null(custom_read_lengths)) {
         if (inherits(custom_read_lengths, "matrix")) {
-            frag_lens <- custom_read_lengths[,1]
-            frag_lens_probs <- custom_read_lengths[,2]
+            read_lens <- custom_read_lengths[,1]
+            read_probs <- custom_read_lengths[,2]
         } else {
-            frag_lens <- custom_read_lengths
-            frag_lens_probs <- rep(1, length(custom_read_lengths))
+            read_lens <- custom_read_lengths
+            read_probs <- rep(1, length(custom_read_lengths))
         }
     } else {
-        frag_lens <- numeric(0)
-        frag_lens_probs <- numeric(0)
+        read_lens <- numeric(0)
+        read_probs <- numeric(0)
     }
 
     if (is.null(variant_probs) && inherits(seq_object, "variants")) {
@@ -221,14 +235,19 @@ pacbio <- function(seq_object,
                    sqrt_params = sqrt_params,
                    norm_params = norm_params,
                    prob_thresh = prob_thresh,
-                   ins_prob = ins_prob,
-                   del_prob = del_prob,
-                   sub_prob = sub_prob,
-                   min_read_length = min_read_length,
-                   lognorm_read_length = lognorm_read_length,
-                   frag_lens = frag_lens,
-                   frag_lens_probs = frag_lens_probs),
+                   prob_ins = ins_prob,
+                   prob_del = del_prob,
+                   prob_subst = sub_prob,
+                   min_read_len = min_read_length,
+                   scale = lognorm_read_length[3],
+                   sigma = lognorm_read_length[1],
+                   loc = lognorm_read_length[2],
+                   read_lens = read_lens,
+                   read_probs = read_probs,
+                   prob_dup = prob_dup,
+                   show_progress = show_progress),
               id_info)
+
 
     if (inherits(seq_object, "ref_genome")) {
         args <- c(args, list(ref_genome_ptr = seq_object$genome))
