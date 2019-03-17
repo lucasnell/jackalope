@@ -3,14 +3,18 @@
 \name{illumina}
 \alias{illumina}
 \title{Create and write Illumina reads to FASTQ file(s).}
+\source{
+Huang, W., L. Li, J. R. Myers, and G. T. Marth. 2012. ART: a next-generation
+sequencing read simulator. \emph{Bioinformatics} \strong{28}:593–594.
+}
 \usage{
 illumina(seq_object, out_prefix, n_reads, read_length, paired, frag_mean,
   frag_sd, seq_sys = NULL, profile1 = NULL, profile2 = NULL,
   ins_prob1 = 9e-05, del_prob1 = 0.00011, ins_prob2 = 0.00015,
   del_prob2 = 0.00023, frag_len_min = NULL, frag_len_max = NULL,
-  variant_probs = NULL, barcodes = NULL, pcr_dups = 0.02,
+  variant_probs = NULL, barcodes = NULL, prob_dup = 0.02,
   id_info = list(), compress = FALSE, n_cores = 1L,
-  read_chunk_size = 100L)
+  read_chunk_size = 100L, show_progress = FALSE)
 }
 \arguments{
 \item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
@@ -69,7 +73,7 @@ Defaults to \code{NULL}.}
 if sequencing a reference genome. \code{NULL} results in no barcodes.
 Defaults to \code{NULL}.}
 
-\item{pcr_dups}{A single number indicating the probability of PCR duplicates.
+\item{prob_dup}{A single number indicating the probability of duplicates.
 Defaults to \code{0.02}.}
 
 \item{id_info}{A list containing information used to generate ID lines in the
@@ -86,6 +90,9 @@ Defaults to \code{1}.}
 \item{read_chunk_size}{The number of reads to store before writing to disk.
 Increasing this number should improve speed but take up more memory.
 Defaults to \code{100}.}
+
+\item{show_progress}{Logical for whether to show a progress bar.
+Defaults to \code{FALSE}.}
 }
 \value{
 Nothing is returned.

@@ -514,6 +514,8 @@ check_illumina_args <- function(seq_object, n_reads,
 #' @param read_chunk_size The number of reads to store before writing to disk.
 #'     Increasing this number should improve speed but take up more memory.
 #'     Defaults to `100`.
+#' @param show_progress Logical for whether to show a progress bar.
+#'     Defaults to `FALSE`.
 #'
 #' @return Nothing is returned.
 #'
