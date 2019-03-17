@@ -70,7 +70,7 @@ double PacBioQualityError::calc_min_exp() {
 
 
 
-void PacBioQualityError::modify_probs(pcg64& eng,
+void PacBioQualityError::update_probs(pcg64& eng,
                                       const double& passes_left,
                                       const double& passes_right) {
 
@@ -108,4 +108,117 @@ void PacBioQualityError::modify_probs(pcg64& eng,
 }
 
 
+template <typename T>
+void PacBioOneGenome<T>::one_read(std::string& fastq_chunk,
+                                  pcg64& eng,
+                                  SequenceIdentifierInfo& ID_info) {
+
+    /*
+    Sample read info, and set the sequence space(s) required for these read(s).
+    */
+    uint32& seq_ind(constr_info.seq_ind);
+    uint32& read_length(constr_info.read_length);
+    uint32& read_start(constr_info.read_start);
+
+    // Sample sequence:
+    seq_ind = seq_sampler.sample(eng);
+    uint32 seq_len = (*sequences)[seq_ind].size();
+
+    // Sample read length:
+    read_length = len_sampler.sample(eng);
+    if (read_length >= seq_len) read_length = seq_len;
+
+    // Sample for # passes over read:
+    pass_sampler.sample(split_pos, passes_left, passes_right, eng, read_length);
+
+    // Sample for errors and qualities:
+    qe_sampler.sample(eng, qual_left, qual_right, insertions, deletions, substitutions,
+                      seq_len, read_length, split_pos, passes_left, passes_right);
+
+    /*
+     The amount of space on the reference/variant sequence needed to create this read.
+     I'm adding deletions because more deletions mean that I need
+     more sequence bases to achieve the same read length.
+     Insertions means I need fewer.
+     */
+    read_seq_space = read_length + deletions.size() - insertions.size();
+
+    // Sample read starting position:
+    if (read_seq_space < seq_len) {
+        double u = runif_01(eng);
+        read_start = static_cast<uint32>(u * (seq_len - read_seq_space + 1));
+    } else if (read_seq_space == seq_len) {
+        read_start = 0;
+    } else {
+        stop("read_seq_space should never exceed the sequence length.");
+    }
+
+    // Fill the reads and qualities
+    append_chunk(fastq_chunk, eng, ID_info);
+
+    return;
+}
+
+
+
+
+template <typename T>
+void PacBioOneGenome<T>::append_chunk(std::string& fastq_chunk,
+                                      pcg64& eng,
+                                      SequenceIdentifierInfo& ID_info) {
+
+    uint32& seq_ind(constr_info.seq_ind);
+    uint32& read_length(constr_info.read_length);
+    uint32& read_start(constr_info.read_start);
+
+    // Make sure it has enough memory reserved:
+    fastq_chunk.reserve(fastq_chunk.size() + read_length * 3 + 10);
+
+    fastq_chunk += ID_info.get_line() + '\n';
+
+    // Boolean for whether we take the reverse side:
+    bool reverse = runif_01(eng) < 0.5;
+
+    // Fill in read:
+    sequences->at(constr_info.seq_ind).fill_read(read, 0, read_start, read_seq_space);
+
+    // Reverse complement if necessary:
+    if (reverse) rev_comp(read);
+
+    /*
+     Adding read with errors:
+     */
+    uint32 read_pos = 0;
+    uint32 current_length = 0;
+    uint32 rndi;
+    while (current_length < read_length) {
+        if (!insertions.empty() && read_pos == insertions.front()) {
+            rndi = runif_aabb(eng, static_cast<uint32>(0UL), static_cast<uint32>(3UL));
+            fastq_chunk += read[read_pos];
+            fastq_chunk += alias_sampler::bases[rndi];
+            insertions.pop_front();
+            current_length += 2;
+        } else if (!deletions.empty() && read_pos == deletions.front()) {
+            deletions.pop_front();
+        } else if (!substitutions.empty() && read_pos == substitutions.front()) {
+            rndi = runif_aabb(eng, static_cast<uint32>(0UL), static_cast<uint32>(2UL));
+            fastq_chunk += mm_nucleos[nt_map[read[read_pos]]][rndi];
+            insertions.pop_front();
+            current_length++;
+        } else {
+            fastq_chunk += read[read_pos];
+            current_length++;
+        }
+        read_pos++;
+    }
+
+    fastq_chunk += "\n+\n";
+
+    // Adding qualities:
+    for (uint i = 0; i < split_pos; i++) fastq_chunk += qual_left;
+    for (uint i = split_pos; i < read_length; i++) fastq_chunk += qual_right;
+    fastq_chunk += '\n';
+
+    return;
+}
 
