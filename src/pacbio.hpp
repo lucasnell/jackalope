@@ -92,7 +92,7 @@ public:
     }
 
     uint32 sample(pcg64& eng) {
-        uint32 len_;
+        uint32 len_(0);
         if (use_distr) {
             double rnd = distr(eng) + loc;
             uint32 iters = 0; // to make sure it doesn't run many times
@@ -106,7 +106,7 @@ public:
             len_ = static_cast<uint32>(rnd);
         } else {
             uint64 ind = sampler.sample(eng);
-            uint32 len_ = read_lens[ind];
+            len_ = read_lens[ind];
         }
         return len_;
     }

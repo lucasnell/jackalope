@@ -443,7 +443,9 @@ void illumina_var_cpp(SEXP var_set_ptr,
     XPtr<VarSet> var_set(var_set_ptr);
     IlluminaVariants read_filler_base;
 
+    uint32 n_read_ends;
     if (paired) {
+        n_read_ends = 2;
         read_filler_base = IlluminaVariants(*var_set, variant_probs,
                                             frag_len_shape, frag_len_scale,
                                             frag_len_min, frag_len_max,
@@ -451,6 +453,7 @@ void illumina_var_cpp(SEXP var_set_ptr,
                                             qual_probs2, quals2, ins_prob2, del_prob2,
                                             barcodes);
     } else {
+        n_read_ends = 1;
         read_filler_base = IlluminaVariants(*var_set, variant_probs,
                                             frag_len_shape, frag_len_scale,
                                             frag_len_min, frag_len_max,
@@ -464,13 +467,13 @@ void illumina_var_cpp(SEXP var_set_ptr,
 
 
     if (compress) {
-        illumina_cpp_<IlluminaVariants, gzFile>(
+        write_reads_cpp_<IlluminaVariants, gzFile>(
                 read_filler_base, ID_info_base, out_prefix, n_reads, prob_dup,
-                read_chunk_size, n_cores);
+                read_chunk_size, n_read_ends, n_cores);
     }else {
-        illumina_cpp_<IlluminaVariants, std::ofstream>(
+        write_reads_cpp_<IlluminaVariants, std::ofstream>(
                 read_filler_base, ID_info_base, out_prefix, n_reads, prob_dup,
-                read_chunk_size, n_cores);
+                read_chunk_size, n_read_ends, n_cores);
     }
 
     return;
