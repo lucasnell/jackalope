@@ -9,6 +9,7 @@
 #include <pcg/pcg_random.hpp> // pcg prng
 #include <fstream> // for writing FASTQ files
 #include <zlib.h>  // for writing to compressed FASTQ
+#include <progress.hpp>  // for the progress bar
 
 #include "gemino_types.hpp"  // uint32
 #include "pcg.hpp"  // ruinf_01
@@ -326,7 +327,8 @@ void write_reads_cpp_(const T& read_filler_base,
                       const double& prob_dup,
                       const uint32& read_chunk_size,
                       const uint32& n_read_ends,
-                      uint32 n_cores) {
+                      uint32 n_cores,
+                      const bool& show_progress) {
 
 
     // To make sure reads_per_core is still accurate if OpenMP not used:
@@ -344,6 +346,10 @@ void write_reads_cpp_(const T& read_filler_base,
     */
     std::vector<U> files(n_read_ends);
     open_fastq(files, out_prefix);
+
+    // Progress bar
+    Progress prog_bar(n_reads, show_progress);
+
 
 #ifdef _OPENMP
 #pragma omp parallel num_threads(n_cores) if (n_cores > 1)
@@ -367,7 +373,12 @@ void write_reads_cpp_(const T& read_filler_base,
     ReadWriterOneCore<T> writer(read_filler_base, ID_info_base, reads_this_core,
                                 read_chunk_size, prob_dup, n_read_ends);
 
+    uint32 reads_written;
+
     while (writer.reads_made < reads_this_core) {
+
+        // Every 10 reads, check that the user hasn't interrupted the process
+        if (writer.reads_made % 10 == 0 && prog_bar.is_aborted()) break;
 
         writer.create_reads(eng);
 
@@ -375,7 +386,9 @@ void write_reads_cpp_(const T& read_filler_base,
 #ifdef _OPENMP
 #pragma omp critical
 #endif
+            reads_written = writer.reads_in_chunk;
             writer.write(files);
+            prog_bar.increment(reads_written);
         }
     }
 

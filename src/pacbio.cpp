@@ -23,6 +23,27 @@
 
 
 
+uint32 PacBioReadLenSampler::sample(pcg64& eng) {
+    uint32 len_;
+    if (use_distr) {
+        double rnd = distr(eng) + loc;
+        uint32 iters = 0; // to make sure it doesn't run many times
+        // Rejection sampling to keep it above minimum and not NaN:
+        while (rnd < min_read_len && iters < 10) {
+            rnd = distr(eng) + loc;
+            iters++;
+        }
+        // Give up if it keeps returning craziness:
+        if (rnd < min_read_len) rnd = min_read_len;
+        len_ = static_cast<uint32>(rnd);
+    } else {
+        uint64 ind = sampler.sample(eng);
+        len_ = read_lens[ind];
+    }
+    return len_;
+}
+
+
 
 double PacBioQualityError::calc_min_exp() {
 
@@ -293,12 +314,13 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
                       const bool& compress,
                       const uint32& n_reads,
                       const uint32& n_cores,
+                      const bool& show_progress,
                       const uint32& read_chunk_size,
                       const double& prob_dup,
                       const double& scale,
                       const double& sigma,
                       const double& loc,
-                      const double& min_frag_len,
+                      const double& min_read_len,
                       const std::vector<double>& read_probs,
                       const std::vector<uint32>& read_lens,
                       const uint32& max_passes,
@@ -328,7 +350,7 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
     if (read_probs.size() == 0) {
         read_filler_base =
             PacBioReference(*ref_genome,
-                            scale, sigma, loc, min_frag_len,
+                            scale, sigma, loc, min_read_len,
                             max_passes, chi2_params_n, chi2_params_s,
                             sqrt_params, norm_params, prob_thresh,
                             prob_ins, prob_del, prob_subst);
@@ -348,11 +370,11 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
     if (compress) {
         write_reads_cpp_<PacBioReference, gzFile>(
                 read_filler_base, ID_info_base, out_prefix, n_reads,
-                prob_dup, read_chunk_size, 1U, n_cores);
+                prob_dup, read_chunk_size, 1U, n_cores, show_progress);
     } else {
         write_reads_cpp_<PacBioReference, std::ofstream>(
                 read_filler_base, ID_info_base, out_prefix, n_reads,
-                prob_dup, read_chunk_size, 1U, n_cores);
+                prob_dup, read_chunk_size, 1U, n_cores, show_progress);
     }
 
 
@@ -373,13 +395,14 @@ void pacbio_var_cpp(SEXP var_set_ptr,
                     const bool& compress,
                     const uint32& n_reads,
                     const uint32& n_cores,
+                    const bool& show_progress,
                     const uint32& read_chunk_size,
                     const std::vector<double>& variant_probs,
                     const double& prob_dup,
                     const double& scale,
                     const double& sigma,
                     const double& loc,
-                    const double& min_frag_len,
+                    const double& min_read_len,
                     const std::vector<double>& read_probs,
                     const std::vector<uint32>& read_lens,
                     const uint32& max_passes,
@@ -409,7 +432,7 @@ void pacbio_var_cpp(SEXP var_set_ptr,
     if (read_probs.size() == 0) {
         read_filler_base =
             PacBioVariants(*var_set, variant_probs,
-                           scale, sigma, loc, min_frag_len,
+                           scale, sigma, loc, min_read_len,
                            max_passes, chi2_params_n, chi2_params_s,
                            sqrt_params, norm_params, prob_thresh,
                            prob_ins, prob_del, prob_subst);
@@ -429,11 +452,11 @@ void pacbio_var_cpp(SEXP var_set_ptr,
     if (compress) {
         write_reads_cpp_<PacBioVariants, gzFile>(
                 read_filler_base, ID_info_base, out_prefix, n_reads,
-                prob_dup, read_chunk_size, 1U, n_cores);
+                prob_dup, read_chunk_size, 1U, n_cores, show_progress);
     } else {
         write_reads_cpp_<PacBioVariants, std::ofstream>(
                 read_filler_base, ID_info_base, out_prefix, n_reads,
-                prob_dup, read_chunk_size, 1U, n_cores);
+                prob_dup, read_chunk_size, 1U, n_cores, show_progress);
     }
 
     return;

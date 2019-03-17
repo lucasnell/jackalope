@@ -330,6 +330,7 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                       const uint32& n_reads,
                       const double& prob_dup,
                       const uint32& n_cores,
+                      const bool& show_progress,
                       const uint32& read_chunk_size,
                       const double& frag_len_shape,
                       const double& frag_len_scale,
@@ -384,11 +385,11 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
     if (compress) {
         write_reads_cpp_<IlluminaReference, gzFile>(
                 read_filler_base, ID_info_base, out_prefix, n_reads, prob_dup,
-                read_chunk_size, n_read_ends, n_cores);
+                read_chunk_size, n_read_ends, n_cores, show_progress);
     } else {
         write_reads_cpp_<IlluminaReference, std::ofstream>(
                 read_filler_base, ID_info_base, out_prefix, n_reads, prob_dup,
-                read_chunk_size, n_read_ends, n_cores);
+                read_chunk_size, n_read_ends, n_cores, show_progress);
     }
 
 
@@ -413,6 +414,7 @@ void illumina_var_cpp(SEXP var_set_ptr,
                       const uint32& n_reads,
                       const double& prob_dup,
                       const uint32& n_cores,
+                      const bool& show_progress,
                       const uint32& read_chunk_size,
                       const std::vector<double>& variant_probs,
                       const double& frag_len_shape,
@@ -469,11 +471,11 @@ void illumina_var_cpp(SEXP var_set_ptr,
     if (compress) {
         write_reads_cpp_<IlluminaVariants, gzFile>(
                 read_filler_base, ID_info_base, out_prefix, n_reads, prob_dup,
-                read_chunk_size, n_read_ends, n_cores);
+                read_chunk_size, n_read_ends, n_cores, show_progress);
     }else {
         write_reads_cpp_<IlluminaVariants, std::ofstream>(
                 read_filler_base, ID_info_base, out_prefix, n_reads, prob_dup,
-                read_chunk_size, n_read_ends, n_cores);
+                read_chunk_size, n_read_ends, n_cores, show_progress);
     }
 
     return;

@@ -36,7 +36,7 @@ using namespace Rcpp;
 /*
  Sample for read lengths.
 
- If providing custom fragment lengths, make sure that the vector of their
+ If providing custom read lengths, make sure that the vector of their
  sampling weights is the same length as the vector of lengths.
 
  */
@@ -50,26 +50,26 @@ public:
     PacBioReadLenSampler(const double& scale_,
                          const double& sigma_,
                          const double& loc_,
-                         const double& min_frag_len_)
+                         const double& min_read_len_)
         : read_lens(),
           sampler(),
           distr(std::log(scale_), sigma_),
           use_distr(true),
-          min_frag_len(std::ceil(min_frag_len_)),
+          min_read_len(std::ceil(min_read_len_)),
           loc(loc_) {
-        if (min_frag_len < 1) min_frag_len = 1;
+        if (min_read_len < 1) min_read_len = 1;
     };
-    // Using a vector of fragment lengths, each with a sampling probability:
+    // Using a vector of read lengths, each with a sampling probability:
     PacBioReadLenSampler(const std::vector<double>& read_probs_,
                          const std::vector<uint32>& read_lens_)
         : read_lens(read_lens_),
           sampler(read_probs_),
           distr(),
           use_distr(false),
-          min_frag_len(),
+          min_read_len(),
           loc() {
         if (read_probs_.size() != read_lens_.size()) {
-            stop("Probability and fragment lengths vector should be the same length.");
+            stop("Probability and read lengths vector should be the same length.");
         }
     };
     // Copy constructor
@@ -78,7 +78,7 @@ public:
           sampler(other.sampler),
           distr(other.distr),
           use_distr(other.use_distr),
-          min_frag_len(other.min_frag_len),
+          min_read_len(other.min_read_len),
           loc(other.loc) {};
     // Assignment operator
     PacBioReadLenSampler& operator=(const PacBioReadLenSampler& other) {
@@ -86,30 +86,12 @@ public:
         sampler = other.sampler;
         distr = other.distr;
         use_distr = other.use_distr;
-        min_frag_len = other.min_frag_len;
+        min_read_len = other.min_read_len;
         loc = other.loc;
         return *this;
     }
 
-    uint32 sample(pcg64& eng) {
-        uint32 len_(0);
-        if (use_distr) {
-            double rnd = distr(eng) + loc;
-            uint32 iters = 0; // to make sure it doesn't run many times
-            // Rejection sampling to keep it above minimum:
-            while (rnd < min_frag_len && iters < 10) {
-                rnd = distr(eng) + loc;
-                iters++;
-            }
-            // Give up if it keeps returning craziness:
-            if (rnd < min_frag_len) rnd = min_frag_len;
-            len_ = static_cast<uint32>(rnd);
-        } else {
-            uint64 ind = sampler.sample(eng);
-            len_ = read_lens[ind];
-        }
-        return len_;
-    }
+    uint32 sample(pcg64& eng);
 
 private:
 
@@ -117,7 +99,7 @@ private:
     TableSampler sampler;               // optional sampler that chooses from `read_lens`
     std::lognormal_distribution<double> distr; // optional if using a distribution
     bool use_distr;                     // Whether to sample using `distr` field
-    double min_frag_len;                // Minimum fragment length
+    double min_read_len;                // Minimum read length
     double loc;                         // Location parameter for lognormal distribution
 
 
@@ -441,7 +423,7 @@ public:
                     const double& scale_,
                     const double& sigma_,
                     const double& loc_,
-                    const double& min_frag_len_,
+                    const double& min_read_len_,
                     const uint32& max_passes_,
                     const std::vector<double>& chi2_params_n_,
                     const std::vector<double>& chi2_params_s_,
@@ -452,7 +434,7 @@ public:
                     const double& prob_del_,
                     const double& prob_subst_)
         : seq_sampler(),
-          len_sampler(scale_, sigma_, loc_, min_frag_len_),
+          len_sampler(scale_, sigma_, loc_, min_read_len_),
           pass_sampler(max_passes_, chi2_params_n_, chi2_params_s_),
           qe_sampler(sqrt_params_, norm_params_, prob_thresh_, prob_ins_,
           prob_del_, prob_subst_),
@@ -460,7 +442,7 @@ public:
           sequences(&seq_object) {
         construct_seqs();
     };
-    // Using vectors of fragment lengths and sampling weight for read lengths:
+    // Using vectors of read lengths and sampling weight for read lengths:
     PacBioOneGenome(const T& seq_object,
                     const std::vector<double>& read_probs_,
                     const std::vector<uint32>& read_lens_,
@@ -586,7 +568,7 @@ public:
                    const double& scale_,
                    const double& sigma_,
                    const double& loc_,
-                   const double& min_frag_len_,
+                   const double& min_read_len_,
                    const uint32& max_passes_,
                    const std::vector<double>& chi2_params_n_,
                    const std::vector<double>& chi2_params_s_,
@@ -599,13 +581,13 @@ public:
         : variants(&var_set),
           variant_sampler(variant_probs),
           read_makers(1, PacBioOneVariant(var_set[0],
-                                          scale_, sigma_, loc_, min_frag_len_,
+                                          scale_, sigma_, loc_, min_read_len_,
                                           max_passes_, chi2_params_n_, chi2_params_s_,
                                           sqrt_params_, norm_params_, prob_thresh_,
                                           prob_ins_, prob_del_, prob_subst_)) {
         construct_makers();
     };
-    // Using vectors of fragment lengths and sampling weight for read lengths:
+    // Using vectors of read lengths and sampling weight for read lengths:
     PacBioVariants(const VarSet& var_set,
                    const std::vector<double>& variant_probs,
                    const std::vector<double>& read_probs_,
