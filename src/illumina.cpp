@@ -44,7 +44,7 @@ void IlluminaOneGenome<T>::one_read(std::vector<std::string>& fastq_chunks,
 }
 
 /*
- Same as above, but for a PCR duplicate. It's assumed that `one_read` has been
+ Same as above, but for a duplicate. It's assumed that `one_read` has been
  run once before.
  */
 template <typename T>
@@ -52,7 +52,7 @@ void IlluminaOneGenome<T>::re_read(std::vector<std::string>& fastq_chunks,
                                    pcg64& eng,
                                    SequenceIdentifierInfo& ID_info) {
 
-    // Here I'm just re-doing indels bc it's a PCR duplicate.
+    // Here I'm just re-doing indels bc it's a duplicate.
     just_indels(eng);
 
     // Fill the reads and qualities
@@ -209,7 +209,7 @@ void IlluminaOneGenome<T>::seq_indels_frag(pcg64& eng) {
 
 
 /*
- Same as above, but for PCR duplicates.
+ Same as above, but for duplicates.
  This means skipping the sequence and fragment info parts.
  */
 template <typename T>
@@ -311,105 +311,6 @@ void IlluminaOneGenome<T>::append_chunks(std::vector<std::string>& fastq_chunks,
 
 
 
-// Add new read(s) to `fastq_chunks`, and update bool for whether you should
-// write to file
-template <typename T>
-void IlluminaWriterOneCore<T>::add_to_chunks(pcg64& eng) {
-    read_filler.one_read(fastq_chunks, eng, ID_info);
-    reads_made += n_read_ends;
-    reads_in_chunk += n_read_ends;
-    double pcr = runif_01(eng);
-    while (pcr < prob_pcr_dup && reads_made < n_reads &&
-           reads_in_chunk < read_chunk_size) {
-        read_filler.re_read(fastq_chunks, eng, ID_info);
-        reads_made += n_read_ends;
-        reads_in_chunk += n_read_ends;
-        pcr = runif_01(eng);
-    }
-    do_write = reads_in_chunk >= read_chunk_size || reads_made >= n_reads;
-    return;
-}
-
-/*
- Make Illumina reads and write them to file(s).
-
- `T` should be `IlluminaReference` or `IlluminaVariants`.
- `U` should be `gzFile` or `std::ofstream`.
-
- */
-template <typename T, typename U>
-void illumina_cpp_(const T& read_filler_base,
-                   const SequenceIdentifierInfo& ID_info_base,
-                   const std::string& out_prefix,
-                   const uint32& n_reads,
-                   const double& prob_pcr_dup,
-                   const uint32& read_chunk_size,
-                   uint32 n_cores) {
-
-    const uint32 n_read_ends(read_filler_base.paired ? uint32(2) : uint32(1));
-
-    // To make sure reads_per_core is still accurate if OpenMP not used:
-#ifndef _OPENMP
-    n_cores = 1;
-#endif
-
-    const std::vector<uint32> reads_per_core = split_n_reads(n_reads, n_cores);
-
-    // Generate seeds for random number generators (1 RNG per core)
-    const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
-
-    /*
-    Create and open files:
-    */
-    std::vector<U> files(n_read_ends);
-    open_fastq_files(files, out_prefix);
-
-#ifdef _OPENMP
-#pragma omp parallel num_threads(n_cores) if (n_cores > 1)
-{
-#endif
-
-    std::vector<uint64> active_seeds;
-
-    // Write the active seed per core or just write one of the seeds.
-#ifdef _OPENMP
-    uint32 active_thread = omp_get_thread_num();
-#else
-    uint32 active_thread = 0;
-#endif
-    active_seeds = seeds[active_thread];
-
-    pcg64 eng = seeded_pcg(active_seeds);
-
-    uint32 reads_this_core = reads_per_core[active_thread];
-
-    IlluminaWriterOneCore<T> writer(read_filler_base, ID_info_base,
-                                    reads_this_core, read_chunk_size, prob_pcr_dup);
-
-    while (writer.reads_made < reads_this_core) {
-
-        writer.add_to_chunks(eng);
-
-        if (writer.do_write) {
-#ifdef _OPENMP
-#pragma omp critical
-#endif
-            writer.write_from_chunks(files);
-        }
-    }
-
-#ifdef _OPENMP
-}
-#endif
-
-
-    // Close files
-    close_fastq_files(files);
-
-    return;
-};
-
-
 
 
 
@@ -427,7 +328,7 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                       const std::string& out_prefix,
                       const bool& compress,
                       const uint32& n_reads,
-                      const double& pcr_dups,
+                      const double& prob_dup,
                       const uint32& n_cores,
                       const uint32& read_chunk_size,
                       const double& frag_len_shape,
@@ -458,7 +359,9 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     IlluminaReference read_filler_base;
 
+    uint32 n_read_ends;
     if (paired) {
+        n_read_ends = 2;
         read_filler_base =
             IlluminaReference(*ref_genome, frag_len_shape, frag_len_scale,
                               frag_len_min, frag_len_max,
@@ -466,6 +369,7 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                               qual_probs2, quals2, ins_prob2, del_prob2,
                               barcodes[0]);
     } else {
+        n_read_ends = 1;
         read_filler_base =
             IlluminaReference(*ref_genome, frag_len_shape, frag_len_scale,
                               frag_len_min, frag_len_max,
@@ -478,13 +382,13 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                                         control_number, sample_number);
 
     if (compress) {
-        illumina_cpp_<IlluminaReference, gzFile>(
-                read_filler_base, ID_info_base, out_prefix, n_reads, pcr_dups,
-                read_chunk_size, n_cores);
+        write_reads_cpp_<IlluminaReference, gzFile>(
+                read_filler_base, ID_info_base, out_prefix, n_reads, prob_dup,
+                read_chunk_size, n_read_ends, n_cores);
     } else {
-        illumina_cpp_<IlluminaReference, std::ofstream>(
-                read_filler_base, ID_info_base, out_prefix, n_reads, pcr_dups,
-                read_chunk_size, n_cores);
+        write_reads_cpp_<IlluminaReference, std::ofstream>(
+                read_filler_base, ID_info_base, out_prefix, n_reads, prob_dup,
+                read_chunk_size, n_read_ends, n_cores);
     }
 
 
@@ -507,7 +411,7 @@ void illumina_var_cpp(SEXP var_set_ptr,
                       const std::string& out_prefix,
                       const bool& compress,
                       const uint32& n_reads,
-                      const double& pcr_dups,
+                      const double& prob_dup,
                       const uint32& n_cores,
                       const uint32& read_chunk_size,
                       const std::vector<double>& variant_probs,
@@ -561,11 +465,11 @@ void illumina_var_cpp(SEXP var_set_ptr,
 
     if (compress) {
         illumina_cpp_<IlluminaVariants, gzFile>(
-                read_filler_base, ID_info_base, out_prefix, n_reads, pcr_dups,
+                read_filler_base, ID_info_base, out_prefix, n_reads, prob_dup,
                 read_chunk_size, n_cores);
     }else {
         illumina_cpp_<IlluminaVariants, std::ofstream>(
-                read_filler_base, ID_info_base, out_prefix, n_reads, pcr_dups,
+                read_filler_base, ID_info_base, out_prefix, n_reads, prob_dup,
                 read_chunk_size, n_cores);
     }
 

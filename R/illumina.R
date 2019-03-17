@@ -274,7 +274,7 @@ check_illumina_args <- function(seq_object, n_reads,
                                 ins_prob1, del_prob1,
                                 ins_prob2, del_prob2,
                                 frag_len_min, frag_len_max,
-                                variant_probs, barcodes, pcr_dups,
+                                variant_probs, barcodes, prob_dup,
                                 id_info, compress, n_cores, read_chunk_size) {
 
     # Checking types:
@@ -299,7 +299,7 @@ check_illumina_args <- function(seq_object, n_reads,
         z <- eval(parse(text = x))
         if (!single_number(z) || z <= 0) err_msg(x, "a single number > 0")
     }
-    for (x in c("ins_prob1", "del_prob1", "ins_prob2", "del_prob2", "pcr_dups")) {
+    for (x in c("ins_prob1", "del_prob1", "ins_prob2", "del_prob2", "prob_dup")) {
         z <- eval(parse(text = x))
         if (!single_number(z, 0)) err_msg(x, "a single number >= 0")
     }
@@ -497,7 +497,7 @@ check_illumina_args <- function(seq_object, n_reads,
 #' @param barcodes Character vector of barcodes for each variant, or a single barcode
 #'     if sequencing a reference genome. `NULL` results in no barcodes.
 #'     Defaults to `NULL`.
-#' @param pcr_dups A single number indicating the probability of PCR duplicates.
+#' @param prob_dup A single number indicating the probability of duplicates.
 #'     Defaults to `0.02`.
 #' @param id_info A list containing information used to generate ID lines in the
 #'     FASTQ file. See "ID line" section for more information.
@@ -541,7 +541,7 @@ illumina <- function(seq_object,
                      frag_len_max = NULL,
                      variant_probs = NULL,
                      barcodes = NULL,
-                     pcr_dups = 0.02,
+                     prob_dup = 0.02,
                      id_info = list(),
                      compress = FALSE,
                      n_cores = 1L,
@@ -553,7 +553,7 @@ illumina <- function(seq_object,
     check_illumina_args(seq_object, n_reads, read_length, paired,
                         frag_mean, frag_sd, seq_sys, profile1, profile2,
                         ins_prob1, del_prob1, ins_prob2, del_prob2,
-                        frag_len_min, frag_len_max, variant_probs, barcodes, pcr_dups,
+                        frag_len_min, frag_len_max, variant_probs, barcodes, prob_dup,
                         id_info, compress, n_cores, read_chunk_size)
 
     # Change mean and SD to shape and scale of Gamma distribution:
@@ -599,7 +599,7 @@ illumina <- function(seq_object,
                    compress = compress,
                    n_reads = n_reads,
                    paired = paired,
-                   pcr_dups = pcr_dups,
+                   prob_dup = prob_dup,
                    n_cores = n_cores,
                    read_chunk_size = read_chunk_size,
                    frag_len_shape = frag_len_shape,
