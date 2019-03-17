@@ -192,6 +192,9 @@ inline uint32 runif_aabb(pcg32& eng, const uint32& a, const uint32& b) {
 inline uint64 runif_aabb(pcg64& eng, const uint64& a, const uint64& b) {
     return a + (static_cast<long double>(eng()) / (pcg::max64 + 1)) * (b - a + 1);
 }
+inline uint32 runif_aabb(pcg64& eng, const uint32& a, const uint32& b) {
+    return a + (static_cast<long double>(eng()) / (pcg::max64 + 1)) * (b - a + 1);
+}
 
 
 

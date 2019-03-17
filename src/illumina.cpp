@@ -179,19 +179,11 @@ void IlluminaOneGenome<T>::seq_indels_frag(pcg64& eng) {
     uint32& seq_ind(constr_info.seq_ind);
     uint32& frag_len(constr_info.frag_len);
     uint32& frag_start(constr_info.frag_start);
-    // const T& seqs_(*sequences);
 
-    // Rcout << "seq_ind = " << seq_ind << std::endl;
-    // Rcout << "seqs_.size() = " << seqs_.size() << std::endl;
-    //
     // Sample sequence:
     seq_ind = seq_sampler.sample(eng);
-    // Rcout << "seq_ind after sampling = " << seq_ind << std::endl;
     uint32 seq_len = (*sequences)[seq_ind].size();
 
-    // // Rcout << seq_len << std::endl;
-    // Rcout << "seq_len after sampling = " << seq_len << std::endl;
-    //
     // Sample fragment length:
     frag_len = static_cast<uint32>(frag_lengths(eng));
     if (frag_len < frag_len_min) frag_len = frag_len_min;

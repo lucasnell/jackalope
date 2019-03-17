@@ -156,9 +156,7 @@ public:
     IlluminaQualityError(const std::vector<std::vector<std::vector<double>>>& probs_,
                          const std::vector<std::vector<std::vector<uint8>>>& quals_)
         : by_nt(),
-          qual_prob_map(),
-          nt_map(256, 4U),
-          mm_nucleos(4) {
+          qual_prob_map() {
 
         uint32 read_length(probs_[0].size());
 
@@ -190,23 +188,11 @@ public:
             qual_prob_map.push_back(prob);
         }
 
-        // Filling map to go from nucleotide char to integer from 0 to 3
-        // (returns 4 if not T, C, A, or G)
-        for (uint32 i = 0; i < 4; i++) {
-            nt_map[alias_sampler::bases[i]] = i;
-        }
-        mm_nucleos[nt_map[static_cast<uint8>('T')]] = "CAG";
-        mm_nucleos[nt_map[static_cast<uint8>('C')]] = "TAG";
-        mm_nucleos[nt_map[static_cast<uint8>('A')]] = "TCG";
-        mm_nucleos[nt_map[static_cast<uint8>('G')]] = "TCA";
-
     }
 
     IlluminaQualityError(const IlluminaQualityError& other)
         : by_nt(other.by_nt),
-          qual_prob_map(other.qual_prob_map),
-          nt_map(other.nt_map),
-          mm_nucleos(other.mm_nucleos) {};
+          qual_prob_map(other.qual_prob_map) {};
 
 
     /*
@@ -278,12 +264,12 @@ private:
     // Maps quality integer to probability of mismatch double:
     std::vector<double> qual_prob_map;
     // Maps nucleotide char to integer from 0 to 3
-    std::vector<uint8> nt_map;
+    std::vector<uint8> nt_map = sequencer::nt_map;
     /*
      Maps nucleotide char integer (i.e., output from nt_map) to string of chars
      to sample from for a mismatch
      */
-    std::vector<std::string> mm_nucleos;
+    std::vector<std::string> mm_nucleos = sequencer::mm_nucleos;
     /*
      Starting value of qualities (for use in converting integers to chars
      (e.g., 0 to '!'))
