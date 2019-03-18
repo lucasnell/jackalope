@@ -168,8 +168,10 @@ check_pacbio_args <- function(seq_object,
 #' read data. \emph{Bioinformatics} \strong{32}:2704–2706.
 #'
 #' @examples
-#'
-#'
+#' \dontrun{
+#' rg <- create_genome(10, 100e3, 100)
+#' pacbio(rg, "pacbio_reads", n_reads = 100)
+#' }
 #'
 pacbio <- function(seq_object,
                    out_prefix,

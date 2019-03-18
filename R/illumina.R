@@ -2,6 +2,9 @@
 
 #' Return table of information about built-in Illumina profiles.
 #'
+#'
+#' @importFrom utils read.csv
+#'
 #' @noRd
 #'
 builtin_illumina_profiles <- function() {
@@ -505,8 +508,12 @@ check_illumina_args <- function(seq_object, n_reads,
 #' sequencing read simulator. \emph{Bioinformatics} \strong{28}:593–594.
 #'
 #' @examples
-#'
-#'
+#' \dontrun{
+#' rg <- create_genome(10, 100e3, 100)
+#' illumina(rg, "illumina_reads", n_reads = 100,
+#'          read_length = 100, paired = FALSE,
+#'          frag_mean = 400, frag_sd = 100)
+#' }
 #'
 illumina <- function(seq_object,
                      out_prefix,

@@ -109,7 +109,9 @@ where \code{genome name} is always \code{REF} for reference genomes (as opposed 
 }
 
 \examples{
-
-
+\dontrun{
+rg <- create_genome(10, 100e3, 100)
+pacbio(rg, "pacbio_reads", n_reads = 100)
+}
 
 }

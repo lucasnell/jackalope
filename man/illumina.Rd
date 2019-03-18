@@ -158,7 +158,11 @@ is always \code{REF} for reference genomes (as opposed to variants).
 }
 
 \examples{
-
-
+\dontrun{
+rg <- create_genome(10, 100e3, 100)
+illumina(rg, "illumina_reads", n_reads = 100,
+         read_length = 100, paired = FALSE,
+         frag_mean = 400, frag_sd = 100)
+}
 
 }
