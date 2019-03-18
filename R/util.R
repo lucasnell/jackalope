@@ -27,3 +27,12 @@ is_type <- function(x, type, L = NULL) {
     if (!is.null(L) && !length(x) %in% L) return(FALSE)
     return(TRUE)
 }
+
+#' Standard way to show error messages (also to make input-checking less verbose).
+#'
+#' @noRd
+#'
+err_msg <- function(fxn, par, ...) {
+    stop(sprintf("\nFor the `%s` function in gemino, argument `%s` must be %s.",
+                 fxn, par, paste(...)), call. = FALSE)
+}

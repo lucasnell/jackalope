@@ -27,11 +27,6 @@ check_pacbio_args <- function(seq_object,
                               prob_dup,
                               show_progress) {
 
-    err_msg <- function(par, ...) {
-        stop(sprintf(paste("\nWhen providing info for the PacBio sequencer, the `%s`",
-                           "argument must be %s."), par, paste(...)), call. = FALSE)
-    }
-
     if (!inherits(seq_object, c("ref_genome", "variants"))) {
         stop("\nWhen providing info for the PacBio sequencer, ",
              "the object providing the sequence information should be ",
@@ -41,11 +36,11 @@ check_pacbio_args <- function(seq_object,
     for (x in c("n_reads", "n_cores", "read_chunk_size",
                 "max_passes", "min_read_length")) {
         z <- eval(parse(text = x))
-        if (!single_integer(z, 1)) err_msg(x, "a single integer >= 1")
+        if (!single_integer(z, 1)) err_msg("pacbio", x, "a single integer >= 1")
     }
     for (x in c("prob_thresh", "ins_prob", "del_prob", "sub_prob", "prob_dup")) {
         z <- eval(parse(text = x))
-        if (!single_number(z, 0, 1)) err_msg(x, "a single number in range [0,1].")
+        if (!single_number(z, 0, 1)) err_msg("pacbio", x, "a single number in range [0,1].")
     }
     if (sum(c(ins_prob, del_prob, sub_prob)) > 1) {
         stop("\nWhen providing info for the PacBio sequencer, the insertion, ",
@@ -54,20 +49,20 @@ check_pacbio_args <- function(seq_object,
     }
 
     if (!is_type(chi2_params_s, "numeric", 5)) {
-        err_msg("chi2_params_s", "a numeric vector of length 5.")
+        err_msg("pacbio", "chi2_params_s", "a numeric vector of length 5.")
     }
     for (x in c("chi2_params_n", "lognorm_read_length")) {
         z <- eval(parse(text = x))
-        if (!is_type(z, "numeric", 3)) err_msg(x, "a numeric vector of length 3.")
+        if (!is_type(z, "numeric", 3)) err_msg("pacbio", x, "a numeric vector of length 3.")
     }
     for (x in c("sqrt_params", "norm_params")) {
         z <- eval(parse(text = x))
-        if (!is_type(z, "numeric", 2)) err_msg(x, "a numeric vector of length 2.")
+        if (!is_type(z, "numeric", 2)) err_msg("pacbio", x, "a numeric vector of length 2.")
     }
 
     if (!is.null(custom_read_lengths) && !is_type(custom_read_lengths, "matrix") &&
         !is_type(custom_read_lengths, "numeric")) {
-        err_msg("custom_read_lengths", "NULL, a matrix, or a numeric vector.")
+        err_msg("pacbio", "custom_read_lengths", "NULL, a matrix, or a numeric vector.")
     }
     if (inherits(custom_read_lengths, "matrix") && ncol(custom_read_lengths) != 2) {
         stop("\nWhen providing info for the PacBio sequencer, ",
@@ -76,12 +71,12 @@ check_pacbio_args <- function(seq_object,
     }
 
     if (!is.null(variant_probs) && !is_type(variant_probs, c("numeric", "integer"))) {
-        err_msg("variant_probs", "NULL or a numeric/integer vector")
+        err_msg("pacbio", "variant_probs", "NULL or a numeric/integer vector")
     }
-    if (!is_type(id_info, "list")) err_msg("id_info", "a list.")
+    if (!is_type(id_info, "list")) err_msg("pacbio", "id_info", "a list.")
     for (x in c("compress", "show_progress")) {
         z <- eval(parse(text = x))
-        if (!is_type(z, "logical", 1)) err_msg(x, "a single logical.")
+        if (!is_type(z, "logical", 1)) err_msg("pacbio", x, "a single logical.")
     }
 
     # Checking proper variant_probs
@@ -93,14 +88,14 @@ check_pacbio_args <- function(seq_object,
     }
     if (!is.null(variant_probs) && inherits(seq_object, "variants") &&
         length(variant_probs) != seq_object$n_vars()) {
-        err_msg("variant_probs",
+        err_msg("pacbio", "variant_probs",
                 "a vector of the same length as the number of variants in the",
                 "`seq_object` argument, if `seq_object` is of class \"variants\".",
                 "Use `seq_object$n_vars()` to see the number of variants")
     }
 
     if (lognorm_read_length[1] < 0 || lognorm_read_length[3] < 0) {
-        err_msg("lognorm_read_length",
+        err_msg("pacbio", "lognorm_read_length",
                 "a numeric vector of length 3 where items 1 and 3 cannot be < 0.")
     }
 

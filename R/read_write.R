@@ -25,30 +25,25 @@ read_fasta <- function(fasta_file, fai_file = NULL,
                        cut_names = TRUE, rm_soft_mask = TRUE) {
 
 
-    if (!inherits(cut_names, "logical") | length(cut_names) != 1) {
-        stop("\nThe cut_names argument supplied to read_fasta is not a logical",
-             "vector of length one.",
-             call. = FALSE)
+    if (!is_type(fasta_file, "character", 1)) {
+        err_msg("read_fasta", "fasta_file", "a single string")
     }
-    if (!inherits(rm_soft_mask, "logical") | length(rm_soft_mask) != 1) {
-        stop("\nThe rm_soft_mask argument supplied to read_fasta is not a logical",
-             "vector of length one.",
-             call. = FALSE)
+    if (!is.null(fai_file) && !is_type(fai_file, "character", 1)) {
+        err_msg("read_fasta", "fai_file", "NULL or a single string")
     }
-    if (!inherits(fasta_file, "character") | length(fasta_file) != 1) {
-        stop("\nThe fasta_file argument supplied to read_fasta is not a character ",
-             "vector of length one.",
-             call. = FALSE)
+    if (!is_type(cut_names, "logical", 1)) {
+        err_msg("read_fasta", "cut_names", "a single logical")
     }
+    if (!is_type(rm_soft_mask, "logical", 1)) {
+        err_msg("read_fasta", "rm_soft_mask", "a single logical")
+    }
+
+    fasta_file <- path.expand(fasta_file)
 
     if (is.null(fai_file)) {
         ptr <- read_fasta_noind(fasta_file, cut_names, rm_soft_mask)
     } else {
-        if (!inherits(fai_file, "character") | length(fai_file) != 1) {
-            stop("\nThe fai_file argument supplied to read_fasta is neither NULL nor ",
-                 "a character vector of length one ",
-                 call. = FALSE)
-        }
+        fai_file <- path.expand(fai_file)
         ptr <- read_fasta_ind(fasta_file, fai_file, rm_soft_mask)
     }
 
@@ -73,31 +68,24 @@ read_fasta <- function(fasta_file, fai_file = NULL,
 #'
 write_fasta <- function(reference, file_name, text_width = 80, compress = FALSE) {
 
-    if (!inherits(compress, "logical") | length(compress) != 1) {
-        stop("\nThe compress argument supplied to write_fasta is not a logical",
-             "vector of length one.",
-             call. = FALSE)
-    }
-    if (!is.numeric(text_width) | length(text_width) != 1) {
-        stop("\nThe text_width argument supplied to write_fasta is not a numeric ",
-             "vector of length one.",
-             call. = FALSE)
-    }
-    if (!inherits(file_name, "character") | length(file_name) != 1) {
-        stop("\nThe file_name argument supplied to write_fasta is not a character ",
-             "vector of length one.",
-             call. = FALSE)
-    }
     if (!inherits(reference, "ref_genome")) {
-        stop("\nThe reference argument supplied to write_fasta is not a ref_genome ",
-             "object.",
-             call. = FALSE)
+        err_msg("write_fasta", "reference", "a `ref_genome` object")
+    }
+    if (!is_type(file_name, "character", 1)) {
+        err_msg("write_fasta", "file_name", "a single string")
+    }
+    if (!single_integer(text_width, 1)) {
+        err_msg("write_fasta", "text_width", "a single integer >= 1")
+    }
+    if (!is_type(compress, "logical", 1)) {
+        err_msg("write_fasta", "compress", "a single logical")
     }
     if (!inherits(reference$genome, "externalptr")) {
-        stop("\nThe genome field in the ref_genome object supplied to write_fasta ",
-             "is not an external pointer.",
+        stop("\nThe `genome` field in the `ref_genome` argument supplied to ",
+             "`write_fasta` should be an external pointer.",
              call. = TRUE)
     }
+    file_name <- path.expand(file_name)
     if (compress) {
         invisible(write_fasta_gz(file_name, reference$genome, text_width))
     } else {

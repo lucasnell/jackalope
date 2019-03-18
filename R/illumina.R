@@ -281,11 +281,6 @@ check_illumina_args <- function(seq_object, n_reads,
 
     # Checking types:
 
-    err_msg <- function(par, ...) {
-        stop(sprintf(paste("\nWhen providing info for the Illumina sequencer, the `%s`",
-                           "argument must be %s."), par, paste(...)), call. = FALSE)
-    }
-
     if (!inherits(seq_object, c("ref_genome", "variants"))) {
         stop("\nWhen providing info for the Illumina sequencer, ",
              "the object providing the sequence information should be ",
@@ -294,39 +289,39 @@ check_illumina_args <- function(seq_object, n_reads,
 
     for (x in c("read_length", "n_reads", "n_cores", "read_chunk_size")) {
         z <- eval(parse(text = x))
-        if (!single_integer(z, 1)) err_msg(x, "a single integer >= 1")
+        if (!single_integer(z, 1)) err_msg("illumina", x, "a single integer >= 1")
     }
     for (x in c("paired", "matepair", "compress", "show_progress")) {
         z <- eval(parse(text = x))
-        if (!is_type(z, "logical", 1)) err_msg(x, "a single logical.")
+        if (!is_type(z, "logical", 1)) err_msg("illumina", x, "a single logical.")
     }
     for (x in c("frag_mean", "frag_sd")) {
         z <- eval(parse(text = x))
-        if (!single_number(z) || z <= 0) err_msg(x, "a single number > 0")
+        if (!single_number(z) || z <= 0) err_msg("illumina", x, "a single number > 0")
     }
     for (x in c("ins_prob1", "del_prob1", "ins_prob2", "del_prob2", "prob_dup")) {
         z <- eval(parse(text = x))
-        if (!single_number(z, 0, 1)) err_msg(x, "a single number in range [0,1].")
+        if (!single_number(z, 0, 1)) err_msg("illumina", x, "a single number in range [0,1].")
     }
     for (x in c("seq_sys", "profile1", "profile2")) {
         z <- eval(parse(text = x))
         if (!is.null(z) && !is_type(z, "character", 1)) {
-            err_msg(x, "NULL or a single string")
+            err_msg("illumina", x, "NULL or a single string")
         }
     }
     for (x in c("frag_len_min", "frag_len_max")) {
         z <- eval(parse(text = x))
         if (!is.null(z) && !single_integer(z, 1)) {
-            err_msg(x, "NULL or a single integer >= 1")
+            err_msg("illumina", x, "NULL or a single integer >= 1")
         }
     }
     if (!is.null(variant_probs) && !is_type(variant_probs, c("numeric", "integer"))) {
-        err_msg("variant_probs", "NULL or a numeric/integer vector")
+        err_msg("illumina", "variant_probs", "NULL or a numeric/integer vector")
     }
     if (!is.null(barcodes) && !is_type(barcodes, "character")) {
-        err_msg("barcodes", "NULL or a character vector")
+        err_msg("illumina", "barcodes", "NULL or a character vector")
     }
-    if (!is_type(id_info, "list")) err_msg("id_info", "a list.")
+    if (!is_type(id_info, "list")) err_msg("illumina", "id_info", "a list.")
 
 
     # Checking for proper profile info:
@@ -353,7 +348,7 @@ check_illumina_args <- function(seq_object, n_reads,
     }
     if (!is.null(variant_probs) && inherits(seq_object, "variants") &&
         length(variant_probs) != seq_object$n_vars()) {
-        err_msg("variant_probs",
+        err_msg("illumina", "variant_probs",
                 "a vector of the same length as the number of variants in the",
                 "`seq_object` argument, if `seq_object` is of class \"variants\".",
                 "Use `seq_object$n_vars()` to see the number of variants")
@@ -367,7 +362,7 @@ check_illumina_args <- function(seq_object, n_reads,
                  "Terminating here in case this was a mistake.", call. = FALSE)
         }
         if (inherits(seq_object, "variants") && length(barcodes) != seq_object$n_vars()) {
-            err_msg("barcodes",
+            err_msg("illumina", "barcodes",
                     "a vector of the same length as the number of variants in the",
                     "`seq_object` argument, if `seq_object` is of class \"variants\".",
                     "Use `seq_object$n_vars()` to see the number of variants")
@@ -375,7 +370,7 @@ check_illumina_args <- function(seq_object, n_reads,
         n_weirdo_chars <- sapply(strsplit(barcodes, ""),
                                  function(x) sum(!x %in% c("T", "C", "A", "G")))
         if (any(n_weirdo_chars > 0)) {
-            err_msg("barcodes", "NULL or a character vector with only the characters",
+            err_msg("illumina", "barcodes", "NULL or a character vector with only the characters",
                     "\"T\", \"C\", \"A\", and \"G\" present")
         }
     }
@@ -639,8 +634,7 @@ illumina <- function(seq_object,
                              variant_probs = variant_probs))
         do.call(illumina_var_cpp, args)
     } else {
-        stop(paste("\nTrying to pass a `seq_object` argument to `illumina` that's",
-                   "not a \"ref_genome\" or \"variants\" class."), call. = FALSE)
+        err_msg("illumina", "`seq_object`", "a \"ref_genome\" or \"variants\" object")
     }
 
     invisible(NULL)
