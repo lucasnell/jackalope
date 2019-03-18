@@ -185,16 +185,6 @@ inline double runif_ab(pcg32& eng, const double& a, const double& b) {
 inline long double runif_ab(pcg64& eng, const long double& a, const long double& b) {
     return a + ((static_cast<long double>(eng()) + 1) / (pcg::max64 + 2)) * (b - a);
 }
-// uniform in range [a,b]
-inline uint32 runif_aabb(pcg32& eng, const uint32& a, const uint32& b) {
-    return a + (static_cast<double>(eng()) / (pcg::max32 + 1)) * (b - a + 1);
-}
-inline uint64 runif_aabb(pcg64& eng, const uint64& a, const uint64& b) {
-    return a + (static_cast<long double>(eng()) / (pcg::max64 + 1)) * (b - a + 1);
-}
-inline uint32 runif_aabb(pcg64& eng, const uint32& a, const uint32& b) {
-    return a + (static_cast<long double>(eng()) / (pcg::max64 + 1)) * (b - a + 1);
-}
 
 
 

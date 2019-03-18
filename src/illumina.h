@@ -253,7 +253,7 @@ public:
             u = runif_01(eng);
             if (u < mis_prob) {
                 const std::string& mm_str(mm_nucleos[nt_ind]);
-                nt = mm_str[runif_aabb(eng, 0U, 2U)];
+                nt = mm_str[static_cast<uint32>(runif_01(eng) * 3)];
             }
         }
 

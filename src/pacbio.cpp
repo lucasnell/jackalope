@@ -254,7 +254,7 @@ void PacBioOneGenome<T>::append_chunk(std::string& fastq_chunk,
     uint32 rndi;
     while (current_length < read_length) {
         if (!insertions.empty() && read_pos == insertions.front()) {
-            rndi = runif_aabb(eng, static_cast<uint32>(0UL), static_cast<uint32>(3UL));
+            rndi = static_cast<uint32>(runif_01(eng) * 4);
             fastq_chunk += read[read_pos];
             fastq_chunk += alias_sampler::bases[rndi];
             insertions.pop_front();
@@ -262,7 +262,7 @@ void PacBioOneGenome<T>::append_chunk(std::string& fastq_chunk,
         } else if (!deletions.empty() && read_pos == deletions.front()) {
             deletions.pop_front();
         } else if (!substitutions.empty() && read_pos == substitutions.front()) {
-            rndi = runif_aabb(eng, static_cast<uint32>(0UL), static_cast<uint32>(2UL));
+            rndi = static_cast<uint32>(runif_01(eng) * 3);
             fastq_chunk += mm_nucleos[nt_map[read[read_pos]]][rndi];
             substitutions.pop_front();
             current_length++;
