@@ -33,6 +33,14 @@ pred_df <- map_dfr(1:4,
                    })
 
 
+# Making fake profile for no mismatches
+profile_df <- crossing(nucleo = c("T", "C", "A", "G"),
+                       pos = 0:99,
+                       qual = c(255L, 1000L)) %>%
+    arrange(nucleo, pos, qual)
+
+write_tsv(profile_df, path = paste0(dir, "test_prof.txt"), col_names = FALSE)
+
 
 
 
@@ -142,12 +150,6 @@ mmbq_df %>%
 # ========================================================
 
 
-# Making fake profile for no mismatches
-profile_df <- crossing(nucleo = bases, pos = 0:99, qual = c(255L, 1000L)) %>%
-    arrange(nucleo, pos, qual)
-
-write_tsv(profile_df, path = paste0(dir, "test_prof.txt"), col_names = FALSE)
-
 
 # 100e3 sequences of length 10
 seqs <- replicate(100e3, paste(rep("TA", 10 / 2), collapse = ""))
@@ -206,4 +208,91 @@ indel_df %>%
     NULL
 
 
+
+
+
+# ========================================================
+# ========================================================
+
+# Testing paired-end reads:
+
+# ========================================================
+# ========================================================
+
+
+# 1 sequence of length 200
+seq <- paste(c(rep('C', 25), rep('N', 150), rep('T', 25)), collapse = "")
+
+poss_pairs <- c(paste(c(rep('C', 25), rep('N', 75)), collapse = ""),
+                paste(c(rep('A', 25), rep('N', 75)), collapse = ""))
+
+# Make ref_genome object from a pointer to a RefGenome object based on `seq`
+rg <- ref_genome$new(gemino:::make_ref_genome(seq))
+
+illumina(rg, out_prefix = paste0(dir, "test"),
+         n_reads = 10e3, read_length = 100,
+         # Paired-end reads:
+         paired = TRUE, matepair = FALSE,
+         # Fragments will always be of length 200:
+         frag_mean = 400, frag_sd = 100,
+         frag_len_min = 200, frag_len_max = 200,
+         # No sequencing errors:
+         ins_prob1 = 0, del_prob1 = 0,
+         ins_prob2 = 0, del_prob2 = 0,
+         profile1 = paste0(dir, "test_prof.txt"),
+         profile2 = paste0(dir, "test_prof.txt"))
+
+fq1 <- readLines(paste0(dir, "test_R1.fq"))
+fq2 <- readLines(paste0(dir, "test_R2.fq"))
+reads1 <- fq1[seq(2, length(fq1), 4)]
+reads2 <- fq2[seq(2, length(fq2), 4)]
+
+# Should both be true:
+all(unique(reads1) %in% poss_pairs)
+all(unique(reads2) %in% poss_pairs)
+
+
+
+
+
+
+
+# ========================================================
+# ========================================================
+
+# Testing mate-pair reads:
+
+# ========================================================
+# ========================================================
+
+# 1 sequence of length 200
+seq <- paste(c(rep('C', 25), rep('N', 150), rep('T', 25)), collapse = "")
+
+poss_pairs <- c(paste(c(rep('N', 75), rep('T', 25)), collapse = ""),
+                paste(c(rep('N', 75), rep('G', 25)), collapse = ""))
+
+# Make ref_genome object from a pointer to a RefGenome object based on `seq`
+rg <- ref_genome$new(gemino:::make_ref_genome(seq))
+
+illumina(rg, out_prefix = paste0(dir, "test"),
+         n_reads = 10, read_length = 100,
+         # Mate-pair reads:
+         paired = TRUE, matepair = TRUE,
+         # Fragments will always be of length 200:
+         frag_mean = 400, frag_sd = 100,
+         frag_len_min = 200, frag_len_max = 200,
+         # No sequencing errors:
+         ins_prob1 = 0, del_prob1 = 0,
+         ins_prob2 = 0, del_prob2 = 0,
+         profile1 = paste0(dir, "test_prof.txt"),
+         profile2 = paste0(dir, "test_prof.txt"))
+
+fq1 <- readLines(paste0(dir, "test_R1.fq"))
+fq2 <- readLines(paste0(dir, "test_R2.fq"))
+reads1 <- fq1[seq(2, length(fq1), 4)]
+reads2 <- fq2[seq(2, length(fq2), 4)]
+
+# Should both be true:
+all(unique(reads1) %in% poss_pairs)
+all(unique(reads2) %in% poss_pairs)
 
