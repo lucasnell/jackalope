@@ -12,7 +12,7 @@
 #'     Defaults to \code{NULL}, which indicates the fasta file is not indexed.
 #' @param cut_names Boolean for whether to cut sequence names at the first space.
 #'     This argument is ignored if \code{fai_file} is not \code{NULL}.
-#'     Defaults to \code{TRUE}.
+#'     Defaults to \code{FALSE}.
 #' @param rm_soft_mask Boolean for whether to remove soft-masking by making
 #'    sequences all uppercase. Defaults to \code{TRUE}.
 #'
@@ -22,7 +22,7 @@
 #'
 #'
 read_fasta <- function(fasta_file, fai_file = NULL,
-                       cut_names = TRUE, rm_soft_mask = TRUE) {
+                       cut_names = FALSE, rm_soft_mask = TRUE) {
 
 
     if (!is_type(fasta_file, "character", 1)) {
