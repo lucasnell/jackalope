@@ -555,6 +555,7 @@ illumina <- function(seq_object,
                      show_progress = FALSE) {
 
     out_prefix <- path.expand(out_prefix)
+    check_fastq(out_prefix, n_read_ends = ifelse(paired, 2, 1))
 
     # Check for improper argument types:
     check_illumina_args(seq_object, n_reads, read_length, paired,

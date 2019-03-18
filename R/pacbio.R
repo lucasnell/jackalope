@@ -193,6 +193,7 @@ pacbio <- function(seq_object,
                    show_progress = FALSE) {
 
     out_prefix <- path.expand(out_prefix)
+    check_fastq(out_prefix)
 
     # Check for improper argument types:
     check_pacbio_args(seq_object, n_reads, variant_probs, id_info,
