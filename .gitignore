@@ -16,4 +16,4 @@ gemino_*.tgz
 *.pdf
 methods
 _crash_test.R
-inst/art_profiles
+!inst/art_profiles/*.txt.gz
