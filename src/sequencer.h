@@ -190,7 +190,7 @@ inline void open_fastq(std::vector<std::ofstream>& files,
 
         std::string file_name = out_prefix + "_R" + std::to_string(i+1)+ ".fq";
 
-        files[i] = std::ofstream(file_name);
+        files[i].open(file_name);
 
         if (!files[i].is_open()) {
             std::string e = "Unable to open file " + file_name + ".\n";
