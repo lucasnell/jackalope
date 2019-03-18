@@ -110,7 +110,7 @@ find_profile_file <- function(seq_sys, read_length, read) {
              paste(ifelse(read == 1, 2, 1)), ".", call. = FALSE)
     }
 
-    profile_fn <- paste0(profile_df$file_name[criteria3][1], ".txt")
+    profile_fn <- paste0(profile_df$file_name[criteria3][1], ".txt.gz")
     profile_fn <- system.file("art_profiles", profile_fn, package = "gemino",
                               mustWork = TRUE)
 
@@ -221,7 +221,12 @@ read_profile <- function(profile_fn, seq_sys, read_length, read) {
         profile_fn <- find_profile_file(seq_sys, read_length, read)
     }
 
-    profile_str <- readLines(profile_fn)
+    if (grepl("\\.gz$", profile_fn)) {
+        gz <- gzfile(profile_fn, 'rt')
+        profile_str <- readLines(gz)
+        close(gz)
+    } else profile_str <- readLines(profile_fn)
+
     profile_str <- profile_str[grepl("^T|^C|^A|^G", profile_str)]
     profile_str <- strsplit(profile_str, "\t")
     profile_info <-
