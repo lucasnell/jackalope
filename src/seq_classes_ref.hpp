@@ -128,6 +128,8 @@ struct RefGenome {
     bool merged = false;
     // For storing original names if merged:
     std::deque<std::string> old_names;
+    // Only added for compatibility with templates in sequencing code:
+    std::string name = "";
 
     // Constructors
     RefGenome()
@@ -236,6 +238,7 @@ struct RefGenome {
             Rcout << std::endl;
         }
     }
+
 };
 
 

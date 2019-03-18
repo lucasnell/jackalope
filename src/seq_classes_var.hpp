@@ -127,12 +127,15 @@ public:
     const RefSequence* ref_seq;  // pointer to const RefSequence
     std::deque<Mutation> mutations;
     uint32 seq_size;
+    std::string name;
 
     // Constructors
     VarSequence() {};
     VarSequence(const RefSequence& ref)
-        : ref_seq(&ref), mutations(std::deque<Mutation>()),
-          seq_size(ref.size()) {};
+        : ref_seq(&ref),
+          mutations(),
+          seq_size(ref.size()),
+          name(ref.name) {};
 
     /*
      Since all other classes have a size() method, I'm including this here:
@@ -151,8 +154,10 @@ public:
 
     // Replace existing mutation information in this VarSequence with another
     void replace(const VarSequence& other) {
+        ref_seq = other.ref_seq;
         mutations = other.mutations;
         seq_size = other.seq_size;
+        name = other.name;
         return;
     }
 
