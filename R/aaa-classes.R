@@ -31,6 +31,11 @@
 #'         sequences are retained that allow at least
 #'         `threshold * sum(<all sequence sizes>)` base pairs remaining after
 #'         filtering.}
+#'     \item{`replace_Ns(pi_tcag, n_cores = 1, show_progress = FALSE)`}{Replace
+#'         `N`s in reference sequence with nucleotides sampled with probabilities
+#'         given in `pi_tcag`.
+#'         You can optionally use multiple cores (`n_cores` argument) and/or
+#'         show a progress bar (`show_progress`).}
 #' }
 #'
 #' @return An object of class \code{ref_genome}.
@@ -160,7 +165,32 @@ ref_genome <- R6::R6Class(
             }
             filter_sequences(self$genome, min_seq_size, out_seq_prop)
             invisible(self)
+        },
+
+
+        replace_Ns = function(pi_tcag,
+                              n_cores = 1,
+                              show_progress = FALSE) {
+            private$check_ptr()
+            if (!is_type(pi_tcag, "numeric", 4)) {
+                stop("\nIn `replace_Ns` method, the `pi_tcag` argument ",
+                     "must be a numeric vector of length 4.", call. = FALSE)
+            }
+            if (!single_integer(n_cores, 1)) {
+                stop("\nIn `replace_Ns` method, the `n_cores` argument ",
+                     "must be a single integer >= 1.", call. = FALSE)
+            }
+            if (!is_type(show_progress, "logical", 1)) {
+                stop("\nIn `replace_Ns` method, the `show_progress` argument ",
+                     "must be a single logical.", call. = FALSE)
+            }
+
+            replace_Ns_cpp(self$genome, pi_tcag, n_cores, show_progress)
+
+            invisible(self)
+
         }
+
 
     ),
 
@@ -532,8 +562,8 @@ variants <- R6::R6Class(
 
         add_del = function(var_ind, seq_ind, pos, n_nts) {
             private$check_pos(var_ind, seq_ind, pos)
-            if (!single_whole_number(n_nts)) {
-                stop("n_nts arg must be a single whole number", call. = FALSE)
+            if (!single_integer(n_nts)) {
+                stop("n_nts arg must be a single integer", call. = FALSE)
             }
             add_deletion(self$genomes, var_ind - 1, seq_ind - 1, n_nts, pos - 1)
             invisible(self)

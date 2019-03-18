@@ -52,6 +52,23 @@ const std::vector<uint32> filter_table = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
+// For complements (Ns stay as Ns)
+const std::vector<uint32> cmp_map = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 84, 0, 71, 0, 0, 0, 67, 0, 0, 0, 0, 0, 0, 78, 0,
+    0, 0, 0, 0, 65, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
 }
 
 
@@ -104,6 +121,48 @@ inline std::vector<std::string> cpp_str_split_delim(const std::string& in_string
     }
 
     return out;
+}
+
+
+/*
+ Reverse complement of a DNA sequence.
+
+ Make sure that `seq` contains only T, C, A, or G!
+ */
+inline void rev_comp(std::string& seq) {
+
+    uint32 n = seq.size();
+    uint32 half_n = n / 2;
+    char tmp;
+
+    for (uint32 j = 0; j < half_n; j++) {
+        tmp = str_manip::cmp_map[seq[j]]; // goes to `n-j-1`
+        seq[j] = str_manip::cmp_map[seq[(n-j-1)]];
+        seq[(n-j-1)] = tmp;
+    }
+
+    if (n % 2 == 1) seq[half_n] = str_manip::cmp_map[seq[half_n]];
+
+    return;
+}
+
+/*
+ Same thing, except that it only does it for the first `n` characters in `seq`
+ */
+inline void rev_comp(std::string& seq, const uint32& n) {
+
+    uint32 half_n = n / 2;
+    char tmp;
+
+    for (uint32 j = 0; j < half_n; j++) {
+        tmp = str_manip::cmp_map[seq[j]]; // goes to `n-j-1`
+        seq[j] = str_manip::cmp_map[seq[(n-j-1)]];
+        seq[(n-j-1)] = tmp;
+    }
+
+    if (n % 2 == 1) seq[half_n] = str_manip::cmp_map[seq[half_n]];
+
+    return;
 }
 
 

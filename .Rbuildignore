@@ -3,8 +3,8 @@
 ^\.Rprofile$
 ^\.travis\.yml$
 ^README\.Rmd$
-^under_constr$
+^under_constr
 ^_crash_test\.R$
-^gfiles$
-^methods$
-^data-raw$
+^methods
+^data-raw
+^diagnostics

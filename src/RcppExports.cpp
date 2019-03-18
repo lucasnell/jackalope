@@ -29,6 +29,19 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// replace_Ns_cpp
+void replace_Ns_cpp(SEXP ref_genome_ptr, const std::vector<double>& pi_tcag, const uint32& n_cores, const bool& show_progress);
+RcppExport SEXP _gemino_replace_Ns_cpp(SEXP ref_genome_ptrSEXP, SEXP pi_tcagSEXP, SEXP n_coresSEXP, SEXP show_progressSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_cores(n_coresSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    replace_Ns_cpp(ref_genome_ptr, pi_tcag, n_cores, show_progress);
+    return R_NilValue;
+END_RCPP
+}
 // create_genome_
 SEXP create_genome_(const uint32& n_seqs, const double& len_mean, const double& len_sd, std::vector<double> pi_tcag, const uint32& n_cores);
 RcppExport SEXP _gemino_create_genome_(SEXP n_seqsSEXP, SEXP len_meanSEXP, SEXP len_sdSEXP, SEXP pi_tcagSEXP, SEXP n_coresSEXP) {
@@ -108,6 +121,100 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const uint32& >::type chunk_size(chunk_sizeSEXP);
     Rcpp::traits::input_parameter< const uint32& >::type n_cores(n_coresSEXP);
     rcpp_result_gen = Rcpp::wrap(digest_ref(ref_genome_ptr, bind_sites, len5s, chunk_size, n_cores));
+    return rcpp_result_gen;
+END_RCPP
+}
+// illumina_ref_cpp
+void illumina_ref_cpp(SEXP ref_genome_ptr, const bool& paired, const bool& matepair, const std::string& out_prefix, const bool& compress, const uint32& n_reads, const double& prob_dup, const uint32& n_cores, const bool& show_progress, const uint32& read_chunk_size, const double& frag_len_shape, const double& frag_len_scale, const uint32& frag_len_min, const uint32& frag_len_max, const std::vector<std::vector<std::vector<double>>>& qual_probs1, const std::vector<std::vector<std::vector<uint8>>>& quals1, const double& ins_prob1, const double& del_prob1, const std::vector<std::vector<std::vector<double>>>& qual_probs2, const std::vector<std::vector<std::vector<uint8>>>& quals2, const double& ins_prob2, const double& del_prob2, const std::vector<std::string>& barcodes);
+RcppExport SEXP _gemino_illumina_ref_cpp(SEXP ref_genome_ptrSEXP, SEXP pairedSEXP, SEXP matepairSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP n_readsSEXP, SEXP prob_dupSEXP, SEXP n_coresSEXP, SEXP show_progressSEXP, SEXP read_chunk_sizeSEXP, SEXP frag_len_shapeSEXP, SEXP frag_len_scaleSEXP, SEXP frag_len_minSEXP, SEXP frag_len_maxSEXP, SEXP qual_probs1SEXP, SEXP quals1SEXP, SEXP ins_prob1SEXP, SEXP del_prob1SEXP, SEXP qual_probs2SEXP, SEXP quals2SEXP, SEXP ins_prob2SEXP, SEXP del_prob2SEXP, SEXP barcodesSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type paired(pairedSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type matepair(matepairSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_reads(n_readsSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_dup(prob_dupSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_cores(n_coresSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type read_chunk_size(read_chunk_sizeSEXP);
+    Rcpp::traits::input_parameter< const double& >::type frag_len_shape(frag_len_shapeSEXP);
+    Rcpp::traits::input_parameter< const double& >::type frag_len_scale(frag_len_scaleSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type frag_len_min(frag_len_minSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type frag_len_max(frag_len_maxSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::vector<std::vector<double>>>& >::type qual_probs1(qual_probs1SEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::vector<std::vector<uint8>>>& >::type quals1(quals1SEXP);
+    Rcpp::traits::input_parameter< const double& >::type ins_prob1(ins_prob1SEXP);
+    Rcpp::traits::input_parameter< const double& >::type del_prob1(del_prob1SEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::vector<std::vector<double>>>& >::type qual_probs2(qual_probs2SEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::vector<std::vector<uint8>>>& >::type quals2(quals2SEXP);
+    Rcpp::traits::input_parameter< const double& >::type ins_prob2(ins_prob2SEXP);
+    Rcpp::traits::input_parameter< const double& >::type del_prob2(del_prob2SEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type barcodes(barcodesSEXP);
+    illumina_ref_cpp(ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes);
+    return R_NilValue;
+END_RCPP
+}
+// illumina_var_cpp
+void illumina_var_cpp(SEXP var_set_ptr, const bool& paired, const bool& matepair, const std::string& out_prefix, const bool& compress, const uint32& n_reads, const double& prob_dup, const uint32& n_cores, const bool& show_progress, const uint32& read_chunk_size, const std::vector<double>& variant_probs, const double& frag_len_shape, const double& frag_len_scale, const uint32& frag_len_min, const uint32& frag_len_max, const std::vector<std::vector<std::vector<double>>>& qual_probs1, const std::vector<std::vector<std::vector<uint8>>>& quals1, const double& ins_prob1, const double& del_prob1, const std::vector<std::vector<std::vector<double>>>& qual_probs2, const std::vector<std::vector<std::vector<uint8>>>& quals2, const double& ins_prob2, const double& del_prob2, const std::vector<std::string>& barcodes);
+RcppExport SEXP _gemino_illumina_var_cpp(SEXP var_set_ptrSEXP, SEXP pairedSEXP, SEXP matepairSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP n_readsSEXP, SEXP prob_dupSEXP, SEXP n_coresSEXP, SEXP show_progressSEXP, SEXP read_chunk_sizeSEXP, SEXP variant_probsSEXP, SEXP frag_len_shapeSEXP, SEXP frag_len_scaleSEXP, SEXP frag_len_minSEXP, SEXP frag_len_maxSEXP, SEXP qual_probs1SEXP, SEXP quals1SEXP, SEXP ins_prob1SEXP, SEXP del_prob1SEXP, SEXP qual_probs2SEXP, SEXP quals2SEXP, SEXP ins_prob2SEXP, SEXP del_prob2SEXP, SEXP barcodesSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type paired(pairedSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type matepair(matepairSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_reads(n_readsSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_dup(prob_dupSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_cores(n_coresSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type read_chunk_size(read_chunk_sizeSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type variant_probs(variant_probsSEXP);
+    Rcpp::traits::input_parameter< const double& >::type frag_len_shape(frag_len_shapeSEXP);
+    Rcpp::traits::input_parameter< const double& >::type frag_len_scale(frag_len_scaleSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type frag_len_min(frag_len_minSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type frag_len_max(frag_len_maxSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::vector<std::vector<double>>>& >::type qual_probs1(qual_probs1SEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::vector<std::vector<uint8>>>& >::type quals1(quals1SEXP);
+    Rcpp::traits::input_parameter< const double& >::type ins_prob1(ins_prob1SEXP);
+    Rcpp::traits::input_parameter< const double& >::type del_prob1(del_prob1SEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::vector<std::vector<double>>>& >::type qual_probs2(qual_probs2SEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::vector<std::vector<uint8>>>& >::type quals2(quals2SEXP);
+    Rcpp::traits::input_parameter< const double& >::type ins_prob2(ins_prob2SEXP);
+    Rcpp::traits::input_parameter< const double& >::type del_prob2(del_prob2SEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type barcodes(barcodesSEXP);
+    illumina_var_cpp(var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes);
+    return R_NilValue;
+END_RCPP
+}
+// make_mutation_sampler_base
+SEXP make_mutation_sampler_base(const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates);
+RcppExport SEXP _gemino_make_mutation_sampler_base(SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type insertion_rates(insertion_ratesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_base(Q, pi_tcag, insertion_rates, deletion_rates));
+    return rcpp_result_gen;
+END_RCPP
+}
+// make_mutation_sampler_chunk_base
+SEXP make_mutation_sampler_chunk_base(const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, const uint32& chunk_size);
+RcppExport SEXP _gemino_make_mutation_sampler_chunk_base(SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP chunk_sizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type insertion_rates(insertion_ratesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type chunk_size(chunk_sizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_chunk_base(Q, pi_tcag, insertion_rates, deletion_rates, chunk_size));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -286,33 +393,69 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// make_mutation_sampler_base
-SEXP make_mutation_sampler_base(const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates);
-RcppExport SEXP _gemino_make_mutation_sampler_base(SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP) {
+// pacbio_ref_cpp
+void pacbio_ref_cpp(SEXP ref_genome_ptr, const std::string& out_prefix, const bool& compress, const uint32& n_reads, const uint32& n_cores, const bool& show_progress, const uint32& read_chunk_size, const double& prob_dup, const double& scale, const double& sigma, const double& loc, const double& min_read_len, const std::vector<double>& read_probs, const std::vector<uint32>& read_lens, const uint32& max_passes, const std::vector<double>& chi2_params_n, const std::vector<double>& chi2_params_s, const std::vector<double>& sqrt_params, const std::vector<double>& norm_params, const double& prob_thresh, const double& prob_ins, const double& prob_del, const double& prob_subst);
+RcppExport SEXP _gemino_pacbio_ref_cpp(SEXP ref_genome_ptrSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP n_readsSEXP, SEXP n_coresSEXP, SEXP show_progressSEXP, SEXP read_chunk_sizeSEXP, SEXP prob_dupSEXP, SEXP scaleSEXP, SEXP sigmaSEXP, SEXP locSEXP, SEXP min_read_lenSEXP, SEXP read_probsSEXP, SEXP read_lensSEXP, SEXP max_passesSEXP, SEXP chi2_params_nSEXP, SEXP chi2_params_sSEXP, SEXP sqrt_paramsSEXP, SEXP norm_paramsSEXP, SEXP prob_threshSEXP, SEXP prob_insSEXP, SEXP prob_delSEXP, SEXP prob_substSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type insertion_rates(insertion_ratesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
-    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_base(Q, pi_tcag, insertion_rates, deletion_rates));
-    return rcpp_result_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_reads(n_readsSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_cores(n_coresSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type read_chunk_size(read_chunk_sizeSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_dup(prob_dupSEXP);
+    Rcpp::traits::input_parameter< const double& >::type scale(scaleSEXP);
+    Rcpp::traits::input_parameter< const double& >::type sigma(sigmaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type loc(locSEXP);
+    Rcpp::traits::input_parameter< const double& >::type min_read_len(min_read_lenSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type read_probs(read_probsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type read_lens(read_lensSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type max_passes(max_passesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type chi2_params_n(chi2_params_nSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type chi2_params_s(chi2_params_sSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type sqrt_params(sqrt_paramsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type norm_params(norm_paramsSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_thresh(prob_threshSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_ins(prob_insSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_del(prob_delSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_subst(prob_substSEXP);
+    pacbio_ref_cpp(ref_genome_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst);
+    return R_NilValue;
 END_RCPP
 }
-// make_mutation_sampler_chunk_base
-SEXP make_mutation_sampler_chunk_base(const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, const uint32& chunk_size);
-RcppExport SEXP _gemino_make_mutation_sampler_chunk_base(SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP chunk_sizeSEXP) {
+// pacbio_var_cpp
+void pacbio_var_cpp(SEXP var_set_ptr, const std::string& out_prefix, const bool& compress, const uint32& n_reads, const uint32& n_cores, const bool& show_progress, const uint32& read_chunk_size, const std::vector<double>& variant_probs, const double& prob_dup, const double& scale, const double& sigma, const double& loc, const double& min_read_len, const std::vector<double>& read_probs, const std::vector<uint32>& read_lens, const uint32& max_passes, const std::vector<double>& chi2_params_n, const std::vector<double>& chi2_params_s, const std::vector<double>& sqrt_params, const std::vector<double>& norm_params, const double& prob_thresh, const double& prob_ins, const double& prob_del, const double& prob_subst);
+RcppExport SEXP _gemino_pacbio_var_cpp(SEXP var_set_ptrSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP n_readsSEXP, SEXP n_coresSEXP, SEXP show_progressSEXP, SEXP read_chunk_sizeSEXP, SEXP variant_probsSEXP, SEXP prob_dupSEXP, SEXP scaleSEXP, SEXP sigmaSEXP, SEXP locSEXP, SEXP min_read_lenSEXP, SEXP read_probsSEXP, SEXP read_lensSEXP, SEXP max_passesSEXP, SEXP chi2_params_nSEXP, SEXP chi2_params_sSEXP, SEXP sqrt_paramsSEXP, SEXP norm_paramsSEXP, SEXP prob_threshSEXP, SEXP prob_insSEXP, SEXP prob_delSEXP, SEXP prob_substSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type insertion_rates(insertion_ratesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type chunk_size(chunk_sizeSEXP);
-    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_chunk_base(Q, pi_tcag, insertion_rates, deletion_rates, chunk_size));
-    return rcpp_result_gen;
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_reads(n_readsSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_cores(n_coresSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type read_chunk_size(read_chunk_sizeSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type variant_probs(variant_probsSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_dup(prob_dupSEXP);
+    Rcpp::traits::input_parameter< const double& >::type scale(scaleSEXP);
+    Rcpp::traits::input_parameter< const double& >::type sigma(sigmaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type loc(locSEXP);
+    Rcpp::traits::input_parameter< const double& >::type min_read_len(min_read_lenSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type read_probs(read_probsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type read_lens(read_lensSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type max_passes(max_passesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type chi2_params_n(chi2_params_nSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type chi2_params_s(chi2_params_sSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type sqrt_params(sqrt_paramsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type norm_params(norm_paramsSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_thresh(prob_threshSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_ins(prob_insSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_del(prob_delSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_subst(prob_substSEXP);
+    pacbio_var_cpp(var_set_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst);
+    return R_NilValue;
 END_RCPP
 }
 // read_ms_output_
@@ -703,16 +846,31 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// using_openmp
+bool using_openmp();
+RcppExport SEXP _gemino_using_openmp() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(using_openmp());
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_gemino_merge_sequences", (DL_FUNC) &_gemino_merge_sequences, 1},
     {"_gemino_filter_sequences", (DL_FUNC) &_gemino_filter_sequences, 3},
+    {"_gemino_replace_Ns_cpp", (DL_FUNC) &_gemino_replace_Ns_cpp, 4},
     {"_gemino_create_genome_", (DL_FUNC) &_gemino_create_genome_, 5},
     {"_gemino_rando_seqs", (DL_FUNC) &_gemino_rando_seqs, 5},
     {"_gemino_get_precleavage_lens", (DL_FUNC) &_gemino_get_precleavage_lens, 1},
     {"_gemino_expand_seqs", (DL_FUNC) &_gemino_expand_seqs, 1},
     {"_gemino_digest_var_set", (DL_FUNC) &_gemino_digest_var_set, 5},
     {"_gemino_digest_ref", (DL_FUNC) &_gemino_digest_ref, 5},
+    {"_gemino_illumina_ref_cpp", (DL_FUNC) &_gemino_illumina_ref_cpp, 23},
+    {"_gemino_illumina_var_cpp", (DL_FUNC) &_gemino_illumina_var_cpp, 24},
+    {"_gemino_make_mutation_sampler_base", (DL_FUNC) &_gemino_make_mutation_sampler_base, 4},
+    {"_gemino_make_mutation_sampler_chunk_base", (DL_FUNC) &_gemino_make_mutation_sampler_chunk_base, 5},
     {"_gemino_make_gamma_mats", (DL_FUNC) &_gemino_make_gamma_mats, 3},
     {"_gemino_check_gamma_mats", (DL_FUNC) &_gemino_check_gamma_mats, 2},
     {"_gemino_phylo_info_to_trees", (DL_FUNC) &_gemino_phylo_info_to_trees, 1},
@@ -727,8 +885,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_F84_rate_matrix", (DL_FUNC) &_gemino_F84_rate_matrix, 3},
     {"_gemino_GTR_rate_matrix", (DL_FUNC) &_gemino_GTR_rate_matrix, 2},
     {"_gemino_UNREST_rate_matrix", (DL_FUNC) &_gemino_UNREST_rate_matrix, 1},
-    {"_gemino_make_mutation_sampler_base", (DL_FUNC) &_gemino_make_mutation_sampler_base, 4},
-    {"_gemino_make_mutation_sampler_chunk_base", (DL_FUNC) &_gemino_make_mutation_sampler_chunk_base, 5},
+    {"_gemino_pacbio_ref_cpp", (DL_FUNC) &_gemino_pacbio_ref_cpp, 23},
+    {"_gemino_pacbio_var_cpp", (DL_FUNC) &_gemino_pacbio_var_cpp, 24},
     {"_gemino_read_ms_output_", (DL_FUNC) &_gemino_read_ms_output_, 1},
     {"_gemino_read_vcfr", (DL_FUNC) &_gemino_read_vcfr, 6},
     {"_gemino_read_fasta_noind", (DL_FUNC) &_gemino_read_fasta_noind, 3},
@@ -761,6 +919,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gemino_add_insertion", (DL_FUNC) &_gemino_add_insertion, 5},
     {"_gemino_add_deletion", (DL_FUNC) &_gemino_add_deletion, 5},
     {"_gemino_test_rate", (DL_FUNC) &_gemino_test_rate, 7},
+    {"_gemino_using_openmp", (DL_FUNC) &_gemino_using_openmp, 0},
     {NULL, NULL, 0}
 };
 

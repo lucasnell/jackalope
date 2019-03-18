@@ -179,3 +179,14 @@ test_that("Mutations produced are accurate", {
 })
 
 
+
+# Testing that replace_Ns works
+seqs <- c("CCAANNNGG", "NNTTCCAAGG", "AACCTTGGGGGNNNNNN")
+ref <- ref_genome$new(gemino:::make_ref_genome(seqs))
+ref$replace_Ns(c(1,0,0,0))
+
+test_that("Replacing Ns works as predicted", {
+    expect_identical(ref$extract_seq(1), "CCAATTTGG")
+    expect_identical(ref$extract_seq(2), "TTTTCCAAGG")
+    expect_identical(ref$extract_seq(3), "AACCTTGGGGGTTTTTT")
+})

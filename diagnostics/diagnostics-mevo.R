@@ -1,9 +1,9 @@
 
+
+library(gemino)
+library(testthat)
+
 context("Testing molecular evolution accuracy")
-
-# library(gemino)
-# library(testthat)
-
 
 boot <- function(x, B = 2000, alpha = 0.01) {
     boots <- numeric(B)

@@ -127,12 +127,15 @@ public:
     const RefSequence* ref_seq;  // pointer to const RefSequence
     std::deque<Mutation> mutations;
     uint32 seq_size;
+    std::string name;
 
     // Constructors
     VarSequence() {};
     VarSequence(const RefSequence& ref)
-        : ref_seq(&ref), mutations(std::deque<Mutation>()),
-          seq_size(ref.size()) {};
+        : ref_seq(&ref),
+          mutations(),
+          seq_size(ref.size()),
+          name(ref.name) {};
 
     /*
      Since all other classes have a size() method, I'm including this here:
@@ -151,8 +154,10 @@ public:
 
     // Replace existing mutation information in this VarSequence with another
     void replace(const VarSequence& other) {
+        ref_seq = other.ref_seq;
         mutations = other.mutations;
         seq_size = other.seq_size;
+        name = other.name;
         return;
     }
 
@@ -212,6 +217,7 @@ public:
         return *this;
     }
 
+
     /*
      ------------------
      Re-calculate new positions (and total sequence size)
@@ -265,6 +271,19 @@ public:
     void add_deletion(const uint32& size_, const uint32& new_pos_);
     void add_insertion(const std::string& nucleos_, const uint32& new_pos_);
     void add_substitution(const char& nucleo, const uint32& new_pos_);
+
+
+    /*
+     ------------------
+     For filling a read at a given starting position from a sequence of a
+     given starting position and size.
+     Used only for sequencer.
+     ------------------
+     */
+    void fill_read(std::string& read,
+                   const uint32& read_start,
+                   const uint32& seq_start,
+                   uint32 n_to_add) const;
 
 
 
@@ -357,17 +376,24 @@ public:
     };
 
     // For easily outputting a reference to a VarSequence
-    VarSequence operator[](const uint32& idx) const {
-        return var_genome[idx];
-    }
-    // For easily outputting a reference to a VarSequence
     VarSequence& operator[](const uint32& idx) {
         VarSequence& var_seq(var_genome[idx]);
+        return var_seq;
+    }
+    // const version
+    const VarSequence& operator[](const uint32& idx) const {
+        const VarSequence& var_seq(var_genome[idx]);
         return var_seq;
     }
     // To return the number of sequences
     uint32 size() const noexcept {
         return var_genome.size();
+    }
+    // To return all the sequence sizes
+    std::vector<uint32> seq_sizes() const noexcept {
+        std::vector<uint32> out(size());
+        for (uint32 i = 0; i < out.size(); i++) out[i] = var_genome[i].size();
+        return out;
     }
 
 private:
@@ -411,6 +437,14 @@ public:
             stop("trying to access a VarGenome that doesn't exist");
         }
         VarGenome& vg(variants[idx]);
+        return vg;
+    }
+    // const version of above
+    const VarGenome& operator[](const uint32& idx) const {
+        if (idx >= variants.size()) {
+            stop("trying to access a VarGenome that doesn't exist");
+        }
+        const VarGenome& vg(variants[idx]);
         return vg;
     }
     // To return the number of variants

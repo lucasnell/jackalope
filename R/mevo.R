@@ -96,13 +96,13 @@ indels <- function(indel) {
         if (indel$rate == 0) return(numeric(0))
         names_ <- sort(names(indel))
         if (identical(names_, sort(c("rate", "max_length")))) {
-            if (!single_whole_number(indel$max_length, 1)) {
+            if (!single_integer(indel$max_length, 1)) {
                 stop(err_msg, "the max length must be a single whole number >= 1.",
                      call. = TRUE)
             }
             rel_rates <- exp(-1 * 1:(indel$max_length))
         } else if (identical(names_, sort(c("rate", "max_length", "a")))) {
-            if (!single_whole_number(indel$max_length, 1)) {
+            if (!single_integer(indel$max_length, 1)) {
                 stop(err_msg, "the max length must be a single whole number >= 1.",
                      call. = TRUE)
             }

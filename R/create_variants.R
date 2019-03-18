@@ -118,7 +118,7 @@ create_variants <- function(reference,
              "And do NOT change the `genome` field manually.",
              call. = FALSE)
     }
-    if (!single_whole_number(n_cores, .min = 1)) {
+    if (!single_integer(n_cores, .min = 1)) {
         stop("\nThe `n_cores` argument supplied to `create_variants` is not a single",
              "whole number greater than or equal to 1.",
              call. = FALSE)

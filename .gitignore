@@ -11,9 +11,9 @@ src/*.dll
 inst/doc
 *.bk
 *.desc
-gfiles
 Gac
 gemino_*.tgz
 *.pdf
 methods
 _crash_test.R
+!inst/art_profiles/*.txt.gz

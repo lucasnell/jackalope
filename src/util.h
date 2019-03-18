@@ -15,8 +15,10 @@
 #include <RcppArmadillo.h>
 #include <vector>
 #include <string>
+#include <pcg/pcg_random.hpp> // pcg prng
 
 #include "gemino_types.h"  // integer types
+#include "pcg.h"  // runif_* methods
 
 
 using namespace Rcpp;
@@ -130,6 +132,73 @@ inline double gc_prop(const std::string& sequence,
     double gc_prop = total_gc / total_seq;
     return gc_prop;
 }
+
+
+
+// To return indices of sorted vector `values`.
+template <typename T>
+std::vector<uint32> increasing_indices(const std::vector<T>& values) {
+
+    std::vector<uint32> indices(values.size());
+    std::iota(begin(indices), end(indices), static_cast<uint32>(0));
+
+    std::sort(
+        begin(indices), end(indices),
+        [&](size_t a, size_t b) { return values[a] < values[b]; }
+    );
+    return indices;
+}
+template <typename T>
+std::vector<uint32> decreasing_indices(const std::vector<T>& values) {
+
+    std::vector<uint32> indices(values.size());
+    std::iota(begin(indices), end(indices), static_cast<uint32>(0));
+
+    std::sort(
+        begin(indices), end(indices),
+        [&](size_t a, size_t b) { return values[a] > values[b]; }
+    );
+    return indices;
+}
+
+
+
+
+// Truncated normal when limit is not very far from the mean (< 5 SD away):
+inline void trunc_rnorm_near(double& out,
+                             const double& a_bar,
+                             const double& mu,
+                             const double& sigma,
+                             pcg64& eng) {
+
+    double p = R::pnorm5(a_bar, 0, 1, 1, 0);
+    double u = runif_ab(eng, p, 1);
+
+    double x = R::qnorm5(u, 0, 1, 1, 0);
+    out = x * sigma + mu;
+
+    return;
+}
+// And for when it IS very far from the mean:
+inline void trunc_rnorm_far(double& out,
+                            const double& a_bar,
+                            const double& mu,
+                            const double& sigma,
+                            pcg64& eng) {
+    double u, x_bar, v;
+    u = runif_01(eng);
+    x_bar = std::sqrt(a_bar * a_bar  - 2 * std::log(1 - u));
+    v = runif_01(eng);
+    while (v > (x_bar / a_bar)) {
+        u = runif_01(eng);
+        x_bar = std::sqrt(a_bar * a_bar  - 2 * std::log(1 - u));
+        v = runif_01(eng);
+    }
+    out = sigma * x_bar + mu;
+
+    return;
+}
+
 
 
 

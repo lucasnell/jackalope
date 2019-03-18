@@ -192,8 +192,9 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
         ++mut_i;
     }
     if (mut_i != 0) --mut_i;
-    // Adjust input string size if necessary
-    if (chunk_str.size() != out_length) chunk_str.resize(out_length, 'x');
+    // Reserve memory for input string
+    if (chunk_str.size() > 0) chunk_str.clear();
+    chunk_str.reserve(out_length);
 
     uint32 pos = start;
     uint32 next_mut_i = mut_i + 1;
@@ -203,7 +204,7 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
      `mut == mutations.begin()` and `start` is before the first mutation)
      */
     while (pos < mutations[mut_i].new_pos && pos <= end) {
-        chunk_str[pos - start] = (*ref_seq)[pos];
+        chunk_str += (*ref_seq)[pos];
         ++pos;
     }
     if (pos > end) return;
@@ -214,7 +215,7 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
      */
     while (next_mut_i < mutations.size()) {
         while (pos < mutations[next_mut_i].new_pos && pos <= end) {
-            chunk_str[pos - start] = get_char_(pos, mut_i);
+            chunk_str += get_char_(pos, mut_i);
             ++pos;
         }
         if (pos > end) return;
@@ -227,12 +228,98 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
      I've made sure that `end < seq_size`).
      */
     while (pos <= end) {
-        chunk_str[pos - start] = get_char_(pos, mut_i);
+        chunk_str += get_char_(pos, mut_i);
         ++pos;
     }
 
     return;
 }
+
+
+
+
+/*
+ Similar to above, but it's for use in the sequence simulator, and it fills info for
+ the read.
+ An important difference is that it doesn't always fill from the start of the
+ read, since I don't want to muck with the barcodes.
+ */
+
+void VarSequence::fill_read(std::string& read,
+                            const uint32& read_start,
+                            const uint32& seq_start,
+                            uint32 n_to_add) const {
+
+    uint32 mut_i = 0;
+
+    uint32 seq_end = seq_start + n_to_add - 1;
+    // Making sure seq_end doesn't go beyond the sequence bounds
+    if (seq_end >= seq_size) {
+        seq_end = seq_size - 1;
+        n_to_add = seq_size - seq_start;
+    }
+
+    // Make sure the read is long enough (this fxn should never shorten it):
+    if (read.size() < n_to_add + read_start) read.resize(n_to_add + read_start, 'N');
+
+    // No need to mess around with mutations if there aren't any
+    if (mutations.empty()) {
+        for (uint32 i = 0; i < n_to_add; i++) {
+            read[(read_start + i)] = ref_seq->nucleos[(seq_start + i)];
+        }
+        return;
+    }
+    // Move mutation to the proper spot
+    while (mut_i < mutations.size()) {
+        if (seq_start < mutations[mut_i].new_pos) break;
+        ++mut_i;
+    }
+    if (mut_i != 0) --mut_i;
+
+    uint32 seq_pos = seq_start;
+    uint32 read_pos = read_start;
+    uint32 next_mut_i = mut_i + 1;
+
+    /*
+     Picking up any nucleotides before the focal mutation (this should only happen when
+     `mut == mutations.begin()` and `seq_start` is before the first mutation)
+     */
+    while (seq_pos < mutations[mut_i].new_pos && seq_pos <= seq_end) {
+        read[read_pos] = (*ref_seq)[seq_pos];
+        ++seq_pos;
+        ++read_pos;
+    }
+    if (seq_pos > seq_end) return;
+
+    /*
+     Now, for each subsequent mutation except the last, add all nucleotides
+     at or after its position (and `seq_end`) but before the next mutation
+     */
+    while (next_mut_i < mutations.size()) {
+        while (seq_pos < mutations[next_mut_i].new_pos && seq_pos <= seq_end) {
+            read[read_pos] = get_char_(seq_pos, mut_i);
+            ++seq_pos;
+            ++read_pos;
+        }
+        if (seq_pos > seq_end) return;
+        ++mut_i;
+        ++next_mut_i;
+    }
+
+    /*
+     If we reach the last mutation, add nucleotides until `seq_end` (remember that above,
+     I've made sure that `seq_end < seq_size`).
+     */
+    while (seq_pos <= seq_end) {
+        read[read_pos] = get_char_(seq_pos, mut_i);
+        ++seq_pos;
+        ++read_pos;
+    }
+
+    return;
+}
+
+
 
 
 /*

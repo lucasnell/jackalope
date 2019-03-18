@@ -72,7 +72,7 @@
  */
 
 template <typename R>
-inline uint32 weighted_reservoir_(R& obj, pcg32& eng,
+inline uint32 weighted_reservoir_(R& obj, pcg64& eng,
                                 const uint32& start = 0,
                                 uint32 end = 0) {
 
@@ -148,13 +148,13 @@ public:
         return *this;
     }
 
-    inline double rexp_(pcg32& eng) {
+    inline double rexp_(pcg64& eng) {
         return distr(eng);
     }
 
 
     // Sample for one location across the whole object or inside a range
-    inline uint32 sample(pcg32& eng, const uint32& start, const uint32& end,
+    inline uint32 sample(pcg64& eng, const uint32& start, const uint32& end,
                          const bool& ranged) {
         uint32 i;
         if (ranged) {
@@ -253,7 +253,7 @@ public:
         recheck_size_();
         return;
     }
-    void reset(pcg32& eng) {
+    void reset(pcg64& eng) {
         recheck_size_();
         // Skip vitter_d if `inds` is a vector from 0 to `all_rates.size() - 1`:
         if (!use_vitter) return;
@@ -261,7 +261,7 @@ public:
         vitter_d<std::vector<uint32>>(inds, all_rates.size(), eng);
         return;
     }
-    void reset(pcg32& eng, const uint32& start, const uint32& end) {
+    void reset(pcg64& eng, const uint32& start, const uint32& end) {
 
         if (start >= all_rates.size() || start > end) {
             stop("start too high in ChunkRateGetter::reset");
@@ -450,12 +450,12 @@ public:
         return *this;
     }
 
-    inline double rexp_(pcg32& eng) {
+    inline double rexp_(pcg64& eng) {
         return distr(eng);
     }
 
     // Sample for one location across the whole object or inside a range
-    inline uint32 sample(pcg32& eng, const uint32& start, const uint32& end,
+    inline uint32 sample(pcg64& eng, const uint32& start, const uint32& end,
                          const bool& ranged) {
         if (ranged) {
             res_rates.reset(eng, start, end);

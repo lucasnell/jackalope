@@ -325,7 +325,7 @@ public:
     }
 
 
-    inline uint32 sample(pcg32& eng, const uint32& start, const uint32& end,
+    inline uint32 sample(pcg64& eng, const uint32& start, const uint32& end,
                          const bool& ranged) {
         return rates.sample(eng, start, end, ranged);
     }
@@ -622,7 +622,7 @@ public:
      `c` gets cast to an uint32, which is then input to `base_inds` to get the index
      from 0 to 3.
      */
-    MutationInfo sample(const char& c, pcg32& eng) const {
+    MutationInfo sample(const char& c, pcg64& eng) const {
         uint32 ind = sampler[base_inds[c]].sample(eng);
         MutationInfo mi(ind, mut_lengths);
         return mi;
@@ -668,7 +668,7 @@ class OneSeqMutationSampler {
      Sample for mutation location based on rates by sequence region and nucleotide,
      for the whole sequence or a range.
      */
-    inline uint32 sample_location(pcg32& eng,
+    inline uint32 sample_location(pcg64& eng,
                                   const uint32& start = 0, const uint32& end = 0,
                                   const bool& ranged = false) {
         return location.sample(eng, start, end, ranged);
@@ -677,7 +677,7 @@ class OneSeqMutationSampler {
     /*
     Sample for mutation type based on nucleotide and rng engine
     */
-    inline MutationInfo sample_type(const char& c, pcg32& eng) const {
+    inline MutationInfo sample_type(const char& c, pcg64& eng) const {
         return type.sample(c, eng);
     }
 
@@ -685,7 +685,7 @@ class OneSeqMutationSampler {
     Create a new string of nucleotides (for insertions) of a given length and using
     an input rng engine
     */
-    inline std::string new_nucleos(const uint32& len, pcg32& eng) const {
+    inline std::string new_nucleos(const uint32& len, pcg64& eng) const {
         std::string str(len, 'x');
         insert.sample(str, eng);
         return str;
@@ -734,7 +734,7 @@ public:
     }
 
     // Add mutation and return the change in the sequence rate that results
-    double mutate(pcg32& eng) {
+    double mutate(pcg64& eng) {
         uint32 pos = sample_location(eng);
         char c = var_seq->get_nt(pos);
         MutationInfo m = sample_type(c, eng);
@@ -769,7 +769,7 @@ public:
      is empty).
      `// ***` mark difference between this and previous `mutate` versions
      */
-    double mutate(pcg32& eng, const uint32& start, sint64& end) {
+    double mutate(pcg64& eng, const uint32& start, sint64& end) {
         if (end < 0) stop("end is negative in [Chunk]MutationSampler.mutate");
         uint32 pos = sample_location(eng, start, static_cast<uint32>(end), true);  // ***
         char c = var_seq->get_nt(pos);
