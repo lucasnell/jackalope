@@ -129,7 +129,7 @@ struct RefGenome {
     // For storing original names if merged:
     std::deque<std::string> old_names;
     // Only added for compatibility with templates in sequencing code:
-    std::string name = "";
+    std::string name = "REF";
 
     // Constructors
     RefGenome()

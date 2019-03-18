@@ -15,8 +15,8 @@ pacbio(seq_object, out_prefix, n_reads, chi2_params_s = c(0.01214, -5.12,
   del_prob = 0.04, sub_prob = 0.01, min_read_length = 50,
   lognorm_read_length = c(0.200110276521, -10075.4363813, 17922.611306),
   custom_read_lengths = NULL, prob_dup = 0, variant_probs = NULL,
-  id_info = list(), compress = FALSE, n_cores = 1L,
-  read_chunk_size = 100L, show_progress = FALSE)
+  compress = FALSE, n_cores = 1L, read_chunk_size = 100L,
+  show_progress = FALSE)
 }
 \arguments{
 \item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
@@ -77,10 +77,6 @@ Defaults to \code{0.0}.}
 This is ignored if sequencing a reference genome.
 \code{NULL} results in all having the same probability.
 Defaults to \code{NULL}.}
-
-\item{id_info}{A list containing information used to generate ID lines in the
-FASTQ file. See "ID line" section for more information.
-Defaults to \code{list()}.}
 
 \item{compress}{A logical for whether to compress output FASTQ files using gzip.
 Defaults to \code{FALSE}.}

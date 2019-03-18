@@ -17,7 +17,7 @@
 #include "alias_sampler.hpp"  // AliasSampler
 #include "util.hpp"  // clear_memory
 #include "str_manip.hpp"  // rev_comp
-#include "sequencer.hpp"  // SequenceIdentifierInfo
+#include "sequencer.hpp"  // generic sequencer classes
 #include "pacbio.hpp"  // PacBio* types
 
 
@@ -131,8 +131,7 @@ void PacBioQualityError::update_probs(pcg64& eng,
 
 template <typename T>
 void PacBioOneGenome<T>::one_read(std::vector<std::string>& fastq_chunks,
-                                  pcg64& eng,
-                                  SequenceIdentifierInfo& ID_info) {
+                                  pcg64& eng) {
 
     std::string& fastq_chunk(fastq_chunks[0]);
 
@@ -173,7 +172,7 @@ void PacBioOneGenome<T>::one_read(std::vector<std::string>& fastq_chunks,
     }
 
     // Fill the reads and qualities
-    append_chunk(fastq_chunk, eng, ID_info);
+    append_chunk(fastq_chunk, eng);
 
     return;
 }
@@ -182,8 +181,7 @@ void PacBioOneGenome<T>::one_read(std::vector<std::string>& fastq_chunks,
 
 template <typename T>
 void PacBioOneGenome<T>::re_read(std::vector<std::string>& fastq_chunks,
-                                 pcg64& eng,
-                                 SequenceIdentifierInfo& ID_info) {
+                                 pcg64& eng) {
 
     std::string& fastq_chunk(fastq_chunks[0]);
 
@@ -221,7 +219,7 @@ void PacBioOneGenome<T>::re_read(std::vector<std::string>& fastq_chunks,
     if ((read_seq_space + read_start) > seq_len) return;
 
     // Fill the reads and qualities
-    append_chunk(fastq_chunk, eng, ID_info);
+    append_chunk(fastq_chunk, eng);
 
     return;
 }
@@ -231,13 +229,13 @@ void PacBioOneGenome<T>::re_read(std::vector<std::string>& fastq_chunks,
 
 template <typename T>
 void PacBioOneGenome<T>::append_chunk(std::string& fastq_chunk,
-                                      pcg64& eng,
-                                      SequenceIdentifierInfo& ID_info) {
+                                      pcg64& eng) {
 
     // Make sure it has enough memory reserved:
     fastq_chunk.reserve(fastq_chunk.size() + read_length * 3 + 10);
 
-    fastq_chunk += ID_info.get_line() + '\n';
+    fastq_chunk += '@' + this->name + '-' + (*sequences)[seq_ind].name +
+        '-' + std::to_string(read_start) + '\n';
 
     // Boolean for whether we take the reverse side:
     bool reverse = runif_01(eng) < 0.5;
@@ -331,18 +329,7 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
                       const double& prob_thresh,
                       const double& prob_ins,
                       const double& prob_del,
-                      const double& prob_subst,
-                      const std::string& instrument,
-                      const uint32& run_number,
-                      const std::string& flowcell_ID,
-                      const uint32& lane,
-                      const uint32& tile,
-                      const uint32& x_pos,
-                      const uint32& y_pos,
-                      const uint32& read,
-                      const std::string& is_filtered,
-                      const uint32& control_number,
-                      const uint32& sample_number) {
+                      const double& prob_subst) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     PacBioReference read_filler_base;
@@ -363,17 +350,13 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
                             prob_ins, prob_del, prob_subst);
     }
 
-    SequenceIdentifierInfo ID_info_base(instrument, run_number, flowcell_ID, lane,
-                                        tile, x_pos, y_pos, read, is_filtered,
-                                        control_number, sample_number);
-
     if (compress) {
         write_reads_cpp_<PacBioReference, gzFile>(
-                read_filler_base, ID_info_base, out_prefix, n_reads,
+                read_filler_base, out_prefix, n_reads,
                 prob_dup, read_chunk_size, 1U, n_cores, show_progress);
     } else {
         write_reads_cpp_<PacBioReference, std::ofstream>(
-                read_filler_base, ID_info_base, out_prefix, n_reads,
+                read_filler_base, out_prefix, n_reads,
                 prob_dup, read_chunk_size, 1U, n_cores, show_progress);
     }
 
@@ -413,18 +396,7 @@ void pacbio_var_cpp(SEXP var_set_ptr,
                     const double& prob_thresh,
                     const double& prob_ins,
                     const double& prob_del,
-                    const double& prob_subst,
-                    const std::string& instrument,
-                    const uint32& run_number,
-                    const std::string& flowcell_ID,
-                    const uint32& lane,
-                    const uint32& tile,
-                    const uint32& x_pos,
-                    const uint32& y_pos,
-                    const uint32& read,
-                    const std::string& is_filtered,
-                    const uint32& control_number,
-                    const uint32& sample_number) {
+                    const double& prob_subst) {
 
     XPtr<VarSet> var_set(var_set_ptr);
     PacBioVariants read_filler_base;
@@ -445,17 +417,13 @@ void pacbio_var_cpp(SEXP var_set_ptr,
                            prob_ins, prob_del, prob_subst);
     }
 
-    SequenceIdentifierInfo ID_info_base(instrument, run_number, flowcell_ID, lane,
-                                        tile, x_pos, y_pos, read, is_filtered,
-                                        control_number, sample_number);
-
     if (compress) {
         write_reads_cpp_<PacBioVariants, gzFile>(
-                read_filler_base, ID_info_base, out_prefix, n_reads,
+                read_filler_base, out_prefix, n_reads,
                 prob_dup, read_chunk_size, 1U, n_cores, show_progress);
     } else {
         write_reads_cpp_<PacBioVariants, std::ofstream>(
-                read_filler_base, ID_info_base, out_prefix, n_reads,
+                read_filler_base, out_prefix, n_reads,
                 prob_dup, read_chunk_size, 1U, n_cores, show_progress);
     }
 

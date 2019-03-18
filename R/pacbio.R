@@ -8,7 +8,6 @@
 check_pacbio_args <- function(seq_object,
                               n_reads,
                               variant_probs,
-                              id_info,
                               compress,
                               n_cores,
                               read_chunk_size,
@@ -73,7 +72,6 @@ check_pacbio_args <- function(seq_object,
     if (!is.null(variant_probs) && !is_type(variant_probs, c("numeric", "integer"))) {
         err_msg("pacbio", "variant_probs", "NULL or a numeric/integer vector")
     }
-    if (!is_type(id_info, "list")) err_msg("pacbio", "id_info", "a list.")
     for (x in c("compress", "show_progress")) {
         z <- eval(parse(text = x))
         if (!is_type(z, "logical", 1)) err_msg("pacbio", x, "a single logical.")
@@ -181,7 +179,6 @@ pacbio <- function(seq_object,
                    custom_read_lengths = NULL,
                    prob_dup = 0.0,
                    variant_probs = NULL,
-                   id_info = list(),
                    compress = FALSE,
                    n_cores = 1L,
                    read_chunk_size = 100L,
@@ -191,7 +188,7 @@ pacbio <- function(seq_object,
     check_fastq(out_prefix)
 
     # Check for improper argument types:
-    check_pacbio_args(seq_object, n_reads, variant_probs, id_info,
+    check_pacbio_args(seq_object, n_reads, variant_probs,
                       compress, n_cores, read_chunk_size,
                       chi2_params_s, chi2_params_n, max_passes,
                       sqrt_params, norm_params,
@@ -216,33 +213,29 @@ pacbio <- function(seq_object,
         variant_probs <- rep(1, seq_object$n_vars())
     }
 
-    id_info <- do.call(id_line_info, id_info)
-
-
     # Assembling list of arguments for inner cpp function:
-    args <- c(list(out_prefix = out_prefix,
-                   compress = compress,
-                   n_reads = n_reads,
-                   n_cores = n_cores,
-                   read_chunk_size = read_chunk_size,
-                   chi2_params_s = chi2_params_s,
-                   chi2_params_n = chi2_params_n,
-                   max_passes = max_passes,
-                   sqrt_params = sqrt_params,
-                   norm_params = norm_params,
-                   prob_thresh = prob_thresh,
-                   prob_ins = ins_prob,
-                   prob_del = del_prob,
-                   prob_subst = sub_prob,
-                   min_read_len = min_read_length,
-                   scale = lognorm_read_length[3],
-                   sigma = lognorm_read_length[1],
-                   loc = lognorm_read_length[2],
-                   read_lens = read_lens,
-                   read_probs = read_probs,
-                   prob_dup = prob_dup,
-                   show_progress = show_progress),
-              id_info)
+    args <- list(out_prefix = out_prefix,
+                 compress = compress,
+                 n_reads = n_reads,
+                 n_cores = n_cores,
+                 read_chunk_size = read_chunk_size,
+                 chi2_params_s = chi2_params_s,
+                 chi2_params_n = chi2_params_n,
+                 max_passes = max_passes,
+                 sqrt_params = sqrt_params,
+                 norm_params = norm_params,
+                 prob_thresh = prob_thresh,
+                 prob_ins = ins_prob,
+                 prob_del = del_prob,
+                 prob_subst = sub_prob,
+                 min_read_len = min_read_length,
+                 scale = lognorm_read_length[3],
+                 sigma = lognorm_read_length[1],
+                 loc = lognorm_read_length[2],
+                 read_lens = read_lens,
+                 read_probs = read_probs,
+                 prob_dup = prob_dup,
+                 show_progress = show_progress)
 
 
     if (inherits(seq_object, "ref_genome")) {

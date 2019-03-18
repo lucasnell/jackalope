@@ -38,65 +38,6 @@ const std::vector<std::string> mm_nucleos = {"CAG", "TAG", "TCG", "TCA", "NNN"};
 
 
 
-/*
- Way to store info for the sequence identifier line in FASTQ file.
- It's organized as such:
- @<instrument>:<run number>:<flowcell ID>:<lane>:<tile>:<x-pos>:<y-pos>
-    <read>:<is filtered>:<control number>:<sample number>
- (where the newline and tab are ' ')
- (from https://help.basespace.illumina.com/articles/descriptive/fastq-files/)
- Example: "@SIM:1:FCX:1:15:6329:1045 1:N:0:2"
- */
-struct SequenceIdentifierInfo {
-
-    // (Numerical) Read number. 1 can be single read or read 2 of paired-end:
-    uint32 read;
-
-    SequenceIdentifierInfo() {}
-    SequenceIdentifierInfo(
-        const std::string& instrument,
-        const uint32& run_number,
-        const std::string& flowcell_ID,
-        const uint32& lane,
-        const uint32& tile,
-        const uint32& x_pos,
-        const uint32& y_pos,
-        const uint32& read_,
-        const std::string& is_filtered,
-        const uint32& control_number,
-        const uint32& sample_number
-    )
-        : read(read_),
-          before_read(),
-          after_read() {
-
-        // Before read:
-        before_read = "@";
-        before_read += instrument + ':' + std::to_string(run_number) + ':' + flowcell_ID + ':';
-        before_read += std::to_string(lane) + ':' + std::to_string(tile) + ':';
-        before_read += std::to_string(x_pos) + ':' + std::to_string(y_pos) + ' ';
-        // After read
-        after_read = ':' + is_filtered + ':';
-        after_read += std::to_string(control_number) + ':';
-        after_read += std::to_string(sample_number);
-
-    };
-
-    std::string get_line() {
-        std::string out = before_read + std::to_string(read) + after_read;
-        return out;
-    }
-
-private:
-
-    std::string before_read;
-    std::string after_read;
-
-};
-
-
-
-
 
 /*
 
@@ -111,7 +52,6 @@ class ReadWriterOneCore {
 public:
 
     T read_filler;
-    SequenceIdentifierInfo ID_info;
     const uint32 n_reads;           // # reads to create
     const uint32 read_chunk_size;   // reads per chunk
     uint32 reads_made;              // Number of reads already made
@@ -122,13 +62,11 @@ public:
     std::vector<std::string> fastq_chunks;
 
     ReadWriterOneCore(const T& read_filler_base,
-                      const SequenceIdentifierInfo& ID_info_base,
                       const uint32& n_reads_,
                       const uint32& read_chunk_size_,
                       const double& prob_dup_,
                       const uint32& n_read_ends_)
         : read_filler(read_filler_base),
-          ID_info(ID_info_base),
           n_reads(n_reads_),
           read_chunk_size(read_chunk_size_),
           reads_made(0),
@@ -180,13 +118,13 @@ public:
      write to file
      */
     void create_reads(pcg64& eng) {
-        read_filler.one_read(fastq_chunks, eng, ID_info);
+        read_filler.one_read(fastq_chunks, eng);
         reads_made += n_read_ends;
         reads_in_chunk += n_read_ends;
         double dup = runif_01(eng);
         while (dup < prob_dup && reads_made < n_reads &&
                reads_in_chunk < read_chunk_size) {
-            read_filler.re_read(fastq_chunks, eng, ID_info);
+            read_filler.re_read(fastq_chunks, eng);
             reads_made += n_read_ends;
             reads_in_chunk += n_read_ends;
             dup = runif_01(eng);
@@ -321,7 +259,6 @@ inline void close_fastq(std::vector<gzFile>& files) {
  */
 template <typename T, typename U>
 void write_reads_cpp_(const T& read_filler_base,
-                      const SequenceIdentifierInfo& ID_info_base,
                       const std::string& out_prefix,
                       const uint32& n_reads,
                       const double& prob_dup,
@@ -370,7 +307,7 @@ void write_reads_cpp_(const T& read_filler_base,
 
     uint32 reads_this_core = reads_per_core[active_thread];
 
-    ReadWriterOneCore<T> writer(read_filler_base, ID_info_base, reads_this_core,
+    ReadWriterOneCore<T> writer(read_filler_base, reads_this_core,
                                 read_chunk_size, prob_dup, n_read_ends);
 
     uint32 reads_written;

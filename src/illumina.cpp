@@ -14,7 +14,7 @@
 #include "gemino_types.hpp"  // integer types
 #include "seq_classes_ref.hpp"  // Ref* classes
 #include "seq_classes_var.hpp"  // Var* classes
-#include "sequencer.hpp"  // SequenceIdentifierInfo class
+#include "sequencer.hpp"  // generic sequencing classes
 #include "illumina.hpp"  // Illumina-specific classes
 
 using namespace Rcpp;
@@ -29,8 +29,7 @@ using namespace Rcpp;
 // Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality)
 template <typename T>
 void IlluminaOneGenome<T>::one_read(std::vector<std::string>& fastq_chunks,
-                                    pcg64& eng,
-                                    SequenceIdentifierInfo& ID_info) {
+                                    pcg64& eng) {
 
     /*
      Sample fragment info, and set the sequence space(s) required for these read(s).
@@ -38,7 +37,7 @@ void IlluminaOneGenome<T>::one_read(std::vector<std::string>& fastq_chunks,
     seq_indels_frag(eng);
 
     // Fill the reads and qualities
-    append_chunks(fastq_chunks, eng, ID_info);
+    append_chunks(fastq_chunks, eng);
 
     return;
 }
@@ -49,14 +48,13 @@ void IlluminaOneGenome<T>::one_read(std::vector<std::string>& fastq_chunks,
  */
 template <typename T>
 void IlluminaOneGenome<T>::re_read(std::vector<std::string>& fastq_chunks,
-                                   pcg64& eng,
-                                   SequenceIdentifierInfo& ID_info) {
+                                   pcg64& eng) {
 
     // Here I'm just re-doing indels bc it's a duplicate.
     just_indels(eng);
 
     // Fill the reads and qualities
-    append_chunks(fastq_chunks, eng, ID_info);
+    append_chunks(fastq_chunks, eng);
 
     return;
 }
@@ -71,15 +69,10 @@ void IlluminaOneGenome<T>::add_seq_info(const T& seq_object, const std::string& 
 
     seq_lengths = seq_object.seq_sizes();
     sequences = &seq_object;
-
-    std::vector<double> probs_;
-    probs_.reserve(seq_lengths.size());
-    for (uint i = 0; i < seq_lengths.size(); i++) {
-        probs_.push_back(static_cast<double>(seq_lengths[i]));
-    }
-    seq_sampler = AliasSampler(probs_);
-
+    name = seq_object.name;
     constr_info.barcode = barcode;
+
+    construct_seqs();
 
     return;
 }
@@ -234,8 +227,7 @@ void IlluminaOneGenome<T>::just_indels(pcg64& eng) {
  */
 template <typename T>
 void IlluminaOneGenome<T>::append_chunks(std::vector<std::string>& fastq_chunks,
-                                         pcg64& eng,
-                                         SequenceIdentifierInfo& ID_info) {
+                                         pcg64& eng) {
 
     uint32 n_read_ends = ins_probs.size();
     if (fastq_chunks.size() != n_read_ends) fastq_chunks.resize(n_read_ends);
@@ -243,10 +235,12 @@ void IlluminaOneGenome<T>::append_chunks(std::vector<std::string>& fastq_chunks,
     const std::string& barcode(constr_info.barcode);
     const std::vector<uint32>& read_seq_spaces(constr_info.read_seq_spaces);
 
+    // Just making this reference to keep lines from getting very long.
+    const uint32& seq_ind(constr_info.seq_ind);
+
     // Boolean for whether we take the reverse side first:
     bool reverse = runif_01(eng) < 0.5;
     for (uint32 i = 0; i < n_read_ends; i++) {
-        ID_info.read = i + 1;
         std::string& read(constr_info.reads[i]);
         std::string& qual(constr_info.quals[i]);
 
@@ -264,7 +258,7 @@ void IlluminaOneGenome<T>::append_chunks(std::vector<std::string>& fastq_chunks,
         */
         if (!reverse) {
             // Fill in read starting with position after barcode:
-            (*(sequences))[constr_info.seq_ind].fill_read(
+            (*(sequences))[seq_ind].fill_read(
                     read, barcode.size(),
                     start, read_seq_spaces[i]);
         } else {
@@ -276,7 +270,7 @@ void IlluminaOneGenome<T>::append_chunks(std::vector<std::string>& fastq_chunks,
              `read` should already have filler 'N' chars present at initialization
              of the `constr_info` field, so no need to add any now.)
              */
-            (*(sequences))[constr_info.seq_ind].fill_read(
+            (*(sequences))[seq_ind].fill_read(
                     read, 0,
                     start, read_seq_spaces[i]);
             // Now do reverse complement:
@@ -293,7 +287,12 @@ void IlluminaOneGenome<T>::append_chunks(std::vector<std::string>& fastq_chunks,
         reverse = !reverse;
 
         // Combine into 4 lines of output per read:
-        fastq_chunks[i] += ID_info.get_line() + '\n' + read + "\n+\n" + qual + '\n';
+        // ID line:
+        fastq_chunks[i] += '@' + this->name + '-' + (*sequences)[seq_ind].name +
+            '-' + std::to_string(start);
+        if (paired) fastq_chunks[i] += '/' + std::to_string(i+1);
+        // The rest:
+        fastq_chunks[i] += '\n' + read + "\n+\n" + qual + '\n';
     }
 
     return;
@@ -351,18 +350,7 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                       const std::vector<std::vector<std::vector<uint8>>>& quals2,
                       const double& ins_prob2,
                       const double& del_prob2,
-                      const std::vector<std::string>& barcodes,
-                      const std::string& instrument,
-                      const uint32& run_number,
-                      const std::string& flowcell_ID,
-                      const uint32& lane,
-                      const uint32& tile,
-                      const uint32& x_pos,
-                      const uint32& y_pos,
-                      const uint32& read,
-                      const std::string& is_filtered,
-                      const uint32& control_number,
-                      const uint32& sample_number) {
+                      const std::vector<std::string>& barcodes) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     IlluminaReference read_filler_base;
@@ -387,17 +375,13 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                               barcodes[0]);
     }
 
-    SequenceIdentifierInfo ID_info_base(instrument, run_number, flowcell_ID, lane,
-                                        tile, x_pos, y_pos, read, is_filtered,
-                                        control_number, sample_number);
-
     if (compress) {
         write_reads_cpp_<IlluminaReference, gzFile>(
-                read_filler_base, ID_info_base, out_prefix, n_reads, prob_dup,
+                read_filler_base, out_prefix, n_reads, prob_dup,
                 read_chunk_size, n_read_ends, n_cores, show_progress);
     } else {
         write_reads_cpp_<IlluminaReference, std::ofstream>(
-                read_filler_base, ID_info_base, out_prefix, n_reads, prob_dup,
+                read_filler_base, out_prefix, n_reads, prob_dup,
                 read_chunk_size, n_read_ends, n_cores, show_progress);
     }
 
@@ -439,18 +423,7 @@ void illumina_var_cpp(SEXP var_set_ptr,
                       const std::vector<std::vector<std::vector<uint8>>>& quals2,
                       const double& ins_prob2,
                       const double& del_prob2,
-                      const std::vector<std::string>& barcodes,
-                      const std::string& instrument,
-                      const uint32& run_number,
-                      const std::string& flowcell_ID,
-                      const uint32& lane,
-                      const uint32& tile,
-                      const uint32& x_pos,
-                      const uint32& y_pos,
-                      const uint32& read,
-                      const std::string& is_filtered,
-                      const uint32& control_number,
-                      const uint32& sample_number) {
+                      const std::vector<std::string>& barcodes) {
 
     XPtr<VarSet> var_set(var_set_ptr);
     IlluminaVariants read_filler_base;
@@ -474,18 +447,13 @@ void illumina_var_cpp(SEXP var_set_ptr,
                                             barcodes);
     }
 
-    SequenceIdentifierInfo ID_info_base(instrument, run_number, flowcell_ID, lane,
-                                        tile, x_pos, y_pos, read, is_filtered,
-                                        control_number, sample_number);
-
-
     if (compress) {
         write_reads_cpp_<IlluminaVariants, gzFile>(
-                read_filler_base, ID_info_base, out_prefix, n_reads, prob_dup,
+                read_filler_base, out_prefix, n_reads, prob_dup,
                 read_chunk_size, n_read_ends, n_cores, show_progress);
     }else {
         write_reads_cpp_<IlluminaVariants, std::ofstream>(
-                read_filler_base, ID_info_base, out_prefix, n_reads, prob_dup,
+                read_filler_base, out_prefix, n_reads, prob_dup,
                 read_chunk_size, n_read_ends, n_cores, show_progress);
     }
 

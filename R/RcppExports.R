@@ -174,8 +174,8 @@ digest_ref <- function(ref_genome_ptr, bind_sites, len5s, chunk_size = 0L, n_cor
 #'
 #' @noRd
 #'
-illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes, instrument, run_number, flowcell_ID, lane, tile, x_pos, y_pos, read, is_filtered, control_number, sample_number) {
-    invisible(.Call(`_gemino_illumina_ref_cpp`, ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes, instrument, run_number, flowcell_ID, lane, tile, x_pos, y_pos, read, is_filtered, control_number, sample_number))
+illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
+    invisible(.Call(`_gemino_illumina_ref_cpp`, ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
 }
 
 #' Illumina sequence for reference object.
@@ -183,8 +183,8 @@ illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compr
 #'
 #' @noRd
 #'
-illumina_var_cpp <- function(var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes, instrument, run_number, flowcell_ID, lane, tile, x_pos, y_pos, read, is_filtered, control_number, sample_number) {
-    invisible(.Call(`_gemino_illumina_var_cpp`, var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes, instrument, run_number, flowcell_ID, lane, tile, x_pos, y_pos, read, is_filtered, control_number, sample_number))
+illumina_var_cpp <- function(var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
+    invisible(.Call(`_gemino_illumina_var_cpp`, var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
 }
 
 make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates) {
@@ -392,8 +392,8 @@ UNREST_rate_matrix <- function(Q) {
 #'
 #' @noRd
 #'
-pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst, instrument, run_number, flowcell_ID, lane, tile, x_pos, y_pos, read, is_filtered, control_number, sample_number) {
-    invisible(.Call(`_gemino_pacbio_ref_cpp`, ref_genome_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst, instrument, run_number, flowcell_ID, lane, tile, x_pos, y_pos, read, is_filtered, control_number, sample_number))
+pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
+    invisible(.Call(`_gemino_pacbio_ref_cpp`, ref_genome_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
 }
 
 #' PacBio sequence for reference object.
@@ -401,8 +401,8 @@ pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, n_reads, n_core
 #'
 #' @noRd
 #'
-pacbio_var_cpp <- function(var_set_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst, instrument, run_number, flowcell_ID, lane, tile, x_pos, y_pos, read, is_filtered, control_number, sample_number) {
-    invisible(.Call(`_gemino_pacbio_var_cpp`, var_set_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst, instrument, run_number, flowcell_ID, lane, tile, x_pos, y_pos, read, is_filtered, control_number, sample_number))
+pacbio_var_cpp <- function(var_set_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
+    invisible(.Call(`_gemino_pacbio_var_cpp`, var_set_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
 }
 
 #' Read a ms output file with newick gene trees and return the gene tree strings.

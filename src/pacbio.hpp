@@ -25,7 +25,7 @@
 #include "alias_sampler.hpp"  // AliasSampler
 #include "util.hpp"  // clear_memory
 #include "str_manip.hpp"  // rev_comp
-#include "sequencer.hpp"  // SequenceIdentifierInfo
+#include "sequencer.hpp"  // generic sequencer classes
 
 using namespace Rcpp;
 
@@ -415,6 +415,7 @@ public:
     /* __ Info __ */
     std::vector<uint32> seq_lengths;    // genome-sequence lengths
     const T* sequences;                 // pointer to `const T`
+    std::string name;
 
 
     PacBioOneGenome() {};
@@ -439,7 +440,8 @@ public:
           qe_sampler(sqrt_params_, norm_params_, prob_thresh_, prob_ins_,
           prob_del_, prob_subst_),
           seq_lengths(seq_object.seq_sizes()),
-          sequences(&seq_object) {
+          sequences(&seq_object),
+          name(seq_object.name) {
         construct_seqs();
     };
     // Using vectors of read lengths and sampling weight for read lengths:
@@ -461,7 +463,8 @@ public:
           qe_sampler(sqrt_params_, norm_params_, prob_thresh_, prob_ins_,
           prob_del_, prob_subst_),
           seq_lengths(seq_object.seq_sizes()),
-          sequences(&seq_object) {
+          sequences(&seq_object),
+          name(seq_object.name) {
         construct_seqs();
     };
 
@@ -471,20 +474,19 @@ public:
           pass_sampler(other.pass_sampler),
           qe_sampler(other.qe_sampler),
           seq_lengths(other.seq_lengths),
-          sequences(other.sequences) {};
+          sequences(other.sequences),
+          name(other.name) {};
 
 
     // Add one read string (with 4 lines: ID, sequence, "+", quality) to a FASTQ chunk
     void one_read(std::vector<std::string>& fastq_chunks,
-                  pcg64& eng,
-                  SequenceIdentifierInfo& ID_info);
+                  pcg64& eng);
     /*
      Same as above, but for a duplicate. It's assumed that `one_read` has been
      run once before.
      */
     void re_read(std::vector<std::string>& fastq_chunks,
-                 pcg64& eng,
-                 SequenceIdentifierInfo& ID_info);
+                 pcg64& eng);
 
 
     /*
@@ -495,6 +497,7 @@ public:
     void add_seq_info(const T& seq_object) {
         seq_lengths = seq_object.seq_sizes();
         sequences = &seq_object;
+        name = seq_object.name;
         construct_seqs();
     }
 
@@ -535,8 +538,7 @@ private:
 
     // Append quality and read to fastq chunk
     void append_chunk(std::string& fastq_chunk,
-                      pcg64& eng,
-                      SequenceIdentifierInfo& ID_info);
+                      pcg64& eng);
 
 
 };
@@ -624,10 +626,9 @@ public:
      */
     // If only providing rng and id info, sample for a variant, then make read(s):
     void one_read(std::vector<std::string>& fastq_chunks,
-                  pcg64& eng,
-                  SequenceIdentifierInfo& ID_info) {
+                  pcg64& eng) {
         var = variant_sampler.sample(eng);
-        read_makers[var].one_read(fastq_chunks, eng, ID_info);
+        read_makers[var].one_read(fastq_chunks, eng);
         return;
     }
     /*
@@ -636,9 +637,8 @@ public:
     -------------
     */
     void re_read(std::vector<std::string>& fastq_chunks,
-                 pcg64& eng,
-                 SequenceIdentifierInfo& ID_info) {
-        read_makers[var].re_read(fastq_chunks, eng, ID_info);
+                 pcg64& eng) {
+        read_makers[var].re_read(fastq_chunks, eng);
         return;
     }
 

@@ -13,8 +13,8 @@ illumina(seq_object, out_prefix, n_reads, read_length, paired, frag_mean,
   profile2 = NULL, ins_prob1 = 9e-05, del_prob1 = 0.00011,
   ins_prob2 = 0.00015, del_prob2 = 0.00023, frag_len_min = NULL,
   frag_len_max = NULL, variant_probs = NULL, barcodes = NULL,
-  prob_dup = 0.02, id_info = list(), compress = FALSE,
-  n_cores = 1L, read_chunk_size = 100L, show_progress = FALSE)
+  prob_dup = 0.02, compress = FALSE, n_cores = 1L,
+  read_chunk_size = 100L, show_progress = FALSE)
 }
 \arguments{
 \item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
@@ -79,10 +79,6 @@ Defaults to \code{NULL}.}
 
 \item{prob_dup}{A single number indicating the probability of duplicates.
 Defaults to \code{0.02}.}
-
-\item{id_info}{A list containing information used to generate ID lines in the
-FASTQ file. See "ID line" section for more information.
-Defaults to \code{list()}.}
 
 \item{compress}{A logical for whether to compress output FASTQ files using gzip.
 Defaults to \code{FALSE}.}

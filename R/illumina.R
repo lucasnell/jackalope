@@ -276,7 +276,7 @@ check_illumina_args <- function(seq_object, n_reads,
                                 ins_prob2, del_prob2,
                                 frag_len_min, frag_len_max,
                                 variant_probs, barcodes, prob_dup,
-                                id_info, compress, n_cores, read_chunk_size,
+                                compress, n_cores, read_chunk_size,
                                 show_progress) {
 
     # Checking types:
@@ -321,8 +321,6 @@ check_illumina_args <- function(seq_object, n_reads,
     if (!is.null(barcodes) && !is_type(barcodes, "character")) {
         err_msg("illumina", "barcodes", "NULL or a character vector")
     }
-    if (!is_type(id_info, "list")) err_msg("illumina", "id_info", "a list.")
-
 
     # Checking for proper profile info:
     if (paired) {
@@ -501,9 +499,6 @@ check_illumina_args <- function(seq_object, n_reads,
 #'     Defaults to `NULL`.
 #' @param prob_dup A single number indicating the probability of duplicates.
 #'     Defaults to `0.02`.
-#' @param id_info A list containing information used to generate ID lines in the
-#'     FASTQ file. See "ID line" section for more information.
-#'     Defaults to `list()`.
 #' @param compress A logical for whether to compress output FASTQ files using gzip.
 #'     Defaults to `FALSE`.
 #' @param n_cores The number of cores to use in processing.
@@ -547,7 +542,6 @@ illumina <- function(seq_object,
                      variant_probs = NULL,
                      barcodes = NULL,
                      prob_dup = 0.02,
-                     id_info = list(),
                      compress = FALSE,
                      n_cores = 1L,
                      read_chunk_size = 100L,
@@ -561,7 +555,7 @@ illumina <- function(seq_object,
                         frag_mean, frag_sd, matepair, seq_sys, profile1, profile2,
                         ins_prob1, del_prob1, ins_prob2, del_prob2,
                         frag_len_min, frag_len_max, variant_probs, barcodes, prob_dup,
-                        id_info, compress, n_cores, read_chunk_size, show_progress)
+                        compress, n_cores, read_chunk_size, show_progress)
 
     # Change mean and SD to shape and scale of Gamma distribution:
     frag_len_shape <- (frag_mean / frag_sd)^2
@@ -584,8 +578,6 @@ illumina <- function(seq_object,
         barcodes <- rep("", seq_object$n_vars())
     } else if (is.null(barcodes)) barcodes <- ""
 
-    id_info <- do.call(id_line_info, id_info)
-
     prof_info1 <- read_profile(profile1, seq_sys, read_length, 1)
     qual_probs1  <- prof_info1$qual_probs
     quals1 <- prof_info1$quals
@@ -602,29 +594,28 @@ illumina <- function(seq_object,
     }
 
     # Assembling list of arguments for inner cpp function:
-    args <- c(list(out_prefix = out_prefix,
-                   compress = compress,
-                   n_reads = n_reads,
-                   paired = paired,
-                   matepair = matepair,
-                   prob_dup = prob_dup,
-                   n_cores = n_cores,
-                   read_chunk_size = read_chunk_size,
-                   frag_len_shape = frag_len_shape,
-                   frag_len_scale = frag_len_scale,
-                   frag_len_min = frag_len_min,
-                   frag_len_max = frag_len_max,
-                   qual_probs1 = as.name(quote(qual_probs1)),
-                   quals1 = as.name(quote(quals1)),
-                   ins_prob1 = ins_prob1,
-                   del_prob1 = del_prob1,
-                   qual_probs2 = as.name(quote(qual_probs2)),
-                   quals2 = as.name(quote(quals2)),
-                   ins_prob2 = ins_prob2,
-                   del_prob2 = del_prob2,
-                   barcodes = barcodes,
-                   show_progress = show_progress),
-              id_info)
+    args <- list(out_prefix = out_prefix,
+                 compress = compress,
+                 n_reads = n_reads,
+                 paired = paired,
+                 matepair = matepair,
+                 prob_dup = prob_dup,
+                 n_cores = n_cores,
+                 read_chunk_size = read_chunk_size,
+                 frag_len_shape = frag_len_shape,
+                 frag_len_scale = frag_len_scale,
+                 frag_len_min = frag_len_min,
+                 frag_len_max = frag_len_max,
+                 qual_probs1 = as.name(quote(qual_probs1)),
+                 quals1 = as.name(quote(quals1)),
+                 ins_prob1 = ins_prob1,
+                 del_prob1 = del_prob1,
+                 qual_probs2 = as.name(quote(qual_probs2)),
+                 quals2 = as.name(quote(quals2)),
+                 ins_prob2 = ins_prob2,
+                 del_prob2 = del_prob2,
+                 barcodes = barcodes,
+                 show_progress = show_progress)
 
     if (inherits(seq_object, "ref_genome")) {
         args <- c(args, list(ref_genome_ptr = seq_object$genome))

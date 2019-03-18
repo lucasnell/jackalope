@@ -22,7 +22,7 @@
 #include "table_sampler.hpp"  // TableSampler
 #include "util.hpp"  // clear_memory
 #include "str_manip.hpp"  // rev_comp
-#include "sequencer.hpp"  // SequenceIdentifierInfo class
+#include "sequencer.hpp"  // generic sequencing class
 
 
 using namespace Rcpp;
@@ -313,6 +313,7 @@ public:
     bool matepair;                      // Boolean for whether to do mate-pair reads
     std::vector<double> ins_probs;      // Per-base prob. of an insertion, reads 1 and 2
     std::vector<double> del_probs;      // Per-base prob. of a deletion, reads 1 and 2
+    std::string name;
 
     IlluminaOneGenome() {};
     // For paired-end reads:
@@ -341,6 +342,7 @@ public:
           matepair(matepair_),
           ins_probs(2),
           del_probs(2),
+          name(seq_object.name),
           insertions(2),
           deletions(2),
           frag_len_min(frag_len_min_),
@@ -380,6 +382,7 @@ public:
           matepair(false),
           ins_probs(1),
           del_probs(1),
+          name(seq_object.name),
           insertions(1),
           deletions(1),
           frag_len_min(frag_len_min_),
@@ -401,6 +404,7 @@ public:
           matepair(other.matepair),
           ins_probs(other.ins_probs),
           del_probs(other.del_probs),
+          name(other.name),
           insertions(other.insertions),
           deletions(other.deletions),
           frag_len_min(other.frag_len_min),
@@ -411,16 +415,14 @@ public:
 
     // Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality)
     void one_read(std::vector<std::string>& fastq_chunks,
-                  pcg64& eng,
-                  SequenceIdentifierInfo& ID_info);
+                  pcg64& eng);
 
     /*
      Same as above, but for a duplicate. It's assumed that `one_read` has been
      run once before.
      */
     void re_read(std::vector<std::string>& fastq_chunks,
-                  pcg64& eng,
-                  SequenceIdentifierInfo& ID_info);
+                  pcg64& eng);
 
     /*
      Add information about a RefGenome or VarGenome object
@@ -475,8 +477,7 @@ protected:
      That should be done outside this function.
      */
     void append_chunks(std::vector<std::string>& fastq_chunks,
-                       pcg64& eng,
-                       SequenceIdentifierInfo& ID_info);
+                       pcg64& eng);
 
 
 };
@@ -600,10 +601,9 @@ public:
      */
     // If only providing rng and id info, sample for a variant, then make read(s):
     void one_read(std::vector<std::string>& fastq_chunks,
-                  pcg64& eng,
-                  SequenceIdentifierInfo& ID_info) {
+                  pcg64& eng) {
         var = variant_sampler.sample(eng);
-        read_makers[var].one_read(fastq_chunks, eng, ID_info);
+        read_makers[var].one_read(fastq_chunks, eng);
         return;
     }
     /*
@@ -612,9 +612,8 @@ public:
      -------------
      */
     void re_read(std::vector<std::string>& fastq_chunks,
-                  pcg64& eng,
-                  SequenceIdentifierInfo& ID_info) {
-        read_makers[var].re_read(fastq_chunks, eng, ID_info);
+                  pcg64& eng) {
+        read_makers[var].re_read(fastq_chunks, eng);
         return;
     }
 
