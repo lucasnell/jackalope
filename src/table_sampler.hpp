@@ -244,6 +244,10 @@ public:
         }
         return;
     }
+    char sample(pcg64& eng) const {
+        uint32 k = uint_sampler.sample(eng);
+        return characters[k];
+    }
 
 private:
     TableSampler uint_sampler;

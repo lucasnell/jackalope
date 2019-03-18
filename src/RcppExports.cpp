@@ -29,6 +29,19 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// replace_Ns_cpp
+void replace_Ns_cpp(SEXP ref_genome_ptr, const std::vector<double>& pi_tcag, const uint32& n_cores, const bool& show_progress);
+RcppExport SEXP _gemino_replace_Ns_cpp(SEXP ref_genome_ptrSEXP, SEXP pi_tcagSEXP, SEXP n_coresSEXP, SEXP show_progressSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_cores(n_coresSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    replace_Ns_cpp(ref_genome_ptr, pi_tcag, n_cores, show_progress);
+    return R_NilValue;
+END_RCPP
+}
 // create_genome_
 SEXP create_genome_(const uint32& n_seqs, const double& len_mean, const double& len_sd, std::vector<double> pi_tcag, const uint32& n_cores);
 RcppExport SEXP _gemino_create_genome_(SEXP n_seqsSEXP, SEXP len_meanSEXP, SEXP len_sdSEXP, SEXP pi_tcagSEXP, SEXP n_coresSEXP) {
@@ -889,6 +902,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_gemino_merge_sequences", (DL_FUNC) &_gemino_merge_sequences, 1},
     {"_gemino_filter_sequences", (DL_FUNC) &_gemino_filter_sequences, 3},
+    {"_gemino_replace_Ns_cpp", (DL_FUNC) &_gemino_replace_Ns_cpp, 4},
     {"_gemino_create_genome_", (DL_FUNC) &_gemino_create_genome_, 5},
     {"_gemino_rando_seqs", (DL_FUNC) &_gemino_rando_seqs, 5},
     {"_gemino_get_precleavage_lens", (DL_FUNC) &_gemino_get_precleavage_lens, 1},

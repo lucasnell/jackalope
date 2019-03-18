@@ -10,9 +10,16 @@
 #include <deque>
 #include <string>
 #include <vector>
+#include <progress.hpp>  // for the progress bar
+
+#ifdef _OPENMP
+#include <omp.h>  // omp
+#endif
+
 
 #include "seq_classes_ref.hpp"  // Ref* classes
 #include "gemino_types.hpp"  // integer types
+#include "table_sampler.hpp"  // Table string sampler
 #include "util.hpp"  // clear_memory
 
 
@@ -171,6 +178,84 @@ void filter_sequences(SEXP ref_genome_ptr,
     }
 
     ref_genome->total_size = static_cast<uint64>(out_seq);
+
+    return;
+}
+
+
+
+
+
+// ======================================================================================
+// ======================================================================================
+
+//  Replace Ns with random sequences
+
+// ======================================================================================
+// ======================================================================================
+
+//' Replace Ns with randome nucleotides.
+//'
+//'
+//' @return Nothing. Changes are made in place.
+//'
+//' @name replace_Ns_cpp
+//'
+//' @noRd
+//'
+//'
+//[[Rcpp::export]]
+void replace_Ns_cpp(SEXP ref_genome_ptr,
+                    const std::vector<double>& pi_tcag,
+                    const uint32& n_cores,
+                    const bool& show_progress) {
+
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
+
+    // Generate seeds for random number generators (1 RNG per core)
+    const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
+
+    const uint32 n_seqs = ref_genome->size();
+
+    // Progress bar
+    Progress prog_bar(n_seqs, show_progress);
+
+#ifdef _OPENMP
+#pragma omp parallel num_threads(n_cores) if (n_cores > 1)
+{
+#endif
+
+    std::vector<uint64> active_seeds;
+
+    // Write the active seed per core or just write one of the seeds.
+#ifdef _OPENMP
+    uint32 active_thread = omp_get_thread_num();
+#else
+    uint32 active_thread = 0;
+#endif
+    active_seeds = seeds[active_thread];
+
+    pcg64 eng = seeded_pcg(active_seeds);
+
+    // Samples for nucleotides:
+    TableStringSampler<std::string> sampler("TCAG", pi_tcag);
+
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
+    for (uint32 i = 0; i < n_seqs; i++) {
+        if (!prog_bar.is_aborted()) {
+            RefSequence& seq(ref_genome->sequences[i]);
+            for (char& c : seq.nucleos) {
+                if (c == 'N') c = sampler.sample(eng);
+            }
+            prog_bar.increment(1U);
+        }
+    }
+
+#ifdef _OPENMP
+}
+#endif
 
     return;
 }

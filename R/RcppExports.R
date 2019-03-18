@@ -38,6 +38,20 @@ filter_sequences <- function(ref_genome_ptr, min_seq_size = 0L, out_seq_prop = 0
     invisible(.Call(`_gemino_filter_sequences`, ref_genome_ptr, min_seq_size, out_seq_prop))
 }
 
+#' Replace Ns with randome nucleotides.
+#'
+#'
+#' @return Nothing. Changes are made in place.
+#'
+#' @name replace_Ns_cpp
+#'
+#' @noRd
+#'
+#'
+replace_Ns_cpp <- function(ref_genome_ptr, pi_tcag, n_cores, show_progress) {
+    invisible(.Call(`_gemino_replace_Ns_cpp`, ref_genome_ptr, pi_tcag, n_cores, show_progress))
+}
+
 #' Create `RefGenome` pointer based on nucleotide equilibrium frequencies.
 #'
 #' Function to create random sequences for a new reference genome object.
@@ -172,34 +186,6 @@ illumina_ref_cpp <- function(ref_genome_ptr, paired, out_prefix, compress, n_rea
 illumina_var_cpp <- function(var_set_ptr, paired, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes, instrument, run_number, flowcell_ID, lane, tile, x_pos, y_pos, read, is_filtered, control_number, sample_number) {
     invisible(.Call(`_gemino_illumina_var_cpp`, var_set_ptr, paired, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes, instrument, run_number, flowcell_ID, lane, tile, x_pos, y_pos, read, is_filtered, control_number, sample_number))
 }
-
-#' Make pointer to object that simulates Illumina sequencing of a reference genome.
-#'
-#'
-#' @noRd
-#'
-NULL
-
-#' Make pointer to object that simulates Illumina sequencing of a variant set object.
-#'
-#'
-#' @noRd
-#'
-NULL
-
-#' Make pointer to object that simulates long-read sequencing of a reference genome.
-#'
-#'
-#' @noRd
-#'
-NULL
-
-#' Make pointer to object that simulates long-read sequencing of a reference genome.
-#'
-#'
-#' @noRd
-#'
-NULL
 
 make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates) {
     .Call(`_gemino_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates)
