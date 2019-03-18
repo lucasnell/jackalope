@@ -17,8 +17,8 @@
 #include <string>
 #include <pcg/pcg_random.hpp> // pcg prng
 
-#include "gemino_types.hpp"  // integer types
-#include "pcg.hpp"  // runif_* methods
+#include "gemino_types.h"  // integer types
+#include "pcg.h"  // runif_* methods
 
 
 using namespace Rcpp;

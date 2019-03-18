@@ -11,8 +11,8 @@
 #include <zlib.h>  // for writing to compressed FASTQ
 #include <progress.hpp>  // for the progress bar
 
-#include "gemino_types.hpp"  // uint32
-#include "pcg.hpp"  // ruinf_01
+#include "gemino_types.h"  // uint32
+#include "pcg.h"  // ruinf_01
 
 using namespace Rcpp;
 

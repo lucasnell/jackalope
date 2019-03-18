@@ -17,9 +17,9 @@
 #include <string>               // string class
 #include <random>               // gamma_distribution
 
-#include "gemino_types.hpp"       // integer types
-#include "pcg.hpp"                // pcg seeding
-#include "mevo_gammas.hpp"        // Gamma* classes
+#include "gemino_types.h"       // integer types
+#include "pcg.h"                // pcg seeding
+#include "mevo_gammas.h"        // Gamma* classes
 
 
 

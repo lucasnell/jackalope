@@ -8,13 +8,13 @@
 
 
 
-#include "gemino_types.hpp"
-#include "mevo.hpp"
-#include "seq_classes_var.hpp"  // Var* classes
-#include "pcg.hpp"  // pcg seeding
-#include "table_sampler.hpp"  // table method of sampling
-#include "weighted_reservoir.hpp"  // weighted reservoir sampling
-#include "mevo_gammas.hpp"  // SequenceGammas class
+#include "gemino_types.h"
+#include "mevo.h"
+#include "seq_classes_var.h"  // Var* classes
+#include "pcg.h"  // pcg seeding
+#include "table_sampler.h"  // table method of sampling
+#include "weighted_reservoir.h"  // weighted reservoir sampling
+#include "mevo_gammas.h"  // SequenceGammas class
 
 using namespace Rcpp;
 

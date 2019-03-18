@@ -5,10 +5,10 @@
 #include <vector>
 #include <zlib.h>
 
-#include "gemino_types.hpp"  // integer types
-#include "seq_classes_ref.hpp"  // Ref* classes
-#include "seq_classes_var.hpp"  // Var* classes
-#include "str_manip.hpp"  // filter_nucleos
+#include "gemino_types.h"  // integer types
+#include "seq_classes_ref.h"  // Ref* classes
+#include "seq_classes_var.h"  // Var* classes
+#include "str_manip.h"  // filter_nucleos
 
 using namespace Rcpp;
 

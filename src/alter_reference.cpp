@@ -17,10 +17,10 @@
 #endif
 
 
-#include "seq_classes_ref.hpp"  // Ref* classes
-#include "gemino_types.hpp"  // integer types
-#include "table_sampler.hpp"  // Table string sampler
-#include "util.hpp"  // clear_memory
+#include "seq_classes_ref.h"  // Ref* classes
+#include "gemino_types.h"  // integer types
+#include "table_sampler.h"  // Table string sampler
+#include "util.h"  // clear_memory
 
 
 using namespace Rcpp;

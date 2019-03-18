@@ -11,11 +11,11 @@
 #include <omp.h>  // omp
 #endif
 
-#include "gemino_types.hpp"  // integer types
-#include "seq_classes_ref.hpp"  // Ref* classes
-#include "seq_classes_var.hpp"  // Var* classes
-#include "sequencer.hpp"  // generic sequencing classes
-#include "illumina.hpp"  // Illumina-specific classes
+#include "gemino_types.h"  // integer types
+#include "seq_classes_ref.h"  // Ref* classes
+#include "seq_classes_var.h"  // Var* classes
+#include "sequencer.h"  // generic sequencing classes
+#include "illumina.h"  // Illumina-specific classes
 
 using namespace Rcpp;
 

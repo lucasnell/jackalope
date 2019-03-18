@@ -23,11 +23,11 @@
 #include <omp.h>  // omp
 #endif
 
-#include "gemino_types.hpp"  // integer types
-#include "seq_classes_var.hpp"  // Var* classes
-#include "mevo.hpp"  // samplers
-#include "table_sampler.hpp" // table sampling
-#include "pcg.hpp" // pcg sampler types
+#include "gemino_types.h"  // integer types
+#include "seq_classes_var.h"  // Var* classes
+#include "mevo.h"  // samplers
+#include "table_sampler.h" // table sampling
+#include "pcg.h" // pcg sampler types
 
 
 using namespace Rcpp;

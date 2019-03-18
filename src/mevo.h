@@ -9,12 +9,12 @@
 #include <random>  // gamma_distribution
 
 
-#include "gemino_types.hpp" // integer types
-#include "seq_classes_var.hpp"  // Var* classes
-#include "pcg.hpp"  // pcg seeding
-#include "table_sampler.hpp"  // table method of sampling
-#include "mevo_gammas.hpp"  // SequenceGammas class
-#include "weighted_reservoir.hpp"  // weighted_reservoir_* functions
+#include "gemino_types.h" // integer types
+#include "seq_classes_var.h"  // Var* classes
+#include "pcg.h"  // pcg seeding
+#include "table_sampler.h"  // table method of sampling
+#include "mevo_gammas.h"  // SequenceGammas class
+#include "weighted_reservoir.h"  // weighted_reservoir_* functions
 
 
 

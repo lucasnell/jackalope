@@ -18,10 +18,10 @@
 #include <omp.h>  // omp
 #endif
 
-#include "gemino_types.hpp"  // integer types
-#include "seq_classes_ref.hpp"  // Ref* classes
-#include "table_sampler.hpp" // table sampling
-#include "pcg.hpp" // pcg::max, mc_seeds, seeded_pcg
+#include "gemino_types.h"  // integer types
+#include "seq_classes_ref.h"  // Ref* classes
+#include "table_sampler.h" // table sampling
+#include "pcg.h" // pcg::max, mc_seeds, seeded_pcg
 
 using namespace Rcpp;
 
