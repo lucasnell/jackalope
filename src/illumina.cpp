@@ -250,13 +250,18 @@ void IlluminaOneGenome<T>::append_chunks(std::vector<std::string>& fastq_chunks,
         std::string& read(constr_info.reads[i]);
         std::string& qual(constr_info.quals[i]);
 
-        // Read starting location:
-        uint32 start = constr_info.frag_start;
-        if (reverse) start += (constr_info.frag_len - read_seq_spaces[i]);
+        // Read starting location depends on if mate-pair and if reverse strand:
+        uint32 start;
+        if ((!matepair && !reverse) || (matepair && reverse)) {
+            start = constr_info.frag_start;
+        } else {
+            start = constr_info.frag_start + constr_info.frag_len -
+                read_seq_spaces[i];
+        }
 
         /*
-         Now fill `read` differently if taking forward or reverse strand:
-         */
+         Filling `read` only depends on whether it's the reverse strand:
+        */
         if (!reverse) {
             // Fill in read starting with position after barcode:
             (*(sequences))[constr_info.seq_ind].fill_read(
@@ -277,6 +282,7 @@ void IlluminaOneGenome<T>::append_chunks(std::vector<std::string>& fastq_chunks,
             // Now do reverse complement:
             rev_comp(read);
         }
+
         // Now fill barcode:
         for (uint i = 0; i < barcode.size(); i++) read[i] = barcode[i];
 
@@ -325,6 +331,7 @@ void IlluminaOneGenome<T>::append_chunks(std::vector<std::string>& fastq_chunks,
 //[[Rcpp::export]]
 void illumina_ref_cpp(SEXP ref_genome_ptr,
                       const bool& paired,
+                      const bool& matepair,
                       const std::string& out_prefix,
                       const bool& compress,
                       const uint32& n_reads,
@@ -364,7 +371,8 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
     if (paired) {
         n_read_ends = 2;
         read_filler_base =
-            IlluminaReference(*ref_genome, frag_len_shape, frag_len_scale,
+            IlluminaReference(*ref_genome, matepair,
+                              frag_len_shape, frag_len_scale,
                               frag_len_min, frag_len_max,
                               qual_probs1, quals1, ins_prob1, del_prob1,
                               qual_probs2, quals2, ins_prob2, del_prob2,
@@ -372,7 +380,8 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
     } else {
         n_read_ends = 1;
         read_filler_base =
-            IlluminaReference(*ref_genome, frag_len_shape, frag_len_scale,
+            IlluminaReference(*ref_genome,
+                              frag_len_shape, frag_len_scale,
                               frag_len_min, frag_len_max,
                               qual_probs1, quals1, ins_prob1, del_prob1,
                               barcodes[0]);
@@ -409,6 +418,7 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
 //[[Rcpp::export]]
 void illumina_var_cpp(SEXP var_set_ptr,
                       const bool& paired,
+                      const bool& matepair,
                       const std::string& out_prefix,
                       const bool& compress,
                       const uint32& n_reads,
@@ -449,6 +459,7 @@ void illumina_var_cpp(SEXP var_set_ptr,
     if (paired) {
         n_read_ends = 2;
         read_filler_base = IlluminaVariants(*var_set, variant_probs,
+                                            matepair,
                                             frag_len_shape, frag_len_scale,
                                             frag_len_min, frag_len_max,
                                             qual_probs1, quals1, ins_prob1, del_prob1,

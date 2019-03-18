@@ -310,12 +310,14 @@ public:
     const T* sequences;                 // pointer to `const T`
     uint32 read_length;                 // Length of reads
     bool paired;                        // Boolean for whether to do paired-end reads
+    bool matepair;                      // Boolean for whether to do mate-pair reads
     std::vector<double> ins_probs;      // Per-base prob. of an insertion, reads 1 and 2
     std::vector<double> del_probs;      // Per-base prob. of a deletion, reads 1 and 2
 
     IlluminaOneGenome() {};
     // For paired-end reads:
     IlluminaOneGenome(const T& seq_object,
+                      const bool& matepair_,
                       const double& frag_len_shape,
                       const double& frag_len_scale,
                       const uint32& frag_len_min_,
@@ -336,6 +338,7 @@ public:
           sequences(&seq_object),
           read_length(qual_probs1[0].size()),
           paired(true),
+          matepair(matepair_),
           ins_probs(2),
           del_probs(2),
           insertions(2),
@@ -374,6 +377,7 @@ public:
           sequences(&seq_object),
           read_length(qual_probs[0].size()),
           paired(false),
+          matepair(false),
           ins_probs(1),
           del_probs(1),
           insertions(1),
@@ -387,13 +391,20 @@ public:
           };
 
     IlluminaOneGenome(const IlluminaOneGenome& other)
-        : seq_sampler(other.seq_sampler), qual_errors(other.qual_errors),
+        : seq_sampler(other.seq_sampler),
+          qual_errors(other.qual_errors),
           frag_lengths(other.frag_lengths),
-          seq_lengths(other.seq_lengths), sequences(other.sequences),
-          read_length(other.read_length), paired(other.paired),
-          ins_probs(other.ins_probs), del_probs(other.del_probs),
-          insertions(other.insertions), deletions(other.deletions),
-          frag_len_min(other.frag_len_min), frag_len_max(other.frag_len_max),
+          seq_lengths(other.seq_lengths),
+          sequences(other.sequences),
+          read_length(other.read_length),
+          paired(other.paired),
+          matepair(other.matepair),
+          ins_probs(other.ins_probs),
+          del_probs(other.del_probs),
+          insertions(other.insertions),
+          deletions(other.deletions),
+          frag_len_min(other.frag_len_min),
+          frag_len_max(other.frag_len_max),
           constr_info(other.constr_info) {};
 
 
@@ -496,6 +507,7 @@ public:
     // For paired-end reads:
     IlluminaVariants(const VarSet& var_set,
                      const std::vector<double>& variant_probs,
+                     const bool& matepair_,
                      const double& frag_len_shape,
                      const double& frag_len_scale,
                      const uint32& frag_len_min_,
@@ -522,7 +534,7 @@ public:
          */
         uint32 n_vars = var_set.size();
         // Read maker for the first variant:
-        IlluminaOneVariant read_maker1(var_set[0],
+        IlluminaOneVariant read_maker1(var_set[0], matepair_,
                                        frag_len_shape, frag_len_scale,
                                        frag_len_min_, frag_len_max_,
                                        qual_probs1, quals1, ins_prob1, del_prob1,

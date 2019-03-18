@@ -9,12 +9,12 @@ sequencing read simulator. \emph{Bioinformatics} \strong{28}:593–594.
 }
 \usage{
 illumina(seq_object, out_prefix, n_reads, read_length, paired, frag_mean,
-  frag_sd, seq_sys = NULL, profile1 = NULL, profile2 = NULL,
-  ins_prob1 = 9e-05, del_prob1 = 0.00011, ins_prob2 = 0.00015,
-  del_prob2 = 0.00023, frag_len_min = NULL, frag_len_max = NULL,
-  variant_probs = NULL, barcodes = NULL, prob_dup = 0.02,
-  id_info = list(), compress = FALSE, n_cores = 1L,
-  read_chunk_size = 100L, show_progress = FALSE)
+  frag_sd, matepair = FALSE, seq_sys = NULL, profile1 = NULL,
+  profile2 = NULL, ins_prob1 = 9e-05, del_prob1 = 0.00011,
+  ins_prob2 = 0.00015, del_prob2 = 0.00023, frag_len_min = NULL,
+  frag_len_max = NULL, variant_probs = NULL, barcodes = NULL,
+  prob_dup = 0.02, id_info = list(), compress = FALSE,
+  n_cores = 1L, read_chunk_size = 100L, show_progress = FALSE)
 }
 \arguments{
 \item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
@@ -32,6 +32,10 @@ for the file extension.}
 
 \item{frag_sd}{Standard deviation of the Gamma distribution that generates
 fragment sizes.}
+
+\item{matepair}{Logical for whether to simulate mate-pair reads.
+This argument is ignored if \code{paired} is \code{FALSE}.
+Defaults to \code{FALSE}.}
 
 \item{seq_sys}{Full or abbreviated name of sequencing system to use.
 See "Sequencing systems" section for options.

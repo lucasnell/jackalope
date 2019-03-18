@@ -270,6 +270,7 @@ read_profile <- function(profile_fn, seq_sys, read_length, read) {
 check_illumina_args <- function(seq_object, n_reads,
                                 read_length, paired,
                                 frag_mean, frag_sd,
+                                matepair,
                                 seq_sys, profile1, profile2,
                                 ins_prob1, del_prob1,
                                 ins_prob2, del_prob2,
@@ -295,7 +296,10 @@ check_illumina_args <- function(seq_object, n_reads,
         z <- eval(parse(text = x))
         if (!single_integer(z, 1)) err_msg(x, "a single integer >= 1")
     }
-    if (!is_type(paired, "logical", 1)) err_msg("paired", "a single logical")
+    for (x in c("paired", "matepair", "compress", "show_progress")) {
+        z <- eval(parse(text = x))
+        if (!is_type(z, "logical", 1)) err_msg(x, "a single logical.")
+    }
     for (x in c("frag_mean", "frag_sd")) {
         z <- eval(parse(text = x))
         if (!single_number(z) || z <= 0) err_msg(x, "a single number > 0")
@@ -323,10 +327,6 @@ check_illumina_args <- function(seq_object, n_reads,
         err_msg("barcodes", "NULL or a character vector")
     }
     if (!is_type(id_info, "list")) err_msg("id_info", "a list.")
-    for (x in c("compress", "show_progress")) {
-        z <- eval(parse(text = x))
-        if (!is_type(z, "logical", 1)) err_msg(x, "a single logical.")
-    }
 
 
     # Checking for proper profile info:
@@ -472,6 +472,9 @@ check_illumina_args <- function(seq_object, n_reads,
 #' @param frag_mean Mean of the Gamma distribution that generates fragment sizes.
 #' @param frag_sd Standard deviation of the Gamma distribution that generates
 #'     fragment sizes.
+#' @param matepair Logical for whether to simulate mate-pair reads.
+#'     This argument is ignored if `paired` is `FALSE`.
+#'     Defaults to `FALSE`.
 #' @param seq_sys Full or abbreviated name of sequencing system to use.
 #'     See "Sequencing systems" section for options.
 #'     See "Sequencing profiles" section for more information on how this argument,
@@ -536,6 +539,7 @@ illumina <- function(seq_object,
                      paired,
                      frag_mean,
                      frag_sd,
+                     matepair = FALSE,
                      seq_sys = NULL,
                      profile1 = NULL,
                      profile2 = NULL,
@@ -559,7 +563,7 @@ illumina <- function(seq_object,
 
     # Check for improper argument types:
     check_illumina_args(seq_object, n_reads, read_length, paired,
-                        frag_mean, frag_sd, seq_sys, profile1, profile2,
+                        frag_mean, frag_sd, matepair, seq_sys, profile1, profile2,
                         ins_prob1, del_prob1, ins_prob2, del_prob2,
                         frag_len_min, frag_len_max, variant_probs, barcodes, prob_dup,
                         id_info, compress, n_cores, read_chunk_size, show_progress)
@@ -607,6 +611,7 @@ illumina <- function(seq_object,
                    compress = compress,
                    n_reads = n_reads,
                    paired = paired,
+                   matepair = matepair,
                    prob_dup = prob_dup,
                    n_cores = n_cores,
                    read_chunk_size = read_chunk_size,
