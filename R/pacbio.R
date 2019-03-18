@@ -113,6 +113,16 @@ check_pacbio_args <- function(seq_object,
 #' From either a reference genome or set of haploid variants, create PacBio reads
 #' and write them to FASTQ output file(s).
 #'
+#'
+#' @section ID lines:
+#' The ID lines for FASTQ files are formatted as such:
+#'
+#' `@<genome name>-<sequence name>-<starting position>`
+#'
+#' where `genome name` is always `REF` for reference genomes (as opposed to variants).
+#'
+#'
+#'
 #' @inheritParams illumina
 #' @param chi2_params_s  Vector containing the 5 parameters for the curve determining
 #'     the scale parameter for the chi^2 distribution.

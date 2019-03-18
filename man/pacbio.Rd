@@ -99,6 +99,15 @@ Nothing is returned.
 From either a reference genome or set of haploid variants, create PacBio reads
 and write them to FASTQ output file(s).
 }
+\section{ID lines}{
+
+The ID lines for FASTQ files are formatted as such:
+
+\code{@<genome name>-<sequence name>-<starting position>}
+
+where \code{genome name} is always \code{REF} for reference genomes (as opposed to variants).
+}
+
 \examples{
 
 

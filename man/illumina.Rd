@@ -147,28 +147,14 @@ and
 | NextSeq 500 v2       | NS50    | 75      | Yes    |
 }
 
-\section{ID line}{
+\section{ID lines}{
 
-Possible values for the \code{id_line} argument are as follows:
-\describe{
-\item{instrument}{Instrument ID (string with the following characters allowed:
-a–z, A–Z, 0–9 and underscore). Defaults to \code{"SIM"}.}
-\item{run_number}{Run number on instrument (numeric). Defaults to \code{1}.}
-\item{flowcell_ID}{ID for flowcell (string with the following characters allowed:
-a–z, A–Z, 0–9). Defaults to \code{"FCX"}.}
-\item{lane}{Lane number (numeric). Defaults to \code{1}.}
-\item{tile}{Tile number (numeric). Defaults to \code{15}.}
-\item{x_pos}{Run number on instrument (numeric). Defaults to \code{6329}.}
-\item{y_pos}{X coordinate of cluster (numeric). Defaults to \code{1045}.}
-\item{read}{Read number (numeric). Note that changing this doesn't do anything
-because it's set by the sequencing sampler as reads are created. Defaults to \code{1}.}
-\item{is_filtered}{\code{"Y"} if the read is filtered (did not pass), \code{"N"} otherwise.
-Defaults to \code{"N"}.}
-\item{control_number}{\code{0} when none of the control bits are on, otherwise it
-is an even number. On HiSeq X systems, control specification is not
-performed and this number is always \code{0}. Defaults to \code{0}.}
-\item{sample_number}{Sample number from sample sheet (numeric). Defaults to \code{1}.}
-}
+The ID lines for FASTQ files are formatted as such:
+
+\code{@<genome name>-<sequence name>-<starting position>[/<read#>]}
+
+where the part in \code{[]} is only for paired-end Illumina reads, and where \code{genome name}
+is always \code{REF} for reference genomes (as opposed to variants).
 }
 
 \examples{
