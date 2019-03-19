@@ -1,5 +1,5 @@
-# ifndef __GEMINO_TYPES_H
-# define __GEMINO_TYPES_H
+# ifndef __JACKAL_TYPES_H
+# define __JACKAL_TYPES_H
 
 
 /*

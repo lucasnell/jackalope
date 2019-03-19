@@ -1,5 +1,6 @@
-#ifndef __GEMINO_PCG_H
-#define __GEMINO_PCG_H
+#ifndef __JACKAL_PCG_H
+#define __JACKAL_PCG_H
+
 
 #include <RcppArmadillo.h>
 #include <vector>
@@ -7,7 +8,7 @@
 #include "pcg/pcg_extras.hpp"  // pcg 128-bit integer type
 #include <pcg/pcg_random.hpp> // pcg prng
 
-#include "gemino_types.h" // integer types
+#include "jackal_types.h" // integer types
 
 
 using namespace Rcpp;

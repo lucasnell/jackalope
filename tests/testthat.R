@@ -1,4 +1,4 @@
 library(testthat)
-library(gemino)
+library(jackal)
 
-test_check("gemino")
+test_check("jackal")

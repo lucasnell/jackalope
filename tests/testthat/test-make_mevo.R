@@ -1,7 +1,7 @@
 
 context("Testing making of mevo (molecular evolution info) object")
 
-# library(gemino)
+# library(jackal)
 # library(testthat)
 
 

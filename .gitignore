@@ -12,7 +12,7 @@ inst/doc
 *.bk
 *.desc
 Gac
-gemino_*.tgz
+jackal_*.tgz
 *.pdf
 methods
 _crash_test.R

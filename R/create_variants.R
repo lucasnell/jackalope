@@ -25,7 +25,7 @@
 #'         For what all `trees` fields should look like, see output from the
 #'         `scrm` or `coala` package.
 #'         (These packages are not required to be installed when installing
-#'         `gemino`.)
+#'         `jackal`.)
 #'         To get gene trees in `coala`, make sure to add `+ sumstat_trees()`
 #'         to the `coalmodel`.
 #'         In `scrm`, make sure that `"-T"` is present in `args`.

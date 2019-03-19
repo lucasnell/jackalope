@@ -1,5 +1,5 @@
-#ifndef __GEMINO_PACBIO_H
-#define __GEMINO_PACBIO_H
+#ifndef __JACKAL_PACBIO_H
+#define __JACKAL_PACBIO_H
 
 
 
@@ -17,7 +17,7 @@
 #include <omp.h>  // omp
 #endif
 
-#include "gemino_types.h"  // uint32
+#include "jackal_types.h"  // uint32
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // runif_01

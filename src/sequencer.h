@@ -1,5 +1,5 @@
-#ifndef __GEMINO_SEQUENCER_H
-#define __GEMINO_SEQUENCER_H
+#ifndef __JACKAL_SEQUENCER_H
+#define __JACKAL_SEQUENCER_H
 
 
 
@@ -11,7 +11,7 @@
 #include <zlib.h>  // for writing to compressed FASTQ
 #include <progress.hpp>  // for the progress bar
 
-#include "gemino_types.h"  // uint32
+#include "jackal_types.h"  // uint32
 #include "pcg.h"  // ruinf_01
 
 using namespace Rcpp;

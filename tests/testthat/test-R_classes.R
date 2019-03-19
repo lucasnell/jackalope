@@ -1,7 +1,7 @@
 
 context("Testing R class methods and info")
 
-# library(gemino)
+# library(jackal)
 # library(testthat)
 
 
@@ -12,7 +12,7 @@ len <- 100
 len_sd <- 10
 
 # Extract vector of sequence strings:
-seqs <- gemino:::rando_seqs(n_seqs, len, len_sd)
+seqs <- jackal:::rando_seqs(n_seqs, len, len_sd)
 
 
 test_that(paste("Random sequences using `create_genome` aren't significantly different",
@@ -36,7 +36,7 @@ test_that(paste("Random sequences using `create_genome` aren't significantly dif
 
 
 # Reference genome
-ref <- ref_genome$new(gemino:::make_ref_genome(seqs))
+ref <- ref_genome$new(jackal:::make_ref_genome(seqs))
 test_that("ref_genome class starts with the correct fields", {
     expect_is(ref$genome, "externalptr")
     expect_null(ref$digests)
@@ -64,7 +64,7 @@ test_that("ref_genome class methods", {
 
     nchars <- nchar(seqs)
     # Making sure of no removal when it shouldn't:
-    ref <<- ref_genome$new(gemino:::make_ref_genome(seqs))
+    ref <<- ref_genome$new(jackal:::make_ref_genome(seqs))
     ref$filter_seqs(min(nchar(seqs)) - 1, "size")
     expect_equal(ref$n_seqs(), n_seqs, label = "after lack of size filtering")
     ref$filter_seqs(1 - 0.99 * min(nchars) / sum(nchars), "prop")
@@ -73,12 +73,12 @@ test_that("ref_genome class methods", {
     ref$filter_seqs(min(nchars) + 1, "size")
     expect_lt(ref$n_seqs(), length(seqs))
 
-    ref <<- ref_genome$new(gemino:::make_ref_genome(seqs))
+    ref <<- ref_genome$new(jackal:::make_ref_genome(seqs))
     ref$filter_seqs(0.99 * sum(nchars[nchars > min(nchars)]) / sum(nchars), "prop")
     expect_lt(ref$n_seqs(), length(seqs))
 })
 # Restart object:
-ref <- ref_genome$new(gemino:::make_ref_genome(seqs))
+ref <- ref_genome$new(jackal:::make_ref_genome(seqs))
 
 # Molecular evolution info:
 mev <- make_mevo(ref, list(model = "JC69", lambda = 0.05))
@@ -109,7 +109,7 @@ test_that("variants class methods", {
     # Variant sequences:
     var_seqs <- lapply(1:n_vars,
                        function(v) {
-                           gemino:::view_var_genome(vars$genomes, v-1)
+                           jackal:::view_var_genome(vars$genomes, v-1)
                        })
     vs0 <- lapply(1:n_vars, function(v) sapply(1:length(seqs),
                                                function(s) vars$extract_seq(v, s)))
@@ -126,7 +126,7 @@ test_that("variants class methods", {
 
 
 # Make empty var_set to compare mutations
-vars <- variants$new(gemino:::make_var_set(ref$genome, n_vars), ref$genome)
+vars <- variants$new(jackal:::make_var_set(ref$genome, n_vars), ref$genome)
 vars_R <- replicate(n_vars, seqs, simplify = FALSE)
 
 
@@ -139,14 +139,14 @@ for (v in 1:n_vars) {
             pos = as.integer(runif(1) * max_size) + 1
             rnd = runif(1);
             if (rnd < 0.5) {
-                str = gemino:::rando_seqs(1, 1)
+                str = jackal:::rando_seqs(1, 1)
                 if (nchar(str) != 1) stop("Improper size in sub")
                 vars$add_sub(v, s, pos, str)
                 substr(ts[s], pos, pos) <- str
             } else if (rnd < 0.75) {
                 size = as.integer(rexp(1, 2.0) + 1.0)
                 if (size > 10) size = 10
-                str = gemino:::rando_seqs(1, size)
+                str = jackal:::rando_seqs(1, size)
                 if (nchar(str) != size) stop("Improper size in insertion")
                 vars$add_ins(v, s, pos, str)
                 ts[s] <- paste0(substr(ts[s], 1, pos), str,
@@ -182,7 +182,7 @@ test_that("Mutations produced are accurate", {
 
 # Testing that replace_Ns works
 seqs <- c("CCAANNNGG", "NNTTCCAAGG", "AACCTTGGGGGNNNNNN")
-ref <- ref_genome$new(gemino:::make_ref_genome(seqs))
+ref <- ref_genome$new(jackal:::make_ref_genome(seqs))
 ref$replace_Ns(c(1,0,0,0))
 
 test_that("Replacing Ns works as predicted", {

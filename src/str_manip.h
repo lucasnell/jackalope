@@ -1,5 +1,5 @@
-# ifndef __GEMINO_STR_MANIP_H
-# define __GEMINO_STR_MANIP_H
+# ifndef __JACKAL_STR_MANIP_H
+# define __JACKAL_STR_MANIP_H
 
 
 #include <RcppArmadillo.h>
@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <random>
 
-#include "gemino_types.h" // integer types
+#include "jackal_types.h" // integer types
 
 using namespace Rcpp;
 

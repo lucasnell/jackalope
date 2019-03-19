@@ -1,5 +1,5 @@
-#ifndef __GEMINO_WEIGHTED_RESERVOIR_H
-#define __GEMINO_WEIGHTED_RESERVOIR_H
+#ifndef __JACKAL_WEIGHTED_RESERVOIR_H
+#define __JACKAL_WEIGHTED_RESERVOIR_H
 
 /*
  ************************************************************************
@@ -19,7 +19,7 @@
 #include <RcppArmadillo.h>
 #include <pcg/pcg_random.hpp> // pcg prng
 
-#include "gemino_types.h" // integer types
+#include "jackal_types.h" // integer types
 #include "pcg.h" // runif_* functions
 #include "vitter_algorithms.h" // vitter_d
 

@@ -1,5 +1,5 @@
-#ifndef __GEMINO_GAMMAS_H
-#define __GEMINO_GAMMAS_H
+#ifndef __JACKAL_GAMMAS_H
+#define __JACKAL_GAMMAS_H
 
 
 /*
@@ -19,7 +19,7 @@
 #include <string>               // string class
 #include <random>               // gamma_distribution
 
-#include "gemino_types.h"       // integer types
+#include "jackal_types.h"       // integer types
 #include "pcg.h"                // pcg seeding
 
 

@@ -6,7 +6,7 @@
 #'
 
 
-library(gemino)
+library(jackal)
 library(tidyverse)
 source(".Rprofile")
 
@@ -19,7 +19,7 @@ dir <- paste0(tempdir(check = TRUE), "/")
 seq <- sapply(c("T", "C", "A", "G"), function(nt) paste(rep(nt, 100e3), collapse = ""))
 
 # Make ref_genome object from a pointer to a RefGenome object based on `seqs`
-rg <- ref_genome$new(gemino:::make_ref_genome(seq))
+rg <- ref_genome$new(jackal:::make_ref_genome(seq))
 
 pacbio(rg, out_prefix = paste0(dir, "test"), n_reads = 10e3)
 

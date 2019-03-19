@@ -1,5 +1,5 @@
-#ifndef __GEMINO_MEVO_PHYLO_H
-#define __GEMINO_MEVO_PHYLO_H
+#ifndef __JACKAL_MEVO_PHYLO_H
+#define __JACKAL_MEVO_PHYLO_H
 
 
 /*
@@ -23,7 +23,7 @@
 #include <omp.h>  // omp
 #endif
 
-#include "gemino_types.h"  // integer types
+#include "jackal_types.h"  // integer types
 #include "seq_classes_var.h"  // Var* classes
 #include "mevo.h"  // samplers
 #include "table_sampler.h" // table sampling

@@ -1,5 +1,5 @@
-#ifndef __GEMINO_MEVO_H
-#define __GEMINO_MEVO_H
+#ifndef __JACKAL_MEVO_H
+#define __JACKAL_MEVO_H
 
 
 #include <RcppArmadillo.h>
@@ -9,7 +9,7 @@
 #include <random>  // gamma_distribution
 
 
-#include "gemino_types.h" // integer types
+#include "jackal_types.h" // integer types
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // pcg seeding
 #include "table_sampler.h"  // table method of sampling

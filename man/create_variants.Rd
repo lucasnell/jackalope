@@ -69,7 +69,7 @@ number of sequences.
 For what all \code{trees} fields should look like, see output from the
 \code{scrm} or \code{coala} package.
 (These packages are not required to be installed when installing
-\code{gemino}.)
+\code{jackal}.)
 To get gene trees in \code{coala}, make sure to add \code{+ sumstat_trees()}
 to the \code{coalmodel}.
 In \code{scrm}, make sure that \code{"-T"} is present in \code{args}.

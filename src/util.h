@@ -1,5 +1,5 @@
-# ifndef __GEMINO_UTIL_H
-# define __GEMINO_UTIL_H
+# ifndef __JACKAL_UTIL_H
+# define __JACKAL_UTIL_H
 
 
 /*
@@ -17,7 +17,7 @@
 #include <string>
 #include <pcg/pcg_random.hpp> // pcg prng
 
-#include "gemino_types.h"  // integer types
+#include "jackal_types.h"  // integer types
 #include "pcg.h"  // runif_* methods
 
 

@@ -22,7 +22,7 @@ process_enzymes <- function(enzyme_names, custom_enzymes) {
         enzyme_seqs <- character(length(enzyme_names))
         for (i in 1:length(enzyme_names)) {
             x <- enzyme_names[i]
-            z <- gemino::binding_sites$sequence[gemino::binding_sites == x]
+            z <- jackal::binding_sites$sequence[jackal::binding_sites == x]
             if (length(z) == 0) {
                 stop(paste0("\nEnzyme name \"", x, "\" not found."),
                      call. = TRUE)
@@ -48,7 +48,7 @@ process_enzymes <- function(enzyme_names, custom_enzymes) {
     if (!missing(custom_enzymes)) {
         stopifnot(inherits(custom_enzymes, "character"))
 
-        allowed_chars <- sort(unique(c(gemino::nucleobase_legend, "/",
+        allowed_chars <- sort(unique(c(jackal::nucleobase_legend, "/",
                                        recursive = TRUE)))
         allowed_chars <- paste(allowed_chars, collapse = "")
         weird_chars <- grepl(sprintf("[^%s]", allowed_chars), custom_enzymes)

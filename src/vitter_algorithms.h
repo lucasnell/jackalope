@@ -1,5 +1,5 @@
-# ifndef __GEMINO_VITTER_ALGS_H
-# define __GEMINO_VITTER_ALGS_H
+# ifndef __JACKAL_VITTER_ALGS_H
+# define __JACKAL_VITTER_ALGS_H
 
 /*
  Algorithms for fast sampling *without* replacement
@@ -16,7 +16,7 @@
 #include <omp.h>
 #endif
 
-#include "gemino_types.h"
+#include "jackal_types.h"
 #include "util.h"  // uints_get_size
 #include "pcg.h"  // pcg::max
 

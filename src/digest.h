@@ -1,5 +1,5 @@
-#ifndef __GEMINO_DIGEST_H
-#define __GEMINO_DIGEST_H
+#ifndef __JACKAL_DIGEST_H
+#define __JACKAL_DIGEST_H
 
 #include <RcppArmadillo.h>
 #include <string> // find, string::npos, string::size_type, ...

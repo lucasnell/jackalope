@@ -18,7 +18,7 @@
 
 
 #include "seq_classes_ref.h"  // Ref* classes
-#include "gemino_types.h"  // integer types
+#include "jackal_types.h"  // integer types
 #include "table_sampler.h"  // Table string sampler
 #include "util.h"  // clear_memory
 

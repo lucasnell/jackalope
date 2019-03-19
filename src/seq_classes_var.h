@@ -1,5 +1,5 @@
-#ifndef __GEMINO_SEQ_CLASSES_VAR_H
-#define __GEMINO_SEQ_CLASSES_VAR_H
+#ifndef __JACKAL_SEQ_CLASSES_VAR_H
+#define __JACKAL_SEQ_CLASSES_VAR_H
 
 
 /*
@@ -17,7 +17,7 @@
 #include <string>  // string class
 #include <deque>  // deque class
 
-#include "gemino_types.h"  // integer types
+#include "jackal_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "util.h"  // clear_memory
 

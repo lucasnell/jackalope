@@ -1,5 +1,5 @@
-#ifndef __GEMINO_SEQ_CLASSES_REF_H
-#define __GEMINO_SEQ_CLASSES_REF_H
+#ifndef __JACKAL_SEQ_CLASSES_REF_H
+#define __JACKAL_SEQ_CLASSES_REF_H
 
 
 /*
@@ -17,7 +17,7 @@
 #include <string>  // string class
 #include <deque>  // deque class
 
-#include "gemino_types.h"  // integer types
+#include "jackal_types.h"  // integer types
 #include "util.h"  // clear_memory, get_width
 
 using namespace Rcpp;

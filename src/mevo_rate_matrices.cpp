@@ -14,7 +14,7 @@
 
 #include <RcppArmadillo.h>
 
-#include "gemino_types.h" // integer types
+#include "jackal_types.h" // integer types
 
 using namespace Rcpp;
 

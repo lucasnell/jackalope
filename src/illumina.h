@@ -1,5 +1,5 @@
-#ifndef __GEMINO_ILLUMINA_H
-#define __GEMINO_ILLUMINA_H
+#ifndef __JACKAL_ILLUMINA_H
+#define __JACKAL_ILLUMINA_H
 
 
 
@@ -14,7 +14,7 @@
 #include <omp.h>  // omp
 #endif
 
-#include "gemino_types.h"  // integer types
+#include "jackal_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // runif_01

@@ -1,5 +1,5 @@
-#ifndef __GEMINO_TABLE_SAMPLER_H
-#define __GEMINO_TABLE_SAMPLER_H
+#ifndef __JACKAL_TABLE_SAMPLER_H
+#define __JACKAL_TABLE_SAMPLER_H
 
 
 /*
@@ -17,7 +17,7 @@
 #include <string>
 #include <pcg/pcg_random.hpp> // pcg prng
 
-#include "gemino_types.h" // integer types
+#include "jackal_types.h" // integer types
 #include "pcg.h"  // pcg seeding
 #include "util.h"  // decreasing_indices
 

@@ -8,7 +8,7 @@
 
 
 
-#include "gemino_types.h"
+#include "jackal_types.h"
 #include "mevo.h"
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // pcg seeding

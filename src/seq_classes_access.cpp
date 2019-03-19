@@ -18,7 +18,7 @@
 #include <pcg/pcg_random.hpp> // pcg prng
 
 
-#include "gemino_types.h"  // integer types
+#include "jackal_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 #include "mevo.h"

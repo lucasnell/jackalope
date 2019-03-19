@@ -1,6 +1,6 @@
 
 
-library(gemino)
+library(jackal)
 library(testthat)
 
 context("Testing molecular evolution accuracy")
@@ -52,7 +52,7 @@ with(pars, {
 set.seed(1087437799)
 
 # Make ref_genome object from a pointer to a RefGenome object based on `seqs`
-ref <- with(pars, ref_genome$new(gemino:::make_ref_genome(seqs)))
+ref <- with(pars, ref_genome$new(jackal:::make_ref_genome(seqs)))
 
 
 mevo_ <- with(pars, {
@@ -93,7 +93,7 @@ var_set <- create_variants(ref, method = "phylo", method_info = tree,
 make_N <- function(x, N) cbind(x, matrix(0, nrow(x), N - ncol(x)))
 
 mutation_exam <- function(v, s) {
-    mut_exam <- gemino:::examine_mutations(var_set, var_ind = v, seq_ind = s)
+    mut_exam <- jackal:::examine_mutations(var_set, var_ind = v, seq_ind = s)
     mut_exam$ins <- setNames(colSums(make_N(mut_exam$ins, pars$M[1])), 1:pars$M[1])
     mut_exam$del <- setNames(colSums(make_N(mut_exam$del, pars$M[2])), 1:pars$M[2])
     return(mut_exam)
@@ -102,7 +102,7 @@ mutation_exam <- function(v, s) {
 
 exams <- lapply(0:(pars$n_seqs-1),
                 function(s) lapply(0:(pars$n_vars-1),
-                                    gemino:::examine_mutations,
+                                    jackal:::examine_mutations,
                                     var_set_ = var_set$genomes,
                                     seq_ind = s))
 
@@ -244,7 +244,7 @@ pos_df <- do.call(
                df_ <- data.frame(seq = s, var = v,
                                  gamma = gamma_mat[,2],
                                  pos = gamma_mat[,1],
-                                 count = gemino:::table_gammas(gamma_mat[,1], exam_$pos))
+                                 count = jackal:::table_gammas(gamma_mat[,1], exam_$pos))
                df_$count <- df_$count / exp_mut
                return(df_)
            }))
@@ -264,7 +264,7 @@ test_that("molecular evolution selects mutation regions according to Gamma value
 # --------------------*
 
 
-mutations <- lapply(0:(pars$n_vars-1), gemino:::view_mutations, var_set_ = var_set$genomes)
+mutations <- lapply(0:(pars$n_vars-1), jackal:::view_mutations, var_set_ = var_set$genomes)
 
 
 # Function to return descendent tips from a given node:
@@ -370,7 +370,7 @@ test_that("Simulations conform to phylogenetic tree", {
 
 # Full sequences:
 var_seqs <- lapply(0:(pars$n_vars-1),
-                   function(v) gemino:::view_var_genome(var_set_ = var_set$genomes, var_ind = v))
+                   function(v) jackal:::view_var_genome(var_set_ = var_set$genomes, var_ind = v))
 
 # R function to get expected rate to compare against C++ version:
 get_seq_rate <- function(seq, rates, start, end, gamma_mat_) {
@@ -391,7 +391,7 @@ compare_rates <- function(var_ind, seq_ind, rates, incr = 1e2, verbose = FALSE) 
     start <- sample.int(as.integer(nchars / 2), 1)
     end <- sample.int(nchars - start, 1) + start
     if (mevo_$chunk_size <= 0) stop("Must only be used for chunked mevo objects")
-    rate_cpp <- gemino:::test_rate(start = start-1, end = end-1,
+    rate_cpp <- jackal:::test_rate(start = start-1, end = end-1,
                                    var_ind = var_ind-1, seq_ind = seq_ind-1,
                                    var_set_ = var_set$genomes, sampler_ = mevo_$to_ptr(),
                                    gamma_mat_ = gamma_mat_new)

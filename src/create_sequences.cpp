@@ -18,7 +18,7 @@
 #include <omp.h>  // omp
 #endif
 
-#include "gemino_types.h"  // integer types
+#include "jackal_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "table_sampler.h" // table sampling
 #include "pcg.h" // pcg::max, mc_seeds, seeded_pcg

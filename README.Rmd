@@ -18,28 +18,26 @@ options(tibble.print_min = 5, tibble.print_max = 5)
 
 [![Project Status: WIP – Initial development is in progress, but there has not 
 yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
-[![Build Status](https://travis-ci.com/lucasnell/gemino.svg?branch=master)](https://travis-ci.com/lucasnell/gemino)
-[![codecov](https://codecov.io/gh/lucasnell/gemino/branch/master/graph/badge.svg)](https://codecov.io/gh/lucasnell/gemino)
+[![Build Status](https://travis-ci.com/lucasnell/jackal.svg?branch=master)](https://travis-ci.com/lucasnell/jackal)
+[![codecov](https://codecov.io/gh/lucasnell/jackal/branch/master/graph/badge.svg)](https://codecov.io/gh/lucasnell/jackal)
 
 
 
-# gemino
+# jackal
 
-__An efficient, flexible molecular evolution and sequencing simulator__
+__An efficient, versatile molecular evolution and sequencing simulator__
 
 ## Overview
 
-`gemino` efficiently (i) reads and simulates reference genomes;
+`jackal` efficiently (i) reads and simulates reference genomes;
 (ii) generates variants using summary statistics, phylogenies, Variant
 Call Format (VCF) files, and coalescent simulations—the latter of which can include
 selection, recombination, and demographic fluctuations;
 (iii) simulates sequencing error, mapping qualities, restriction-enzyme digestion, 
 and variance in coverage among sites; and
 (iv) writes outputs to standard file formats.
-`gemino` can simulate single or paired-ended reads for WGS on the Illumina platform,
-and can be extended to simulate different methods (e.g., original RADseq,
-double-digest RADseq, and genotyping-by-sequencing), and sequencing technologies
-(e.g., Pacific BioSciences, Oxford Nanopore Technologies).
+`jackal` can simulate single, paired-end, or mate-pair Illumina reads, as well as
+reads from Pacific BioSciences.
 
 
 ## Installation
@@ -47,7 +45,7 @@ double-digest RADseq, and genotyping-by-sequencing), and sequencing technologies
 The package is not yet on CRAN, so to install...
 
 ```{r, eval = FALSE}
-devtools::install_github("lucasnell/gemino")
+devtools::install_github("lucasnell/jackal")
 ```
 
 
@@ -55,7 +53,7 @@ devtools::install_github("lucasnell/gemino")
 ## Usage
 
 ```{r, eval = TRUE}
-library(gemino)
+library(jackal)
 reference <- create_genome(n_seqs = 10, len_mean = 1000)
 phy <- ape::rcoal(5)
 mevo_info <- make_mevo(reference, list(model = "JC69", lambda = 0.1))
