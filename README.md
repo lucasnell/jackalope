@@ -7,6 +7,8 @@ public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus
 [![Build
 Status](https://travis-ci.com/lucasnell/jackal.svg?branch=master)](https://travis-ci.com/lucasnell/jackal)
 [![codecov](https://codecov.io/gh/lucasnell/jackal/branch/master/graph/badge.svg)](https://codecov.io/gh/lucasnell/jackal)
+[![AppVeyor build
+status](https://ci.appveyor.com/api/projects/status/github/lucasnell/jackal?branch=master&svg=true)](https://ci.appveyor.com/project/lucasnell/jackal)
 
 # jackal
 
@@ -42,20 +44,20 @@ ref_variants <- create_variants(reference, "phylo", phy, mevo_info)
 ref_variants
 #>                            << Variants object >>
 #> # Variants: 5
-#> # Mutations: 5,130
+#> # Mutations: 17,940
 #> 
 #>                         << Reference genome info: >>
 #> < Set of 10 sequences >
 #> # Total size: 10,000 bp
 #>   name                          sequence                             length
-#> seq0       GACTACGGCGCAGAACCTACAGAAC...TACCGGCGACAATAGTTTACCACTAC      1000
-#> seq1       AAGCATCCACATATTAGGGTTTTAC...GGCCCTAACGTATCGTGTGGCCTGAT      1000
-#> seq2       CGCTTATAACAACGCGTTTCGCGAT...ACAACAAGCGGTCCCACCTTAGAATT      1000
-#> seq3       CCTTGTCATCGGCTTAGTTGAGCAT...AGGCTAGAGAATAGTAACATGCATAC      1000
-#> seq4       AGGCACTATGCACTGTTCCAACGCA...CGTACGTACACTCCAATGTGTAGGAC      1000
-#> seq5       CGTCAGGACACGTTGGAGTTGAAAA...GTGTAGGTTATAGTCCATTGATGCGT      1000
-#> seq6       CTTGACGGGGGCCTTAACCGGCGAG...GTAGTTCTCCCTCTCCGACTGCTGCA      1000
-#> seq7       GGACTAAGGCAGTCCAGCTACTCAT...ACGCAGGGTTATCATTCATACACGTC      1000
-#> seq8       CATACACGACGTCCCATTAGGATGA...ATAAAGATTCCTGAGATCCGCAATGA      1000
-#> seq9       CAACGGTATGCACGATTGCATGGGA...GGGGCTTAACCTCTCGTTTCATTATC      1000
+#> seq0       CGTCGTGTCGAGTATTGCATATTGC...AGGCTTAACCTCAATTGCCCAATGCG      1000
+#> seq1       GCCCGGGCGACACTAGACGTAAGAC...TATCACACACTGTCCCCGTGGCACAG      1000
+#> seq2       CTAGCGTGCCCGGTTACCGACAAAC...ATACTGAATTGGGCGATCACGCATGT      1000
+#> seq3       GTCTCGAAGCCCTTTGATATCAACT...TAGTGTATGTCGATTATCCATGGCTA      1000
+#> seq4       CATCTGACGACGCAGTGGAGGACTG...TCTCTGAGCCCTGGACACTACAGGAT      1000
+#> seq5       CTAAGATTCACGCGGTCTTAACTTC...GCGTTGCGCACAGTCTGATGGGGCCT      1000
+#> seq6       CAGGCGCCTTTACACAAGTGTGTGA...TAGATTACATCAGTCGTTGGACGCAG      1000
+#> seq7       CACGTCAGCAAACCTCAGGTGGTGA...AGCGTCGCTAAAAGTAGGTACGAGGT      1000
+#> seq8       GGGTGCTGGGACTCATTGGGGATAG...ATGCGGCGTTGACGTCCCCCGTGGGC      1000
+#> seq9       AAACATACAGCCCGAATCGTGTGGG...TAGGGTGTATGAGGTACTATGTGCTC      1000
 ```

@@ -13,6 +13,7 @@ knitr::opts_chunk$set(
   fig.path = "README-"
 )
 options(tibble.print_min = 5, tibble.print_max = 5)
+set.seed(1) # for keeping the printing of `reference` below the same
 ```
 
 
@@ -20,7 +21,7 @@ options(tibble.print_min = 5, tibble.print_max = 5)
 yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
 [![Build Status](https://travis-ci.com/lucasnell/jackal.svg?branch=master)](https://travis-ci.com/lucasnell/jackal)
 [![codecov](https://codecov.io/gh/lucasnell/jackal/branch/master/graph/badge.svg)](https://codecov.io/gh/lucasnell/jackal)
-
+[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/lucasnell/jackal?branch=master&svg=true)](https://ci.appveyor.com/project/lucasnell/jackal)
 
 
 # jackal
