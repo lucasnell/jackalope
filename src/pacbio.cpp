@@ -276,8 +276,8 @@ void PacBioOneGenome<T>::append_chunk(std::string& fastq_chunk,
     fastq_chunk += "\n+\n";
 
     // Adding qualities:
-    for (uint i = 0; i < split_pos; i++) fastq_chunk += qual_left;
-    for (uint i = split_pos; i < read_length; i++) fastq_chunk += qual_right;
+    for (uint32 i = 0; i < split_pos; i++) fastq_chunk += qual_left;
+    for (uint32 i = split_pos; i < read_length; i++) fastq_chunk += qual_right;
     fastq_chunk += '\n';
 
     return;

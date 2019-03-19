@@ -492,7 +492,7 @@ public:
         ChunkRateGetter<MutationRates>& crg(rates.res_rates);
         crg.chunk_size = chunk_size;
         crg.inds.resize(chunk_size);
-        for (uint i = 0; i < chunk_size; i++) crg.inds[i] = i;
+        for (uint32 i = 0; i < chunk_size; i++) crg.inds[i] = i;
         // If not a valid pointer, stop here
         if (!crg.all_rates.var_seq) return;
         // Else, check on sizes:

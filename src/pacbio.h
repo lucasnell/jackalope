@@ -530,7 +530,7 @@ private:
     void construct_seqs() {
         std::vector<double> probs_;
         probs_.reserve(seq_lengths.size());
-        for (uint i = 0; i < seq_lengths.size(); i++) {
+        for (uint32 i = 0; i < seq_lengths.size(); i++) {
             probs_.push_back(static_cast<double>(seq_lengths[i]));
         }
         seq_sampler = AliasSampler(probs_);

@@ -152,7 +152,7 @@ inline std::vector<uint32> split_n_reads(const uint32& n_reads,
                                          const uint32& n_cores) {
     std::vector<uint32> out(n_cores, n_reads / n_cores);
     uint32 sum_reads = std::accumulate(out.begin(), out.end(), 0U);
-    uint i = 0;
+    uint32 i = 0;
     while (sum_reads < n_reads) {
         out[i]++;
         i++;

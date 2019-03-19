@@ -83,7 +83,7 @@ template <typename T>
 void IlluminaOneGenome<T>::construct_seqs() {
     std::vector<double> probs_;
     probs_.reserve(seq_lengths.size());
-    for (uint i = 0; i < seq_lengths.size(); i++) {
+    for (uint32 i = 0; i < seq_lengths.size(); i++) {
         probs_.push_back(static_cast<double>(seq_lengths[i]));
     }
     seq_sampler = AliasSampler(probs_);
@@ -278,7 +278,7 @@ void IlluminaOneGenome<T>::append_chunks(std::vector<std::string>& fastq_chunks,
         }
 
         // Now fill barcode:
-        for (uint i = 0; i < barcode.size(); i++) read[i] = barcode[i];
+        for (uint32 i = 0; i < barcode.size(); i++) read[i] = barcode[i];
 
         // Sample mapping quality and add errors to read:
         qual_errors[i].fill_read_qual(read, qual, insertions[i], deletions[i], eng);
