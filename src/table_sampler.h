@@ -35,15 +35,15 @@ namespace table_sampler {
 class TableSampler {
 public:
     // Stores vectors of each category's Pr(sampled):
-    std::vector<std::vector<uint32>> T;
+    std::vector<std::vector<uint32>> T = std::vector<std::vector<uint32>>(4);
     // Stores values at which to transition between vectors of `T`:
-    std::vector<uint128> t;
+    std::vector<uint128> t = std::vector<uint128>(3, 0);
 
     TableSampler() {};
-    TableSampler(const std::vector<long double>& probs) : T(4), t(3, 0) {
+    TableSampler(const std::vector<long double>& probs) {
         construct(probs);
     }
-    TableSampler(const std::vector<double>& probs) : T(4), t(3, 0) {
+    TableSampler(const std::vector<double>& probs) {
         std::vector<long double> probs_;
         probs_.reserve(probs.size());
         for (uint32 i = 0; i < probs.size(); i++) {
@@ -80,11 +80,10 @@ public:
 
 private:
 
-    uint32 dg(const uint128& m, const uint32& k) {
+    uint32 dg(const uint128& m, const uint8& k) {
         // uint128 x = ((m>>(64-16*k))&65535);
         uint128 x = m;
-        // x >>= (static_cast<uint128>(64) - static_cast<uint128>(16) * static_cast<uint128>(k));
-        x >>= static_cast<uint128>(64 - 16 * k);
+        x >>= (64 - 16 * k);
         x &= static_cast<uint128>(65535);
         uint32 y = static_cast<uint32>(x);
         return y;
@@ -137,7 +136,7 @@ private:
     // Most of the construction of the TableSampler object:
     inline void construct(const std::vector<long double>& probs) {
 
-        uint32 n_tables = T.size();
+        uint8 n_tables = 4;
 
         uint32 n = probs.size();
         std::vector<uint128> ints;
@@ -147,7 +146,7 @@ private:
         std::vector<uint32> sizes(n_tables, 0);
         // Adding up sizes of `T` vectors:
         for (uint32 i = 0; i < n; i++) {
-            for (uint32 k = 1; k <= n_tables; k++) {
+            for (uint8 k = 1; k <= n_tables; k++) {
                 sizes[k-1] += this->dg(ints[i], k);
             }
         }
@@ -180,7 +179,7 @@ private:
             // Re-sizing `T` vectors:
             for (uint32 i = 0; i < n_tables; i++) T[i].resize(sizes[i]);
             // Filling `T` vectors
-            for (uint32 k = 1; k <= n_tables; k++) {
+            for (uint8 k = 1; k <= n_tables; k++) {
                 uint32 ind = 0; // index inside `T[k-1]`
                 for (uint32 i = 0; i < n; i++) {
                     uint32 z = this->dg(ints[i], k);
