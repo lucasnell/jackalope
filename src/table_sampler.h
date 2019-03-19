@@ -127,7 +127,8 @@ private:
         // Now fill `ints`:
         ints.reserve(n);
         for (uint32 i = 0; i < n; i++) {
-            ints.push_back(static_cast<uint128>(pp[i]));
+            double ppi = static_cast<double>(pp[i]); // needed to pass appveyor tests
+            ints.push_back(static_cast<uint128>(ppi));
         }
 
         return;
@@ -152,7 +153,7 @@ private:
         }
 
         // Adding up thresholds in the `t` vector
-        for (uint64 k = 0; k < (n_tables - 1); k++) {
+        for (uint8 k = 0; k < (n_tables - 1); k++) {
             t[k] = sizes[k];
             t[k] <<= (64 - 16 * (1 + k));
             if (k > 0) t[k] += t[k-1];
@@ -177,7 +178,7 @@ private:
             T[0] = std::vector<uint32>((1UL<<16), max_ind);
         } else {
             // Re-sizing `T` vectors:
-            for (uint32 i = 0; i < n_tables; i++) T[i].resize(sizes[i]);
+            for (uint8 i = 0; i < n_tables; i++) T[i].resize(sizes[i]);
             // Filling `T` vectors
             for (uint8 k = 1; k <= n_tables; k++) {
                 uint32 ind = 0; // index inside `T[k-1]`
