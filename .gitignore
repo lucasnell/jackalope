@@ -16,3 +16,4 @@ jackal_*.tgz
 *.pdf
 _crash_test.R
 !inst/art_profiles/*.txt.gz
+under_constr

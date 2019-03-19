@@ -38,6 +38,12 @@ public:
     std::vector<std::vector<uint32>> T = std::vector<std::vector<uint32>>(4);
     // Stores values at which to transition between vectors of `T`:
     std::vector<uint64> t = std::vector<uint64>(3, 0);
+    /*
+     For whether probs are evenly divisible into 2^16 bits, which means that only
+     the first `T` vector should be used.
+     This allows me to avoid using a 128-bit integer type.
+    */
+    bool even_probs = false;
 
     TableSampler() {};
     TableSampler(const std::vector<long double>& probs) {
@@ -54,13 +60,7 @@ public:
     // Copy constructor
     TableSampler(const TableSampler& other) : T(other.T), t(other.t) {}
 
-    inline uint32 sample(pcg64& eng) const {
-        uint64 j = eng();
-        if (j<t[0]) return T[0][j>>(64-16*1)];
-        if (j<t[1]) return T[1][(j-t[0])>>(64-16*2)];
-        if (j<t[2]) return T[2][(j-t[1])>>(64-16*3)];
-        return T[3][j-t[2]];
-    }
+    uint32 sample(pcg64& eng) const;
 
 private:
 
@@ -74,110 +74,12 @@ private:
      If only one outcome is possible (all but one p is zero), it makes `ints` have
      only one item, the index for that outcome
      */
-    inline void fill_ints(const std::vector<long double>& p,
-                          std::vector<uint64>& ints) {
-
-        long double max_int = 18446744073709551616.0;  // 2^64
-
-        uint32 n = p.size();
-
-        std::vector<long double> pp(n);
-        long double p_sum = std::accumulate(p.begin(), p.end(), 0.0);
-        for (uint32 i = 0; i < n; i++) {
-            long double x = p[i] / p_sum;
-            if (x == 1) {
-                ints = { static_cast<uint64>(i) };
-                return;
-            }
-            x *= max_int;
-            pp[i] = std::round(x);
-        }
-
-        std::vector<uint32> inds = decreasing_indices<long double>(p);
-
-        long double pp_sum = std::accumulate(pp.begin(), pp.end(), 0.0);
-        long double d = max_int - pp_sum;
-
-        uint32_t i = 0;
-        // We need to remove from `pp`
-        while (d < 0) {
-            pp[inds[i]]--;
-            i++;
-            if (i == inds.size()) i = 0;
-            d++;
-        }
-        // We need to add to `pp`
-        while (d > 0) {
-            pp[inds[i]]++;
-            i++;
-            if (i == inds.size()) i = 0;
-            d--;
-        }
-
-        // Now fill `ints`:
-        ints.reserve(n);
-        for (uint32 i = 0; i < n; i++) {
-            double ppi = static_cast<double>(pp[i]); // needed to pass appveyor tests
-            ints.push_back(static_cast<uint64>(ppi));
-        }
-
-        return;
-    }
+    void fill_ints(const std::vector<long double>& p,
+                          std::vector<uint64>& ints);
 
     // Most of the construction of the TableSampler object:
-    inline void construct(const std::vector<long double>& probs) {
+    void construct(const std::vector<long double>& probs);
 
-        uint32 n_tables = 4;
-
-        uint32 n = probs.size();
-        std::vector<uint64> ints;
-        // Filling the `ints` vector based on `probs`
-        this->fill_ints(probs, ints);
-
-        // Taking care of scenario when just one output is possible
-        if (ints.size() == 1) {
-
-            // Below will result in sample only ever touching T[0] and T[3]
-            t = std::vector<uint64>(4, 18446744073709551615ULL);
-            /*
-             Under this scenario, `fill_ints` makes `ints` only contain the index
-             the we want returned.
-             The lengths of T[0] and T[3] below will make sure that any value
-             possible from a pcg64 RNG will return `ints[0]`
-             */
-            T[0] = std::vector<uint32>((1UL<<16), static_cast<uint32>(ints[0]));
-            T[3] = std::vector<uint32>(1, static_cast<uint32>(ints[0]));
-
-        } else {
-
-            std::vector<uint32> sizes(n_tables, 0);
-            // Adding up sizes of `T` vectors:
-            for (uint32 i = 0; i < n; i++) {
-                for (uint32 k = 1; k <= n_tables; k++) {
-                    sizes[k-1] += this->dg(ints[i], k);
-                }
-            }
-            // Adding up thresholds in the `t` vector
-            for (uint32 k = 0; k < (n_tables - 1); k++) {
-                t[k] = sizes[k];
-                t[k] <<= (64 - 16 * (1 + k));
-                if (k > 0) t[k] += t[k-1];
-            }
-            // Re-sizing `T` vectors:
-            for (uint32 i = 0; i < n_tables; i++) T[i].resize(sizes[i]);
-            // Filling `T` vectors
-            for (uint32 k = 1; k <= n_tables; k++) {
-                uint32 ind = 0; // index inside `T[k-1]`
-                for (uint32 i = 0; i < n; i++) {
-                    uint32 z = this->dg(ints[i], k);
-                    for (uint32 j = 0; j < z; j++) T[k-1][ind + j] = i;
-                    ind += z;
-                }
-            }
-        }
-
-        return;
-    }
 };
 
 
