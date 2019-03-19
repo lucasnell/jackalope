@@ -208,7 +208,7 @@ struct RefGenome {
                 seq_print_len - (before_elips - 4), "sequence",
                 length_width, "length");
 
-        for (int i = 0; i < inds.size(); i++) {
+        for (int i = 0; i < static_cast<int>(inds.size()); i++) {
             ind_i = inds[i];
             if (ind_i == -1) {
                 Rprintf("%-10s %-*s %9s\n", "...", seq_print_len, "...", "...");
@@ -220,10 +220,11 @@ struct RefGenome {
             // Print name
             Rprintf("%-10.10s ", name_i.c_str());
             // Print sequence
-            if (seq_i.size() > seq_print_len){
+            int seq_i_size = static_cast<int>(seq_i.size());
+            if (seq_i_size > seq_print_len){
                 for (int j = 0; j < before_elips; j++) Rcout << seq_i[j];
                 Rcout << "...";
-                for (int j = (seq_i.size() - after_elips); j < seq_i.size(); j++) {
+                for (int j = (seq_i_size - after_elips); j < seq_i_size; j++) {
                     Rcout << seq_i[j];
                 }
             } else {

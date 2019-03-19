@@ -55,7 +55,7 @@ public:
     TableSampler(const TableSampler& other) : T(other.T), t(other.t) {}
 
     inline uint32 sample(pcg64& eng) const {
-        uint64 j = eng();
+        uint128 j = static_cast<uint128>(eng());
         if (j<t[0]) return T[0][j>>(64-16*1)];
         if (j<t[1]) return T[1][(j-t[0])>>(64-16*2)];
         if (j<t[2]) return T[2][(j-t[1])>>(64-16*3)];

@@ -309,7 +309,7 @@ void fill_ref_noind(RefGenome& ref,
     gzclose (file);
 
     // Remove weird characters and remove soft masking if desired:
-    for (int i = 0; i < ref.size(); i++) {
+    for (uint32 i = 0; i < ref.size(); i++) {
         filter_nucleos(ref.sequences[i].nucleos, remove_soft_mask);
     }
 
@@ -494,7 +494,7 @@ void fill_ref_ind(RefGenome& ref,
         // Length of the whole sequence including newlines
         uint64 len = lengths[i] + lengths[i] / line_lens[i] + 1;
 
-        uint64 bytes_read;
+        sint64 bytes_read;
 
         for (uint64 j = 0; j < len; j += (LIMIT-1)) {
             gzseek(file, offsets[i] + j, SEEK_SET);
