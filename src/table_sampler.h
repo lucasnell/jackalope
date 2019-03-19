@@ -81,10 +81,11 @@ public:
 private:
 
     uint32 dg(const uint128& m, const uint32& k) {
-        uint128 x = ((m>>(64-16*k))&65535);
-        // uint128 x = m;
+        // uint128 x = ((m>>(64-16*k))&65535);
+        uint128 x = m;
         // x >>= (static_cast<uint128>(64) - static_cast<uint128>(16) * static_cast<uint128>(k));
-        // x &= static_cast<uint128>(65535);
+        x >>= static_cast<uint128>(64 - 16 * k);
+        x &= static_cast<uint128>(65535);
         uint32 y = static_cast<uint32>(x);
         return y;
     }
