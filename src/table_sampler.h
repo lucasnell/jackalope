@@ -56,23 +56,26 @@ public:
 
     inline uint32 sample(pcg64& eng) const {
         uint128 j = static_cast<uint128>(eng());
-        if (j<t[0]) return T[0][j>>(64-16*1)];
-        if (j<t[1]) return T[1][(j-t[0])>>(64-16*2)];
-        if (j<t[2]) return T[2][(j-t[1])>>(64-16*3)];
-        return T[3][j-t[2]];
-    }
-
-    void print() const {
-        // names coincide with names from Marsaglia (2004)
-        std::vector<std::string> names = {"AA", "BB", "CC", "DD"};
-        for (uint32 i = 0; i < T.size(); i++) {
-            Rcout << "T[" << i << "]:" << std::endl;
-            for (const uint32& tt : T[i]) Rcout << tt << ' ';
-            Rcout << std::endl;
+        if (j<t[0]) {
+            j >>= (64-16*1);
+            uint32 jj = static_cast<uint32>(j);
+            return T[0][jj];
         }
-        Rcout << "t" << std::endl;
-        for (const uint128& tt : t) Rcout << static_cast<double>(tt) << ' ';
-        Rcout << std::endl;
+        if (j<t[1]) {
+            j -= t[0];
+            j >>= (64-16*2);
+            uint32 jj = static_cast<uint32>(j);
+            return T[1][jj];
+        }
+        if (j<t[2]) {
+            j -= t[1];
+            j >>= (64-16*3);
+            uint32 jj = static_cast<uint32>(j);
+            return T[2][jj];
+        }
+        j -= t[2];
+        uint32 jj = static_cast<uint32>(j);
+        return T[3][jj];
     }
 
 private:
