@@ -18,10 +18,10 @@ Status](https://travis-ci.com/lucasnell/jackal.svg?branch=master)](https://travi
 generates variants using summary statistics, phylogenies, Variant Call
 Format (VCF) files, and coalescent simulations—the latter of which can
 include selection, recombination, and demographic fluctuations; (iii)
-simulates sequencing error, mapping qualities, restriction-enzyme
-digestion, and variance in coverage among sites; and (iv) writes outputs
-to standard file formats. `jackal` can simulate single, paired-end, or
-mate-pair Illumina reads, as well as reads from Pacific BioSciences.
+simulates sequencing error, mapping qualities, and optical/PCR
+duplicates; and (iv) writes outputs to standard file formats. `jackal`
+can simulate single, paired-end, or mate-pair Illumina reads, as well as
+reads from Pacific BioSciences.
 
 ## Installation
 
@@ -42,20 +42,20 @@ ref_variants <- create_variants(reference, "phylo", phy, mevo_info)
 ref_variants
 #>                            << Variants object >>
 #> # Variants: 5
-#> # Mutations: 21,301
+#> # Mutations: 5,130
 #> 
 #>                         << Reference genome info: >>
 #> < Set of 10 sequences >
 #> # Total size: 10,000 bp
 #>   name                          sequence                             length
-#> seq0       CGTACCCCGTCGTGATTCTAGACTC...GTGTGAAAATGGCGATGTTACATGTG      1000
-#> seq1       TCTCCTCCTGATACCTGAACTCGCC...ACGATCGCGGGTGTTGCTCCGACCGG      1000
-#> seq2       ATCTTAAGGCTCACCACTGAGCCAG...AAATAGCATTAGTCCCGTTCGTAAAA      1000
-#> seq3       TCCAACAAGTGGGCCAGCTGCTTTA...ACGGTGTCGCCCAGCGTATTATGATA      1000
-#> seq4       ACGATATGCTTTCGCGCCTAGGATC...GAGAGTGTTCTCTTCACATCTGTCCG      1000
-#> seq5       GCGTTCTAGTTACGTGTTACCCAGG...GTCATAACATTAGATAATCCATCCGA      1000
-#> seq6       CGGCTCTAAACTTACCGGAAGACCA...CGGGACGGCGTGCTTCTAGTAACCGC      1000
-#> seq7       CCGCGGGCCAGGACAATCTTAACAT...ACTGAGAGTAATGCGTAGCACTGGCA      1000
-#> seq8       ATAACGGAGCTCCACACCGTCCTTG...CGATTGGCTTAAGGGTCCGGAATTAA      1000
-#> seq9       ATCCAATTGGACTCGAGGGTGATAG...CACCGGGCACACTAGCGTCCTCGTGA      1000
+#> seq0       GACTACGGCGCAGAACCTACAGAAC...TACCGGCGACAATAGTTTACCACTAC      1000
+#> seq1       AAGCATCCACATATTAGGGTTTTAC...GGCCCTAACGTATCGTGTGGCCTGAT      1000
+#> seq2       CGCTTATAACAACGCGTTTCGCGAT...ACAACAAGCGGTCCCACCTTAGAATT      1000
+#> seq3       CCTTGTCATCGGCTTAGTTGAGCAT...AGGCTAGAGAATAGTAACATGCATAC      1000
+#> seq4       AGGCACTATGCACTGTTCCAACGCA...CGTACGTACACTCCAATGTGTAGGAC      1000
+#> seq5       CGTCAGGACACGTTGGAGTTGAAAA...GTGTAGGTTATAGTCCATTGATGCGT      1000
+#> seq6       CTTGACGGGGGCCTTAACCGGCGAG...GTAGTTCTCCCTCTCCGACTGCTGCA      1000
+#> seq7       GGACTAAGGCAGTCCAGCTACTCAT...ACGCAGGGTTATCATTCATACACGTC      1000
+#> seq8       CATACACGACGTCCCATTAGGATGA...ATAAAGATTCCTGAGATCCGCAATGA      1000
+#> seq9       CAACGGTATGCACGATTGCATGGGA...GGGGCTTAACCTCTCGTTTCATTATC      1000
 ```

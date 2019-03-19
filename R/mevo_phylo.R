@@ -137,7 +137,7 @@ read_phy_obj <- function(phy, n_seqs, chunked, err_msg = "") {
 #'
 read_coal_obj <- function(coal_obj, seq_sizes, chunked, err_msg) {
 
-    # Check for coal_obj begin a list and either having a `trees` field or all its
+    # Check for coal_obj being a list and either having a `trees` field or all its
     # items within having `trees` fields
     err <- FALSE
     nested <- FALSE

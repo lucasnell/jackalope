@@ -24,9 +24,6 @@ For safe ways of manipulating the variants' information, see the "Methods" secti
 \item{\code{genome}}{An \code{externalptr} to a C++ object storing the sequences
 representing the genome.}
 
-\item{\code{digests}}{An \code{externalptr} to a C++ object storing the digestion of the
-genome, if a digestion has been carried out. It's \code{NULL} otherwise.}
-
 \item{\code{reference}}{An \code{externalptr} to a C++ object storing the sequences
 representing the genome.
 There are a few extra notes for this field:

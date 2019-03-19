@@ -39,7 +39,6 @@ test_that(paste("Random sequences using `create_genome` aren't significantly dif
 ref <- ref_genome$new(jackal:::make_ref_genome(seqs))
 test_that("ref_genome class starts with the correct fields", {
     expect_is(ref$genome, "externalptr")
-    expect_null(ref$digests)
 })
 
 test_that("ref_genome class methods", {
@@ -89,7 +88,6 @@ phy <- ape::rcoal(n_vars)
 vars <- create_variants(ref, "phy", phy, mevo_obj = mev)
 test_that("variants class starts with the correct fields", {
     expect_is(vars$genomes, "externalptr")
-    expect_null(vars$digests)
 })
 
 

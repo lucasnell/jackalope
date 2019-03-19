@@ -1,34 +1,3 @@
-#' Binding sites for selected restriction enzymes.
-#'
-#' @format A 695 x 2 data frame with the following columns:
-#' \describe{
-#'   \item{enzyme}{Restriction enzyme name.}
-#'   \item{sites}{Enzyme binding site sequences.
-#'       See \code{\link{nucleobase_legend}} for what bases other than `T`, `C`, `A`,
-#'       and `G` mean.
-#'       Each `/` indicates a cleavage point.
-#'       According to NEB (see link below under Source):
-#'       "Numbers in parentheses indicate point of cleaveage for non-palindromic
-#'       enzymes."
-#'       These types of enzymes are not implemented.}
-#' }
-#' @source \url{https://www.neb.com/tools-and-resources/selection-charts/alphabetized-list-of-recognition-specificities}
-"binding_sites"
-
-
-
-#' Legend for the single-letter code of nucleobases indicating restriction sequences.
-#'
-#' @format A data frame of 28 rows and two columns:
-#' \describe{
-#'   \item{code}{The letter indicating more than one possible nucleotides.}
-#'   \item{nucleotides}{One of the multiple nucleotides the code can refer to.}
-#' }
-#' @source \url{https://en.wikipedia.org/wiki/List_of_restriction_enzyme_cutting_sites:_A#Whole_list_navigation}
-"nucleobase_legend"
-
-
-
 
 #' Table of evolutionary rates.
 #'

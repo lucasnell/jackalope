@@ -2,7 +2,6 @@
 
 export(create_genome)
 export(create_variants)
-export(digest)
 export(illumina)
 export(make_mevo)
 export(mevo)

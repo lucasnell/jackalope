@@ -11,8 +11,6 @@
 #'
 #' @field genome An \code{externalptr} to a C++ object storing the sequences
 #'     representing the genome.
-#' @field digests An \code{externalptr} to a C++ object storing the digestion of the
-#'     genome, if a digestion has been carried out. It's \code{NULL} otherwise.
 #'
 #' @section Methods:
 #' \describe{
@@ -55,7 +53,6 @@ ref_genome <- R6::R6Class(
     public = list(
 
         genome = NULL,
-        digests = NULL,
 
         initialize = function(genome_ptr) {
             if (!inherits(genome_ptr, "externalptr")) {
@@ -384,8 +381,6 @@ mevo$lock()
 #'
 #' @field genome An \code{externalptr} to a C++ object storing the sequences
 #'     representing the genome.
-#' @field digests An \code{externalptr} to a C++ object storing the digestion of the
-#'     genome, if a digestion has been carried out. It's \code{NULL} otherwise.
 #' @field reference An \code{externalptr} to a C++ object storing the sequences
 #'     representing the genome.
 #'     There are a few extra notes for this field:
@@ -437,7 +432,6 @@ variants <- R6::R6Class(
     public = list(
 
         genomes = NULL,
-        digests = NULL,
 
         initialize = function(genomes_ptr, reference_ptr) {
             if (!inherits(genomes_ptr, "externalptr")) {

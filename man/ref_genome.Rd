@@ -23,9 +23,6 @@ For safe ways of manipulating the reference genome, see the "Methods" section.
 \describe{
 \item{\code{genome}}{An \code{externalptr} to a C++ object storing the sequences
 representing the genome.}
-
-\item{\code{digests}}{An \code{externalptr} to a C++ object storing the digestion of the
-genome, if a digestion has been carried out. It's \code{NULL} otherwise.}
 }}
 
 \section{Methods}{

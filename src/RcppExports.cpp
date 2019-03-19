@@ -72,58 +72,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// get_precleavage_lens
-std::vector<uint32> get_precleavage_lens(const std::vector<std::string>& seqs);
-RcppExport SEXP _jackal_get_precleavage_lens(SEXP seqsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type seqs(seqsSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_precleavage_lens(seqs));
-    return rcpp_result_gen;
-END_RCPP
-}
-// expand_seqs
-std::vector<std::string> expand_seqs(const std::vector<std::string>& seqs);
-RcppExport SEXP _jackal_expand_seqs(SEXP seqsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type seqs(seqsSEXP);
-    rcpp_result_gen = Rcpp::wrap(expand_seqs(seqs));
-    return rcpp_result_gen;
-END_RCPP
-}
-// digest_var_set
-SEXP digest_var_set(SEXP var_set_ptr, const std::vector<std::string>& bind_sites, const std::vector<uint32>& len5s, const uint32& chunk_size, const uint32& n_cores);
-RcppExport SEXP _jackal_digest_var_set(SEXP var_set_ptrSEXP, SEXP bind_sitesSEXP, SEXP len5sSEXP, SEXP chunk_sizeSEXP, SEXP n_coresSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type bind_sites(bind_sitesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type len5s(len5sSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type chunk_size(chunk_sizeSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type n_cores(n_coresSEXP);
-    rcpp_result_gen = Rcpp::wrap(digest_var_set(var_set_ptr, bind_sites, len5s, chunk_size, n_cores));
-    return rcpp_result_gen;
-END_RCPP
-}
-// digest_ref
-SEXP digest_ref(SEXP ref_genome_ptr, const std::vector<std::string>& bind_sites, const std::vector<uint32>& len5s, const uint32& chunk_size, const uint32& n_cores);
-RcppExport SEXP _jackal_digest_ref(SEXP ref_genome_ptrSEXP, SEXP bind_sitesSEXP, SEXP len5sSEXP, SEXP chunk_sizeSEXP, SEXP n_coresSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type bind_sites(bind_sitesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type len5s(len5sSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type chunk_size(chunk_sizeSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type n_cores(n_coresSEXP);
-    rcpp_result_gen = Rcpp::wrap(digest_ref(ref_genome_ptr, bind_sites, len5s, chunk_size, n_cores));
-    return rcpp_result_gen;
-END_RCPP
-}
 // illumina_ref_cpp
 void illumina_ref_cpp(SEXP ref_genome_ptr, const bool& paired, const bool& matepair, const std::string& out_prefix, const bool& compress, const uint32& n_reads, const double& prob_dup, const uint32& n_cores, const bool& show_progress, const uint32& read_chunk_size, const double& frag_len_shape, const double& frag_len_scale, const uint32& frag_len_min, const uint32& frag_len_max, const std::vector<std::vector<std::vector<double>>>& qual_probs1, const std::vector<std::vector<std::vector<uint8>>>& quals1, const double& ins_prob1, const double& del_prob1, const std::vector<std::vector<std::vector<double>>>& qual_probs2, const std::vector<std::vector<std::vector<uint8>>>& quals2, const double& ins_prob2, const double& del_prob2, const std::vector<std::string>& barcodes);
 RcppExport SEXP _jackal_illumina_ref_cpp(SEXP ref_genome_ptrSEXP, SEXP pairedSEXP, SEXP matepairSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP n_readsSEXP, SEXP prob_dupSEXP, SEXP n_coresSEXP, SEXP show_progressSEXP, SEXP read_chunk_sizeSEXP, SEXP frag_len_shapeSEXP, SEXP frag_len_scaleSEXP, SEXP frag_len_minSEXP, SEXP frag_len_maxSEXP, SEXP qual_probs1SEXP, SEXP quals1SEXP, SEXP ins_prob1SEXP, SEXP del_prob1SEXP, SEXP qual_probs2SEXP, SEXP quals2SEXP, SEXP ins_prob2SEXP, SEXP del_prob2SEXP, SEXP barcodesSEXP) {
@@ -863,10 +811,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackal_replace_Ns_cpp", (DL_FUNC) &_jackal_replace_Ns_cpp, 4},
     {"_jackal_create_genome_", (DL_FUNC) &_jackal_create_genome_, 5},
     {"_jackal_rando_seqs", (DL_FUNC) &_jackal_rando_seqs, 5},
-    {"_jackal_get_precleavage_lens", (DL_FUNC) &_jackal_get_precleavage_lens, 1},
-    {"_jackal_expand_seqs", (DL_FUNC) &_jackal_expand_seqs, 1},
-    {"_jackal_digest_var_set", (DL_FUNC) &_jackal_digest_var_set, 5},
-    {"_jackal_digest_ref", (DL_FUNC) &_jackal_digest_ref, 5},
     {"_jackal_illumina_ref_cpp", (DL_FUNC) &_jackal_illumina_ref_cpp, 23},
     {"_jackal_illumina_var_cpp", (DL_FUNC) &_jackal_illumina_var_cpp, 24},
     {"_jackal_make_mutation_sampler_base", (DL_FUNC) &_jackal_make_mutation_sampler_base, 4},
