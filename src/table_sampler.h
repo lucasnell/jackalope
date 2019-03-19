@@ -81,7 +81,10 @@ public:
 private:
 
     uint32 dg(const uint128& m, const uint32& k) {
-        uint128 x = ((m>>(64ULL-16ULL*static_cast<uint128>(k)))&65535ULL);
+        uint128 x = ((m>>(64-16*static_cast<uint128>(k)))&65535);
+        // uint128 x = m;
+        // x >>= (static_cast<uint128>(64) - static_cast<uint128>(16) * static_cast<uint128>(k));
+        // x &= static_cast<uint128>(65535);
         uint32 y = static_cast<uint32>(x);
         return y;
     }
@@ -151,14 +154,14 @@ private:
         // Adding up thresholds in the `t` vector
         for (uint64 k = 0; k < (n_tables - 1); k++) {
             t[k] = sizes[k];
-            t[k] <<= (64 - 16 * (1 + k));
+            t[k] <<= (64 - 16 * (1 + static_cast<uint128>(k)));
             if (k > 0) t[k] += t[k-1];
         }
 
         // Taking care of scenario when just one output is possible
         if (std::accumulate(sizes.begin(), sizes.end(), 0ULL) == 0ULL) {
             // So it's always TRUE for the first `if ()` statement in sample:
-            t[0] = (1ULL<<63);
+            t[0] = (static_cast<uint128>(1)<<63);
             t[0] *= 2;
             /*
             Now filling in the index to the output with P = 1 so that sample
