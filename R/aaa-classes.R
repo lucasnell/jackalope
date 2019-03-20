@@ -228,8 +228,6 @@ ref_genome$lock()
 #' \describe{
 #'     \item{`mu()`}{Calculates the average overall mutation rate at equilibrium.}
 #'     \item{`q()`}{Calculates the mutation rate for each nucleotide.}
-#'     \item{`to_ptr()`}{Converts information in this object to a C++ pointer.
-#'         You shouldn't need to use this. Ever.}
 #' }
 #'
 #' @return An object of class \code{mevo}.
@@ -330,30 +328,6 @@ mevo <- R6::R6Class(
             # Mutation rates by nucleotides:
             q <- rowSums(self$Q) + indel
             return(q)
-        },
-
-
-        # -------*
-        # Convert to a XPtr<[Chunk]MutationSampler> object
-        # -------*
-        to_ptr = function() {
-
-            stopifnot(is.numeric(self$chunk_size) & !is.na(self$chunk_size))
-
-            if (self$chunk_size <= 0) {
-                sampler_ptr <- make_mutation_sampler_base(self$Q,
-                                                          self$pi_tcag,
-                                                          self$insertion_rates,
-                                                          self$deletion_rates)
-            } else {
-                sampler_ptr <- make_mutation_sampler_chunk_base(self$Q,
-                                                                self$pi_tcag,
-                                                                self$insertion_rates,
-                                                                self$deletion_rates,
-                                                                self$chunk_size)
-            }
-
-            return(sampler_ptr)
         }
 
     ),

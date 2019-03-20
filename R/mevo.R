@@ -1,3 +1,47 @@
+#' Check validity of input parameters for substitions and indels.
+#'
+#'
+#' @noRd
+#'
+validate_sub_pars <- function(par_list) {
+
+    # Defaults err_msg fxn doesn't quite work
+    err_msg_ <- "\nThe parameter `%s` used for substititions should be %s."
+
+    for (x in c("lambda", "alpha", "beta", "alpha_1", "alpha_2", "kappa")) {
+        z <- par_list[[x]]
+        if (!is.null(z) && !single_number(z, 0)) {
+            stop(sprintf(err_msg_, x, "a single number >= 0"), call. = FALSE)
+        }
+    }
+    if (!is.null(par_list[["pi_tcag"]]) &&
+        (!is_type(par_list[["pi_tcag"]], "numeric", 4) ||
+         any(par_list[["pi_tcag"]] < 0) ||
+         all(par_list[["pi_tcag"]] == 0))) {
+        stop(sprintf(err_msg_, "pi_tcag",
+                     paste("numeric vector of length 4, where",
+                           "no values should be < 0 and",
+                           "at least one value should be > 0")), call. = FALSE)
+    }
+    if (!is.null(par_list[["abcdef"]]) &&
+        (!is_type(par_list[["abcdef"]], "numeric", 6) ||
+         any(par_list[["abcdef"]] < 0) ||
+         all(par_list[["abcdef"]] == 0))) {
+        stop(sprintf(err_msg_, "abcdef",
+                     paste("numeric vector of length 6, where",
+                           "no values should be < 0 and",
+                           "at least one value should be > 0")), call. = FALSE)
+    }
+    if (!is.null(par_list[["Q"]]) && (!is_type(par_list[["Q"]], "matrix") ||
+                        !identical(dim(par_list[["Q"]]), c(4L, 4L)) ||
+                        any(par_list[["Q"]] < 0))) {
+        stop(sprintf(err_msg_, "Q", "a 4x4 matrix, where no values are < 0"),
+             call. = FALSE)
+    }
+
+    invisible(NULL)
+}
+
 
 #' Make substitution rate matrix (Q) and vector of equilibrium frequencies (pis).
 #'
@@ -8,57 +52,61 @@
 #'
 substitutions <- function(sub) {
 
-    err_msg <- paste("\nNot all required parameters provided for the given",
+    err_msg_ <- paste("\nNot all required parameters provided for the given",
                      "substitution model (\"%s\").",
                      "See `vignette(\"sub-model\")` for each model's required",
                      "parameter(s).")
 
     if (sub$model == "TN93") {
         if (any(! c("pi_tcag", "alpha_1", "alpha_2", "beta") %in% names(sub))) {
-            stop(sprintf(err_msg, sub$model), call. = FALSE)
+            stop(sprintf(err_msg_, sub$model), call. = FALSE)
+        }
+        if (any(sub$pi_tcag < 0) || sum(sub$pi_tcag <= 0)) {
+            stop("\nNo values of `pi_tcag` should be < 0, and the vector needs at ",
+                 "least one value > 0.", call. = FALSE)
         }
         Q <- TN93_rate_matrix(sub$pi_tcag, sub$alpha_1, sub$alpha_2,
                               sub$beta)
         pi_tcag <- sub$pi_tcag
     } else if (sub$model == "JC69") {
         if (any(! c("lambda") %in% names(sub))) {
-            stop(sprintf(err_msg, sub$model), call. = FALSE)
+            stop(sprintf(err_msg_, sub$model), call. = FALSE)
         }
         Q <- JC69_rate_matrix(sub$lambda)
         pi_tcag <- rep(0.25, 4)
     } else if (sub$model == "K80") {
         if (any(! c("alpha", "beta") %in% names(sub))) {
-            stop(sprintf(err_msg, sub$model), call. = FALSE)
+            stop(sprintf(err_msg_, sub$model), call. = FALSE)
         }
         Q <- K80_rate_matrix(sub$alpha, sub$beta);
         pi_tcag <- rep(0.25, 4)
     } else if (sub$model == "F81") {
         if (any(! c("pi_tcag") %in% names(sub))) {
-            stop(sprintf(err_msg, sub$model), call. = FALSE)
+            stop(sprintf(err_msg_, sub$model), call. = FALSE)
         }
         Q <- F81_rate_matrix(sub$pi_tcag);
         pi_tcag <- sub$pi_tcag
     } else if (sub$model == "HKY85") {
         if (any(! c("pi_tcag", "alpha", "beta") %in% names(sub))) {
-            stop(sprintf(err_msg, sub$model), call. = FALSE)
+            stop(sprintf(err_msg_, sub$model), call. = FALSE)
         }
         Q <- HKY85_rate_matrix(sub$pi_tcag, sub$alpha, sub$beta)
         pi_tcag <- sub$pi_tcag
     } else if (sub$model == "F84") {
         if (any(! c("pi_tcag", "beta", "kappa") %in% names(sub))) {
-            stop(sprintf(err_msg, sub$model), call. = FALSE)
+            stop(sprintf(err_msg_, sub$model), call. = FALSE)
         }
         Q <- F84_rate_matrix(sub$pi_tcag, sub$beta, sub$kappa)
         pi_tcag <- sub$pi_tcag
     } else if (sub$model == "GTR") {
         if (any(! c("pi_tcag", "abcdef") %in% names(sub))) {
-            stop(sprintf(err_msg, sub$model), call. = FALSE)
+            stop(sprintf(err_msg_, sub$model), call. = FALSE)
         }
         Q <- GTR_rate_matrix(sub$pi_tcag, sub$abcdef)
         pi_tcag <- sub$pi_tcag
     } else if (sub$model == "UNREST") {
         if (any(! c("Q") %in% names(sub))) {
-            stop(sprintf(err_msg, sub$model), call. = FALSE)
+            stop(sprintf(err_msg_, sub$model), call. = FALSE)
         }
         q_pi_list <- UNREST_rate_matrix(sub$Q)
         Q <- q_pi_list$Q
@@ -85,36 +133,47 @@ indels <- function(indel) {
     if (is.null(indel)) {
         rates <- numeric(0)
     } else {
-        err_msg <- paste("\nWhen specifying", which_type, "in `make_mevo`, ")
-        if (is.null(indel$rate)) {
-            stop(err_msg, "you must always provide a rate.",
-                 call. = TRUE)
-        } else if (!single_number(indel$rate, 0)) {
-            stop(err_msg, "the rate must be a single number >= 0.",
-                 call. = TRUE)
+        err_msg_ <- paste0("\nWhen specifying `", which_type, "` in `make_mevo`, ")
+        if (!single_number(indel$rate, 0)) {
+            err_msg("make_mevo", which_type, "a list with a \"rate\" field,",
+                    "and that field must be a single number >= 0")
         }
         if (indel$rate == 0) return(numeric(0))
         names_ <- sort(names(indel))
         if (identical(names_, sort(c("rate", "max_length")))) {
             if (!single_integer(indel$max_length, 1)) {
-                stop(err_msg, "the max length must be a single whole number >= 1.",
-                     call. = TRUE)
+                stop(err_msg_, "the `max_length` field within, if provided, must ",
+                     "be a single whole number >= 1.", call. = FALSE)
             }
             rel_rates <- exp(-1 * 1:(indel$max_length))
         } else if (identical(names_, sort(c("rate", "max_length", "a")))) {
             if (!single_integer(indel$max_length, 1)) {
-                stop(err_msg, "the max length must be a single whole number >= 1.",
-                     call. = TRUE)
+                stop(err_msg_, "the `max_length` field within, if provided, must ",
+                     "be a single whole number >= 1.", call. = FALSE)
+            }
+            if (!single_number(indel$a, 0)) {
+                stop(err_msg_, "the `a` field within, if provided, must ",
+                     "be a single number >= 0.", call. = FALSE)
             }
             L <- 1:(indel$max_length)
             rel_rates <- {(L * indel$max_length) / (indel$max_length - L + 1)}^(-indel$a)
         } else if (identical(names_, sort(c("rate", "rel_rates")))) {
+            if (!is_type(indel$rel_rates, "numeric") ||
+                 any(indel$rel_rates < 0) ||
+                 all(indel$rel_rates == 0)) {
+                stop(sprintf(err_msg_, "pi_tcag",
+                             paste("numeric vector of length 4, where",
+                                   "no values should be < 0 and",
+                                   "at least one value should be > 0")), call. = FALSE)
+                stop(err_msg_, "the `rel_rates` field within, if provided, must ",
+                     "be a numeric vector, where no values should be < 0 and ",
+                     "at least one value should be > 0.", call. = FALSE)
+            }
             rel_rates <- indel$rel_rates
         } else {
-            stop(err_msg, "it must contain names that coincide with one of the methods ",
-                 "in the \"Indels\" section within `?make_mevo`.",
-                 "Note that extra names return an error.",
-                 call. = FALSE)
+            err_msg("make_mevo", which_type, "a list with names that coincide",
+                    "with one of the methods in the \"Indels\" section within",
+                    "`?make_mevo`. Note that extra names return an error.")
         }
 
         # So relative rates sum to 1:
@@ -158,14 +217,14 @@ site_variability <- function(site_var, seq_sizes) {
                                           shape = site_var$shape)
         } else if ("mats" %in% names(site_var)) {
 
-            err_msg <- paste("\nThe `mats` field inside the `site_var`",
+            err_msg_ <- paste("\nThe `mats` field inside the `site_var`",
                              "argument to the `make_mevo` function needs to",
                              "be a list of matrices.")
             if (!inherits(site_var$mats, "list")) {
-                stop(err_msg, call. = FALSE)
+                stop(err_msg_, call. = FALSE)
             } else if (!all(sapply(site_var$mats, inherits,
                                    what = "matrix"))) {
-                stop(err_msg, call. = FALSE)
+                stop(err_msg_, call. = FALSE)
             }
 
             # Check matrices for proper end points and # columns:
@@ -331,6 +390,7 @@ make_mevo <- function(reference,
     }
     sub$model <- match.arg(sub$model, c("JC69", "K80", "F81", "HKY85", "TN93", "F84",
                                         "GTR", "UNREST"))
+    validate_sub_pars(sub)
     sub_info <- substitutions(sub)
 
 

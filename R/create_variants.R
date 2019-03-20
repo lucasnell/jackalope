@@ -1,4 +1,33 @@
 
+#' Convert to a XPtr<[Chunk]MutationSampler> object
+#'
+#' @noRd
+#'
+mevo_obj_to_ptr <- function(mevo_obj) {
+
+    if (!single_integer(mevo_obj$chunk_size, 0)) {
+        err_msg("create_variants", "mevo_obj", "a \"mevo\" object with a `chunk_size`",
+                "field that's a single integer >= 0")
+    }
+
+    if (mevo_obj$chunk_size <= 0) {
+        sampler_ptr <- make_mutation_sampler_base(mevo_obj$Q,
+                                                  mevo_obj$pi_tcag,
+                                                  mevo_obj$insertion_rates,
+                                                  mevo_obj$deletion_rates)
+    } else {
+        sampler_ptr <- make_mutation_sampler_chunk_base(mevo_obj$Q,
+                                                        mevo_obj$pi_tcag,
+                                                        mevo_obj$insertion_rates,
+                                                        mevo_obj$deletion_rates,
+                                                        mevo_obj$chunk_size)
+    }
+
+    return(sampler_ptr)
+}
+
+
+
 # doc start ----
 #' Create variants from a reference genome.
 #'
@@ -70,7 +99,9 @@
 #' @param method_info Object containing information used for the given method.
 #'     See "Method arguments" section for which arguments are used for each method.
 #' @param mevo_obj A `mevo` object that stores molecular-evolution information.
+#'     This argument is needed for all methods except `"vcf"`.
 #'     See \code{\link{make_mevo}} for more information.
+#'     Defaults to `NULL`.
 #' @param n_cores Number of cores to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
 #'     Cores are spread across sequences, so it
@@ -93,7 +124,7 @@
 create_variants <- function(reference,
                             method,
                             method_info,
-                            mevo_obj,
+                            mevo_obj = NULL,
                             n_cores = 1,
                             show_progress = FALSE) {
 
@@ -107,21 +138,17 @@ create_variants <- function(reference,
     # ---------*
 
     if (!inherits(reference, "ref_genome")) {
-        stop("\nCreating variants can only be done to a ref_genome object.",
-             call. = FALSE)
+        err_msg("create_variants", "reference", "a \"ref_genome\" object")
     }
     ref_genome_ptr <- reference$genome
     if (!inherits(ref_genome_ptr, "externalptr")) {
-        stop("\nYou're attempting to create variants using a \"ref_genome\" object with ",
-             "a `genome` field that is not of class \"externalptr\". ",
-             "Restart by reading a FASTA file or by simulating a genome. ",
-             "And do NOT change the `genome` field manually.",
-             call. = FALSE)
+        err_msg("create_variants", "mevo_obj", "a \"mevo\" object with a `genome`",
+                "field of class \"externalptr\".",
+                "Restart by reading a FASTA file or by simulating a genome,",
+                "and do NOT change the `genome` field manually")
     }
     if (!single_integer(n_cores, .min = 1)) {
-        stop("\nThe `n_cores` argument supplied to `create_variants` is not a single",
-             "whole number greater than or equal to 1.",
-             call. = FALSE)
+        err_msg("create_variants", "n_cores", "a single integer >= 1")
     }
 
 
@@ -134,18 +161,11 @@ create_variants <- function(reference,
         # -------+
         # Check mevo_obj argument
         # -------+
-        mevo_obj_err <- FALSE
-        if (missing(mevo_obj)) {
-            mevo_obj_err <- TRUE
-        } else if (!inherits(mevo_obj, "mevo")) {
-            mevo_obj_err <- TRUE
-        }
-        if (mevo_obj_err) {
-            stop("\nIf you want to use a method other than \"vcf\" in ",
-                 "`create_variants`, you must provide the `mevo_obj` argument that is ",
-                 "of class \"mevo\". ",
-                 "You should use the `make_mevo` function to create this object.",
-                 call. = FALSE)
+        if (is.null(mevo_obj) || !inherits(mevo_obj, "mevo")) {
+            err_msg("create_variants", "mevo_obj", "a \"mevo\" object (if you",
+                    "want to use a method other than \"vcf\").",
+                    "You should use the `make_mevo` function to create this object")
+
         }
 
         # -------+
@@ -160,7 +180,7 @@ create_variants <- function(reference,
         # -------+
         # Make sampler_base_ptr
         # -------+
-        sampler_base_ptr <- mevo_obj$to_ptr()
+        sampler_base_ptr <- mevo_obj_to_ptr(mevo_obj)
 
         # -------+
         # Make Gamma matrices (for mutation-rate variability among sites):
