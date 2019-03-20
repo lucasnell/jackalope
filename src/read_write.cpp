@@ -603,6 +603,8 @@ void write_fasta_fa(std::string file_name,
     XPtr<RefGenome> ref_xptr(ref_genome_ptr);
     RefGenome& ref(*ref_xptr);
 
+    expand_path(file_name);
+
     std::ofstream out_file(file_name);
 
     if (out_file.is_open()) {
@@ -641,12 +643,14 @@ void write_fasta_fa(std::string file_name,
 //' @noRd
 //'
 //[[Rcpp::export]]
-void write_fasta_gz(const std::string& file_name,
+void write_fasta_gz(std::string file_name,
                     SEXP ref_genome_ptr,
                     const uint32& text_width){
 
     XPtr<RefGenome> ref_xptr(ref_genome_ptr);
     RefGenome& ref(*ref_xptr);
+
+    expand_path(file_name);
 
     // Initialize filehandle.
     gzFile fi;

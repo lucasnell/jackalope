@@ -38,8 +38,6 @@ read_fasta <- function(fasta_file, fai_file = NULL,
         err_msg("read_fasta", "rm_soft_mask", "a single logical")
     }
 
-    fasta_file <- path.expand(fasta_file)
-
     if (is.null(fai_file)) {
         ptr <- read_fasta_noind(fasta_file, cut_names, rm_soft_mask)
     } else {
@@ -85,7 +83,6 @@ write_fasta <- function(reference, file_name, text_width = 80, compress = FALSE)
              "`write_fasta` should be an external pointer.",
              call. = TRUE)
     }
-    file_name <- path.expand(file_name)
     if (compress) {
         invisible(write_fasta_gz(file_name, reference$genome, text_width))
     } else {
