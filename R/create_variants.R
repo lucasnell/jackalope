@@ -43,13 +43,32 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'                 Phylogenies will be assigned to sequences in the order provided.
 #'         }
 #'     }
-#'     \item{`method = "coal_obj"`}{One of the following object types is allowed:
+#'     \item{`method = "coal_trees"`}{One of the following object types is allowed:
 #'         \itemize{
 #'             \item A single `list` with a `trees` field inside. This field must
 #'                 contain a set of gene trees for each sequence.
 #'             \item A list of lists, each sub-list containing a `trees` field of
 #'                 length 1. The top-level list must be of the same length as the
 #'                 number of sequences.
+#'             \item A single string specifying the name of the file containing
+#'                 the `ms`-style coalescent output with gene trees.
+#'         }
+#'         The top two options are designed after the `trees` fields in the output from
+#'         the `scrm` and `coala` packages.
+#'         (These packages are not required to be installed when installing
+#'         `jackal`.)
+#'         To get gene trees, make sure to add `+ sumstat_trees()`
+#'         to the `coalmodel` for `coala`, or
+#'         make sure that `"-T"` is present in `args` for `scrm`.
+#'         If using an output file from a command-line program like `ms`/`msms`,
+#'         add the `-T` option.
+#'     }
+#'     \item{`method = "coal_sites"`}{One of the following object types is allowed:
+#'         \itemize{
+#'             \item A single `list` with a `segsites` field inside. This field must
+#'                 contain a matrix for segregating sites for each sequence.
+#'             \item A single string specifying the name of the file containing
+#'                 the `ms`-style coalescent output with segregating site info.
 #'         }
 #'         For what all `trees` fields should look like, see output from the
 #'         `scrm` or `coala` package.
@@ -59,8 +78,6 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'         to the `coalmodel`.
 #'         In `scrm`, make sure that `"-T"` is present in `args`.
 #'     }
-#'     \item{`method = "ms_file"`}{A single string specifying the name of the file
-#'         containing the `ms`-style coalescent output.}
 #'     \item{`method = "newick"`}{One or more string(s), each of which specifies
 #'         a name of a NEWICK file containing a phylogeny.
 #'         If one name is provided, that phylogeny will be used for all sequences.
@@ -128,7 +145,7 @@ create_variants <- function(reference,
                             n_cores = 1,
                             show_progress = FALSE) {
 
-    methods_ <- list(phylo = c("phylo", "coal_obj", "ms_file", "newick", "theta"),
+    methods_ <- list(phylo = c("phylo", "coal_trees", "coal_sites", "newick", "theta"),
                      non = "vcf")
 
     method <- match.arg(method, do.call(c, methods_))

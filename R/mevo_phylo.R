@@ -1,4 +1,32 @@
 
+#' Process one segregating-sites matrix from a coalescent simulator with ms-style output.
+#'
+#' @param mat The matrix to process.
+#' @param seq_size The number of bp in the sequence associated with the input string.
+#'
+#' @noRd
+#'
+process_coal_sites_matrix <- function(mat, seq_size) {
+
+    err_msg_ <- paste("\nPositions in one or more segregating-sites matrices %s.",
+                      "They are derived from column names, so check those for nonsense.")
+
+    pos <- as.numeric(colnames(mat))
+    if (any(is.na(pos))) {
+        stop(sprint(err_msg_, "are producing NAs when trying to coerce them to numbers"),
+             call. = FALSE)
+    } else if (length(pos) != ncol(mat)) {
+        stop(sprint(err_msg_, paste("are not the same length as the number of rows",
+                                    "in the matrix")), call. = FALSE)
+    }
+
+    new_mat <- cbind(pos, t(mat))
+    rownames(new_mat) <- colnames(new_mat) <- NULL
+
+    new_mat <- adjust_pos_coal_sites_matrix(new_mat, seq_size)
+
+    return(new_mat)
+}
 
 
 #' Process one gene-tree string from a coalescent simulator with ms-style output.
@@ -135,7 +163,7 @@ read_phy_obj <- function(phy, n_seqs, chunked, err_msg = "") {
 #' @noRd
 #'
 #'
-read_coal_obj <- function(coal_obj, seq_sizes, chunked, err_msg) {
+read_coal_trees <- function(coal_obj, seq_sizes, chunked, err_msg) {
 
     # Check for coal_obj being a list and either having a `trees` field or all its
     # items within having `trees` fields
@@ -173,7 +201,7 @@ read_coal_obj <- function(coal_obj, seq_sizes, chunked, err_msg) {
     }
 
     phylo_info <- mapply(process_coal_tree_string, trees, seq_sizes,
-                        SIMPLIFY = FALSE, USE.NAMES = FALSE)
+                         SIMPLIFY = FALSE, USE.NAMES = FALSE)
 
     # Making sure all labels are the same
     label_mat <- do.call(rbind,
@@ -211,13 +239,9 @@ read_coal_obj <- function(coal_obj, seq_sizes, chunked, err_msg) {
 #' @noRd
 #'
 #'
-read_ms_output <- function(ms_filename, seq_sizes, chunked, err_msg) {
+read_ms_trees <- function(ms_filename, seq_sizes, chunked) {
 
-    if (!is_type(ms_filename, "character", 1)) {
-        stop(sprintf(err_msg, "a single string"), call. = FALSE)
-    }
-
-    trees <- read_ms_output_(ms_filename)
+    trees <- read_ms_trees_(ms_filename)
 
     phylo_info <- mapply(process_coal_tree_string, trees, seq_sizes,
                         SIMPLIFY = FALSE, USE.NAMES = FALSE)
@@ -357,13 +381,27 @@ make_phylo_info <- function(method,
 
         trees_ptr <- read_phy_obj(method_info, n_seqs, chunked, err_msg)
 
-    } else if (method == "coal_obj") {
+    } else if (method == "coal_trees") {
 
-        trees_ptr <- read_coal_obj(method_info, seq_sizes, chunked, err_msg)
+        if (is_type(method_info, "character", 1)) {
+            trees_ptr <- read_ms_trees(method_info, seq_sizes, chunked)
+        } else if (inherits(method_info, "list")) {
+            trees_ptr <- read_coal_trees(method_info, seq_sizes, chunked, err_msg)
+        } else {
+            stop(sprintf(err_msg, "a single string or a list"), call. = FALSE)
+        }
 
-    } else if (method == "ms_file") {
+    } else if (method == "coal_sites") {
 
-        trees_ptr <- read_ms_output(method_info, seq_sizes, chunked, err_msg)
+        if (is_type(method_info, "character", 1)) {
+            stop("NOT YET IMPLEMENTED")
+            # trees_ptr <- read_ms_trees(method_info, seq_sizes, chunked)
+        } else if (inherits(method_info, "list")) {
+            stop("NOT YET IMPLEMENTED")
+            # trees_ptr <- read_coal_trees(method_info, seq_sizes, chunked, err_msg)
+        } else {
+            stop(sprintf(err_msg, "a single string or a list"), call. = FALSE)
+        }
 
     } else if (method == "newick") {
 
