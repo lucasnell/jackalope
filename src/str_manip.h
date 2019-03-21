@@ -88,7 +88,7 @@ inline void filter_nucleos(std::string& nucleos, const bool& upper) {
 
 
 // Trim leading and trailing whitespace off a string
-void trimws(std::string& str) {
+inline void trimws(std::string& str) {
     size_t first = str.find_first_not_of(' ');
     if (std::string::npos == first) return;
     size_t last = str.find_last_not_of(' ');
