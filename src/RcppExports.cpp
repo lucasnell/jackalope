@@ -166,6 +166,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// add_coal_sites_cpp
+SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr, const std::vector<std::string>& var_names, const std::vector<arma::mat>& seg_sites, const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, uint32 n_cores, const bool& show_progress);
+RcppExport SEXP _jackal_add_coal_sites_cpp(SEXP ref_genome_ptrSEXP, SEXP var_namesSEXP, SEXP seg_sitesSEXP, SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP n_coresSEXP, SEXP show_progressSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP& >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type var_names(var_namesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type seg_sites(seg_sitesSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type insertion_rates(insertion_ratesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
+    Rcpp::traits::input_parameter< uint32 >::type n_cores(n_coresSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    rcpp_result_gen = Rcpp::wrap(add_coal_sites_cpp(ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_cores, show_progress));
+    return rcpp_result_gen;
+END_RCPP
+}
 // make_gamma_mats
 arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes, const uint32& gamma_size_, const double& shape);
 RcppExport SEXP _jackal_make_gamma_mats(SEXP seq_sizesSEXP, SEXP gamma_size_SEXP, SEXP shapeSEXP) {
@@ -406,14 +425,25 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// read_ms_output_
-std::vector<std::vector<std::string>> read_ms_output_(std::string ms_file);
-RcppExport SEXP _jackal_read_ms_output_(SEXP ms_fileSEXP) {
+// read_ms_trees_
+std::vector<std::vector<std::string>> read_ms_trees_(std::string ms_file);
+RcppExport SEXP _jackal_read_ms_trees_(SEXP ms_fileSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type ms_file(ms_fileSEXP);
-    rcpp_result_gen = Rcpp::wrap(read_ms_output_(ms_file));
+    rcpp_result_gen = Rcpp::wrap(read_ms_trees_(ms_file));
+    return rcpp_result_gen;
+END_RCPP
+}
+// coal_file_sites
+arma::field<arma::mat> coal_file_sites(std::string ms_file);
+RcppExport SEXP _jackal_coal_file_sites(SEXP ms_fileSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type ms_file(ms_fileSEXP);
+    rcpp_result_gen = Rcpp::wrap(coal_file_sites(ms_file));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -472,11 +502,11 @@ BEGIN_RCPP
 END_RCPP
 }
 // write_fasta_gz
-void write_fasta_gz(const std::string& file_name, SEXP ref_genome_ptr, const uint32& text_width);
+void write_fasta_gz(std::string file_name, SEXP ref_genome_ptr, const uint32& text_width);
 RcppExport SEXP _jackal_write_fasta_gz(SEXP file_nameSEXP, SEXP ref_genome_ptrSEXP, SEXP text_widthSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type file_name(file_nameSEXP);
+    Rcpp::traits::input_parameter< std::string >::type file_name(file_nameSEXP);
     Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
     Rcpp::traits::input_parameter< const uint32& >::type text_width(text_widthSEXP);
     write_fasta_gz(file_name, ref_genome_ptr, text_width);
@@ -815,6 +845,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackal_illumina_var_cpp", (DL_FUNC) &_jackal_illumina_var_cpp, 24},
     {"_jackal_make_mutation_sampler_base", (DL_FUNC) &_jackal_make_mutation_sampler_base, 4},
     {"_jackal_make_mutation_sampler_chunk_base", (DL_FUNC) &_jackal_make_mutation_sampler_chunk_base, 5},
+    {"_jackal_add_coal_sites_cpp", (DL_FUNC) &_jackal_add_coal_sites_cpp, 9},
     {"_jackal_make_gamma_mats", (DL_FUNC) &_jackal_make_gamma_mats, 3},
     {"_jackal_check_gamma_mats", (DL_FUNC) &_jackal_check_gamma_mats, 2},
     {"_jackal_phylo_info_to_trees", (DL_FUNC) &_jackal_phylo_info_to_trees, 1},
@@ -831,7 +862,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackal_UNREST_rate_matrix", (DL_FUNC) &_jackal_UNREST_rate_matrix, 1},
     {"_jackal_pacbio_ref_cpp", (DL_FUNC) &_jackal_pacbio_ref_cpp, 23},
     {"_jackal_pacbio_var_cpp", (DL_FUNC) &_jackal_pacbio_var_cpp, 24},
-    {"_jackal_read_ms_output_", (DL_FUNC) &_jackal_read_ms_output_, 1},
+    {"_jackal_read_ms_trees_", (DL_FUNC) &_jackal_read_ms_trees_, 1},
+    {"_jackal_coal_file_sites", (DL_FUNC) &_jackal_coal_file_sites, 1},
     {"_jackal_read_vcfr", (DL_FUNC) &_jackal_read_vcfr, 6},
     {"_jackal_read_fasta_noind", (DL_FUNC) &_jackal_read_fasta_noind, 3},
     {"_jackal_read_fasta_ind", (DL_FUNC) &_jackal_read_fasta_ind, 3},

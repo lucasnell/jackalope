@@ -1,33 +1,4 @@
 
-#' Process one segregating-sites matrix from a coalescent simulator with ms-style output.
-#'
-#' @param mat The matrix to process.
-#' @param seq_size The number of bp in the sequence associated with the input string.
-#'
-#' @noRd
-#'
-process_coal_sites_matrix <- function(mat, seq_size) {
-
-    err_msg_ <- paste("\nPositions in one or more segregating-sites matrices %s.",
-                      "They are derived from column names, so check those for nonsense.")
-
-    pos <- as.numeric(colnames(mat))
-    if (any(is.na(pos))) {
-        stop(sprint(err_msg_, "are producing NAs when trying to coerce them to numbers"),
-             call. = FALSE)
-    } else if (length(pos) != ncol(mat)) {
-        stop(sprint(err_msg_, paste("are not the same length as the number of rows",
-                                    "in the matrix")), call. = FALSE)
-    }
-
-    new_mat <- cbind(pos, t(mat))
-    rownames(new_mat) <- colnames(new_mat) <- NULL
-
-    new_mat <- adjust_pos_coal_sites_matrix(new_mat, seq_size)
-
-    return(new_mat)
-}
-
 
 #' Process one gene-tree string from a coalescent simulator with ms-style output.
 #'
@@ -59,6 +30,10 @@ process_coal_tree_string <- function(str, seq_size) {
                 inds <- sample.int(length(sizes_), abs(seq_size - sum(sizes_)))
                 sizes_[inds] <- sizes_[inds] + sign(seq_size - sum(sizes_))
             }
+        } else if (sum(sizes_) != seq_size) {
+            stop("\nA coalescent string appears to include ",
+                 "recombination but the combined sizes of all regions don't match ",
+                 "the size of the sequence.", call. = FALSE)
         }
     } else {
         sizes_ <- 1
@@ -130,7 +105,7 @@ read_phy_obj <- function(phy, n_seqs, chunked, err_msg = "") {
     phylo_info <- lapply(phy,
                          function(p) {
                              p <- ape::reorder.phylo(p, order = "cladewise")
-                             labels <- paste(p$tip.label)  # <-- making sure they're strings
+                             labels <- paste(p$tip.label)# <-- making sure they're strings
                              branch_lens <- p$edge.length
                              edges <- p$edge
                              phy_info <- list(branch_lens = branch_lens, edges = edges,
@@ -153,7 +128,7 @@ read_phy_obj <- function(phy, n_seqs, chunked, err_msg = "") {
 
 
 
-#' Read info from a coalescent object from scrm or coala.
+#' Read gene-tree info from a coalescent object from scrm or coala.
 #'
 #' @inheritParams make_phylo_info
 #'
@@ -224,6 +199,8 @@ read_coal_trees <- function(coal_obj, seq_sizes, chunked, err_msg) {
 
     return(trees_ptr)
 }
+
+
 
 
 
@@ -387,18 +364,6 @@ make_phylo_info <- function(method,
             trees_ptr <- read_ms_trees(method_info, seq_sizes, chunked)
         } else if (inherits(method_info, "list")) {
             trees_ptr <- read_coal_trees(method_info, seq_sizes, chunked, err_msg)
-        } else {
-            stop(sprintf(err_msg, "a single string or a list"), call. = FALSE)
-        }
-
-    } else if (method == "coal_sites") {
-
-        if (is_type(method_info, "character", 1)) {
-            stop("NOT YET IMPLEMENTED")
-            # trees_ptr <- read_ms_trees(method_info, seq_sizes, chunked)
-        } else if (inherits(method_info, "list")) {
-            stop("NOT YET IMPLEMENTED")
-            # trees_ptr <- read_coal_trees(method_info, seq_sizes, chunked, err_msg)
         } else {
             stop(sprintf(err_msg, "a single string or a list"), call. = FALSE)
         }

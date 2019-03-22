@@ -65,18 +65,24 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'     }
 #'     \item{`method = "coal_sites"`}{One of the following object types is allowed:
 #'         \itemize{
-#'             \item A single `list` with a `segsites` field inside. This field must
+#'             \item A single `list` with a `seg_sites` field inside. This field must
 #'                 contain a matrix for segregating sites for each sequence.
+#'                 The matrix itself should contain the haplotype information, coded
+#'                 using 0s and 1s: 0s indicate the ancestral state and 1s indicate
+#'                 mutant.
+#'                 The matrix column names should be numbers in the range (0,1) and
+#'                 indicate the relative positions of the polymorphisms on the
+#'                 chromosome.
 #'             \item A single string specifying the name of the file containing
 #'                 the `ms`-style coalescent output with segregating site info.
+#'             \item A list containing `names` and `info` fields. The `info` field should
+#'                 be one of the options above, and the `names` field provides a name
+#'                 for each variant.
 #'         }
-#'         For what all `trees` fields should look like, see output from the
+#'         For what the `seg_sites` field should look like in a list, see output from the
 #'         `scrm` or `coala` package.
 #'         (These packages are not required to be installed when installing
 #'         `jackal`.)
-#'         To get gene trees in `coala`, make sure to add `+ sumstat_trees()`
-#'         to the `coalmodel`.
-#'         In `scrm`, make sure that `"-T"` is present in `args`.
 #'     }
 #'     \item{`method = "newick"`}{One or more string(s), each of which specifies
 #'         a name of a NEWICK file containing a phylogeny.
@@ -102,9 +108,14 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'     Options are as follows:
 #'     \describe{
 #'         \item{`"phylo"`}{phylogenetic tree(s) from `phylo` object(s).}
-#'         \item{`"coal_obj"`}{coalescent-simulator object(s) from the `scrm` or `coala`
-#'             package.}
-#'         \item{`"ms_file"`}{a file containing output from a coalescent simulator in the
+#'         \item{`"coal_trees"`}{information from gene trees, either in the form of
+#'             (1) coalescent-simulator object(s) from the `scrm` or `coala` package, or
+#'             (2) a file containing output from a coalescent simulator in the
+#'             format of the `ms` program.}
+#'         \item{`"coal_sites"`}{information from matrices of segregating sites,
+#'             either in the form of
+#'             (1) coalescent-simulator object(s) from the `scrm` or `coala` package, or
+#'             (2) a file containing output from a coalescent simulator in the
 #'             format of the `ms` program.}
 #'         \item{`"newick"`}{NEWICK file(s) containing a phylogenetic tree(s).}
 #'         \item{`"theta"`}{an estimate for theta, the population-scaled mutation rate.}
@@ -132,10 +143,10 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'
 #' @examples
 #' r <- create_genome(10, 1000)
-#' p <- ape::rcoal(5)
+#' tree <- ape::rcoal(5)
 #' m <- make_mevo(r, list(model = "JC69", lambda = 0.1))
-#' v <- create_variants(r, "phylo", p, m)
-#'
+#' v_phylo <- create_variants(r, "phylo", tree, m)
+#' v_theta <- create_variants(r, "theta", list(theta = 0.001, n_vars = 5), m)
 #'
 # doc end ----
 create_variants <- function(reference,
@@ -145,10 +156,10 @@ create_variants <- function(reference,
                             n_cores = 1,
                             show_progress = FALSE) {
 
-    methods_ <- list(phylo = c("phylo", "coal_trees", "coal_sites", "newick", "theta"),
-                     non = "vcf")
+    methods_ <- list(phylo = c("phylo", "coal_trees", "newick", "theta"),
+                     non = c("coal_sites", "vcf"))
 
-    method <- match.arg(method, do.call(c, methods_))
+    method <- match.arg(method, as.character(do.call(c, methods_)))
 
     # ---------*
     # --- check types ----
@@ -167,6 +178,13 @@ create_variants <- function(reference,
     if (!single_integer(n_cores, .min = 1)) {
         err_msg("create_variants", "n_cores", "a single integer >= 1")
     }
+    # Check mevo_obj argument
+    if (method %in% c("coal_sites", methods_$phylo) &&
+        (is.null(mevo_obj) || !inherits(mevo_obj, "mevo"))) {
+        err_msg("create_variants", "mevo_obj", "a \"mevo\" object (if you",
+                "want to use a method other than \"vcf\").",
+                "You should use the `make_mevo` function to create this object")
+    }
 
 
     # ---------*
@@ -174,16 +192,6 @@ create_variants <- function(reference,
     # ---------*
 
     if (method %in% methods_$phylo) {
-
-        # -------+
-        # Check mevo_obj argument
-        # -------+
-        if (is.null(mevo_obj) || !inherits(mevo_obj, "mevo")) {
-            err_msg("create_variants", "mevo_obj", "a \"mevo\" object (if you",
-                    "want to use a method other than \"vcf\").",
-                    "You should use the `make_mevo` function to create this object")
-
-        }
 
         # -------+
         # Make phylo_ptr
@@ -225,11 +233,18 @@ create_variants <- function(reference,
                 show_progress)
         }
 
+
+    # ---------*
+    # --- coal_sites method ----
+    # ---------*
+    } else if (method == "coal_sites") {
+
+        variants_ptr <- read_coal_sites(method_info, reference, mevo_obj,
+                                        n_cores, show_progress)
+
     # ---------*
     # --- vcf method ----
-    # (It's the only non-phylogenetic method currently)
     # ---------*
-
     } else {
 
         variants_ptr <- read_vcf(reference, method_info)

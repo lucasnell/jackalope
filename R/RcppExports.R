@@ -112,12 +112,32 @@ illumina_var_cpp <- function(var_set_ptr, paired, matepair, out_prefix, compress
     invisible(.Call(`_jackal_illumina_var_cpp`, var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
 }
 
+#' Used below to directly make a MutationTypeSampler
+#'
+#' @noRd
+#'
+NULL
+
+#' Add mutations at segregating sites for one sequence from coalescent simulation output.
+#'
+#' @noRd
+#'
+NULL
+
 make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates) {
     .Call(`_jackal_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates)
 }
 
 make_mutation_sampler_chunk_base <- function(Q, pi_tcag, insertion_rates, deletion_rates, chunk_size) {
     .Call(`_jackal_make_mutation_sampler_chunk_base`, Q, pi_tcag, insertion_rates, deletion_rates, chunk_size)
+}
+
+#' Add mutations at segregating sites from coalescent simulation output.
+#'
+#' @noRd
+#'
+add_coal_sites_cpp <- function(ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_cores, show_progress) {
+    .Call(`_jackal_add_coal_sites_cpp`, ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_cores, show_progress)
 }
 
 #' Fill matrix of Gamma-region end points and Gamma values.
@@ -338,8 +358,20 @@ pacbio_var_cpp <- function(var_set_ptr, out_prefix, compress, n_reads, n_cores, 
 #'
 #' @noRd
 #'
-read_ms_output_ <- function(ms_file) {
-    .Call(`_jackal_read_ms_output_`, ms_file)
+read_ms_trees_ <- function(ms_file) {
+    .Call(`_jackal_read_ms_trees_`, ms_file)
+}
+
+#' Read a ms output file with segregating sites and return the matrices of site info.
+#'
+#' @param ms_file File name of the ms output file.
+#'
+#' @return A vector of strings for each set of gene trees.
+#'
+#' @noRd
+#'
+coal_file_sites <- function(ms_file) {
+    .Call(`_jackal_coal_file_sites`, ms_file)
 }
 
 #' Read VCF from a vcfR object.

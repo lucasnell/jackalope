@@ -419,3 +419,172 @@ make_mevo <- function(reference,
     return(out)
 }
 
+
+
+
+
+
+
+#' Process one segregating-sites matrix from a coalescent simulator with ms-style output.
+#'
+#' @param mat The matrix to process.
+#' @param seq_size The number of bp in the sequence associated with the input string.
+#'
+#' @noRd
+#'
+process_coal_obj_sites <- function(mat, seq_size) {
+
+    err_msg_ <- paste("\nPositions in one or more segregating-sites matrices %s.",
+                      "They are derived from column names, so check those for nonsense.")
+
+    # Dealing with coala objects:
+    if (!is.null(mat$snps)) mat <- mat$snps
+
+    pos <- as.numeric(colnames(mat))
+
+    if (any(is.na(pos))) {
+        stop(sprintf(err_msg_, "are producing NAs when trying to coerce them to numbers"),
+             call. = FALSE)
+    } else if (length(pos) != ncol(mat)) {
+        stop(sprintf(err_msg_, paste("are not the same length as the number of rows",
+                                     "in the matrix")), call. = FALSE)
+    }
+
+    new_mat <- cbind(pos, t(mat))
+    rownames(new_mat) <- colnames(new_mat) <- NULL
+
+    return(new_mat)
+}
+
+
+
+#' Read segregating-site info from a coalescent object from scrm or coala.
+#'
+#' @inheritParams make_phylo_info
+#'
+#' @return An XPtr to the info needed from the phylogenies to do the sequence
+#'     simulations.
+#'
+#' @noRd
+#'
+#'
+coal_obj_sites <- function(coal_obj) {
+
+    # Check for coal_obj being a list and having a `seg_sites` field
+    if (!inherits(coal_obj, "list") || is.null(coal_obj$seg_sites)) {
+        err_msg("create_variants", "method_info",
+                "a list with a `seg_sites` field present (when method = \"coal_sites\").",
+                "This must also be true of the inner list if also providing a",
+                "`names` field.")
+    }
+
+    sites <- coal_obj$seg_sites
+
+    sites_mats <- lapply(sites, process_coal_obj_sites)
+
+    return(sites_mats)
+}
+
+
+#' Check validity of position columns in segregating-sites matrices.
+#'
+#' @noRd
+#'
+fill_coal_mat_pos <- function(sites_mats, seq_sizes) {
+
+    if (length(sites_mats) != length(seq_sizes)) {
+        err_msg("create_variants", "method_info",
+                "a list with `seg_sites` field that contains the same number of",
+                "matrices as the number of sequences.")
+    }
+
+    for (i in 1:length(sites_mats)) {
+        if (nrow(sites_mats[[i]]) == 0) next;
+        if (all(sites_mats[[i]][,1] < 1 && sites_mats[[i]][,1] > 0)) {
+            # Converting to integer positions (0-based):
+            sites_mats[[i]][,1]  <- as.integer(sites_mats[[i]][,1] * seq_sizes[i]);
+        } else if (all(sites_mats[[i]][,1] < seq_sizes[i] && sites_mats[[i]][,1] >= 0)) {
+            # Keeping them in 0-based indices:
+            sites_mats[[i]][,1] = as.integer(sites_mats[[i]][,1]);
+        } else if (all(sites_mats[[i]][,1] <= seq_sizes[i] && sites_mats[[i]][,1] >= 1)) {
+            # Converting to 0-based indices:
+            sites_mats[[i]][,1] = as.integer(sites_mats[[i]][,1]) - 1;
+        } else {
+            stop("\nYour `method_info` argument to `create_variants` is causing problems: ",
+                 "Positions in one or more segregating-sites matrices ",
+                 "are not obviously from either a finite- or infinite-sites model. ",
+                 "The former should have positions in the range ",
+                 "[0, sequence length - 1] or [1, sequence length], ",
+                 "the latter in (0,1).", call. = FALSE)
+        }
+
+    }
+
+    return(sites_mats)
+
+}
+
+
+#' Create variants from segregating-site info from coalescent simulations.
+#'
+#'
+#' @noRd
+#'
+read_coal_sites <- function(method_info, reference, mevo_obj, n_cores, show_progress) {
+
+    if (inherits(method_info, "list") && !is.null(method_info$names) &&
+        !is.null(method_info$info)) {
+        var_names <- method_info$names
+        method_info <- method_info$info
+    } else {
+        var_names <- character(0)
+    }
+
+    if (inherits(method_info, "list")) {
+        sites_mats <- coal_obj_sites(method_info)
+    } else if (is_type(method_info, "character", 1)) {
+        sites_mats <- coal_file_sites(method_info)
+        # Revert back to list (from arma::field which adds dims)
+        dim(sites_mats) <- NULL
+    } else {
+        err_msg("create_variants", "method_info", "a single string or a list",
+                "(for method = \"coal_sites\")")
+    }
+
+
+    if (length(var_names) == 0) {
+        var_names <- sprintf("var%i", 0:(ncol(sites_mats[[1]])-2))
+    }
+    if (length(unique(sapply(sites_mats, ncol))) != 1) {
+        err_msg("create_variants", "method_info", "a list containing matrices with",
+                "the same number of rows, if `method` is \"coal_sites\"")
+    }
+    if (unique(sapply(sites_mats, ncol))[1] != (length(var_names) + 1)) {
+        err_msg("create_variants", "method_info",
+                "(when `method` is \"coal_sites\" and when providing a names field in",
+                "`method_info`)",
+                "a list containing a `names` field",
+                "with the same number of items as the number of rows in each",
+                "segregating-sites matrix")
+    }
+
+    seq_sizes <- reference$sizes()
+
+    # Fill and check the position column in sites_mats
+    sites_mats <- fill_coal_mat_pos(sites_mats, seq_sizes)
+
+    variants_ptr <- add_coal_sites_cpp(reference$genome,
+                                       var_names,
+                                       sites_mats,
+                                       mevo_obj$Q,
+                                       mevo_obj$pi_tcag,
+                                       mevo_obj$insertion_rates,
+                                       mevo_obj$deletion_rates,
+                                       n_cores,
+                                       show_progress)
+
+    return(variants_ptr)
+
+}
+
+
