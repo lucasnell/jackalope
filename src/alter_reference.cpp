@@ -148,9 +148,8 @@ void filter_sequences(SEXP ref_genome_ptr,
     if (min_seq_size > 0) {
         if (seqs.back().size() >= min_seq_size) return;
         if (seqs[i].size() < min_seq_size) {
-            stop("Desired minimum scaffold size is too large. None found. "
-                     "The minimum size is " + std::to_string(seqs[i].size())
-            );
+            str_stop({"Desired minimum scaffold size is too large. None found. ",
+                     "The minimum size is ", std::to_string(seqs[i].size())});
         }
         // after below, `iter` points to the first sequence smaller than the minimum
         while (seqs[i].size() >= min_seq_size) {

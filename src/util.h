@@ -202,4 +202,16 @@ inline void trunc_rnorm_far(double& out,
 
 
 
+//' For prettier long error messages.
+//'
+//'
+inline void str_stop(const std::vector<std::string>& err_msg_vec) {
+    std::string err_msg = "";
+    for (const std::string& err : err_msg_vec) err_msg += err;
+    throw(Rcpp::exception(err_msg.c_str(), false));
+}
+
+
+
+
 # endif

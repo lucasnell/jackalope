@@ -19,7 +19,7 @@
 
 #include "jackal_types.h" // integer types
 #include "pcg.h"  // pcg seeding
-#include "util.h"  // decreasing_indices
+#include "util.h"  // decreasing_indices, str_stop
 
 
 using namespace Rcpp;
@@ -121,8 +121,8 @@ public:
     TableStringSampler(const T& chars_in, const std::vector<double>& probs)
         : characters(chars_in), uint_sampler(probs), n(probs.size()) {
         if (probs.size() != chars_in.size()) {
-            stop("For a TableStringSampler construction, arguments probs and chars_in ",
-                 "must be same length.");
+            str_stop({"For a TableStringSampler construction, arguments probs and ",
+                     "chars_in must be same length."});
         }
     }
     TableStringSampler() {}

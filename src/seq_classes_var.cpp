@@ -943,10 +943,9 @@ uint32 VarSequence::get_mut_(const uint32& new_pos) const {
     if (mutations.empty()) return mutations.size();
 
     if (new_pos >= seq_size) {
-        stop(
-            "new_pos should never be >= the sequence size. "
-            "Either re-calculate the sequence size or closely examine new_pos."
-        );
+        str_stop({"new_pos should never be >= the sequence size. ",
+                 "Either re-calculate the sequence size or closely examine new_pos."});
+
     }
     /*
      If new_pos is less than the position for the first mutation, we return

@@ -21,6 +21,7 @@
 
 #include "jackal_types.h"       // integer types
 #include "pcg.h"                // pcg seeding
+#include "util.h"                // str_stop
 
 
 
@@ -98,16 +99,16 @@ public:
     }
 
     SequenceGammas(arma::mat gamma_mat) {
-        if (gamma_mat.n_cols != 2) stop("input Gamma matrix must have 2 columns, "
-                                            "one for end positions, one for gammas.");
+        if (gamma_mat.n_cols != 2) str_stop({"input Gamma matrix must have 2 columns, ",
+            "one for end positions, one for gammas."});
         // Sort from first to last region
         arma::uvec sort_inds = arma::sort_index(gamma_mat.col(0));
         gamma_mat = gamma_mat.rows(sort_inds);
         // Since the input matrix should be 1-based indexing, make sure there are no 0s:
         if (arma::any(gamma_mat.col(0) <= 0)) {
-            stop("A value <= 0 was detected in the first column of the Gamma matrix, "
-                     "which is where the end points should be. "
-                     "Please use 1-based indexing instead of 0-based.");
+            str_stop({"A value <= 0 was detected in the first column of the Gamma ",
+                     "matrix, which is where the end points should be. ",
+                     "Please use 1-based indexing instead of 0-based."});
         }
         // Make sure there are no repeat ends points
         arma::vec diffs = arma::diff(gamma_mat.col(0));
