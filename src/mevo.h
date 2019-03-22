@@ -595,13 +595,10 @@ class MutationTypeSampler {
 
 public:
 
-    MutationTypeSampler() : sampler(4), mut_lengths(), base_inds() {
-        base_inds = make_base_inds();
-    }
+    MutationTypeSampler() : sampler(4), mut_lengths(), base_inds(make_base_inds()) {};
     MutationTypeSampler(const std::vector<std::vector<double>>& probs,
                         const std::vector<sint32>& mut_lengths_)
-    : sampler(4), mut_lengths(mut_lengths_), base_inds() {
-        base_inds = make_base_inds();
+    : sampler(4), mut_lengths(mut_lengths_), base_inds(make_base_inds()) {
         if (probs.size() != 4) stop("probs must be size 4.");
         for (uint32 i = 0; i < 4; i++) sampler[i] = TableSampler(probs[i]);
     }
@@ -613,7 +610,7 @@ public:
     MutationTypeSampler& operator=(const MutationTypeSampler& other) {
         sampler = other.sampler;
         mut_lengths = other.mut_lengths;
-        base_inds = other.base_inds;
+        base_inds = make_base_inds();
         return *this;
     }
 
@@ -769,35 +766,9 @@ public:
      is empty).
      `// ***` mark difference between this and previous `mutate` versions
      */
-    double mutate(pcg64& eng, const uint32& start, sint64& end) {
-        if (end < 0) stop("end is negative in [Chunk]MutationSampler.mutate");
-        uint32 pos = sample_location(eng, start, static_cast<uint32>(end), true);  // ***
-        char c = var_seq->get_nt(pos);
-        MutationInfo m = sample_type(c, eng);
-        double rate_change;
-        if (m.length == 0) {
-            rate_change = location.substitution_rate_change(m.nucleo, pos);
-            var_seq->add_substitution(m.nucleo, pos);
-        } else {
-            if (m.length > 0) {
-                std::string nts = new_nucleos(m.length, eng);
-                rate_change = location.insertion_rate_change(nts, pos);
-                var_seq->add_insertion(nts, pos);
-            } else {
-                sint64 pos_ = static_cast<sint64>(pos);
-                sint64 size_ = end + 1;  // ***
-                if (pos_ - m.length > size_) m.length = static_cast<sint32>(pos_-size_);
-                uint32 del_size = std::abs(m.length);
-                rate_change = location.deletion_rate_change(m.length, pos);
-                var_seq->add_deletion(del_size, pos);
-            }
-            // Update Gamma region bounds:
-            location.update_gamma_regions(m.length, pos);
-            // Update end point:
-            end += static_cast<sint64>(m.length);  // ***
-        }
-        return rate_change;
-    }
+    double mutate(pcg64& eng, const uint32& start, sint64& end);
+
+
 
     double total_rate(const uint32& start = 0, const uint32& end = 0,
                       const bool& ranged = false) {
@@ -813,6 +784,90 @@ typedef OneSeqMutationSampler<ChunkLocationSampler> ChunkMutationSampler;
 
 
 
+
+
+//' Fill probs and q_tcag vectors.
+//'
+//' (1) Combine substitution, insertion, and deletion rates into a single vector
+//' (2) Fill the `q_tcag` vector with mutation rates for each nucleotide
+//'
+//' @noRd
+//'
+inline void fill_probs_q_tcag(std::vector<std::vector<double>>& probs,
+                              std::vector<double>& q_tcag,
+                              const arma::mat& Q,
+                              const std::vector<double>& pi_tcag,
+                              const std::vector<double>& insertion_rates,
+                              const std::vector<double>& deletion_rates) {
+
+    uint32 n_ins = insertion_rates.size();
+    uint32 n_del = deletion_rates.size();
+    uint32 n_muts = 4 + n_ins + n_del;
+
+    // 1 vector of probabilities for each nucleotide: T, C, A, then G
+    probs.resize(4);
+    // Overall mutation rates for each nucleotide: T, C, A, then G
+    q_tcag.reserve(4);
+
+    for (uint32 i = 0; i < 4; i++) {
+
+        std::vector<double>& qc(probs[i]);
+
+        qc.reserve(n_muts);
+
+        for (uint32 j = 0; j < Q.n_cols; j++) qc.push_back(Q(i, j));
+        /*
+         Make absolutely sure the diagonal is set to zero bc you don't want to
+         mutate back to the same nucleotide
+         */
+        qc[i] = 0;
+
+        // Add insertions, then deletions
+        for (uint32 j = 0; j < n_ins; j++) {
+            qc.push_back(insertion_rates[j] * 0.25);
+        }
+        for (uint32 j = 0; j < n_del; j++) {
+            qc.push_back(deletion_rates[j] * 0.25);
+        }
+        // Get the overall mutation rate for this nucleotide
+        double qi = std::accumulate(qc.begin(), qc.end(), 0.0);
+        // Divide all in `qc` by `qi` to make them probabilities:
+        for (uint32 j = 0; j < n_muts; j++) qc[j] /= qi;
+        // Add `qi` to vector of rates by nucleotide:
+        q_tcag.push_back(qi);
+    }
+
+
+    return;
+}
+
+
+//' Filling in mut_lengths vector
+//'
+//' @noRd
+//'
+inline void fill_mut_lengths(std::vector<sint32>& mut_lengths,
+                             const std::vector<double>& insertion_rates,
+                             const std::vector<double>& deletion_rates) {
+
+    uint32 n_ins = insertion_rates.size();
+    uint32 n_del = deletion_rates.size();
+    uint32 n_muts = 4 + n_ins + n_del;
+
+    // Now filling in mut_lengths vector
+    mut_lengths.reserve(n_muts);
+    for (uint32 i = 0; i < 4; i++) mut_lengths.push_back(0);
+    for (uint32 i = 0; i < n_ins; i++) {
+        mut_lengths.push_back(static_cast<sint32>(i+1));
+    }
+    for (uint32 i = 0; i < n_del; i++) {
+        sint32 ds = static_cast<sint32>(i + 1);
+        ds *= -1;
+        mut_lengths.push_back(ds);
+    }
+
+    return;
+}
 
 
 
@@ -848,59 +903,14 @@ XPtr<T> make_mutation_sampler_base_(const arma::mat& Q,
     std::vector<std::vector<double>> probs;
     std::vector<sint32> mut_lengths;
     std::vector<double> q_tcag;
-
-    uint32 n_ins = insertion_rates.size();
-    uint32 n_del = deletion_rates.size();
-    uint32 n_muts = 4 + n_ins + n_del;
-
-    // 1 vector of probabilities for each nucleotide: T, C, A, then G
-    probs.resize(4);
-    // Overall mutation rates for each nucleotide: T, C, A, then G
-    q_tcag.reserve(4);
-
     /*
     (1) Combine substitution, insertion, and deletion rates into a single vector
     (2) Fill the `q_tcag` vector with mutation rates for each nucleotide
     */
-    for (uint32 i = 0; i < 4; i++) {
-
-        std::vector<double>& qc(probs[i]);
-
-        qc.reserve(n_muts);
-
-        for (uint32 j = 0; j < Q.n_cols; j++) qc.push_back(Q(i, j));
-        /*
-        Make absolutely sure the diagonal is set to zero bc you don't want to
-        mutate back to the same nucleotide
-        */
-        qc[i] = 0;
-
-        // Add insertions, then deletions
-        for (uint32 j = 0; j < n_ins; j++) {
-            qc.push_back(insertion_rates[j] * 0.25);
-        }
-        for (uint32 j = 0; j < n_del; j++) {
-            qc.push_back(deletion_rates[j] * 0.25);
-        }
-        // Get the overall mutation rate for this nucleotide
-        double qi = std::accumulate(qc.begin(), qc.end(), 0.0);
-        // Divide all in `qc` by `qi` to make them probabilities:
-        for (uint32 j = 0; j < n_muts; j++) qc[j] /= qi;
-        // Add `qi` to vector of rates by nucleotide:
-        q_tcag.push_back(qi);
-    }
+    fill_probs_q_tcag(probs, q_tcag, Q, pi_tcag, insertion_rates, deletion_rates);
 
     // Now filling in mut_lengths vector
-    mut_lengths.reserve(n_muts);
-    for (uint32 i = 0; i < 4; i++) mut_lengths.push_back(0);
-    for (uint32 i = 0; i < n_ins; i++) {
-        mut_lengths.push_back(static_cast<sint32>(i+1));
-    }
-    for (uint32 i = 0; i < n_del; i++) {
-        sint32 ds = static_cast<sint32>(i + 1);
-        ds *= -1;
-        mut_lengths.push_back(ds);
-    }
+    fill_mut_lengths(mut_lengths, insertion_rates, deletion_rates);
 
     /*
      Now create and fill output pointer to base sampler:
@@ -915,6 +925,11 @@ XPtr<T> make_mutation_sampler_base_(const arma::mat& Q,
 
     return out;
 }
+
+
+
+
+
 
 
 

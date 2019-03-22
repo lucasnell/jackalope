@@ -162,60 +162,7 @@ public:
     }
 
     // Add existing mutation information in another `VarSequence` to this one
-    VarSequence& operator+=(const VarSequence& other) {
-        // If either is empty, then this is easy:
-        if (other.mutations.empty()) return *this;
-        if (mutations.empty()) {
-            mutations = other.mutations;
-            seq_size = other.seq_size;
-            return *this;
-        }
-
-        // Combine sequence sizes:
-        sint32 diff = static_cast<sint32>(other.seq_size) -
-            static_cast<sint32>(ref_seq->size());
-        seq_size += diff;
-
-        /*
-         Now combine `mutations` deques.
-         Process differently depending on whether `other` has its mutations before
-         or after this one's.
-         If they overlap, then throw an error.
-         */
-        // `other` has mutations before this one:
-        bool other_is_before = other.mutations.back() < mutations.front();
-        // `other` has mutations after this one:
-        bool other_is_after = other.mutations.front() > mutations.back();
-        if (other_is_before) {
-            // Adjust current mutations' `new_pos` fields (using `diff` from above):
-            auto mut_ = mutations.begin();
-            for (; mut_ != mutations.end(); ++mut_) {
-                (*mut_).new_pos += diff;
-            }
-            // Now add the new mutations:
-            auto mut = other.mutations.rbegin();  // note the use of reverse iterator!
-            for (; mut != other.mutations.rend(); ++mut) {
-                // Add the new mutation to the front of `(*this).mutations`:
-                mutations.push_front(*mut);
-            }
-        } else if (other_is_after) {
-            // The amount to adjust the new mutation's `new_pos` fields:
-            diff = static_cast<sint32>(seq_size) - static_cast<sint32>(ref_seq->size());
-            auto mut = other.mutations.begin();
-            for (; mut != other.mutations.end(); ++mut) {
-                // Add the new mutation to the back of `(*this).mutations`:
-                mutations.push_back(*mut);
-                // Adjust the `new_pos` field:
-                mutations.back().new_pos += diff;
-            }
-        } else {
-            stop("\nOverlapping VarSequence.mutations in +=. ",
-                 "Note that when combining VarSequence objects, you must ",
-                 "do it sequentially, either from the front or back.");
-        }
-
-        return *this;
-    }
+    VarSequence& operator+=(const VarSequence& other);
 
 
     /*
@@ -450,6 +397,14 @@ public:
     // To return the number of variants
     uint32 size() const noexcept {
         return variants.size();
+    }
+    // To return the minimum size of a given sequence
+    uint32 min_size(const uint32& i) const {
+        uint32 ms = variants[0][i].size();
+        for (const VarGenome vg : variants) {
+            if (vg[i].size() < ms) ms = vg[i].size();
+        }
+        return ms;
     }
 
     /*

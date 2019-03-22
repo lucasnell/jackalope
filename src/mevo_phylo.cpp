@@ -15,6 +15,9 @@
 #include <algorithm>  // lower_bound, sort
 #include <deque>  // deque
 #include <progress.hpp>  // for the progress bar
+#ifdef _OPENMP
+#include <omp.h>  // omp
+#endif
 
 
 #include "jackal_types.h"  // integer types
@@ -28,6 +31,176 @@
 using namespace Rcpp;
 
 
+
+/*
+ Overloaded for only mutating within a range.
+ It also updates `end` if an indel occurs in the range.
+ Make sure to keep checking for situation where `end < start` (i.e., sequence section
+ is empty).
+ `// ***` mark difference between this and previous `mutate` versions
+ */
+template <class C>
+double OneSeqMutationSampler<C>::mutate(pcg64& eng, const uint32& start, sint64& end) {
+    if (end < 0) stop("end is negative in [Chunk]MutationSampler.mutate");
+    uint32 pos = sample_location(eng, start, static_cast<uint32>(end), true);  // ***
+    char c = var_seq->get_nt(pos);
+    MutationInfo m = sample_type(c, eng);
+    double rate_change;
+    if (m.length == 0) {
+        rate_change = location.substitution_rate_change(m.nucleo, pos);
+        var_seq->add_substitution(m.nucleo, pos);
+    } else {
+        if (m.length > 0) {
+            std::string nts = new_nucleos(m.length, eng);
+            rate_change = location.insertion_rate_change(nts, pos);
+            var_seq->add_insertion(nts, pos);
+        } else {
+            sint64 pos_ = static_cast<sint64>(pos);
+            sint64 size_ = end + 1;  // ***
+            if (pos_ - m.length > size_) m.length = static_cast<sint32>(pos_-size_);
+            uint32 del_size = std::abs(m.length);
+            rate_change = location.deletion_rate_change(m.length, pos);
+            var_seq->add_deletion(del_size, pos);
+        }
+        // Update Gamma region bounds:
+        location.update_gamma_regions(m.length, pos);
+        // Update end point:
+        end += static_cast<sint64>(m.length);  // ***
+    }
+    return rate_change;
+}
+
+
+
+
+
+/*
+ Process one phylogenetic tree for a single sequence with no recombination.
+ This template does most of the work for the chunked and non-chunked versions in
+ the cpp file.
+ `T` should be `MutationSampler` or `ChunkMutationSampler`.
+
+ Note that this function should be changed if any of these VarSequences differ from
+ each other (within the range specified if recombination = true).
+ They can already have mutations, but to start out, they must all be the same.
+ */
+template<typename T>
+int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
+                             pcg64& eng,
+                             Progress& prog_bar) {
+
+    // Reset tree of samplers and VarSequence objects representing nodes and tips:
+    reset(tree);
+
+    /*
+     Check for a user interrupt. Using a Progress object allows the user to interrupt
+     the process during multithreaded operations.
+     If recombination == true, I'm only doing this here, not for each edge bc that
+     would likely cause too many checks, which would slow things down.
+     */
+    if (prog_bar.is_aborted()) return -1;
+
+    // Exponential distribution to do the time-jumps along the branch lengths:
+    std::exponential_distribution<double> distr(1.0);
+
+    /*
+     Now iterate through the phylogeny:
+     */
+    for (uint32 i = 0; i < tree.n_edges; i++) {
+
+        // If not simulating recombination, checking for abort every edge:
+        if (!recombination) {
+            if (prog_bar.is_aborted()) return -1;
+        }
+
+        // Indices for nodes/tips that the branch length in `branch_lens` refers to
+        uint32 b1 = tree.edges(i,0);
+        uint32 b2 = tree.edges(i,1);
+
+        /*
+         Update `samplers`, `seq_rates`, and `distr` for this edge:
+         */
+        update(distr, b1, b2);
+
+        /*
+         Now do exponential jumps and mutate until you exceed the branch length.
+         */
+        double& rate(seq_rates[b2]);
+        double amt_time = tree.branch_lens[i];
+        double time_jumped = distr(eng);
+        double rate_change = 0;
+        if (recombination) {
+            sint64& end_(tree.ends[b2]);
+            end_ = tree.ends[b1];
+            const sint64 start_ = static_cast<sint64>(tree.start);
+            while (time_jumped <= amt_time && end_ >= start_) {
+                /*
+                 Add mutation here, outputting how much the overall sequence rate should
+                 change:
+                 (`end_` is automatically adjusted for indels)
+                 */
+                rate_change = samplers[b2].mutate(eng, start_, end_);
+                /*
+                 Adjust the overall sequence rate, then update the exponential
+                 distribution:
+                 */
+                rate += rate_change;
+                distr.param(std::exponential_distribution<double>::param_type(rate));
+                // Jump again:
+                time_jumped += distr(eng);
+            }
+        } else {
+            // Same thing but without recombination
+            while (time_jumped <= amt_time && var_seqs[b2].size() > 0) {
+                rate_change = samplers[b2].mutate(eng);
+                rate += rate_change;
+                distr.param(std::exponential_distribution<double>::param_type(rate));
+                time_jumped += distr(eng);
+            }
+        }
+
+        /*
+         To free up some memory, clear info from VarSequence object at `b1` if it's no
+         longer needed.
+         */
+        clear_branches(b1, i, tree);
+
+    }
+
+    /*
+     Update final `VarSequence` objects:
+     */
+    update_var_seq(tree);
+
+    // Update progress bar:
+    if (recombination) {
+        prog_bar.increment(tree.end - tree.start + 1);
+    } else prog_bar.increment(var_seq_ptrs[0]->ref_seq->size());
+
+    return 0;
+
+}
+
+
+template <typename T>
+void PhyloOneSeq<T>::update_var_seq(const PhyloTree& tree) {
+
+    std::vector<uint32> spp_order = match_(ordered_tip_labels,
+                                           tree.tip_labels);
+
+    if (recombination) {
+        for (uint32 i = 0; i < tree.n_tips; i++) {
+            uint32 j = spp_order[i];
+            (*var_seq_ptrs[i]) += var_seqs[j];
+        }
+    } else {
+        for (uint32 i = 0; i < tree.n_tips; i++) {
+            uint32 j = spp_order[i];
+            (*var_seq_ptrs[i]).replace(var_seqs[j]);
+        }
+    }
+    return;
+}
 
 
 
@@ -47,8 +220,7 @@ XPtr<VarSet> PhyloInfo<T>::evolve_seqs(
     XPtr<T> sampler_base(sampler_base_ptr);
 
     // Extract tip labels from the first tree:
-    const PhyloTree& first_tree(phylo_one_seqs[0].trees[0]);
-    std::vector<std::string> var_names = first_tree.tip_labels;
+    std::vector<std::string> var_names = phylo_one_seqs[0].trees[0].tip_labels;
 
     XPtr<VarSet> var_set(new VarSet(*ref_genome, var_names), true);
 
@@ -56,7 +228,7 @@ XPtr<VarSet> PhyloInfo<T>::evolve_seqs(
     n_cores = 1;
 #endif
 
-    uint32 n_seqs = var_set->reference->size();
+    uint32 n_seqs = ref_genome->size();
     uint64 total_seq = ref_genome->total_size;
 
     Progress prog_bar(total_seq, show_progress);
@@ -135,6 +307,7 @@ XPtr<VarSet> PhyloInfo<T>::evolve_seqs(
             warn_msg += "Note that changes occur in place, so your variants have ";
             warn_msg += "already been partially added.";
             Rcpp::warning(warn_msg.c_str());
+            break;
         }
     }
 

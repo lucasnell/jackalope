@@ -23,7 +23,6 @@
 #include "seq_classes_var.h"  // Var* classes
 #include "mevo.h"
 #include "pcg.h"  // pcg seeding
-#include "table_sampler.h"  // table method of sampling
 #include "weighted_reservoir.h"  // weighted reservoir sampling
 #include "mevo_gammas.h"  // SequenceGammas class
 #include "mevo_phylo.h"  // match_ and template functions
