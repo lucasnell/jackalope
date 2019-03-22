@@ -19,7 +19,7 @@
 
 #include "seq_classes_ref.h"  // Ref* classes
 #include "jackal_types.h"  // integer types
-#include "table_sampler.h"  // Table string sampler
+#include "alias_sampler.h"  // alias string sampler
 #include "util.h"  // clear_memory
 
 
@@ -237,7 +237,7 @@ void replace_Ns_cpp(SEXP ref_genome_ptr,
     pcg64 eng = seeded_pcg(active_seeds);
 
     // Samples for nucleotides:
-    TableStringSampler<std::string> sampler("TCAG", pi_tcag);
+    AliasStringSampler<std::string> sampler("TCAG", pi_tcag);
 
 #ifdef _OPENMP
 #pragma omp for schedule(static)

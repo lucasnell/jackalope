@@ -12,9 +12,10 @@
 #include "jackal_types.h" // integer types
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // pcg seeding
-#include "table_sampler.h"  // table method of sampling
+#include "alias_sampler.h"  // alias method of sampling
 #include "mevo_gammas.h"  // SequenceGammas class
 #include "weighted_reservoir.h"  // weighted_reservoir_* functions
+#include "util.h"  // str_stop
 
 
 
@@ -562,7 +563,7 @@ struct MutationInfo {
 /*
  For constructors, this creates a vector of indices for each char in "TCAG" (0 to 3).
  Because char objects can be easily cast to uints, I can input a char from a sequence
- and get out an index to which TableSampler object to sample from.
+ and get out an index to which AliasSampler object to sample from.
  This way is much faster than using an unordered_map.
  Using 8-bit uints bc the char should never be >= 256.
  It's only of length 85 (versus 256 in MutationRates class) because characters other
@@ -581,7 +582,7 @@ inline std::vector<uint8> make_base_inds() {
 
 
 /*
- For table-sampling mutation types depending on which nucleotide you start with.
+ For alias-sampling mutation types depending on which nucleotide you start with.
  The `mut_lengths` vector tells how long each mutation is.
  This field is 0 for substitions, < 0 for deletions, and > 0 for insertions.
  The `base_inds` field allows me to convert the characters 'T', 'C', 'A', or 'G'
@@ -589,7 +590,7 @@ inline std::vector<uint8> make_base_inds() {
  */
 class MutationTypeSampler {
 
-    std::vector<TableSampler> sampler;
+    std::vector<AliasSampler> sampler;
     std::vector<sint32> mut_lengths;
     std::vector<uint8> base_inds;
 
@@ -600,7 +601,7 @@ public:
                         const std::vector<sint32>& mut_lengths_)
     : sampler(4), mut_lengths(mut_lengths_), base_inds(make_base_inds()) {
         if (probs.size() != 4) stop("probs must be size 4.");
-        for (uint32 i = 0; i < 4; i++) sampler[i] = TableSampler(probs[i]);
+        for (uint32 i = 0; i < 4; i++) sampler[i] = AliasSampler(probs[i]);
     }
     // copy constructor
     MutationTypeSampler(const MutationTypeSampler& other)
@@ -697,14 +698,14 @@ public:
     // For sampling the type of mutation:
     MutationTypeSampler type;
     // For new insertion sequences:
-    TableStringSampler<std::string> insert;
+    AliasStringSampler<std::string> insert;
 
     OneSeqMutationSampler() {}
 
     OneSeqMutationSampler(VarSequence& vs_,
                           const C& location_,
                           const MutationTypeSampler& type_,
-                          const TableStringSampler<std::string>& insert_)
+                          const AliasStringSampler<std::string>& insert_)
         : var_seq(&vs_), location(location_), type(type_), insert(insert_) {}
 
     OneSeqMutationSampler(const OneSeqMutationSampler<C>& other)
@@ -918,7 +919,7 @@ XPtr<T> make_mutation_sampler_base_(const arma::mat& Q,
     XPtr<T> out(new T());
 
     out->type = MutationTypeSampler(probs, mut_lengths);
-    out->insert = TableStringSampler<std::string>(mevo::bases, pi_tcag);
+    out->insert = AliasStringSampler<std::string>(mevo::bases, pi_tcag);
 
     MutationRates mr(q_tcag);
     out->location = U(mr);

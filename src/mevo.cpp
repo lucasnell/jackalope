@@ -10,12 +10,11 @@
 #endif
 
 
-
 #include "jackal_types.h"
 #include "mevo.h"
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // pcg seeding
-#include "table_sampler.h"  // table method of sampling
+#include "alias_sampler.h"  // alias method of sampling
 #include "weighted_reservoir.h"  // weighted reservoir sampling
 #include "mevo_gammas.h"  // SequenceGammas class
 

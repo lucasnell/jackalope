@@ -26,7 +26,7 @@
 #include "jackal_types.h"  // integer types
 #include "seq_classes_var.h"  // Var* classes
 #include "mevo.h"  // samplers
-#include "table_sampler.h" // table sampling
+#include "alias_sampler.h" // alias sampling
 #include "pcg.h" // pcg sampler types
 
 

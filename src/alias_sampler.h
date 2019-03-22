@@ -20,6 +20,7 @@
 
 #include "jackal_types.h" // integer types
 #include "pcg.h"  // pcg seeding
+#include "util.h"  // str_stop
 
 
 using namespace Rcpp;
@@ -98,6 +99,53 @@ private:
     std::vector<uint32_t> Alias;
     uint32_t n;
 };
+
+
+
+
+/*
+ Class template for table sampling a string, using an underlying AliasSampler object.
+ `chars_in` should be the characters to sample from, `probs` the probabilities of
+ sampling those characters.
+ `T` can be `std::string` or `RefSequence`. Others may work, but are not guaranteed.
+ */
+template <typename T>
+class AliasStringSampler {
+public:
+
+    T characters;
+
+    AliasStringSampler(const T& chars_in, const std::vector<double>& probs)
+        : characters(chars_in), uint_sampler(probs), n(probs.size()) {
+        if (probs.size() != chars_in.size()) {
+            str_stop({"For a AliasStringSampler construction, arguments probs and ",
+                     "chars_in  must be same length."});
+        }
+    }
+    AliasStringSampler() {}
+    // copy constructor
+    AliasStringSampler(const AliasStringSampler& other)
+        : characters(other.characters), uint_sampler(other.uint_sampler),
+          n(other.n) {}
+
+    void sample(std::string& str, pcg64& eng) const {
+        for (uint32 i = 0; i < str.size(); i++) {
+            uint32 k = uint_sampler.sample(eng);
+            str[i] = characters[k];
+        }
+        return;
+    }
+    char sample(pcg64& eng) const {
+        uint32 k = uint_sampler.sample(eng);
+        return characters[k];
+    }
+
+private:
+    AliasSampler uint_sampler;
+    uint32 n;
+};
+
+
 
 
 

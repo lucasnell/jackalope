@@ -21,7 +21,6 @@
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // runif_01
-#include "table_sampler.h"  // TableSampler
 #include "alias_sampler.h"  // AliasSampler
 #include "util.h"  // clear_memory
 #include "str_manip.h"  // rev_comp
@@ -96,7 +95,7 @@ public:
 private:
 
     std::vector<uint32> read_lens;      // optional vector of possible read lengths
-    TableSampler sampler;               // optional sampler that chooses from `read_lens`
+    AliasSampler sampler;               // optional sampler that chooses from `read_lens`
     std::lognormal_distribution<double> distr; // optional if using a distribution
     bool use_distr;                     // Whether to sample using `distr` field
     double min_read_len;                // Minimum read length
@@ -559,7 +558,7 @@ class PacBioVariants {
 public:
 
     const VarSet* variants;                         // pointer to `const VarSet`
-    TableSampler variant_sampler;                   // chooses which variant to use
+    AliasSampler variant_sampler;                   // chooses which variant to use
     std::vector<PacBioOneVariant> read_makers;      // makes PacBio reads
 
     /* Initializers */
