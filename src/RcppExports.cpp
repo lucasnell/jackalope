@@ -557,7 +557,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // view_ref_genome_nseqs
-uint32 view_ref_genome_nseqs(SEXP ref_genome_ptr);
+IntegerVector view_ref_genome_nseqs(SEXP ref_genome_ptr);
 RcppExport SEXP _jackal_view_ref_genome_nseqs(SEXP ref_genome_ptrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -568,7 +568,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // view_var_set_nseqs
-uint32 view_var_set_nseqs(SEXP var_set_ptr);
+IntegerVector view_var_set_nseqs(SEXP var_set_ptr);
 RcppExport SEXP _jackal_view_var_set_nseqs(SEXP var_set_ptrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -579,7 +579,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // view_var_set_nvars
-uint32 view_var_set_nvars(SEXP var_set_ptr);
+IntegerVector view_var_set_nvars(SEXP var_set_ptr);
 RcppExport SEXP _jackal_view_var_set_nvars(SEXP var_set_ptrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -590,7 +590,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // view_ref_genome_seq_sizes
-std::vector<uint32> view_ref_genome_seq_sizes(SEXP ref_genome_ptr);
+IntegerVector view_ref_genome_seq_sizes(SEXP ref_genome_ptr);
 RcppExport SEXP _jackal_view_ref_genome_seq_sizes(SEXP ref_genome_ptrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -601,7 +601,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // view_var_genome_seq_sizes
-std::vector<uint32> view_var_genome_seq_sizes(SEXP var_set_ptr, const uint32& var_ind);
+IntegerVector view_var_genome_seq_sizes(SEXP var_set_ptr, const uint32& var_ind);
 RcppExport SEXP _jackal_view_var_genome_seq_sizes(SEXP var_set_ptrSEXP, SEXP var_indSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

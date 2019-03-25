@@ -5,33 +5,28 @@ context("Testing R class methods and info")
 # library(testthat)
 
 
-n_seqs <- 10
-n_vars <- 5
-n_muts <- 100
-len <- 100
-len_sd <- 10
+n_seqs <- 10L
+n_vars <- 5L
+n_muts <- 100L
+len <- 100L
+len_sd <- 10.0
 
 # Extract vector of sequence strings:
-seqs <- jackal:::rando_seqs(n_seqs, len, len_sd)
+seqs <- jackal:::rando_seqs(n_seqs, len, len_sd, pi_tcag = c(8, 4, 2, 1))
 
 
-test_that(paste("Random sequences using `create_genome` aren't significantly different",
-                "from expectation."),
-          {
-              # Frequency of `char` in string `s`
-              char_frequencies <- function(char, s) {
-                  s2 <- gsub(char,"",s)
-                  return((nchar(s) - nchar(s2)) / nchar(s))
-              }
-              freq_obs <- t(sapply(1:n_seqs,
-                                   function(i) sapply(c("T", "C", "A", "G"),
-                                                      char_frequencies,
-                                                      s = seqs[i])))
-              freq_exp <- matrix(rep(0.25, n_seqs * 4), n_seqs)
-              p <- chisq.test(freq_obs, freq_exp, simulate.p.value = TRUE)$p.value
-              expect_gt(p, 0.05)
-          }
-)
+
+test_that("Sequences from `create_genome` aren't very different from expectation.", {
+    all_seqs <- paste(seqs, collapse = "")
+    freq_obs <- sapply(c("T", "C", "A", "G"),
+                       function(char) {
+                           s2 <- gsub(char,"",all_seqs)
+                           return((nchar(all_seqs) - nchar(s2)) / nchar(all_seqs))
+                       })
+    freq_obs <- as.numeric(freq_obs)
+    freq_exp <- c(8, 4, 2, 1) / sum(c(8, 4, 2, 1))
+    expect_identical(rank(freq_obs), rank(freq_exp))
+})
 
 
 
@@ -41,38 +36,38 @@ test_that("ref_genome class starts with the correct fields", {
     expect_is(ref$genome, "externalptr")
 })
 
-test_that("ref_genome class methods", {
+test_that("ref_genome class methods produce correct output", {
 
-    expect_equal(ref$n_seqs(), n_seqs)
+    expect_identical(ref$n_seqs(), n_seqs)
 
-    expect_equal(ref$sizes(), nchar(seqs))
+    expect_identical(ref$sizes(), nchar(seqs))
 
-    expect_equal(ref$names(), paste0("seq", 1:length(seqs)-1))
+    expect_identical(ref$names(), paste0("seq", 1:length(seqs) - 1))
 
-    for (i in 1:n_seqs) expect_equal(ref$extract_seq(i), seqs[i])
+    for (i in 1:n_seqs) expect_identical(ref$extract_seq(i), seqs[i])
 
     nn <- paste0("__SEQ_",1:length(seqs))
     ref$set_names(nn)
-    expect_equal(ref$names(), nn)
+    expect_identical(ref$names(), nn)
 
     ref$rm_seqs(nn[3])
-    expect_equal(ref$names(), nn[-3])
+    expect_identical(ref$names(), nn[-3])
 
     ref$merge_seqs()
-    expect_equal(nchar(ref$extract_seq(1)), nchar(paste(seqs[-3], collapse = "")))
+    expect_identical(nchar(ref$extract_seq(1)), nchar(paste(seqs[-3], collapse = "")))
 
     nchars <- nchar(seqs)
     # Making sure of no removal when it shouldn't:
     ref <<- ref_genome$new(jackal:::make_ref_genome(seqs))
     ref$filter_seqs(min(nchar(seqs)) - 1, "size")
-    expect_equal(ref$n_seqs(), n_seqs, label = "after lack of size filtering")
+    expect_identical(ref$n_seqs(), n_seqs, label = "after lack of size filtering")
     ref$filter_seqs(1 - 0.99 * min(nchars) / sum(nchars), "prop")
-    expect_equal(ref$n_seqs(), n_seqs, label = "after lack of filtering")
+    expect_identical(ref$n_seqs(), n_seqs, label = "after lack of filtering")
     # Now seeing if it `filter_seqs` removes when it should
     ref$filter_seqs(min(nchars) + 1, "size")
     expect_lt(ref$n_seqs(), length(seqs))
 
-    ref <<- ref_genome$new(jackal:::make_ref_genome(seqs))
+    ref <- ref_genome$new(jackal:::make_ref_genome(seqs))
     ref$filter_seqs(0.99 * sum(nchars[nchars > min(nchars)]) / sum(nchars), "prop")
     expect_lt(ref$n_seqs(), length(seqs))
 })
@@ -100,9 +95,9 @@ test_that("variants class methods", {
     # No indels, so these should be true:
     for (i in 1:n_vars) expect_equal(vars$sizes(i), nchar(seqs))
 
-    expect_equal(vars$seq_names(), paste0("seq", 1:length(seqs)-1))
+    expect_identical(vars$seq_names(), paste0("seq", 1:length(seqs)-1))
 
-    expect_equal(vars$var_names(), phy$tip.label)
+    expect_identical(vars$var_names(), phy$tip.label)
 
     # Variant sequences:
     var_seqs <- lapply(1:n_vars,
@@ -115,10 +110,10 @@ test_that("variants class methods", {
 
     nv <- paste0("__VARS_", 1:n_vars)
     vars$set_names(nv)
-    expect_equal(vars$var_names(), nv)
+    expect_identical(vars$var_names(), nv)
 
     vars$rm_vars(nv[1:2])
-    expect_equal(vars$var_names(), nv[-1:-2])
+    expect_identical(vars$var_names(), nv[-1:-2])
 })
 
 
