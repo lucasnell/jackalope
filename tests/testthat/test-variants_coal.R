@@ -1,7 +1,7 @@
 
 #'
-#' The files `ms_out*.txt` are used for these tests, and all but `ms_out.txt` have
-#' errors intentionally added:
+#' The files `ms_files/ms_out*.txt` are used for these tests, and all but
+#' `ms_out.txt` have errors intentionally added:
 #'
 #' - `ms_out_err1.txt`: no sites and no trees
 #' - `ms_out_err2.txt`: a position is removed in the seg. sites
@@ -37,7 +37,7 @@ test_coal_obj_sims <- function(coal_info, pkg, type) {
 
     # Add path to filename if that's what's input
     if (inherits(coal_info, "character") && length(coal_info) == 1) {
-        coal_info <- test_path(coal_info)
+        coal_info <- test_path(paste0("ms_files/", coal_info))
     }
 
     if (type == tests[1]) {
@@ -153,7 +153,8 @@ test_that("variant creation works with ms-style file output", {
     test_coal_obj_sims("ms_out_err2.txt", pkg, "error missing tree tip")
     test_coal_obj_sims("ms_out_err2.txt", pkg, "error bad site pos")
     expect_error(
-        create_variants(reference, method = "coal_sites", test_path("ms_out_err3.txt"), mevo_obj),
+        create_variants(reference, method = "coal_sites",
+                        test_path("ms_files/ms_out_err3.txt"), mevo_obj),
         regexp = paste("the listed number of sites \\(line starting with",
                        "'segsites:'\\) does not agree with the number of",
                        "items in the 3th line of segregating sites",
@@ -165,7 +166,7 @@ test_that("variant creation works with ms-style file output", {
     mevo_obj2 <- make_mevo(reference2, list(model = "JC69", lambda = 0.1))
 
     expect_error(create_variants(reference2, method = "coal_trees",
-                                 test_path("ms_out.txt"), mevo_obj2),
+                                 test_path("ms_files/ms_out.txt"), mevo_obj2),
                  regexp = paste("A coalescent string appears to include recombination",
                                 "but the combined sizes of all regions don't match the",
                                 "size of the sequence"))
@@ -173,13 +174,13 @@ test_that("variant creation works with ms-style file output", {
     test_that("variant creation returns error with improper ref_genome input", {
         expect_error(
             create_variants(list(1, 2), method = "coal_trees",
-                            test_path("ms_out.txt"), mevo_obj),
+                            test_path("ms_files/ms_out.txt"), mevo_obj),
             regexp = paste("For the `create_variants` function in jackal,",
                            "argument `reference` must be a \"ref_genome\" object."))
     })
 
     test_that("seg. sites produces the correct number of mutations", {
-        ms_file <- test_path("ms_out.txt")
+        ms_file <- test_path("ms_files/ms_out.txt")
         # Have to make bigger ref. genome to make sure site positions don't overlap.
         reference2 <- create_genome(3, 100e3)
         mevo_obj2 <- make_mevo(reference2, list(model = "JC69", lambda = 0.1))
