@@ -117,7 +117,7 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'             (1) coalescent-simulator object(s) from the `scrm` or `coala` package, or
 #'             (2) a file containing output from a coalescent simulator in the
 #'             format of the `ms` program.}
-#'         \item{`"newick"`}{NEWICK file(s) containing a phylogenetic tree(s).}
+#'         \item{`"newick"`}{NEWICK file(s) containing phylogenetic tree(s).}
 #'         \item{`"theta"`}{an estimate for theta, the population-scaled mutation rate.}
 #'         \item{`"vcf"`}{a variant call format (VCF) file that directly specifies
 #'             variants. This method does not work if the `vcfR` package isn't installed.

@@ -147,7 +147,7 @@ read_coal_trees <- function(coal_obj, seq_sizes, chunked, err_msg) {
     if (!inherits(coal_obj, "list")) {
         err <- TRUE
     } else if (is.null(coal_obj$trees)) {
-        if (any(sapply(coal_obj, function(x) is.null(x$trees)))) {
+        if (any(sapply(coal_obj, function(x) !inherits(x, "list") || is.null(x$trees)))) {
             err <- TRUE
         } else {
             nested <- TRUE
@@ -175,8 +175,25 @@ read_coal_trees <- function(coal_obj, seq_sizes, chunked, err_msg) {
              call. = FALSE)
     }
 
-    phylo_info <- mapply(process_coal_tree_string, trees, seq_sizes,
+    phylo_info <- mapply(jackal:::process_coal_tree_string, trees, seq_sizes,
                          SIMPLIFY = FALSE, USE.NAMES = FALSE)
+
+    unq_n_tips <- lapply(phylo_info,
+                         function(x) sapply(x, function(xx) length(xx$labels)))
+    unq_n_tips <- unique(do.call(c, unq_n_tips))
+    if (length(unq_n_tips) > 1) {
+        stop("\nIn the input coalescent object, the gene trees don't all have the ",
+             "same number of tips.", call. = FALSE)
+    }
+    unq_tips_names <- sapply(phylo_info,
+                             function(x) {
+                                 tips_ <- do.call(c, lapply(x, function(xx) xx$labels))
+                                 paste(sort(unique(tips_)), collapse = "___")
+                             })
+    if (length(unique(unq_tips_names)) > 1) {
+        stop("\nIn the input coalescent file, the gene trees don't all have the ",
+             "same tip names.", call. = FALSE)
+    }
 
     # Making sure all labels are the same
     label_mat <- do.call(rbind,
@@ -218,10 +235,33 @@ read_coal_trees <- function(coal_obj, seq_sizes, chunked, err_msg) {
 #'
 read_ms_trees <- function(ms_filename, seq_sizes, chunked) {
 
-    trees <- read_ms_trees_(ms_filename)
+    trees <- jackal:::read_ms_trees_(ms_filename)
+
+    if (any(sapply(trees, length) == 0)) {
+        stop("\nIn ms-style output file, one or more sequences have no trees.",
+             call. = FALSE)
+    }
 
     phylo_info <- mapply(process_coal_tree_string, trees, seq_sizes,
                         SIMPLIFY = FALSE, USE.NAMES = FALSE)
+
+    unq_n_tips <- lapply(phylo_info,
+                         function(x) sapply(x, function(xx) length(xx$labels)))
+    unq_n_tips <- unique(do.call(c, unq_n_tips))
+    if (length(unq_n_tips) > 1) {
+        stop("\nIn the input coalescent file, the gene trees don't all have the ",
+             "same number of tips.", call. = FALSE)
+    }
+    unq_tips_names <- sapply(phylo_info,
+                             function(x) {
+                                 tips_ <- do.call(c, lapply(x, function(xx) xx$labels))
+                                 paste(sort(unique(tips_)), collapse = "___")
+                             })
+    if (length(unique(unq_tips_names)) > 1) {
+        stop("\nIn the input coalescent file, the gene trees don't all have the ",
+             "same tip names.", call. = FALSE)
+    }
+
 
     # Making sure all labels are the same
     label_mat <- do.call(rbind,

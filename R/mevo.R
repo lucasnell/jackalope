@@ -432,13 +432,13 @@ make_mevo <- function(reference,
 #'
 #' @noRd
 #'
-process_coal_obj_sites <- function(mat, seq_size) {
+process_coal_obj_sites <- function(mat) {
 
     err_msg_ <- paste("\nPositions in one or more segregating-sites matrices %s.",
                       "They are derived from column names, so check those for nonsense.")
 
     # Dealing with coala objects:
-    if (!is.null(mat$snps)) mat <- mat$snps
+    if (inherits(mat, "segsites")) mat <- mat$snps
 
     pos <- as.numeric(colnames(mat))
 
@@ -475,7 +475,7 @@ coal_obj_sites <- function(coal_obj) {
         err_msg("create_variants", "method_info",
                 "a list with a `seg_sites` field present (when method = \"coal_sites\").",
                 "This must also be true of the inner list if also providing a",
-                "`names` field.")
+                "`names` field")
     }
 
     sites <- coal_obj$seg_sites
@@ -532,12 +532,11 @@ fill_coal_mat_pos <- function(sites_mats, seq_sizes) {
 #'
 read_coal_sites <- function(method_info, reference, mevo_obj, n_cores, show_progress) {
 
+    var_names <- character(0)
     if (inherits(method_info, "list") && !is.null(method_info$names) &&
         !is.null(method_info$info)) {
         var_names <- method_info$names
         method_info <- method_info$info
-    } else {
-        var_names <- character(0)
     }
 
     if (inherits(method_info, "list")) {
@@ -546,6 +545,12 @@ read_coal_sites <- function(method_info, reference, mevo_obj, n_cores, show_prog
         sites_mats <- coal_file_sites(method_info)
         # Revert back to list (from arma::field which adds dims)
         dim(sites_mats) <- NULL
+        n_cols <- sapply(sites_mats, ncol)
+        if (any(n_cols < 2)) {
+            stop("\nOne or more seg. sites matrices from a ms-style file output ",
+                 "have no variant information specified.",
+                 call. = FALSE)
+        }
     } else {
         err_msg("create_variants", "method_info", "a single string or a list",
                 "(for method = \"coal_sites\")")
