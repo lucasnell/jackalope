@@ -31,7 +31,7 @@ with(pars, {
     rel_rates = list(1:10 * 0.1, 8:1 * 0.2)
     # For site variability:
     shape = 0.5
-    region_size = 100
+    region_size = 10
     ends = seq(region_size, seq_len, region_size)
     mats = replicate(n_seqs,
                      cbind(ends, rgamma(length(ends), shape = shape, rate = shape)),
@@ -230,7 +230,6 @@ test_that("proper indel rates with `rate` and `rel_rates` inputs", {
 
 
 
-
 # ==============================*
 # __site var.__ ----
 # ==============================*
@@ -247,11 +246,12 @@ test_that("proper gamma distance values with `shape` and `region_size` inputs", 
                         ceiling(pars$seq_len / pars$region_size), pars$n_seqs))
     # Testing mean:
     expect_equal(mean(sapply(M$gamma_mats, function(x) mean(x[,2]))), 1)
-    # Looking at variance:
+    # Testing SD:
     G <- do.call(c, lapply(M$gamma_mats, function(x) x[,2]))
-    v <- var(G)                 # observed variance
-    var0 <- 1 / pars$shape      # expected variance
-    expect_lte((v - var0) / var0, 0.5)
+    s <- sd(G)                 # observed SD
+    s0 <- sqrt(1 / pars$shape)      # expected SD
+    rel_diff <- abs((s - s0) / s0)
+    expect_lte(rel_diff, 0.25)  # was never >0.25 in 1000 sims
 })
 
 # *  custom ----
