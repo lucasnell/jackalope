@@ -185,7 +185,7 @@ indel_test <- function(.ins_prob, .del_prob) {
 
 
 
-# 20 combos takes ~ 5 sec
+# Takes ~ 6 sec
 indel_df <- crossing(ins_prob = c(0, 10^(seq(-1,-4,length.out = 11))),
                      del_prob = c(0, 10^(seq(-1,-4,length.out = 11)))) %>%
     filter((ins_prob == 0 | del_prob == 0) & (ins_prob > 0 | del_prob > 0)) %>%
