@@ -76,27 +76,25 @@ process_coal_tree_string <- function(str, seq_size) {
 #'
 #' @noRd
 #'
-read_phy_obj <- function(phy, n_seqs, chunked, err_msg = "") {
+read_phy_obj <- function(phy, n_seqs, chunked) {
 
-    if (!inherits(phy, "phylo") & !inherits(phy, "multiPhylo") &
-        !inherits(phy, "list")) {
-        stop(sprintf(err_msg, "of class phylo, multiPhylo, or list"), call. = FALSE)
+    if ((!inherits(phy, "phylo") && !inherits(phy, "multiPhylo") &&
+        !inherits(phy, "list")) ||
+        (inherits(phy, "list") && !all(sapply(phy, inherits, what = "phylo")))) {
+        err_msg("create_variants", "method_info",
+                "of class \"phylo\", \"multiPhylo\", or a list of \"phylo\" objects",
+                "when `method` = \"phylo\"")
     }
-    if (inherits(phy, "list")) {
-        if (!all(sapply(phy, inherits, what = "phylo"))) {
-            stop(paste0("\nFor `create_variants` method \"phy\", ",
-                        "if providing a list, the list must only contain `phylo` ",
-                        "objects."),
-                 call. = FALSE)
-        }
-    }
-    if (inherits(phy, "multiPhylo") | inherits(phy, "list")) {
-        if (length(phy) != n_seqs) {
+
+    if ((inherits(phy, "multiPhylo") || inherits(phy, "list")) &&
+        length(phy) != n_seqs) {
             stop(paste0("\nFor `create_variants` method \"phy\", ",
                         "if providing a list or `multiPhylo` object, its length ",
                         "must equal the number of sequences."),
                  call. = FALSE)
-        }
+        err_msg("create_variants", "method_info",
+                "the same length as the number of sequences if it's of class",
+                "\"multiPhylo\" or list and when `method` = \"phylo\"")
     }
     # So all inputs are lists of the proper length:
     if (inherits(phy, "phylo")) phy <- rep(list(phy), n_seqs)
@@ -138,7 +136,7 @@ read_phy_obj <- function(phy, n_seqs, chunked, err_msg = "") {
 #' @noRd
 #'
 #'
-read_coal_trees <- function(coal_obj, seq_sizes, chunked, err_msg) {
+read_coal_trees <- function(coal_obj, seq_sizes, chunked) {
 
     # Check for coal_obj being a list and either having a `trees` field or all its
     # items within having `trees` fields
@@ -156,11 +154,10 @@ read_coal_trees <- function(coal_obj, seq_sizes, chunked, err_msg) {
         }
     }
     if (err) {
-        stop(sprintf(err_msg,
-                     paste("(1) a list with a `trees` field present or",
-                           "(2) a list of lists, each sub-list containing a `trees`",
-                           "field of length 1. For more, see `?create_variants`.")),
-             call. = FALSE)
+        err_msg("create_variants", "method_info",
+                "(1) a list with a `trees` field present or",
+                "(2) a list of lists, each sub-list containing a `trees`",
+                "field of length 1, when `method` = \"coal_trees\"")
     }
 
     if (nested) {
@@ -168,14 +165,13 @@ read_coal_trees <- function(coal_obj, seq_sizes, chunked, err_msg) {
     } else trees <- coal_obj$trees
 
     if (length(trees) != length(seq_sizes)) {
-        stop(sprintf(err_msg,
-                     paste("result in a number of trees that's the same as the number",
-                           "of sequences.",
-                           "For more, see `?create_variants`.")),
-             call. = FALSE)
+        err_msg("create_variants", "method_info",
+                "a list that results in a number of trees that's the same as the",
+                "number of sequences in the reference genome,",
+                "when `method` = \"coal_trees\"")
     }
 
-    phylo_info <- mapply(jackal:::process_coal_tree_string, trees, seq_sizes,
+    phylo_info <- mapply(process_coal_tree_string, trees, seq_sizes,
                          SIMPLIFY = FALSE, USE.NAMES = FALSE)
 
     unq_n_tips <- lapply(phylo_info,
@@ -235,7 +231,7 @@ read_coal_trees <- function(coal_obj, seq_sizes, chunked, err_msg) {
 #'
 read_ms_trees <- function(ms_filename, seq_sizes, chunked) {
 
-    trees <- jackal:::read_ms_trees_(ms_filename)
+    trees <- read_ms_trees_(ms_filename)
 
     if (any(sapply(trees, length) == 0)) {
         stop("\nIn ms-style output file, one or more sequences have no trees.",
@@ -243,7 +239,7 @@ read_ms_trees <- function(ms_filename, seq_sizes, chunked) {
     }
 
     phylo_info <- mapply(process_coal_tree_string, trees, seq_sizes,
-                        SIMPLIFY = FALSE, USE.NAMES = FALSE)
+                         SIMPLIFY = FALSE, USE.NAMES = FALSE)
 
     unq_n_tips <- lapply(phylo_info,
                          function(x) sapply(x, function(xx) length(xx$labels)))
@@ -298,19 +294,19 @@ read_ms_trees <- function(ms_filename, seq_sizes, chunked) {
 #'
 #' @noRd
 #'
-read_newick <- function(newick_filename, n_seqs, chunked, err_msg) {
+read_newick <- function(newick_filename, n_seqs, chunked) {
 
     if (!is_type(newick_filename, "character", c(1, n_seqs))) {
-        stop(sprintf(err_msg, paste("a single string or a vector of strings of the",
-                                    "same length as the number of sequences")),
-             call. = FALSE)
+        err_msg("create_variants", "method_info",
+                "a single string or a vector of strings of the same length as",
+                "the number of sequences, when `method` = \"newick\"")
     }
 
     phy <- lapply(newick_filename, ape::read.tree)
 
     if (length(phy) == 1) phy <- rep(phy, n_seqs)
 
-    trees_ptr <- read_phy_obj(phy, n_seqs, chunked, err_msg)
+    trees_ptr <- read_phy_obj(phy, n_seqs, chunked)
 
     return(trees_ptr)
 }
@@ -329,19 +325,21 @@ read_newick <- function(newick_filename, n_seqs, chunked, err_msg) {
 #'
 #' @noRd
 #'
-read_theta <- function(theta_n_vars, mu, n_seqs, chunked, err_msg) {
+read_theta <- function(theta_n_vars, mu, n_seqs, chunked) {
 
-    err_msg <- sprintf(err_msg,
-                       paste("a named list or numeric vector, with the names",
-                             "\"theta\" and \"n_vars\".",
-                             "\"theta\" must be single number, and",
-                             "\"n_vars\" must be a single whole number >= 1."))
-    if ((!inherits(theta_n_vars, "list") & !inherits(theta_n_vars, "numeric")) |
-        is.null(names(theta_n_vars))) {
-        stop(err_msg, call. = FALSE)
+    if (!is_type(theta_n_vars, c("list", "numeric")) ||
+        is.null(names(theta_n_vars)) ||
+        !single_number(theta_n_vars[["theta"]]) ||
+        theta_n_vars[["theta"]] <= 0 ||
+        !single_integer(theta_n_vars[["n_vars"]], 1)) {
+
+        err_msg("create_variants", "method_info",
+                "a named list or numeric vector, with the names",
+                "\"theta\" and \"n_vars\".",
+                "\"theta\" must be a single number > 0, and",
+                "\"n_vars\" must be a single whole number >= 1.")
+
     }
-    if (!single_number(theta_n_vars[["theta"]])) stop(err_msg, call. = FALSE)
-    if (!single_integer(theta_n_vars[["n_vars"]], 1)) stop(err_msg, call. = FALSE)
 
     theta <- theta_n_vars[["theta"]]
     n_vars <- theta_n_vars[["n_vars"]]
@@ -383,42 +381,42 @@ read_theta <- function(theta_n_vars, mu, n_seqs, chunked, err_msg) {
 #'
 make_phylo_info <- function(method,
                             method_info,
-                            seq_sizes,
-                            n_seqs,
-                            mu,
-                            chunk_size) {
+                            reference,
+                            mevo_obj) {
+
+    chunk_size <- mevo_obj$chunk_size
+    seq_sizes <- reference$sizes()
+    mu <- mevo_obj$mu()
+    n_seqs <- length(seq_sizes)
 
     chunked <- chunk_size > 0
 
-    err_msg <- paste0("\nFor `create_variants` method \"", method,
-                      "\", `method_info` must be %s.")
-
-
     if (method == "phylo") {
 
-        trees_ptr <- read_phy_obj(method_info, n_seqs, chunked, err_msg)
+        trees_ptr <- read_phy_obj(method_info, n_seqs, chunked)
 
     } else if (method == "coal_trees") {
 
         if (is_type(method_info, "character", 1)) {
             trees_ptr <- read_ms_trees(method_info, seq_sizes, chunked)
         } else if (inherits(method_info, "list")) {
-            trees_ptr <- read_coal_trees(method_info, seq_sizes, chunked, err_msg)
+            trees_ptr <- read_coal_trees(method_info, seq_sizes, chunked)
         } else {
-            stop(sprintf(err_msg, "a single string or a list"), call. = FALSE)
+            err_msg("create_variants", "metho_info", "a single string or a list",
+                    "when `method` = \"coal_trees\"")
         }
 
     } else if (method == "newick") {
 
-        trees_ptr <- read_newick(method_info, n_seqs, chunked, err_msg)
+        trees_ptr <- read_newick(method_info, n_seqs, chunked)
 
     } else if (method == "theta") {
 
-        trees_ptr <- read_theta(method_info, mu, n_seqs, chunked, err_msg)
+        trees_ptr <- read_theta(method_info, mu, n_seqs, chunked)
 
     } else {
-        stop("\nAn improper method argument was input to the `make_phylo_info` function",
-             call. = FALSE)
+        err_msg("make_phylo_info", "method", "one of \"phylo\", \"coal_trees\",",
+                "\"newick\", or \"theta\" for a phylogenetic method")
     }
 
     return(trees_ptr)

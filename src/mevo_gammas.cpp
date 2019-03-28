@@ -288,6 +288,13 @@ void check_gamma_mats(const std::vector<arma::mat>& mats,
             error = true;
             break;
         }
+        // Sampling weights < 0 makes no sense
+        if (arma::any(gamma_mat.col(1) < 0)) {
+            err_msg += "should only have values >= 0 in the second column, ";
+            err_msg += "which is where the mutation-rate weights should be.";
+            error = true;
+            break;
+        }
         // Make sure there are no repeat ends points
         arma::vec unq_ends = arma::unique(gamma_mat.col(0));
         if (unq_ends.n_elem != gamma_mat.n_rows) {

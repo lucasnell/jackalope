@@ -67,10 +67,22 @@ check_pacbio_args <- function(seq_object,
         stop("\nWhen providing info for the PacBio sequencer, ",
              "if the `custom_read_lengths` argument is a matrix, it should ",
              "have exactly 2 columns.", call. = FALSE)
+    } else if (inherits(custom_read_lengths, "matrix")) {
+        P <- custom_read_lengths[,2]
+        if (any(P < 0) || all(P == 0)) {
+            stop("\nWhen providing info for the PacBio sequencer, ",
+                 "if the `custom_read_lengths` argument is a matrix, it should ",
+                 "have exactly 2 columns, and the second column should contain ",
+                 "no values < 0 and at least one value > 0.", call. = FALSE)
+        }
     }
 
-    if (!is.null(variant_probs) && !is_type(variant_probs, c("numeric", "integer"))) {
-        err_msg("pacbio", "variant_probs", "NULL or a numeric/integer vector")
+    if (!is.null(variant_probs) &&
+        (!is_type(variant_probs, c("numeric", "integer")) ||
+         any(variant_probs < 0) ||
+         all(variant_probs == 0))) {
+        err_msg("pacbio", "variant_probs", "NULL or a numeric/integer vector",
+                "with no values < 0 and at least one value > 0")
     }
     for (x in c("compress", "show_progress")) {
         z <- eval(parse(text = x))

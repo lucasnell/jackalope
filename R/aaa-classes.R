@@ -92,7 +92,7 @@ ref_genome <- R6::R6Class(
         # Extract one reference sequence
         extract_seq = function(seq_ind) {
             private$check_ptr()
-            if (seq_ind > self$n_seqs() | seq_ind < 1) {
+            if (!single_integer(seq_ind, 1, self$n_seqs())) {
                 stop("seq_ind arg must be in range [1, <# sequences>]", call. = FALSE)
             }
             return(view_ref_genome_seq(self$genome, seq_ind - 1))
@@ -104,7 +104,7 @@ ref_genome <- R6::R6Class(
         # Change sequence names
         set_names = function(names) {
             private$check_ptr()
-            if (length(names) != self$n_seqs()) {
+            if (!is_type(names, "character", self$n_seqs())) {
                 stop("names arg must be the same length as # sequences", call. = FALSE)
             }
             seq_inds <- 0:(length(names) - 1)
@@ -116,6 +116,9 @@ ref_genome <- R6::R6Class(
         rm_seqs = function(seq_names) {
             private$check_ptr()
             self_names <- self$names()
+            if (!is_type(seq_names, "character")) {
+                stop("sequence names must be a character vector", call. = FALSE)
+            }
             if (!all(seq_names %in% self_names)) {
                 stop("not all provided seq_names are in this genome.", call. = FALSE)
             }
@@ -141,19 +144,19 @@ ref_genome <- R6::R6Class(
             min_seq_size <- 0
             out_seq_prop <- 0
             # Filling in the necessary parameter and checking for sensible inputs
-            if (!is.numeric(threshold)) {
-                stop("\nWhen filtering ref_genome genome, the threshold must be numeric.",
-                     call. = FALSE)
+            if (!single_number(threshold)) {
+                stop("\nWhen filtering ref_genome genome, the threshold must be a ",
+                     "single number", call. = FALSE)
             }
             if (method == "size") {
-                if (threshold < 1 | threshold %% 1 != 0) {
+                if (!single_integer(threshold, 1)) {
                     stop("\nWhen filtering ref_genome genome based on sequence ",
-                         "sizes, the threshold must be a whole number greater than 0.",
+                         "sizes, the threshold must be a single integer >= 1.",
                          call. = FALSE)
                 }
                 min_seq_size <- threshold
             } else {
-                if (threshold >= 1 | threshold <= 0) {
+                if (!single_number(threshold) || threshold >= 1 || threshold <= 0) {
                     stop("\nWhen filtering ref_genome genome based on a proportion of ",
                          "total bases, the threshold must be > 0 and < 1",
                          call. = FALSE)
@@ -169,9 +172,11 @@ ref_genome <- R6::R6Class(
                               n_cores = 1,
                               show_progress = FALSE) {
             private$check_ptr()
-            if (!is_type(pi_tcag, "numeric", 4)) {
+            if (!is_type(pi_tcag, "numeric", 4) || any(pi_tcag < 0) ||
+                all(pi_tcag == 0)) {
                 stop("\nIn `replace_Ns` method, the `pi_tcag` argument ",
-                     "must be a numeric vector of length 4.", call. = FALSE)
+                     "must be a numeric vector of length 4, where no values can ",
+                     "be < 0 and at least one value must be > 0.", call. = FALSE)
             }
             if (!single_integer(n_cores, 1)) {
                 stop("\nIn `replace_Ns` method, the `n_cores` argument ",
@@ -477,7 +482,7 @@ variants <- R6::R6Class(
         # Change variant names
         set_names = function(names) {
             private$check_ptr()
-            if (length(names) != self$n_vars()) {
+            if (!is_type(names, "character", self$n_vars())) {
                 stop("names arg must be the same length as # variants", call. = FALSE)
             }
             var_inds <- 0:(length(names) - 1)
@@ -489,6 +494,9 @@ variants <- R6::R6Class(
         rm_vars = function(var_names) {
             private$check_ptr()
             self_names <- self$var_names()
+            if (!is_type(var_names, "character")) {
+                stop("variant names must be a character vector", call. = FALSE)
+            }
             if (!all(var_names %in% self_names)) {
                 stop("not all provided var_names are in this genome.", call. = FALSE)
             }
@@ -504,7 +512,7 @@ variants <- R6::R6Class(
         # Mutations:
         add_sub = function(var_ind, seq_ind, pos, nt) {
             private$check_pos(var_ind, seq_ind, pos)
-            if (length(nt) != 1 | nchar(nt) != 1) {
+            if (!is_type(nt, "character", 1) || nchar(nt) != 1) {
                 stop("nt arg must be a single character", call. = FALSE)
             }
             if (! nt %in% c("T", "C", "A", "G", "N")) {
@@ -517,7 +525,7 @@ variants <- R6::R6Class(
 
         add_ins = function(var_ind, seq_ind, pos, nts) {
             private$check_pos(var_ind, seq_ind, pos)
-            if (length(nts) != 1) {
+            if (!is_type(nts, "character", 1)) {
                 stop("nts arg must be a single string", call. = FALSE)
             }
             if (! all(strsplit(nts, "")[[1]] %in% c("T", "C", "A", "G", "N"))) {
@@ -530,8 +538,8 @@ variants <- R6::R6Class(
 
         add_del = function(var_ind, seq_ind, pos, n_nts) {
             private$check_pos(var_ind, seq_ind, pos)
-            if (!single_integer(n_nts)) {
-                stop("n_nts arg must be a single integer", call. = FALSE)
+            if (!single_integer(n_nts, 1)) {
+                stop("n_nts arg must be a single integer >= 1", call. = FALSE)
             }
             add_deletion(self$genomes, var_ind - 1, seq_ind - 1, n_nts, pos - 1)
             invisible(self)
@@ -549,26 +557,25 @@ variants <- R6::R6Class(
 
         check_seq_ind = function(seq_ind) {
             stopifnot(inherits(self$genomes, "externalptr"))
-            if (seq_ind > self$n_seqs() | seq_ind < 1) {
-                stop("seq_ind arg must be in range [1, <# sequences>]", call. = FALSE)
+            if (!single_integer(seq_ind, 1, self$n_seqs())) {
+                stop("seq_ind arg must be integer in range [1, <# sequences>]",
+                     call. = FALSE)
             }
         },
         check_var_ind = function(var_ind) {
             stopifnot(inherits(self$genomes, "externalptr"))
-            if (var_ind > self$n_vars() | var_ind < 1) {
-                stop("var_ind arg must be in range [1, <# variants>]", call. = FALSE)
+            if (!single_integer(var_ind, 1, self$n_vars())) {
+                stop("var_ind arg must be integer in range [1, <# variants>]",
+                     call. = FALSE)
             }
         },
         check_pos = function(var_ind, seq_ind, pos) {
             stopifnot(inherits(self$genomes, "externalptr"))
-            if (seq_ind > self$n_seqs() | seq_ind < 1) {
-                stop("seq_ind arg must be in range [1, <# sequences>]", call. = FALSE)
-            }
-            if (var_ind > self$n_vars() | var_ind < 1) {
-                stop("var_ind arg must be in range [1, <# variants>]", call. = FALSE)
-            }
-            if (pos > self$sizes(var_ind)[seq_ind] | pos < 1) {
-                stop("pos arg must be in range [1, <sequence size>]", call. = FALSE)
+            private$check_seq_ind(seq_ind)
+            private$check_var_ind(var_ind)
+            if (!single_integer(pos, 1, self$sizes(var_ind)[seq_ind])) {
+                stop("pos arg must be integer in range [1, <sequence size>]",
+                     call. = FALSE)
             }
         }
     )

@@ -178,6 +178,9 @@ create_variants <- function(reference,
     if (!single_integer(n_cores, .min = 1)) {
         err_msg("create_variants", "n_cores", "a single integer >= 1")
     }
+    if (!is_type(show_progress, "logical", 1)) {
+        err_msg("create_variants", "show_progress", "a single logical")
+    }
     # Check mevo_obj argument
     if (method %in% c("coal_sites", methods_$phylo) &&
         (is.null(mevo_obj) || !inherits(mevo_obj, "mevo"))) {
@@ -196,11 +199,9 @@ create_variants <- function(reference,
         # -------+
         # Make phylo_ptr
         # -------+
-        seq_sizes <- reference$sizes()
-        n_seqs <- length(seq_sizes)
         phylo_info_ptr <- make_phylo_info(method, method_info,
-                                          seq_sizes, n_seqs, mevo_obj$mu(),
-                                          mevo_obj$chunk_size)
+                                          reference, mevo_obj)
+
 
         # -------+
         # Make sampler_base_ptr

@@ -130,6 +130,8 @@ indels <- function(indel) {
 
     which_type <- deparse(substitute(indel))
 
+    rates <- NULL
+
     if (is.null(indel)) {
         rates <- numeric(0)
     } else {
@@ -378,6 +380,9 @@ make_mevo <- function(reference,
     if (!inherits(reference, "ref_genome")) {
         stop("\nIn `make_mevo`, the `reference` argument must be a ref_genome object.",
              call. = FALSE)
+    }
+    if (!single_integer(chunk_size, 0)) {
+        err_msg("make_mevo", "chunk_size", "an integer >= 0")
     }
 
     # -------+
