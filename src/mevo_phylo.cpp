@@ -106,10 +106,8 @@ int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
      */
     for (uint32 i = 0; i < tree.n_edges; i++) {
 
-        // If not simulating recombination, checking for abort every edge:
-        if (!recombination) {
-            if (prog_bar.is_aborted()) return -1;
-        }
+        // Checking for abort every edge:
+        if (prog_bar.is_aborted()) return -1;
 
         // Indices for nodes/tips that the branch length in `branch_lens` refers to
         uint32 b1 = tree.edges(i,0);
