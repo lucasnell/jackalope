@@ -10,34 +10,9 @@
 #include "seq_classes_var.h"  // Var* classes
 #include "str_manip.h"  // filter_nucleos
 #include "util.h"  // str_stop
+#include "read_write.h"  // str_stop
 
 using namespace Rcpp;
-
-
-// For parsing segregating sites from ms-style output files
-namespace parse_ms {
-    const std::string site = "segsites:";
-    const std::string pos = "positions:";
-}
-
-
-/*
- Calling `base::path.expand(file_name)` and changing input string
-*/
-void expand_path(std::string& file_name) {
-    // Obtain environment containing function
-    Environment base("package:base");
-    // Make function callable from C++
-    Function pe_r = base["path.expand"];
-    // Call the function and receive its list output
-    SEXP fai_file_exp = pe_r(file_name);
-    file_name = as<std::string>(fai_file_exp);
-    return;
-}
-
-
-// Size of the block of memory to use for reading non-indexed fasta files and fai files.
-#define LENGTH 0x1000 // hexadecimel for 4096.
 
 
 
@@ -858,6 +833,5 @@ void write_fasta_gz(std::string file_name,
 
     return;
 }
-
 
 
