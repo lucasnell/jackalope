@@ -707,6 +707,16 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// clean_ref_genome_seq_names
+void clean_ref_genome_seq_names(SEXP ref_genome_ptr);
+RcppExport SEXP _jackal_clean_ref_genome_seq_names(SEXP ref_genome_ptrSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    clean_ref_genome_seq_names(ref_genome_ptr);
+    return R_NilValue;
+END_RCPP
+}
 // set_var_set_var_names
 void set_var_set_var_names(SEXP var_set_ptr, const std::vector<uint32>& var_inds, const std::vector<std::string>& names);
 RcppExport SEXP _jackal_set_var_set_var_names(SEXP var_set_ptrSEXP, SEXP var_indsSEXP, SEXP namesSEXP) {
@@ -899,6 +909,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackal_view_ref_genome_seq_names", (DL_FUNC) &_jackal_view_ref_genome_seq_names, 1},
     {"_jackal_view_var_set_var_names", (DL_FUNC) &_jackal_view_var_set_var_names, 1},
     {"_jackal_set_ref_genome_seq_names", (DL_FUNC) &_jackal_set_ref_genome_seq_names, 3},
+    {"_jackal_clean_ref_genome_seq_names", (DL_FUNC) &_jackal_clean_ref_genome_seq_names, 1},
     {"_jackal_set_var_set_var_names", (DL_FUNC) &_jackal_set_var_set_var_names, 3},
     {"_jackal_remove_ref_genome_seqs", (DL_FUNC) &_jackal_remove_ref_genome_seqs, 2},
     {"_jackal_remove_var_set_vars", (DL_FUNC) &_jackal_remove_var_set_vars, 2},

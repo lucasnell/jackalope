@@ -350,6 +350,27 @@ void set_ref_genome_seq_names(
 }
 
 
+
+//[[Rcpp::export]]
+void clean_ref_genome_seq_names(SEXP ref_genome_ptr) {
+
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
+
+    std::string char_map;
+    char_map.reserve(256);
+    for (uint32 i = 0; i < 256; i++) char_map += static_cast<char>(i);
+    std::string bad_chars = " :;=%,\\|/\"\'";
+    for (char& c : bad_chars) char_map[c] = '_';
+
+    for (uint32 i = 0; i < ref_genome->size(); i++) {
+        for (char& c : (*ref_genome)[i].name) {
+            c = char_map[c];
+        }
+    }
+    return;
+}
+
+
 //[[Rcpp::export]]
 void set_var_set_var_names(
         SEXP var_set_ptr,

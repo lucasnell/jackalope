@@ -582,6 +582,10 @@ set_ref_genome_seq_names <- function(ref_genome_ptr, seq_inds, names) {
     invisible(.Call(`_jackal_set_ref_genome_seq_names`, ref_genome_ptr, seq_inds, names))
 }
 
+clean_ref_genome_seq_names <- function(ref_genome_ptr) {
+    invisible(.Call(`_jackal_clean_ref_genome_seq_names`, ref_genome_ptr))
+}
+
 set_var_set_var_names <- function(var_set_ptr, var_inds, names) {
     invisible(.Call(`_jackal_set_var_set_var_names`, var_set_ptr, var_inds, names))
 }

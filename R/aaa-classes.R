@@ -20,6 +20,8 @@
 #'     \item{`extract_seq(seq_ind)`}{Extract a sequence string based on an index,
 #'         `seq_ind`.}
 #'     \item{`set_names(names)`}{Set names for all sequences.}
+#'     \item{`clean_names()`}{Clean sequence names, converting `" :;=%,\\|/\"\'"`
+#'         to `"_"`.}
 #'     \item{`rm_seqs(seq_names)`}{Remove one or more sequences based on names in
 #'         the `seq_names` vector.}
 #'     \item{`merge_seqs()`}{Merge all sequences into one.}
@@ -109,6 +111,13 @@ ref_genome <- R6::R6Class(
             }
             seq_inds <- 0:(length(names) - 1)
             set_ref_genome_seq_names(self$genome, seq_inds, names)
+            invisible(self)
+        },
+
+        # Clean sequence names, converting " :;=%,\\|/\"\'" to "_"
+        clean_names = function() {
+            private$check_ptr()
+            clean_ref_genome_seq_names(self$genome)
             invisible(self)
         },
 
