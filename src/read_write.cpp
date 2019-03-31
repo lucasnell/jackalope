@@ -10,7 +10,7 @@
 #include "seq_classes_var.h"  // Var* classes
 #include "str_manip.h"  // filter_nucleos
 #include "util.h"  // str_stop
-#include "read_write.h"  // str_stop
+#include "read_write.h"
 
 using namespace Rcpp;
 
@@ -833,5 +833,86 @@ void write_fasta_gz(std::string file_name,
 
     return;
 }
+
+
+
+
+
+
+//' Write `variants` to VCF file.
+//'
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+void write_vcf_cpp(std::string out_prefix,
+                   const bool& compress,
+                   SEXP var_set_ptr,
+                   const IntegerMatrix& sample_matrix) {
+
+    XPtr<VarSet> var_set(var_set_ptr);
+
+    expand_path(out_prefix);
+
+    if (any(sample_matrix < 1).is_true()) {
+        str_stop({"\nIn the input matrix specifying which samples each ",
+                 "variant belongs to, there are values < 1."});
+    }
+    if (any(sample_matrix > var_set->size()).is_true()) {
+        str_stop({"\nIn the input matrix specifying which samples each ",
+                 "variant belongs to, there are values > the number of variants."});
+    }
+    if (any(is_na(sample_matrix)).is_true()) {
+        str_stop({"\nIn the input matrix specifying which samples each ",
+                 "variant belongs to, there are missing values."});
+    }
+
+
+    // Start the `WriterVCF` object
+    WriterVCF writer(*var_set, 0, sample_matrix);
+
+    if (compress) {
+        std::string file_name = out_prefix + ".vcf.gz";
+        /*
+         Initialize file.
+         Note that gzfile does not tolerate initializing an empty file.
+         Use ofstream instead.
+         */
+        if (!std::ifstream(file_name)){
+            std::ofstream tmp_file;
+            tmp_file.open(file_name, std::ios::out | std::ios::binary);
+            tmp_file.close();
+        }
+
+        gzFile out_file = gzopen(file_name.c_str(), "wb");
+        if (!out_file) {
+            std::string e = "gzopen of " + file_name + " failed: " +
+                strerror(errno) + ".\n";
+            Rcpp::stop(e);
+        }
+
+        write_vcf_<gzFile>(var_set, out_file, writer);
+
+        gzclose(out_file);
+
+    } else {
+
+        std::string file_name = out_prefix + ".vcf";
+        std::ofstream out_file(file_name);
+
+        if (!out_file.is_open()) {
+            Rcout << "Unable to open file " << file_name << std::endl;
+        }
+
+        write_vcf_<std::ofstream>(var_set, out_file, writer);
+
+        out_file.close();
+    }
+
+
+    return;
+
+}
+
 
 
