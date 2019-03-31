@@ -216,3 +216,71 @@ read_vcf <- function(reference, method_info) {
 
 
 
+#' Write variant info from a \code{variants} object to a VCF file.
+#'
+#' @param vars A \code{variants} object.
+#' @param out_prefix Prefix for the output file VCF.
+#' @param compress Boolean for whether to compress using \code{"gzip"}.
+#'     Defaults to \code{FALSE}.
+#' @param sample_matrix Matrix to specify how haploid variants are grouped into samples
+#'     if samples are not haploid. There should be one row for each sample, and
+#'     each row should contain indices or names for the variants present in that sample.
+#'     Indices/names for variants can be repeated across and within rows.
+#'     The number of columns indicates the ploidy level: 2 columns for diploid,
+#'     3 for triploid, 4 for tetraploid, and so on;
+#'     there is no limit to the ploidy level.
+#'     If this argument is `NULL`, it's assumed that each variant is its own
+#'     separate sample.
+#'     Defaults to `NULL`.
+#'
+#' @return \code{NULL}
+#'
+#' @export
+#'
+write_vcf <- function(vars,
+                      out_prefix,
+                      compress = FALSE,
+                      sample_matrix = NULL) {
+
+    if (!inherits(vars, "variants")) {
+        err_msg("write_vcf", "vars", "a \"variants\" object")
+    }
+    if (!is_type(out_prefix, "character", 1)) {
+        err_msg("write_vcf", "out_prefix", "a single string")
+    }
+    if (!is_type(compress, "logical", 1)) {
+        err_msg("write_vcf", "compress", "a single logical")
+    }
+    if (!inherits(vars$genomes, "externalptr")) {
+        stop("\nThe `genomes` field in the `vars` argument supplied to ",
+             "`write_vcf` should be an external pointer.",
+             call. = TRUE)
+    }
+    if (!is.null(sample_matrix) && !inherits(sample_matrix, "matrix")) {
+        err_msg("write_vcf", "sample_matrix", "NULL or a matrix")
+    }
+    if (is.null(sample_matrix)) {
+        sample_matrix <- cbind(1:vars$n_vars())
+    }
+    # If they provided names rather than indices:
+    if (inherits(sample_matrix[1,1], "character")) {
+        var_names <- vars$var_names()
+        not_found <- !unique(as.character(sample_matrix)) %in% var_names
+        if (sum(not_found) > 0) {
+            stop("\nThe `sample_matrix` argument to the `write_vcf` function had ",
+                 "the following variant name(s) that weren't found in the ",
+                 "input variants object: ",
+                 paste(unique(as.character(sample_matrix))[not_found], collapse = ", "),
+                 call. = FALSE)
+        }
+        sample_matrix <- apply(sample_matrix, 1:2, function(nm) which(var_names == nm))
+    } else if (!inherits(sample_matrix[1,1], c("numeric", "integer"))) {
+        err_msg("write_vcf", "sample_matrix", "NULL or a character, numeric, or",
+                "integer matrix.")
+    }
+
+    write_vcf_cpp(out_prefix, compress, vars$genomes, sample_matrix)
+
+    return(invisible(NULL))
+}
+

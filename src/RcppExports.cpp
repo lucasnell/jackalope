@@ -513,6 +513,19 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// write_vcf_cpp
+void write_vcf_cpp(std::string out_prefix, const bool& compress, SEXP var_set_ptr, const IntegerMatrix& sample_matrix);
+RcppExport SEXP _jackal_write_vcf_cpp(SEXP out_prefixSEXP, SEXP compressSEXP, SEXP var_set_ptrSEXP, SEXP sample_matrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type sample_matrix(sample_matrixSEXP);
+    write_vcf_cpp(out_prefix, compress, var_set_ptr, sample_matrix);
+    return R_NilValue;
+END_RCPP
+}
 // print_ref_genome
 void print_ref_genome(SEXP ref_genome_ptr);
 RcppExport SEXP _jackal_print_ref_genome(SEXP ref_genome_ptrSEXP) {
@@ -869,6 +882,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackal_read_fasta_ind", (DL_FUNC) &_jackal_read_fasta_ind, 3},
     {"_jackal_write_fasta_fa", (DL_FUNC) &_jackal_write_fasta_fa, 3},
     {"_jackal_write_fasta_gz", (DL_FUNC) &_jackal_write_fasta_gz, 3},
+    {"_jackal_write_vcf_cpp", (DL_FUNC) &_jackal_write_vcf_cpp, 4},
     {"_jackal_print_ref_genome", (DL_FUNC) &_jackal_print_ref_genome, 1},
     {"_jackal_print_var_set", (DL_FUNC) &_jackal_print_var_set, 1},
     {"_jackal_make_ref_genome", (DL_FUNC) &_jackal_make_ref_genome, 1},

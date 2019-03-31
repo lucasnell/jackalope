@@ -66,14 +66,6 @@ inline void expand_path(std::string& file_name) {
     return;
 }
 
-// Formatted date as "20190331"
-inline std::string vcf_date() {
-    std::time_t t = std::time(nullptr);
-    std::tm tm = *std::localtime(&t);
-    std::stringstream ss;
-    ss << std::put_time(&tm, "%Y%m%d");
-    return ss.str();
-}
 
 
 
@@ -557,6 +549,7 @@ inline void chunk_to_output(gzFile& out_file,
 //' `T` should be `std::string`, `std::ofstream`, or `gzFile`, for the three
 //' specializations of the `chunk_to_output` function above.
 //'
+//' @noRd
 //'
 template <typename T>
 void write_vcf_(XPtr<VarSet> var_set,

@@ -445,6 +445,24 @@ write_fasta_gz <- function(file_name, ref_genome_ptr, text_width) {
     invisible(.Call(`_jackal_write_fasta_gz`, file_name, ref_genome_ptr, text_width))
 }
 
+#' Write `variants` to VCF file.
+#'
+#'
+#' @noRd
+#'
+write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix) {
+    invisible(.Call(`_jackal_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix))
+}
+
+#' Template doing most of the work for writing to a VCF file.
+#'
+#' `T` should be `std::string`, `std::ofstream`, or `gzFile`, for the three
+#' specializations of the `chunk_to_output` function above.
+#'
+#' @noRd
+#'
+NULL
+
 #' Add mutations manually from R.
 #'
 #' Note that all indices are in 0-based C++ indexing. This means that the first

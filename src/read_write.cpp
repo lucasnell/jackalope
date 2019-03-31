@@ -359,8 +359,8 @@ SEXP read_vcfr(SEXP reference_ptr,
 
 // Parse one line of input from a file and add to output
 
-void parse_line(const std::string& line, const bool& cut_names,
-                RefGenome& ref) {
+void parse_fasta_line(const std::string& line, const bool& cut_names,
+                      RefGenome& ref) {
 
     if (line.find(">") != std::string::npos) {
         std::string name_i = "";
@@ -425,7 +425,7 @@ void fill_ref_noind(RefGenome& ref,
 
         // Scroll through lines derived from the buffer.
         for (uint32 i = 0; i < svec.size() - 1; i++){
-            parse_line(svec[i], cut_names, ref);
+            parse_fasta_line(svec[i], cut_names, ref);
         }
         // Manage the last line.
         lastline = svec.back();
@@ -433,7 +433,7 @@ void fill_ref_noind(RefGenome& ref,
         // Check for end of file (EOF) or errors.
         if (bytes_read < LENGTH - 1) {
             if ( gzeof(file) ) {
-                parse_line(lastline, cut_names, ref);
+                parse_fasta_line(lastline, cut_names, ref);
                 break;
             } else {
                 std::string error_string = gzerror (file, & err);
