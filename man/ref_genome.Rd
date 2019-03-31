@@ -34,6 +34,8 @@ representing the genome.}
 \item{\code{extract_seq(seq_ind)}}{Extract a sequence string based on an index,
 \code{seq_ind}.}
 \item{\code{set_names(names)}}{Set names for all sequences.}
+\item{\code{clean_names()}}{Clean sequence names, converting \code{" :;=\%,\\|/\"\'"}
+to \code{"_"}.}
 \item{\code{rm_seqs(seq_names)}}{Remove one or more sequences based on names in
 the \code{seq_names} vector.}
 \item{\code{merge_seqs()}}{Merge all sequences into one.}

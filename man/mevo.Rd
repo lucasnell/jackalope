@@ -41,8 +41,6 @@ See \code{?make_mevo} for more information.}
 \describe{
 \item{\code{mu()}}{Calculates the average overall mutation rate at equilibrium.}
 \item{\code{q()}}{Calculates the mutation rate for each nucleotide.}
-\item{\code{to_ptr()}}{Converts information in this object to a C++ pointer.
-You shouldn't need to use this. Ever.}
 }
 }
 
