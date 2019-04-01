@@ -450,8 +450,8 @@ write_fasta_gz <- function(file_name, ref_genome_ptr, text_width) {
 #'
 #' @noRd
 #'
-write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix) {
-    invisible(.Call(`_jackal_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix))
+write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, testing) {
+    invisible(.Call(`_jackal_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix, testing))
 }
 
 #' Template doing most of the work for writing to a VCF file.

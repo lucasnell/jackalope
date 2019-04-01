@@ -38,8 +38,8 @@ using namespace Rcpp;
 
 // For parsing segregating sites from ms-style output files
 namespace parse_ms {
-    const std::string site = "segsites:";
-    const std::string pos = "positions:";
+const std::string site = "segsites:";
+const std::string pos = "positions:";
 }
 
 
@@ -77,13 +77,13 @@ class OneVarSeqVCF {
 public:
 
     /*
-    Integer indicating whether to include this variant in the current line of VCF file,
-    and, if so, which alternate string to use.
-    0 indicates not to include it at all.
-    After running `check` but before `dump`, it's set ambiguously to 1 if it should
-    be included. The `dump` method assigns the actual index to the alternate string
-    to use.
-    */
+     Integer indicating whether to include this variant in the current line of VCF file,
+     and, if so, which alternate string to use.
+     0 indicates not to include it at all.
+     After running `check` but before `dump`, it's set ambiguously to 1 if it should
+     be included. The `dump` method assigns the actual index to the alternate string
+     to use.
+     */
     uint32 gt_index = 0;
     // Starting/ending indices on mutations vector:
     std::pair<uint32, uint32> ind = std::make_pair(0, 0);
@@ -94,11 +94,11 @@ public:
 
 
     /*
-    Determine whether this variant should be included in a VCF line for given
-    sequence starting and ending positions.
-    If this variant has a deletion at the input position, this method updates that
-    and the boolean for whether the line is still expanding (changes it to true).
-    */
+     Determine whether this variant should be included in a VCF line for given
+     sequence starting and ending positions.
+     If this variant has a deletion at the input position, this method updates that
+     and the boolean for whether the line is still expanding (changes it to true).
+     */
     void check(const uint32& pos_start,
                uint32& pos_end,
                bool& still_growing) {
@@ -123,6 +123,20 @@ public:
 
             }
 
+            /*
+             Checking for a deletion right after the current mutation:
+             (the second part of this statement is added because contiguous deletions
+             are prevented)
+             */
+            if (ind.second < var_seq->mutations.size() &&
+                var_seq->mutations[ind.second].size_modifier >= 0) {
+                const Mutation& next_mut(var_seq->mutations[ind.second + 1]);
+                if (next_mut.size_modifier < 0 &&
+                    next_mut.old_pos == (var_seq->mutations[ind.second].old_pos + 1)) {
+                    ind.second++;
+                }
+            }
+
             mut = &(var_seq->mutations[ind.second]);
             set_second_pos(*mut);
 
@@ -142,9 +156,9 @@ public:
 
 
     /*
-    This "dumps" the necessary haploid information for the VCF's `ALT` string,
-    then iterates to the next mutation information
-    */
+     This "dumps" the necessary haploid information for the VCF's `ALT` string,
+     then iterates to the next mutation information
+     */
     void dump(std::vector<std::string>& unq_alts,
               uint32& gt_tmp,
               const uint32& pos_start,
@@ -154,8 +168,8 @@ public:
         if (gt_index > 0) {
 
             /*
-            First create alternate string:
-            */
+             First create alternate string:
+             */
             // Fill with reference sequence:
             std::string alt_str = ref_str;
 
@@ -186,13 +200,13 @@ public:
             }
 
             /*
-            Double-check that two mutations didn't combine to turn it back into the
-            reference string:
-            */
+             Double-check that two mutations didn't combine to turn it back into the
+             reference string:
+             */
             if (alt_str != ref_str) {
                 /*
-                Now see if that string exists already, and assign `gt_index` accordingly
-                */
+                 Now see if that string exists already, and assign `gt_index` accordingly
+                 */
                 auto iter = std::find(unq_alts.begin(), unq_alts.end(), alt_str);
                 // If it doesn't already exist, we add it:
                 if (iter == unq_alts.end()) {
@@ -241,10 +255,10 @@ public:
             pos_end = pos.second;
         }
         /*
-        If this one ties with a previous mutation
-        and the ending position of this one is further along than the original,
-        then we override that.
-        */
+         If this one ties with a previous mutation
+         and the ending position of this one is further along than the original,
+         then we override that.
+         */
         if (pos.first == pos_start && pos.second > pos_end) {
             pos_end = pos.second;
         }
@@ -264,17 +278,30 @@ private:
         if (ind.first >= var_seq->mutations.size()) {
             pos = std::make_pair(MAX_INT, MAX_INT); // max uint32 values
         } else {
-            const Mutation& mut(var_seq->mutations[ind.first]);
-            set_first_pos(mut);
-            set_second_pos(mut);
+            const Mutation* mut(&(var_seq->mutations[ind.first]));
+            set_first_pos(*mut);
+            /*
+             Checking for a deletion right after the current mutation:
+             (the second part of this statement is added because contiguous deletions
+             are prevented elsewhere)
+             */
+            if (ind.second < var_seq->mutations.size() && mut->size_modifier >= 0) {
+                const Mutation& next_mut(var_seq->mutations[ind.second + 1]);
+                if (next_mut.size_modifier < 0 &&
+                    next_mut.old_pos == (mut->old_pos + 1)) {
+                    ind.second++;
+                    mut = &(var_seq->mutations[ind.second]);
+                }
+            }
+            set_second_pos(*mut);
         }
         return;
     }
 
     /*
-    Gets first ref. sequence position for a mutation, compensating for the fact
-    that deletions have to be treated differently
-    */
+     Gets first ref. sequence position for a mutation, compensating for the fact
+     that deletions have to be treated differently
+     */
     inline void set_first_pos(const Mutation& mut) {
         pos.first = mut.old_pos;
         if (mut.size_modifier < 0 && mut.old_pos > 0) pos.first--;
@@ -287,9 +314,9 @@ private:
         return pos_first;
     }
     /*
-    Gets last ref. sequence position for a mutation, compensating for the fact
-    that deletions have to be treated differently
-    */
+     Gets last ref. sequence position for a mutation, compensating for the fact
+     that deletions have to be treated differently
+     */
     inline void set_second_pos(const Mutation& mut) {
         pos.second = mut.old_pos;
         if (mut.size_modifier < 0) {
@@ -363,10 +390,10 @@ public:
 
 
     /*
-    Set the strings for the sequence position (`POS`), reference sequence (`REF`),
-    alternative alleles (`ALT`), and genotype information (`GT` format field)
-    to add to a new line in the VCF file.
-    */
+     Set the strings for the sequence position (`POS`), reference sequence (`REF`),
+     alternative alleles (`ALT`), and genotype information (`GT` format field)
+     to add to a new line in the VCF file.
+     */
     void iterate(std::string& pos_str,
                  std::string& ref_str,
                  std::string& alt_str,
@@ -378,14 +405,14 @@ public:
         for (std::string& gt : gt_strs) if (gt.size() > 0) gt.clear();
 
         /*
-        Boolean for whether we're still merging mutations.
-        Only deletions can change this from false to true.
-        */
+         Boolean for whether we're still merging mutations.
+         Only deletions can change this from false to true.
+         */
         bool still_growing = true;
         /*
-        Now going through sequences until it's no longer merging, updating the starting
-        and ending positions each time:
-        */
+         Now going through sequences until it's no longer merging, updating the starting
+         and ending positions each time:
+         */
         while (still_growing) {
             still_growing = false;
             for (uint32 i = 0; i < var_infos.size(); i++) {
@@ -406,9 +433,9 @@ public:
         }
 
         /*
-        Go back through and collect information for each variant that's
-        getting included:
-        */
+         Go back through and collect information for each variant that's
+         getting included:
+         */
         pos_str = std::to_string(mut_pos.first + 1);  //bc it's 1-based indexing
         unq_alts.clear();
         for (uint32 i = 0; i < var_infos.size(); i++) {
@@ -422,8 +449,8 @@ public:
 
 
         /*
-        Now fill genotype (`GT`) info, using `sample_groups` to group them
-        */
+         Now fill genotype (`GT`) info, using `sample_groups` to group them
+         */
         if (gt_strs.size() != sample_groups.n_rows) {
             str_stop({"\nInput vector for GT field info isn't the same size ",
                      "as the number of rows in the `sample_matrix` argument."});
@@ -494,9 +521,9 @@ private:
         ref_nts = &(var_set->reference->sequences[seq_ind].nucleos);
 
         /*
-        Set pointer for the focal sequence in each variant
-        and set positions in `mut_pos` field
-        */
+         Set pointer for the focal sequence in each variant
+         and set positions in `mut_pos` field
+         */
         for (uint32 i = 0; i < var_infos.size(); i++) {
             var_infos[i].set_var((*var_set)[i][seq_ind]);
             var_infos[i].compare_pos(mut_pos.first, mut_pos.second);
@@ -568,14 +595,14 @@ void write_vcf_(XPtr<VarSet> var_set,
 
 
     /*
-    Header
-    */
+     Header
+     */
     writer.fill_header(chunk);
     chunk_to_output(out_file, chunk);
 
     /*
-    Data lines
-    */
+     Data lines
+     */
 
     std::string pos_str = "";
     std::string ref_str = "";
@@ -619,6 +646,8 @@ void write_vcf_(XPtr<VarSet> var_set,
     return;
 
 }
+
+
 
 
 
