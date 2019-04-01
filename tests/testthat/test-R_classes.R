@@ -149,7 +149,7 @@ for (v in 1:n_vars) {
                 size = as.integer(rexp(1, 2.0) + 1.0)
                 if (size > 10) size = 10
                 if (size > (max_size - pos)) size = max_size - pos;
-                if (size < 0) stop("size < 0")
+                if (size < 1) size = 1
                 vars$add_del(v, s, pos, size)
                 ts[s] <- paste0(substr(ts[s], 1, pos - 1),
                                     substr(ts[s], pos + size, nchar(ts[s])))
@@ -183,3 +183,4 @@ test_that("Replacing Ns works as predicted", {
     expect_identical(ref$extract_seq(2), "TTTTCCAAGG")
     expect_identical(ref$extract_seq(3), "AACCTTGGGGGTTTTTT")
 })
+
