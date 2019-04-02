@@ -15,7 +15,7 @@
 #' @noRd
 #'
 merge_sequences <- function(ref_genome_ptr) {
-    invisible(.Call(`_jackal_merge_sequences`, ref_genome_ptr))
+    invisible(.Call(`_jackalope_merge_sequences`, ref_genome_ptr))
 }
 
 #' Filter reference genome sequences by size or for a proportion of total nucleotides.
@@ -35,7 +35,7 @@ merge_sequences <- function(ref_genome_ptr) {
 #'
 #'
 filter_sequences <- function(ref_genome_ptr, min_seq_size = 0L, out_seq_prop = 0) {
-    invisible(.Call(`_jackal_filter_sequences`, ref_genome_ptr, min_seq_size, out_seq_prop))
+    invisible(.Call(`_jackalope_filter_sequences`, ref_genome_ptr, min_seq_size, out_seq_prop))
 }
 
 #' Replace Ns with randome nucleotides.
@@ -49,7 +49,7 @@ filter_sequences <- function(ref_genome_ptr, min_seq_size = 0L, out_seq_prop = 0
 #'
 #'
 replace_Ns_cpp <- function(ref_genome_ptr, pi_tcag, n_cores, show_progress) {
-    invisible(.Call(`_jackal_replace_Ns_cpp`, ref_genome_ptr, pi_tcag, n_cores, show_progress))
+    invisible(.Call(`_jackalope_replace_Ns_cpp`, ref_genome_ptr, pi_tcag, n_cores, show_progress))
 }
 
 #' Create `RefGenome` pointer based on nucleotide equilibrium frequencies.
@@ -75,7 +75,7 @@ replace_Ns_cpp <- function(ref_genome_ptr, pi_tcag, n_cores, show_progress) {
 #'
 #'
 create_genome_ <- function(n_seqs, len_mean, len_sd, pi_tcag, n_cores) {
-    .Call(`_jackal_create_genome_`, n_seqs, len_mean, len_sd, pi_tcag, n_cores)
+    .Call(`_jackalope_create_genome_`, n_seqs, len_mean, len_sd, pi_tcag, n_cores)
 }
 
 #' Create random sequences as a character vector.
@@ -91,7 +91,7 @@ create_genome_ <- function(n_seqs, len_mean, len_sd, pi_tcag, n_cores) {
 #' @noRd
 #'
 rando_seqs <- function(n_seqs, len_mean, len_sd = 0, pi_tcag = numeric(0), n_cores = 1L) {
-    .Call(`_jackal_rando_seqs`, n_seqs, len_mean, len_sd, pi_tcag, n_cores)
+    .Call(`_jackalope_rando_seqs`, n_seqs, len_mean, len_sd, pi_tcag, n_cores)
 }
 
 #' Illumina sequence for reference object.
@@ -100,7 +100,7 @@ rando_seqs <- function(n_seqs, len_mean, len_sd = 0, pi_tcag = numeric(0), n_cor
 #' @noRd
 #'
 illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
-    invisible(.Call(`_jackal_illumina_ref_cpp`, ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
+    invisible(.Call(`_jackalope_illumina_ref_cpp`, ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
 }
 
 #' Illumina sequence for reference object.
@@ -109,7 +109,7 @@ illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compr
 #' @noRd
 #'
 illumina_var_cpp <- function(var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
-    invisible(.Call(`_jackal_illumina_var_cpp`, var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
+    invisible(.Call(`_jackalope_illumina_var_cpp`, var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
 }
 
 #' Used below to directly make a MutationTypeSampler
@@ -125,11 +125,11 @@ NULL
 NULL
 
 make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates) {
-    .Call(`_jackal_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates)
+    .Call(`_jackalope_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates)
 }
 
 make_mutation_sampler_chunk_base <- function(Q, pi_tcag, insertion_rates, deletion_rates, chunk_size) {
-    .Call(`_jackal_make_mutation_sampler_chunk_base`, Q, pi_tcag, insertion_rates, deletion_rates, chunk_size)
+    .Call(`_jackalope_make_mutation_sampler_chunk_base`, Q, pi_tcag, insertion_rates, deletion_rates, chunk_size)
 }
 
 #' Add mutations at segregating sites from coalescent simulation output.
@@ -137,7 +137,7 @@ make_mutation_sampler_chunk_base <- function(Q, pi_tcag, insertion_rates, deleti
 #' @noRd
 #'
 add_coal_sites_cpp <- function(ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_cores, show_progress) {
-    .Call(`_jackal_add_coal_sites_cpp`, ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_cores, show_progress)
+    .Call(`_jackalope_add_coal_sites_cpp`, ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_cores, show_progress)
 }
 
 #' Fill matrix of Gamma-region end points and Gamma values.
@@ -169,7 +169,7 @@ NULL
 #' @noRd
 #'
 make_gamma_mats <- function(seq_sizes, gamma_size_, shape) {
-    .Call(`_jackal_make_gamma_mats`, seq_sizes, gamma_size_, shape)
+    .Call(`_jackalope_make_gamma_mats`, seq_sizes, gamma_size_, shape)
 }
 
 #' Check input Gamma matrices for proper # columns and end points.
@@ -183,7 +183,7 @@ make_gamma_mats <- function(seq_sizes, gamma_size_, shape) {
 #' @noRd
 #'
 check_gamma_mats <- function(mats, seq_sizes) {
-    invisible(.Call(`_jackal_check_gamma_mats`, mats, seq_sizes))
+    invisible(.Call(`_jackalope_check_gamma_mats`, mats, seq_sizes))
 }
 
 #' Create XPtr to nested vector of PhyloTree objects from phylogeny information.
@@ -191,7 +191,7 @@ check_gamma_mats <- function(mats, seq_sizes) {
 #' @noRd
 #'
 phylo_info_to_trees <- function(genome_phylo_info) {
-    .Call(`_jackal_phylo_info_to_trees`, genome_phylo_info)
+    .Call(`_jackalope_phylo_info_to_trees`, genome_phylo_info)
 }
 
 #' Create XPtr to nested vector of PhyloTree objects from phylogeny information.
@@ -201,7 +201,7 @@ phylo_info_to_trees <- function(genome_phylo_info) {
 #' @noRd
 #'
 phylo_info_to_trees_chunk <- function(genome_phylo_info) {
-    .Call(`_jackal_phylo_info_to_trees_chunk`, genome_phylo_info)
+    .Call(`_jackalope_phylo_info_to_trees_chunk`, genome_phylo_info)
 }
 
 #' Evolve all sequences in a reference genome.
@@ -209,7 +209,7 @@ phylo_info_to_trees_chunk <- function(genome_phylo_info) {
 #' @noRd
 #'
 evolve_seqs <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress) {
-    .Call(`_jackal_evolve_seqs`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress)
+    .Call(`_jackalope_evolve_seqs`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress)
 }
 
 #' Same as above, but using chunks.
@@ -217,7 +217,7 @@ evolve_seqs <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_
 #' @noRd
 #'
 evolve_seqs_chunk <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress) {
-    .Call(`_jackal_evolve_seqs_chunk`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress)
+    .Call(`_jackalope_evolve_seqs_chunk`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress)
 }
 
 #' Estimates equilibrium nucleotide frequencies from an input rate matrix.
@@ -256,7 +256,7 @@ NULL
 #' @noRd
 #'
 TN93_rate_matrix <- function(pi_tcag, alpha_1, alpha_2, beta) {
-    .Call(`_jackal_TN93_rate_matrix`, pi_tcag, alpha_1, alpha_2, beta)
+    .Call(`_jackalope_TN93_rate_matrix`, pi_tcag, alpha_1, alpha_2, beta)
 }
 
 #' Q matrix for rates for a given nucleotide using the JC69 substitution model.
@@ -266,7 +266,7 @@ TN93_rate_matrix <- function(pi_tcag, alpha_1, alpha_2, beta) {
 #' @noRd
 #'
 JC69_rate_matrix <- function(lambda) {
-    .Call(`_jackal_JC69_rate_matrix`, lambda)
+    .Call(`_jackalope_JC69_rate_matrix`, lambda)
 }
 
 #' Q matrix for rates for a given nucleotide using the K80 substitution model.
@@ -276,7 +276,7 @@ JC69_rate_matrix <- function(lambda) {
 #' @noRd
 #'
 K80_rate_matrix <- function(alpha, beta) {
-    .Call(`_jackal_K80_rate_matrix`, alpha, beta)
+    .Call(`_jackalope_K80_rate_matrix`, alpha, beta)
 }
 
 #' Q matrix for rates for a given nucleotide using the F81 substitution model.
@@ -286,7 +286,7 @@ K80_rate_matrix <- function(alpha, beta) {
 #' @noRd
 #'
 F81_rate_matrix <- function(pi_tcag) {
-    .Call(`_jackal_F81_rate_matrix`, pi_tcag)
+    .Call(`_jackalope_F81_rate_matrix`, pi_tcag)
 }
 
 #' Q matrix for rates for a given nucleotide using the HKY85 substitution model.
@@ -296,7 +296,7 @@ F81_rate_matrix <- function(pi_tcag) {
 #' @noRd
 #'
 HKY85_rate_matrix <- function(pi_tcag, alpha, beta) {
-    .Call(`_jackal_HKY85_rate_matrix`, pi_tcag, alpha, beta)
+    .Call(`_jackalope_HKY85_rate_matrix`, pi_tcag, alpha, beta)
 }
 
 #' Q matrix for rates for a given nucleotide using the F84 substitution model.
@@ -306,7 +306,7 @@ HKY85_rate_matrix <- function(pi_tcag, alpha, beta) {
 #' @noRd
 #'
 F84_rate_matrix <- function(pi_tcag, beta, kappa) {
-    .Call(`_jackal_F84_rate_matrix`, pi_tcag, beta, kappa)
+    .Call(`_jackalope_F84_rate_matrix`, pi_tcag, beta, kappa)
 }
 
 #' Q matrix for rates for a given nucleotide using the GTR substitution model.
@@ -314,7 +314,7 @@ F84_rate_matrix <- function(pi_tcag, beta, kappa) {
 #' @noRd
 #'
 GTR_rate_matrix <- function(pi_tcag, abcdef) {
-    .Call(`_jackal_GTR_rate_matrix`, pi_tcag, abcdef)
+    .Call(`_jackalope_GTR_rate_matrix`, pi_tcag, abcdef)
 }
 
 #' Same as above, but it only takes a matrix and indel rate, and outputs a list.
@@ -329,7 +329,7 @@ GTR_rate_matrix <- function(pi_tcag, abcdef) {
 #'
 #'
 UNREST_rate_matrix <- function(Q) {
-    .Call(`_jackal_UNREST_rate_matrix`, Q)
+    .Call(`_jackalope_UNREST_rate_matrix`, Q)
 }
 
 #' PacBio sequence for reference object.
@@ -338,7 +338,7 @@ UNREST_rate_matrix <- function(Q) {
 #' @noRd
 #'
 pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
-    invisible(.Call(`_jackal_pacbio_ref_cpp`, ref_genome_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
+    invisible(.Call(`_jackalope_pacbio_ref_cpp`, ref_genome_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
 }
 
 #' PacBio sequence for reference object.
@@ -347,7 +347,7 @@ pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, n_reads, n_core
 #' @noRd
 #'
 pacbio_var_cpp <- function(var_set_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
-    invisible(.Call(`_jackal_pacbio_var_cpp`, var_set_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
+    invisible(.Call(`_jackalope_pacbio_var_cpp`, var_set_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
 }
 
 #' Read a ms output file with newick gene trees and return the gene tree strings.
@@ -359,7 +359,7 @@ pacbio_var_cpp <- function(var_set_ptr, out_prefix, compress, n_reads, n_cores, 
 #' @noRd
 #'
 read_ms_trees_ <- function(ms_file) {
-    .Call(`_jackal_read_ms_trees_`, ms_file)
+    .Call(`_jackalope_read_ms_trees_`, ms_file)
 }
 
 #' Read a ms output file with segregating sites and return the matrices of site info.
@@ -371,7 +371,7 @@ read_ms_trees_ <- function(ms_file) {
 #' @noRd
 #'
 coal_file_sites <- function(ms_file) {
-    .Call(`_jackal_coal_file_sites`, ms_file)
+    .Call(`_jackalope_coal_file_sites`, ms_file)
 }
 
 #' Read VCF from a vcfR object.
@@ -380,7 +380,7 @@ coal_file_sites <- function(ms_file) {
 #' @noRd
 #'
 read_vcfr <- function(reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq) {
-    .Call(`_jackal_read_vcfr`, reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq)
+    .Call(`_jackalope_read_vcfr`, reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq)
 }
 
 #' Read a non-indexed fasta file to a \code{RefGenome} object.
@@ -396,7 +396,7 @@ read_vcfr <- function(reference_ptr, var_names, haps_list, seq_inds, pos, ref_se
 #' @noRd
 #'
 read_fasta_noind <- function(fasta_files, cut_names, remove_soft_mask) {
-    .Call(`_jackal_read_fasta_noind`, fasta_files, cut_names, remove_soft_mask)
+    .Call(`_jackalope_read_fasta_noind`, fasta_files, cut_names, remove_soft_mask)
 }
 
 #' Read an indexed fasta file to a \code{RefGenome} object.
@@ -415,7 +415,7 @@ read_fasta_noind <- function(fasta_files, cut_names, remove_soft_mask) {
 #'
 #'
 read_fasta_ind <- function(fasta_files, fai_files, remove_soft_mask) {
-    .Call(`_jackal_read_fasta_ind`, fasta_files, fai_files, remove_soft_mask)
+    .Call(`_jackalope_read_fasta_ind`, fasta_files, fai_files, remove_soft_mask)
 }
 
 #' Write \code{RefGenome} to an uncompressed fasta file.
@@ -430,7 +430,7 @@ read_fasta_ind <- function(fasta_files, fai_files, remove_soft_mask) {
 #'
 #'
 write_fasta_fa <- function(file_name, ref_genome_ptr, text_width) {
-    invisible(.Call(`_jackal_write_fasta_fa`, file_name, ref_genome_ptr, text_width))
+    invisible(.Call(`_jackalope_write_fasta_fa`, file_name, ref_genome_ptr, text_width))
 }
 
 #' Write \code{RefGenome} to a compressed fasta file.
@@ -442,7 +442,7 @@ write_fasta_fa <- function(file_name, ref_genome_ptr, text_width) {
 #' @noRd
 #'
 write_fasta_gz <- function(file_name, ref_genome_ptr, text_width) {
-    invisible(.Call(`_jackal_write_fasta_gz`, file_name, ref_genome_ptr, text_width))
+    invisible(.Call(`_jackalope_write_fasta_gz`, file_name, ref_genome_ptr, text_width))
 }
 
 #' Write `variants` to VCF file.
@@ -451,7 +451,7 @@ write_fasta_gz <- function(file_name, ref_genome_ptr, text_width) {
 #' @noRd
 #'
 write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, testing) {
-    invisible(.Call(`_jackal_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix, testing))
+    invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix, testing))
 }
 
 #' Template doing most of the work for writing to a VCF file.
@@ -486,7 +486,7 @@ NULL
 #' @noRd
 #'
 print_ref_genome <- function(ref_genome_ptr) {
-    invisible(.Call(`_jackal_print_ref_genome`, ref_genome_ptr))
+    invisible(.Call(`_jackalope_print_ref_genome`, ref_genome_ptr))
 }
 
 #' Function to print info on a VarSet.
@@ -496,7 +496,7 @@ print_ref_genome <- function(ref_genome_ptr) {
 #' @noRd
 #'
 print_var_set <- function(var_set_ptr) {
-    invisible(.Call(`_jackal_print_var_set`, var_set_ptr))
+    invisible(.Call(`_jackalope_print_var_set`, var_set_ptr))
 }
 
 #' Make a RefGenome object from a set of sequences.
@@ -506,7 +506,7 @@ print_var_set <- function(var_set_ptr) {
 #' @noRd
 #'
 make_ref_genome <- function(seqs) {
-    .Call(`_jackal_make_ref_genome`, seqs)
+    .Call(`_jackalope_make_ref_genome`, seqs)
 }
 
 #' Make a VarSet object from a RefGenome pointer and # variants.
@@ -517,23 +517,23 @@ make_ref_genome <- function(seqs) {
 #' @noRd
 #'
 make_var_set <- function(ref_genome_ptr, n_vars) {
-    .Call(`_jackal_make_var_set`, ref_genome_ptr, n_vars)
+    .Call(`_jackalope_make_var_set`, ref_genome_ptr, n_vars)
 }
 
 view_ref_genome_nseqs <- function(ref_genome_ptr) {
-    .Call(`_jackal_view_ref_genome_nseqs`, ref_genome_ptr)
+    .Call(`_jackalope_view_ref_genome_nseqs`, ref_genome_ptr)
 }
 
 view_var_set_nseqs <- function(var_set_ptr) {
-    .Call(`_jackal_view_var_set_nseqs`, var_set_ptr)
+    .Call(`_jackalope_view_var_set_nseqs`, var_set_ptr)
 }
 
 view_var_set_nvars <- function(var_set_ptr) {
-    .Call(`_jackal_view_var_set_nvars`, var_set_ptr)
+    .Call(`_jackalope_view_var_set_nvars`, var_set_ptr)
 }
 
 view_ref_genome_seq_sizes <- function(ref_genome_ptr) {
-    .Call(`_jackal_view_ref_genome_seq_sizes`, ref_genome_ptr)
+    .Call(`_jackalope_view_ref_genome_seq_sizes`, ref_genome_ptr)
 }
 
 #' See all sequence sizes in a VarGenome object within a VarSet.
@@ -541,11 +541,11 @@ view_ref_genome_seq_sizes <- function(ref_genome_ptr) {
 #' @noRd
 #'
 view_var_genome_seq_sizes <- function(var_set_ptr, var_ind) {
-    .Call(`_jackal_view_var_genome_seq_sizes`, var_set_ptr, var_ind)
+    .Call(`_jackalope_view_var_genome_seq_sizes`, var_set_ptr, var_ind)
 }
 
 view_ref_genome_seq <- function(ref_genome_ptr, seq_ind) {
-    .Call(`_jackal_view_ref_genome_seq`, ref_genome_ptr, seq_ind)
+    .Call(`_jackalope_view_ref_genome_seq`, ref_genome_ptr, seq_ind)
 }
 
 #' Function to piece together the strings for one sequence in a VarGenome.
@@ -553,11 +553,11 @@ view_ref_genome_seq <- function(ref_genome_ptr, seq_ind) {
 #' @noRd
 #'
 view_var_genome_seq <- function(var_set_ptr, var_ind, seq_ind) {
-    .Call(`_jackal_view_var_genome_seq`, var_set_ptr, var_ind, seq_ind)
+    .Call(`_jackalope_view_var_genome_seq`, var_set_ptr, var_ind, seq_ind)
 }
 
 view_ref_genome <- function(ref_genome_ptr) {
-    .Call(`_jackal_view_ref_genome`, ref_genome_ptr)
+    .Call(`_jackalope_view_ref_genome`, ref_genome_ptr)
 }
 
 #' Function to piece together the strings for all sequences in a VarGenome.
@@ -565,11 +565,11 @@ view_ref_genome <- function(ref_genome_ptr) {
 #' @noRd
 #'
 view_var_genome <- function(var_set_ptr, var_ind) {
-    .Call(`_jackal_view_var_genome`, var_set_ptr, var_ind)
+    .Call(`_jackalope_view_var_genome`, var_set_ptr, var_ind)
 }
 
 view_ref_genome_seq_names <- function(ref_genome_ptr) {
-    .Call(`_jackal_view_ref_genome_seq_names`, ref_genome_ptr)
+    .Call(`_jackalope_view_ref_genome_seq_names`, ref_genome_ptr)
 }
 
 #' See all variant-genome names in a VarSet object.
@@ -577,27 +577,27 @@ view_ref_genome_seq_names <- function(ref_genome_ptr) {
 #' @noRd
 #'
 view_var_set_var_names <- function(var_set_ptr) {
-    .Call(`_jackal_view_var_set_var_names`, var_set_ptr)
+    .Call(`_jackalope_view_var_set_var_names`, var_set_ptr)
 }
 
 set_ref_genome_seq_names <- function(ref_genome_ptr, seq_inds, names) {
-    invisible(.Call(`_jackal_set_ref_genome_seq_names`, ref_genome_ptr, seq_inds, names))
+    invisible(.Call(`_jackalope_set_ref_genome_seq_names`, ref_genome_ptr, seq_inds, names))
 }
 
 clean_ref_genome_seq_names <- function(ref_genome_ptr) {
-    invisible(.Call(`_jackal_clean_ref_genome_seq_names`, ref_genome_ptr))
+    invisible(.Call(`_jackalope_clean_ref_genome_seq_names`, ref_genome_ptr))
 }
 
 set_var_set_var_names <- function(var_set_ptr, var_inds, names) {
-    invisible(.Call(`_jackal_set_var_set_var_names`, var_set_ptr, var_inds, names))
+    invisible(.Call(`_jackalope_set_var_set_var_names`, var_set_ptr, var_inds, names))
 }
 
 remove_ref_genome_seqs <- function(ref_genome_ptr, seq_inds) {
-    invisible(.Call(`_jackal_remove_ref_genome_seqs`, ref_genome_ptr, seq_inds))
+    invisible(.Call(`_jackalope_remove_ref_genome_seqs`, ref_genome_ptr, seq_inds))
 }
 
 remove_var_set_vars <- function(var_set_ptr, var_inds) {
-    invisible(.Call(`_jackal_remove_var_set_vars`, var_set_ptr, var_inds))
+    invisible(.Call(`_jackalope_remove_var_set_vars`, var_set_ptr, var_inds))
 }
 
 #' Turns a VarGenome's mutations into a list of data frames.
@@ -608,7 +608,7 @@ remove_var_set_vars <- function(var_set_ptr, var_inds) {
 #' @noRd
 #'
 view_mutations <- function(var_set_ptr, var_ind) {
-    .Call(`_jackal_view_mutations`, var_set_ptr, var_ind)
+    .Call(`_jackalope_view_mutations`, var_set_ptr, var_ind)
 }
 
 #' Turns a VarGenome's mutations into a list of data frames.
@@ -619,7 +619,7 @@ view_mutations <- function(var_set_ptr, var_ind) {
 #' @noRd
 #'
 examine_mutations <- function(var_set_ptr, var_ind, seq_ind) {
-    .Call(`_jackal_examine_mutations`, var_set_ptr, var_ind, seq_ind)
+    .Call(`_jackalope_examine_mutations`, var_set_ptr, var_ind, seq_ind)
 }
 
 #' Faster version of table function to count the number of mutations in Gamma regions.
@@ -630,7 +630,7 @@ examine_mutations <- function(var_set_ptr, var_ind, seq_ind) {
 #' @noRd
 #'
 table_gammas <- function(gamma_ends, positions) {
-    .Call(`_jackal_table_gammas`, gamma_ends, positions)
+    .Call(`_jackalope_table_gammas`, gamma_ends, positions)
 }
 
 #' @describeIn add_mutations Add a substitution.
@@ -641,7 +641,7 @@ table_gammas <- function(gamma_ends, positions) {
 #' @noRd
 #'
 add_substitution <- function(var_set_ptr, var_ind, seq_ind, nucleo_, new_pos_) {
-    invisible(.Call(`_jackal_add_substitution`, var_set_ptr, var_ind, seq_ind, nucleo_, new_pos_))
+    invisible(.Call(`_jackalope_add_substitution`, var_set_ptr, var_ind, seq_ind, nucleo_, new_pos_))
 }
 
 #' @describeIn add_mutations Add an insertion.
@@ -653,7 +653,7 @@ add_substitution <- function(var_set_ptr, var_ind, seq_ind, nucleo_, new_pos_) {
 #' @noRd
 #'
 add_insertion <- function(var_set_ptr, var_ind, seq_ind, nucleos_, new_pos_) {
-    invisible(.Call(`_jackal_add_insertion`, var_set_ptr, var_ind, seq_ind, nucleos_, new_pos_))
+    invisible(.Call(`_jackalope_add_insertion`, var_set_ptr, var_ind, seq_ind, nucleos_, new_pos_))
 }
 
 #' @describeIn add_mutations Add a deletion.
@@ -665,7 +665,7 @@ add_insertion <- function(var_set_ptr, var_ind, seq_ind, nucleos_, new_pos_) {
 #' @noRd
 #'
 add_deletion <- function(var_set_ptr, var_ind, seq_ind, size_, new_pos_) {
-    invisible(.Call(`_jackal_add_deletion`, var_set_ptr, var_ind, seq_ind, size_, new_pos_))
+    invisible(.Call(`_jackalope_add_deletion`, var_set_ptr, var_ind, seq_ind, size_, new_pos_))
 }
 
 #' Get a rate for given start and end points of a VarSequence.
@@ -673,10 +673,10 @@ add_deletion <- function(var_set_ptr, var_ind, seq_ind, size_, new_pos_) {
 #' @noRd
 #'
 test_rate <- function(start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_) {
-    .Call(`_jackal_test_rate`, start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_)
+    .Call(`_jackalope_test_rate`, start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_)
 }
 
 using_openmp <- function() {
-    .Call(`_jackal_using_openmp`)
+    .Call(`_jackalope_using_openmp`)
 }
 

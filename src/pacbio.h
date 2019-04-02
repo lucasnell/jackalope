@@ -17,7 +17,7 @@
 #include <omp.h>  // omp
 #endif
 
-#include "jackal_types.h"  // uint32
+#include "jackalope_types.h"  // uint32
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // runif_01

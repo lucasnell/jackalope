@@ -14,7 +14,7 @@
 // #endif
 
 
-#include "jackal_types.h"  // integer types
+#include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 
@@ -491,7 +491,7 @@ public:
         chunk += "##fileDate=";
         chunk += vcf_date();
         chunk += '\n';
-        chunk += "##source=jackal\n";
+        chunk += "##source=jackalope\n";
         for (uint32 i = 0; i < var_set->reference->size(); i++) {
             const RefSequence& rs(var_set->reference->operator[](i));
             chunk += "##contig=<ID=" + rs.name + ',';

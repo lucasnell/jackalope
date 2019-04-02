@@ -19,7 +19,7 @@
 #include <string>               // string class
 #include <random>               // gamma_distribution
 
-#include "jackal_types.h"       // integer types
+#include "jackalope_types.h"       // integer types
 #include "pcg.h"                // pcg seeding
 #include "util.h"                // str_stop
 

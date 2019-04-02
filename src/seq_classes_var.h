@@ -17,7 +17,7 @@
 #include <string>  // string class
 #include <deque>  // deque class
 
-#include "jackal_types.h"  // integer types
+#include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "util.h"  // clear_memory
 

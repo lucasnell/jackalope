@@ -1,17 +1,17 @@
-Package: jackal
+Package: jackalope
 Type: Package
 Title: An efficient, versatile molecular evolution and sequencing simulator
 Version: 0.1.0
 Authors@R: person(c("Lucas", "A."), "Nell", email = "lucas@lucasnell.com", 
                     role = c("cph", "aut", "cre"),
                     comment = c(ORCID = "0000-0003-3209-0517"))
-Description: `jackal` efficiently (i) reads and simulates reference genomes;
+Description: `jackalope` efficiently (i) reads and simulates reference genomes;
     (ii) generates variants using summary statistics, phylogenies, Variant
     Call Format (VCF) files, and coalescent simulations—the latter of which can include
     selection, recombination, and demographic fluctuations;
     (iii) simulates sequencing error, mapping qualities, and optical/PCR duplicates; and
     (iv) writes outputs to standard file formats.
-    `jackal` can simulate single, paired-end, or mate-pair Illumina reads, as well as
+    `jackalope` can simulate single, paired-end, or mate-pair Illumina reads, as well as
     reads from Pacific BioSciences.
 License: GPL-3
 Encoding: UTF-8
@@ -35,5 +35,5 @@ Suggests:
     vcfR,
     testthat
 VignetteBuilder: knitr
-URL: https://github.com/lucasnell/jackal
-BugReports: https://github.com/lucasnell/jackal/issues
+URL: https://github.com/lucasnell/jackalope
+BugReports: https://github.com/lucasnell/jackalope/issues

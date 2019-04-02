@@ -1,7 +1,7 @@
 
 
 
-# library(jackal)
+# library(jackalope)
 # library(testthat)
 
 context("Testing writing variant information to a VCF file")
@@ -10,8 +10,8 @@ options(stringsAsFactors = FALSE)
 
 
 seqs <- rep("TCAGTCAGTC", 2)
-ref <- ref_genome$new(jackal:::make_ref_genome(seqs))
-vars <- variants$new(jackal:::make_var_set(ref$genome, 4), ref$genome)
+ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
+vars <- variants$new(jackalope:::make_var_set(ref$genome, 4), ref$genome)
 
 # First sequence combines deletions and substitutions
 {
@@ -94,7 +94,7 @@ vcf_info <-
 # ===============================================================
 
 vcf <- capture.output({
-    jackal:::write_vcf_cpp(out_prefix = "",
+    jackalope:::write_vcf_cpp(out_prefix = "",
                            compress = FALSE,
                            var_set_ptr = vars$genomes,
                            sample_matrix = cbind(1:vars$n_vars()),
@@ -107,7 +107,7 @@ test_that("VCF file header is accurate for haploid samples", {
     header <-
         c("##fileformat=VCFv4.3",
           sprintf("##fileDate=%s", format(Sys.Date(), "%Y%m%d")),
-          "##source=jackal",
+          "##source=jackalope",
           sprintf("##contig=<ID=%s,length=%i>", ref$names()[1], ref$sizes()[1]),
           sprintf("##contig=<ID=%s,length=%i>", ref$names()[2], ref$sizes()[2]),
           "##phasing=full",
@@ -166,7 +166,7 @@ test_that("VCF file data lines are accurate for haploid samples", {
 sample_mat <- t(combn(vars$n_vars(), 2))
 
 vcf <- capture.output({
-    jackal:::write_vcf_cpp(out_prefix = "",
+    jackalope:::write_vcf_cpp(out_prefix = "",
                            compress = FALSE,
                            var_set_ptr = vars$genomes,
                            sample_matrix = sample_mat,
@@ -182,7 +182,7 @@ test_that("VCF file header is accurate for diploid samples", {
     header <-
         c("##fileformat=VCFv4.3",
           sprintf("##fileDate=%s", format(Sys.Date(), "%Y%m%d")),
-          "##source=jackal",
+          "##source=jackalope",
           sprintf("##contig=<ID=%s,length=%i>", ref$names()[1], ref$sizes()[1]),
           sprintf("##contig=<ID=%s,length=%i>", ref$names()[2], ref$sizes()[2]),
           "##phasing=full",

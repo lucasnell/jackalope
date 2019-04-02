@@ -78,7 +78,7 @@ the \code{ms}-style coalescent output with gene trees.
 The top two options are designed after the \code{trees} fields in the output from
 the \code{scrm} and \code{coala} packages.
 (These packages are not required to be installed when installing
-\code{jackal}.)
+\code{jackalope}.)
 To get gene trees, make sure to add \code{+ sumstat_trees()}
 to the \code{coalmodel} for \code{coala}, or
 make sure that \code{"-T"} is present in \code{args} for \code{scrm}.
@@ -104,7 +104,7 @@ for each variant.
 For what the \code{seg_sites} field should look like in a list, see output from the
 \code{scrm} or \code{coala} package.
 (These packages are not required to be installed when installing
-\code{jackal}.)
+\code{jackalope}.)
 }
 \item{\code{method = "newick"}}{One or more string(s), each of which specifies
 a name of a NEWICK file containing a phylogeny.

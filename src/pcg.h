@@ -8,7 +8,7 @@
 #include "pcg/pcg_extras.hpp"  // pcg 128-bit integer type
 #include <pcg/pcg_random.hpp> // pcg prng
 
-#include "jackal_types.h" // integer types
+#include "jackalope_types.h" // integer types
 
 
 using namespace Rcpp;

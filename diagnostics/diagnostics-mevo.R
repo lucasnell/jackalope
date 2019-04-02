@@ -1,6 +1,6 @@
 
 
-library(jackal)
+library(jackalope)
 library(tidyverse)
 library(scrm)
 library(grid)
@@ -45,7 +45,7 @@ with(pars, {
 set.seed(1087437799)
 
 # Make ref_genome object from a pointer to a RefGenome object based on `seqs`
-ref <- with(pars, ref_genome$new(jackal:::make_ref_genome(seqs)))
+ref <- with(pars, ref_genome$new(jackalope:::make_ref_genome(seqs)))
 
 
 
@@ -100,7 +100,7 @@ var_set <- create_variants(ref, method = "coal_sites", method_info = coal_obj,
 
 insertions <- map(0:(pars$n_seqs-1),
              function(s) {
-                 Z <- jackal:::examine_mutations(var_set_ptr = var_set$genomes,
+                 Z <- jackalope:::examine_mutations(var_set_ptr = var_set$genomes,
                                                  var_ind = 0, seq_ind = s) %>%
                      .[["ins"]]
                  # Anything over `pars$M[1]` is >1 mutation
@@ -148,7 +148,7 @@ var_set <- create_variants(ref, method = "coal_sites", method_info = coal_obj,
 
 deletions <- map(0:(pars$n_seqs-1),
                   function(s) {
-                      Z <- jackal:::examine_mutations(var_set_ptr = var_set$genomes,
+                      Z <- jackalope:::examine_mutations(var_set_ptr = var_set$genomes,
                                                       var_ind = 0, seq_ind = s) %>%
                           .[["del"]]
                       # Anything over `pars$M[1]` is >1 mutation
@@ -208,7 +208,7 @@ var_set <- create_variants(ref, method = "phylo", method_info = tree,
 
 substitutions <- map(0:(pars$n_seqs-1),
                      function(s) {
-                         Z <- jackal:::examine_mutations(var_set_ptr = var_set$genomes,
+                         Z <- jackalope:::examine_mutations(var_set_ptr = var_set$genomes,
                                                      var_ind = 0, seq_ind = s) %>%
                          .[["sub"]]
                      return(Z)
@@ -247,7 +247,7 @@ sub_df %>%
 # =================================================================*
 # =================================================================*
 
-ref <- with(pars, ref_genome$new(jackal:::make_ref_genome(seqs[1:4])))
+ref <- with(pars, ref_genome$new(jackalope:::make_ref_genome(seqs[1:4])))
 # Only substitutions plus gammas
 mevo_ <- make_mevo(ref,
                    sub = list(model = "TN93", alpha_1 = pars$alpha_1,
@@ -261,7 +261,7 @@ var_set <- create_variants(ref, method = "phylo", method_info = tree,
 
 pos_df <- map_dfr(0:(ref$n_seqs()-1),
     function(s) {
-        Z <- jackal:::examine_mutations(var_set_ptr = var_set$genomes,
+        Z <- jackalope:::examine_mutations(var_set_ptr = var_set$genomes,
                                         var_ind = 0, seq_ind = s) %>%
             .[["pos"]]
         return(tibble(seq = as.integer(s), pos = as.integer(Z)))
@@ -276,7 +276,7 @@ gamm_df <- map_dfr(0:(ref$n_seqs()-1),
         df_ <- tibble(seq = s,
                       gamma = gamma_mat[,2],
                       pos = gamma_mat[,1],
-                      obs = jackal:::table_gammas(gamma_mat[,1], Z))
+                      obs = jackalope:::table_gammas(gamma_mat[,1], Z))
         df_$pred <- (df_$gamma / sum(df_$gamma)) * sum(df_$obs)
         return(df_)
     })
@@ -312,7 +312,7 @@ set.seed(89415648)
 tree <- ape::rcoal(pars$n_vars)
 tree$edge.length <- tree$edge.length * 0.1
 
-ref <- with(pars, ref_genome$new(jackal:::make_ref_genome(seqs[1:4])))
+ref <- with(pars, ref_genome$new(jackalope:::make_ref_genome(seqs[1:4])))
 # Only substitutions again
 mevo_ <- make_mevo(ref,
                    sub = list(model = "TN93", alpha_1 = pars$alpha_1,
@@ -325,7 +325,7 @@ var_set <- create_variants(ref, method = "phylo", method_info = tree,
 
 mutations <- lapply(0:(pars$n_vars-1),
                     function(v) {
-                        Z <- jackal:::view_mutations(var_set_ = var_set$genomes,
+                        Z <- jackalope:::view_mutations(var_set_ = var_set$genomes,
                                                      var_ind = v)
                         Zseq <- Z[,"seq"]
                         Z <- Z[, c("old_pos", "size_mod", "nucleos")]
@@ -410,7 +410,7 @@ phy_df %>%
 tree <- ape::rcoal(2)
 tree$edge.length <- tree$edge.length * 0.1
 
-ref <- with(pars, ref_genome$new(jackal:::make_ref_genome(seqs[1:4])))
+ref <- with(pars, ref_genome$new(jackalope:::make_ref_genome(seqs[1:4])))
 
 # Only substitutions
 mevo_ <- make_mevo(ref,
@@ -423,7 +423,7 @@ var_set <- create_variants(ref, method = "phylo", method_info = tree,
 
 # Full sequences:
 var_seqs <- lapply(0:(var_set$n_vars()-1),
-                   function(v) jackal:::view_var_genome(var_set_ = var_set$genomes,
+                   function(v) jackalope:::view_var_genome(var_set_ = var_set$genomes,
                                                         var_ind = v))
 
 # R function to get expected rate to compare against C++ version:
@@ -445,10 +445,10 @@ compare_rates <- function(var_ind, seq_ind, rates, incr = 1e2, verbose = FALSE) 
     start <- sample.int(as.integer(nchars / 2), 1)
     end <- sample.int(nchars - start, 1) + start
     if (mevo_$chunk_size <= 0) stop("Must only be used for chunked mevo objects")
-    rate_cpp <- jackal:::test_rate(start = start-1, end = end-1,
+    rate_cpp <- jackalope:::test_rate(start = start-1, end = end-1,
                                    var_ind = var_ind-1, seq_ind = seq_ind-1,
                                    var_set_ = var_set$genomes,
-                                   sampler_ = jackal:::mevo_obj_to_ptr(mevo_),
+                                   sampler_ = jackalope:::mevo_obj_to_ptr(mevo_),
                                    gamma_mat_ = gamma_mat_new)
     rate_r <- get_seq_rate(var_seqs[[var_ind]][seq_ind], rates, start, end, gamma_mat_new)
     if (verbose & !isTRUE(all.equal(rate_cpp, rate_r))) {

@@ -9,7 +9,7 @@
 #include <random>  // gamma_distribution
 
 
-#include "jackal_types.h" // integer types
+#include "jackalope_types.h" // integer types
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling

@@ -17,7 +17,7 @@
 #include <string>
 #include <pcg/pcg_random.hpp> // pcg prng
 
-#include "jackal_types.h"  // integer types
+#include "jackalope_types.h"  // integer types
 #include "pcg.h"  // runif_* methods
 
 

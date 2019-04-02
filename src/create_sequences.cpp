@@ -18,7 +18,7 @@
 #include <omp.h>  // omp
 #endif
 
-#include "jackal_types.h"  // integer types
+#include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "alias_sampler.h" // alias sampling
 #include "pcg.h" // pcg::max, mc_seeds, seeded_pcg

@@ -18,7 +18,7 @@
 
 
 #include "seq_classes_ref.h"  // Ref* classes
-#include "jackal_types.h"  // integer types
+#include "jackalope_types.h"  // integer types
 #include "alias_sampler.h"  // alias string sampler
 #include "util.h"  // clear_memory
 

@@ -17,7 +17,7 @@
 
 context("Testing creating variants from coalescent simulations")
 
-# library(jackal)
+# library(jackalope)
 # library(testthat)
 
 
@@ -175,7 +175,7 @@ test_that("variant creation works with ms-style file output", {
         expect_error(
             create_variants(list(1, 2), method = "coal_trees",
                             test_path("ms_files/ms_out.txt"), mevo_obj),
-            regexp = paste("For the `create_variants` function in jackal,",
+            regexp = paste("For the `create_variants` function in jackalope,",
                            "argument `reference` must be a \"ref_genome\" object."))
     })
 
@@ -190,7 +190,7 @@ test_that("variant creation works with ms-style file output", {
         msf <- msf[grepl("^0|^1", msf)]
         msf <- do.call(c, strsplit(msf, ""))
         n_muts_by_var <-
-            sapply(0:4, function(i) nrow(jackal:::view_mutations(vars$genomes, i)))
+            sapply(0:4, function(i) nrow(jackalope:::view_mutations(vars$genomes, i)))
         expect_equal(sum(as.integer(msf)), sum(n_muts_by_var))
     })
 

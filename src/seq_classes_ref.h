@@ -17,7 +17,7 @@
 #include <string>  // string class
 #include <deque>  // deque class
 
-#include "jackal_types.h"  // integer types
+#include "jackalope_types.h"  // integer types
 #include "util.h"  // clear_memory, get_width
 
 using namespace Rcpp;

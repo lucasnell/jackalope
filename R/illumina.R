@@ -110,7 +110,7 @@ find_profile_file <- function(seq_sys, read_length, read) {
     }
 
     profile_fn <- paste0(profile_df$file_name[criteria3][1], ".txt.gz")
-    profile_fn <- system.file("art_profiles", profile_fn, package = "jackal",
+    profile_fn <- system.file("art_profiles", profile_fn, package = "jackalope",
                               mustWork = TRUE)
 
     return(profile_fn)

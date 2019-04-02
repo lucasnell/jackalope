@@ -56,7 +56,7 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'         The top two options are designed after the `trees` fields in the output from
 #'         the `scrm` and `coala` packages.
 #'         (These packages are not required to be installed when installing
-#'         `jackal`.)
+#'         `jackalope`.)
 #'         To get gene trees, make sure to add `+ sumstat_trees()`
 #'         to the `coalmodel` for `coala`, or
 #'         make sure that `"-T"` is present in `args` for `scrm`.
@@ -82,7 +82,7 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'         For what the `seg_sites` field should look like in a list, see output from the
 #'         `scrm` or `coala` package.
 #'         (These packages are not required to be installed when installing
-#'         `jackal`.)
+#'         `jackalope`.)
 #'     }
 #'     \item{`method = "newick"`}{One or more string(s), each of which specifies
 #'         a name of a NEWICK file containing a phylogeny.

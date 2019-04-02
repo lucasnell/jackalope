@@ -1,7 +1,7 @@
 
 context("Testing R class methods and info")
 
-# library(jackal)
+# library(jackalope)
 # library(testthat)
 
 
@@ -12,7 +12,7 @@ len <- 100L
 len_sd <- 10.0
 
 # Extract vector of sequence strings:
-seqs <- jackal:::rando_seqs(n_seqs, len, len_sd, pi_tcag = c(8, 4, 2, 1))
+seqs <- jackalope:::rando_seqs(n_seqs, len, len_sd, pi_tcag = c(8, 4, 2, 1))
 
 
 
@@ -31,7 +31,7 @@ test_that("Sequences from `create_genome` aren't very different from expectation
 
 
 # Reference genome
-ref <- ref_genome$new(jackal:::make_ref_genome(seqs))
+ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
 test_that("ref_genome class starts with the correct fields", {
     expect_is(ref$genome, "externalptr")
 })
@@ -58,7 +58,7 @@ test_that("ref_genome class methods produce correct output", {
 
     nchars <- nchar(seqs)
     # Making sure of no removal when it shouldn't:
-    ref <<- ref_genome$new(jackal:::make_ref_genome(seqs))
+    ref <<- ref_genome$new(jackalope:::make_ref_genome(seqs))
     ref$filter_seqs(min(nchar(seqs)) - 1, "size")
     expect_identical(ref$n_seqs(), n_seqs, label = "after lack of size filtering")
     ref$filter_seqs(1 - 0.99 * min(nchars) / sum(nchars), "prop")
@@ -67,12 +67,12 @@ test_that("ref_genome class methods produce correct output", {
     ref$filter_seqs(min(nchars) + 1, "size")
     expect_lt(ref$n_seqs(), length(seqs))
 
-    ref <- ref_genome$new(jackal:::make_ref_genome(seqs))
+    ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
     ref$filter_seqs(0.99 * sum(nchars[nchars > min(nchars)]) / sum(nchars), "prop")
     expect_lt(ref$n_seqs(), length(seqs))
 })
 # Restart object:
-ref <- ref_genome$new(jackal:::make_ref_genome(seqs))
+ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
 
 # Molecular evolution info:
 mev <- make_mevo(ref, list(model = "JC69", lambda = 0.05))
@@ -102,7 +102,7 @@ test_that("variants class methods", {
     # Variant sequences:
     var_seqs <- lapply(1:n_vars,
                        function(v) {
-                           jackal:::view_var_genome(vars$genomes, v-1)
+                           jackalope:::view_var_genome(vars$genomes, v-1)
                        })
     vs0 <- lapply(1:n_vars, function(v) sapply(1:length(seqs),
                                                function(s) vars$sequence(v, s)))
@@ -119,7 +119,7 @@ test_that("variants class methods", {
 
 
 # Make empty var_set to compare mutations
-vars <- variants$new(jackal:::make_var_set(ref$genome, n_vars), ref$genome)
+vars <- variants$new(jackalope:::make_var_set(ref$genome, n_vars), ref$genome)
 vars_R <- replicate(n_vars, seqs, simplify = FALSE)
 
 
@@ -132,14 +132,14 @@ for (v in 1:n_vars) {
             pos = as.integer(runif(1) * max_size) + 1
             rnd = runif(1);
             if (rnd < 0.5) {
-                str = jackal:::rando_seqs(1, 1)
+                str = jackalope:::rando_seqs(1, 1)
                 if (nchar(str) != 1) stop("Improper size in sub")
                 vars$add_sub(v, s, pos, str)
                 substr(ts[s], pos, pos) <- str
             } else if (rnd < 0.75) {
                 size = as.integer(rexp(1, 2.0) + 1.0)
                 if (size > 10) size = 10
-                str = jackal:::rando_seqs(1, size)
+                str = jackalope:::rando_seqs(1, size)
                 if (nchar(str) != size) stop("Improper size in insertion")
                 vars$add_ins(v, s, pos, str)
                 ts[s] <- paste0(substr(ts[s], 1, pos), str,
@@ -175,7 +175,7 @@ test_that("Mutations produced are accurate", {
 
 # Testing that replace_Ns works
 seqs <- c("CCAANNNGG", "NNTTCCAAGG", "AACCTTGGGGGNNNNNN")
-ref <- ref_genome$new(jackal:::make_ref_genome(seqs))
+ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
 ref$replace_Ns(c(1,0,0,0))
 
 test_that("Replacing Ns works as predicted", {
