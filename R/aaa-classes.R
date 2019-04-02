@@ -114,11 +114,11 @@ ref_genome <- R6::R6Class(
         # Change sequence names
         set_names = function(new_names) {
             private$check_ptr()
-            if (!is_type(names, "character", self$n_seqs())) {
+            if (!is_type(new_names, "character", self$n_seqs())) {
                 stop("names arg must be the same length as # sequences", call. = FALSE)
             }
-            seq_inds <- 0:(length(names) - 1)
-            set_ref_genome_seq_names(self$genome, seq_inds, names)
+            seq_inds <- 0:(length(new_names) - 1)
+            set_ref_genome_seq_names(self$genome, seq_inds, new_names)
             invisible(self)
         },
 
@@ -523,11 +523,11 @@ variants <- R6::R6Class(
         # Change variant names
         set_names = function(new_names) {
             private$check_ptr()
-            if (!is_type(names, "character", self$n_vars())) {
+            if (!is_type(new_names, "character", self$n_vars())) {
                 stop("names arg must be the same length as # variants", call. = FALSE)
             }
-            var_inds <- 0:(length(names) - 1)
-            set_var_set_var_names(self$genomes, var_inds, names)
+            var_inds <- 0:(length(new_names) - 1)
+            set_var_set_var_names(self$genomes, var_inds, new_names)
             invisible(self)
         },
 

@@ -258,6 +258,7 @@ site_variability <- function(site_var, reference, gamma_bed) {
     } else {
         # This results in no variability among sites:
         gamma_mats <- make_gamma_mats(seq_sizes, gamma_size_ = 0, shape = 1)
+        dim(gamma_mats) <- NULL # so it's just a list now
     }
     return(gamma_mats)
 }

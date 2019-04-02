@@ -44,7 +44,7 @@ test_that("ref_genome class methods produce correct output", {
 
     expect_identical(ref$names(), paste0("seq", 1:length(seqs) - 1))
 
-    for (i in 1:n_seqs) expect_identical(ref$extract_seq(i), seqs[i])
+    for (i in 1:n_seqs) expect_identical(ref$sequence(i), seqs[i])
 
     nn <- paste0("__SEQ_",1:length(seqs))
     ref$set_names(nn)
@@ -54,7 +54,7 @@ test_that("ref_genome class methods produce correct output", {
     expect_identical(ref$names(), nn[-3])
 
     ref$merge_seqs()
-    expect_identical(nchar(ref$extract_seq(1)), nchar(paste(seqs[-3], collapse = "")))
+    expect_identical(nchar(ref$sequence(1)), nchar(paste(seqs[-3], collapse = "")))
 
     nchars <- nchar(seqs)
     # Making sure of no removal when it shouldn't:
@@ -105,7 +105,7 @@ test_that("variants class methods", {
                            jackal:::view_var_genome(vars$genomes, v-1)
                        })
     vs0 <- lapply(1:n_vars, function(v) sapply(1:length(seqs),
-                                               function(s) vars$extract_seq(v, s)))
+                                               function(s) vars$sequence(v, s)))
     expect_identical(var_seqs, vs0)
 
     nv <- paste0("__VARS_", 1:n_vars)
@@ -165,7 +165,7 @@ for (v in 1:n_vars) {
 # Converting to list like vars_R:
 vars_cpp <- lapply(1:n_vars,
                    function(v) sapply(1:n_seqs,
-                                      function(s) vars$extract_seq(v, s)))
+                                      function(s) vars$sequence(v, s)))
 
 test_that("Mutations produced are accurate", {
     expect_identical(vars_R, vars_cpp)
@@ -179,8 +179,8 @@ ref <- ref_genome$new(jackal:::make_ref_genome(seqs))
 ref$replace_Ns(c(1,0,0,0))
 
 test_that("Replacing Ns works as predicted", {
-    expect_identical(ref$extract_seq(1), "CCAATTTGG")
-    expect_identical(ref$extract_seq(2), "TTTTCCAAGG")
-    expect_identical(ref$extract_seq(3), "AACCTTGGGGGTTTTTT")
+    expect_identical(ref$sequence(1), "CCAATTTGG")
+    expect_identical(ref$sequence(2), "TTTTCCAAGG")
+    expect_identical(ref$sequence(3), "AACCTTGGGGGTTTTTT")
 })
 
