@@ -6,10 +6,12 @@
 #'
 #' Accepts uncompressed and gzipped fasta files.
 #'
-#' @param fasta_file File name of the fasta file.
-#' @param fai_file File name of the fasta index file.
+#' @param fasta_files File name(s) of the fasta file(s).
+#' @param fai_files File name(s) of the fasta index file(s).
 #'     Providing this argument speeds up the reading process significantly.
-#'     Defaults to \code{NULL}, which indicates the fasta file is not indexed.
+#'     If this argument is provided, it must be the same length as the `fasta_files`
+#'     argument.
+#'     Defaults to \code{NULL}, which indicates the fasta file(s) is/are not indexed.
 #' @param cut_names Boolean for whether to cut sequence names at the first space.
 #'     This argument is ignored if \code{fai_file} is not \code{NULL}.
 #'     Defaults to \code{FALSE}.
@@ -19,15 +21,16 @@
 #' @export
 #'
 #'
-read_fasta <- function(fasta_file, fai_file = NULL,
+read_fasta <- function(fasta_files, fai_files = NULL,
                        cut_names = FALSE) {
 
 
-    if (!is_type(fasta_file, "character", 1)) {
-        err_msg("read_fasta", "fasta_file", "a single string")
+    if (!is_type(fasta_files, "character")) {
+        err_msg("read_fasta", "fasta_files", "a character vector")
     }
-    if (!is.null(fai_file) && !is_type(fai_file, "character", 1)) {
-        err_msg("read_fasta", "fai_file", "NULL or a single string")
+    if (!is.null(fai_files) && !is_type(fai_files, "character", length(fasta_files))) {
+        err_msg("read_fasta", "fai_files", "NULL or a character vector of the same",
+                "length as the `fasta_files` argument")
     }
     if (!is_type(cut_names, "logical", 1)) {
         err_msg("read_fasta", "cut_names", "a single logical")
@@ -36,11 +39,10 @@ read_fasta <- function(fasta_file, fai_file = NULL,
     # For now I'm forcing the users to remove soft-masking
     rm_soft_mask <- TRUE
 
-    if (is.null(fai_file)) {
-        ptr <- read_fasta_noind(fasta_file, cut_names, rm_soft_mask)
+    if (is.null(fai_files)) {
+        ptr <- read_fasta_noind(fasta_files, cut_names, rm_soft_mask)
     } else {
-        fai_file <- path.expand(fai_file)
-        ptr <- read_fasta_ind(fasta_file, fai_file, rm_soft_mask)
+        ptr <- read_fasta_ind(fasta_files, fai_files, rm_soft_mask)
     }
 
     reference <- ref_genome$new(ptr)

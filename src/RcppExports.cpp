@@ -464,28 +464,28 @@ BEGIN_RCPP
 END_RCPP
 }
 // read_fasta_noind
-SEXP read_fasta_noind(const std::string& fasta_file, const bool& cut_names, const bool& remove_soft_mask);
-RcppExport SEXP _jackal_read_fasta_noind(SEXP fasta_fileSEXP, SEXP cut_namesSEXP, SEXP remove_soft_maskSEXP) {
+SEXP read_fasta_noind(const std::vector<std::string>& fasta_files, const bool& cut_names, const bool& remove_soft_mask);
+RcppExport SEXP _jackal_read_fasta_noind(SEXP fasta_filesSEXP, SEXP cut_namesSEXP, SEXP remove_soft_maskSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type fasta_file(fasta_fileSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type fasta_files(fasta_filesSEXP);
     Rcpp::traits::input_parameter< const bool& >::type cut_names(cut_namesSEXP);
     Rcpp::traits::input_parameter< const bool& >::type remove_soft_mask(remove_soft_maskSEXP);
-    rcpp_result_gen = Rcpp::wrap(read_fasta_noind(fasta_file, cut_names, remove_soft_mask));
+    rcpp_result_gen = Rcpp::wrap(read_fasta_noind(fasta_files, cut_names, remove_soft_mask));
     return rcpp_result_gen;
 END_RCPP
 }
 // read_fasta_ind
-SEXP read_fasta_ind(const std::string& fasta_file, const std::string& fai_file, const bool& remove_soft_mask);
-RcppExport SEXP _jackal_read_fasta_ind(SEXP fasta_fileSEXP, SEXP fai_fileSEXP, SEXP remove_soft_maskSEXP) {
+SEXP read_fasta_ind(const std::vector<std::string>& fasta_files, const std::vector<std::string>& fai_files, const bool& remove_soft_mask);
+RcppExport SEXP _jackal_read_fasta_ind(SEXP fasta_filesSEXP, SEXP fai_filesSEXP, SEXP remove_soft_maskSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type fasta_file(fasta_fileSEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type fai_file(fai_fileSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type fasta_files(fasta_filesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type fai_files(fai_filesSEXP);
     Rcpp::traits::input_parameter< const bool& >::type remove_soft_mask(remove_soft_maskSEXP);
-    rcpp_result_gen = Rcpp::wrap(read_fasta_ind(fasta_file, fai_file, remove_soft_mask));
+    rcpp_result_gen = Rcpp::wrap(read_fasta_ind(fasta_files, fai_files, remove_soft_mask));
     return rcpp_result_gen;
 END_RCPP
 }

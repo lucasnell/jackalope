@@ -387,13 +387,13 @@ void parse_fasta_line(const std::string& line, const bool& cut_names,
 
 
 /*
- C++ function to fill an empty RefGenome object from a non-indexed fasta file.
+ C++ function to add to a RefGenome object from a non-indexed fasta file.
  Does most of the work for `read_fasta_noind` below.
  */
-void fill_ref_noind(RefGenome& ref,
-                    std::string fasta_file,
-                    const bool& cut_names,
-                    const bool& remove_soft_mask) {
+void append_ref_noind(RefGenome& ref,
+                      std::string fasta_file,
+                      const bool& cut_names,
+                      const bool& remove_soft_mask) {
 
     expand_path(fasta_file);
 
@@ -459,7 +459,7 @@ void fill_ref_noind(RefGenome& ref,
 
 //' Read a non-indexed fasta file to a \code{RefGenome} object.
 //'
-//' @param file_name File name of the fasta file.
+//' @param file_names File names of the fasta file(s).
 //' @param cut_names Boolean for whether to cut sequence names at the first space.
 //'     Defaults to \code{TRUE}.
 //' @param remove_soft_mask Boolean for whether to remove soft-masking by making
@@ -470,14 +470,16 @@ void fill_ref_noind(RefGenome& ref,
 //' @noRd
 //'
 //[[Rcpp::export]]
-SEXP read_fasta_noind(const std::string& fasta_file,
+SEXP read_fasta_noind(const std::vector<std::string>& fasta_files,
                       const bool& cut_names,
                       const bool& remove_soft_mask) {
 
     XPtr<RefGenome> ref_xptr(new RefGenome(), true);
     RefGenome& ref(*ref_xptr);
 
-    fill_ref_noind(ref, fasta_file, cut_names, remove_soft_mask);
+    for (const std::string& fasta : fasta_files) {
+        append_ref_noind(ref, fasta, cut_names, remove_soft_mask);
+    }
 
     return ref_xptr;
 }
@@ -586,13 +588,13 @@ void read_fai(const std::string& fai_file,
 
 
 /*
- C++ function to fill an empty RefGenome object from an indexed fasta file.
+ C++ function to add to a RefGenome object from an indexed fasta file.
  Does most of the work for `read_fasta_ind` below.
  */
-void fill_ref_ind(RefGenome& ref,
-                  std::string fasta_file,
-                  std::string fai_file,
-                  const bool& remove_soft_mask) {
+void append_ref_ind(RefGenome& ref,
+                    std::string fasta_file,
+                    std::string fai_file,
+                    const bool& remove_soft_mask) {
 
     std::vector<uint64> offsets;
     std::vector<std::string> names;
@@ -618,15 +620,16 @@ void fill_ref_ind(RefGenome& ref,
         Rcpp::stop(e);
     }
 
-    uint32 n_seqs = offsets.size();
+    const uint32 n_seqs0 = ref.size(); // starting # sequences
+    uint32 n_new_seqs = offsets.size();
     uint64 LIMIT = 4194304;
-    ref.sequences = std::deque<RefSequence>(n_seqs, RefSequence());
+    ref.sequences.resize(n_seqs0 + n_new_seqs, RefSequence());
 
-    for (uint32 i = 0; i < n_seqs; i++) {
+    for (uint32 i = 0; i < n_new_seqs; i++) {
 
         Rcpp::checkUserInterrupt();
 
-        RefSequence& rs(ref.sequences[i]);
+        RefSequence& rs(ref.sequences[i+n_seqs0]);
         rs.name = names[i];
 
         // Length of the whole sequence including newlines
@@ -673,7 +676,10 @@ void fill_ref_ind(RefGenome& ref,
         }
 
     }
-    gzclose (file);
+
+    gzclose(file);
+
+    return;
 }
 
 //' Read an indexed fasta file to a \code{RefGenome} object.
@@ -692,14 +698,21 @@ void fill_ref_ind(RefGenome& ref,
 //'
 //'
 //[[Rcpp::export]]
-SEXP read_fasta_ind(const std::string& fasta_file,
-                    const std::string& fai_file,
+SEXP read_fasta_ind(const std::vector<std::string>& fasta_files,
+                    const std::vector<std::string>& fai_files,
                     const bool& remove_soft_mask) {
 
     XPtr<RefGenome> ref_xptr(new RefGenome(), true);
     RefGenome& ref(*ref_xptr);
 
-    fill_ref_ind(ref, fasta_file, fai_file, remove_soft_mask);
+    if (fasta_files.size() != fai_files.size()) {
+        str_stop({"\nThe vector of fasta index files must be the same length as ",
+                 "the vector of fasta files."});
+    }
+
+    for (uint32 i = 0; i < fasta_files.size(); i++) {
+        append_ref_ind(ref, fasta_files[i], fai_files[i], remove_soft_mask);
+    }
 
     return ref_xptr;
 

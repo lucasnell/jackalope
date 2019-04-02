@@ -385,7 +385,7 @@ read_vcfr <- function(reference_ptr, var_names, haps_list, seq_inds, pos, ref_se
 
 #' Read a non-indexed fasta file to a \code{RefGenome} object.
 #'
-#' @param file_name File name of the fasta file.
+#' @param file_names File names of the fasta file(s).
 #' @param cut_names Boolean for whether to cut sequence names at the first space.
 #'     Defaults to \code{TRUE}.
 #' @param remove_soft_mask Boolean for whether to remove soft-masking by making
@@ -395,8 +395,8 @@ read_vcfr <- function(reference_ptr, var_names, haps_list, seq_inds, pos, ref_se
 #'
 #' @noRd
 #'
-read_fasta_noind <- function(fasta_file, cut_names, remove_soft_mask) {
-    .Call(`_jackal_read_fasta_noind`, fasta_file, cut_names, remove_soft_mask)
+read_fasta_noind <- function(fasta_files, cut_names, remove_soft_mask) {
+    .Call(`_jackal_read_fasta_noind`, fasta_files, cut_names, remove_soft_mask)
 }
 
 #' Read an indexed fasta file to a \code{RefGenome} object.
@@ -414,8 +414,8 @@ read_fasta_noind <- function(fasta_file, cut_names, remove_soft_mask) {
 #' @noRd
 #'
 #'
-read_fasta_ind <- function(fasta_file, fai_file, remove_soft_mask) {
-    .Call(`_jackal_read_fasta_ind`, fasta_file, fai_file, remove_soft_mask)
+read_fasta_ind <- function(fasta_files, fai_files, remove_soft_mask) {
+    .Call(`_jackal_read_fasta_ind`, fasta_files, fai_files, remove_soft_mask)
 }
 
 #' Write \code{RefGenome} to an uncompressed fasta file.
