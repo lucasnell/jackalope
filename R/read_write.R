@@ -13,8 +13,6 @@
 #' @param cut_names Boolean for whether to cut sequence names at the first space.
 #'     This argument is ignored if \code{fai_file} is not \code{NULL}.
 #'     Defaults to \code{FALSE}.
-#' @param rm_soft_mask Boolean for whether to remove soft-masking by making
-#'    sequences all uppercase. Defaults to \code{TRUE}.
 #'
 #' @return A \code{\link{ref_genome}} object.
 #'
@@ -22,7 +20,7 @@
 #'
 #'
 read_fasta <- function(fasta_file, fai_file = NULL,
-                       cut_names = FALSE, rm_soft_mask = TRUE) {
+                       cut_names = FALSE) {
 
 
     if (!is_type(fasta_file, "character", 1)) {
@@ -34,9 +32,9 @@ read_fasta <- function(fasta_file, fai_file = NULL,
     if (!is_type(cut_names, "logical", 1)) {
         err_msg("read_fasta", "cut_names", "a single logical")
     }
-    if (!is_type(rm_soft_mask, "logical", 1)) {
-        err_msg("read_fasta", "rm_soft_mask", "a single logical")
-    }
+
+    # For now I'm forcing the users to remove soft-masking
+    rm_soft_mask <- TRUE
 
     if (is.null(fai_file)) {
         ptr <- read_fasta_noind(fasta_file, cut_names, rm_soft_mask)
