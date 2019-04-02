@@ -18,9 +18,9 @@
 #include <omp.h>  // omp
 #endif
 
-#include "jackal_types.h"  // integer types
+#include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
-#include "table_sampler.h" // table sampling
+#include "alias_sampler.h" // alias sampling
 #include "pcg.h" // pcg::max, mc_seeds, seeded_pcg
 
 using namespace Rcpp;
@@ -63,8 +63,8 @@ OuterClass create_sequences_(const uint32& n_seqs,
     // Generate seeds for random number generators (1 RNG per core)
     const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
 
-    // Table-sampling object
-    const TableSampler sampler(pi_tcag);
+    // Alias-sampling object
+    const AliasSampler sampler(pi_tcag);
 
     // Creating output object
     OuterClass seqs_out(n_seqs);
@@ -96,7 +96,7 @@ OuterClass create_sequences_(const uint32& n_seqs,
         distr = std::gamma_distribution<double>(gamma_shape, gamma_scale);
     }
 
-    std::string bases_ = table_sampler::bases;
+    std::string bases_ = alias_sampler::bases;
 
     // Parallelize the Loop
     #ifdef _OPENMP

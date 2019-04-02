@@ -2,7 +2,7 @@
 
 # Cleaning up when the package is unloaded
 .onUnload <- function (libpath) {
-    library.dynam.unload("jackal", libpath)
+    library.dynam.unload("jackalope", libpath)
 }
 
 # Check for a single, whole number, perhaps in range
@@ -33,6 +33,6 @@ is_type <- function(x, type, L = NULL) {
 #' @noRd
 #'
 err_msg <- function(fxn, par, ...) {
-    stop(sprintf("\nFor the `%s` function in jackal, argument `%s` must be %s.",
+    stop(sprintf("\nFor the `%s` function in jackalope, argument `%s` must be %s.",
                  fxn, par, paste(...)), call. = FALSE)
 }

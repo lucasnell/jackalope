@@ -9,11 +9,10 @@
 
 
 
-#include "jackal_types.h"  // uint32
+#include "jackalope_types.h"  // uint32
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // runif_01
-#include "table_sampler.h"  // TableSampler
 #include "alias_sampler.h"  // AliasSampler
 #include "util.h"  // clear_memory
 #include "str_manip.h"  // rev_comp

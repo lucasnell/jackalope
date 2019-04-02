@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 
-#include "jackal_types.h"  // integer types
+#include "jackalope_types.h"  // integer types
 
 
 using namespace Rcpp;

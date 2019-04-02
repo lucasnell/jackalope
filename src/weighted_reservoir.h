@@ -19,7 +19,7 @@
 #include <RcppArmadillo.h>
 #include <pcg/pcg_random.hpp> // pcg prng
 
-#include "jackal_types.h" // integer types
+#include "jackalope_types.h" // integer types
 #include "pcg.h" // runif_* functions
 #include "vitter_algorithms.h" // vitter_d
 

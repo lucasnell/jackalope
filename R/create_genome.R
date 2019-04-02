@@ -31,30 +31,21 @@ create_genome <- function(n_seqs,
 
 
     if (!single_integer(n_seqs, .min = 1)) {
-        stop("\nThe n_seqs argument supplied to create_genome is not a single",
-             "whole number greater than 0.",
-             call. = FALSE)
+        err_msg("create_genome", "n_seqs", "a single integer >= 1")
     }
     if (!single_number(len_mean, .min = 1)) {
-        stop("\nThe len_mean argument supplied to create_genome is not a single",
-             "number greater than or equal to 1.",
-             call. = FALSE)
+        err_msg("create_genome", "len_mean", "a single number >= 1")
     }
     if (!single_number(len_sd, .min = 0)) {
-        stop("\nThe len_sd argument supplied to create_genome is not a single",
-             "number >= 0.",
-             call. = FALSE)
+        err_msg("create_genome", "len_sd", "a single number >= 0")
     }
 
-    if (!is.numeric(pi_tcag) | length(pi_tcag) != 4 | any(pi_tcag < 0)) {
-        stop("\nThe pi_tcag argument supplied to create_genome is not a numeric",
-             "vector of exactly 4 non-negative numbers.",
-             call. = FALSE)
+    if (!is_type(pi_tcag, "numeric", 4) || any(pi_tcag < 0) || all(pi_tcag == 0)) {
+        err_msg("create_genome", "pi_tcag", "a numeric vector of length 4,",
+                "where no number can be < 0 and at least one must be > 0")
     }
     if (!single_integer(n_cores, .min = 1)) {
-        stop("\nThe n_cores argument supplied to create_genome is not a single",
-             "whole number greater than or equal to 1.",
-             call. = FALSE)
+        err_msg("create_genome", "n_cores", "a single integer >= 1")
     }
 
     ptr <- create_genome_(n_seqs, len_mean, len_sd, pi_tcag, n_cores)

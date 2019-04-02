@@ -1,18 +1,11 @@
 
 
-library(jackal)
-library(testthat)
-
-context("Testing molecular evolution accuracy")
-
-boot <- function(x, B = 2000, alpha = 0.01) {
-    boots <- numeric(B)
-    N <- length(x)
-    for (i in 1:B) {
-        boots[i] <- mean(sample(x, size = N, replace = TRUE))
-    }
-    return(quantile(boots, c(alpha / 2, 1 - alpha / 2), names = FALSE))
-}
+library(jackalope)
+library(tidyverse)
+library(scrm)
+library(grid)
+library(ape)
+source(".Rprofile")
 
 
 
@@ -34,15 +27,15 @@ with(pars, {
     n_vars = 10
     #   For site variability:
     shape = 0.5
-    region_size = 100
-    seq_len = 1000
+    region_size = 1e3
+    seq_len = 100e3
     ends = seq(region_size, seq_len, region_size)
     mats = replicate(n_seqs,
                      cbind(ends, rgamma(length(ends), shape = shape, rate = shape)),
                      simplify = FALSE)
     # Construct sequences with known number of each nucleotide
-    seqs <- rep(list(c(rep("T", pi_tcag[1] * seq_len), rep("C", pi_tcag[2] * seq_len),
-                       rep("A", pi_tcag[3] * seq_len), rep("G", pi_tcag[4] * seq_len))),
+    seqs <- rep(list(c(rep("T", 0.25 * seq_len), rep("C", 0.25 * seq_len),
+                       rep("A", 0.25 * seq_len), rep("G", 0.25 * seq_len))),
                 n_seqs)
     seqs <- lapply(seqs, sample)
     seqs <- sapply(seqs, paste, collapse = "")
@@ -52,30 +45,13 @@ with(pars, {
 set.seed(1087437799)
 
 # Make ref_genome object from a pointer to a RefGenome object based on `seqs`
-ref <- with(pars, ref_genome$new(jackal:::make_ref_genome(seqs)))
-
-
-mevo_ <- with(pars, {
-    make_mevo(ref,
-              sub = list(model = "TN93", alpha_1 = alpha_1, alpha_2 = alpha_2,
-                         beta = beta, pi_tcag = pi_tcag),
-              ins = list(rate = rates[1], max_length = M[1], a = a[1]),
-              del = list(rate = rates[2], max_length = M[2], a = a[2]),
-              site_var = list(mats = pars$mats),
-              chunk_size = 100)
-})
-
-
-# Phylogenetic tree:
-tree <- ape::rcoal(pars$n_vars)
-# Don't want this to take too long:
-tree$edge.length <- tree$edge.length * 0.1
+ref <- with(pars, ref_genome$new(jackalope:::make_ref_genome(seqs)))
 
 
 
-var_set <- create_variants(ref, method = "phylo", method_info = tree,
-                           mevo_obj = mevo_)
-
+# For testing: just one individual at known sites
+coal_obj <- scrm("2 20 -r 3.1 1000 -t 1000")
+coal_obj$seg_sites <- map(coal_obj$seg_sites, ~ .x[1,.x[1,] > 0,drop=FALSE])
 
 
 
@@ -83,38 +59,15 @@ var_set <- create_variants(ref, method = "phylo", method_info = tree,
 # =================================================================*
 # =================================================================*
 
-# examine output ----
+# INDELS ----
 
 # =================================================================*
 # =================================================================*
 
-
-# Function to make a matrix have N columns
-make_N <- function(x, N) cbind(x, matrix(0, nrow(x), N - ncol(x)))
-
-mutation_exam <- function(v, s) {
-    mut_exam <- jackal:::examine_mutations(var_set, var_ind = v, seq_ind = s)
-    mut_exam$ins <- setNames(colSums(make_N(mut_exam$ins, pars$M[1])), 1:pars$M[1])
-    mut_exam$del <- setNames(colSums(make_N(mut_exam$del, pars$M[2])), 1:pars$M[2])
-    return(mut_exam)
-}
-
-
-exams <- lapply(0:(pars$n_seqs-1),
-                function(s) lapply(0:(pars$n_vars-1),
-                                    jackal:::examine_mutations,
-                                    var_set_ = var_set$genomes,
-                                    seq_ind = s))
-
-
-# --------------------*
-# indels ----
-# --------------------*
 
 # Function to calculate the expected proportion of mutations that are
 # insertions or deletions of a given size:
-indel_p <- function(u, j) {
-    stopifnot(!missing(j))
+indel_pred <- function(u, j) {
     # < indel of type j > / < all mutations >
     ijp <- pars$rates[j] / sum(mevo_$q())
     # < indel of type j and size u > / < indel of type j >
@@ -126,211 +79,288 @@ indel_p <- function(u, j) {
     return(ijp * piju)
 }
 
-# Sample for only one variant to avoid the issue of closely related
-# individuals having many of the same mutations:
-rand_vars <- sample.int(pars$n_vars, pars$n_seqs, replace = TRUE)
+# Function to make a matrix have N columns
+make_N <- function(x, N) cbind(x, matrix(0, nrow(x), N - ncol(x)))
 
-# Coercing total # mutations (# trials) to a single vector
-total_muts <- sapply(1:pars$n_seqs,
-                       function(s) {
-                           v <- rand_vars[s]
-                           length(exams[[s]][[v]]$pos)
-                       })
+# --------------------*
+# Insertions ----
+# --------------------*
 
-# Columns are different sizes:
-insertions <- sapply(1:pars$M[1], function(u) {
-    sapply(1:pars$n_seqs,
+# Only insertions:
+# ref <- create_genome(20, 100e3)
+mevo_ <- make_mevo(ref,
+                   sub = list(model = "TN93", alpha_1 = 0,
+                              alpha_2 = 0, beta = 0,
+                              pi_tcag = pars$pi_tcag),
+                   ins = list(rate = pars$rates[1],
+                              max_length = pars$M[1],
+                              a = pars$a[1]))
+var_set <- create_variants(ref, method = "coal_sites", method_info = coal_obj,
+                           mevo_obj = mevo_)
+
+insertions <- map(0:(pars$n_seqs-1),
              function(s) {
-                 v <- rand_vars[s]
-                 if (ncol(exams[[s]][[v]]$ins) > pars$M[1]) {
-                     M <- exams[[s]][[v]]$ins[,1:pars$M[1]]
-                 } else M <- exams[[s]][[v]]$ins
-                 sum(make_N(M, pars$M[1])[,u])
-             })
-})
-deletions <- sapply(1:pars$M[2], function(u) {
-    sapply(1:pars$n_seqs,
-             function(s) {
-                 v <- rand_vars[s]
-                 if (ncol(exams[[s]][[v]]$del) > pars$M[2]) {
-                     M <- exams[[s]][[v]]$del[,1:pars$M[2]]
-                 } else M <- exams[[s]][[v]]$del
-                 sum(make_N(M, pars$M[2])[,u])
-             })
-})
+                 Z <- jackalope:::examine_mutations(var_set_ptr = var_set$genomes,
+                                                 var_ind = 0, seq_ind = s) %>%
+                     .[["ins"]]
+                 # Anything over `pars$M[1]` is >1 mutation
+                 if (ncol(Z) > pars$M[1]) Z <- Z[,1:pars$M[1],drop=FALSE]
+                 # Make sure it has exactly pars$M[1] columns for binding
+                 if (ncol(Z) < pars$M[1]) Z <- make_N(Z, pars$M[1])
+                 return(colSums(Z))
+             })%>%
+    do.call(what = rbind) %>%
+    colSums()
 
 
+ins_df <- tibble(pred = indel_pred(1:pars$M[1], 1) * sum(insertions),
+                 obs = insertions)
 
-test_that("molecular evolution produces correct proportion of indel sizes", {
+lims <- range(c(ins_df$obs, ins_df$pred))
 
-    ins_exp <- matrix(rep(total_muts, pars$M[1]), pars$n_seqs) *
-        matrix(rep(indel_p(1:pars$M[1], 1), each = pars$n_seqs), pars$n_seqs)
-    p <- chisq.test(insertions, ins_exp, simulate.p.value = TRUE, B = 1000)$p.value
-    expect_gt(p, 0.01, label = "insertion sizes")
-
-    # Same for deletions
-    del_exp <- matrix(rep(total_muts, pars$M[2]), pars$n_seqs) *
-        matrix(rep(indel_p(1:pars$M[2], 2), each = pars$n_seqs), pars$n_seqs)
-    p <- chisq.test(deletions, del_exp, simulate.p.value = TRUE, B = 1000)$p.value
-    expect_gt(p, 0.01, label = "deletion sizes")
-})
-
-
-
-# --------------------*
-# substitutions ----
-# --------------------*
-
-sub_df <- do.call(
-    rbind,
-    lapply(1:pars$n_seqs,
-           function(s) {
-               # Sample for only one variant to avoid the issue of closely related
-               # individuals having many of the same mutations:
-               v <- rand_vars[s]
-               data.frame(seq = s, var = v,
-                          from = rep(1:4, 4),
-                          to = rep(1:4, each = 4),
-                          n = sum(exams[[s]][[v]]$sub),
-                          count = as.integer(exams[[s]][[v]]$sub))
-           }))
-sub_df <- sub_df[sub_df$from != sub_df$to,]
-
-# Expected proportion
-expected_sub <- function(i, j) {
-    Q <- mevo_$Q
-    q <- rowSums(Q)
-    (q[i] / sum(q)) * (Q[i, j] / sum(Q[i,]))
-}
-
-# Observed counts per variant--sequence combo
-Q_obs <- matrix(0, 4, 4)
-# Expected:
-Q_exp <- matrix(0, 4, 4)
-for (i in 1:4) {
-    for (j in 1:4) {
-        if (i == j) next
-        df_ <- sub_df[sub_df$from == i & sub_df$to == j,]
-        Q_obs[i, j] <- sum(df_$count)
-        Q_exp[i, j] <- expected_sub(i, j) * sum(df_$n)
-    }
-}
-
-test_that("molecular evolution produces correct substitution matrix", {
-    x <- c(Q_obs[lower.tri(Q_obs)], Q_obs[upper.tri(Q_obs)])
-    y <- c(Q_exp[lower.tri(Q_exp)], Q_exp[upper.tri(Q_exp)])
-    p <- t.test(x, y, paired = TRUE)$p.value
-    expect_gt(p, 0.01)
-})
+ins_p <- ins_df %>%
+    ggplot(aes(pred, obs)) +
+    geom_point() +
+    geom_abline(slope = 1, intercept = 0, linetype = 2, color = "firebrick2") +
+    scale_x_continuous("Predicted insertion count",
+                       limits = lims) +
+    scale_y_continuous("Observed insertion count",
+                       limits = lims) +
+    theme_classic()
 
 
 
 
 # --------------------*
-# gammas ----
+# Deletions ----
 # --------------------*
 
-pos_df <- do.call(
-    rbind,
-    lapply(1:pars$n_seqs,
-           function(s) {
-               # Sample for only one variant to avoid the issue of closely related
-               # individuals having many of the same mutations:
-               v <- rand_vars[s]
-               exam_ <- exams[[s]][[v]]
-               gamma_mat <- mevo_$gamma_mats[[s]]
-               # Expected # mutations per gamma region:
-               exp_mut = length(exam_$pos) / nrow(gamma_mat)
-               df_ <- data.frame(seq = s, var = v,
-                                 gamma = gamma_mat[,2],
-                                 pos = gamma_mat[,1],
-                                 count = jackal:::table_gammas(gamma_mat[,1], exam_$pos))
-               df_$count <- df_$count / exp_mut
-               return(df_)
-           }))
+# Only deletions
+mevo_ <- make_mevo(ref,
+                   sub = list(model = "TN93", alpha_1 = 0,
+                              alpha_2 = 0, beta = 0,
+                              pi_tcag = pars$pi_tcag),
+                   del = list(rate = pars$rates[2],
+                              max_length = pars$M[2],
+                              a = pars$a[2]))
+var_set <- create_variants(ref, method = "coal_sites", method_info = coal_obj,
+                           mevo_obj = mevo_)
+
+deletions <- map(0:(pars$n_seqs-1),
+                  function(s) {
+                      Z <- jackalope:::examine_mutations(var_set_ptr = var_set$genomes,
+                                                      var_ind = 0, seq_ind = s) %>%
+                          .[["del"]]
+                      # Anything over `pars$M[1]` is >1 mutation
+                      if (ncol(Z) > pars$M[2]) Z <- Z[,1:pars$M[2],drop=FALSE]
+                      # Make sure it has exactly pars$M[1] columns for binding
+                      if (ncol(Z) < pars$M[2]) Z <- make_N(Z, pars$M[2])
+                      return(colSums(Z))
+                  })%>%
+    do.call(what = rbind) %>%
+    colSums()
 
 
-# This regression coefficient should approximately correspond to one
-test_that("molecular evolution selects mutation regions according to Gamma values", {
-    mod <- lm(count ~ gamma + 0, data = pos_df)
-    gamma_coef <- coef(mod)[['gamma']]
-    expect_true(gamma_coef > 0.5 & gamma_coef < 1.5)
-})
+del_df <- tibble(pred = indel_pred(1:pars$M[2], 2) * sum(deletions),
+                 obs = deletions)
+
+lims <- range(c(del_df$obs, del_df$pred))
+
+del_p <- del_df %>%
+    ggplot(aes(pred, obs)) +
+    geom_point() +
+    geom_abline(slope = 1, intercept = 0, linetype = 2, color = "firebrick2") +
+    scale_x_continuous("Predicted deletion count",
+                       limits = lims) +
+    scale_y_continuous("Observed deletion count",
+                       limits = lims) +
+    theme_classic()
 
 
 
-# --------------------*
-# phylogeny ----
-# --------------------*
+grid.newpage()
+grid.draw(rbind(ggplotGrob(del_p), ggplotGrob(ins_p), size = "last"))
 
 
-mutations <- lapply(0:(pars$n_vars-1), jackal:::view_mutations, var_set_ = var_set$genomes)
 
 
-# Function to return descendent tips from a given node:
-get_descendant_tips <- function(tree, node) {
-    # Function to get descendent nodes and tips from a given node
-    # From http://blog.phytools.org/2012/01/function-to-get-descendant-node-numbers.html
-    # Slight tweeks for personal style
-    getDescendants <- function(tree, node, curr = NULL){
-        if(is.null(curr)) curr <- vector()
-        daughters <- tree$edge[which(tree$edge[,1] == node), 2]
-        curr <- c(curr, daughters)
-        w <- which(daughters >= length(tree$tip))
-        if (length(w) > 0) {
-            for (i in 1:length(w)) {
-                curr <- getDescendants(tree, daughters[w[i]], curr)
-            }
-        }
-        return(curr)
-    }
-    tips_ <- getDescendants(tree, node)
-    tips_ <- tips_[tips_ <= length(tree$tip.label)]
-    return(tips_)
-}
+# =================================================================*
+# =================================================================*
 
-compare_mutations <- function(df1, df2) {
+# SUBSTITUTIONS ----
 
-    df1 <- df1[, c("seq", "old_pos", "size_mod", "nucleos")]
-    df2 <- df2[, c("seq", "old_pos", "size_mod", "nucleos")]
-
-    df1_ <- apply(df1, 1, function(xx) gsub(" ", "", paste(xx, collapse = "_")))
-    df2_ <- apply(df2, 1, function(xx) gsub(" ", "", paste(xx, collapse = "_")))
-
-    n_shared_muts <- sum(df2_ %in% df1_)
-
-    return(as.integer(n_shared_muts))
-
-}
+# =================================================================*
+# =================================================================*
 
 
-shared_muts <- rep(list(matrix(0L, pars$n_vars, pars$n_vars)), pars$n_seqs)
-for (s in 1:pars$n_seqs) {
+
+# Phylogenetic tree:
+tree <- ape::rcoal(2)
+tree$edge.length <- tree$edge.length * 0.1
+
+# Only substitutions
+mevo_ <- make_mevo(ref,
+                   sub = list(model = "TN93", alpha_1 = pars$alpha_1,
+                              alpha_2 = pars$alpha_2, beta = pars$beta,
+                              pi_tcag = pars$pi_tcag))
+var_set <- create_variants(ref, method = "phylo", method_info = tree,
+                           mevo_obj = mevo_)
+
+substitutions <- map(0:(pars$n_seqs-1),
+                     function(s) {
+                         Z <- jackalope:::examine_mutations(var_set_ptr = var_set$genomes,
+                                                     var_ind = 0, seq_ind = s) %>%
+                         .[["sub"]]
+                     return(Z)
+                 }) %>%
+    Reduce(f = `+`)
+# Predicted values:
+sub_pred <- sum(substitutions) * (mevo_$Q / sum(mevo_$Q))
+
+sub_df <- tibble(obs = c(substitutions[lower.tri(substitutions)],
+                         substitutions[upper.tri(substitutions)]),
+                 pred = c(sub_pred[lower.tri(sub_pred)],
+                          sub_pred[upper.tri(sub_pred)]))
+
+lims <- range(c(sub_df$obs, sub_df$pred))
+
+sub_df %>%
+    ggplot(aes(pred, obs)) +
+    geom_point() +
+    geom_abline(slope = 1, intercept = 0, linetype = 2, color = "firebrick2") +
+    scale_x_continuous("Predicted substitution count",
+                       limits = lims) +
+    scale_y_continuous("Observed substitution count",
+                       limits = lims) +
+    theme_classic()
+
+
+
+
+
+
+# =================================================================*
+# =================================================================*
+
+# GAMMAS ----
+
+# =================================================================*
+# =================================================================*
+
+ref <- with(pars, ref_genome$new(jackalope:::make_ref_genome(seqs[1:4])))
+# Only substitutions plus gammas
+mevo_ <- make_mevo(ref,
+                   sub = list(model = "TN93", alpha_1 = pars$alpha_1,
+                              alpha_2 = pars$alpha_2, beta = pars$beta,
+                              pi_tcag = pars$pi_tcag),
+                   site_var = pars$mats[1:ref$n_seqs()],
+                   chunk_size = 100)
+# Takes ~14 sec
+var_set <- create_variants(ref, method = "phylo", method_info = tree,
+                           mevo_obj = mevo_, n_cores = 4)
+
+pos_df <- map_dfr(0:(ref$n_seqs()-1),
+    function(s) {
+        Z <- jackalope:::examine_mutations(var_set_ptr = var_set$genomes,
+                                        var_ind = 0, seq_ind = s) %>%
+            .[["pos"]]
+        return(tibble(seq = as.integer(s), pos = as.integer(Z)))
+    })
+
+gamm_df <- map_dfr(0:(ref$n_seqs()-1),
+    function(s) {
+        gamma_mat <- mevo_$gamma_mats[[s+1]]
+        Z <- pos_df[pos_df$seq == s, ][["pos"]]
+        # Expected # mutations per gamma region:
+        pred_mut = length(Z) / nrow(gamma_mat)
+        df_ <- tibble(seq = s,
+                      gamma = gamma_mat[,2],
+                      pos = gamma_mat[,1],
+                      obs = jackalope:::table_gammas(gamma_mat[,1], Z))
+        df_$pred <- (df_$gamma / sum(df_$gamma)) * sum(df_$obs)
+        return(df_)
+    })
+
+
+lims <- range(c(gamm_df$obs, gamm_df$pred))
+
+gamm_df %>%
+    ggplot(aes(pred, obs)) +
+    geom_point() +
+    geom_abline(slope = 1, intercept = 0, linetype = 2, color = "firebrick2") +
+    scale_x_continuous("Predicted mutation count",
+                       limits = lims) +
+    scale_y_continuous("Observed mutation count",
+                       limits = lims) +
+    theme_classic()
+
+
+
+
+
+
+# =================================================================*
+# =================================================================*
+
+# PHYLOGENY ----
+
+# =================================================================*
+# =================================================================*
+
+# Phylogenetic tree:
+set.seed(89415648)
+tree <- ape::rcoal(pars$n_vars)
+tree$edge.length <- tree$edge.length * 0.1
+
+ref <- with(pars, ref_genome$new(jackalope:::make_ref_genome(seqs[1:4])))
+# Only substitutions again
+mevo_ <- make_mevo(ref,
+                   sub = list(model = "TN93", alpha_1 = pars$alpha_1,
+                              alpha_2 = pars$alpha_2, beta = pars$beta,
+                              pi_tcag = pars$pi_tcag))
+
+var_set <- create_variants(ref, method = "phylo", method_info = tree,
+                           mevo_obj = mevo_, n_cores = 4)
+
+
+mutations <- lapply(0:(pars$n_vars-1),
+                    function(v) {
+                        Z <- jackalope:::view_mutations(var_set_ = var_set$genomes,
+                                                     var_ind = v)
+                        Zseq <- Z[,"seq"]
+                        Z <- Z[, c("old_pos", "size_mod", "nucleos")]
+                        ZZ <- apply(Z, 1, function(xx) gsub(" ", "",
+                                                            paste(xx, collapse = "_")))
+                        return(split(ZZ, Zseq))
+                    })
+
+
+
+shared_muts <- rep(list(matrix(0L, pars$n_vars, pars$n_vars)), ref$n_seqs())
+for (s in 1:(ref$n_seqs())) {
     for (i in 1:(pars$n_vars-1)) {
-        for (j in (i+1):pars$n_vars) {
-            df1 <- mutations[[i]]
-            df2 <- mutations[[j]]
-            sm <- compare_mutations(df1[df1$seq == (s-1), ], df2[df2$seq == (s-1), ])
-            shared_muts[[s]][i,j] <- sm
-            shared_muts[[s]][j,i] <- sm
+        for (j in (i+1):(pars$n_vars)) {
+            muts1 <- mutations[[i]][[s]]
+            muts2 <- mutations[[j]][[s]]
+            shared_muts[[s]][i,j] <- as.integer(sum(muts2 %in% muts1))
+            shared_muts[[s]][j,i] <- as.integer(sum(muts1 %in% muts2))
         }
     }
-    diag(shared_muts[[s]]) <- sapply(mutations, function(x) sum(x$seq==(s-1)))
-}; rm(s, i, j, df1, df2, sm)
+    diag(shared_muts[[s]]) <- sapply(mutations, function(x) length(x[[s]]))
+}; rm(s, i, j, muts1, muts2)
+
 
 # "Mutational" distances between all pairs:
-mut_dists <- rep(list(matrix(0L, pars$n_vars, pars$n_vars)), pars$n_seqs)
-for (s in 1:pars$n_seqs) {
+mut_dists <- rep(list(matrix(0L, pars$n_vars, pars$n_vars)), ref$n_seqs())
+for (s in 1:(ref$n_seqs())) {
     for (i in 1:(pars$n_vars-1)) {
         for (j in (i+1):pars$n_vars) {
             # Total non-shared mutations for each:
-            mdi <- shared_muts[[s]][i,i] - shared_muts[[s]][i,j]
-            mdj <- shared_muts[[s]][j,j] - shared_muts[[s]][i,j]
-            mut_dists[[s]][i,j] <- mdi
-            mut_dists[[s]][j,i] <- mdj
+            mut_dists[[s]][i,j] <- shared_muts[[s]][i,i] - shared_muts[[s]][i,j]
+            mut_dists[[s]][j,i] <- shared_muts[[s]][j,j] - shared_muts[[s]][j,i]
         }
     }
-}; rm(s, i, j, mdi, mdj)
+}; rm(s, i, j)
 
 
 # Phylogenetic distances between all pairs:
@@ -341,36 +371,60 @@ phylo_dists <- phylo_dists / 2
 
 
 # Average mutation rate for ancestral sequences times total bp in each sequence:
-mu_ <- mevo_$mu() * pars$seq_len
+mu_ <- mean(mevo_$q()) * mean(nchar(pars$seqs[1:4]))
 
 # Expected mutational distances:
-expected <- mu_ * phylo_dists
-
-comp_mats <- lapply(mut_dists, function(y) (expected - y) / expected)
+pred_mut_dists <- mu_ * phylo_dists
 
 
-test_that("Simulations conform to phylogenetic tree", {
-    # Bootstrap these bc they're a weird distribution
-    b <- boot(sapply(comp_mats, mean, na.rm = TRUE))
-    expect_lt(b[1], 0)
-    expect_gt(b[2], 0)
-})
+phy_df <- tibble(obs = lapply(mut_dists,
+                              function(x) c(x[lower.tri(x)], x[upper.tri(x)])) %>%
+                     do.call(what = c),
+                 pred = rep(c(pred_mut_dists[lower.tri(pred_mut_dists)],
+                              pred_mut_dists[upper.tri(pred_mut_dists)]),
+                            ref$n_seqs()))
 
+lims <- range(c(phy_df$obs, phy_df$pred))
 
+phy_df %>%
+    ggplot(aes(pred, obs)) +
+    geom_point() +
+    geom_abline(slope = 1, intercept = 0, linetype = 2, color = "firebrick2") +
+    scale_x_continuous("Predicted mutation count",
+                       limits = lims) +
+    scale_y_continuous("Observed mutation count",
+                       limits = lims) +
+    theme_classic()
 
 
 
 # =================================================================*
 # =================================================================*
 
-# rate method ----
+# RATE METHOD ----
 
 # =================================================================*
 # =================================================================*
+
+# Phylogenetic tree:
+tree <- ape::rcoal(2)
+tree$edge.length <- tree$edge.length * 0.1
+
+ref <- with(pars, ref_genome$new(jackalope:::make_ref_genome(seqs[1:4])))
+
+# Only substitutions
+mevo_ <- make_mevo(ref,
+                   sub = list(model = "TN93", alpha_1 = pars$alpha_1,
+                              alpha_2 = pars$alpha_2, beta = pars$beta,
+                              pi_tcag = pars$pi_tcag),
+                   site_var = pars$mats[1:ref$n_seqs()])
+var_set <- create_variants(ref, method = "phylo", method_info = tree,
+                           mevo_obj = mevo_)
 
 # Full sequences:
-var_seqs <- lapply(0:(pars$n_vars-1),
-                   function(v) jackal:::view_var_genome(var_set_ = var_set$genomes, var_ind = v))
+var_seqs <- lapply(0:(var_set$n_vars()-1),
+                   function(v) jackalope:::view_var_genome(var_set_ = var_set$genomes,
+                                                        var_ind = v))
 
 # R function to get expected rate to compare against C++ version:
 get_seq_rate <- function(seq, rates, start, end, gamma_mat_) {
@@ -391,9 +445,10 @@ compare_rates <- function(var_ind, seq_ind, rates, incr = 1e2, verbose = FALSE) 
     start <- sample.int(as.integer(nchars / 2), 1)
     end <- sample.int(nchars - start, 1) + start
     if (mevo_$chunk_size <= 0) stop("Must only be used for chunked mevo objects")
-    rate_cpp <- jackal:::test_rate(start = start-1, end = end-1,
+    rate_cpp <- jackalope:::test_rate(start = start-1, end = end-1,
                                    var_ind = var_ind-1, seq_ind = seq_ind-1,
-                                   var_set_ = var_set$genomes, sampler_ = mevo_$to_ptr(),
+                                   var_set_ = var_set$genomes,
+                                   sampler_ = jackalope:::mevo_obj_to_ptr(mevo_),
                                    gamma_mat_ = gamma_mat_new)
     rate_r <- get_seq_rate(var_seqs[[var_ind]][seq_ind], rates, start, end, gamma_mat_new)
     if (verbose & !isTRUE(all.equal(rate_cpp, rate_r))) {
@@ -403,19 +458,16 @@ compare_rates <- function(var_ind, seq_ind, rates, incr = 1e2, verbose = FALSE) 
 }
 
 
-mat <- matrix(0, pars$n_vars * pars$n_seqs, 2)
+mat <- matrix(0, var_set$n_vars() * ref$n_seqs(), 2)
 i <- 1
-for (var_ind in 1:pars$n_vars) {
-    for (seq_ind in 1:pars$n_seqs) {
+for (var_ind in 1:var_set$n_vars()) {
+    for (seq_ind in 1:ref$n_seqs()) {
         mat[i,] <- compare_rates(var_ind, seq_ind, rates = mevo_$q())
         i <- i + 1
     }
 }
 
-test_that("Rate method produces accurate results", {
-    expect_equal(mat[,1], mat[,2])
-})
 
-
-
+# Should be `TRUE`:
+all.equal(mat[,1], mat[,2])
 

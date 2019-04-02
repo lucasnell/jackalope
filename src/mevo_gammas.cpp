@@ -17,7 +17,7 @@
 #include <string>               // string class
 #include <random>               // gamma_distribution
 
-#include "jackal_types.h"       // integer types
+#include "jackalope_types.h"       // integer types
 #include "pcg.h"                // pcg seeding
 #include "mevo_gammas.h"        // Gamma* classes
 
@@ -285,6 +285,13 @@ void check_gamma_mats(const std::vector<arma::mat>& mats,
         if (arma::any(gamma_mat.col(0) <= 0)) {
             err_msg += "should only have values > 0 in the first column, ";
             err_msg += "which is where the end points should be.";
+            error = true;
+            break;
+        }
+        // Sampling weights < 0 makes no sense
+        if (arma::any(gamma_mat.col(1) < 0)) {
+            err_msg += "should only have values >= 0 in the second column, ";
+            err_msg += "which is where the mutation-rate weights should be.";
             error = true;
             break;
         }

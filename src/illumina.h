@@ -14,12 +14,11 @@
 #include <omp.h>  // omp
 #endif
 
-#include "jackal_types.h"  // integer types
+#include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // runif_01
 #include "alias_sampler.h"  // AliasSampler
-#include "table_sampler.h"  // TableSampler
 #include "util.h"  // clear_memory
 #include "str_manip.h"  // rev_comp
 #include "sequencer.h"  // generic sequencing class
@@ -497,7 +496,7 @@ class IlluminaVariants {
 public:
 
     const VarSet* variants;                         // pointer to `const VarSet`
-    TableSampler variant_sampler;                   // chooses which variant to use
+    AliasSampler variant_sampler;                   // chooses which variant to use
     std::vector<IlluminaOneVariant> read_makers;    // makes Illumina reads
     bool paired;                                    // Boolean for paired-end reads
 

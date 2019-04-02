@@ -18,12 +18,11 @@
 #include <pcg/pcg_random.hpp> // pcg prng
 
 
-#include "jackal_types.h"  // integer types
+#include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 #include "mevo.h"
 #include "pcg.h"  // pcg seeding
-#include "table_sampler.h"  // table method of sampling
 #include "weighted_reservoir.h"  // weighted reservoir sampling
 #include "mevo_gammas.h"  // SequenceGammas class
 #include "mevo_phylo.h"  // match_ and template functions
@@ -131,26 +130,29 @@ SEXP make_var_set(SEXP ref_genome_ptr, const uint32& n_vars) {
 
 
 //[[Rcpp::export]]
-uint32 view_ref_genome_nseqs(SEXP ref_genome_ptr) {
+IntegerVector view_ref_genome_nseqs(SEXP ref_genome_ptr) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    uint32 out = ref_genome->size();
+    IntegerVector out(1);
+    out[0] = ref_genome->size();
     return out;
 }
 
 
 // Number of sequences
 //[[Rcpp::export]]
-uint32 view_var_set_nseqs(SEXP var_set_ptr) {
+IntegerVector view_var_set_nseqs(SEXP var_set_ptr) {
     XPtr<VarSet> var_set(var_set_ptr);
-    uint32 out = var_set->reference->size();
+    IntegerVector out(1);
+    out[0] = var_set->reference->size();
     return out;
 }
 
 // Number of variants
 //[[Rcpp::export]]
-uint32 view_var_set_nvars(SEXP var_set_ptr) {
+IntegerVector view_var_set_nvars(SEXP var_set_ptr) {
     XPtr<VarSet> var_set(var_set_ptr);
-    uint32 out = var_set->size();
+    IntegerVector out(1);
+    out[0] = var_set->size();
     return out;
 }
 
@@ -167,9 +169,11 @@ uint32 view_var_set_nvars(SEXP var_set_ptr) {
 
 
 //[[Rcpp::export]]
-std::vector<uint32> view_ref_genome_seq_sizes(SEXP ref_genome_ptr) {
+IntegerVector view_ref_genome_seq_sizes(SEXP ref_genome_ptr) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    std::vector<uint32> out = ref_genome->seq_sizes();
+    std::vector<uint32> tmp = ref_genome->seq_sizes();
+    IntegerVector out(tmp.size());
+    for (uint32 i = 0; i < tmp.size(); i++) out[i] = tmp[i];
     return out;
 }
 
@@ -179,13 +183,13 @@ std::vector<uint32> view_ref_genome_seq_sizes(SEXP ref_genome_ptr) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-std::vector<uint32> view_var_genome_seq_sizes(SEXP var_set_ptr,
-                                             const uint32& var_ind) {
+IntegerVector view_var_genome_seq_sizes(SEXP var_set_ptr,
+                                        const uint32& var_ind) {
 
     XPtr<VarSet> var_set(var_set_ptr);
     const VarGenome& var_genome((*var_set)[var_ind]);
 
-    std::vector<uint32> out(var_genome.size());
+    IntegerVector out(var_genome.size());
     for (uint32 i = 0; i < var_genome.size(); i++) {
         const VarSequence& var_seq(var_genome.var_genome[i]);
         out[i] = var_seq.seq_size;
@@ -341,6 +345,27 @@ void set_ref_genome_seq_names(
     }
     for (uint32 i = 0; i < seq_inds.size(); i++) {
         (*ref_genome)[seq_inds[i]].name = names[i];
+    }
+    return;
+}
+
+
+
+//[[Rcpp::export]]
+void clean_ref_genome_seq_names(SEXP ref_genome_ptr) {
+
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
+
+    std::string char_map;
+    char_map.reserve(256);
+    for (uint32 i = 0; i < 256; i++) char_map += static_cast<char>(i);
+    std::string bad_chars = " :;=%,\\|/\"\'";
+    for (char& c : bad_chars) char_map[c] = '_';
+
+    for (uint32 i = 0; i < ref_genome->size(); i++) {
+        for (char& c : (*ref_genome)[i].name) {
+            c = char_map[c];
+        }
     }
     return;
 }
@@ -587,7 +612,7 @@ List examine_mutations(SEXP var_set_ptr, const uint32& var_ind, const uint32& se
 //' @param gamma_ends Vector of endpoints for gamma regions
 //' @param positions Vector of positions that you want to bin into gamma regions.
 //'
-//'
+//' @noRd
 //'
 //[[Rcpp::export]]
 std::vector<uint32> table_gammas(const std::vector<uint32>& gamma_ends,
@@ -603,7 +628,10 @@ std::vector<uint32> table_gammas(const std::vector<uint32>& gamma_ends,
 
 
 
+
 //' Add mutations manually from R.
+//'
+//' This section applies to the next 3 functions.
 //'
 //' Note that all indices are in 0-based C++ indexing. This means that the first
 //' item is indexed by `0`, and so forth.
@@ -614,7 +642,7 @@ std::vector<uint32> table_gammas(const std::vector<uint32>& gamma_ends,
 //' @param new_pos_ Integer index to the desired subsitution location.
 //'     Uses 0-based indexing!
 //'
-//' @name add_mutations
+//' @noRd
 NULL_ENTRY;
 
 //' @describeIn add_mutations Add a substitution.
@@ -622,6 +650,7 @@ NULL_ENTRY;
 //' @inheritParams add_mutations
 //' @param nucleo_ Character to substitute for existing one.
 //'
+//' @noRd
 //'
 //[[Rcpp::export]]
 void add_substitution(SEXP var_set_ptr, const uint32& var_ind,
@@ -640,6 +669,8 @@ void add_substitution(SEXP var_set_ptr, const uint32& var_ind,
 //' @param nucleos_ Nucleotides to insert at the desired location.
 //'
 //'
+//' @noRd
+//'
 //[[Rcpp::export]]
 void add_insertion(SEXP var_set_ptr, const uint32& var_ind,
                    const uint32& seq_ind,
@@ -656,6 +687,8 @@ void add_insertion(SEXP var_set_ptr, const uint32& var_ind,
 //' @inheritParams add_mutations
 //' @param size_ Size of deletion.
 //'
+//'
+//' @noRd
 //'
 //[[Rcpp::export]]
 void add_deletion(SEXP var_set_ptr, const uint32& var_ind,

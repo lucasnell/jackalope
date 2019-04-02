@@ -6,7 +6,7 @@
 #'
 
 
-library(jackal)
+library(jackalope)
 library(tidyverse)
 source(".Rprofile")
 
@@ -19,7 +19,7 @@ dir <- paste0(tempdir(check = TRUE), "/")
 seq <- sapply(c("T", "C", "A", "G"), function(nt) paste(rep(nt, 100e3), collapse = ""))
 
 # Make ref_genome object from a pointer to a RefGenome object based on `seqs`
-rg <- ref_genome$new(jackal:::make_ref_genome(seq))
+rg <- ref_genome$new(jackalope:::make_ref_genome(seq))
 
 pacbio(rg, out_prefix = paste0(dir, "test"), n_reads = 10e3)
 
@@ -29,7 +29,8 @@ fq <- readLines(paste0(dir, "test_R1.fq"))
 # Looking at default read length distribution:
 
 # Defaults from SimLoRD:
-test_lens <- function(N) {
+test_lens <- function(N, seed = NULL) {
+    if (!is.null(seed)) set.seed(seed)
     pars <- list(sigma = 0.200110276521, loc = -10075.4363813, scale = 17922.611306,
                  min_len = 50)
     z <- rlnorm(N, log(pars$scale), pars$sigma)
@@ -38,11 +39,20 @@ test_lens <- function(N) {
     return(z)
 }
 
-read_lens <- nchar(fq[seq(2, length(fq), 4)])
 
-par(mfrow = c(2, 1))
-hist(read_lens, main = "Observed read length distribution")
-hist(test_lens(10e3), main = "Expected read length distribution")
+tibble(Observed = nchar(fq[seq(2, length(fq), 4)]),
+       Expected = test_lens(length(read_lens), 46135456)) %>%
+    gather("type", "len", factor_key = TRUE) %>%
+    ggplot(aes(len)) +
+    geom_freqpoly(aes(color = type), bins = 50, size = 1) +
+    theme_classic() +
+    theme(legend.position = c(0.75, 0.75),
+          legend.text = element_text(size = 11)) +
+    scale_color_brewer(NULL, palette = "Dark2") +
+    ggtitle("Read length distributions") +
+    ylab("Count") +
+    scale_x_continuous("Read length (kb)",
+                       breaks = seq(0, 30e3, 10e3), labels = seq(0, 30, 10))
 
 
 # Looking at qualities:

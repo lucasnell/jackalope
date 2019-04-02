@@ -4,8 +4,8 @@
 \alias{create_variants}
 \title{Create variants from a reference genome.}
 \usage{
-create_variants(reference, method, method_info, mevo_obj, n_cores = 1,
-  show_progress = FALSE)
+create_variants(reference, method, method_info, mevo_obj = NULL,
+  n_cores = 1, show_progress = FALSE)
 }
 \arguments{
 \item{reference}{A \code{ref_genome} object from which to generate variants.
@@ -15,11 +15,16 @@ This argument is required.}
 Options are as follows:
 \describe{
 \item{\code{"phylo"}}{phylogenetic tree(s) from \code{phylo} object(s).}
-\item{\code{"coal_obj"}}{coalescent-simulator object(s) from the \code{scrm} or \code{coala}
-package.}
-\item{\code{"ms_file"}}{a file containing output from a coalescent simulator in the
+\item{\code{"coal_trees"}}{information from gene trees, either in the form of
+(1) coalescent-simulator object(s) from the \code{scrm} or \code{coala} package, or
+(2) a file containing output from a coalescent simulator in the
 format of the \code{ms} program.}
-\item{\code{"newick"}}{NEWICK file(s) containing a phylogenetic tree(s).}
+\item{\code{"coal_sites"}}{information from matrices of segregating sites,
+either in the form of
+(1) coalescent-simulator object(s) from the \code{scrm} or \code{coala} package, or
+(2) a file containing output from a coalescent simulator in the
+format of the \code{ms} program.}
+\item{\code{"newick"}}{NEWICK file(s) containing phylogenetic tree(s).}
 \item{\code{"theta"}}{an estimate for theta, the population-scaled mutation rate.}
 \item{\code{"vcf"}}{a variant call format (VCF) file that directly specifies
 variants. This method does not work if the \code{vcfR} package isn't installed.
@@ -31,7 +36,9 @@ variants. This method does not work if the \code{vcfR} package isn't installed.
 See "Method arguments" section for which arguments are used for each method.}
 
 \item{mevo_obj}{A \code{mevo} object that stores molecular-evolution information.
-See \code{\link{make_mevo}} for more information.}
+This argument is needed for all methods except \code{"vcf"}.
+See \code{\link{make_mevo}} for more information.
+Defaults to \code{NULL}.}
 
 \item{n_cores}{Number of cores to use for parallel processing.
 This argument is ignored if OpenMP is not enabled.
@@ -58,24 +65,47 @@ each reference sequence.
 Phylogenies will be assigned to sequences in the order provided.
 }
 }
-\item{\code{method = "coal_obj"}}{One of the following object types is allowed:
+\item{\code{method = "coal_trees"}}{One of the following object types is allowed:
 \itemize{
 \item A single \code{list} with a \code{trees} field inside. This field must
 contain a set of gene trees for each sequence.
 \item A list of lists, each sub-list containing a \code{trees} field of
 length 1. The top-level list must be of the same length as the
 number of sequences.
+\item A single string specifying the name of the file containing
+the \code{ms}-style coalescent output with gene trees.
 }
-For what all \code{trees} fields should look like, see output from the
+The top two options are designed after the \code{trees} fields in the output from
+the \code{scrm} and \code{coala} packages.
+(These packages are not required to be installed when installing
+\code{jackalope}.)
+To get gene trees, make sure to add \code{+ sumstat_trees()}
+to the \code{coalmodel} for \code{coala}, or
+make sure that \code{"-T"} is present in \code{args} for \code{scrm}.
+If using an output file from a command-line program like \code{ms}/\code{msms},
+add the \code{-T} option.
+}
+\item{\code{method = "coal_sites"}}{One of the following object types is allowed:
+\itemize{
+\item A single \code{list} with a \code{seg_sites} field inside. This field must
+contain a matrix for segregating sites for each sequence.
+The matrix itself should contain the haplotype information, coded
+using 0s and 1s: 0s indicate the ancestral state and 1s indicate
+mutant.
+The matrix column names should be numbers in the range (0,1) and
+indicate the relative positions of the polymorphisms on the
+chromosome.
+\item A single string specifying the name of the file containing
+the \code{ms}-style coalescent output with segregating site info.
+\item A list containing \code{names} and \code{info} fields. The \code{info} field should
+be one of the options above, and the \code{names} field provides a name
+for each variant.
+}
+For what the \code{seg_sites} field should look like in a list, see output from the
 \code{scrm} or \code{coala} package.
 (These packages are not required to be installed when installing
-\code{jackal}.)
-To get gene trees in \code{coala}, make sure to add \code{+ sumstat_trees()}
-to the \code{coalmodel}.
-In \code{scrm}, make sure that \code{"-T"} is present in \code{args}.
+\code{jackalope}.)
 }
-\item{\code{method = "ms_file"}}{A single string specifying the name of the file
-containing the \code{ms}-style coalescent output.}
 \item{\code{method = "newick"}}{One or more string(s), each of which specifies
 a name of a NEWICK file containing a phylogeny.
 If one name is provided, that phylogeny will be used for all sequences.
@@ -96,9 +126,9 @@ This method won't work if the package \code{vcfR} isn't installed.}
 
 \examples{
 r <- create_genome(10, 1000)
-p <- ape::rcoal(5)
+tree <- ape::rcoal(5)
 m <- make_mevo(r, list(model = "JC69", lambda = 0.1))
-v <- create_variants(r, "phylo", p, m)
-
+v_phylo <- create_variants(r, "phylo", tree, m)
+v_theta <- create_variants(r, "theta", list(theta = 0.001, n_vars = 5), m)
 
 }

@@ -17,7 +17,7 @@
 #include <string>
 #include <pcg/pcg_random.hpp> // pcg prng
 
-#include "jackal_types.h"  // integer types
+#include "jackalope_types.h"  // integer types
 #include "pcg.h"  // runif_* methods
 
 
@@ -197,6 +197,18 @@ inline void trunc_rnorm_far(double& out,
     out = sigma * x_bar + mu;
 
     return;
+}
+
+
+
+
+//' For prettier long error messages.
+//'
+//'
+inline void str_stop(const std::vector<std::string>& err_msg_vec) {
+    std::string err_msg = "";
+    for (const std::string& err : err_msg_vec) err_msg += err;
+    throw(Rcpp::exception(err_msg.c_str(), false));
 }
 
 

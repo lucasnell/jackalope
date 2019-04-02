@@ -18,8 +18,8 @@
 
 
 #include "seq_classes_ref.h"  // Ref* classes
-#include "jackal_types.h"  // integer types
-#include "table_sampler.h"  // Table string sampler
+#include "jackalope_types.h"  // integer types
+#include "alias_sampler.h"  // alias string sampler
 #include "util.h"  // clear_memory
 
 
@@ -148,9 +148,8 @@ void filter_sequences(SEXP ref_genome_ptr,
     if (min_seq_size > 0) {
         if (seqs.back().size() >= min_seq_size) return;
         if (seqs[i].size() < min_seq_size) {
-            stop("Desired minimum scaffold size is too large. None found. "
-                     "The minimum size is " + std::to_string(seqs[i].size())
-            );
+            str_stop({"Desired minimum scaffold size is too large. None found. ",
+                     "The minimum size is ", std::to_string(seqs[i].size())});
         }
         // after below, `iter` points to the first sequence smaller than the minimum
         while (seqs[i].size() >= min_seq_size) {
@@ -238,7 +237,7 @@ void replace_Ns_cpp(SEXP ref_genome_ptr,
     pcg64 eng = seeded_pcg(active_seeds);
 
     // Samples for nucleotides:
-    TableStringSampler<std::string> sampler("TCAG", pi_tcag);
+    AliasStringSampler<std::string> sampler("TCAG", pi_tcag);
 
 #ifdef _OPENMP
 #pragma omp for schedule(static)

@@ -6,45 +6,43 @@
 #'
 #' Accepts uncompressed and gzipped fasta files.
 #'
-#' @param fasta_file File name of the fasta file.
-#' @param fai_file File name of the fasta index file.
+#' @param fasta_files File name(s) of the fasta file(s).
+#' @param fai_files File name(s) of the fasta index file(s).
 #'     Providing this argument speeds up the reading process significantly.
-#'     Defaults to \code{NULL}, which indicates the fasta file is not indexed.
+#'     If this argument is provided, it must be the same length as the `fasta_files`
+#'     argument.
+#'     Defaults to \code{NULL}, which indicates the fasta file(s) is/are not indexed.
 #' @param cut_names Boolean for whether to cut sequence names at the first space.
 #'     This argument is ignored if \code{fai_file} is not \code{NULL}.
 #'     Defaults to \code{FALSE}.
-#' @param rm_soft_mask Boolean for whether to remove soft-masking by making
-#'    sequences all uppercase. Defaults to \code{TRUE}.
 #'
 #' @return A \code{\link{ref_genome}} object.
 #'
 #' @export
 #'
 #'
-read_fasta <- function(fasta_file, fai_file = NULL,
-                       cut_names = FALSE, rm_soft_mask = TRUE) {
+read_fasta <- function(fasta_files, fai_files = NULL,
+                       cut_names = FALSE) {
 
 
-    if (!is_type(fasta_file, "character", 1)) {
-        err_msg("read_fasta", "fasta_file", "a single string")
+    if (!is_type(fasta_files, "character")) {
+        err_msg("read_fasta", "fasta_files", "a character vector")
     }
-    if (!is.null(fai_file) && !is_type(fai_file, "character", 1)) {
-        err_msg("read_fasta", "fai_file", "NULL or a single string")
+    if (!is.null(fai_files) && !is_type(fai_files, "character", length(fasta_files))) {
+        err_msg("read_fasta", "fai_files", "NULL or a character vector of the same",
+                "length as the `fasta_files` argument")
     }
     if (!is_type(cut_names, "logical", 1)) {
         err_msg("read_fasta", "cut_names", "a single logical")
     }
-    if (!is_type(rm_soft_mask, "logical", 1)) {
-        err_msg("read_fasta", "rm_soft_mask", "a single logical")
-    }
 
-    fasta_file <- path.expand(fasta_file)
+    # For now I'm forcing the users to remove soft-masking
+    rm_soft_mask <- TRUE
 
-    if (is.null(fai_file)) {
-        ptr <- read_fasta_noind(fasta_file, cut_names, rm_soft_mask)
+    if (is.null(fai_files)) {
+        ptr <- read_fasta_noind(fasta_files, cut_names, rm_soft_mask)
     } else {
-        fai_file <- path.expand(fai_file)
-        ptr <- read_fasta_ind(fasta_file, fai_file, rm_soft_mask)
+        ptr <- read_fasta_ind(fasta_files, fai_files, rm_soft_mask)
     }
 
     reference <- ref_genome$new(ptr)
@@ -85,7 +83,6 @@ write_fasta <- function(reference, file_name, text_width = 80, compress = FALSE)
              "`write_fasta` should be an external pointer.",
              call. = TRUE)
     }
-    file_name <- path.expand(file_name)
     if (compress) {
         invisible(write_fasta_gz(file_name, reference$genome, text_width))
     } else {
@@ -218,4 +215,72 @@ read_vcf <- function(reference, method_info) {
 }
 
 
+
+#' Write variant info from a \code{variants} object to a VCF file.
+#'
+#' @param vars A \code{variants} object.
+#' @param out_prefix Prefix for the output file VCF.
+#' @param compress Boolean for whether to compress using \code{"gzip"}.
+#'     Defaults to \code{FALSE}.
+#' @param sample_matrix Matrix to specify how haploid variants are grouped into samples
+#'     if samples are not haploid. There should be one row for each sample, and
+#'     each row should contain indices or names for the variants present in that sample.
+#'     Indices/names for variants can be repeated across and within rows.
+#'     The number of columns indicates the ploidy level: 2 columns for diploid,
+#'     3 for triploid, 4 for tetraploid, and so on;
+#'     there is no limit to the ploidy level.
+#'     If this argument is `NULL`, it's assumed that each variant is its own
+#'     separate sample.
+#'     Defaults to `NULL`.
+#'
+#' @return \code{NULL}
+#'
+#' @export
+#'
+write_vcf <- function(vars,
+                      out_prefix,
+                      compress = FALSE,
+                      sample_matrix = NULL) {
+
+    if (!inherits(vars, "variants")) {
+        err_msg("write_vcf", "vars", "a \"variants\" object")
+    }
+    if (!is_type(out_prefix, "character", 1)) {
+        err_msg("write_vcf", "out_prefix", "a single string")
+    }
+    if (!is_type(compress, "logical", 1)) {
+        err_msg("write_vcf", "compress", "a single logical")
+    }
+    if (!inherits(vars$genomes, "externalptr")) {
+        stop("\nThe `genomes` field in the `vars` argument supplied to ",
+             "`write_vcf` should be an external pointer.",
+             call. = TRUE)
+    }
+    if (!is.null(sample_matrix) && !inherits(sample_matrix, "matrix")) {
+        err_msg("write_vcf", "sample_matrix", "NULL or a matrix")
+    }
+    if (is.null(sample_matrix)) {
+        sample_matrix <- cbind(1:vars$n_vars())
+    }
+    # If they provided names rather than indices:
+    if (inherits(sample_matrix[1,1], "character")) {
+        var_names <- vars$var_names()
+        not_found <- !unique(as.character(sample_matrix)) %in% var_names
+        if (sum(not_found) > 0) {
+            stop("\nThe `sample_matrix` argument to the `write_vcf` function had ",
+                 "the following variant name(s) that weren't found in the ",
+                 "input variants object: ",
+                 paste(unique(as.character(sample_matrix))[not_found], collapse = ", "),
+                 call. = FALSE)
+        }
+        sample_matrix <- apply(sample_matrix, 1:2, function(nm) which(var_names == nm))
+    } else if (!inherits(sample_matrix[1,1], c("numeric", "integer"))) {
+        err_msg("write_vcf", "sample_matrix", "NULL or a character, numeric, or",
+                "integer matrix.")
+    }
+
+    write_vcf_cpp(out_prefix, compress, vars$genomes, sample_matrix, FALSE)
+
+    return(invisible(NULL))
+}
 

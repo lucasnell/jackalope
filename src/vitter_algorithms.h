@@ -16,7 +16,7 @@
 #include <omp.h>
 #endif
 
-#include "jackal_types.h"
+#include "jackalope_types.h"
 #include "util.h"  // uints_get_size
 #include "pcg.h"  // pcg::max
 

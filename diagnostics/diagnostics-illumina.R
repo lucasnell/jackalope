@@ -6,7 +6,7 @@
 #'
 
 
-library(jackal)
+library(jackalope)
 library(tidyverse)
 source(".Rprofile")
 
@@ -15,7 +15,7 @@ Rcpp::sourceCpp("diagnostics/diagnostics-illumina.cpp")
 dir <- paste0(tempdir(check = TRUE), "/")
 
 # Profile I'll be using
-prof <- jackal:::read_profile(NULL, "HS25", read_length = 100, 1)
+prof <- jackalope:::read_profile(NULL, "HS25", read_length = 100, 1)
 
 # Predicted qualities for each nucleotide
 pred_df <- map_dfr(1:4,
@@ -59,7 +59,7 @@ bases <- c("T", "C", "A", "G")
 seq <- sapply(bases, function(nt) paste(rep(nt, 100e3), collapse = ""))
 
 # Make ref_genome object from a pointer to a RefGenome object based on `seqs`
-rg <- ref_genome$new(jackal:::make_ref_genome(seq))
+rg <- ref_genome$new(jackalope:::make_ref_genome(seq))
 
 illumina(rg, out_prefix = paste0(dir, "test"),
          n_reads = 100e3, read_length = 100, paired = FALSE, seq_sys = "HS25",
@@ -155,7 +155,7 @@ mmbq_df %>%
 seqs <- replicate(100e3, paste(rep("TA", 10 / 2), collapse = ""))
 
 # Make ref_genome object from a pointer to a RefGenome object based on `seqs`
-rg <- ref_genome$new(jackal:::make_ref_genome(seqs))
+rg <- ref_genome$new(jackalope:::make_ref_genome(seqs))
 
 
 
@@ -185,7 +185,7 @@ indel_test <- function(.ins_prob, .del_prob) {
 
 
 
-# 20 combos takes ~ 5 sec
+# Takes ~ 6 sec
 indel_df <- crossing(ins_prob = c(0, 10^(seq(-1,-4,length.out = 11))),
                      del_prob = c(0, 10^(seq(-1,-4,length.out = 11)))) %>%
     filter((ins_prob == 0 | del_prob == 0) & (ins_prob > 0 | del_prob > 0)) %>%
@@ -227,7 +227,7 @@ poss_pairs <- c(paste(c(rep('C', 25), rep('N', 75)), collapse = ""),
                 paste(c(rep('A', 25), rep('N', 75)), collapse = ""))
 
 # Make ref_genome object from a pointer to a RefGenome object based on `seq`
-rg <- ref_genome$new(jackal:::make_ref_genome(seq))
+rg <- ref_genome$new(jackalope:::make_ref_genome(seq))
 
 illumina(rg, out_prefix = paste0(dir, "test"),
          n_reads = 10e3, read_length = 100,
@@ -272,7 +272,7 @@ poss_pairs <- c(paste(c(rep('N', 75), rep('T', 25)), collapse = ""),
                 paste(c(rep('N', 75), rep('G', 25)), collapse = ""))
 
 # Make ref_genome object from a pointer to a RefGenome object based on `seq`
-rg <- ref_genome$new(jackal:::make_ref_genome(seq))
+rg <- ref_genome$new(jackalope:::make_ref_genome(seq))
 
 illumina(rg, out_prefix = paste0(dir, "test"),
          n_reads = 10, read_length = 100,

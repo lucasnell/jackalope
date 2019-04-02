@@ -15,12 +15,69 @@
 #include <deque>  // deque
 
 
-#include "jackal_types.h"  // integer types
+#include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 
 using namespace Rcpp;
 
+
+
+VarSequence& VarSequence::operator+=(const VarSequence& other) {
+
+    // If either is empty, then this is easy:
+    if (other.mutations.empty()) return *this;
+    if (mutations.empty()) {
+        mutations = other.mutations;
+        seq_size = other.seq_size;
+        return *this;
+    }
+
+    // Combine sequence sizes:
+    sint32 diff = static_cast<sint32>(other.seq_size) -
+        static_cast<sint32>(ref_seq->size());
+    seq_size += diff;
+
+    /*
+    Now combine `mutations` deques.
+    Process differently depending on whether `other` has its mutations before
+    or after this one's.
+    If they overlap, then throw an error.
+    */
+    // `other` has mutations before this one:
+    bool other_is_before = other.mutations.back() < mutations.front();
+    // `other` has mutations after this one:
+    bool other_is_after = other.mutations.front() > mutations.back();
+    if (other_is_before) {
+        // Adjust current mutations' `new_pos` fields (using `diff` from above):
+        auto mut_ = mutations.begin();
+        for (; mut_ != mutations.end(); ++mut_) {
+            (*mut_).new_pos += diff;
+        }
+        // Now add the new mutations:
+        auto mut = other.mutations.rbegin();  // note the use of reverse iterator!
+        for (; mut != other.mutations.rend(); ++mut) {
+            // Add the new mutation to the front of `(*this).mutations`:
+            mutations.push_front(*mut);
+        }
+    } else if (other_is_after) {
+        // The amount to adjust the new mutation's `new_pos` fields:
+        diff = static_cast<sint32>(seq_size) - static_cast<sint32>(ref_seq->size());
+        auto mut = other.mutations.begin();
+        for (; mut != other.mutations.end(); ++mut) {
+            // Add the new mutation to the back of `(*this).mutations`:
+            mutations.push_back(*mut);
+            // Adjust the `new_pos` field:
+            mutations.back().new_pos += diff;
+        }
+    } else {
+        str_stop({"\nOverlapping VarSequence.mutations in +=. ",
+                 "Note that when combining VarSequence objects, you must ",
+                 "do it sequentially, either from the front or back."});
+    }
+
+    return *this;
+}
 
 
 /*
@@ -886,10 +943,9 @@ uint32 VarSequence::get_mut_(const uint32& new_pos) const {
     if (mutations.empty()) return mutations.size();
 
     if (new_pos >= seq_size) {
-        stop(
-            "new_pos should never be >= the sequence size. "
-            "Either re-calculate the sequence size or closely examine new_pos."
-        );
+        str_stop({"new_pos should never be >= the sequence size. ",
+                 "Either re-calculate the sequence size or closely examine new_pos."});
+
     }
     /*
      If new_pos is less than the position for the first mutation, we return

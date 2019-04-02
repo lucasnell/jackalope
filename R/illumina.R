@@ -3,12 +3,11 @@
 #' Return table of information about built-in Illumina profiles.
 #'
 #'
-#' @importFrom utils read.csv
 #'
 #' @noRd
 #'
 builtin_illumina_profiles <- function() {
-    profiles <- read.csv(
+    profiles <- utils::read.csv(
         text = paste('"name","read_length","read","file_name","abbrev"',
                      '"Genome Analyzer I",36,1,"EmpR36R1","GA1"',
                      '"Genome Analyzer I",36,2,"EmpR36R2","GA1"',
@@ -111,7 +110,7 @@ find_profile_file <- function(seq_sys, read_length, read) {
     }
 
     profile_fn <- paste0(profile_df$file_name[criteria3][1], ".txt.gz")
-    profile_fn <- system.file("art_profiles", profile_fn, package = "jackal",
+    profile_fn <- system.file("art_profiles", profile_fn, package = "jackalope",
                               mustWork = TRUE)
 
     return(profile_fn)
@@ -309,7 +308,8 @@ check_illumina_args <- function(seq_object, n_reads,
     }
     for (x in c("ins_prob1", "del_prob1", "ins_prob2", "del_prob2", "prob_dup")) {
         z <- eval(parse(text = x))
-        if (!single_number(z, 0, 1)) err_msg("illumina", x, "a single number in range [0,1].")
+        if (!single_number(z, 0, 1)) err_msg("illumina", x,
+                                             "a single number in range [0,1].")
     }
     for (x in c("seq_sys", "profile1", "profile2")) {
         z <- eval(parse(text = x))
@@ -323,8 +323,12 @@ check_illumina_args <- function(seq_object, n_reads,
             err_msg("illumina", x, "NULL or a single integer >= 1")
         }
     }
-    if (!is.null(variant_probs) && !is_type(variant_probs, c("numeric", "integer"))) {
-        err_msg("illumina", "variant_probs", "NULL or a numeric/integer vector")
+    if (!is.null(variant_probs) &&
+        (!is_type(variant_probs, c("numeric", "integer")) ||
+         any(variant_probs < 0) ||
+         all(variant_probs == 0))) {
+        err_msg("illumina", "variant_probs", "NULL or a numeric/integer vector",
+                "with no values < 0 and at least one value > 0")
     }
     if (!is.null(barcodes) && !is_type(barcodes, "character")) {
         err_msg("illumina", "barcodes", "NULL or a character vector")

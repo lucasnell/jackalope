@@ -11,7 +11,7 @@
 #include <zlib.h>  // for writing to compressed FASTQ
 #include <progress.hpp>  // for the progress bar
 
-#include "jackal_types.h"  // uint32
+#include "jackalope_types.h"  // uint32
 #include "pcg.h"  // ruinf_01
 
 using namespace Rcpp;

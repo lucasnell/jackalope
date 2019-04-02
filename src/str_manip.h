@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <random>
 
-#include "jackal_types.h" // integer types
+#include "jackalope_types.h" // integer types
 
 using namespace Rcpp;
 
@@ -85,6 +85,16 @@ inline void filter_nucleos(std::string& nucleos, const bool& upper) {
     return;
 }
 
+
+
+// Trim leading and trailing whitespace off a string
+inline void trimws(std::string& str) {
+    size_t first = str.find_first_not_of(' ');
+    if (std::string::npos == first) return;
+    size_t last = str.find_last_not_of(' ');
+    str = str.substr(first, (last - first + 1));
+    return;
+}
 
 
 /*

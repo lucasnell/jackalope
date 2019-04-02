@@ -23,10 +23,10 @@
 #include <omp.h>  // omp
 #endif
 
-#include "jackal_types.h"  // integer types
+#include "jackalope_types.h"  // integer types
 #include "seq_classes_var.h"  // Var* classes
 #include "mevo.h"  // samplers
-#include "table_sampler.h" // table sampling
+#include "alias_sampler.h" // alias sampling
 #include "pcg.h" // pcg sampler types
 
 
@@ -189,9 +189,9 @@ public:
         sint64 end_ = -1;
         for (uint32 i = 0; i < n_trees; i++) {
             end_ += n_bases_[i];
+            if (i > 0) start_ += n_bases_[i-1];
             trees[i] = PhyloTree(branch_lens_[i], edges_[i], tip_labels_[i],
                                  start_, end_);
-            if (i < (n_trees - 1)) start_ += n_bases_[i+1];
         }
 
         // Filling in pointers:
@@ -248,9 +248,9 @@ public:
         sint64 end_ = -1;
         for (uint32 i = 0; i < n_trees; i++) {
             end_ += n_bases_[i];
+            if (i > 0) start_ += n_bases_[i-1];
             trees[i] = PhyloTree(branch_lens_[i], edges_[i], tip_labels_[i],
                                  start_, end_);
-            if (i < (n_trees - 1)) start_ += n_bases_[i+1];
         }
 
     }
@@ -474,137 +474,13 @@ private:
     /*
      Update final `VarSequence` objects in the same order as `ordered_tip_labels`:
      */
-    void update_var_seq(const PhyloTree& tree) {
-
-        std::vector<uint32> spp_order = match_(ordered_tip_labels,
-                                               tree.tip_labels);
-
-        if (recombination) {
-            for (uint32 i = 0; i < tree.n_tips; i++) {
-                uint32 j = spp_order[i];
-                (*var_seq_ptrs[i]) += var_seqs[j];
-            }
-        } else {
-            for (uint32 i = 0; i < tree.n_tips; i++) {
-                uint32 j = spp_order[i];
-                (*var_seq_ptrs[i]).replace(var_seqs[j]);
-            }
-        }
-        return;
-    }
+    void update_var_seq(const PhyloTree& tree);
 
 };
 
 
 
 
-
-/*
- Process one phylogenetic tree for a single sequence with no recombination.
- This template does most of the work for the chunked and non-chunked versions in
- the cpp file.
- `T` should be `MutationSampler` or `ChunkMutationSampler`.
-
- Note that this function should be changed if any of these VarSequences differ from
- each other (within the range specified if recombination = true).
- They can already have mutations, but to start out, they must all be the same.
- */
-template<typename T>
-int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
-                             pcg64& eng,
-                             Progress& prog_bar) {
-
-    // Reset tree of samplers and VarSequence objects representing nodes and tips:
-    reset(tree);
-
-    /*
-     Check for a user interrupt. Using a Progress object allows the user to interrupt
-     the process during multithreaded operations.
-     If recombination == true, I'm only doing this here, not for each edge bc that
-     would likely cause too many checks, which would slow things down.
-     */
-    if (prog_bar.is_aborted()) return -1;
-
-    // Exponential distribution to do the time-jumps along the branch lengths:
-    std::exponential_distribution<double> distr(1.0);
-
-    /*
-     Now iterate through the phylogeny:
-     */
-    for (uint32 i = 0; i < tree.n_edges; i++) {
-
-        // If not simulating recombination, checking for abort every edge:
-        if (!recombination) {
-            if (prog_bar.is_aborted()) return -1;
-        }
-
-        // Indices for nodes/tips that the branch length in `branch_lens` refers to
-        uint32 b1 = tree.edges(i,0);
-        uint32 b2 = tree.edges(i,1);
-
-        /*
-         Update `samplers`, `seq_rates`, and `distr` for this edge:
-         */
-        update(distr, b1, b2);
-
-        /*
-         Now do exponential jumps and mutate until you exceed the branch length.
-         */
-        double& rate(seq_rates[b2]);
-        double amt_time = tree.branch_lens[i];
-        double time_jumped = distr(eng);
-        double rate_change = 0;
-        if (recombination) {
-            sint64& end_(tree.ends[b2]);
-            end_ = tree.ends[b1];
-            const sint64 start_ = static_cast<sint64>(tree.start);
-            while (time_jumped <= amt_time && end_ >= start_) {
-                /*
-                 Add mutation here, outputting how much the overall sequence rate should
-                 change:
-                 (`end_` is automatically adjusted for indels)
-                 */
-                rate_change = samplers[b2].mutate(eng, tree.start, end_);
-                /*
-                 Adjust the overall sequence rate, then update the exponential
-                 distribution:
-                 */
-                rate += rate_change;
-                distr.param(std::exponential_distribution<double>::param_type(rate));
-                // Jump again:
-                time_jumped += distr(eng);
-            }
-        } else {
-            // Same thing but without recombination
-            while (time_jumped <= amt_time && var_seqs[b2].size() > 0) {
-                rate_change = samplers[b2].mutate(eng);
-                rate += rate_change;
-                distr.param(std::exponential_distribution<double>::param_type(rate));
-                time_jumped += distr(eng);
-            }
-        }
-
-        /*
-         To free up some memory, clear info from VarSequence object at `b1` if it's no
-         longer needed.
-         */
-        clear_branches(b1, i, tree);
-
-    }
-
-    /*
-     Update final `VarSequence` objects:
-     */
-    update_var_seq(tree);
-
-    // Update progress bar:
-    if (recombination) {
-        prog_bar.increment(tree.end - tree.start + 1);
-    } else prog_bar.increment(var_seq_ptrs[0]->ref_seq->size());
-
-    return 0;
-
-}
 
 
 
