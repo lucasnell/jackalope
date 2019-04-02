@@ -465,6 +465,8 @@ NULL
 
 #' Add mutations manually from R.
 #'
+#' This section applies to the next 3 functions.
+#'
 #' Note that all indices are in 0-based C++ indexing. This means that the first
 #' item is indexed by `0`, and so forth.
 #'
@@ -474,7 +476,7 @@ NULL
 #' @param new_pos_ Integer index to the desired subsitution location.
 #'     Uses 0-based indexing!
 #'
-#' @name add_mutations
+#' @noRd
 NULL
 
 #' Function to print info on a `RefGenome`.
@@ -625,7 +627,7 @@ examine_mutations <- function(var_set_ptr, var_ind, seq_ind) {
 #' @param gamma_ends Vector of endpoints for gamma regions
 #' @param positions Vector of positions that you want to bin into gamma regions.
 #'
-#'
+#' @noRd
 #'
 table_gammas <- function(gamma_ends, positions) {
     .Call(`_jackal_table_gammas`, gamma_ends, positions)
@@ -636,6 +638,7 @@ table_gammas <- function(gamma_ends, positions) {
 #' @inheritParams add_mutations
 #' @param nucleo_ Character to substitute for existing one.
 #'
+#' @noRd
 #'
 add_substitution <- function(var_set_ptr, var_ind, seq_ind, nucleo_, new_pos_) {
     invisible(.Call(`_jackal_add_substitution`, var_set_ptr, var_ind, seq_ind, nucleo_, new_pos_))
@@ -647,6 +650,8 @@ add_substitution <- function(var_set_ptr, var_ind, seq_ind, nucleo_, new_pos_) {
 #' @param nucleos_ Nucleotides to insert at the desired location.
 #'
 #'
+#' @noRd
+#'
 add_insertion <- function(var_set_ptr, var_ind, seq_ind, nucleos_, new_pos_) {
     invisible(.Call(`_jackal_add_insertion`, var_set_ptr, var_ind, seq_ind, nucleos_, new_pos_))
 }
@@ -656,6 +661,8 @@ add_insertion <- function(var_set_ptr, var_ind, seq_ind, nucleos_, new_pos_) {
 #' @inheritParams add_mutations
 #' @param size_ Size of deletion.
 #'
+#'
+#' @noRd
 #'
 add_deletion <- function(var_set_ptr, var_ind, seq_ind, size_, new_pos_) {
     invisible(.Call(`_jackal_add_deletion`, var_set_ptr, var_ind, seq_ind, size_, new_pos_))

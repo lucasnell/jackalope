@@ -420,6 +420,19 @@ mevo$lock()
 #'         be the same length as the # variants.}
 #'     \item{`rm_vars(var_names)`}{Remove one or more variants based on names in
 #'         the `var_names` vector.}
+#'     \item{`add_sub(var_ind, seq_ind, pos, nt)`}{Manually add a substitution
+#'         for a given variant (`var_ind`), sequence (`seq_ind`), and position (`pos`).
+#'         The reference nucleotide will be changed to `nt`, which should be a single
+#'         character.}
+#'     \item{`add_ins(var_ind, seq_ind, pos, nts)`}{Manually add an insertion
+#'         for a given variant (`var_ind`), sequence (`seq_ind`), and position (`pos`).
+#'         The nucleotide(s) `nts` will be inserted after the designated position.}
+#'     \item{`add_del(var_ind, seq_ind, pos, n_nts)`}{Manually add a deletion
+#'         for a given variant (`var_ind`), sequence (`seq_ind`), and position (`pos`).
+#'         The designated number of nucleotides to delete (`n_nts`) will be deleted
+#'         starting at `pos`, unless `pos` is near the sequence end and doesn't have
+#'         `n_nts` nucleotides to remove; it simply stops at the sequence end in
+#'         this case.}
 #' }
 #'
 #' @return An object of class \code{variants}.
@@ -576,6 +589,7 @@ variants <- R6::R6Class(
     ),
 
 
+    # __private__ ------
     private = list(
         # This should store a `XPtr<RefGenome>` to make sure it doesn't
         # go out of scope:

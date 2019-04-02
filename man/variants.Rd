@@ -69,6 +69,19 @@ indices for the sequence (\code{seq_ind}) and variant (\code{var_ind}).}
 be the same length as the # variants.}
 \item{\code{rm_vars(var_names)}}{Remove one or more variants based on names in
 the \code{var_names} vector.}
+\item{\code{add_sub(var_ind, seq_ind, pos, nt)}}{Manually add a substitution
+for a given variant (\code{var_ind}), sequence (\code{seq_ind}), and position (\code{pos}).
+The reference nucleotide will be changed to \code{nt}, which should be a single
+character.}
+\item{\code{add_ins(var_ind, seq_ind, pos, nts)}}{Manually add an insertion
+for a given variant (\code{var_ind}), sequence (\code{seq_ind}), and position (\code{pos}).
+The nucleotide(s) \code{nts} will be inserted after the designated position.}
+\item{\code{add_del(var_ind, seq_ind, pos, n_nts)}}{Manually add a deletion
+for a given variant (\code{var_ind}), sequence (\code{seq_ind}), and position (\code{pos}).
+The designated number of nucleotides to delete (\code{n_nts}) will be deleted
+starting at \code{pos}, unless \code{pos} is near the sequence end and doesn't have
+\code{n_nts} nucleotides to remove; it simply stops at the sequence end in
+this case.}
 }
 }
 

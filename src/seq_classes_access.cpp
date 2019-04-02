@@ -612,7 +612,7 @@ List examine_mutations(SEXP var_set_ptr, const uint32& var_ind, const uint32& se
 //' @param gamma_ends Vector of endpoints for gamma regions
 //' @param positions Vector of positions that you want to bin into gamma regions.
 //'
-//'
+//' @noRd
 //'
 //[[Rcpp::export]]
 std::vector<uint32> table_gammas(const std::vector<uint32>& gamma_ends,
@@ -628,7 +628,10 @@ std::vector<uint32> table_gammas(const std::vector<uint32>& gamma_ends,
 
 
 
+
 //' Add mutations manually from R.
+//'
+//' This section applies to the next 3 functions.
 //'
 //' Note that all indices are in 0-based C++ indexing. This means that the first
 //' item is indexed by `0`, and so forth.
@@ -639,7 +642,7 @@ std::vector<uint32> table_gammas(const std::vector<uint32>& gamma_ends,
 //' @param new_pos_ Integer index to the desired subsitution location.
 //'     Uses 0-based indexing!
 //'
-//' @name add_mutations
+//' @noRd
 NULL_ENTRY;
 
 //' @describeIn add_mutations Add a substitution.
@@ -647,6 +650,7 @@ NULL_ENTRY;
 //' @inheritParams add_mutations
 //' @param nucleo_ Character to substitute for existing one.
 //'
+//' @noRd
 //'
 //[[Rcpp::export]]
 void add_substitution(SEXP var_set_ptr, const uint32& var_ind,
@@ -665,6 +669,8 @@ void add_substitution(SEXP var_set_ptr, const uint32& var_ind,
 //' @param nucleos_ Nucleotides to insert at the desired location.
 //'
 //'
+//' @noRd
+//'
 //[[Rcpp::export]]
 void add_insertion(SEXP var_set_ptr, const uint32& var_ind,
                    const uint32& seq_ind,
@@ -681,6 +687,8 @@ void add_insertion(SEXP var_set_ptr, const uint32& var_ind,
 //' @inheritParams add_mutations
 //' @param size_ Size of deletion.
 //'
+//'
+//' @noRd
 //'
 //[[Rcpp::export]]
 void add_deletion(SEXP var_set_ptr, const uint32& var_ind,
