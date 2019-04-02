@@ -486,7 +486,7 @@ public:
 
 
     // Change the sequence this object refers to
-    void new_seq(const uint& seq_ind_) {
+    void new_seq(const uint32& seq_ind_) {
         seq_ind = seq_ind_;
         construct();
         return;
