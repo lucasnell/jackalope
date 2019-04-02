@@ -46,12 +46,18 @@ const std::string pos = "positions:";
 
 // Formatted date as "20190331"
 inline std::string vcf_date() {
-    std::time_t t = std::time(nullptr);
-    std::tm tm = *std::localtime(&t);
-    std::stringstream ss;
-    ss << std::put_time(&tm, "%Y%m%d");
-    return ss.str();
+    // Obtain environment containing function
+    Environment base("package:base");
+    // Make function callable from C++
+    Function sys_date = base["Sys.Date"];
+    Function format = base["format"];
+    // Call the function and change its output using format
+    SEXP date = sys_date();
+    SEXP fmt_date = format(date, "%Y%m%d");
+    std::string vcf_date_str = as<std::string>(fmt_date);
+    return vcf_date_str;
 }
+
 
 
 

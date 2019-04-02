@@ -224,7 +224,7 @@ test_that("variant creation works with coala coalescent object", {
     library(coala)
     model <- coal_model(sample_size = 5, loci_number = 3, loci_length = 100) +
         feat_recombination(2) +
-        feat_mutation(0.5) +
+        feat_mutation(5) +
         sumstat_trees() +
         sumstat_seg_sites()
     coal_obj <- simulate(model)
