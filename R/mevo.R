@@ -241,7 +241,7 @@ site_variability <- function(site_var, reference, gamma_bed) {
             seq_names <- reference$names()
             make_bed_df <- function(i) {
                 .df <- data.frame(chrom = seq_names[i],
-                                  start = c(0, head(gamma_mats[[i]][,1], -1)),
+                                  start = c(0, gamma_mats[[i]][-nrow(gamma_mats[[i]]),1]),
                                   end = gamma_mats[[i]][,1],
                                   id = "",
                                   gamma = gamma_mats[[i]][,2],
@@ -251,8 +251,8 @@ site_variability <- function(site_var, reference, gamma_bed) {
                 return(.df)
             }
             bed_df <- do.call(rbind, lapply(1:length(gamma_mats), make_bed_df))
-            write.table(bed_df, gamma_bed, quote = FALSE, sep = "\t",
-                        row.names = FALSE, col.names = FALSE)
+            utils::write.table(bed_df, gamma_bed, quote = FALSE, sep = "\t",
+                               row.names = FALSE, col.names = FALSE)
         }
 
     } else {

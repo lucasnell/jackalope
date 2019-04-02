@@ -3,12 +3,11 @@
 #' Return table of information about built-in Illumina profiles.
 #'
 #'
-#' @importFrom utils read.csv
 #'
 #' @noRd
 #'
 builtin_illumina_profiles <- function() {
-    profiles <- read.csv(
+    profiles <- utils::read.csv(
         text = paste('"name","read_length","read","file_name","abbrev"',
                      '"Genome Analyzer I",36,1,"EmpR36R1","GA1"',
                      '"Genome Analyzer I",36,2,"EmpR36R2","GA1"',
