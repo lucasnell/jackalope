@@ -256,7 +256,7 @@ test_that("proper gamma distance values with `shape` and `region_size` inputs", 
 
 # *  custom ----
 M <- with(pars, make_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                          site_var = list(mats = pars$mats)))
+                          site_var = pars$mats))
 
 test_that("proper gamma distance values with `mats` inputs", {
     expect_identical(M$gamma_mats, pars$mats)
@@ -267,19 +267,19 @@ test_that("proper gamma distance values with `mats` inputs", {
 test_that("throws proper errors when inputting an incorrect `site_var$mats` input", {
     expect_error({
         M <- with(pars, make_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                                  site_var = list(mats = pars$mats_err1)))
+                                  site_var = pars$mats_err1))
     })
     expect_error({
         M <- with(pars, make_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                                  site_var = list(mats = pars$mats_err2)))
+                                  site_var = pars$mats_err2))
     })
     expect_error({
         M <- with(pars, make_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                                  site_var = list(mats = pars$mats_err3)))
+                                  site_var = pars$mats_err3))
     })
     expect_error({
         M <- with(pars, make_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                                  site_var = list(mats = pars$mats_err4)))
+                                  site_var = pars$mats_err4))
     })
 })
 

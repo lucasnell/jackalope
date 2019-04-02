@@ -200,47 +200,61 @@ indels <- function(indel) {
 #'
 #' @noRd
 #'
-site_variability <- function(site_var, seq_sizes) {
+site_variability <- function(site_var, reference, gamma_bed) {
+
+    seq_sizes <- reference$sizes()
 
     if (!is.null(site_var)) {
 
-        if (all(c("shape", "region_size", "mats") %in% names(site_var))) {
-            stop("\nThe `site_var` argument to `make_mevo` ",
-                 "must be a named list with names of either ",
-                 "(a) both \"shape\" and \"region_size\" or ",
-                 "(b) just \"mats\". ",
-                 "Providing all three names is not permitted.",
-                 call. = FALSE)
+        if (!inherits(site_var, "list")) {
+            err_msg("make_mevo", "site_var", "NULL, a list specifying Gamma",
+                    "parameters \"shape\" and \"region_size\", or a list of matrices")
         }
 
         if (all(c("shape", "region_size") %in% names(site_var))) {
+
             gamma_mats <- make_gamma_mats(seq_sizes,
                                           gamma_size_ = site_var$region_size,
                                           shape = site_var$shape)
-        } else if ("mats" %in% names(site_var)) {
+            dim(gamma_mats) <- NULL # so it's just a list now
 
-            err_msg_ <- paste("\nThe `mats` field inside the `site_var`",
-                             "argument to the `make_mevo` function needs to",
-                             "be a list of matrices.")
-            if (!inherits(site_var$mats, "list")) {
-                stop(err_msg_, call. = FALSE)
-            } else if (!all(sapply(site_var$mats, inherits,
-                                   what = "matrix"))) {
-                stop(err_msg_, call. = FALSE)
-            }
+        } else if (all(sapply(site_var, inherits, what = "matrix"))) {
 
             # Check matrices for proper end points and # columns:
-            check_gamma_mats(site_var$mats, seq_sizes)
+            check_gamma_mats(site_var, seq_sizes)
 
-            gamma_mats <- site_var$mats
+            gamma_mats <- site_var
 
         } else {
-            stop("\nThe `site_var` argument to `make_mevo` ",
-                 "must be a named list with names of either ",
-                 "(a) both \"shape\" and \"region_size\" or ",
-                 "(b) just \"mats\".",
-                 call. = FALSE)
+            err_msg("make_mevo", "site_var", "NULL, a list specifying Gamma",
+                    "parameters \"shape\" and \"region_size\", or a list of matrices")
         }
+
+        # ---------*
+        # Writing to BED file if desired:
+        # ---------*
+        if (!is.null(gamma_bed) && !is_type(gamma_bed, "character", 1)) {
+            err_msg("make_mevo", "gamma_bed", "NULL or a single string")
+        }
+        if (!is.null(gamma_bed)) {
+            if (!grepl("\\.bed$", gamma_bed)) gamma_bed <- paste0(gamma_bed, ".bed")
+            seq_names <- reference$names()
+            make_bed_df <- function(i) {
+                .df <- data.frame(chrom = seq_names[i],
+                                  start = c(0, head(gamma_mats[[i]][,1], -1)),
+                                  end = gamma_mats[[i]][,1],
+                                  id = "",
+                                  gamma = gamma_mats[[i]][,2],
+                                  stringsAsFactors = FALSE)
+                .df$id <- sprintf("%s_%i_%i", gsub(" ", "_", seq_names[i]),
+                                  .df$start, .df$end)
+                return(.df)
+            }
+            bed_df <- do.call(rbind, lapply(1:length(gamma_mats), make_bed_df))
+            write.table(bed_df, gamma_bed, quote = FALSE, sep = "\t",
+                        row.names = FALSE, col.names = FALSE)
+        }
+
     } else {
         # This results in no variability among sites:
         gamma_mats <- make_gamma_mats(seq_sizes, gamma_size_ = 0, shape = 1)
@@ -307,7 +321,7 @@ site_variability <- function(site_var, seq_sizes) {
 #'                 where all sites within a region have the same gamma distance.}
 #'         }
 #'     \item Manually input matrices that specify the gamma distance and end points
-#'         for regions each gamma distances refers to.
+#'         for regions each gamma distance refers to.
 #'         This option requires the following argument:
 #'         \describe{
 #'             \item{`mats`}{List of matrices, one for each sequence in the genome.
@@ -342,6 +356,11 @@ site_variability <- function(site_var, seq_sizes) {
 #'     Passing `NULL` to this argument results in no variability among sites.
 #'     See "Site variation" section for more information.
 #'     Defaults to `NULL`.
+#' @param gamma_bed String specifying the file name for a BED file specifying the
+#'     Gamma values (for among-site variability in mutation rates).
+#'     This argument is ignored if no among-site variability is specified.
+#'     If `NULL`, no output file is produced.
+#'     Defaults to `NULL`.
 #' @param chunk_size The size of "chunks" of sequences to first sample uniformly
 #'     before doing weighted sampling by rates for each sequence location.
 #'     Uniformly sampling before doing weighted sampling dramatically speeds up
@@ -375,6 +394,7 @@ make_mevo <- function(reference,
                       ins = NULL,
                       del = NULL,
                       site_var = NULL,
+                      gamma_bed = NULL,
                       chunk_size = 100) {
 
     if (!inherits(reference, "ref_genome")) {
@@ -407,9 +427,11 @@ make_mevo <- function(reference,
 
 
     # -------+
-    # Process info for mutation-rate variability among sites:
+    # Process info for mutation-rate variability among sites and write to BED
+    # file if desired
     # -------+
-    gamma_mats <- site_variability(site_var, seq_sizes = reference$sizes())
+    gamma_mats <- site_variability(site_var, reference, gamma_bed)
+
 
 
     # -------+

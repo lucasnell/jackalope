@@ -5,7 +5,7 @@
 \title{Make a \code{mevo} object to store information needed for molecular evolution simulation.}
 \usage{
 make_mevo(reference, sub, ins = NULL, del = NULL, site_var = NULL,
-  chunk_size = 100)
+  gamma_bed = NULL, chunk_size = 100)
 }
 \arguments{
 \item{reference}{A \code{ref_genome} object from which you will generate variants.}
@@ -32,6 +32,12 @@ Defaults to \code{NULL}.}
 rates among sites (for both substitutions and indels).
 Passing \code{NULL} to this argument results in no variability among sites.
 See "Site variation" section for more information.
+Defaults to \code{NULL}.}
+
+\item{gamma_bed}{String specifying the file name for a BED file specifying the
+Gamma values (for among-site variability in mutation rates).
+This argument is ignored if no among-site variability is specified.
+If \code{NULL}, no output file is produced.
 Defaults to \code{NULL}.}
 
 \item{chunk_size}{The size of "chunks" of sequences to first sample uniformly
@@ -107,7 +113,7 @@ The mean is fixed to 1.}
 where all sites within a region have the same gamma distance.}
 }
 \item Manually input matrices that specify the gamma distance and end points
-for regions each gamma distances refers to.
+for regions each gamma distance refers to.
 This option requires the following argument:
 \describe{
 \item{\code{mats}}{List of matrices, one for each sequence in the genome.

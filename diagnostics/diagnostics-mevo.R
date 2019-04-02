@@ -8,16 +8,6 @@ library(ape)
 source(".Rprofile")
 
 
-# boot <- function(x, B = 2000, alpha = 0.01) {
-#     boots <- numeric(B)
-#     N <- length(x)
-#     for (i in 1:B) {
-#         boots[i] <- mean(sample(x, size = N, replace = TRUE))
-#     }
-#     return(quantile(boots, c(alpha / 2, 1 - alpha / 2), names = FALSE))
-# }
-
-
 
 # simulate ----
 
@@ -58,57 +48,11 @@ set.seed(1087437799)
 ref <- with(pars, ref_genome$new(jackal:::make_ref_genome(seqs)))
 
 
-# mevo_ <- with(pars, {
-#     make_mevo(ref,
-#               sub = list(model = "TN93", alpha_1 = alpha_1, alpha_2 = alpha_2,
-#                          beta = beta, pi_tcag = pi_tcag),
-#               ins = list(rate = rates[1], max_length = M[1], a = a[1]),
-#               del = list(rate = rates[2], max_length = M[2], a = a[2]),
-#               site_var = list(mats = pars$mats),
-#               chunk_size = 100)
-# })
-
-
-
-
-
-# # Takes ~ 8 sec
-# var_set <- create_variants(ref, method = "phylo", method_info = tree,
-#                            mevo_obj = mevo_)
-
 
 # For testing: just one individual at known sites
 coal_obj <- scrm("2 20 -r 3.1 1000 -t 1000")
 coal_obj$seg_sites <- map(coal_obj$seg_sites, ~ .x[1,.x[1,] > 0,drop=FALSE])
 
-
-# # =================================================================*
-# # =================================================================*
-#
-# # examine output ----
-#
-# # =================================================================*
-# # =================================================================*
-#
-#
-#
-#
-# Function to make a matrix have N columns
-make_N <- function(x, N) cbind(x, matrix(0, nrow(x), N - ncol(x)))
-#
-# mutation_exam <- function(v, s) {
-#     mut_exam <- jackal:::examine_mutations(var_set, var_ind = v, seq_ind = s)
-#     mut_exam$ins <- setNames(colSums(make_N(mut_exam$ins, pars$M[1])), 1:pars$M[1])
-#     mut_exam$del <- setNames(colSums(make_N(mut_exam$del, pars$M[2])), 1:pars$M[2])
-#     return(mut_exam)
-# }
-#
-#
-# exams <- lapply(0:(pars$n_seqs-1),
-#                 function(s) lapply(0:(pars$n_vars-1),
-#                                     jackal:::examine_mutations,
-#                                     var_set_ = var_set$genomes,
-#                                     seq_ind = s))
 
 
 
@@ -134,6 +78,9 @@ indel_pred <- function(u, j) {
     piju <- all_ps[u] / sum(all_ps)
     return(ijp * piju)
 }
+
+# Function to make a matrix have N columns
+make_N <- function(x, N) cbind(x, matrix(0, nrow(x), N - ncol(x)))
 
 # --------------------*
 # Insertions ----
@@ -306,7 +253,7 @@ mevo_ <- make_mevo(ref,
                    sub = list(model = "TN93", alpha_1 = pars$alpha_1,
                               alpha_2 = pars$alpha_2, beta = pars$beta,
                               pi_tcag = pars$pi_tcag),
-                   site_var = list(mats = pars$mats[1:ref$n_seqs()]),
+                   site_var = pars$mats[1:ref$n_seqs()],
                    chunk_size = 100)
 # Takes ~14 sec
 var_set <- create_variants(ref, method = "phylo", method_info = tree,
@@ -334,11 +281,6 @@ gamm_df <- map_dfr(0:(ref$n_seqs()-1),
         return(df_)
     })
 
-
-{
-    with(gamm_df, plot(pred, obs, main = paste("chunk_size =", mevo_$chunk_size)))
-    abline(0, 1, lty = 2, col= "red")
-}
 
 lims <- range(c(gamm_df$obs, gamm_df$pred))
 
@@ -376,7 +318,7 @@ mevo_ <- make_mevo(ref,
                    sub = list(model = "TN93", alpha_1 = pars$alpha_1,
                               alpha_2 = pars$alpha_2, beta = pars$beta,
                               pi_tcag = pars$pi_tcag))
-# Takes ~1 min
+
 var_set <- create_variants(ref, method = "phylo", method_info = tree,
                            mevo_obj = mevo_, n_cores = 4)
 
@@ -475,7 +417,7 @@ mevo_ <- make_mevo(ref,
                    sub = list(model = "TN93", alpha_1 = pars$alpha_1,
                               alpha_2 = pars$alpha_2, beta = pars$beta,
                               pi_tcag = pars$pi_tcag),
-                   site_var = list(mats = pars$mats[1:ref$n_seqs()]))
+                   site_var = pars$mats[1:ref$n_seqs()])
 var_set <- create_variants(ref, method = "phylo", method_info = tree,
                            mevo_obj = mevo_)
 
