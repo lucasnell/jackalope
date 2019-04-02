@@ -12,7 +12,8 @@ ref_genome
 An object of class \code{ref_genome}.
 }
 \description{
-\emph{Note:} Do NOT change fields in this class directly.
+\emph{Note:} This class wraps a pointer to a C++ object, so
+do NOT change fields in this class directly.
 It will cause your R session to do bad things.
 (Ever seen the bomb popup on RStudio? Manually mess with these fields and you
 surely will.)
@@ -27,20 +28,27 @@ representing the genome.}
 
 \section{Methods}{
 
+\strong{Viewing information:}
 \describe{
 \item{\code{n_seqs()}}{View the number of sequences.}
 \item{\code{sizes()}}{View vector of sequence sizes.}
 \item{\code{names()}}{View vector of sequence names.}
-\item{\code{extract_seq(seq_ind)}}{Extract a sequence string based on an index,
+\item{\code{sequence(seq_ind)}}{View a sequence string based on an index,
 \code{seq_ind}.}
-\item{\code{set_names(names)}}{Set names for all sequences.}
+}
+\strong{Editing information:}
+\describe{
+\item{\code{set_names(new_names)}}{Set names for all sequences.
+\code{new_names} is a character vector of what to change names to, and it must
+be the same length as the # sequences.}
 \item{\code{clean_names()}}{Clean sequence names, converting \code{" :;=\%,\\|/\"\'"}
 to \code{"_"}.}
 \item{\code{rm_seqs(seq_names)}}{Remove one or more sequences based on names in
 the \code{seq_names} vector.}
-\item{\code{merge_seqs()}}{Merge all sequences into one.}
+\item{\code{merge_seqs()}}{Merge all sequences into one after first shuffling
+their order.}
 \item{\code{filter_seqs(threshold, method)}}{Filter sequences by size
-(\code{method = "size"}) or for a proportion of total bases \code{method = "prop"}.
+(\code{method = "size"}) or for a proportion of total bases (\code{method = "prop"}).
 For the latter, sequences are first size-sorted, then the largest \code{N}
 sequences are retained that allow at least
 \code{threshold * sum(<all sequence sizes>)} base pairs remaining after

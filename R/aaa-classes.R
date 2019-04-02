@@ -2,7 +2,8 @@
 #' An R6 class representing a reference genome.
 #'
 #'
-#' \emph{Note:} Do NOT change fields in this class directly.
+#' \emph{Note:} This class wraps a pointer to a C++ object, so
+#' do NOT change fields in this class directly.
 #' It will cause your R session to do bad things.
 #' (Ever seen the bomb popup on RStudio? Manually mess with these fields and you
 #' surely will.)
@@ -13,20 +14,27 @@
 #'     representing the genome.
 #'
 #' @section Methods:
+#' \strong{Viewing information:}
 #' \describe{
 #'     \item{`n_seqs()`}{View the number of sequences.}
 #'     \item{`sizes()`}{View vector of sequence sizes.}
 #'     \item{`names()`}{View vector of sequence names.}
-#'     \item{`extract_seq(seq_ind)`}{Extract a sequence string based on an index,
+#'     \item{`sequence(seq_ind)`}{View a sequence string based on an index,
 #'         `seq_ind`.}
-#'     \item{`set_names(names)`}{Set names for all sequences.}
+#' }
+#' \strong{Editing information:}
+#' \describe{
+#'     \item{`set_names(new_names)`}{Set names for all sequences.
+#'         `new_names` is a character vector of what to change names to, and it must
+#'         be the same length as the # sequences.}
 #'     \item{`clean_names()`}{Clean sequence names, converting `" :;=%,\\|/\"\'"`
 #'         to `"_"`.}
 #'     \item{`rm_seqs(seq_names)`}{Remove one or more sequences based on names in
 #'         the `seq_names` vector.}
-#'     \item{`merge_seqs()`}{Merge all sequences into one.}
+#'     \item{`merge_seqs()`}{Merge all sequences into one after first shuffling
+#'         their order.}
 #'     \item{`filter_seqs(threshold, method)`}{Filter sequences by size
-#'         (`method = "size"`) or for a proportion of total bases `method = "prop"`.
+#'         (`method = "size"`) or for a proportion of total bases (`method = "prop"`).
 #'         For the latter, sequences are first size-sorted, then the largest `N`
 #'         sequences are retained that allow at least
 #'         `threshold * sum(<all sequence sizes>)` base pairs remaining after
@@ -92,7 +100,7 @@ ref_genome <- R6::R6Class(
         },
 
         # Extract one reference sequence
-        extract_seq = function(seq_ind) {
+        sequence = function(seq_ind) {
             private$check_ptr()
             if (!single_integer(seq_ind, 1, self$n_seqs())) {
                 stop("seq_ind arg must be in range [1, <# sequences>]", call. = FALSE)
@@ -104,7 +112,7 @@ ref_genome <- R6::R6Class(
         # __edit__ ----
         # ----------*
         # Change sequence names
-        set_names = function(names) {
+        set_names = function(new_names) {
             private$check_ptr()
             if (!is_type(names, "character", self$n_seqs())) {
                 stop("names arg must be the same length as # sequences", call. = FALSE)
@@ -278,7 +286,6 @@ mevo <- R6::R6Class(
             self$insertion_rates <- insertion_rates
             self$deletion_rates <- deletion_rates
             self$gamma_mats <- gamma_mats
-            dim(self$gamma_mats) <- NULL  # to make it a list instead of matrix
             self$chunk_size <- chunk_size
 
         },
@@ -361,8 +368,9 @@ mevo$lock()
 # >> variants class----
 #' An R6 class representing haploid variants from a reference genome.
 #'
-#' \emph{Note:} Do NOT change fields in this class directly. It will cause your
-#' R session to do bad things.
+#' \emph{Note:} This class wraps a pointer to a C++ object, so
+#' do NOT change fields in this class directly.
+#' It will cause your R session to do bad things.
 #' (Ever seen the bomb popup on RStudio? Manually mess with these fields and you
 #' surely will.)
 #' For safe ways of manipulating the variants' information, see the "Methods" section.
@@ -371,36 +379,47 @@ mevo$lock()
 #'     representing the genome.
 #' @field reference An \code{externalptr} to a C++ object storing the sequences
 #'     representing the genome.
-#'     There are a few extra notes for this field:
+#'     This field is private, so you can't view it, but I'm listing it here
+#'     so that I can provide a few extra notes about it:
 #'     \itemize{
 #'         \item \strong{This point is the most important.}
 #'             Since it's a pointer, if you make any changes to the reference genome
 #'             that it points to, those changes will also show up in the \code{variants}
-#'             object. For example, if you make a \code{variants} object \code{V}
-#'             based on an existing \code{ref_genome} object \code{R}, then you merge
-#'             sequences in \code{R}, \code{V} will now have merged sequences.
+#'             object. For example, if you make a \code{variants} object named \code{V}
+#'             based on an existing \code{ref_genome} object named \code{R},
+#'             then you merge sequences in \code{R},
+#'             \code{V} will now have merged sequences.
 #'             If you've already started adding mutations to \code{V},
 #'             then all the indexes used to store those mutations will be inaccurate.
-#'             So when you do anything with \code{V} later, your R session will crash.
-#'         \item This field is private so cannot be accessed directly.
-#'         \item If a \code{ref_genome} object is used to create a \code{variants} object,
-#'             don't worry about later deleting the \code{ref_genome} object.
+#'             So when you do anything with \code{V} later, your R session will crash
+#'             or have errors.
+#'         \item If a \code{ref_genome} object is used to create a \code{variants}
+#'             object, deleting the \code{ref_genome} object won't cause issues with
+#'             the \code{variants} object.
+#'             However, the \code{variants} class doesn't provide methods to edit
+#'             sequences, so only remove the \code{ref_genome} object when you're done
+#'             editing the reference genome.
 #'     }
 #'
 #'
 #' @section Methods:
+#' \strong{Viewing information:}
 #' \describe{
 #'     \item{`n_seqs()`}{View the number of sequences.}
 #'     \item{`n_vars()`}{View the number of variants.}
 #'     \item{`sizes(var_ind)`}{View vector of sequence sizes for a given variant.}
 #'     \item{`seq_names()`}{View vector of sequence names.}
 #'     \item{`var_names()`}{View vector of variant names.}
-#'     \item{`extract_seq(var_ind, seq_ind)`}{Extract a sequence string based on
+#'     \item{`sequence(var_ind, seq_ind)`}{View a sequence string based on
 #'         indices for the sequence (`seq_ind`) and variant (`var_ind`).}
-#'     \item{`set_names(names)`}{Set names for all variants.}
+#' }
+#' \strong{Editing information:}
+#' \describe{
+#'     \item{`set_names(new_names)`}{Set names for all variants.
+#'         `new_names` is a character vector of what to change names to, and it must
+#'         be the same length as the # variants.}
 #'     \item{`rm_vars(var_names)`}{Remove one or more variants based on names in
 #'         the `var_names` vector.}
-#'
 #' }
 #'
 #' @return An object of class \code{variants}.
@@ -476,7 +495,7 @@ variants <- R6::R6Class(
         },
 
         # Extract one variant sequence
-        extract_seq = function(var_ind, seq_ind) {
+        sequence = function(var_ind, seq_ind) {
             private$check_ptr()
             private$check_var_ind(var_ind)
             private$check_seq_ind(seq_ind)
@@ -489,7 +508,7 @@ variants <- R6::R6Class(
         # ----------*
 
         # Change variant names
-        set_names = function(names) {
+        set_names = function(new_names) {
             private$check_ptr()
             if (!is_type(names, "character", self$n_vars())) {
                 stop("names arg must be the same length as # variants", call. = FALSE)

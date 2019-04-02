@@ -12,8 +12,9 @@ variants
 An object of class \code{variants}.
 }
 \description{
-\emph{Note:} Do NOT change fields in this class directly. It will cause your
-R session to do bad things.
+\emph{Note:} This class wraps a pointer to a C++ object, so
+do NOT change fields in this class directly.
+It will cause your R session to do bad things.
 (Ever seen the bomb popup on RStudio? Manually mess with these fields and you
 surely will.)
 For safe ways of manipulating the variants' information, see the "Methods" section.
@@ -26,37 +27,48 @@ representing the genome.}
 
 \item{\code{reference}}{An \code{externalptr} to a C++ object storing the sequences
 representing the genome.
-There are a few extra notes for this field:
+This field is private, so you can't view it, but I'm listing it here
+so that I can provide a few extra notes about it:
 \itemize{
 \item \strong{This point is the most important.}
 Since it's a pointer, if you make any changes to the reference genome
 that it points to, those changes will also show up in the \code{variants}
-object. For example, if you make a \code{variants} object \code{V}
-based on an existing \code{ref_genome} object \code{R}, then you merge
-sequences in \code{R}, \code{V} will now have merged sequences.
+object. For example, if you make a \code{variants} object named \code{V}
+based on an existing \code{ref_genome} object named \code{R},
+then you merge sequences in \code{R},
+\code{V} will now have merged sequences.
 If you've already started adding mutations to \code{V},
 then all the indexes used to store those mutations will be inaccurate.
-So when you do anything with \code{V} later, your R session will crash.
-\item This field is private so cannot be accessed directly.
-\item If a \code{ref_genome} object is used to create a \code{variants} object,
-don't worry about later deleting the \code{ref_genome} object.
+So when you do anything with \code{V} later, your R session will crash
+or have errors.
+\item If a \code{ref_genome} object is used to create a \code{variants}
+object, deleting the \code{ref_genome} object won't cause issues with
+the \code{variants} object.
+However, the \code{variants} class doesn't provide methods to edit
+sequences, so only remove the \code{ref_genome} object when you're done
+editing the reference genome.
 }}
 }}
 
 \section{Methods}{
 
+\strong{Viewing information:}
 \describe{
 \item{\code{n_seqs()}}{View the number of sequences.}
 \item{\code{n_vars()}}{View the number of variants.}
 \item{\code{sizes(var_ind)}}{View vector of sequence sizes for a given variant.}
 \item{\code{seq_names()}}{View vector of sequence names.}
 \item{\code{var_names()}}{View vector of variant names.}
-\item{\code{extract_seq(var_ind, seq_ind)}}{Extract a sequence string based on
+\item{\code{sequence(var_ind, seq_ind)}}{View a sequence string based on
 indices for the sequence (\code{seq_ind}) and variant (\code{var_ind}).}
-\item{\code{set_names(names)}}{Set names for all variants.}
+}
+\strong{Editing information:}
+\describe{
+\item{\code{set_names(new_names)}}{Set names for all variants.
+\code{new_names} is a character vector of what to change names to, and it must
+be the same length as the # variants.}
 \item{\code{rm_vars(var_names)}}{Remove one or more variants based on names in
 the \code{var_names} vector.}
-
 }
 }
 
