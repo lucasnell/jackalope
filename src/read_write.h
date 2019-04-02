@@ -4,6 +4,7 @@
 #include <RcppArmadillo.h>
 #include <vector>               // vector class
 #include <string>               // string class
+#include <iomanip>
 #include <ctime>
 
 #include <fstream>
