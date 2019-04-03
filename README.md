@@ -1,9 +1,9 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-[![Project Status: WIP – Initial development is in progress, but there
-has not yet been a stable, usable release suitable for the
-public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
+[![Project Status: Active – The project has reached a stable, usable
+state and is being actively
+developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![Build
 Status](https://travis-ci.com/lucasnell/jackalope.svg?branch=master)](https://travis-ci.com/lucasnell/jackalope)
 [![codecov](https://codecov.io/gh/lucasnell/jackalope/branch/master/graph/badge.svg)](https://codecov.io/gh/lucasnell/jackalope)
@@ -21,9 +21,9 @@ generates variants using summary statistics, phylogenies, Variant Call
 Format (VCF) files, and coalescent simulations—the latter of which can
 include selection, recombination, and demographic fluctuations; (iii)
 simulates sequencing error, mapping qualities, and optical/PCR
-duplicates; and (iv) writes outputs to standard file formats. `jackalope`
-can simulate single, paired-end, or mate-pair Illumina reads, as well as
-reads from Pacific BioSciences.
+duplicates; and (iv) writes outputs to standard file formats.
+`jackalope` can simulate single, paired-end, or mate-pair Illumina
+reads, as well as reads from Pacific BioSciences.
 
 ## Installation
 
@@ -44,20 +44,20 @@ ref_variants <- create_variants(reference, "phylo", phy, mevo_info)
 ref_variants
 #>                            << Variants object >>
 #> # Variants: 5
-#> # Mutations: 17,940
+#> # Mutations: 17,684
 #> 
 #>                         << Reference genome info: >>
 #> < Set of 10 sequences >
 #> # Total size: 10,000 bp
 #>   name                          sequence                             length
-#> seq0       CGTCGTGTCGAGTATTGCATATTGC...AGGCTTAACCTCAATTGCCCAATGCG      1000
-#> seq1       GCCCGGGCGACACTAGACGTAAGAC...TATCACACACTGTCCCCGTGGCACAG      1000
-#> seq2       CTAGCGTGCCCGGTTACCGACAAAC...ATACTGAATTGGGCGATCACGCATGT      1000
-#> seq3       GTCTCGAAGCCCTTTGATATCAACT...TAGTGTATGTCGATTATCCATGGCTA      1000
-#> seq4       CATCTGACGACGCAGTGGAGGACTG...TCTCTGAGCCCTGGACACTACAGGAT      1000
-#> seq5       CTAAGATTCACGCGGTCTTAACTTC...GCGTTGCGCACAGTCTGATGGGGCCT      1000
-#> seq6       CAGGCGCCTTTACACAAGTGTGTGA...TAGATTACATCAGTCGTTGGACGCAG      1000
-#> seq7       CACGTCAGCAAACCTCAGGTGGTGA...AGCGTCGCTAAAAGTAGGTACGAGGT      1000
-#> seq8       GGGTGCTGGGACTCATTGGGGATAG...ATGCGGCGTTGACGTCCCCCGTGGGC      1000
-#> seq9       AAACATACAGCCCGAATCGTGTGGG...TAGGGTGTATGAGGTACTATGTGCTC      1000
+#> seq0       CTGGCATTGAATCATATGAGGTGGC...GTTGCACGATTGATTAAATTCCTGAA      1000
+#> seq1       CACTCCGTCGCACACTAGGTTTCGA...GAGCTCGCGTACATGGAGCATTCTGT      1000
+#> seq2       CTTAGCCGGAGCGACTCGGAGCAAC...GCGTAATATGCCAGGTCCCGCGTGGC      1000
+#> seq3       CGCCTTCCATTTAGGACTTGTATTG...TAAACTCCATGTGACTGTAATGTCAG      1000
+#> seq4       GGGTGATATGGTGTGCATGCTGAAT...AGTCTAGAGTCTCTGGGAGGTCAGGT      1000
+#> seq5       TTCGTTGGTGGGTGTCCTATGCTAC...CCCGCCGGTTTGACTTACTCGATTGG      1000
+#> seq6       GCATGGACAGATGTGATCTGAGTAT...GACCCCATAAGGCCTGGGACACTGTG      1000
+#> seq7       TCGTTTCAACGTCCTTAAGTGTAGT...CTCGTTAGCTCTCCGAGGAGACGAGG      1000
+#> seq8       CAGGTAAGTTATCAAAGAACCTTCC...GCATCACCTCGCAAGGAGACTCGTTA      1000
+#> seq9       GGTAGTAATTAGGCTTAAAATAGCA...AACAAATGTTCGGCATACGATCTACG      1000
 ```
