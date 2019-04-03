@@ -165,6 +165,7 @@ read_vcf <- function(reference, method_info) {
     chrom <- vcf@fix[,"CHROM"]
     pos <- as.integer(vcf@fix[,"POS"]) - 1  # -1 is to convert to C++ indices
     ref_seq <- vcf@fix[,"REF"]
+    alts <- strsplit(vcf@fix[,"ALT"], ",")
 
     if (length(chrom) != length(pos) | length(chrom) != length(ref_seq)) {
         stop("\nVCF not parsing correctly. ",
@@ -195,17 +196,33 @@ read_vcf <- function(reference, method_info) {
     colnames(haps) <- NULL
     rownames(haps) <- NULL
 
-    # So I don't have to deal with NAs:
-    haps[is.na(haps)] <- ""
-
     if (nrow(haps) != length(pos)) {
         stop("\nVCF not parsing correctly. ",
              "Number of haplotypes doesn't match with number of positions.",
              call. = FALSE)
     }
 
+    # I'm assuming NAs mean no mutation
+    haps[is.na(haps)] <- ""
+
     # Split into list for easier processing in `read_vcfr`
     haps <- split(haps, row(haps))
+
+    # We treat things differently if vcfR has output numbers rather than nucleotides.
+    # (The below line should be TRUE when it outputs numbers.)
+    if (any(!is.na(suppressWarnings(as.integer(do.call(c, haps)))))) {
+        # Change string integers to actual genotypes:
+        haps <-
+            lapply(1:length(haps),
+                   function(i) {
+                       as.character(sapply(haps[[i]],
+                                           function(j) {
+                                               ifelse(j == "" | j == "0", "",
+                                                      alts[[i]][as.integer(j)])
+                                           }))
+                   })
+    }
+
 
     variants_ptr <- read_vcfr(reference$genome, var_names,
                               haps, chrom_inds, pos, ref_seq)

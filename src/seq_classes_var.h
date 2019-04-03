@@ -52,6 +52,9 @@ struct Mutation {
     Mutation(uint32 old_pos_, uint32 new_pos_, std::string nucleos_)
         : size_modifier(nucleos_.size() - 1), old_pos(old_pos_),
           new_pos(new_pos_), nucleos(nucleos_) {};
+    Mutation(uint32 old_pos_, uint32 new_pos_, char nucleo_)
+        : size_modifier(0), old_pos(old_pos_),
+          new_pos(new_pos_), nucleos(1, nucleo_) {};
     Mutation(const Mutation& other)
         : size_modifier(other.size_modifier), old_pos(other.old_pos),
           new_pos(other.new_pos), nucleos(other.nucleos) {};

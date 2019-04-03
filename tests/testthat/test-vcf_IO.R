@@ -8,6 +8,7 @@ context("Testing VCF file input/output")
 
 options(stringsAsFactors = FALSE)
 
+dir <- tempdir()
 
 seqs <- rep("TCAGTCAGTC", 2)
 ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
@@ -85,13 +86,20 @@ vcf_info <-
 
 
 
-# ===============================================================
-# ===============================================================
+# ===============================================================`
+# ===============================================================`
 
-# Haploid version (i.e., each variant is a separate sample)
+#               WRITING -----
 
-# ===============================================================
-# ===============================================================
+# ===============================================================`
+# ===============================================================`
+
+
+# ------------------------*
+# Haploid version -----
+# (i.e., each variant is a separate sample)
+# ------------------------*
+
 
 vcf <- capture.output({
     jackalope:::write_vcf_cpp(out_prefix = "",
@@ -154,13 +162,11 @@ test_that("VCF file data lines are accurate for haploid samples", {
 
 
 
-# ===============================================================
-# ===============================================================
+# ------------------------*
+# Diploid version -----
+# (i.e., 2 variants represent one sample)
+# ------------------------*
 
-# Diploid version (i.e., 2 variants represent one sample)
-
-# ===============================================================
-# ===============================================================
 
 
 sample_mat <- t(combn(vars$n_vars(), 2))
@@ -234,3 +240,63 @@ test_that("VCF file data lines are accurate for diploid samples", {
 
 })
 
+
+
+
+
+
+
+# ===============================================================`
+# ===============================================================`
+
+#           READING -----
+
+# ===============================================================`
+# ===============================================================`
+
+
+
+
+
+
+
+test_that("reading haploid variant info from VCF produces proper output", {
+
+    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"))
+
+    skip_if_not_installed("vcfR")
+
+    vars2 <- create_variants(ref, method = "vcf",
+                             method_info = sprintf("%s/%s.vcf", dir, "test"))
+
+    expect_identical(vars$n_vars(), vars2$n_vars())
+
+    for (i in 1:vars$n_vars()) {
+        expect_identical(sapply(1:ref$n_seqs(), function(j) vars$sequence(i, j)),
+                         sapply(1:ref$n_seqs(), function(j) vars2$sequence(i, j)))
+    }
+
+
+})
+
+
+test_that("reading diploid variant info from VCF produces proper output", {
+
+    skip_if_not_installed("vcfR")
+
+    sample_mat <- matrix(1:4, 2, 2, byrow = TRUE)
+
+    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"),
+              sample_matrix = sample_mat)
+
+    vars2 <- create_variants(ref, method = "vcf",
+                             method_info = sprintf("%s/%s.vcf", dir, "test"))
+
+    expect_identical(vars$n_vars(), vars2$n_vars())
+
+    for (i in 1:vars$n_vars()) {
+        expect_identical(sapply(1:ref$n_seqs(), function(j) vars$sequence(i, j)),
+                         sapply(1:ref$n_seqs(), function(j) vars2$sequence(i, j)))
+    }
+
+})

@@ -287,6 +287,8 @@ SEXP read_vcfr(SEXP reference_ptr,
     uint32 n_vars = var_names.size();
     uint32 n_seqs = reference->size();
 
+    Mutation new_mut;
+
     XPtr<VarSet> var_set(new VarSet(*reference, var_names));
 
     for (uint32 mut_i = 0; mut_i < n_muts; mut_i++) {
@@ -297,35 +299,82 @@ SEXP read_vcfr(SEXP reference_ptr,
 
         for (uint32 var_i = 0; var_i < n_vars; var_i++) {
 
-            // If it's blank or if it's the same as the reference, move on:
-            if (haps[var_i].size() == 0 || haps[var_i] == ref) continue;
+            const std::string& alt(haps[var_i]);
 
-            VarSequence& var_seq((*var_set)[var_i][seq_i]);
+            // If it's blank or if it's the same as the reference, move on:
+            if (alt.size() == 0 || alt == ref) continue;
 
             // Else, mutate accordingly:
-            Mutation new_mut;
-            if (ref.size() <= haps[var_i].size()) {
+            VarSequence& var_seq((*var_set)[var_i][seq_i]);
+
+            if (alt.size() == ref.size()) {
                 /*
-                ------------
-                substitution and/or insertion
-                ------------
-                */
-                new_mut = Mutation(pos[mut_i], pos[mut_i], haps[var_i]);
+                 ------------
+                 substitution(s)
+                 ------------
+                 */
+                for (uint32 i = 0; i < ref.size(); i++) {
+                    if (alt[i] != ref[i]) {
+                        new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt[i]);
+                        var_seq.mutations.push_back(new_mut);
+                    }
+                }
+            } else if (alt.size() > ref.size()) {
+                /*
+                 ------------
+                 insertion
+                 ------------
+                 */
+                // Copy the string so it can be manipulated
+                std::string alt_copy = alt;
+
+                /*
+                 For all sequences but the last in the REF string, just make
+                 them substitutions if they differ from ALT.
+                 */
+                uint32 i = 0;
+                for (; i < (ref.size()-1); i++) {
+                    if (alt[i] != ref[i]) {
+                        new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt_copy[i]);
+                        var_seq.mutations.push_back(new_mut);
+                    }
+                }
+                // Erase all the nucleotides that have already been added (if any):
+                if (ref.size() > 1) alt_copy.erase(0, ref.size() - 1U);
+                /*
+                 Make the last one an insertion proper
+                 */
+                new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt_copy);
+                var_seq.mutations.push_back(new_mut);
+
             } else {
                 /*
-                ------------
-                deletion
-                ------------
-                */
+                 ------------
+                 deletion
+                 ------------
+                 */
+                /*
+                 For all sequences in the ALT string, just make them substitutions
+                 if they differ from REF.
+                 (Note that this goes to the end of ALT, not REF, as it does for
+                 insertions.)
+                 */
+                uint32 i = 0;
+                for (; i < alt.size(); i++) {
+                    if (alt[i] != ref[i]) {
+                        new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt[i]);
+                        var_seq.mutations.push_back(new_mut);
+                    }
+                }
+
                 // size modifier:
-                sint32 sm = static_cast<sint32>(haps[var_i].size()) -
+                sint32 sm = static_cast<sint32>(alt.size()) -
                     static_cast<sint32>(ref.size());
-                /* Position (have to do this bc VCFs include non-deleted nucleotide when
-                calculating deltion positions) */
-                uint32 np = pos[mut_i] + 1;
-                new_mut = Mutation(np, np, sm);
+
+                new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, sm);
+                var_seq.mutations.push_back(new_mut);
+
             }
-            var_seq.mutations.push_back(new_mut);
 
         }
 
@@ -333,8 +382,8 @@ SEXP read_vcfr(SEXP reference_ptr,
 
 
     /*
-    Go back and re-calculate positions and variant sequence sizes
-    */
+     Go back and re-calculate positions and variant sequence sizes
+     */
     for (uint32 seq_i = 0; seq_i < n_seqs; seq_i++) {
         for (uint32 var_i = 0; var_i < n_vars; var_i++) {
             VarSequence& var_seq((*var_set)[var_i][seq_i]);
