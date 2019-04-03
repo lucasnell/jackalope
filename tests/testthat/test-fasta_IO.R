@@ -1,0 +1,247 @@
+
+context("Testing FASTA file input/output")
+
+# library(jackalope)
+# library(testthat)
+
+
+dir <- tempdir()
+
+
+
+seqs <- jackalope:::rando_seqs(10, 100)
+
+ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
+
+
+# ================================================================================`
+# ================================================================================`
+
+# >>> Non-indexed ----
+
+# ================================================================================`
+# ================================================================================`
+
+
+
+# ----------*
+# Single ----
+# ----------*
+
+
+test_that("Read/writing single non-indexed FASTA files works with uncompressed output", {
+
+    fa_fn <- sprintf("%s/%s.fa", dir, "test")
+
+    write_fasta(ref, fa_fn, compress = FALSE)
+
+    new_ref <- read_fasta(fa_fn)
+
+    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+
+    for (i in 1:ref$n_seqs()) {
+        expect_identical(ref$sequence(i), ref$sequence(i))
+    }
+
+})
+
+
+test_that("Read/writing single non-indexed FASTA files works with compressed output", {
+
+    fa_fn <- sprintf("%s/%s.fa.gz", dir, "test")
+
+    write_fasta(ref, fa_fn, compress = TRUE)
+
+    new_ref <- read_fasta(fa_fn)
+
+    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+
+    for (i in 1:ref$n_seqs()) {
+        expect_identical(ref$sequence(i), ref$sequence(i))
+    }
+
+})
+
+
+
+
+# ----------*
+# Multiple ----
+# ----------*
+
+
+ref1 <- ref_genome$new(jackalope:::make_ref_genome(seqs[1:5]))
+ref2 <- ref_genome$new(jackalope:::make_ref_genome(seqs[6:10]))
+
+
+test_that("Read/writing multiple non-indexed FASTA files works with uncompressed output", {
+
+    fa_fns <- sprintf("%s/%s%i.fa", dir, "test", 1:2)
+
+    write_fasta(ref1, fa_fns[1], compress = FALSE)
+    write_fasta(ref2, fa_fns[2], compress = FALSE)
+
+    new_ref <- read_fasta(fa_fns)
+
+    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+
+    for (i in 1:ref$n_seqs()) {
+        expect_identical(ref$sequence(i), ref$sequence(i))
+    }
+
+})
+
+
+test_that("Read/writing multiple non-indexed FASTA files works with compressed output", {
+
+    fa_fns <- sprintf("%s/%s%i.fa.gz", dir, "test", 1:2)
+
+    write_fasta(ref1, fa_fns[1], compress = TRUE)
+    write_fasta(ref2, fa_fns[2], compress = TRUE)
+
+    new_ref <- read_fasta(fa_fns)
+
+    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+
+    for (i in 1:ref$n_seqs()) {
+        expect_identical(ref$sequence(i), ref$sequence(i))
+    }
+
+})
+
+
+
+
+
+
+
+
+# ================================================================================`
+# ================================================================================`
+
+# >>> Indexed ----
+
+# ================================================================================`
+# ================================================================================`
+
+
+
+
+# ----------*
+# Single ----
+# ----------*
+
+
+# Making my own fasta index file:
+fa_index_df <-
+    data.frame(name = ref$names(),
+               nbases = ref$sizes(),
+               byte_index = cumsum(c(nchar(ref$names()[1]) + 2,
+                                     nchar(ref$names()[-1]) + 2 +
+                                         utils::head(ref$sizes(), -1) +
+                                         ceiling(utils::head(ref$sizes(), -1) /
+                                                     formals(write_fasta)$text_width))),
+               bases_perline = formals(write_fasta)[["text_width"]],
+               bytes_perline = formals(write_fasta)[["text_width"]] + 1)
+
+
+utils::write.table(fa_index_df, sprintf("%s/%s.fa.fai", dir, "test"), quote = FALSE,
+                   sep = "\t", row.names = FALSE, col.names = FALSE)
+
+
+test_that("Read/writing single indexed FASTA files works with uncompressed output", {
+
+    fa_fn <- sprintf("%s/%s.fa", dir, "test")
+    fai_fn <- sprintf("%s/%s.fa.fai", dir, "test")
+
+    write_fasta(ref, fa_fn, compress = FALSE)
+
+    new_ref <- read_fasta(fa_fn, fai_fn)
+
+    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+
+    for (i in 1:ref$n_seqs()) {
+        expect_identical(ref$sequence(i), ref$sequence(i))
+    }
+
+})
+
+
+test_that("Read/writing single indexed FASTA files works with compressed output", {
+
+    fa_fn <- sprintf("%s/%s.fa.gz", dir, "test")
+    fai_fn <- sprintf("%s/%s.fa.fai", dir, "test")
+
+    write_fasta(ref, fa_fn, compress = TRUE)
+
+    new_ref <- read_fasta(fa_fn, fai_fn)
+
+    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+
+    for (i in 1:ref$n_seqs()) {
+        expect_identical(ref$sequence(i), ref$sequence(i))
+    }
+
+})
+
+
+
+# ----------*
+# Multiple ----
+# ----------*
+
+
+# Making my own fasta index file:
+fa_index_df1 <- fa_index_df[1:5,]
+fa_index_df2 <- fa_index_df[6:10,]
+fa_index_df2$byte_index <- fa_index_df2$byte_index + ((nchar(ref$names()[1]) + 2) -
+                                                          fa_index_df2$byte_index[1])
+
+
+ref1 <- ref_genome$new(jackalope:::make_ref_genome(seqs[1:5]))
+ref2 <- ref_genome$new(jackalope:::make_ref_genome(seqs[6:10]))
+
+utils::write.table(fa_index_df1, sprintf("%s/%s1.fa.fai", dir, "test"),
+                   quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
+utils::write.table(fa_index_df2, sprintf("%s/%s2.fa.fai", dir, "test"),
+                   quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
+
+
+test_that("Read/writing multiple indexed FASTA files works with uncompressed output", {
+
+    fa_fns <- sprintf("%s/%s%i.fa", dir, "test", 1:2)
+    fai_fns <- sprintf("%s/%s%i.fa.fai", dir, "test", 1:2)
+
+    write_fasta(ref1, fa_fns[1], compress = FALSE)
+    write_fasta(ref2, fa_fns[2], compress = FALSE)
+
+    new_ref <- read_fasta(fa_fns, fai_fns)
+
+    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+
+    for (i in 1:ref$n_seqs()) {
+        expect_identical(ref$sequence(i), ref$sequence(i))
+    }
+
+})
+
+
+test_that("Read/writing multiple indexed FASTA files works with compressed output", {
+
+    fa_fns <- sprintf("%s/%s%i.fa.gz", dir, "test", 1:2)
+    fai_fns <- sprintf("%s/%s%i.fa.fai", dir, "test", 1:2)
+
+    write_fasta(ref1, fa_fns[1], compress = TRUE)
+    write_fasta(ref2, fa_fns[2], compress = TRUE)
+
+    new_ref <- read_fasta(fa_fns, fai_fns)
+
+    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+
+    for (i in 1:ref$n_seqs()) {
+        expect_identical(ref$sequence(i), ref$sequence(i))
+    }
+
+})
+
+
