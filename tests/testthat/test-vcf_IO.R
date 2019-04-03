@@ -4,7 +4,7 @@
 # library(jackalope)
 # library(testthat)
 
-context("Testing writing variant information to a VCF file")
+context("Testing VCF file input/output")
 
 options(stringsAsFactors = FALSE)
 
