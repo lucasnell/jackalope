@@ -76,6 +76,7 @@ test_that("proper output for JC69 model", {
     diag(Q) <- 0
     expect_equal(M$Q, Q)
     expect_equal(M$pi_tcag, rep(0.25, 4))
+    expect_equal(M$q(), rowSums(Q))
 })
 
 # *  K80 ----
@@ -87,6 +88,7 @@ test_that("proper output for K80 model", {
     diag(Q) <- 0
     expect_equal(M$Q, Q)
     expect_equal(M$pi_tcag, rep(0.25, 4))
+    expect_equal(M$q(), rowSums(Q))
 })
 
 
@@ -98,6 +100,7 @@ test_that("proper output for F81 model", {
     diag(Q) <- 0
     expect_equal(M$Q, Q)
     expect_equal(M$pi_tcag, pars$pi_tcag)
+    expect_equal(M$q(), rowSums(Q))
 })
 
 
@@ -112,6 +115,7 @@ test_that("proper output for HKY85 model", {
     diag(Q) <- 0
     expect_equal(M$Q, Q)
     expect_equal(M$pi_tcag, pars$pi_tcag)
+    expect_equal(M$q(), rowSums(Q))
 })
 
 # *  TN93 ----
@@ -127,6 +131,7 @@ test_that("proper output for TN93 model", {
     diag(Q) <- 0
     expect_equal(M$Q, Q)
     expect_equal(M$pi_tcag, pars$pi_tcag)
+    expect_equal(M$q(), rowSums(Q))
 })
 
 # *  F84 ----
@@ -143,6 +148,7 @@ test_that("proper output for F84 model", {
     diag(Q) <- 0
     expect_equal(M$Q, Q)
     expect_equal(M$pi_tcag, pars$pi_tcag)
+    expect_equal(M$q(), rowSums(Q))
 })
 
 # *  GTR ----
@@ -156,6 +162,7 @@ test_that("proper output for GTR model", {
     for (i in 1:4) Q[,i] <- Q[,i] * pars$pi_tcag[i]
     expect_equal(M$Q, Q)
     expect_equal(M$pi_tcag, pars$pi_tcag)
+    expect_equal(M$q(), rowSums(Q))
 })
 
 # *  UNREST ----
@@ -175,6 +182,7 @@ test_that("proper output for UNREST model", {
     diag(Q) <- 0  # <-- change back to compare to M$Q
     expect_equal(M$Q, Q)
     expect_equal(M$pi_tcag, pi_tcag)
+    expect_equal(M$q(), rowSums(Q))
 })
 
 
@@ -229,13 +237,27 @@ test_that("proper indel rates with `rate` and `rel_rates` inputs", {
 
 
 
+test_that("proper output for JC69 model when indels are included", {
+    indel <- sum(pars$rates * 0.25)
+    Q <- matrix(pars$lambda, 4, 4)
+    diag(Q) <- 0
+    expect_equal(M$Q, Q)
+    expect_equal(M$pi_tcag, rep(0.25, 4))
+    expect_equal(M$q(), rowSums(Q) + indel)
+})
+
+
+
 
 # ==============================*
 # __site var.__ ----
 # ==============================*
 
+dir <- tempdir()
+
 M <- with(pars, make_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                          site_var = list(shape = shape, region_size = region_size)))
+                          site_var = list(shape = shape, region_size = region_size),
+                          gamma_bed = paste0(dir, "/mevo")))
 
 # *  generate ----
 test_that("proper gamma distance values with `shape` and `region_size` inputs", {
@@ -252,6 +274,24 @@ test_that("proper gamma distance values with `shape` and `region_size` inputs", 
     s0 <- sqrt(1 / pars$shape)      # expected SD
     rel_diff <- abs((s - s0) / s0)
     expect_lte(rel_diff, 0.25)  # was never >0.25 in 1000 sims
+})
+
+
+
+test_that("BED file of gamma values is correct", {
+
+    bed_df <- utils::read.table(paste0(dir, "/mevo.bed"), sep = "\t")
+
+    gmat_df <- do.call(rbind, lapply(1:length(M$gamma_mats),
+                                     function(i) {
+                                         cbind(nm = ref$names()[i],
+                                               as.data.frame(M$gamma_mats[[i]]))
+                                         }))
+
+    expect_equal(bed_df[,1], gmat_df[,1])
+    expect_equal(bed_df[,3], gmat_df[,2])
+    expect_equal(bed_df[,5], gmat_df[,3])
+
 })
 
 # *  custom ----

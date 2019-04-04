@@ -102,3 +102,17 @@ test_that("errors occur when nonsense is input to create_variants", {
 })
 
 
+
+test_that("basic diagnostic functions work for variants", {
+
+    vars <- create_variants(reference, "theta", list(theta = 0.1, n_vars = 4), mevo_obj)
+
+    Z <- jackalope:::examine_mutations(var_set_ptr = vars$genomes,
+                                       var_ind = 0, seq_ind = 0)
+
+    expect_identical(length(Z$pos), as.integer(sum(sapply(c("sub", "ins", "del"),
+                                                          function(x) sum(Z[[x]])))))
+    expect_identical(jackalope:::table_gammas(seq(9, 99, 10), 0:99), rep(10, 10))
+
+})
+

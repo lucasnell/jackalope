@@ -30,11 +30,45 @@ test_that("Sequences from `create_genome` aren't very different from expectation
 
 
 
+test_that("initialization of ref_genome class with nonsense produces error", {
+    expect_error(ref_genome$new("nonsense"),
+                 paste("When initializing a ref_genome object, you need to use",
+                       "an externalptr object"))
+})
+
 # Reference genome
 ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
 test_that("ref_genome class starts with the correct fields", {
     expect_is(ref$genome, "externalptr")
 })
+
+
+test_that("ref_genome print appears about right", {
+    expect_output(print(ref),
+                  paste0("< Set of ", n_seqs, " sequences >\n",
+                         "\\# Total size: ", format(sum(nchar(seqs)),
+                                                    big.mark = ","), " bp"))
+})
+
+
+test_that("ref_genome methods `set_names` and `clean_names` work properly", {
+
+    og_names <- ref$names()
+    unclean_names <- sprintf("nonsense names %i ';,\"", 1:ref$n_seqs())
+    clean_names <- sprintf("nonsense_names_%i_____", 1:ref$n_seqs())
+
+    ref$set_names(unclean_names)
+    expect_identical(ref$names(), unclean_names)
+
+    ref$clean_names()
+    expect_identical(ref$names(), clean_names)
+
+    ref$set_names(og_names)
+    expect_identical(ref$names(), og_names)
+
+})
+
+
 
 test_that("ref_genome class methods produce correct output", {
 
@@ -44,7 +78,7 @@ test_that("ref_genome class methods produce correct output", {
 
     expect_identical(ref$names(), paste0("seq", 1:length(seqs) - 1))
 
-    for (i in 1:n_seqs) expect_identical(ref$sequence(i), seqs[i])
+    expect_identical(jackalope:::view_ref_genome(ref$genome), seqs)
 
     nn <- paste0("__SEQ_",1:length(seqs))
     ref$set_names(nn)
@@ -84,6 +118,15 @@ vars <- create_variants(ref, "phy", phy, mevo_obj = mev)
 test_that("variants class starts with the correct fields", {
     expect_is(vars$genomes, "externalptr")
 })
+
+
+test_that("variants print appears about right", {
+    expect_output(print(vars),
+                  paste0("<< Variants object >>\n",
+                         "\\# Variants: ", n_vars, "\n",
+                         "\\# Mutations: "))
+})
+
 
 
 test_that("variants class methods", {
