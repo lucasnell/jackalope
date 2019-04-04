@@ -100,15 +100,8 @@ vcf_info <-
 # (i.e., each variant is a separate sample)
 # ------------------------*
 
-
-vcf <- capture.output({
-    jackalope:::write_vcf_cpp(out_prefix = "",
-                           compress = FALSE,
-                           var_set_ptr = vars$genomes,
-                           sample_matrix = cbind(1:vars$n_vars()),
-                           testing = TRUE)
-})
-
+write_vcf(vars, paste0(dir, "/test"))
+vcf <- readLines(paste0(dir, "/test.vcf"))
 
 test_that("VCF file header is accurate for haploid samples", {
 
@@ -162,6 +155,66 @@ test_that("VCF file data lines are accurate for haploid samples", {
 
 
 
+
+# Haploid compressed -----
+
+
+write_vcf(vars, paste0(dir, "/test"), compress = TRUE)
+vcf_gz <- gzfile(paste0(dir, "/test.vcf.gz"), "rt")
+vcf <- readLines(vcf_gz)
+close(vcf_gz)
+
+test_that("VCF file header is accurate for haploid samples", {
+
+    header <-
+        c("##fileformat=VCFv4.3",
+          sprintf("##fileDate=%s", format(Sys.Date(), "%Y%m%d")),
+          "##source=jackalope",
+          sprintf("##contig=<ID=%s,length=%i>", ref$names()[1], ref$sizes()[1]),
+          sprintf("##contig=<ID=%s,length=%i>", ref$names()[2], ref$sizes()[2]),
+          "##phasing=full",
+          paste("##INFO=<ID=NS,Number=1,Type=Integer,Description=\"Number of",
+                "Samples With Data\">"),
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"GenotypeQuality\">",
+          paste0("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t",
+                 paste(vars$var_names(), collapse = "\t")))
+
+    expect_identical(vcf[1:length(header)], header)
+
+})
+
+
+# Remove header lines
+vcf <- vcf[!grepl("^#", vcf)]
+
+test_that("VCF file data lines are accurate for haploid samples", {
+
+    # String to insert VCF info into:
+    test_str <- paste0(c("%s\t%i\t.\t%s\t%s\t441453\tPASS\tNS=4\tGT:GQ",
+                         rep("%i:441453", 4)), collapse = "\t")
+
+    data_lines <- lapply(1:2,
+                         function(i) {
+                             sprintf(
+                                 rep(test_str, sum(vcf_info$seq == ref$names()[i])),
+                                 ref$names()[i],
+                                 vcf_info$pos[vcf_info$seq == ref$names()[i]],
+                                 vcf_info$ref[vcf_info$seq == ref$names()[i]],
+                                 vcf_info$alt[vcf_info$seq == ref$names()[i]],
+                                 vcf_info$gt1[vcf_info$seq == ref$names()[i]],
+                                 vcf_info$gt2[vcf_info$seq == ref$names()[i]],
+                                 vcf_info$gt3[vcf_info$seq == ref$names()[i]],
+                                 vcf_info$gt4[vcf_info$seq == ref$names()[i]])
+                         })
+
+    expect_identical(data_lines[[1]], vcf[grepl(paste0("^", ref$names()[1]), vcf)])
+    expect_identical(data_lines[[2]], vcf[grepl(paste0("^", ref$names()[2]), vcf)])
+
+})
+
+
+
 # ------------------------*
 # Diploid version -----
 # (i.e., 2 variants represent one sample)
@@ -171,13 +224,24 @@ test_that("VCF file data lines are accurate for haploid samples", {
 
 sample_mat <- t(combn(vars$n_vars(), 2))
 
-vcf <- capture.output({
-    jackalope:::write_vcf_cpp(out_prefix = "",
-                           compress = FALSE,
-                           var_set_ptr = vars$genomes,
-                           sample_matrix = sample_mat,
-                           testing = TRUE)
+write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat)
+vcf <- readLines(paste0(dir, "/test.vcf"))
+
+
+
+test_that("VCF writing produces error with nonsense sample matrix", {
+
+    expect_error(write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat * 0),
+                 "there are values < 1.")
+
+    sample_mat2 <- sample_mat
+    sample_mat2[nrow(sample_mat2),ncol(sample_mat2)] <- vars$n_vars() + 1
+
+    expect_error(write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat2),
+                 "there are values > the number of variants")
+
 })
+
 
 
 test_that("VCF file header is accurate for diploid samples", {

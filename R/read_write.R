@@ -296,7 +296,7 @@ write_vcf <- function(vars,
                 "integer matrix.")
     }
 
-    write_vcf_cpp(out_prefix, compress, vars$genomes, sample_matrix, FALSE)
+    write_vcf_cpp(out_prefix, compress, vars$genomes, sample_matrix)
 
     return(invisible(NULL))
 }

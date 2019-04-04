@@ -909,8 +909,7 @@ void write_fasta_gz(std::string file_name,
 void write_vcf_cpp(std::string out_prefix,
                    const bool& compress,
                    SEXP var_set_ptr,
-                   const IntegerMatrix& sample_matrix,
-                   const bool& testing) {
+                   const IntegerMatrix& sample_matrix) {
 
     XPtr<VarSet> var_set(var_set_ptr);
 
@@ -933,19 +932,6 @@ void write_vcf_cpp(std::string out_prefix,
     // Start the `WriterVCF` object
     WriterVCF writer(*var_set, 0, sample_matrix);
 
-
-    /*
-     The `testing` argument overrides everything else.
-     It results in all output being streamed to Rcout.
-     */
-    if (testing) {
-
-        std::string out_file = "";
-
-        write_vcf_<std::string>(var_set, out_file, writer);
-
-        return;
-    }
 
     if (compress) {
         std::string file_name = out_prefix + ".vcf.gz";

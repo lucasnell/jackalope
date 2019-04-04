@@ -556,12 +556,7 @@ private:
 };
 
 
-// Overloaded for writing to stdout, uncompressed file, or gzipped file
-inline void chunk_to_output(const std::string& null_str,
-                            const std::string& chunk) {
-    Rcout << chunk;
-    return;
-}
+// Overloaded for writing to uncompressed or gzipped file
 inline void chunk_to_output(std::ofstream& out_file,
                             const std::string& chunk) {
     out_file << chunk;
@@ -580,7 +575,7 @@ inline void chunk_to_output(gzFile& out_file,
 
 //' Template doing most of the work for writing to a VCF file.
 //'
-//' `T` should be `std::string`, `std::ofstream`, or `gzFile`, for the three
+//' `T` should be `std::ofstream` or `gzFile`, for the three
 //' specializations of the `chunk_to_output` function above.
 //'
 //' @noRd
