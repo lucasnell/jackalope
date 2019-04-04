@@ -402,7 +402,7 @@ make_phylo_info <- function(method,
         } else if (inherits(method_info, "list")) {
             trees_ptr <- read_coal_trees(method_info, seq_sizes, chunked)
         } else {
-            err_msg("create_variants", "metho_info", "a single string or a list",
+            err_msg("create_variants", "method_info", "a single string or a list",
                     "when `method` = \"coal_trees\"")
         }
 

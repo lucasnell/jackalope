@@ -14,6 +14,50 @@ seqs <- jackalope:::rando_seqs(10, 100)
 ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
 
 
+
+
+# ----------*
+# Errors ----
+# ----------*
+
+test_that("Read/writing FASTA files produces errors when nonsense is input", {
+
+    fa_fn <- sprintf("%s/%s.fa", dir, "test")
+
+    expect_error(write_fasta("ref", fa_fn),
+                 regexp = "argument `reference` must be a `ref_genome` object")
+
+    expect_error(write_fasta(ref, 3),
+                 regexp = "argument `file_name` must be a single string")
+
+    expect_error(write_fasta(ref, fa_fn, compress = 3),
+                 regexp = "argument `compress` must be a single logical")
+
+    expect_error(write_fasta(ref, fa_fn, text_width = "y"),
+                 regexp = "argument `text_width` must be a single integer >= 1")
+
+
+    expect_error(read_fasta(c()),
+                 regexp = "argument `fasta_files` must be a character vector")
+
+    expect_error(read_fasta(fa_fn, NA),
+                 regexp = paste("argument `fai_files` must be NULL or a",
+                                "character vector of the same length as the",
+                                "`fasta_files` argument"))
+
+    expect_error(read_fasta(rep(fa_fn, 2), "NA"),
+                 regexp = paste("argument `fai_files` must be NULL or a",
+                                "character vector of the same length as the",
+                                "`fasta_files` argument"))
+
+    expect_error(read_fasta(fa_fn, cut_names = "yeah"),
+                 regexp = "argument `cut_names` must be a single logical")
+
+})
+
+
+
+
 # ================================================================================`
 # ================================================================================`
 
@@ -21,7 +65,6 @@ ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
 
 # ================================================================================`
 # ================================================================================`
-
 
 
 # ----------*
