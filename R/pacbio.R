@@ -124,6 +124,8 @@ check_pacbio_args <- function(seq_object,
 #'
 #' From either a reference genome or set of haploid variants, create PacBio reads
 #' and write them to FASTQ output file(s).
+#' I encourage you to cite the reference below in addition to `jackalope` if you use
+#' this function.
 #'
 #'
 #' @section ID lines:
@@ -170,6 +172,9 @@ check_pacbio_args <- function(seq_object,
 #'     Defaults to `NULL`.
 #' @param prob_dup A single number indicating the probability of duplicates.
 #'     Defaults to `0.0`.
+#' @param read_chunk_size The number of reads to store before writing to disk.
+#'     Increasing this number should improve speed but take up more memory.
+#'     Defaults to `100`.
 #'
 #' @return Nothing is returned.
 #'

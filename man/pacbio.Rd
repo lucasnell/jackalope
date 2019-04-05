@@ -98,6 +98,8 @@ Nothing is returned.
 \description{
 From either a reference genome or set of haploid variants, create PacBio reads
 and write them to FASTQ output file(s).
+I encourage you to cite the reference below in addition to \code{jackalope} if you use
+this function.
 }
 \section{ID lines}{
 

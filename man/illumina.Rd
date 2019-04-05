@@ -14,7 +14,7 @@ illumina(seq_object, out_prefix, n_reads, read_length, paired, frag_mean,
   ins_prob2 = 0.00015, del_prob2 = 0.00023, frag_len_min = NULL,
   frag_len_max = NULL, variant_probs = NULL, barcodes = NULL,
   prob_dup = 0.02, compress = FALSE, n_cores = 1L,
-  read_chunk_size = 100L, show_progress = FALSE)
+  read_chunk_size = 1000L, show_progress = FALSE)
 }
 \arguments{
 \item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
@@ -89,7 +89,7 @@ Defaults to \code{1}.}
 
 \item{read_chunk_size}{The number of reads to store before writing to disk.
 Increasing this number should improve speed but take up more memory.
-Defaults to \code{100}.}
+Defaults to \code{1000}.}
 
 \item{show_progress}{Logical for whether to show a progress bar.
 Defaults to \code{FALSE}.}
@@ -100,6 +100,8 @@ Nothing is returned.
 \description{
 From either a reference genome or set of haploid variants, create Illumina reads
 from error profiles and write them to FASTQ output file(s).
+I encourage you to cite the reference below in addition to \code{jackalope} if you use
+this function.
 }
 \section{Sequencing profiles}{
 

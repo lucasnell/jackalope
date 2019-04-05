@@ -401,6 +401,8 @@ check_illumina_args <- function(seq_object, n_reads,
 #'
 #' From either a reference genome or set of haploid variants, create Illumina reads
 #' from error profiles and write them to FASTQ output file(s).
+#' I encourage you to cite the reference below in addition to `jackalope` if you use
+#' this function.
 #'
 #' @section Sequencing profiles:
 #' This section outlines how to use the `seq_sys`, `profile1`,
@@ -504,7 +506,7 @@ check_illumina_args <- function(seq_object, n_reads,
 #'     Defaults to `1`.
 #' @param read_chunk_size The number of reads to store before writing to disk.
 #'     Increasing this number should improve speed but take up more memory.
-#'     Defaults to `100`.
+#'     Defaults to `1000`.
 #' @param show_progress Logical for whether to show a progress bar.
 #'     Defaults to `FALSE`.
 #'
@@ -546,7 +548,7 @@ illumina <- function(seq_object,
                      prob_dup = 0.02,
                      compress = FALSE,
                      n_cores = 1L,
-                     read_chunk_size = 100L,
+                     read_chunk_size = 1000L,
                      show_progress = FALSE) {
 
     out_prefix <- path.expand(out_prefix)
