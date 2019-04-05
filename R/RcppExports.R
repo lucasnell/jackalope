@@ -48,8 +48,8 @@ filter_sequences <- function(ref_genome_ptr, min_seq_size = 0L, out_seq_prop = 0
 #' @noRd
 #'
 #'
-replace_Ns_cpp <- function(ref_genome_ptr, pi_tcag, n_cores, show_progress) {
-    invisible(.Call(`_jackalope_replace_Ns_cpp`, ref_genome_ptr, pi_tcag, n_cores, show_progress))
+replace_Ns_cpp <- function(ref_genome_ptr, pi_tcag, n_threads, show_progress) {
+    invisible(.Call(`_jackalope_replace_Ns_cpp`, ref_genome_ptr, pi_tcag, n_threads, show_progress))
 }
 
 #' Create `RefGenome` pointer based on nucleotide equilibrium frequencies.
@@ -64,7 +64,7 @@ replace_Ns_cpp <- function(ref_genome_ptr, pi_tcag, n_cores, show_progress) {
 #'     If set to `<= 0`, all sequences will be the same length.
 #' @param pi_tcag Vector of nucleotide equilibrium frequencies for
 #'     "T", "C", "A", and "G", respectively.
-#' @param n_cores Number of cores to use via OpenMP.
+#' @param n_threads Number of threads to use via OpenMP.
 #'
 #'
 #' @return External pointer to a `RefGenome` C++ object.
@@ -74,8 +74,8 @@ replace_Ns_cpp <- function(ref_genome_ptr, pi_tcag, n_cores, show_progress) {
 #' @examples
 #'
 #'
-create_genome_ <- function(n_seqs, len_mean, len_sd, pi_tcag, n_cores) {
-    .Call(`_jackalope_create_genome_`, n_seqs, len_mean, len_sd, pi_tcag, n_cores)
+create_genome_ <- function(n_seqs, len_mean, len_sd, pi_tcag, n_threads) {
+    .Call(`_jackalope_create_genome_`, n_seqs, len_mean, len_sd, pi_tcag, n_threads)
 }
 
 #' Create random sequences as a character vector.
@@ -90,8 +90,8 @@ create_genome_ <- function(n_seqs, len_mean, len_sd, pi_tcag, n_cores) {
 #'
 #' @noRd
 #'
-rando_seqs <- function(n_seqs, len_mean, len_sd = 0, pi_tcag = numeric(0), n_cores = 1L) {
-    .Call(`_jackalope_rando_seqs`, n_seqs, len_mean, len_sd, pi_tcag, n_cores)
+rando_seqs <- function(n_seqs, len_mean, len_sd = 0, pi_tcag = numeric(0), n_threads = 1L) {
+    .Call(`_jackalope_rando_seqs`, n_seqs, len_mean, len_sd, pi_tcag, n_threads)
 }
 
 #' Illumina sequence for reference object.
@@ -99,8 +99,8 @@ rando_seqs <- function(n_seqs, len_mean, len_sd = 0, pi_tcag = numeric(0), n_cor
 #'
 #' @noRd
 #'
-illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
-    invisible(.Call(`_jackalope_illumina_ref_cpp`, ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
+illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_threads, show_progress, read_chunk_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
+    invisible(.Call(`_jackalope_illumina_ref_cpp`, ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_threads, show_progress, read_chunk_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
 }
 
 #' Illumina sequence for reference object.
@@ -108,8 +108,8 @@ illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compr
 #'
 #' @noRd
 #'
-illumina_var_cpp <- function(var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
-    invisible(.Call(`_jackalope_illumina_var_cpp`, var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_cores, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
+illumina_var_cpp <- function(var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_threads, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
+    invisible(.Call(`_jackalope_illumina_var_cpp`, var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_threads, show_progress, read_chunk_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
 }
 
 #' Used below to directly make a MutationTypeSampler
@@ -136,8 +136,8 @@ make_mutation_sampler_chunk_base <- function(Q, pi_tcag, insertion_rates, deleti
 #'
 #' @noRd
 #'
-add_coal_sites_cpp <- function(ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_cores, show_progress) {
-    .Call(`_jackalope_add_coal_sites_cpp`, ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_cores, show_progress)
+add_coal_sites_cpp <- function(ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress) {
+    .Call(`_jackalope_add_coal_sites_cpp`, ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress)
 }
 
 #' Fill matrix of Gamma-region end points and Gamma values.
@@ -208,16 +208,16 @@ phylo_info_to_trees_chunk <- function(genome_phylo_info) {
 #'
 #' @noRd
 #'
-evolve_seqs <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress) {
-    .Call(`_jackalope_evolve_seqs`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress)
+evolve_seqs <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress) {
+    .Call(`_jackalope_evolve_seqs`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress)
 }
 
 #' Same as above, but using chunks.
 #'
 #' @noRd
 #'
-evolve_seqs_chunk <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress) {
-    .Call(`_jackalope_evolve_seqs_chunk`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_cores, show_progress)
+evolve_seqs_chunk <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress) {
+    .Call(`_jackalope_evolve_seqs_chunk`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress)
 }
 
 #' Estimates equilibrium nucleotide frequencies from an input rate matrix.
@@ -337,8 +337,8 @@ UNREST_rate_matrix <- function(Q) {
 #'
 #' @noRd
 #'
-pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
-    invisible(.Call(`_jackalope_pacbio_ref_cpp`, ref_genome_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
+pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, n_reads, n_threads, show_progress, read_chunk_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
+    invisible(.Call(`_jackalope_pacbio_ref_cpp`, ref_genome_ptr, out_prefix, compress, n_reads, n_threads, show_progress, read_chunk_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
 }
 
 #' PacBio sequence for reference object.
@@ -346,8 +346,8 @@ pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, n_reads, n_core
 #'
 #' @noRd
 #'
-pacbio_var_cpp <- function(var_set_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
-    invisible(.Call(`_jackalope_pacbio_var_cpp`, var_set_ptr, out_prefix, compress, n_reads, n_cores, show_progress, read_chunk_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
+pacbio_var_cpp <- function(var_set_ptr, out_prefix, compress, n_reads, n_threads, show_progress, read_chunk_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
+    invisible(.Call(`_jackalope_pacbio_var_cpp`, var_set_ptr, out_prefix, compress, n_reads, n_threads, show_progress, read_chunk_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
 }
 
 #' Read a ms output file with newick gene trees and return the gene tree strings.

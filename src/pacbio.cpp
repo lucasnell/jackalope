@@ -310,7 +310,7 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
                       const std::string& out_prefix,
                       const bool& compress,
                       const uint32& n_reads,
-                      const uint32& n_cores,
+                      const uint32& n_threads,
                       const bool& show_progress,
                       const uint32& read_chunk_size,
                       const double& prob_dup,
@@ -352,11 +352,11 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
     if (compress) {
         write_reads_cpp_<PacBioReference, gzFile>(
                 read_filler_base, out_prefix, n_reads,
-                prob_dup, read_chunk_size, 1U, n_cores, show_progress);
+                prob_dup, read_chunk_size, 1U, n_threads, show_progress);
     } else {
         write_reads_cpp_<PacBioReference, std::ofstream>(
                 read_filler_base, out_prefix, n_reads,
-                prob_dup, read_chunk_size, 1U, n_cores, show_progress);
+                prob_dup, read_chunk_size, 1U, n_threads, show_progress);
     }
 
 
@@ -376,7 +376,7 @@ void pacbio_var_cpp(SEXP var_set_ptr,
                     const std::string& out_prefix,
                     const bool& compress,
                     const uint32& n_reads,
-                    const uint32& n_cores,
+                    const uint32& n_threads,
                     const bool& show_progress,
                     const uint32& read_chunk_size,
                     const std::vector<double>& variant_probs,
@@ -419,11 +419,11 @@ void pacbio_var_cpp(SEXP var_set_ptr,
     if (compress) {
         write_reads_cpp_<PacBioVariants, gzFile>(
                 read_filler_base, out_prefix, n_reads,
-                prob_dup, read_chunk_size, 1U, n_cores, show_progress);
+                prob_dup, read_chunk_size, 1U, n_threads, show_progress);
     } else {
         write_reads_cpp_<PacBioVariants, std::ofstream>(
                 read_filler_base, out_prefix, n_reads,
-                prob_dup, read_chunk_size, 1U, n_cores, show_progress);
+                prob_dup, read_chunk_size, 1U, n_threads, show_progress);
     }
 
     return;

@@ -130,10 +130,10 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'     This argument is needed for all methods except `"vcf"`.
 #'     See \code{\link{make_mevo}} for more information.
 #'     Defaults to `NULL`.
-#' @param n_cores Number of cores to use for parallel processing.
+#' @param n_threads Number of threads to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
-#'     Cores are spread across sequences, so it
-#'     doesn't make sense to supply more cores than sequences in the reference genome.
+#'     Threads are spread across sequences, so it
+#'     doesn't make sense to supply more threads than sequences in the reference genome.
 #'     Defaults to `1`.
 #' @param show_progress Boolean for whether to show a progress bar during processing.
 #'     Defaults to `FALSE`.
@@ -153,7 +153,7 @@ create_variants <- function(reference,
                             method,
                             method_info,
                             mevo_obj = NULL,
-                            n_cores = 1,
+                            n_threads = 1,
                             show_progress = FALSE) {
 
     methods_ <- list(phylo = c("phylo", "coal_trees", "newick", "theta"),
@@ -175,8 +175,8 @@ create_variants <- function(reference,
                 "Restart by reading a FASTA file or by simulating a genome,",
                 "and do NOT change the `genome` field manually")
     }
-    if (!single_integer(n_cores, .min = 1)) {
-        err_msg("create_variants", "n_cores", "a single integer >= 1")
+    if (!single_integer(n_threads, .min = 1)) {
+        err_msg("create_variants", "n_threads", "a single integer >= 1")
     }
     if (!is_type(show_progress, "logical", 1)) {
         err_msg("create_variants", "show_progress", "a single logical")
@@ -222,7 +222,7 @@ create_variants <- function(reference,
                 sampler_base_ptr,
                 phylo_info_ptr,
                 gamma_mats,
-                n_cores,
+                n_threads,
                 show_progress)
         } else {
             variants_ptr <- evolve_seqs(
@@ -230,7 +230,7 @@ create_variants <- function(reference,
                 sampler_base_ptr,
                 phylo_info_ptr,
                 gamma_mats,
-                n_cores,
+                n_threads,
                 show_progress)
         }
 
@@ -241,7 +241,7 @@ create_variants <- function(reference,
     } else if (method == "coal_sites") {
 
         variants_ptr <- read_coal_sites(method_info, reference, mevo_obj,
-                                        n_cores, show_progress)
+                                        n_threads, show_progress)
 
     # ---------*
     # --- vcf method ----

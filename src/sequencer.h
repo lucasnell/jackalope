@@ -41,13 +41,13 @@ const std::vector<std::string> mm_nucleos = {"CAG", "TAG", "TCG", "TCA", "NNN"};
 
 /*
 
-Info for making reads and writing them, for one core.
+Info for making reads and writing them, for one thread.
 
 `T` can be `[Illumina/PacBio]Reference` or `[Illumina/PacBio]Variants`.
 */
 
 template <typename T>
-class ReadWriterOneCore {
+class ReadWriterOneThread {
 
 public:
 
@@ -61,11 +61,11 @@ public:
     const uint32 n_read_ends;       // (1 for SE Illumina or PacBio, 2 for PE Illumina)
     std::vector<std::string> fastq_chunks;
 
-    ReadWriterOneCore(const T& read_filler_base,
-                      const uint32& n_reads_,
-                      const uint32& read_chunk_size_,
-                      const double& prob_dup_,
-                      const uint32& n_read_ends_)
+    ReadWriterOneThread(const T& read_filler_base,
+                        const uint32& n_reads_,
+                        const uint32& read_chunk_size_,
+                        const double& prob_dup_,
+                        const uint32& n_read_ends_)
         : read_filler(read_filler_base),
           n_reads(n_reads_),
           read_chunk_size(read_chunk_size_),
@@ -144,13 +144,13 @@ public:
 
 
 
-//' Split number of reads by number of cores.
+//' Split number of reads by number of threads.
 //'
 //' @noRd
 //'
 inline std::vector<uint32> split_n_reads(const uint32& n_reads,
-                                         const uint32& n_cores) {
-    std::vector<uint32> out(n_cores, n_reads / n_cores);
+                                         const uint32& n_threads) {
+    std::vector<uint32> out(n_threads, n_reads / n_threads);
     uint32 sum_reads = std::accumulate(out.begin(), out.end(), 0U);
     uint32 i = 0;
     while (sum_reads < n_reads) {
@@ -264,19 +264,19 @@ void write_reads_cpp_(const T& read_filler_base,
                       const double& prob_dup,
                       const uint32& read_chunk_size,
                       const uint32& n_read_ends,
-                      uint32 n_cores,
+                      uint32 n_threads,
                       const bool& show_progress) {
 
 
-    // To make sure reads_per_core is still accurate if OpenMP not used:
+    // To make sure reads_per_thread is still accurate if OpenMP not used:
 #ifndef _OPENMP
-    n_cores = 1;
+    n_threads = 1;
 #endif
 
-    const std::vector<uint32> reads_per_core = split_n_reads(n_reads, n_cores);
+    const std::vector<uint32> reads_per_thread = split_n_reads(n_reads, n_threads);
 
-    // Generate seeds for random number generators (1 RNG per core)
-    const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
+    // Generate seeds for random number generators (1 RNG per thread)
+    const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
 
     /*
     Create and open files:
@@ -289,13 +289,13 @@ void write_reads_cpp_(const T& read_filler_base,
 
 
 #ifdef _OPENMP
-#pragma omp parallel num_threads(n_cores) if (n_cores > 1)
+#pragma omp parallel num_threads(n_threads) if (n_threads > 1)
 {
 #endif
 
     std::vector<uint64> active_seeds;
 
-    // Write the active seed per core or just write one of the seeds.
+    // Write the active seed per thread or just write one of the seeds.
 #ifdef _OPENMP
     uint32 active_thread = omp_get_thread_num();
 #else
@@ -305,14 +305,14 @@ void write_reads_cpp_(const T& read_filler_base,
 
     pcg64 eng = seeded_pcg(active_seeds);
 
-    uint32 reads_this_core = reads_per_core[active_thread];
+    uint32 reads_this_thread = reads_per_thread[active_thread];
 
-    ReadWriterOneCore<T> writer(read_filler_base, reads_this_core,
-                                read_chunk_size, prob_dup, n_read_ends);
+    ReadWriterOneThread<T> writer(read_filler_base, reads_this_thread,
+                                  read_chunk_size, prob_dup, n_read_ends);
 
     uint32 reads_written;
 
-    while (writer.reads_made < reads_this_core) {
+    while (writer.reads_made < reads_this_thread) {
 
         // Every 10 reads, check that the user hasn't interrupted the process
         if (writer.reads_made % 10 == 0 && prog_bar.is_aborted()) break;
@@ -332,7 +332,6 @@ void write_reads_cpp_(const T& read_filler_base,
 #ifdef _OPENMP
 }
 #endif
-
 
     // Close files
     close_fastq(files);

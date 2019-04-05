@@ -21,7 +21,7 @@
 #include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "alias_sampler.h" // alias sampling
-#include "pcg.h" // pcg::max, mc_seeds, seeded_pcg
+#include "pcg.h" // pcg::max, mt_seeds, seeded_pcg
 
 using namespace Rcpp;
 
@@ -58,10 +58,10 @@ OuterClass create_sequences_(const uint32& n_seqs,
                              const double& len_mean,
                              const double& len_sd,
                              const std::vector<double>& pi_tcag,
-                             const uint32& n_cores) {
+                             const uint32& n_threads) {
 
-    // Generate seeds for random number generators (1 RNG per core)
-    const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
+    // Generate seeds for random number generators (1 RNG per thread)
+    const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
 
     // Alias-sampling object
     const AliasSampler sampler(pi_tcag);
@@ -75,13 +75,13 @@ OuterClass create_sequences_(const uint32& n_seqs,
 
 
     #ifdef _OPENMP
-    #pragma omp parallel default(shared) num_threads(n_cores) if (n_cores > 1)
+    #pragma omp parallel default(shared) num_threads(n_threads) if (n_threads > 1)
     {
     #endif
 
     std::vector<uint64> active_seeds;
 
-    // Write the active seed per core or just write one of the seeds.
+    // Write the active seed per thread or just write one of the seeds.
     #ifdef _OPENMP
     uint32 active_thread = omp_get_thread_num();
     active_seeds = seeds[active_thread];
@@ -142,7 +142,7 @@ OuterClass create_sequences_(const uint32& n_seqs,
 //'     If set to `<= 0`, all sequences will be the same length.
 //' @param pi_tcag Vector of nucleotide equilibrium frequencies for
 //'     "T", "C", "A", and "G", respectively.
-//' @param n_cores Number of cores to use via OpenMP.
+//' @param n_threads Number of threads to use via OpenMP.
 //'
 //'
 //' @return External pointer to a `RefGenome` C++ object.
@@ -157,13 +157,13 @@ SEXP create_genome_(const uint32& n_seqs,
                     const double& len_mean,
                     const double& len_sd,
                     std::vector<double> pi_tcag,
-                    const uint32& n_cores) {
+                    const uint32& n_threads) {
 
     XPtr<RefGenome> ref_xptr(new RefGenome(), true);
     RefGenome& ref(*ref_xptr);
 
     ref = create_sequences_<RefGenome, RefSequence>(
-        n_seqs, len_mean, len_sd, pi_tcag, n_cores);
+        n_seqs, len_mean, len_sd, pi_tcag, n_threads);
 
     for (uint32 i = 0; i < n_seqs; i++) {
         ref.total_size += ref[i].size();
@@ -193,13 +193,13 @@ std::vector<std::string> rando_seqs(const uint32& n_seqs,
                                     const double& len_mean,
                                     const double& len_sd = 0,
                                     NumericVector pi_tcag = NumericVector(0),
-                                    const uint32& n_cores = 1) {
+                                    const uint32& n_threads = 1) {
 
     std::vector<double> pi_tcag_ = as<std::vector<double>>(pi_tcag);
     if (pi_tcag_.size() == 0) pi_tcag_ = std::vector<double>(4, 0.25);
 
     std::vector<std::string> ref = create_sequences_<std::vector<std::string>,
-                std::string>(n_seqs, len_mean, len_sd, pi_tcag_, n_cores);
+                std::string>(n_seqs, len_mean, len_sd, pi_tcag_, n_threads);
 
     return ref;
 }

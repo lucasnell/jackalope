@@ -39,10 +39,10 @@
 #'         sequences are retained that allow at least
 #'         `threshold * sum(<all sequence sizes>)` base pairs remaining after
 #'         filtering.}
-#'     \item{`replace_Ns(pi_tcag, n_cores = 1, show_progress = FALSE)`}{Replace
+#'     \item{`replace_Ns(pi_tcag, n_threads = 1, show_progress = FALSE)`}{Replace
 #'         `N`s in reference sequence with nucleotides sampled with probabilities
 #'         given in `pi_tcag`.
-#'         You can optionally use multiple cores (`n_cores` argument) and/or
+#'         You can optionally use multiple threads (`n_threads` argument) and/or
 #'         show a progress bar (`show_progress`).}
 #' }
 #'
@@ -186,7 +186,7 @@ ref_genome <- R6::R6Class(
 
 
         replace_Ns = function(pi_tcag,
-                              n_cores = 1,
+                              n_threads = 1,
                               show_progress = FALSE) {
             private$check_ptr()
             if (!is_type(pi_tcag, "numeric", 4) || any(pi_tcag < 0) ||
@@ -195,8 +195,8 @@ ref_genome <- R6::R6Class(
                      "must be a numeric vector of length 4, where no values can ",
                      "be < 0 and at least one value must be > 0.", call. = FALSE)
             }
-            if (!single_integer(n_cores, 1)) {
-                stop("\nIn `replace_Ns` method, the `n_cores` argument ",
+            if (!single_integer(n_threads, 1)) {
+                stop("\nIn `replace_Ns` method, the `n_threads` argument ",
                      "must be a single integer >= 1.", call. = FALSE)
             }
             if (!is_type(show_progress, "logical", 1)) {
@@ -204,7 +204,7 @@ ref_genome <- R6::R6Class(
                      "must be a single logical.", call. = FALSE)
             }
 
-            replace_Ns_cpp(self$genome, pi_tcag, n_cores, show_progress)
+            replace_Ns_cpp(self$genome, pi_tcag, n_threads, show_progress)
 
             invisible(self)
 

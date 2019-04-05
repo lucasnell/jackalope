@@ -9,7 +9,7 @@ check_pacbio_args <- function(seq_object,
                               n_reads,
                               variant_probs,
                               compress,
-                              n_cores,
+                              n_threads,
                               read_chunk_size,
                               chi2_params_s,
                               chi2_params_n,
@@ -32,7 +32,7 @@ check_pacbio_args <- function(seq_object,
              "of class \"ref_genome\" or \"variants\".", call. = FALSE)
     }
 
-    for (x in c("n_reads", "n_cores", "read_chunk_size",
+    for (x in c("n_reads", "n_threads", "read_chunk_size",
                 "max_passes", "min_read_length")) {
         z <- eval(parse(text = x))
         if (!single_integer(z, 1)) err_msg("pacbio", x, "a single integer >= 1")
@@ -209,7 +209,7 @@ pacbio <- function(seq_object,
                    prob_dup = 0.0,
                    variant_probs = NULL,
                    compress = FALSE,
-                   n_cores = 1L,
+                   n_threads = 1L,
                    read_chunk_size = 100L,
                    show_progress = FALSE) {
 
@@ -218,7 +218,7 @@ pacbio <- function(seq_object,
 
     # Check for improper argument types:
     check_pacbio_args(seq_object, n_reads, variant_probs,
-                      compress, n_cores, read_chunk_size,
+                      compress, n_threads, read_chunk_size,
                       chi2_params_s, chi2_params_n, max_passes,
                       sqrt_params, norm_params,
                       prob_thresh, ins_prob, del_prob, sub_prob,
@@ -246,7 +246,7 @@ pacbio <- function(seq_object,
     args <- list(out_prefix = out_prefix,
                  compress = compress,
                  n_reads = n_reads,
-                 n_cores = n_cores,
+                 n_threads = n_threads,
                  read_chunk_size = read_chunk_size,
                  chi2_params_s = chi2_params_s,
                  chi2_params_n = chi2_params_n,

@@ -11,7 +11,7 @@
 #'     If set to \code{<= 0}, all sequences will be the same length. Defaults to \code{0}.
 #' @param pi_tcag Vector of length 4 containing the nucleotide equilibrium frequencies
 #'     for "T", "C", "A", and "G", respectively. Defaults to `rep(0.25, 4)`.
-#' @param n_cores Number of cores to use for parallel processing. This argument is
+#' @param n_threads Number of threads to use for parallel processing. This argument is
 #'     ignored if OpenMP is not enabled. Defaults to \code{1}.
 #'
 #'
@@ -27,7 +27,7 @@ create_genome <- function(n_seqs,
                           len_mean,
                           len_sd = 0,
                           pi_tcag = rep(0.25, 4),
-                          n_cores = 1) {
+                          n_threads = 1) {
 
 
     if (!single_integer(n_seqs, .min = 1)) {
@@ -44,11 +44,11 @@ create_genome <- function(n_seqs,
         err_msg("create_genome", "pi_tcag", "a numeric vector of length 4,",
                 "where no number can be < 0 and at least one must be > 0")
     }
-    if (!single_integer(n_cores, .min = 1)) {
-        err_msg("create_genome", "n_cores", "a single integer >= 1")
+    if (!single_integer(n_threads, .min = 1)) {
+        err_msg("create_genome", "n_threads", "a single integer >= 1")
     }
 
-    ptr <- create_genome_(n_seqs, len_mean, len_sd, pi_tcag, n_cores)
+    ptr <- create_genome_(n_seqs, len_mean, len_sd, pi_tcag, n_threads)
 
     ref_obj <- ref_genome$new(ptr)
 

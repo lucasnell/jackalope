@@ -209,7 +209,7 @@ XPtr<VarSet> PhyloInfo<T>::evolve_seqs(
         SEXP& ref_genome_ptr,
         SEXP& sampler_base_ptr,
         const std::vector<arma::mat>& gamma_mats,
-        uint32 n_cores,
+        uint32 n_threads,
         const bool& show_progress) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
@@ -221,14 +221,14 @@ XPtr<VarSet> PhyloInfo<T>::evolve_seqs(
     XPtr<VarSet> var_set(new VarSet(*ref_genome, var_names), true);
 
 #ifndef _OPENMP
-    n_cores = 1;
+    n_threads = 1;
 #endif
 
     uint32 n_seqs = ref_genome->size();
     uint64 total_seq = ref_genome->total_size;
 
     Progress prog_bar(total_seq, show_progress);
-    std::vector<int> status_codes(n_cores, 0);
+    std::vector<int> status_codes(n_threads, 0);
 
     if (n_seqs != gamma_mats.size()) {
         std::string err_msg = "\ngamma_mats must be of same length as # sequences in ";
@@ -252,17 +252,17 @@ XPtr<VarSet> PhyloInfo<T>::evolve_seqs(
     }
 
 
-    // Generate seeds for random number generators (1 RNG per core)
-    const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
+    // Generate seeds for random number generators (1 RNG per thread)
+    const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
 
 #ifdef _OPENMP
-#pragma omp parallel default(shared) num_threads(n_cores) if (n_cores > 1)
+#pragma omp parallel default(shared) num_threads(n_threads) if (n_threads > 1)
 {
 #endif
 
     std::vector<uint64> active_seeds;
 
-    // Write the active seed per core or just write one of the seeds.
+    // Write the active seed per thread or just write one of the seeds.
 #ifdef _OPENMP
     uint32 active_thread = omp_get_thread_num();
 #else
@@ -376,14 +376,14 @@ SEXP evolve_seqs(
         SEXP& sampler_base_ptr,
         SEXP& phylo_info_ptr,
         const std::vector<arma::mat>& gamma_mats,
-        const uint32& n_cores,
+        const uint32& n_threads,
         const bool& show_progress) {
 
     XPtr<PhyloInfo<MutationSampler>> phylo_info(phylo_info_ptr);
 
     XPtr<VarSet> var_set = phylo_info->evolve_seqs(
         ref_genome_ptr, sampler_base_ptr,
-        gamma_mats, n_cores, show_progress);
+        gamma_mats, n_threads, show_progress);
 
     return var_set;
 }
@@ -398,14 +398,14 @@ SEXP evolve_seqs_chunk(
         SEXP& sampler_base_ptr,
         SEXP& phylo_info_ptr,
         const std::vector<arma::mat>& gamma_mats,
-        const uint32& n_cores,
+        const uint32& n_threads,
         const bool& show_progress) {
 
     XPtr<PhyloInfo<ChunkMutationSampler>> phylo_info(phylo_info_ptr);
 
     XPtr<VarSet> var_set = phylo_info->evolve_seqs(
         ref_genome_ptr, sampler_base_ptr,
-        gamma_mats, n_cores, show_progress);
+        gamma_mats, n_threads, show_progress);
 
     return var_set;
 }

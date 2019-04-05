@@ -257,7 +257,7 @@ mevo_ <- make_mevo(ref,
                    chunk_size = 100)
 # Takes ~14 sec
 var_set <- create_variants(ref, method = "phylo", method_info = tree,
-                           mevo_obj = mevo_, n_cores = 4)
+                           mevo_obj = mevo_, n_threads = 4)
 
 pos_df <- map_dfr(0:(ref$n_seqs()-1),
     function(s) {
@@ -320,7 +320,7 @@ mevo_ <- make_mevo(ref,
                               pi_tcag = pars$pi_tcag))
 
 var_set <- create_variants(ref, method = "phylo", method_info = tree,
-                           mevo_obj = mevo_, n_cores = 4)
+                           mevo_obj = mevo_, n_threads = 4)
 
 
 mutations <- lapply(0:(pars$n_vars-1),

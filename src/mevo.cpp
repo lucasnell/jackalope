@@ -162,7 +162,7 @@ SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
                         const std::vector<double>& pi_tcag,
                         const std::vector<double>& insertion_rates,
                         const std::vector<double>& deletion_rates,
-                        uint32 n_cores,
+                        uint32 n_threads,
                         const bool& show_progress) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
@@ -171,20 +171,20 @@ SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
     XPtr<VarSet> var_set(new VarSet(*ref_genome, var_names), true);
 
 #ifndef _OPENMP
-    n_cores = 1;
+    n_threads = 1;
 #endif
 
     const uint32 n_seqs = ref_genome->size();
     const uint64 total_seq = ref_genome->total_size;
 
     Progress prog_bar(total_seq, show_progress);
-    std::vector<int> status_codes(n_cores, 0);
+    std::vector<int> status_codes(n_threads, 0);
 
-    // Generate seeds for random number generators (1 RNG per core)
-    const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
+    // Generate seeds for random number generators (1 RNG per thread)
+    const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
 
 #ifdef _OPENMP
-#pragma omp parallel default(shared) num_threads(n_cores) if (n_cores > 1)
+#pragma omp parallel default(shared) num_threads(n_threads) if (n_threads > 1)
 {
 #endif
 
@@ -195,7 +195,7 @@ SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
 
     std::vector<uint64> active_seeds;
 
-    // Write the active seed per core or just write one of the seeds.
+    // Write the active seed per thread or just write one of the seeds.
 #ifdef _OPENMP
     uint32 active_thread = omp_get_thread_num();
 #else

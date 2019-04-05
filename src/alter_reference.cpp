@@ -206,13 +206,13 @@ void filter_sequences(SEXP ref_genome_ptr,
 //[[Rcpp::export]]
 void replace_Ns_cpp(SEXP ref_genome_ptr,
                     const std::vector<double>& pi_tcag,
-                    const uint32& n_cores,
+                    const uint32& n_threads,
                     const bool& show_progress) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
 
-    // Generate seeds for random number generators (1 RNG per core)
-    const std::vector<std::vector<uint64>> seeds = mc_seeds(n_cores);
+    // Generate seeds for random number generators (1 RNG per thread)
+    const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
 
     const uint32 n_seqs = ref_genome->size();
 
@@ -220,13 +220,13 @@ void replace_Ns_cpp(SEXP ref_genome_ptr,
     Progress prog_bar(n_seqs, show_progress);
 
 #ifdef _OPENMP
-#pragma omp parallel num_threads(n_cores) if (n_cores > 1)
+#pragma omp parallel num_threads(n_threads) if (n_threads > 1)
 {
 #endif
 
     std::vector<uint64> active_seeds;
 
-    // Write the active seed per core or just write one of the seeds.
+    // Write the active seed per thread or just write one of the seeds.
 #ifdef _OPENMP
     uint32 active_thread = omp_get_thread_num();
 #else

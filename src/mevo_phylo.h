@@ -515,7 +515,7 @@ public:
             SEXP& ref_genome_ptr,
             SEXP& sampler_base_ptr,
             const std::vector<arma::mat>& gamma_mats,
-            uint32 n_cores,
+            uint32 n_threads,
             const bool& show_progress);
 
 

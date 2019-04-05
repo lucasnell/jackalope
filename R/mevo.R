@@ -558,7 +558,7 @@ fill_coal_mat_pos <- function(sites_mats, seq_sizes) {
 #'
 #' @noRd
 #'
-read_coal_sites <- function(method_info, reference, mevo_obj, n_cores, show_progress) {
+read_coal_sites <- function(method_info, reference, mevo_obj, n_threads, show_progress) {
 
     var_names <- character(0)
     if (inherits(method_info, "list") && !is.null(method_info$names) &&
@@ -613,7 +613,7 @@ read_coal_sites <- function(method_info, reference, mevo_obj, n_cores, show_prog
                                        mevo_obj$pi_tcag,
                                        mevo_obj$insertion_rates,
                                        mevo_obj$deletion_rates,
-                                       n_cores,
+                                       n_threads,
                                        show_progress)
 
     return(variants_ptr)

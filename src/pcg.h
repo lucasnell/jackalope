@@ -33,12 +33,12 @@ namespace pcg {
 
 
 
-// To sample for seeds before multi-core operations
-inline std::vector<std::vector<uint64>> mc_seeds(const uint32& n_cores) {
+// To sample for seeds before multi-thread operations
+inline std::vector<std::vector<uint64>> mt_seeds(const uint32& n_threads) {
 
-    std::vector<std::vector<uint64>> sub_seeds(n_cores, std::vector<uint64>(8));
+    std::vector<std::vector<uint64>> sub_seeds(n_threads, std::vector<uint64>(8));
 
-    for (uint32 i = 0; i < n_cores; i++) {
+    for (uint32 i = 0; i < n_threads; i++) {
         sub_seeds[i] = as<std::vector<uint64>>(Rcpp::runif(8,0,4294967296));
     }
 
@@ -92,12 +92,12 @@ inline pcg64 seeded_pcg(const std::vector<uint64>& sub_seeds) {
  -----------
  */
 
-// To sample for seeds before multi-core operations
-inline std::vector<std::vector<uint64>> mc_seeds32(const uint32& n_cores) {
+// To sample for seeds before multi-thread operations
+inline std::vector<std::vector<uint64>> mt_seeds32(const uint32& n_threads) {
 
-    std::vector<std::vector<uint64>> sub_seeds(n_cores, std::vector<uint64>(4));
+    std::vector<std::vector<uint64>> sub_seeds(n_threads, std::vector<uint64>(4));
 
-    for (uint32 i = 0; i < n_cores; i++) {
+    for (uint32 i = 0; i < n_threads; i++) {
         sub_seeds[i] = as<std::vector<uint64>>(Rcpp::runif(4,0,4294967296));
     }
 
@@ -114,7 +114,7 @@ inline void fill_seeds32(const std::vector<uint64>& sub_seeds,
 }
 
 /*
- For single-core operations, you can use R's RNG for 32-bit random number generation.
+ For single-thread operations, you can use R's RNG for 32-bit random number generation.
  */
 inline pcg32 seeded_pcg32() {
 
@@ -130,9 +130,9 @@ inline pcg32 seeded_pcg32() {
 }
 
 /*
- For multi-core operations, you should call `mc_seeds` when outside multi-core mode,
- then input an inner `std::vector<uint32>` (from inside the object output from `mc_seeds`)
- to this function when in multi-core mode to seed the PRNG.
+ For multi-thread operations, you should call `mt_seeds` when outside multi-thread mode,
+ then input an inner `std::vector<uint32>` (from inside the object output from `mt_seeds`)
+ to this function when in multi-thread mode to seed the PRNG.
  */
 // sub_seeds needs to be at least 4-long!
 inline pcg32 seeded_pcg32(const std::vector<uint64>& sub_seeds) {

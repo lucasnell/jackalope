@@ -283,7 +283,7 @@ check_illumina_args <- function(seq_object, n_reads,
                                 ins_prob2, del_prob2,
                                 frag_len_min, frag_len_max,
                                 variant_probs, barcodes, prob_dup,
-                                compress, n_cores, read_chunk_size,
+                                compress, n_threads, read_chunk_size,
                                 show_progress) {
 
     # Checking types:
@@ -294,7 +294,7 @@ check_illumina_args <- function(seq_object, n_reads,
              "of class \"ref_genome\" or \"variants\".", call. = FALSE)
     }
 
-    for (x in c("read_length", "n_reads", "n_cores", "read_chunk_size")) {
+    for (x in c("read_length", "n_reads", "n_threads", "read_chunk_size")) {
         z <- eval(parse(text = x))
         if (!single_integer(z, 1)) err_msg("illumina", x, "a single integer >= 1")
     }
@@ -501,7 +501,7 @@ check_illumina_args <- function(seq_object, n_reads,
 #'     Defaults to `0.02`.
 #' @param compress A logical for whether to compress output FASTQ files using gzip.
 #'     Defaults to `FALSE`.
-#' @param n_cores The number of cores to use in processing.
+#' @param n_threads The number of threads to use in processing.
 #'     This argument is ignored if the package was not compiled with OpenMP.
 #'     Defaults to `1`.
 #' @param read_chunk_size The number of reads to store before writing to disk.
@@ -547,7 +547,7 @@ illumina <- function(seq_object,
                      barcodes = NULL,
                      prob_dup = 0.02,
                      compress = FALSE,
-                     n_cores = 1L,
+                     n_threads = 1L,
                      read_chunk_size = 1000L,
                      show_progress = FALSE) {
 
@@ -559,7 +559,7 @@ illumina <- function(seq_object,
                         frag_mean, frag_sd, matepair, seq_sys, profile1, profile2,
                         ins_prob1, del_prob1, ins_prob2, del_prob2,
                         frag_len_min, frag_len_max, variant_probs, barcodes, prob_dup,
-                        compress, n_cores, read_chunk_size, show_progress)
+                        compress, n_threads, read_chunk_size, show_progress)
 
     # Change mean and SD to shape and scale of Gamma distribution:
     frag_len_shape <- (frag_mean / frag_sd)^2
@@ -604,7 +604,7 @@ illumina <- function(seq_object,
                  paired = paired,
                  matepair = matepair,
                  prob_dup = prob_dup,
-                 n_cores = n_cores,
+                 n_threads = n_threads,
                  read_chunk_size = read_chunk_size,
                  frag_len_shape = frag_len_shape,
                  frag_len_scale = frag_len_scale,
