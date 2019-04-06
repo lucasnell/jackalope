@@ -5,7 +5,7 @@
 \title{Create a reference genome.}
 \usage{
 create_genome(n_seqs, len_mean, len_sd = 0, pi_tcag = rep(0.25, 4),
-  n_cores = 1)
+  n_threads = 1)
 }
 \arguments{
 \item{n_seqs}{Number of sequences.}
@@ -18,7 +18,7 @@ If set to \code{<= 0}, all sequences will be the same length. Defaults to \code{
 \item{pi_tcag}{Vector of length 4 containing the nucleotide equilibrium frequencies
 for "T", "C", "A", and "G", respectively. Defaults to \code{rep(0.25, 4)}.}
 
-\item{n_cores}{Number of cores to use for parallel processing. This argument is
+\item{n_threads}{Number of threads to use for parallel processing. This argument is
 ignored if OpenMP is not enabled. Defaults to \code{1}.}
 }
 \value{

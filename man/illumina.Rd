@@ -13,8 +13,8 @@ illumina(seq_object, out_prefix, n_reads, read_length, paired, frag_mean,
   profile2 = NULL, ins_prob1 = 9e-05, del_prob1 = 0.00011,
   ins_prob2 = 0.00015, del_prob2 = 0.00023, frag_len_min = NULL,
   frag_len_max = NULL, variant_probs = NULL, barcodes = NULL,
-  prob_dup = 0.02, compress = FALSE, n_cores = 1L,
-  read_chunk_size = 1000L, show_progress = FALSE)
+  prob_dup = 0.02, compress = FALSE, n_threads = 1L,
+  read_pool_size = 1000L, show_progress = FALSE)
 }
 \arguments{
 \item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
@@ -83,11 +83,11 @@ Defaults to \code{0.02}.}
 \item{compress}{A logical for whether to compress output FASTQ files using gzip.
 Defaults to \code{FALSE}.}
 
-\item{n_cores}{The number of cores to use in processing.
+\item{n_threads}{The number of threads to use in processing.
 This argument is ignored if the package was not compiled with OpenMP.
 Defaults to \code{1}.}
 
-\item{read_chunk_size}{The number of reads to store before writing to disk.
+\item{read_pool_size}{The number of reads to store before writing to disk.
 Increasing this number should improve speed but take up more memory.
 Defaults to \code{1000}.}
 

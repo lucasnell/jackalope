@@ -53,10 +53,10 @@ For the latter, sequences are first size-sorted, then the largest \code{N}
 sequences are retained that allow at least
 \code{threshold * sum(<all sequence sizes>)} base pairs remaining after
 filtering.}
-\item{\code{replace_Ns(pi_tcag, n_cores = 1, show_progress = FALSE)}}{Replace
+\item{\code{replace_Ns(pi_tcag, n_threads = 1, show_progress = FALSE)}}{Replace
 \code{N}s in reference sequence with nucleotides sampled with probabilities
 given in \code{pi_tcag}.
-You can optionally use multiple cores (\code{n_cores} argument) and/or
+You can optionally use multiple threads (\code{n_threads} argument) and/or
 show a progress bar (\code{show_progress}).}
 }
 }

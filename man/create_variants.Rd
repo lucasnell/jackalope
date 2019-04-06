@@ -5,7 +5,7 @@
 \title{Create variants from a reference genome.}
 \usage{
 create_variants(reference, method, method_info, mevo_obj = NULL,
-  n_cores = 1, show_progress = FALSE)
+  n_threads = 1, show_progress = FALSE)
 }
 \arguments{
 \item{reference}{A \code{ref_genome} object from which to generate variants.
@@ -40,10 +40,10 @@ This argument is needed for all methods except \code{"vcf"}.
 See \code{\link{make_mevo}} for more information.
 Defaults to \code{NULL}.}
 
-\item{n_cores}{Number of cores to use for parallel processing.
+\item{n_threads}{Number of threads to use for parallel processing.
 This argument is ignored if OpenMP is not enabled.
-Cores are spread across sequences, so it
-doesn't make sense to supply more cores than sequences in the reference genome.
+Threads are spread across sequences, so it
+doesn't make sense to supply more threads than sequences in the reference genome.
 Defaults to \code{1}.}
 
 \item{show_progress}{Boolean for whether to show a progress bar during processing.

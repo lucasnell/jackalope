@@ -15,7 +15,7 @@ pacbio(seq_object, out_prefix, n_reads, chi2_params_s = c(0.01214, -5.12,
   del_prob = 0.04, sub_prob = 0.01, min_read_length = 50,
   lognorm_read_length = c(0.200110276521, -10075.4363813, 17922.611306),
   custom_read_lengths = NULL, prob_dup = 0, variant_probs = NULL,
-  compress = FALSE, n_cores = 1L, read_chunk_size = 100L,
+  compress = FALSE, n_threads = 1L, read_pool_size = 100L,
   show_progress = FALSE)
 }
 \arguments{
@@ -81,11 +81,11 @@ Defaults to \code{NULL}.}
 \item{compress}{A logical for whether to compress output FASTQ files using gzip.
 Defaults to \code{FALSE}.}
 
-\item{n_cores}{The number of cores to use in processing.
+\item{n_threads}{The number of threads to use in processing.
 This argument is ignored if the package was not compiled with OpenMP.
 Defaults to \code{1}.}
 
-\item{read_chunk_size}{The number of reads to store before writing to disk.
+\item{read_pool_size}{The number of reads to store before writing to disk.
 Increasing this number should improve speed but take up more memory.
 Defaults to \code{100}.}
 
