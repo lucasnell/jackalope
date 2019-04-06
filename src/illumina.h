@@ -413,14 +413,14 @@ public:
 
 
     // Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality)
-    void one_read(std::vector<std::string>& fastq_chunks,
+    void one_read(std::vector<std::string>& fastq_pools,
                   pcg64& eng);
 
     /*
      Same as above, but for a duplicate. It's assumed that `one_read` has been
      run once before.
      */
-    void re_read(std::vector<std::string>& fastq_chunks,
+    void re_read(std::vector<std::string>& fastq_pools,
                   pcg64& eng);
 
     /*
@@ -471,11 +471,11 @@ protected:
 
     /*
      Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality),
-     then append that to the `fastq_chunks` vector.
+     then append that to the `fastq_pools` vector.
      This function does NOT do anything with fragments.
      That should be done outside this function.
      */
-    void append_chunks(std::vector<std::string>& fastq_chunks,
+    void append_pools(std::vector<std::string>& fastq_pools,
                        pcg64& eng);
 
 
@@ -599,10 +599,10 @@ public:
      -------------
      */
     // If only providing rng and id info, sample for a variant, then make read(s):
-    void one_read(std::vector<std::string>& fastq_chunks,
+    void one_read(std::vector<std::string>& fastq_pools,
                   pcg64& eng) {
         var = variant_sampler.sample(eng);
-        read_makers[var].one_read(fastq_chunks, eng);
+        read_makers[var].one_read(fastq_pools, eng);
         return;
     }
     /*
@@ -610,9 +610,9 @@ public:
      `re_read` methods (for duplicates)
      -------------
      */
-    void re_read(std::vector<std::string>& fastq_chunks,
+    void re_read(std::vector<std::string>& fastq_pools,
                   pcg64& eng) {
-        read_makers[var].re_read(fastq_chunks, eng);
+        read_makers[var].re_read(fastq_pools, eng);
         return;
     }
 

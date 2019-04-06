@@ -477,14 +477,14 @@ public:
           name(other.name) {};
 
 
-    // Add one read string (with 4 lines: ID, sequence, "+", quality) to a FASTQ chunk
-    void one_read(std::vector<std::string>& fastq_chunks,
+    // Add one read string (with 4 lines: ID, sequence, "+", quality) to a FASTQ pool
+    void one_read(std::vector<std::string>& fastq_pools,
                   pcg64& eng);
     /*
      Same as above, but for a duplicate. It's assumed that `one_read` has been
      run once before.
      */
-    void re_read(std::vector<std::string>& fastq_chunks,
+    void re_read(std::vector<std::string>& fastq_pools,
                  pcg64& eng);
 
 
@@ -535,8 +535,8 @@ private:
         seq_sampler = AliasSampler(probs_);
     }
 
-    // Append quality and read to fastq chunk
-    void append_chunk(std::string& fastq_chunk,
+    // Append quality and read to fastq pool
+    void append_pool(std::string& fastq_pool,
                       pcg64& eng);
 
 
@@ -624,10 +624,10 @@ public:
      -------------
      */
     // If only providing rng and id info, sample for a variant, then make read(s):
-    void one_read(std::vector<std::string>& fastq_chunks,
+    void one_read(std::vector<std::string>& fastq_pools,
                   pcg64& eng) {
         var = variant_sampler.sample(eng);
-        read_makers[var].one_read(fastq_chunks, eng);
+        read_makers[var].one_read(fastq_pools, eng);
         return;
     }
     /*
@@ -635,9 +635,9 @@ public:
      `re_read` methods (for duplicates)
     -------------
     */
-    void re_read(std::vector<std::string>& fastq_chunks,
+    void re_read(std::vector<std::string>& fastq_pools,
                  pcg64& eng) {
-        read_makers[var].re_read(fastq_chunks, eng);
+        read_makers[var].re_read(fastq_pools, eng);
         return;
     }
 

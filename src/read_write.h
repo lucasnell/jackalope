@@ -493,28 +493,28 @@ public:
     }
 
     // Fill a string with the header info
-    void fill_header(std::string& chunk) {
-        chunk = "##fileformat=VCFv4.3\n";
-        chunk += "##fileDate=";
-        chunk += vcf_date();
-        chunk += '\n';
-        chunk += "##source=jackalope\n";
+    void fill_header(std::string& pool) {
+        pool = "##fileformat=VCFv4.3\n";
+        pool += "##fileDate=";
+        pool += vcf_date();
+        pool += '\n';
+        pool += "##source=jackalope\n";
         for (uint32 i = 0; i < var_set->reference->size(); i++) {
             const RefSequence& rs(var_set->reference->operator[](i));
-            chunk += "##contig=<ID=" + rs.name + ',';
-            chunk += "length=" + std::to_string(rs.size()) + ">\n";
+            pool += "##contig=<ID=" + rs.name + ',';
+            pool += "length=" + std::to_string(rs.size()) + ">\n";
         }
-        chunk += "##phasing=full\n";
-        chunk += "##INFO=<ID=NS,Number=1,Type=Integer,Description=\"Number ";
-        chunk +=    "of Samples With Data\">\n";
-        chunk += "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
-        chunk += "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype";
-        chunk +=    "Quality\">\n";
-        chunk += "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT";
+        pool += "##phasing=full\n";
+        pool += "##INFO=<ID=NS,Number=1,Type=Integer,Description=\"Number ";
+        pool +=    "of Samples With Data\">\n";
+        pool += "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
+        pool += "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype";
+        pool +=    "Quality\">\n";
+        pool += "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT";
         for (uint32 i = 0; i < sample_names.size(); i++) {
-            chunk += '\t' + sample_names[i];
+            pool += '\t' + sample_names[i];
         }
-        chunk += '\n';
+        pool += '\n';
         return;
     }
 
@@ -557,14 +557,14 @@ private:
 
 
 // Overloaded for writing to uncompressed or gzipped file
-inline void chunk_to_output(std::ofstream& out_file,
-                            const std::string& chunk) {
-    out_file << chunk;
+inline void pool_to_output(std::ofstream& out_file,
+                            const std::string& pool) {
+    out_file << pool;
     return;
 }
-inline void chunk_to_output(gzFile& out_file,
-                            const std::string& chunk) {
-    gzwrite(out_file, chunk.c_str(), chunk.size());
+inline void pool_to_output(gzFile& out_file,
+                            const std::string& pool) {
+    gzwrite(out_file, pool.c_str(), pool.size());
     return;
 }
 
@@ -576,7 +576,7 @@ inline void chunk_to_output(gzFile& out_file,
 //' Template doing most of the work for writing to a VCF file.
 //'
 //' `T` should be `std::ofstream` or `gzFile`, for the three
-//' specializations of the `chunk_to_output` function above.
+//' specializations of the `pool_to_output` function above.
 //'
 //' @noRd
 //'
@@ -593,14 +593,14 @@ void write_vcf_(XPtr<VarSet> var_set,
     uint32 n_samples = writer.sample_groups.n_rows;
 
     // String of text to append to, then to insert into output:
-    std::string chunk;
+    std::string pool;
 
 
     /*
      Header
      */
-    writer.fill_header(chunk);
-    chunk_to_output(out_file, chunk);
+    writer.fill_header(pool);
+    pool_to_output(out_file, pool);
 
     /*
      Data lines
@@ -617,30 +617,30 @@ void write_vcf_(XPtr<VarSet> var_set,
             // Set information for this line:
             writer.iterate(pos_str, ref_str, alt_str, gt_strs);
             // CHROM
-            chunk = var_set->reference->operator[](writer.seq_ind).name;
+            pool = var_set->reference->operator[](writer.seq_ind).name;
             // POS
-            chunk += '\t' + pos_str;
+            pool += '\t' + pos_str;
             // ID
-            chunk += "\t.";
+            pool += "\t.";
             // REF
-            chunk += '\t' + ref_str;
+            pool += '\t' + ref_str;
             // ALT
-            chunk += '\t' + alt_str;
+            pool += '\t' + alt_str;
             // QUAL (setting to super high value)
-            chunk += '\t' + max_qual;
+            pool += '\t' + max_qual;
             // FILTER
-            chunk += "\tPASS";
+            pool += "\tPASS";
             // INFO
-            chunk += "\tNS=" + std::to_string(n_samples);
+            pool += "\tNS=" + std::to_string(n_samples);
             // FORMAT
-            chunk += "\tGT:GQ";
+            pool += "\tGT:GQ";
             // Sample info (setting GQ to super high value)
             for (uint32 i = 0; i < n_samples; i++) {
-                chunk += '\t' + gt_strs[i];
-                chunk += ':' + max_qual;
+                pool += '\t' + gt_strs[i];
+                pool += ':' + max_qual;
             }
-            chunk += '\n';
-            chunk_to_output(out_file, chunk);
+            pool += '\n';
+            pool_to_output(out_file, pool);
         }
     }
 

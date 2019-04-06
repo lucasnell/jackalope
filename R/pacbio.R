@@ -10,7 +10,7 @@ check_pacbio_args <- function(seq_object,
                               variant_probs,
                               compress,
                               n_threads,
-                              read_chunk_size,
+                              read_pool_size,
                               chi2_params_s,
                               chi2_params_n,
                               max_passes,
@@ -32,7 +32,7 @@ check_pacbio_args <- function(seq_object,
              "of class \"ref_genome\" or \"variants\".", call. = FALSE)
     }
 
-    for (x in c("n_reads", "n_threads", "read_chunk_size",
+    for (x in c("n_reads", "n_threads", "read_pool_size",
                 "max_passes", "min_read_length")) {
         z <- eval(parse(text = x))
         if (!single_integer(z, 1)) err_msg("pacbio", x, "a single integer >= 1")
@@ -172,7 +172,7 @@ check_pacbio_args <- function(seq_object,
 #'     Defaults to `NULL`.
 #' @param prob_dup A single number indicating the probability of duplicates.
 #'     Defaults to `0.0`.
-#' @param read_chunk_size The number of reads to store before writing to disk.
+#' @param read_pool_size The number of reads to store before writing to disk.
 #'     Increasing this number should improve speed but take up more memory.
 #'     Defaults to `100`.
 #'
@@ -210,7 +210,7 @@ pacbio <- function(seq_object,
                    variant_probs = NULL,
                    compress = FALSE,
                    n_threads = 1L,
-                   read_chunk_size = 100L,
+                   read_pool_size = 100L,
                    show_progress = FALSE) {
 
     out_prefix <- path.expand(out_prefix)
@@ -218,7 +218,7 @@ pacbio <- function(seq_object,
 
     # Check for improper argument types:
     check_pacbio_args(seq_object, n_reads, variant_probs,
-                      compress, n_threads, read_chunk_size,
+                      compress, n_threads, read_pool_size,
                       chi2_params_s, chi2_params_n, max_passes,
                       sqrt_params, norm_params,
                       prob_thresh, ins_prob, del_prob, sub_prob,
@@ -247,7 +247,7 @@ pacbio <- function(seq_object,
                  compress = compress,
                  n_reads = n_reads,
                  n_threads = n_threads,
-                 read_chunk_size = read_chunk_size,
+                 read_pool_size = read_pool_size,
                  chi2_params_s = chi2_params_s,
                  chi2_params_n = chi2_params_n,
                  max_passes = max_passes,

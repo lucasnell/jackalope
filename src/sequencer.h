@@ -53,83 +53,83 @@ public:
 
     T read_filler;
     const uint32 n_reads;           // # reads to create
-    const uint32 read_chunk_size;   // reads per chunk
+    const uint32 read_pool_size;    // reads per pool
     uint32 reads_made;              // Number of reads already made
-    uint32 reads_in_chunk;          // Number of reads in current chunk
+    uint32 reads_in_pool;           // Number of reads in current pool
     bool do_write;                  // Whether to write to file
     const double prob_dup;          // probability of duplicate
     const uint32 n_read_ends;       // (1 for SE Illumina or PacBio, 2 for PE Illumina)
-    std::vector<std::string> fastq_chunks;
+    std::vector<std::string> fastq_pools;
 
     ReadWriterOneThread(const T& read_filler_base,
                         const uint32& n_reads_,
-                        const uint32& read_chunk_size_,
+                        const uint32& read_pool_size_,
                         const double& prob_dup_,
                         const uint32& n_read_ends_)
         : read_filler(read_filler_base),
           n_reads(n_reads_),
-          read_chunk_size(read_chunk_size_),
+          read_pool_size(read_pool_size_),
           reads_made(0),
-          reads_in_chunk(0),
+          reads_in_pool(0),
           do_write(false),
           prob_dup(prob_dup_),
           n_read_ends(n_read_ends_),
-          fastq_chunks(n_read_ends_, "") {};
+          fastq_pools(n_read_ends_, "") {};
 
 
-    // Write contents in `fastq_chunks` to UNcompressed file(s).
+    // Write contents in `fastq_pools` to UNcompressed file(s).
     void write(std::vector<std::ofstream>& files) {
-        for (uint32 i = 0; i < fastq_chunks.size(); i++) {
-            files[i] << fastq_chunks[i];
-            fastq_chunks[i].clear();
+        for (uint32 i = 0; i < fastq_pools.size(); i++) {
+            files[i] << fastq_pools[i];
+            fastq_pools[i].clear();
         }
-        reads_in_chunk = 0;
+        reads_in_pool = 0;
         do_write = false;
         return;
     }
-    // Write contents in `fastq_chunks` to compressed file(s).
+    // Write contents in `fastq_pools` to compressed file(s).
     void write(std::vector<gzFile>& files) {
-        for (uint32 i = 0; i < fastq_chunks.size(); i++) {
-            gzwrite(files[i], fastq_chunks[i].c_str(), fastq_chunks[i].size());
-            fastq_chunks[i].clear();
+        for (uint32 i = 0; i < fastq_pools.size(); i++) {
+            gzwrite(files[i], fastq_pools[i].c_str(), fastq_pools[i].size());
+            fastq_pools[i].clear();
         }
-        reads_in_chunk = 0;
+        reads_in_pool = 0;
         do_write = false;
         return;
     }
     /* Overloaded for one file: */
     void write(std::ofstream& file) {
-        file << fastq_chunks[0];
-        fastq_chunks[0].clear();
-        reads_in_chunk = 0;
+        file << fastq_pools[0];
+        fastq_pools[0].clear();
+        reads_in_pool = 0;
         do_write = false;
         return;
     }
     void write(gzFile& file) {
-        gzwrite(file, fastq_chunks[0].c_str(), fastq_chunks[0].size());
-        fastq_chunks[0].clear();
-        reads_in_chunk = 0;
+        gzwrite(file, fastq_pools[0].c_str(), fastq_pools[0].size());
+        fastq_pools[0].clear();
+        reads_in_pool = 0;
         do_write = false;
         return;
     }
 
     /*
-     Add new read(s) to `fastq_chunks`, and update bool for whether you should
+     Add new read(s) to `fastq_pools`, and update bool for whether you should
      write to file
      */
     void create_reads(pcg64& eng) {
-        read_filler.one_read(fastq_chunks, eng);
+        read_filler.one_read(fastq_pools, eng);
         reads_made += n_read_ends;
-        reads_in_chunk += n_read_ends;
+        reads_in_pool += n_read_ends;
         double dup = runif_01(eng);
         while (dup < prob_dup && reads_made < n_reads &&
-               reads_in_chunk < read_chunk_size) {
-            read_filler.re_read(fastq_chunks, eng);
+               reads_in_pool < read_pool_size) {
+            read_filler.re_read(fastq_pools, eng);
             reads_made += n_read_ends;
-            reads_in_chunk += n_read_ends;
+            reads_in_pool += n_read_ends;
             dup = runif_01(eng);
         }
-        do_write = reads_in_chunk >= read_chunk_size || reads_made >= n_reads;
+        do_write = reads_in_pool >= read_pool_size || reads_made >= n_reads;
         return;
     }
 
@@ -262,7 +262,7 @@ void write_reads_cpp_(const T& read_filler_base,
                       const std::string& out_prefix,
                       const uint32& n_reads,
                       const double& prob_dup,
-                      const uint32& read_chunk_size,
+                      const uint32& read_pool_size,
                       const uint32& n_read_ends,
                       uint32 n_threads,
                       const bool& show_progress) {
@@ -308,7 +308,7 @@ void write_reads_cpp_(const T& read_filler_base,
     uint32 reads_this_thread = reads_per_thread[active_thread];
 
     ReadWriterOneThread<T> writer(read_filler_base, reads_this_thread,
-                                  read_chunk_size, prob_dup, n_read_ends);
+                                  read_pool_size, prob_dup, n_read_ends);
 
     uint32 reads_written;
 
@@ -323,7 +323,7 @@ void write_reads_cpp_(const T& read_filler_base,
 #ifdef _OPENMP
 #pragma omp critical
 #endif
-            reads_written = writer.reads_in_chunk;
+            reads_written = writer.reads_in_pool;
             writer.write(files);
             prog_bar.increment(reads_written);
         }

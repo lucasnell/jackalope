@@ -283,7 +283,7 @@ check_illumina_args <- function(seq_object, n_reads,
                                 ins_prob2, del_prob2,
                                 frag_len_min, frag_len_max,
                                 variant_probs, barcodes, prob_dup,
-                                compress, n_threads, read_chunk_size,
+                                compress, n_threads, read_pool_size,
                                 show_progress) {
 
     # Checking types:
@@ -294,7 +294,7 @@ check_illumina_args <- function(seq_object, n_reads,
              "of class \"ref_genome\" or \"variants\".", call. = FALSE)
     }
 
-    for (x in c("read_length", "n_reads", "n_threads", "read_chunk_size")) {
+    for (x in c("read_length", "n_reads", "n_threads", "read_pool_size")) {
         z <- eval(parse(text = x))
         if (!single_integer(z, 1)) err_msg("illumina", x, "a single integer >= 1")
     }
@@ -504,7 +504,7 @@ check_illumina_args <- function(seq_object, n_reads,
 #' @param n_threads The number of threads to use in processing.
 #'     This argument is ignored if the package was not compiled with OpenMP.
 #'     Defaults to `1`.
-#' @param read_chunk_size The number of reads to store before writing to disk.
+#' @param read_pool_size The number of reads to store before writing to disk.
 #'     Increasing this number should improve speed but take up more memory.
 #'     Defaults to `1000`.
 #' @param show_progress Logical for whether to show a progress bar.
@@ -548,7 +548,7 @@ illumina <- function(seq_object,
                      prob_dup = 0.02,
                      compress = FALSE,
                      n_threads = 1L,
-                     read_chunk_size = 1000L,
+                     read_pool_size = 1000L,
                      show_progress = FALSE) {
 
     out_prefix <- path.expand(out_prefix)
@@ -559,7 +559,7 @@ illumina <- function(seq_object,
                         frag_mean, frag_sd, matepair, seq_sys, profile1, profile2,
                         ins_prob1, del_prob1, ins_prob2, del_prob2,
                         frag_len_min, frag_len_max, variant_probs, barcodes, prob_dup,
-                        compress, n_threads, read_chunk_size, show_progress)
+                        compress, n_threads, read_pool_size, show_progress)
 
     # Change mean and SD to shape and scale of Gamma distribution:
     frag_len_shape <- (frag_mean / frag_sd)^2
@@ -605,7 +605,7 @@ illumina <- function(seq_object,
                  matepair = matepair,
                  prob_dup = prob_dup,
                  n_threads = n_threads,
-                 read_chunk_size = read_chunk_size,
+                 read_pool_size = read_pool_size,
                  frag_len_shape = frag_len_shape,
                  frag_len_scale = frag_len_scale,
                  frag_len_min = frag_len_min,
