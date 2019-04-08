@@ -9,7 +9,7 @@ write_vcf(vars, out_prefix, compress = FALSE, sample_matrix = NULL)
 \arguments{
 \item{vars}{A \code{variants} object.}
 
-\item{out_prefix}{Prefix for the output file VCF.}
+\item{out_prefix}{Prefix for the output file.}
 
 \item{compress}{Boolean for whether to compress using \code{"gzip"}.
 Defaults to \code{FALSE}.}

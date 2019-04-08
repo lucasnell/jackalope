@@ -478,14 +478,15 @@ public:
 
 
     // Add one read string (with 4 lines: ID, sequence, "+", quality) to a FASTQ pool
-    void one_read(std::vector<std::string>& fastq_pools,
-                  pcg64& eng);
+    // `U` should be a std::string or std::vector<char>
+    template <typename U>
+    void one_read(std::vector<U>& fastq_pools, pcg64& eng);
     /*
      Same as above, but for a duplicate. It's assumed that `one_read` has been
      run once before.
      */
-    void re_read(std::vector<std::string>& fastq_pools,
-                 pcg64& eng);
+    template <typename U>
+    void re_read(std::vector<U>& fastq_pools, pcg64& eng);
 
 
     /*
@@ -536,8 +537,8 @@ private:
     }
 
     // Append quality and read to fastq pool
-    void append_pool(std::string& fastq_pool,
-                      pcg64& eng);
+    template <typename U>
+    void append_pool(U& fastq_pool, pcg64& eng);
 
 
 };
@@ -624,10 +625,10 @@ public:
      -------------
      */
     // If only providing rng and id info, sample for a variant, then make read(s):
-    void one_read(std::vector<std::string>& fastq_pools,
-                  pcg64& eng) {
+    template <typename U>
+    void one_read(std::vector<U>& fastq_pools, pcg64& eng) {
         var = variant_sampler.sample(eng);
-        read_makers[var].one_read(fastq_pools, eng);
+        read_makers[var].one_read<U>(fastq_pools, eng);
         return;
     }
     /*
@@ -635,9 +636,9 @@ public:
      `re_read` methods (for duplicates)
     -------------
     */
-    void re_read(std::vector<std::string>& fastq_pools,
-                 pcg64& eng) {
-        read_makers[var].re_read(fastq_pools, eng);
+    template <typename U>
+    void re_read(std::vector<U>& fastq_pools, pcg64& eng) {
+        read_makers[var].re_read<U>(fastq_pools, eng);
         return;
     }
 

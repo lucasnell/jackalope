@@ -509,6 +509,8 @@ check_illumina_args <- function(seq_object, n_reads,
 #'     Defaults to `1000`.
 #' @param show_progress Logical for whether to show a progress bar.
 #'     Defaults to `FALSE`.
+#' @param overwrite Logical for whether to overwrite existing FASTQ file(s) of the
+#'     same name, if they exist.
 #'
 #' @return Nothing is returned.
 #'
@@ -549,10 +551,12 @@ illumina <- function(seq_object,
                      compress = FALSE,
                      n_threads = 1L,
                      read_pool_size = 1000L,
-                     show_progress = FALSE) {
+                     show_progress = FALSE,
+                     overwrite = FALSE) {
+
 
     out_prefix <- path.expand(out_prefix)
-    check_fastq(out_prefix, n_read_ends = ifelse(paired, 2, 1))
+    check_fastq(out_prefix, compress, overwrite, n_read_ends = ifelse(paired, 2, 1))
 
     # Check for improper argument types:
     check_illumina_args(seq_object, n_reads, read_length, paired,

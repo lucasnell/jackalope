@@ -211,10 +211,12 @@ pacbio <- function(seq_object,
                    compress = FALSE,
                    n_threads = 1L,
                    read_pool_size = 100L,
-                   show_progress = FALSE) {
+                   show_progress = FALSE,
+                   overwrite = FALSE) {
+
 
     out_prefix <- path.expand(out_prefix)
-    check_fastq(out_prefix)
+    check_fastq(out_prefix, compress, overwrite)
 
     # Check for improper argument types:
     check_pacbio_args(seq_object, n_reads, variant_probs,

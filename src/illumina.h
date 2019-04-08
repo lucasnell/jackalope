@@ -413,15 +413,16 @@ public:
 
 
     // Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality)
-    void one_read(std::vector<std::string>& fastq_pools,
-                  pcg64& eng);
+    // `U` should be a std::string or std::vector<char>
+    template <typename U>
+    void one_read(std::vector<U>& fastq_pools, pcg64& eng);
 
     /*
      Same as above, but for a duplicate. It's assumed that `one_read` has been
      run once before.
      */
-    void re_read(std::vector<std::string>& fastq_pools,
-                  pcg64& eng);
+    template <typename U>
+    void re_read(std::vector<U>& fastq_pools, pcg64& eng);
 
     /*
      Add information about a RefGenome or VarGenome object
@@ -429,6 +430,8 @@ public:
      that related to the sequence object.
      */
     void add_seq_info(const T& seq_object, const std::string& barcode);
+
+
 
 
 protected:
@@ -475,8 +478,8 @@ protected:
      This function does NOT do anything with fragments.
      That should be done outside this function.
      */
-    void append_pools(std::vector<std::string>& fastq_pools,
-                       pcg64& eng);
+    template <typename U>
+    void append_pools(std::vector<U>& fastq_pools, pcg64& eng);
 
 
 };
@@ -599,10 +602,10 @@ public:
      -------------
      */
     // If only providing rng and id info, sample for a variant, then make read(s):
-    void one_read(std::vector<std::string>& fastq_pools,
-                  pcg64& eng) {
+    template <typename U>
+    void one_read(std::vector<U>& fastq_pools, pcg64& eng) {
         var = variant_sampler.sample(eng);
-        read_makers[var].one_read(fastq_pools, eng);
+        read_makers[var].one_read<U>(fastq_pools, eng);
         return;
     }
     /*
@@ -610,11 +613,12 @@ public:
      `re_read` methods (for duplicates)
      -------------
      */
-    void re_read(std::vector<std::string>& fastq_pools,
-                  pcg64& eng) {
-        read_makers[var].re_read(fastq_pools, eng);
+    template <typename U>
+    void re_read(std::vector<U>& fastq_pools, pcg64& eng) {
+        read_makers[var].re_read<U>(fastq_pools, eng);
         return;
     }
+
 
 
 private:

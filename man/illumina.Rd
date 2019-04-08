@@ -14,7 +14,7 @@ illumina(seq_object, out_prefix, n_reads, read_length, paired, frag_mean,
   ins_prob2 = 0.00015, del_prob2 = 0.00023, frag_len_min = NULL,
   frag_len_max = NULL, variant_probs = NULL, barcodes = NULL,
   prob_dup = 0.02, compress = FALSE, n_threads = 1L,
-  read_pool_size = 1000L, show_progress = FALSE)
+  read_pool_size = 1000L, show_progress = FALSE, overwrite = FALSE)
 }
 \arguments{
 \item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
@@ -93,6 +93,9 @@ Defaults to \code{1000}.}
 
 \item{show_progress}{Logical for whether to show a progress bar.
 Defaults to \code{FALSE}.}
+
+\item{overwrite}{Logical for whether to overwrite existing FASTQ file(s) of the
+same name, if they exist.}
 }
 \value{
 Nothing is returned.

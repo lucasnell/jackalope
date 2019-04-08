@@ -210,6 +210,15 @@ inline void str_stop(const std::vector<std::string>& err_msg_vec) {
     for (const std::string& err : err_msg_vec) err_msg += err;
     throw(Rcpp::exception(err_msg.c_str(), false));
 }
+//' For prettier long warning messages.
+//'
+//'
+inline void str_warn(const std::vector<std::string>& warn_msg_vec) {
+    std::string warn_msg = "";
+    for (const std::string& warn : warn_msg_vec) warn_msg += warn;
+    Rcpp::warning(warn_msg.c_str());
+    return;
+}
 
 
 

@@ -16,7 +16,7 @@ pacbio(seq_object, out_prefix, n_reads, chi2_params_s = c(0.01214, -5.12,
   lognorm_read_length = c(0.200110276521, -10075.4363813, 17922.611306),
   custom_read_lengths = NULL, prob_dup = 0, variant_probs = NULL,
   compress = FALSE, n_threads = 1L, read_pool_size = 100L,
-  show_progress = FALSE)
+  show_progress = FALSE, overwrite = FALSE)
 }
 \arguments{
 \item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
@@ -91,6 +91,9 @@ Defaults to \code{100}.}
 
 \item{show_progress}{Logical for whether to show a progress bar.
 Defaults to \code{FALSE}.}
+
+\item{overwrite}{Logical for whether to overwrite existing FASTQ file(s) of the
+same name, if they exist.}
 }
 \value{
 Nothing is returned.
