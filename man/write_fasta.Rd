@@ -2,17 +2,23 @@
 % Please edit documentation in R/read_write.R
 \name{write_fasta}
 \alias{write_fasta}
-\title{Write a \code{ref_genome} object to a FASTA file.}
+\title{Write a sequence object to a FASTA file.}
 \usage{
-write_fasta(seq_obj, out_prefix, compress = FALSE, text_width = 80)
+write_fasta(seq_obj, out_prefix, compress = FALSE,
+  comp_method = "gzip", text_width = 80)
 }
 \arguments{
 \item{seq_obj}{A \code{ref_genome} or \code{variants} object.}
 
 \item{out_prefix}{Prefix for the output file.}
 
-\item{compress}{Boolean for whether to compress using \code{"gzip"}.
+\item{compress}{Logical specifying whether or not to compress output file, or
+an integer specifying the level of compression, from 1 to 9.
+If \code{TRUE}, a compression level of \code{6} is used.
 Defaults to \code{FALSE}.}
+
+\item{comp_method}{Character specifying which type of compression to use if any
+is desired. Options include \code{"gzip"} and \code{"bgzip"}. Defaults to \code{"gzip"}.}
 
 \item{text_width}{The number of characters per line in the output fasta file.
 Defaults to \code{80}.}
@@ -21,5 +27,6 @@ Defaults to \code{80}.}
 \code{NULL}
 }
 \description{
-Write a \code{ref_genome} object to a FASTA file.
+This file produces 1 FASTA file for a \code{ref_genome} object and one file
+for each variant in a \code{variants} object.
 }

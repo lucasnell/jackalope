@@ -51,12 +51,19 @@ read_fasta <- function(fasta_files, fai_files = NULL,
 }
 
 
-#' Write a \code{ref_genome} object to a FASTA file.
+#' Write a sequence object to a FASTA file.
+#'
+#' This file produces 1 FASTA file for a `ref_genome` object and one file
+#' for each variant in a `variants` object.
 #'
 #' @param seq_obj A \code{ref_genome} or \code{variants} object.
 #' @param out_prefix Prefix for the output file.
-#' @param compress Boolean for whether to compress using \code{"gzip"}.
-#'     Defaults to \code{FALSE}.
+#' @param compress Logical specifying whether or not to compress output file, or
+#'     an integer specifying the level of compression, from 1 to 9.
+#'     If `TRUE`, a compression level of `6` is used.
+#'     Defaults to `FALSE`.
+#' @param comp_method Character specifying which type of compression to use if any
+#'     is desired. Options include `"gzip"` and `"bgzip"`. Defaults to `"gzip"`.
 #' @param text_width The number of characters per line in the output fasta file.
 #'     Defaults to \code{80}.
 #'
@@ -64,7 +71,10 @@ read_fasta <- function(fasta_files, fai_files = NULL,
 #'
 #' @export
 #'
-write_fasta <- function(seq_obj, out_prefix, compress = FALSE, text_width = 80) {
+write_fasta <- function(seq_obj, out_prefix,
+                        compress = FALSE,
+                        comp_method = "gzip",
+                        text_width = 80) {
 
     if (!inherits(seq_obj, c("ref_genome", "variants"))) {
         err_msg("write_fasta", "seq_obj", "a \"ref_genome\" or \"variants\" object")
@@ -72,8 +82,13 @@ write_fasta <- function(seq_obj, out_prefix, compress = FALSE, text_width = 80) 
     if (!is_type(out_prefix, "character", 1)) {
         err_msg("write_fasta", "out_prefix", "a single string")
     }
-    if (!is_type(compress, "logical", 1)) {
-        err_msg("write_fasta", "compress", "a single logical")
+    if (!is_type(compress, "logical", 1) && !single_integer(compress, 1, 9)) {
+        err_msg("write_fasta", "compress", "a single logical or integer from 1 to 9")
+    }
+    if (is_type(compress, "logical", 1) && compress) compress <- 6 # default compression
+    if (is_type(compress, "logical", 1) && !compress) compress <- 0 # no compression
+    if (!is_type(comp_method, "character", 1) || !comp_method %in% c("gzip", "bgzip")) {
+        err_msg("write_fasta", "comp_method", "\"gzip\" or \"bgzip\"")
     }
     if (!single_integer(text_width, 1)) {
         err_msg("write_fasta", "text_width", "a single integer >= 1")
@@ -85,7 +100,8 @@ write_fasta <- function(seq_obj, out_prefix, compress = FALSE, text_width = 80) 
                  "argument is of class \"ref_genome\".",
                  call. = TRUE)
         }
-        invisible(write_ref_fasta(out_prefix, seq_obj$genome, text_width, compress))
+        invisible(write_ref_fasta(out_prefix, seq_obj$genome, text_width,
+                                  compress, comp_method))
     } else {
         if (!inherits(seq_obj$genomes, "externalptr")) {
             stop("\nThe `genomes` field in the `seq_obj` argument supplied to ",
@@ -93,7 +109,8 @@ write_fasta <- function(seq_obj, out_prefix, compress = FALSE, text_width = 80) 
                  "argument is of class \"variants\".",
                  call. = TRUE)
         }
-        invisible(write_vars_fasta(out_prefix, seq_obj$genome, text_width, compress))
+        invisible(write_vars_fasta(out_prefix, seq_obj$genomes, text_width,
+                                   compress, comp_method))
     }
     return(invisible(NULL))
 }
@@ -242,6 +259,8 @@ read_vcf <- function(reference, method_info) {
 
 #' Write variant info from a \code{variants} object to a VCF file.
 #'
+#' Compression in this function always uses `"bgzip"` for compatibility with `"tabix"`.
+#'
 #' @param vars A \code{variants} object.
 #' @inheritParams write_fasta
 #' @param sample_matrix Matrix to specify how haploid variants are grouped into samples
@@ -270,9 +289,11 @@ write_vcf <- function(vars,
     if (!is_type(out_prefix, "character", 1)) {
         err_msg("write_vcf", "out_prefix", "a single string")
     }
-    if (!is_type(compress, "logical", 1)) {
-        err_msg("write_vcf", "compress", "a single logical")
+    if (!is_type(compress, "logical", 1) && !single_integer(compress, 1, 9)) {
+        err_msg("write_fasta", "compress", "a single logical or integer from 1 to 9")
     }
+    if (is_type(compress, "logical", 1) && compress) compress <- 6 # default compression
+    if (is_type(compress, "logical", 1) && !compress) compress <- 0 # no compression
     if (!inherits(vars$genomes, "externalptr")) {
         stop("\nThe `genomes` field in the `vars` argument supplied to ",
              "`write_vcf` should be an external pointer.",

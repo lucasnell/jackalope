@@ -11,7 +11,9 @@ write_vcf(vars, out_prefix, compress = FALSE, sample_matrix = NULL)
 
 \item{out_prefix}{Prefix for the output file.}
 
-\item{compress}{Boolean for whether to compress using \code{"gzip"}.
+\item{compress}{Logical specifying whether or not to compress output file, or
+an integer specifying the level of compression, from 1 to 9.
+If \code{TRUE}, a compression level of \code{6} is used.
 Defaults to \code{FALSE}.}
 
 \item{sample_matrix}{Matrix to specify how haploid variants are grouped into samples
@@ -29,5 +31,5 @@ Defaults to \code{NULL}.}
 \code{NULL}
 }
 \description{
-Write variant info from a \code{variants} object to a VCF file.
+Compression in this function always uses \code{"bgzip"} for compatibility with \code{"tabix"}.
 }
