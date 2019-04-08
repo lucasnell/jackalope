@@ -17,6 +17,7 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 2.10)
+biocViews:
 Imports:
     ape,
     R6,
@@ -26,8 +27,10 @@ Imports:
 LinkingTo:
     Rcpp,
     RcppArmadillo,
-    RcppProgress
-SystemRequirements: zlib headers and library. C++11
+    RcppProgress,
+    Rhtslib,
+    zlibbioc
+SystemRequirements: C++11
 RoxygenNote: 6.1.1
 Roxygen: list(markdown = TRUE)
 Suggests:
