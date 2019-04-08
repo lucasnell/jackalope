@@ -10,6 +10,10 @@ init:
 install:
   ps: Bootstrap
 
+branches:
+  only:
+    - master
+
 cache:
   - C:\RLibrary
 

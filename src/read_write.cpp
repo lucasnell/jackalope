@@ -1212,7 +1212,7 @@ void bgzip_cpp(const std::string& file_name,
     int code = bgzip_C(file_name, static_cast<int>(n_threads), compress_level);
 
     if (code != 0) {
-        str_warn({"\nThe bgzip step", ""});
+        str_warn({"\nThe bgzip step failed"});
     }
 
     return;
