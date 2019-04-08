@@ -528,6 +528,18 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// bgzip_cpp
+void bgzip_cpp(const std::string& file_name, const uint32& n_threads, int compress_level);
+RcppExport SEXP _jackalope_bgzip_cpp(SEXP file_nameSEXP, SEXP n_threadsSEXP, SEXP compress_levelSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type file_name(file_nameSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< int >::type compress_level(compress_levelSEXP);
+    bgzip_cpp(file_name, n_threads, compress_level);
+    return R_NilValue;
+END_RCPP
+}
 // print_ref_genome
 void print_ref_genome(SEXP ref_genome_ptr);
 RcppExport SEXP _jackalope_print_ref_genome(SEXP ref_genome_ptrSEXP) {
@@ -895,6 +907,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_write_ref_fasta", (DL_FUNC) &_jackalope_write_ref_fasta, 4},
     {"_jackalope_write_vars_fasta", (DL_FUNC) &_jackalope_write_vars_fasta, 4},
     {"_jackalope_write_vcf_cpp", (DL_FUNC) &_jackalope_write_vcf_cpp, 4},
+    {"_jackalope_bgzip_cpp", (DL_FUNC) &_jackalope_bgzip_cpp, 3},
     {"_jackalope_print_ref_genome", (DL_FUNC) &_jackalope_print_ref_genome, 1},
     {"_jackalope_print_var_set", (DL_FUNC) &_jackalope_print_var_set, 1},
     {"_jackalope_make_ref_genome", (DL_FUNC) &_jackalope_make_ref_genome, 1},

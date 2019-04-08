@@ -350,6 +350,12 @@ pacbio_var_cpp <- function(var_set_ptr, out_prefix, compress, n_reads, n_threads
     invisible(.Call(`_jackalope_pacbio_var_cpp`, var_set_ptr, out_prefix, compress, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
 }
 
+#' bgzip a file.
+#'
+#' @noRd
+#'
+NULL
+
 #' Read a ms output file with newick gene trees and return the gene tree strings.
 #'
 #' @param ms_file File name of the ms output file.
@@ -459,14 +465,9 @@ write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix) {
     invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix))
 }
 
-#' Template doing most of the work for writing to a VCF file.
-#'
-#' `T` should be `std::ofstream` or `gzFile`, for the three
-#' specializations of the `pool_to_output` function above.
-#'
-#' @noRd
-#'
-NULL
+bgzip_cpp <- function(file_name, n_threads, compress_level) {
+    invisible(.Call(`_jackalope_bgzip_cpp`, file_name, n_threads, compress_level))
+}
 
 #' Add mutations manually from R.
 #'
