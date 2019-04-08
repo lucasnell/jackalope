@@ -490,38 +490,40 @@ BEGIN_RCPP
 END_RCPP
 }
 // write_ref_fasta
-void write_ref_fasta(const std::string& out_prefix, SEXP ref_genome_ptr, const uint32& text_width, const bool& compress);
-RcppExport SEXP _jackalope_write_ref_fasta(SEXP out_prefixSEXP, SEXP ref_genome_ptrSEXP, SEXP text_widthSEXP, SEXP compressSEXP) {
+void write_ref_fasta(const std::string& out_prefix, SEXP ref_genome_ptr, const uint32& text_width, const int& compress, const std::string& comp_method);
+RcppExport SEXP _jackalope_write_ref_fasta(SEXP out_prefixSEXP, SEXP ref_genome_ptrSEXP, SEXP text_widthSEXP, SEXP compressSEXP, SEXP comp_methodSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
     Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
     Rcpp::traits::input_parameter< const uint32& >::type text_width(text_widthSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
-    write_ref_fasta(out_prefix, ref_genome_ptr, text_width, compress);
+    Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
+    write_ref_fasta(out_prefix, ref_genome_ptr, text_width, compress, comp_method);
     return R_NilValue;
 END_RCPP
 }
 // write_vars_fasta
-void write_vars_fasta(const std::string& out_prefix, SEXP var_set_ptr, const uint32& text_width, const bool& compress);
-RcppExport SEXP _jackalope_write_vars_fasta(SEXP out_prefixSEXP, SEXP var_set_ptrSEXP, SEXP text_widthSEXP, SEXP compressSEXP) {
+void write_vars_fasta(std::string out_prefix, SEXP var_set_ptr, const uint32& text_width, const int& compress, const std::string& comp_method);
+RcppExport SEXP _jackalope_write_vars_fasta(SEXP out_prefixSEXP, SEXP var_set_ptrSEXP, SEXP text_widthSEXP, SEXP compressSEXP, SEXP comp_methodSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< std::string >::type out_prefix(out_prefixSEXP);
     Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
     Rcpp::traits::input_parameter< const uint32& >::type text_width(text_widthSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
-    write_vars_fasta(out_prefix, var_set_ptr, text_width, compress);
+    Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
+    write_vars_fasta(out_prefix, var_set_ptr, text_width, compress, comp_method);
     return R_NilValue;
 END_RCPP
 }
 // write_vcf_cpp
-void write_vcf_cpp(std::string out_prefix, const bool& compress, SEXP var_set_ptr, const IntegerMatrix& sample_matrix);
+void write_vcf_cpp(std::string out_prefix, const int& compress, SEXP var_set_ptr, const IntegerMatrix& sample_matrix);
 RcppExport SEXP _jackalope_write_vcf_cpp(SEXP out_prefixSEXP, SEXP compressSEXP, SEXP var_set_ptrSEXP, SEXP sample_matrixSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type out_prefix(out_prefixSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
     Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
     Rcpp::traits::input_parameter< const IntegerMatrix& >::type sample_matrix(sample_matrixSEXP);
     write_vcf_cpp(out_prefix, compress, var_set_ptr, sample_matrix);
@@ -529,13 +531,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // bgzip_cpp
-void bgzip_cpp(const std::string& file_name, const uint32& n_threads, int compress_level);
+void bgzip_cpp(const std::string& file_name, const int& n_threads, const int& compress_level);
 RcppExport SEXP _jackalope_bgzip_cpp(SEXP file_nameSEXP, SEXP n_threadsSEXP, SEXP compress_levelSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type file_name(file_nameSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type n_threads(n_threadsSEXP);
-    Rcpp::traits::input_parameter< int >::type compress_level(compress_levelSEXP);
+    Rcpp::traits::input_parameter< const int& >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< const int& >::type compress_level(compress_levelSEXP);
     bgzip_cpp(file_name, n_threads, compress_level);
     return R_NilValue;
 END_RCPP
@@ -904,8 +906,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_read_vcfr", (DL_FUNC) &_jackalope_read_vcfr, 6},
     {"_jackalope_read_fasta_noind", (DL_FUNC) &_jackalope_read_fasta_noind, 3},
     {"_jackalope_read_fasta_ind", (DL_FUNC) &_jackalope_read_fasta_ind, 3},
-    {"_jackalope_write_ref_fasta", (DL_FUNC) &_jackalope_write_ref_fasta, 4},
-    {"_jackalope_write_vars_fasta", (DL_FUNC) &_jackalope_write_vars_fasta, 4},
+    {"_jackalope_write_ref_fasta", (DL_FUNC) &_jackalope_write_ref_fasta, 5},
+    {"_jackalope_write_vars_fasta", (DL_FUNC) &_jackalope_write_vars_fasta, 5},
     {"_jackalope_write_vcf_cpp", (DL_FUNC) &_jackalope_write_vcf_cpp, 4},
     {"_jackalope_bgzip_cpp", (DL_FUNC) &_jackalope_bgzip_cpp, 3},
     {"_jackalope_print_ref_genome", (DL_FUNC) &_jackalope_print_ref_genome, 1},

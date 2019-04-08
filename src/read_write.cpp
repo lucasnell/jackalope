@@ -8,9 +8,6 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef _OPENMP
-#include <omp.h>  // omp
-#endif
 // From Rhtslib package, used in `bgzip_C`:
 #include "htslib/bgzf.h"
 #include "htslib/hts.h"
@@ -797,7 +794,40 @@ SEXP read_fasta_ind(const std::vector<std::string>& fasta_files,
 
 
 
+/*
+ Template that does most of the work to write from RefGenome to FASTA files of
+ varying formats (gzip, bgzip, uncompressed).
+ */
+template <typename T>
+inline void write_ref_fasta__(T& file,
+                              const RefGenome& ref,
+                              const uint32& text_width) {
 
+    std::string one_line;
+    one_line.reserve(text_width + 2);
+
+    for (uint32 i = 0; i < ref.size(); i++) {
+        std::string name = '>' + ref[i].name + '\n';
+        file.write(name);
+
+        const std::string& seq_str(ref[i].nucleos);
+        uint32 num_rows = seq_str.length() / text_width;
+
+        for (uint32 i = 0; i < num_rows; i++) {
+            one_line = seq_str.substr(i * text_width, text_width);
+            one_line += '\n';
+            file.write(one_line);
+        }
+
+        // If there are leftover characters, create a shorter item at the end.
+        if (seq_str.length() % text_width != 0) {
+            one_line = seq_str.substr(text_width * num_rows);
+            one_line += '\n';
+            file.write(one_line);
+        }
+    }
+    return;
+}
 
 //' Write \code{RefGenome} to an uncompressed fasta file.
 //'
@@ -815,7 +845,8 @@ SEXP read_fasta_ind(const std::vector<std::string>& fasta_files,
 void write_ref_fasta(const std::string& out_prefix,
                      SEXP ref_genome_ptr,
                      const uint32& text_width,
-                     const bool& compress){
+                     const int& compress,
+                     const std::string& comp_method) {
 
     XPtr<RefGenome> ref_xptr(ref_genome_ptr);
     RefGenome& ref(*ref_xptr);
@@ -824,87 +855,75 @@ void write_ref_fasta(const std::string& out_prefix,
 
     expand_path(file_name);
 
-    if (compress) {
+    if (compress > 0) {
 
-        file_name += ".gz";
-
-        // Initialize filehandle.
-        gzFile fi;
-
-        // Initialize file.
-        // Note that gzfile does not tolerate initializing an empty file.
-        // Use ofstream instead.
-        if (!std::ifstream(file_name)){
-            std::ofstream myfile;
-            myfile.open(file_name, std::ios::out | std::ios::binary);
-            myfile.close();
-        }
-
-
-        fi = gzopen(file_name.c_str(), "wb");
-        if (!fi) {
-            str_stop({"gzopen of ", file_name, " failed: ", strerror(errno), ".\n"});
-        }
-
-        std::string one_line;
-        one_line.reserve(text_width + 2);
-
-        for (uint32 i = 0; i < ref.size(); i++) {
-            std::string name = '>' + ref[i].name + '\n';
-            gzwrite(fi, name.c_str(), name.size());
-
-            const std::string& seq_str(ref[i].nucleos);
-            uint32 num_rows = seq_str.length() / text_width;
-
-            for (uint32 i = 0; i < num_rows; i++) {
-                one_line = seq_str.substr(i * text_width, text_width);
-                one_line += '\n';
-                gzwrite(fi, one_line.c_str(), one_line.size());
-            }
-
-            // If there are leftover characters, create a shorter item at the end.
-            if (seq_str.length() % text_width != 0) {
-                one_line = seq_str.substr(text_width * num_rows);
-                one_line += '\n';
-                gzwrite(fi, one_line.c_str(), one_line.size());
-            }
-        }
-        gzclose(fi);
+        if (comp_method == "gzip") {
+            FileGZ file(file_name, compress);
+            write_ref_fasta__<FileGZ>(file, ref, text_width);
+            file.close();
+        } else if (comp_method == "bgzip") {
+            FileBGZF file(file_name, 1, compress);
+            write_ref_fasta__<FileBGZF>(file, ref, text_width);
+            file.close();
+        } else stop("\nUnrecognized compression method.");
 
     } else {
 
-        std::ofstream out_file(file_name);
-
-        if (out_file.is_open()) {
-
-            for (uint32 i = 0; i < ref.size(); i++) {
-                out_file << '>';
-                out_file << ref[i].name;
-                out_file << '\n';
-
-                const std::string& seq_str(ref[i].nucleos);
-
-                for (uint32 pos = 0; pos < seq_str.size(); pos++) {
-                    out_file << seq_str[pos];
-                    if ((pos % text_width) == (text_width - 1)) out_file << '\n';
-                }
-                out_file << '\n';
-            }
-            out_file.close();
-
-        } else {
-
-            str_stop({"Unable to open file ", file_name, ".\n"});
-
-        }
+        FileUncomp file(file_name);
+        write_ref_fasta__<FileUncomp>(file, ref, text_width);
+        file.close();
 
     }
-
 
     return;
 }
 
 
+
+
+
+
+template <typename T>
+void write_vars_fasta__(const std::string& out_prefix,
+                        const VarSet& var_set,
+                        const uint32& text_width,
+                        const int& compress) {
+
+    std::string line;
+    line.reserve(text_width + 1);
+    std::string name;
+    name.reserve(text_width + 1);
+    for (uint32 v = 0; v < var_set.size(); v++) {
+
+        std::string file_name = out_prefix + "__" + var_set[v].name + ".fa";
+        T out_file(file_name, compress);
+
+        for (uint32 s = 0; s < var_set.reference->size(); s++) {
+
+            name = '>';
+            name += (*var_set.reference)[s].name;
+            name += '\n';
+            out_file.write(name);
+
+            const VarSequence& var_seq(var_set[v][s]);
+            uint32 mut_i = 0;
+            uint32 line_start = 0;
+
+            while (line_start < var_seq.seq_size) {
+                var_seq.set_seq_chunk(line, line_start,
+                                      text_width, mut_i);
+                line += '\n';
+                out_file.write(line);
+                line_start += text_width;
+            }
+
+        }
+
+        out_file.close();
+
+    }
+
+}
 
 
 
@@ -921,118 +940,28 @@ void write_ref_fasta(const std::string& out_prefix,
 //'
 //'
 //[[Rcpp::export]]
-void write_vars_fasta(const std::string& out_prefix,
+void write_vars_fasta(std::string out_prefix,
                       SEXP var_set_ptr,
                       const uint32& text_width,
-                      const bool& compress){
+                      const int& compress,
+                      const std::string& comp_method) {
 
     XPtr<VarSet> vars_xptr(var_set_ptr);
     VarSet& var_set(*vars_xptr);
 
-    std::string file_name = out_prefix + ".fa";
+    expand_path(out_prefix);
 
-    expand_path(file_name);
+    if (compress > 0) {
 
-    if (compress) {
-
-        file_name += ".gz";
-
-        // Initialize filehandle.
-        gzFile fi;
-
-        // Initialize file.
-        // Note that gzfile does not tolerate initializing an empty file.
-        // Use ofstream instead.
-        if (!std::ifstream(file_name)){
-            std::ofstream myfile;
-            myfile.open(file_name, std::ios::out | std::ios::binary);
-            myfile.close();
-        }
-
-
-        fi = gzopen(file_name.c_str(), "wb");
-        if (!fi) {
-            str_stop({"gzopen of ", file_name, " failed: ", strerror(errno), ".\n"});
-        }
-
-        std::string one_line;
-        one_line.reserve(text_width + 2);
-
-        // for (uint32 i = 0; i < ref.size(); i++) {
-        //     std::string name = '>' + ref[i].name + '\n';
-        //     gzwrite(fi, name.c_str(), name.size());
-        //
-        //     const std::string& seq_str(ref[i].nucleos);
-        //     uint32 num_rows = seq_str.length() / text_width;
-        //
-        //     for (uint32 i = 0; i < num_rows; i++) {
-        //         one_line = seq_str.substr(i * text_width, text_width);
-        //         one_line += '\n';
-        //         gzwrite(fi, one_line.c_str(), one_line.size());
-        //     }
-        //
-        //     // If there are leftover characters, create a shorter item at the end.
-        //     if (seq_str.length() % text_width != 0) {
-        //         one_line = seq_str.substr(text_width * num_rows);
-        //         one_line += '\n';
-        //         gzwrite(fi, one_line.c_str(), one_line.size());
-        //     }
-        // }
-        gzclose(fi);
+        if (comp_method == "gzip") {
+            write_vars_fasta__<FileGZ>(out_prefix, var_set, text_width, compress);
+        } else if (comp_method == "bgzip") {
+            write_vars_fasta__<FileBGZF>(out_prefix, var_set, text_width, compress);
+        } else stop("\nUnrecognized compression method.");
 
     } else {
 
-        std::ofstream out_file(file_name);
-
-        if (out_file.is_open()) {
-
-            std::string line;
-            line.reserve(text_width);
-            for (uint32 v = 0; v < var_set.size(); v++) {
-                for (uint32 s = 0; s < var_set.reference->size(); s++) {
-                    // Variant sequence name:
-                    out_file << '>';
-                    out_file << (*var_set.reference)[s].name;
-                    out_file << "__";
-                    out_file << var_set[v].name;
-                    out_file << '\n';
-
-                    const VarSequence& var_seq(var_set[v][s]);
-                    uint32 mut_i = 0;
-                    uint32 line_start = 0;
-
-                    while (line_start < var_seq.seq_size) {
-                        var_seq.set_seq_chunk(line, line_start,
-                                              text_width, mut_i);
-                        out_file << line;
-                        out_file << '\n';
-                        line_start += text_width;
-                    }
-
-                }
-            }
-
-            // for (uint32 i = 0; i < ref.size(); i++) {
-            //     out_file << '>';
-            //     out_file << ref[i].name;
-            //     out_file << '\n';
-            //
-            //     const std::string& seq_str(ref[i].nucleos);
-            //
-            //     for (uint32 pos = 0; pos < seq_str.size(); pos++) {
-            //         out_file << seq_str[pos];
-            //         if ((pos % text_width) == (text_width - 1)) out_file << '\n';
-            //     }
-            //     out_file << '\n';
-            // }
-
-            out_file.close();
-
-        } else {
-
-            str_stop({"Unable to open file ", file_name, ".\n"});
-
-        }
+        write_vars_fasta__<FileUncomp>(out_prefix, var_set, text_width, compress);
 
     }
 
@@ -1055,7 +984,7 @@ void write_vars_fasta(const std::string& out_prefix,
 //'
 //[[Rcpp::export]]
 void write_vcf_cpp(std::string out_prefix,
-                   const bool& compress,
+                   const int& compress,
                    SEXP var_set_ptr,
                    const IntegerMatrix& sample_matrix) {
 
@@ -1080,43 +1009,18 @@ void write_vcf_cpp(std::string out_prefix,
     // Start the `WriterVCF` object
     WriterVCF writer(*var_set, 0, sample_matrix);
 
+    std::string file_name = out_prefix + ".vcf";
 
-    if (compress) {
-        std::string file_name = out_prefix + ".vcf.gz";
-        /*
-         Initialize file.
-         Note that gzfile does not tolerate initializing an empty file.
-         Use ofstream instead.
-         */
-        if (!std::ifstream(file_name)){
-            std::ofstream tmp_file;
-            tmp_file.open(file_name, std::ios::out | std::ios::binary);
-            tmp_file.close();
-        }
+    if (compress > 0) {
 
-        gzFile out_file = gzopen(file_name.c_str(), "wb");
-        if (!out_file) {
-            std::string e = "gzopen of " + file_name + " failed: " +
-                strerror(errno) + ".\n";
-            Rcpp::stop(e);
-        }
-
-        write_vcf_<gzFile>(var_set, out_file, writer);
-
-        gzclose(out_file);
+        // Use wrapper of `BGZF` to write to compressed VCF file
+        write_vcf_<FileBGZF>(var_set, file_name, compress, writer);
 
     } else {
 
-        std::string file_name = out_prefix + ".vcf";
-        std::ofstream out_file(file_name);
+        // Use wrapper of `std::ofstream` to write to uncompressed VCF file
+        write_vcf_<FileUncomp>(var_set, file_name, compress, writer);
 
-        if (!out_file.is_open()) {
-            Rcout << "Unable to open file " << file_name << std::endl;
-        }
-
-        write_vcf_<std::ofstream>(var_set, out_file, writer);
-
-        out_file.close();
     }
 
 
@@ -1127,38 +1031,25 @@ void write_vcf_cpp(std::string out_prefix,
 
 
 
-static void bgzip_error(const char *format, ...) {
-    va_list ap;
-    va_start(ap, format);
-    vfprintf(stderr, format, ap);
-    va_end(ap);
-    exit(EXIT_FAILURE);
-}
+
 
 //' bgzip a file.
 //'
 //' @noRd
 //'
 int bgzip_C(const std::string& file_name,
-            int threads,
-            int compress_level) {
+            const int& threads,
+            const int& compress_level) {
 
-    BGZF *fp;
+    // Make writer object:
+    FileBGZF bgzf(file_name, threads, compress_level);
+    // Others used below:
     void *buffer;
     int c;
-
     struct stat sbuf;
     int f_src = fileno(stdin);
-    char out_mode[3] = "w\0";
 
-    if (compress_level < -1 || compress_level > 9) {
-        str_stop({"\nInvalid bgzip compress level of ", std::to_string(compress_level),
-                 ". It must be in range [0,9]."});
-    }
-    if (compress_level >= 0) {
-        out_mode[1] = compress_level + '0';
-    }
-
+    // Checking source file:
     if (stat(file_name.c_str(), &sbuf) < 0) {
         str_stop({"\nIn bgzip step, file ", file_name,
                  " had non-zero status: ", strerror(errno), "."});
@@ -1167,32 +1058,18 @@ int bgzip_C(const std::string& file_name,
         str_stop({"\nIn bgzip step, file ", file_name, " could not be opened."});
     }
 
-    char *name = new char[file_name.size() + 5];
-    strcpy(name, file_name.c_str());
-    strcat(name, ".gz");
-    fp = bgzf_open(name, out_mode);
-    if (fp == NULL) {
-        delete [] name;
-        str_stop({"\nIn bgzip step, it can't create ", file_name, ".gz"});
-    }
-    delete [] name;
-
-    if (threads > 1) {
-        bgzf_mt(fp, threads, 256);
-    }
-
+    // Create buffer of info to pass between:
     buffer = malloc(WINDOW_SIZE);
 #ifdef _WIN32
     _setmode(f_src, O_BINARY);
 #endif
-
+    // Writing info from one to another
     while ((c = read(f_src, buffer, WINDOW_SIZE)) > 0) {
-        if (bgzf_write(fp, buffer, c) < 0) {
-            bgzip_error("Could not write %d bytes: Error %d\n", c, fp->errcode);
-        }
+        bgzf.write(buffer, c);
     }
 
-    if (bgzf_close(fp) < 0) bgzip_error("Close failed: Error %d", fp->errcode);
+    bgzf.close();
+    unlink(file_name.c_str());
     free(buffer);
     close(f_src);
     return 0;
@@ -1203,17 +1080,16 @@ int bgzip_C(const std::string& file_name,
 
 //[[Rcpp::export]]
 void bgzip_cpp(const std::string& file_name,
-               const uint32& n_threads,
-               int compress_level) {
+               const int& n_threads,
+               const int& compress_level) {
 
-    if (n_threads < 1) stop("\nCannot have 0 threads");
-    if (compress_level < 1) stop("\nCompression level must be in range [0,9].");
+    if (n_threads < 1) stop("\nCannot have < 1 threads");
+    if (compress_level < 0) stop("\nCompression level must be in range [0,9].");
+    if (compress_level > 9) stop("\nCompression level must be in range [0,9].");
 
-    int code = bgzip_C(file_name, static_cast<int>(n_threads), compress_level);
+    int code = bgzip_C(file_name, n_threads, compress_level);
 
-    if (code != 0) {
-        str_warn({"\nThe bgzip step failed"});
-    }
+    if (code != 0) str_warn({"\nThe bgzip step returned a non-zero exit code."});
 
     return;
 
