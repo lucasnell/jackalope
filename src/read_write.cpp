@@ -3,7 +3,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <zlib.h>
+#include "zlib.h"
 // for bgzip method
 #include <fcntl.h>
 #include <sys/types.h>

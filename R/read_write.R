@@ -72,11 +72,11 @@ write_fasta <- function(seq_obj, out_prefix, compress = FALSE, text_width = 80) 
     if (!is_type(out_prefix, "character", 1)) {
         err_msg("write_fasta", "out_prefix", "a single string")
     }
-    if (!single_integer(text_width, 1)) {
-        err_msg("write_fasta", "text_width", "a single integer >= 1")
-    }
     if (!is_type(compress, "logical", 1)) {
         err_msg("write_fasta", "compress", "a single logical")
+    }
+    if (!single_integer(text_width, 1)) {
+        err_msg("write_fasta", "text_width", "a single integer >= 1")
     }
     if (inherits(seq_obj, "ref_genome")) {
         if (!inherits(seq_obj$genome, "externalptr")) {

@@ -8,7 +8,7 @@
 #include <ctime>
 
 #include <fstream>
-#include <zlib.h>
+#include "zlib.h"
 
 
 #include "jackalope_types.h"  // integer types

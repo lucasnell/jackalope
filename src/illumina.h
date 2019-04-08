@@ -9,7 +9,7 @@
 #include <pcg/pcg_random.hpp> // pcg prng
 #include <random>  // distributions
 #include <fstream> // for writing FASTQ files
-#include <zlib.h>  // for writing to compressed FASTQ
+#include "zlib.h"  // for writing to compressed FASTQ
 #ifdef _OPENMP
 #include <omp.h>  // omp
 #endif

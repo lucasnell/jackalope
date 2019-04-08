@@ -13,7 +13,7 @@ Description: `jackalope` efficiently (i) reads and simulates reference genomes;
     (iv) writes outputs to standard file formats.
     `jackalope` can simulate single, paired-end, or mate-pair Illumina reads, as well as
     reads from Pacific BioSciences.
-License: GPL-3
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 2.10)
