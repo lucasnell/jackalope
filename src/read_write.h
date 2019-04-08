@@ -10,18 +10,10 @@
 #include <fstream>
 #include <zlib.h>
 
-// #ifdef _OPENMP
-// #include <omp.h>  // omp
-// #endif
-
 
 #include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
-
-
-//[[Rcpp::depends(RcppArmadillo)]]
-//[[Rcpp::plugins(cpp11)]]
 
 
 

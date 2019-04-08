@@ -489,27 +489,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// write_fasta_fa
-void write_fasta_fa(std::string file_name, SEXP ref_genome_ptr, const uint32& text_width);
-RcppExport SEXP _jackalope_write_fasta_fa(SEXP file_nameSEXP, SEXP ref_genome_ptrSEXP, SEXP text_widthSEXP) {
+// write_ref_fasta
+void write_ref_fasta(const std::string& out_prefix, SEXP ref_genome_ptr, const uint32& text_width, const bool& compress);
+RcppExport SEXP _jackalope_write_ref_fasta(SEXP out_prefixSEXP, SEXP ref_genome_ptrSEXP, SEXP text_widthSEXP, SEXP compressSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type file_name(file_nameSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
     Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
     Rcpp::traits::input_parameter< const uint32& >::type text_width(text_widthSEXP);
-    write_fasta_fa(file_name, ref_genome_ptr, text_width);
+    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
+    write_ref_fasta(out_prefix, ref_genome_ptr, text_width, compress);
     return R_NilValue;
 END_RCPP
 }
-// write_fasta_gz
-void write_fasta_gz(std::string file_name, SEXP ref_genome_ptr, const uint32& text_width);
-RcppExport SEXP _jackalope_write_fasta_gz(SEXP file_nameSEXP, SEXP ref_genome_ptrSEXP, SEXP text_widthSEXP) {
+// write_vars_fasta
+void write_vars_fasta(const std::string& out_prefix, SEXP var_set_ptr, const uint32& text_width, const bool& compress);
+RcppExport SEXP _jackalope_write_vars_fasta(SEXP out_prefixSEXP, SEXP var_set_ptrSEXP, SEXP text_widthSEXP, SEXP compressSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type file_name(file_nameSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
     Rcpp::traits::input_parameter< const uint32& >::type text_width(text_widthSEXP);
-    write_fasta_gz(file_name, ref_genome_ptr, text_width);
+    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
+    write_vars_fasta(out_prefix, var_set_ptr, text_width, compress);
     return R_NilValue;
 END_RCPP
 }
@@ -890,8 +892,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_read_vcfr", (DL_FUNC) &_jackalope_read_vcfr, 6},
     {"_jackalope_read_fasta_noind", (DL_FUNC) &_jackalope_read_fasta_noind, 3},
     {"_jackalope_read_fasta_ind", (DL_FUNC) &_jackalope_read_fasta_ind, 3},
-    {"_jackalope_write_fasta_fa", (DL_FUNC) &_jackalope_write_fasta_fa, 3},
-    {"_jackalope_write_fasta_gz", (DL_FUNC) &_jackalope_write_fasta_gz, 3},
+    {"_jackalope_write_ref_fasta", (DL_FUNC) &_jackalope_write_ref_fasta, 4},
+    {"_jackalope_write_vars_fasta", (DL_FUNC) &_jackalope_write_vars_fasta, 4},
     {"_jackalope_write_vcf_cpp", (DL_FUNC) &_jackalope_write_vcf_cpp, 4},
     {"_jackalope_print_ref_genome", (DL_FUNC) &_jackalope_print_ref_genome, 1},
     {"_jackalope_print_var_set", (DL_FUNC) &_jackalope_print_var_set, 1},

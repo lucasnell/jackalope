@@ -786,9 +786,10 @@ SEXP read_fasta_ind(const std::vector<std::string>& fasta_files,
 
 //' Write \code{RefGenome} to an uncompressed fasta file.
 //'
-//' @param file_name File name of output fasta file.
+//' @param out_prefix Prefix to file name of output fasta file.
 //' @param ref_genome_ptr An external pointer to a \code{RefGenome} C++ object.
 //' @param text_width The number of characters per line in the output fasta file.
+//' @param compress Boolean for whether to compress output.
 //'
 //' @return Nothing.
 //'
@@ -796,37 +797,94 @@ SEXP read_fasta_ind(const std::vector<std::string>& fasta_files,
 //'
 //'
 //[[Rcpp::export]]
-void write_fasta_fa(std::string file_name,
-                    SEXP ref_genome_ptr,
-                    const uint32& text_width){
+void write_ref_fasta(const std::string& out_prefix,
+                     SEXP ref_genome_ptr,
+                     const uint32& text_width,
+                     const bool& compress){
 
     XPtr<RefGenome> ref_xptr(ref_genome_ptr);
     RefGenome& ref(*ref_xptr);
 
+    std::string file_name = out_prefix + ".fa";
+
     expand_path(file_name);
 
-    std::ofstream out_file(file_name);
+    if (compress) {
 
-    if (out_file.is_open()) {
+        file_name += ".gz";
+
+        // Initialize filehandle.
+        gzFile fi;
+
+        // Initialize file.
+        // Note that gzfile does not tolerate initializing an empty file.
+        // Use ofstream instead.
+        if (!std::ifstream(file_name)){
+            std::ofstream myfile;
+            myfile.open(file_name, std::ios::out | std::ios::binary);
+            myfile.close();
+        }
+
+
+        fi = gzopen(file_name.c_str(), "wb");
+        if (!fi) {
+            str_stop({"gzopen of ", file_name, " failed: ", strerror(errno), ".\n"});
+        }
+
+        std::string one_line;
+        one_line.reserve(text_width + 2);
 
         for (uint32 i = 0; i < ref.size(); i++) {
-            out_file << '>';
-            out_file << ref[i].name;
-            out_file << '\n';
+            std::string name = '>' + ref[i].name + '\n';
+            gzwrite(fi, name.c_str(), name.size());
 
             const std::string& seq_str(ref[i].nucleos);
+            uint32 num_rows = seq_str.length() / text_width;
 
-            for (uint32 pos = 0; pos < seq_str.size(); pos++) {
-                out_file << seq_str[pos];
-                if ((pos % text_width) == (text_width - 1)) out_file << '\n';
+            for (uint32 i = 0; i < num_rows; i++) {
+                one_line = seq_str.substr(i * text_width, text_width);
+                one_line += '\n';
+                gzwrite(fi, one_line.c_str(), one_line.size());
             }
-            out_file << '\n';
+
+            // If there are leftover characters, create a shorter item at the end.
+            if (seq_str.length() % text_width != 0) {
+                one_line = seq_str.substr(text_width * num_rows);
+                one_line += '\n';
+                gzwrite(fi, one_line.c_str(), one_line.size());
+            }
         }
-        out_file.close();
+        gzclose(fi);
 
     } else {
-        Rcout << "Unable to open file " << file_name << std::endl;
+
+        std::ofstream out_file(file_name);
+
+        if (out_file.is_open()) {
+
+            for (uint32 i = 0; i < ref.size(); i++) {
+                out_file << '>';
+                out_file << ref[i].name;
+                out_file << '\n';
+
+                const std::string& seq_str(ref[i].nucleos);
+
+                for (uint32 pos = 0; pos < seq_str.size(); pos++) {
+                    out_file << seq_str[pos];
+                    if ((pos % text_width) == (text_width - 1)) out_file << '\n';
+                }
+                out_file << '\n';
+            }
+            out_file.close();
+
+        } else {
+
+            str_stop({"Unable to open file ", file_name, ".\n"});
+
+        }
+
     }
+
 
     return;
 }
@@ -834,67 +892,142 @@ void write_fasta_fa(std::string file_name,
 
 
 
-//' Write \code{RefGenome} to a compressed fasta file.
+
+//' Write \code{VarSet} to an uncompressed fasta file.
 //'
-//' @inheritParams write_fasta_fa
+//' @param out_prefix Prefix to file name of output fasta file.
+//' @param var_set_ptr An external pointer to a \code{VarSet} C++ object.
+//' @param text_width The number of characters per line in the output fasta file.
+//' @param compress Boolean for whether to compress output.
 //'
 //' @return Nothing.
 //'
 //' @noRd
 //'
+//'
 //[[Rcpp::export]]
-void write_fasta_gz(std::string file_name,
-                    SEXP ref_genome_ptr,
-                    const uint32& text_width){
+void write_vars_fasta(const std::string& out_prefix,
+                      SEXP var_set_ptr,
+                      const uint32& text_width,
+                      const bool& compress){
 
-    XPtr<RefGenome> ref_xptr(ref_genome_ptr);
-    RefGenome& ref(*ref_xptr);
+    XPtr<VarSet> vars_xptr(var_set_ptr);
+    VarSet& var_set(*vars_xptr);
+
+    std::string file_name = out_prefix + ".fa";
 
     expand_path(file_name);
 
-    // Initialize filehandle.
-    gzFile fi;
+    if (compress) {
 
-    // Initialize file.
-    // Note that gzfile does not tolerate initializing an empty file.
-    // Use ofstream instead.
-    if (!std::ifstream(file_name)){
-        std::ofstream myfile;
-        myfile.open(file_name, std::ios::out | std::ios::binary);
-        myfile.close();
-    }
+        file_name += ".gz";
 
+        // Initialize filehandle.
+        gzFile fi;
 
-    fi = gzopen(file_name.c_str(), "wb");
-    if (!fi) {
-        std::string e = "gzopen of " + file_name + " failed: " + strerror (errno) + ".\n";
-        Rcpp::stop(e);
-    }
-
-    for (uint32 i = 0; i < ref.size(); i++) {
-        std::string name = '>' + ref[i].name + '\n';
-        gzwrite(fi, name.c_str(), name.size());
-
-        const std::string& seq_str(ref[i].nucleos);
-        uint32 num_rows = seq_str.length() / text_width;
-
-        for (uint32 i = 0; i < num_rows; i++) {
-            std::string one_line = seq_str.substr(i * text_width, text_width);
-            one_line += '\n';
-            gzwrite(fi, one_line.c_str(), one_line.size());
+        // Initialize file.
+        // Note that gzfile does not tolerate initializing an empty file.
+        // Use ofstream instead.
+        if (!std::ifstream(file_name)){
+            std::ofstream myfile;
+            myfile.open(file_name, std::ios::out | std::ios::binary);
+            myfile.close();
         }
 
-        // If there are leftover characters, create a shorter item at the end.
-        if (seq_str.length() % text_width != 0) {
-            std::string one_line = seq_str.substr(text_width * num_rows);
-            one_line += '\n';
-            gzwrite(fi, one_line.c_str(), one_line.size());
+
+        fi = gzopen(file_name.c_str(), "wb");
+        if (!fi) {
+            str_stop({"gzopen of ", file_name, " failed: ", strerror(errno), ".\n"});
         }
+
+        std::string one_line;
+        one_line.reserve(text_width + 2);
+
+        // for (uint32 i = 0; i < ref.size(); i++) {
+        //     std::string name = '>' + ref[i].name + '\n';
+        //     gzwrite(fi, name.c_str(), name.size());
+        //
+        //     const std::string& seq_str(ref[i].nucleos);
+        //     uint32 num_rows = seq_str.length() / text_width;
+        //
+        //     for (uint32 i = 0; i < num_rows; i++) {
+        //         one_line = seq_str.substr(i * text_width, text_width);
+        //         one_line += '\n';
+        //         gzwrite(fi, one_line.c_str(), one_line.size());
+        //     }
+        //
+        //     // If there are leftover characters, create a shorter item at the end.
+        //     if (seq_str.length() % text_width != 0) {
+        //         one_line = seq_str.substr(text_width * num_rows);
+        //         one_line += '\n';
+        //         gzwrite(fi, one_line.c_str(), one_line.size());
+        //     }
+        // }
+        gzclose(fi);
+
+    } else {
+
+        std::ofstream out_file(file_name);
+
+        if (out_file.is_open()) {
+
+            std::string line;
+            line.reserve(text_width);
+            for (uint32 v = 0; v < var_set.size(); v++) {
+                for (uint32 s = 0; s < var_set.reference->size(); s++) {
+                    // Variant sequence name:
+                    out_file << '>';
+                    out_file << (*var_set.reference)[s].name;
+                    out_file << "__";
+                    out_file << var_set[v].name;
+                    out_file << '\n';
+
+                    const VarSequence& var_seq(var_set[v][s]);
+                    uint32 mut_i = 0;
+                    uint32 line_start = 0;
+
+                    while (line_start < var_seq.seq_size) {
+                        var_seq.set_seq_chunk(line, line_start,
+                                              text_width, mut_i);
+                        out_file << line;
+                        out_file << '\n';
+                        line_start += text_width;
+                    }
+
+                }
+            }
+
+            // for (uint32 i = 0; i < ref.size(); i++) {
+            //     out_file << '>';
+            //     out_file << ref[i].name;
+            //     out_file << '\n';
+            //
+            //     const std::string& seq_str(ref[i].nucleos);
+            //
+            //     for (uint32 pos = 0; pos < seq_str.size(); pos++) {
+            //         out_file << seq_str[pos];
+            //         if ((pos % text_width) == (text_width - 1)) out_file << '\n';
+            //     }
+            //     out_file << '\n';
+            // }
+
+            out_file.close();
+
+        } else {
+
+            str_stop({"Unable to open file ", file_name, ".\n"});
+
+        }
+
     }
-    gzclose(fi);
+
 
     return;
 }
+
+
+
+
 
 
 

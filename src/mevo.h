@@ -131,6 +131,7 @@ public:
     inline double operator()(const uint32& start, const uint32& end) const {
 
         std::string seq;
+        seq.reserve(end - start + 1);
         uint32 mut_ = var_seq->get_mut_(start);
         var_seq->set_seq_chunk(seq, start, end - start + 1, mut_);
 

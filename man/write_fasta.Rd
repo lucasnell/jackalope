@@ -4,18 +4,18 @@
 \alias{write_fasta}
 \title{Write a \code{ref_genome} object to a FASTA file.}
 \usage{
-write_fasta(reference, file_name, text_width = 80, compress = FALSE)
+write_fasta(seq_obj, out_prefix, compress = FALSE, text_width = 80)
 }
 \arguments{
-\item{reference}{A \code{ref_genome} object.}
+\item{seq_obj}{A \code{ref_genome} or \code{variants} object.}
 
-\item{file_name}{File name of the output fasta file.}
-
-\item{text_width}{The number of characters per line in the output fasta file.
-Defaults to \code{80}.}
+\item{out_prefix}{Prefix for the output file.}
 
 \item{compress}{Boolean for whether to compress using \code{"gzip"}.
 Defaults to \code{FALSE}.}
+
+\item{text_width}{The number of characters per line in the output fasta file.
+Defaults to \code{80}.}
 }
 \value{
 \code{NULL}

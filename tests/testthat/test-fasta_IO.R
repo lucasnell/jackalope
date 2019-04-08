@@ -25,10 +25,10 @@ test_that("Read/writing FASTA files produces errors when nonsense is input", {
     fa_fn <- sprintf("%s/%s.fa", dir, "test")
 
     expect_error(write_fasta("ref", fa_fn),
-                 regexp = "argument `reference` must be a `ref_genome` object")
+                 regexp = "argument `seq_obj` must be a \"ref_genome\" or \"variants\"")
 
     expect_error(write_fasta(ref, 3),
-                 regexp = "argument `file_name` must be a single string")
+                 regexp = "argument `out_prefix` must be a single string")
 
     expect_error(write_fasta(ref, fa_fn, compress = 3),
                  regexp = "argument `compress` must be a single logical")

@@ -420,29 +420,34 @@ read_fasta_ind <- function(fasta_files, fai_files, remove_soft_mask) {
 
 #' Write \code{RefGenome} to an uncompressed fasta file.
 #'
-#' @param file_name File name of output fasta file.
+#' @param out_prefix Prefix to file name of output fasta file.
 #' @param ref_genome_ptr An external pointer to a \code{RefGenome} C++ object.
 #' @param text_width The number of characters per line in the output fasta file.
+#' @param compress Boolean for whether to compress output.
 #'
 #' @return Nothing.
 #'
 #' @noRd
 #'
 #'
-write_fasta_fa <- function(file_name, ref_genome_ptr, text_width) {
-    invisible(.Call(`_jackalope_write_fasta_fa`, file_name, ref_genome_ptr, text_width))
+write_ref_fasta <- function(out_prefix, ref_genome_ptr, text_width, compress) {
+    invisible(.Call(`_jackalope_write_ref_fasta`, out_prefix, ref_genome_ptr, text_width, compress))
 }
 
-#' Write \code{RefGenome} to a compressed fasta file.
+#' Write \code{VarSet} to an uncompressed fasta file.
 #'
-#' @inheritParams write_fasta_fa
+#' @param out_prefix Prefix to file name of output fasta file.
+#' @param var_set_ptr An external pointer to a \code{VarSet} C++ object.
+#' @param text_width The number of characters per line in the output fasta file.
+#' @param compress Boolean for whether to compress output.
 #'
 #' @return Nothing.
 #'
 #' @noRd
 #'
-write_fasta_gz <- function(file_name, ref_genome_ptr, text_width) {
-    invisible(.Call(`_jackalope_write_fasta_gz`, file_name, ref_genome_ptr, text_width))
+#'
+write_vars_fasta <- function(out_prefix, var_set_ptr, text_width, compress) {
+    invisible(.Call(`_jackalope_write_vars_fasta`, out_prefix, var_set_ptr, text_width, compress))
 }
 
 #' Write `variants` to VCF file.

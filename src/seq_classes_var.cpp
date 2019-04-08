@@ -249,9 +249,8 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
         ++mut_i;
     }
     if (mut_i != 0) --mut_i;
-    // Reserve memory for input string
+    // Clearing string if necessary (reserving memory should happen outside this method)
     if (chunk_str.size() > 0) chunk_str.clear();
-    chunk_str.reserve(out_length);
 
     uint32 pos = start;
     uint32 next_mut_i = mut_i + 1;

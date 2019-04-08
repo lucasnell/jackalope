@@ -53,24 +53,24 @@ read_fasta <- function(fasta_files, fai_files = NULL,
 
 #' Write a \code{ref_genome} object to a FASTA file.
 #'
-#' @param reference A \code{ref_genome} object.
-#' @param file_name File name of the output fasta file.
-#' @param text_width The number of characters per line in the output fasta file.
-#'     Defaults to \code{80}.
+#' @param seq_obj A \code{ref_genome} or \code{variants} object.
+#' @param out_prefix Prefix for the output file.
 #' @param compress Boolean for whether to compress using \code{"gzip"}.
 #'     Defaults to \code{FALSE}.
+#' @param text_width The number of characters per line in the output fasta file.
+#'     Defaults to \code{80}.
 #'
 #' @return \code{NULL}
 #'
 #' @export
 #'
-write_fasta <- function(reference, file_name, text_width = 80, compress = FALSE) {
+write_fasta <- function(seq_obj, out_prefix, compress = FALSE, text_width = 80) {
 
-    if (!inherits(reference, "ref_genome")) {
-        err_msg("write_fasta", "reference", "a `ref_genome` object")
+    if (!inherits(seq_obj, c("ref_genome", "variants"))) {
+        err_msg("write_fasta", "seq_obj", "a \"ref_genome\" or \"variants\" object")
     }
-    if (!is_type(file_name, "character", 1)) {
-        err_msg("write_fasta", "file_name", "a single string")
+    if (!is_type(out_prefix, "character", 1)) {
+        err_msg("write_fasta", "out_prefix", "a single string")
     }
     if (!single_integer(text_width, 1)) {
         err_msg("write_fasta", "text_width", "a single integer >= 1")
@@ -78,15 +78,22 @@ write_fasta <- function(reference, file_name, text_width = 80, compress = FALSE)
     if (!is_type(compress, "logical", 1)) {
         err_msg("write_fasta", "compress", "a single logical")
     }
-    if (!inherits(reference$genome, "externalptr")) {
-        stop("\nThe `genome` field in the `ref_genome` argument supplied to ",
-             "`write_fasta` should be an external pointer.",
-             call. = TRUE)
-    }
-    if (compress) {
-        invisible(write_fasta_gz(file_name, reference$genome, text_width))
+    if (inherits(seq_obj, "ref_genome")) {
+        if (!inherits(seq_obj$genome, "externalptr")) {
+            stop("\nThe `genome` field in the `seq_obj` argument supplied to ",
+                 "`write_fasta` should be an external pointer when the `seq_obj` ",
+                 "argument is of class \"ref_genome\".",
+                 call. = TRUE)
+        }
+        invisible(write_ref_fasta(out_prefix, seq_obj$genome, text_width, compress))
     } else {
-        invisible(write_fasta_fa(file_name, reference$genome, text_width))
+        if (!inherits(seq_obj$genomes, "externalptr")) {
+            stop("\nThe `genomes` field in the `seq_obj` argument supplied to ",
+                 "`write_fasta` should be an external pointer when the `seq_obj` ",
+                 "argument is of class \"variants\".",
+                 call. = TRUE)
+        }
+        invisible(write_vars_fasta(out_prefix, seq_obj$genome, text_width, compress))
     }
     return(invisible(NULL))
 }
@@ -236,9 +243,7 @@ read_vcf <- function(reference, method_info) {
 #' Write variant info from a \code{variants} object to a VCF file.
 #'
 #' @param vars A \code{variants} object.
-#' @param out_prefix Prefix for the output file VCF.
-#' @param compress Boolean for whether to compress using \code{"gzip"}.
-#'     Defaults to \code{FALSE}.
+#' @inheritParams write_fasta
 #' @param sample_matrix Matrix to specify how haploid variants are grouped into samples
 #'     if samples are not haploid. There should be one row for each sample, and
 #'     each row should contain indices or names for the variants present in that sample.
