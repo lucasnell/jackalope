@@ -55,7 +55,7 @@ devtools::install_github("lucasnell/jackalope")
 library(jackalope)
 reference <- create_genome(n_seqs = 10, len_mean = 1000)
 phy <- ape::rcoal(5)
-mevo_info <- make_mevo(reference, list(model = "JC69", lambda = 0.1))
+mevo_info <- create_mevo(reference, list(model = "JC69", lambda = 0.1))
 ref_variants <- create_variants(reference, "phylo", phy, mevo_info)
 ref_variants
 ```

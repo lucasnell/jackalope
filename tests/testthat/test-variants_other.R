@@ -7,10 +7,10 @@ context("Testing basics of creating variants")
 
 
 reference <- create_genome(3, 100)
-mevo_obj <- make_mevo(reference, list(model = "JC69", lambda = 0.1),
-                      list(rate = 0.1, max_length = 10),
-                      list(rate = 0.1, max_length = 10),
-                      chunk_size = 0)
+mevo_obj <- create_mevo(reference, list(model = "JC69", lambda = 0.1),
+                        list(rate = 0.1, max_length = 10),
+                        list(rate = 0.1, max_length = 10),
+                        chunk_size = 0)
 
 
 

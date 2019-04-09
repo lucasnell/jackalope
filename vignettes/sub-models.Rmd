@@ -34,9 +34,9 @@ $$
 the rate from $C$ to $T$.)
 Diagonals are determined based on all rows having to sum to zero (Yang 2006).
 
-Under each rate matrix are listed the parameters in `make_mevo` required for that model.
+Under each rate matrix are listed the parameters in `create_mevo` required for that model.
 
-Below is a key of the parameters required in `make_mevo` for the models below,
+Below is a key of the parameters required in `create_mevo` for the models below,
 in order of their appearance:
 
 * `lambda`: $\lambda$

@@ -13,7 +13,7 @@ An object of class \code{mevo}.
 }
 \description{
 You shouldn't need to interact with this class much, if at all.
-This class is designed to be made in \code{make_mevo}, then to store information for use
+This class is designed to be made in \code{create_mevo}, then to store information for use
 in \code{create_variants}.
 }
 \section{Fields}{
@@ -29,11 +29,11 @@ in \code{create_variants}.
 \item{\code{deletion_rates}}{Vector of deletion rates by length.}
 
 \item{\code{gamma_mats}}{List of matrices specifying "gamma distances" (see definition in
-\code{?make_mevo}) for each sequence.}
+\code{?create_mevo}) for each sequence.}
 
 \item{\code{chunk_size}}{The size of "chunks" of sequences to first sample uniformly
 before doing weighted sampling by rates for each sequence location.
-See \code{?make_mevo} for more information.}
+See \code{?create_mevo} for more information.}
 }}
 
 \section{Methods}{
@@ -45,6 +45,6 @@ See \code{?make_mevo} for more information.}
 }
 
 \seealso{
-\code{\link{make_mevo}}
+\code{\link{create_mevo}}
 }
 \keyword{datasets}

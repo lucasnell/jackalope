@@ -133,7 +133,7 @@ test_coal_obj_sims <- function(coal_info, pkg, type) {
 
 
 reference <- create_genome(3, 100)
-mevo_obj <- make_mevo(reference, list(model = "JC69", lambda = 0.1),
+mevo_obj <- create_mevo(reference, list(model = "JC69", lambda = 0.1),
                       list(rate = 0.1, max_length = 10),
                       list(rate = 0.1, max_length = 10))
 
@@ -163,7 +163,7 @@ test_that("variant creation works with ms-style file output", {
 
 
     reference2 <- create_genome(3, 1000)
-    mevo_obj2 <- make_mevo(reference2, list(model = "JC69", lambda = 0.1))
+    mevo_obj2 <- create_mevo(reference2, list(model = "JC69", lambda = 0.1))
 
     expect_error(create_variants(reference2, method = "coal_trees",
                                  test_path("files/ms_out.txt"), mevo_obj2),
@@ -183,7 +183,7 @@ test_that("variant creation works with ms-style file output", {
         ms_file <- test_path("files/ms_out.txt")
         # Have to make bigger ref. genome to make sure site positions don't overlap.
         reference2 <- create_genome(3, 100e3)
-        mevo_obj2 <- make_mevo(reference2, list(model = "JC69", lambda = 0.1))
+        mevo_obj2 <- create_mevo(reference2, list(model = "JC69", lambda = 0.1))
         vars <- create_variants(reference2, method = "coal_sites", ms_file, mevo_obj)
 
         msf <- readLines(ms_file)[-1:-2]

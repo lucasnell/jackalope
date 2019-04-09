@@ -128,7 +128,7 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'     See "Method arguments" section for which arguments are used for each method.
 #' @param mevo_obj A `mevo` object that stores molecular-evolution information.
 #'     This argument is needed for all methods except `"vcf"`.
-#'     See \code{\link{make_mevo}} for more information.
+#'     See \code{\link{create_mevo}} for more information.
 #'     Defaults to `NULL`.
 #' @param n_threads Number of threads to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
@@ -144,7 +144,7 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #' @examples
 #' r <- create_genome(10, 1000)
 #' tree <- ape::rcoal(5)
-#' m <- make_mevo(r, list(model = "JC69", lambda = 0.1))
+#' m <- create_mevo(r, list(model = "JC69", lambda = 0.1))
 #' v_phylo <- create_variants(r, "phylo", tree, m)
 #' v_theta <- create_variants(r, "theta", list(theta = 0.001, n_vars = 5), m)
 #'
@@ -186,7 +186,7 @@ create_variants <- function(reference,
         (is.null(mevo_obj) || !inherits(mevo_obj, "mevo"))) {
         err_msg("create_variants", "mevo_obj", "a \"mevo\" object (if you",
                 "want to use a method other than \"vcf\").",
-                "You should use the `make_mevo` function to create this object")
+                "You should use the `create_mevo` function to create this object")
     }
 
 

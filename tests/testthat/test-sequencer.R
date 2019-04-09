@@ -14,8 +14,8 @@ dir <- tempdir()
 ref <- create_genome(5, 100)
 tr <- ape::rcoal(4)
 vars <- create_variants(ref, method = "phy", method_info = tr,
-                        mevo_obj = make_mevo(ref, sub = list(model = "JC69",
-                                                             lambda = 0.1)))
+                        mevo_obj = create_mevo(ref, sub = list(model = "JC69",
+                                                               lambda = 0.1)))
 
 
 # ================================================================================`

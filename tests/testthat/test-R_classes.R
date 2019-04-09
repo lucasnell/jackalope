@@ -109,8 +109,8 @@ test_that("ref_genome class methods produce correct output", {
 ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
 
 # Molecular evolution info:
-mev <- make_mevo(ref, list(model = "JC69", lambda = 0.05))
-# <test-make_mevo.R already tested this class>
+mev <- create_mevo(ref, list(model = "JC69", lambda = 0.05))
+# <test-create_mevo.R already tested this class>
 
 # Create variants:
 phy <- ape::rcoal(n_vars)

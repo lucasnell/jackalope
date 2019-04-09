@@ -232,7 +232,7 @@ ref_genome$lock()
 #' An R6 class containing information needed for molecular evolution.
 #'
 #' You shouldn't need to interact with this class much, if at all.
-#' This class is designed to be made in `make_mevo`, then to store information for use
+#' This class is designed to be made in `create_mevo`, then to store information for use
 #' in `create_variants`.
 #'
 #' @field Q A matrix of substitution rates for each nucleotide.
@@ -241,10 +241,10 @@ ref_genome$lock()
 #' @field insertion_rates Vector of insertion rates by length.
 #' @field deletion_rates Vector of deletion rates by length.
 #' @field gamma_mats List of matrices specifying "gamma distances" (see definition in
-#'     `?make_mevo`) for each sequence.
+#'     `?create_mevo`) for each sequence.
 #' @field chunk_size The size of "chunks" of sequences to first sample uniformly
 #'     before doing weighted sampling by rates for each sequence location.
-#'     See `?make_mevo` for more information.
+#'     See `?create_mevo` for more information.
 #'
 #' @section Methods:
 #' \describe{
@@ -256,7 +256,7 @@ ref_genome$lock()
 #'
 #' @docType class
 #'
-#' @seealso \code{\link{make_mevo}}
+#' @seealso \code{\link{create_mevo}}
 #'
 #' @export
 #'

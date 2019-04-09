@@ -88,7 +88,7 @@ make_N <- function(x, N) cbind(x, matrix(0, nrow(x), N - ncol(x)))
 
 # Only insertions:
 # ref <- create_genome(20, 100e3)
-mevo_ <- make_mevo(ref,
+mevo_ <- create_mevo(ref,
                    sub = list(model = "TN93", alpha_1 = 0,
                               alpha_2 = 0, beta = 0,
                               pi_tcag = pars$pi_tcag),
@@ -136,7 +136,7 @@ ins_p <- ins_df %>%
 # --------------------*
 
 # Only deletions
-mevo_ <- make_mevo(ref,
+mevo_ <- create_mevo(ref,
                    sub = list(model = "TN93", alpha_1 = 0,
                               alpha_2 = 0, beta = 0,
                               pi_tcag = pars$pi_tcag),
@@ -199,7 +199,7 @@ tree <- ape::rcoal(2)
 tree$edge.length <- tree$edge.length * 0.1
 
 # Only substitutions
-mevo_ <- make_mevo(ref,
+mevo_ <- create_mevo(ref,
                    sub = list(model = "TN93", alpha_1 = pars$alpha_1,
                               alpha_2 = pars$alpha_2, beta = pars$beta,
                               pi_tcag = pars$pi_tcag))
@@ -249,7 +249,7 @@ sub_df %>%
 
 ref <- with(pars, ref_genome$new(jackalope:::make_ref_genome(seqs[1:4])))
 # Only substitutions plus gammas
-mevo_ <- make_mevo(ref,
+mevo_ <- create_mevo(ref,
                    sub = list(model = "TN93", alpha_1 = pars$alpha_1,
                               alpha_2 = pars$alpha_2, beta = pars$beta,
                               pi_tcag = pars$pi_tcag),
@@ -314,7 +314,7 @@ tree$edge.length <- tree$edge.length * 0.1
 
 ref <- with(pars, ref_genome$new(jackalope:::make_ref_genome(seqs[1:4])))
 # Only substitutions again
-mevo_ <- make_mevo(ref,
+mevo_ <- create_mevo(ref,
                    sub = list(model = "TN93", alpha_1 = pars$alpha_1,
                               alpha_2 = pars$alpha_2, beta = pars$beta,
                               pi_tcag = pars$pi_tcag))
@@ -413,7 +413,7 @@ tree$edge.length <- tree$edge.length * 0.1
 ref <- with(pars, ref_genome$new(jackalope:::make_ref_genome(seqs[1:4])))
 
 # Only substitutions
-mevo_ <- make_mevo(ref,
+mevo_ <- create_mevo(ref,
                    sub = list(model = "TN93", alpha_1 = pars$alpha_1,
                               alpha_2 = pars$alpha_2, beta = pars$beta,
                               pi_tcag = pars$pi_tcag),

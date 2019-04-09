@@ -45,7 +45,7 @@ validate_sub_pars <- function(par_list) {
 
 #' Make substitution rate matrix (Q) and vector of equilibrium frequencies (pis).
 #'
-#' @inheritParams make_mevo
+#' @inheritParams create_mevo
 #'
 #' @noRd
 #'
@@ -111,7 +111,7 @@ substitutions <- function(sub) {
         q_pi_list <- UNREST_rate_matrix(sub$Q)
         Q <- q_pi_list$Q
         pi_tcag <- q_pi_list$pi_tcag
-    } else stop("\nInvalid `sub$model` argument to `make_mevo`.", call. = FALSE)
+    } else stop("\nInvalid `sub$model` argument to `create_mevo`.", call. = FALSE)
 
     return(list(Q = Q, pi_tcag = pi_tcag))
 }
@@ -135,9 +135,9 @@ indels <- function(indel) {
     if (is.null(indel)) {
         rates <- numeric(0)
     } else {
-        err_msg_ <- paste0("\nWhen specifying `", which_type, "` in `make_mevo`, ")
+        err_msg_ <- paste0("\nWhen specifying `", which_type, "` in `create_mevo`, ")
         if (!single_number(indel$rate, 0)) {
-            err_msg("make_mevo", which_type, "a list with a \"rate\" field,",
+            err_msg("create_mevo", which_type, "a list with a \"rate\" field,",
                     "and that field must be a single number >= 0")
         }
         if (indel$rate == 0) return(numeric(0))
@@ -173,9 +173,9 @@ indels <- function(indel) {
             }
             rel_rates <- indel$rel_rates
         } else {
-            err_msg("make_mevo", which_type, "a list with names that coincide",
+            err_msg("create_mevo", which_type, "a list with names that coincide",
                     "with one of the methods in the \"Indels\" section within",
-                    "`?make_mevo`. Note that extra names return an error.")
+                    "`?create_mevo`. Note that extra names return an error.")
         }
 
         # So relative rates sum to 1:
@@ -194,7 +194,7 @@ indels <- function(indel) {
 
 #' Process information for variation in mutation rates among sites.
 #'
-#' @inheritParams make_mevo
+#' @inheritParams create_mevo
 #' @param seq_sizes Vector of reference-genome sequence sizes.
 #'
 #'
@@ -207,7 +207,7 @@ site_variability <- function(site_var, reference, gamma_bed) {
     if (!is.null(site_var)) {
 
         if (!inherits(site_var, "list")) {
-            err_msg("make_mevo", "site_var", "NULL, a list specifying Gamma",
+            err_msg("create_mevo", "site_var", "NULL, a list specifying Gamma",
                     "parameters \"shape\" and \"region_size\", or a list of matrices")
         }
 
@@ -226,7 +226,7 @@ site_variability <- function(site_var, reference, gamma_bed) {
             gamma_mats <- site_var
 
         } else {
-            err_msg("make_mevo", "site_var", "NULL, a list specifying Gamma",
+            err_msg("create_mevo", "site_var", "NULL, a list specifying Gamma",
                     "parameters \"shape\" and \"region_size\", or a list of matrices")
         }
 
@@ -234,7 +234,7 @@ site_variability <- function(site_var, reference, gamma_bed) {
         # Writing to BED file if desired:
         # ---------*
         if (!is.null(gamma_bed) && !is_type(gamma_bed, "character", 1)) {
-            err_msg("make_mevo", "gamma_bed", "NULL or a single string")
+            err_msg("create_mevo", "gamma_bed", "NULL or a single string")
         }
         if (!is.null(gamma_bed)) {
             if (!grepl("\\.bed$", gamma_bed)) gamma_bed <- paste0(gamma_bed, ".bed")
@@ -388,9 +388,9 @@ site_variability <- function(site_var, reference, gamma_bed) {
 #'
 #' @examples
 #' ref <- create_genome(10, 1000)
-#' mevo <- make_mevo(ref, list(model = "JC69", lambda = 1))
+#' mevo <- create_mevo(ref, list(model = "JC69", lambda = 1))
 #'
-make_mevo <- function(reference,
+create_mevo <- function(reference,
                       sub,
                       ins = NULL,
                       del = NULL,
@@ -399,11 +399,11 @@ make_mevo <- function(reference,
                       chunk_size = 100) {
 
     if (!inherits(reference, "ref_genome")) {
-        stop("\nIn `make_mevo`, the `reference` argument must be a ref_genome object.",
+        stop("\nIn `create_mevo`, the `reference` argument must be a ref_genome object.",
              call. = FALSE)
     }
     if (!single_integer(chunk_size, 0)) {
-        err_msg("make_mevo", "chunk_size", "an integer >= 0")
+        err_msg("create_mevo", "chunk_size", "an integer >= 0")
     }
 
     # -------+
@@ -411,7 +411,7 @@ make_mevo <- function(reference,
     # -------+
     if (is.null(sub$model)) {
         stop("\nYou must always specify a `model` field to the `sub` argument in ",
-             "`make_mevo` (i.e., `is.null(sub$model)` should never be `TRUE`).",
+             "`create_mevo` (i.e., `is.null(sub$model)` should never be `TRUE`).",
              call. = FALSE)
     }
     sub$model <- match.arg(sub$model, c("JC69", "K80", "F81", "HKY85", "TN93", "F84",

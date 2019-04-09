@@ -37,7 +37,7 @@ See "Method arguments" section for which arguments are used for each method.}
 
 \item{mevo_obj}{A \code{mevo} object that stores molecular-evolution information.
 This argument is needed for all methods except \code{"vcf"}.
-See \code{\link{make_mevo}} for more information.
+See \code{\link{create_mevo}} for more information.
 Defaults to \code{NULL}.}
 
 \item{n_threads}{Number of threads to use for parallel processing.
@@ -127,7 +127,7 @@ This method won't work if the package \code{vcfR} isn't installed.}
 \examples{
 r <- create_genome(10, 1000)
 tree <- ape::rcoal(5)
-m <- make_mevo(r, list(model = "JC69", lambda = 0.1))
+m <- create_mevo(r, list(model = "JC69", lambda = 0.1))
 v_phylo <- create_variants(r, "phylo", tree, m)
 v_theta <- create_variants(r, "theta", list(theta = 0.001, n_vars = 5), m)
 
