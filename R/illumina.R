@@ -556,7 +556,8 @@ illumina <- function(seq_object,
 
 
     out_prefix <- path.expand(out_prefix)
-    check_fastq(out_prefix, compress, overwrite, n_read_ends = ifelse(paired, 2, 1))
+    check_file_existence(paste0(out_prefix, "_R", 1:ifelse(paired, 2, 1), ".fq"),
+                         compress, overwrite)
 
     # Check for improper argument types:
     check_illumina_args(seq_object, n_reads, read_length, paired,

@@ -36,3 +36,35 @@ err_msg <- function(fxn, par, ...) {
     stop(sprintf("\nFor the `%s` function in jackalope, argument `%s` must be %s.",
                  fxn, par, paste(...)), call. = FALSE)
 }
+
+
+
+
+#' Check for whether file(s) already exist, return error depending on `overwrite` arg.
+#'
+#'
+#' @noRd
+#'
+check_file_existence <- function(file_names, compress, overwrite) {
+
+    file_names <- path.expand(file_names)
+
+    if (compress) file_names <- paste0(file_names, ".gz")
+
+    dir_names <- unique(dirname(file_names))
+
+    for (d in dir_names) {
+        if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+    }
+
+    if (!overwrite) {
+        for (f in file_names) {
+            if (file.exists(f)) {
+                stop("\nFile ", paste(f), " already exists.", call. = FALSE)
+            }
+        }
+    }
+
+    invisible(NULL)
+
+}

@@ -216,7 +216,7 @@ pacbio <- function(seq_object,
 
 
     out_prefix <- path.expand(out_prefix)
-    check_fastq(out_prefix, compress, overwrite)
+    check_file_existence(paste0(out_prefix, "_R1.fq"), compress, overwrite)
 
     # Check for improper argument types:
     check_pacbio_args(seq_object, n_reads, variant_probs,

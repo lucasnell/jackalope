@@ -120,6 +120,7 @@ write_fasta <- function(seq_obj, out_prefix,
                  "argument is of class \"ref_genome\".",
                  call. = TRUE)
         }
+        check_file_existence(paste0(out_prefix, ".fa"), compress, overwrite)
         invisible(write_ref_fasta(out_prefix, seq_obj$genome, text_width,
                                   compress, comp_method, show_progress))
     } else {
@@ -129,6 +130,8 @@ write_fasta <- function(seq_obj, out_prefix,
                  "argument is of class \"variants\".",
                  call. = TRUE)
         }
+        check_file_existence(paste0(out_prefix, "__", seq_obj$var_names(), ".fa"),
+                             compress, overwrite)
         invisible(write_vars_fasta(out_prefix, seq_obj$genomes, text_width,
                                    compress, comp_method, n_threads, show_progress))
     }
@@ -350,6 +353,7 @@ write_vcf <- function(vars,
         err_msg("write_fasta", "overwrite", "a single logical")
     }
 
+    check_file_existence(paste0(out_prefix, ".vcf"), compress, overwrite)
 
     write_vcf_cpp(out_prefix, compress, vars$genomes, sample_matrix, show_progress)
 
