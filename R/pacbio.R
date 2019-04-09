@@ -237,6 +237,11 @@ pacbio <- function(seq_object,
     if (is_type(compress, "logical", 1) && compress) compress <- 6 # default compression
     if (is_type(compress, "logical", 1) && !compress) compress <- 0 # no compression
 
+    if (n_threads > 1 && compress > 0 && comp_method == "gzip") {
+        stop("\nCompression using gzip cannot be performed using multiple threads. ",
+             "Please use bgzip compression instead.")
+    }
+
     if (!is.null(custom_read_lengths)) {
         if (inherits(custom_read_lengths, "matrix")) {
             read_lens <- custom_read_lengths[,1]

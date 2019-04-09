@@ -593,6 +593,11 @@ illumina <- function(seq_object,
     if (is_type(compress, "logical", 1) && compress) compress <- 6 # default compression
     if (is_type(compress, "logical", 1) && !compress) compress <- 0 # no compression
 
+    if (n_threads > 1 && compress > 0 && comp_method == "gzip") {
+        stop("\nCompression using gzip cannot be performed using multiple threads. ",
+             "Please use bgzip compression instead.")
+    }
+
     # Change mean and SD to shape and scale of Gamma distribution:
     frag_len_shape <- (frag_mean / frag_sd)^2
     frag_len_scale <- frag_sd^2 / frag_mean
