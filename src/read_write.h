@@ -844,6 +844,7 @@ inline void write_vcf_(XPtr<VarSet> var_set,
     for (uint32 seq = 0; seq < n_seqs; seq++) {
         writer.new_seq(seq);
         while (writer.mut_pos.first < MAX_INT) {
+            Rcpp::checkUserInterrupt();
             // Set information for this line:
             writer.iterate(pos_str, ref_str, alt_str, gt_strs);
             // CHROM

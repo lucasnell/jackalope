@@ -56,7 +56,7 @@ read_fasta <- function(fasta_files, fai_files = NULL,
 #' This file produces 1 FASTA file for a `ref_genome` object and one file
 #' for each variant in a `variants` object.
 #'
-#' @param seq_obj A \code{ref_genome} or \code{variants} object.
+#' @param seq_obj A `ref_genome` or `variants` object.
 #' @param out_prefix Prefix for the output file.
 #' @param compress Logical specifying whether or not to compress output file, or
 #'     an integer specifying the level of compression, from 1 to 9.
@@ -65,16 +65,27 @@ read_fasta <- function(fasta_files, fai_files = NULL,
 #' @param comp_method Character specifying which type of compression to use if any
 #'     is desired. Options include `"gzip"` and `"bgzip"`. Defaults to `"gzip"`.
 #' @param text_width The number of characters per line in the output fasta file.
-#'     Defaults to \code{80}.
+#'     Defaults to `80`.
+#' @param show_progress Logical for whether to show a progress bar.
+#'     Defaults to `FALSE`.
+#' @param n_threads Number of threads to use if writing from a `variants` object.
+#'     Threads are split among variants, so it's not useful to provide more threads
+#'     than variants. This argument is ignored if `seq_obj` is a `ref_genome` object.
+#'     Defaults to `1`.
+#' @param overwrite Logical for whether to overwrite existing file(s) of the
+#'     same name, if they exist. Defaults to `FALSE`.
 #'
-#' @return \code{NULL}
+#' @return `NULL`
 #'
 #' @export
 #'
 write_fasta <- function(seq_obj, out_prefix,
                         compress = FALSE,
                         comp_method = "gzip",
-                        text_width = 80) {
+                        text_width = 80,
+                        show_progress = FALSE,
+                        n_threads = 1,
+                        overwrite = FALSE) {
 
     if (!inherits(seq_obj, c("ref_genome", "variants"))) {
         err_msg("write_fasta", "seq_obj", "a \"ref_genome\" or \"variants\" object")
@@ -93,6 +104,15 @@ write_fasta <- function(seq_obj, out_prefix,
     if (!single_integer(text_width, 1)) {
         err_msg("write_fasta", "text_width", "a single integer >= 1")
     }
+    if (!is_type(show_progress, "logical", 1)) {
+        err_msg("write_fasta", "show_progress", "a single logical")
+    }
+    if (!single_integer(n_threads, 1)) {
+        err_msg("write_fasta", "n_threads", "a single integer >= 1")
+    }
+    if (!is_type(overwrite, "logical", 1)) {
+        err_msg("write_fasta", "overwrite", "a single logical")
+    }
     if (inherits(seq_obj, "ref_genome")) {
         if (!inherits(seq_obj$genome, "externalptr")) {
             stop("\nThe `genome` field in the `seq_obj` argument supplied to ",
@@ -101,7 +121,7 @@ write_fasta <- function(seq_obj, out_prefix,
                  call. = TRUE)
         }
         invisible(write_ref_fasta(out_prefix, seq_obj$genome, text_width,
-                                  compress, comp_method))
+                                  compress, comp_method, show_progress))
     } else {
         if (!inherits(seq_obj$genomes, "externalptr")) {
             stop("\nThe `genomes` field in the `seq_obj` argument supplied to ",
@@ -110,7 +130,7 @@ write_fasta <- function(seq_obj, out_prefix,
                  call. = TRUE)
         }
         invisible(write_vars_fasta(out_prefix, seq_obj$genomes, text_width,
-                                   compress, comp_method))
+                                   compress, comp_method, n_threads, show_progress))
     }
     return(invisible(NULL))
 }
@@ -281,7 +301,9 @@ read_vcf <- function(reference, method_info) {
 write_vcf <- function(vars,
                       out_prefix,
                       compress = FALSE,
-                      sample_matrix = NULL) {
+                      sample_matrix = NULL,
+                      show_progress = FALSE,
+                      overwrite = FALSE) {
 
     if (!inherits(vars, "variants")) {
         err_msg("write_vcf", "vars", "a \"variants\" object")
@@ -321,8 +343,15 @@ write_vcf <- function(vars,
         err_msg("write_vcf", "sample_matrix", "NULL or a character, numeric, or",
                 "integer matrix.")
     }
+    if (!is_type(show_progress, "logical", 1)) {
+        err_msg("write_fasta", "show_progress", "a single logical")
+    }
+    if (!is_type(overwrite, "logical", 1)) {
+        err_msg("write_fasta", "overwrite", "a single logical")
+    }
 
-    write_vcf_cpp(out_prefix, compress, vars$genomes, sample_matrix)
+
+    write_vcf_cpp(out_prefix, compress, vars$genomes, sample_matrix, show_progress)
 
     return(invisible(NULL))
 }

@@ -436,8 +436,8 @@ read_fasta_ind <- function(fasta_files, fai_files, remove_soft_mask) {
 #' @noRd
 #'
 #'
-write_ref_fasta <- function(out_prefix, ref_genome_ptr, text_width, compress, comp_method) {
-    invisible(.Call(`_jackalope_write_ref_fasta`, out_prefix, ref_genome_ptr, text_width, compress, comp_method))
+write_ref_fasta <- function(out_prefix, ref_genome_ptr, text_width, compress, comp_method, show_progress) {
+    invisible(.Call(`_jackalope_write_ref_fasta`, out_prefix, ref_genome_ptr, text_width, compress, comp_method, show_progress))
 }
 
 #' Write \code{VarSet} to an uncompressed fasta file.
@@ -452,8 +452,8 @@ write_ref_fasta <- function(out_prefix, ref_genome_ptr, text_width, compress, co
 #' @noRd
 #'
 #'
-write_vars_fasta <- function(out_prefix, var_set_ptr, text_width, compress, comp_method) {
-    invisible(.Call(`_jackalope_write_vars_fasta`, out_prefix, var_set_ptr, text_width, compress, comp_method))
+write_vars_fasta <- function(out_prefix, var_set_ptr, text_width, compress, comp_method, n_threads, show_progress) {
+    invisible(.Call(`_jackalope_write_vars_fasta`, out_prefix, var_set_ptr, text_width, compress, comp_method, n_threads, show_progress))
 }
 
 #' Write `variants` to VCF file.
@@ -461,8 +461,8 @@ write_vars_fasta <- function(out_prefix, var_set_ptr, text_width, compress, comp
 #'
 #' @noRd
 #'
-write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix) {
-    invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix))
+write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, show_progress) {
+    invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix, show_progress))
 }
 
 bgzip_cpp <- function(file_name, n_threads, compress_level) {

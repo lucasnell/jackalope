@@ -490,8 +490,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // write_ref_fasta
-void write_ref_fasta(const std::string& out_prefix, SEXP ref_genome_ptr, const uint32& text_width, const int& compress, const std::string& comp_method);
-RcppExport SEXP _jackalope_write_ref_fasta(SEXP out_prefixSEXP, SEXP ref_genome_ptrSEXP, SEXP text_widthSEXP, SEXP compressSEXP, SEXP comp_methodSEXP) {
+void write_ref_fasta(const std::string& out_prefix, SEXP ref_genome_ptr, const uint32& text_width, const int& compress, const std::string& comp_method, const bool& show_progress);
+RcppExport SEXP _jackalope_write_ref_fasta(SEXP out_prefixSEXP, SEXP ref_genome_ptrSEXP, SEXP text_widthSEXP, SEXP compressSEXP, SEXP comp_methodSEXP, SEXP show_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
@@ -499,13 +499,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const uint32& >::type text_width(text_widthSEXP);
     Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
-    write_ref_fasta(out_prefix, ref_genome_ptr, text_width, compress, comp_method);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    write_ref_fasta(out_prefix, ref_genome_ptr, text_width, compress, comp_method, show_progress);
     return R_NilValue;
 END_RCPP
 }
 // write_vars_fasta
-void write_vars_fasta(std::string out_prefix, SEXP var_set_ptr, const uint32& text_width, const int& compress, const std::string& comp_method);
-RcppExport SEXP _jackalope_write_vars_fasta(SEXP out_prefixSEXP, SEXP var_set_ptrSEXP, SEXP text_widthSEXP, SEXP compressSEXP, SEXP comp_methodSEXP) {
+void write_vars_fasta(std::string out_prefix, SEXP var_set_ptr, const uint32& text_width, const int& compress, const std::string& comp_method, const uint32& n_threads, const bool& show_progress);
+RcppExport SEXP _jackalope_write_vars_fasta(SEXP out_prefixSEXP, SEXP var_set_ptrSEXP, SEXP text_widthSEXP, SEXP compressSEXP, SEXP comp_methodSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type out_prefix(out_prefixSEXP);
@@ -513,20 +514,23 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const uint32& >::type text_width(text_widthSEXP);
     Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
-    write_vars_fasta(out_prefix, var_set_ptr, text_width, compress, comp_method);
+    Rcpp::traits::input_parameter< const uint32& >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    write_vars_fasta(out_prefix, var_set_ptr, text_width, compress, comp_method, n_threads, show_progress);
     return R_NilValue;
 END_RCPP
 }
 // write_vcf_cpp
-void write_vcf_cpp(std::string out_prefix, const int& compress, SEXP var_set_ptr, const IntegerMatrix& sample_matrix);
-RcppExport SEXP _jackalope_write_vcf_cpp(SEXP out_prefixSEXP, SEXP compressSEXP, SEXP var_set_ptrSEXP, SEXP sample_matrixSEXP) {
+void write_vcf_cpp(std::string out_prefix, const int& compress, SEXP var_set_ptr, const IntegerMatrix& sample_matrix, const bool& show_progress);
+RcppExport SEXP _jackalope_write_vcf_cpp(SEXP out_prefixSEXP, SEXP compressSEXP, SEXP var_set_ptrSEXP, SEXP sample_matrixSEXP, SEXP show_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type out_prefix(out_prefixSEXP);
     Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
     Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
     Rcpp::traits::input_parameter< const IntegerMatrix& >::type sample_matrix(sample_matrixSEXP);
-    write_vcf_cpp(out_prefix, compress, var_set_ptr, sample_matrix);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    write_vcf_cpp(out_prefix, compress, var_set_ptr, sample_matrix, show_progress);
     return R_NilValue;
 END_RCPP
 }
@@ -906,9 +910,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_read_vcfr", (DL_FUNC) &_jackalope_read_vcfr, 6},
     {"_jackalope_read_fasta_noind", (DL_FUNC) &_jackalope_read_fasta_noind, 3},
     {"_jackalope_read_fasta_ind", (DL_FUNC) &_jackalope_read_fasta_ind, 3},
-    {"_jackalope_write_ref_fasta", (DL_FUNC) &_jackalope_write_ref_fasta, 5},
-    {"_jackalope_write_vars_fasta", (DL_FUNC) &_jackalope_write_vars_fasta, 5},
-    {"_jackalope_write_vcf_cpp", (DL_FUNC) &_jackalope_write_vcf_cpp, 4},
+    {"_jackalope_write_ref_fasta", (DL_FUNC) &_jackalope_write_ref_fasta, 6},
+    {"_jackalope_write_vars_fasta", (DL_FUNC) &_jackalope_write_vars_fasta, 7},
+    {"_jackalope_write_vcf_cpp", (DL_FUNC) &_jackalope_write_vcf_cpp, 5},
     {"_jackalope_bgzip_cpp", (DL_FUNC) &_jackalope_bgzip_cpp, 3},
     {"_jackalope_print_ref_genome", (DL_FUNC) &_jackalope_print_ref_genome, 1},
     {"_jackalope_print_var_set", (DL_FUNC) &_jackalope_print_var_set, 1},

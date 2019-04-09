@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "zlib.h"
+#include <progress.hpp>  // for the progress bar
 // for bgzip method
 #include <fcntl.h>
 #include <sys/types.h>
@@ -801,12 +802,18 @@ SEXP read_fasta_ind(const std::vector<std::string>& fasta_files,
 template <typename T>
 inline void write_ref_fasta__(T& file,
                               const RefGenome& ref,
-                              const uint32& text_width) {
+                              const uint32& text_width,
+                              const bool& show_progress) {
+
+    Progress prog_bar(ref.total_size, show_progress);
 
     std::string one_line;
     one_line.reserve(text_width + 2);
 
     for (uint32 i = 0; i < ref.size(); i++) {
+
+        if (prog_bar.check_abort()) continue;
+
         std::string name = '>' + ref[i].name + '\n';
         file.write(name);
 
@@ -814,10 +821,14 @@ inline void write_ref_fasta__(T& file,
         uint32 num_rows = seq_str.length() / text_width;
 
         for (uint32 i = 0; i < num_rows; i++) {
+            // Check every 10 lines:
+            if (i % 10 == 0 && prog_bar.check_abort()) continue;
             one_line = seq_str.substr(i * text_width, text_width);
             one_line += '\n';
             file.write(one_line);
         }
+
+        if (prog_bar.check_abort()) continue;
 
         // If there are leftover characters, create a shorter item at the end.
         if (seq_str.length() % text_width != 0) {
@@ -825,6 +836,9 @@ inline void write_ref_fasta__(T& file,
             one_line += '\n';
             file.write(one_line);
         }
+
+        prog_bar.increment(seq_str.size());
+
     }
     return;
 }
@@ -846,7 +860,8 @@ void write_ref_fasta(const std::string& out_prefix,
                      SEXP ref_genome_ptr,
                      const uint32& text_width,
                      const int& compress,
-                     const std::string& comp_method) {
+                     const std::string& comp_method,
+                     const bool& show_progress) {
 
     XPtr<RefGenome> ref_xptr(ref_genome_ptr);
     RefGenome& ref(*ref_xptr);
@@ -859,18 +874,18 @@ void write_ref_fasta(const std::string& out_prefix,
 
         if (comp_method == "gzip") {
             FileGZ file(file_name, compress);
-            write_ref_fasta__<FileGZ>(file, ref, text_width);
+            write_ref_fasta__<FileGZ>(file, ref, text_width, show_progress);
             file.close();
         } else if (comp_method == "bgzip") {
             FileBGZF file(file_name, 1, compress);
-            write_ref_fasta__<FileBGZF>(file, ref, text_width);
+            write_ref_fasta__<FileBGZF>(file, ref, text_width, show_progress);
             file.close();
         } else stop("\nUnrecognized compression method.");
 
     } else {
 
         FileUncomp file(file_name);
-        write_ref_fasta__<FileUncomp>(file, ref, text_width);
+        write_ref_fasta__<FileUncomp>(file, ref, text_width, show_progress);
         file.close();
 
     }
@@ -887,12 +902,25 @@ template <typename T>
 void write_vars_fasta__(const std::string& out_prefix,
                         const VarSet& var_set,
                         const uint32& text_width,
-                        const int& compress) {
+                        const int& compress,
+                        const uint32& n_threads,
+                        const bool& show_progress) {
 
+    Progress prog_bar(var_set.reference->size() * var_set.size(), show_progress);
+
+#ifdef _OPENMP
+#pragma omp parallel num_threads(n_threads) if (n_threads > 1)
+{
+#endif
     std::string line;
     line.reserve(text_width + 1);
     std::string name;
     name.reserve(text_width + 1);
+
+    // Parallelize the Loop
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
     for (uint32 v = 0; v < var_set.size(); v++) {
 
         std::string file_name = out_prefix + "__" + var_set[v].name + ".fa";
@@ -923,6 +951,10 @@ void write_vars_fasta__(const std::string& out_prefix,
 
     }
 
+#ifdef _OPENMP
+}
+#endif
+
 }
 
 
@@ -944,7 +976,9 @@ void write_vars_fasta(std::string out_prefix,
                       SEXP var_set_ptr,
                       const uint32& text_width,
                       const int& compress,
-                      const std::string& comp_method) {
+                      const std::string& comp_method,
+                      const uint32& n_threads,
+                      const bool& show_progress) {
 
     XPtr<VarSet> vars_xptr(var_set_ptr);
     VarSet& var_set(*vars_xptr);
@@ -954,14 +988,17 @@ void write_vars_fasta(std::string out_prefix,
     if (compress > 0) {
 
         if (comp_method == "gzip") {
-            write_vars_fasta__<FileGZ>(out_prefix, var_set, text_width, compress);
+            write_vars_fasta__<FileGZ>(out_prefix, var_set, text_width, compress,
+                                       n_threads, show_progress);
         } else if (comp_method == "bgzip") {
-            write_vars_fasta__<FileBGZF>(out_prefix, var_set, text_width, compress);
+            write_vars_fasta__<FileBGZF>(out_prefix, var_set, text_width, compress,
+                                         n_threads, show_progress);
         } else stop("\nUnrecognized compression method.");
 
     } else {
 
-        write_vars_fasta__<FileUncomp>(out_prefix, var_set, text_width, compress);
+        write_vars_fasta__<FileUncomp>(out_prefix, var_set, text_width, compress,
+                                       n_threads, show_progress);
 
     }
 
@@ -986,7 +1023,8 @@ void write_vars_fasta(std::string out_prefix,
 void write_vcf_cpp(std::string out_prefix,
                    const int& compress,
                    SEXP var_set_ptr,
-                   const IntegerMatrix& sample_matrix) {
+                   const IntegerMatrix& sample_matrix,
+                   const bool& show_progress) {
 
     XPtr<VarSet> var_set(var_set_ptr);
 
