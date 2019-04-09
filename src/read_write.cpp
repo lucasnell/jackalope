@@ -4,15 +4,11 @@
 #include <string>
 #include <vector>
 #include "zlib.h"
-#include <progress.hpp>  // for the progress bar
-// for bgzip method
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-// From Rhtslib package, used in `bgzip_C`:
-#include "htslib/bgzf.h"
-#include "htslib/hts.h"
+#ifdef _OPENMP
+#include <omp.h>  // omp
+#endif
 
+#include <progress.hpp>  // for the progress bar
 
 
 #include "jackalope_types.h"  // integer types
@@ -25,9 +21,6 @@
 using namespace Rcpp;
 
 
-
-// also for bgzip method
-static const int WINDOW_SIZE = 64 * 1024;
 
 
 
@@ -1075,64 +1068,22 @@ void write_vcf_cpp(std::string out_prefix,
 
 
 
-//' bgzip a file.
-//'
-//' @noRd
-//'
-int bgzip_C(const std::string& file_name,
-            const int& threads,
-            const int& compress_level) {
-
-    // Make writer object:
-    FileBGZF bgzf(file_name, threads, compress_level);
-    // Others used below:
-    void *buffer;
-    int c;
-    struct stat sbuf;
-    int f_src = fileno(stdin);
-
-    // Checking source file:
-    if (stat(file_name.c_str(), &sbuf) < 0) {
-        str_stop({"\nIn bgzip step, file ", file_name,
-                 " had non-zero status: ", strerror(errno), "."});
-    }
-    if ((f_src = open(file_name.c_str(), O_RDONLY)) < 0) {
-        str_stop({"\nIn bgzip step, file ", file_name, " could not be opened."});
-    }
-
-    // Create buffer of info to pass between:
-    buffer = malloc(WINDOW_SIZE);
-#ifdef _WIN32
-    _setmode(f_src, O_BINARY);
-#endif
-    // Writing info from one to another
-    while ((c = read(f_src, buffer, WINDOW_SIZE)) > 0) {
-        bgzf.write(buffer, c);
-    }
-
-    bgzf.close();
-    unlink(file_name.c_str());
-    free(buffer);
-    close(f_src);
-    return 0;
-
-}
 
 
 
-//[[Rcpp::export]]
-void bgzip_cpp(const std::string& file_name,
-               const int& n_threads,
-               const int& compress_level) {
-
-    if (n_threads < 1) stop("\nCannot have < 1 threads");
-    if (compress_level < 0) stop("\nCompression level must be in range [0,9].");
-    if (compress_level > 9) stop("\nCompression level must be in range [0,9].");
-
-    int code = bgzip_C(file_name, n_threads, compress_level);
-
-    if (code != 0) str_warn({"\nThe bgzip step returned a non-zero exit code."});
-
-    return;
-
-}
+// //[[Rcpp::export]]
+// void bgzip_cpp(const std::string& file_name,
+//                const int& n_threads,
+//                const int& compress_level) {
+//
+//     if (n_threads < 1) stop("\nCannot have < 1 threads");
+//     if (compress_level < 0) stop("\nCompression level must be in range [0,9].");
+//     if (compress_level > 9) stop("\nCompression level must be in range [0,9].");
+//
+//     int code = bgzip_file(file_name, n_threads, compress_level);
+//
+//     if (code != 0) str_warn({"\nThe bgzip step returned a non-zero exit code."});
+//
+//     return;
+//
+// }

@@ -18,6 +18,7 @@
 #include "str_manip.h"  // rev_comp
 #include "sequencer.h"  // generic sequencer classes
 #include "pacbio.h"  // PacBio* types
+#include "read_write.h"  // File* types
 
 
 
@@ -319,7 +320,8 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
 //[[Rcpp::export]]
 void pacbio_ref_cpp(SEXP ref_genome_ptr,
                       const std::string& out_prefix,
-                      const bool& compress,
+                      const int& compress,
+                      const std::string& comp_method,
                       const uint32& n_reads,
                       const uint32& n_threads,
                       const bool& show_progress,
@@ -360,15 +362,9 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
                             prob_ins, prob_del, prob_subst);
     }
 
-    if (compress) {
-        write_reads_cpp_<PacBioReference, gzFile>(
-                read_filler_base, out_prefix, n_reads,
-                prob_dup, read_pool_size, 1U, n_threads, show_progress);
-    } else {
-        write_reads_cpp_<PacBioReference, std::ofstream>(
-                read_filler_base, out_prefix, n_reads,
-                prob_dup, read_pool_size, 1U, n_threads, show_progress);
-    }
+    write_reads_cpp_<PacBioReference>(
+        read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size, 1,
+        n_threads, show_progress, compress, comp_method);
 
 
     return;
@@ -385,7 +381,8 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
 //[[Rcpp::export]]
 void pacbio_var_cpp(SEXP var_set_ptr,
                     const std::string& out_prefix,
-                    const bool& compress,
+                    const int& compress,
+                    const std::string& comp_method,
                     const uint32& n_reads,
                     const uint32& n_threads,
                     const bool& show_progress,
@@ -427,15 +424,9 @@ void pacbio_var_cpp(SEXP var_set_ptr,
                            prob_ins, prob_del, prob_subst);
     }
 
-    if (compress) {
-        write_reads_cpp_<PacBioVariants, gzFile>(
-                read_filler_base, out_prefix, n_reads,
-                prob_dup, read_pool_size, 1U, n_threads, show_progress);
-    } else {
-        write_reads_cpp_<PacBioVariants, std::ofstream>(
-                read_filler_base, out_prefix, n_reads,
-                prob_dup, read_pool_size, 1U, n_threads, show_progress);
-    }
+    write_reads_cpp_<PacBioVariants>(
+        read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size, 1,
+        n_threads, show_progress, compress, comp_method);
 
     return;
 }

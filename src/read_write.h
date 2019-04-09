@@ -4,11 +4,10 @@
 #include <RcppArmadillo.h>
 #include <vector>               // vector class
 #include <string>               // string class
-#include <iomanip>
-#include <ctime>
 
 #include <fstream>
 #include "zlib.h"
+
 
 // for BZGF method
 #include <fcntl.h>
@@ -56,16 +55,16 @@ struct FileBGZF {
     BGZF *file;
 
     FileBGZF(const std::string& out_prefix,
-             const int& threads,
-             const int& compress_level) {
+             const int& n_threads,
+             const int& compress) {
 
-        if (compress_level < -1 || compress_level > 9) {
+        if (compress < -1 || compress > 9) {
             str_stop({"\nInvalid bgzip compress level of ",
-                     std::to_string(compress_level),
+                     std::to_string(compress),
                      ". It must be in range [0,9]."});
         }
         char out_mode[3] = "w\0";
-        if (compress_level >= 0) out_mode[1] = compress_level + '0';
+        if (compress >= 0) out_mode[1] = compress + '0';
 
         char *name = new char[out_prefix.size() + 5];
         strcpy(name, out_prefix.c_str());
@@ -77,20 +76,20 @@ struct FileBGZF {
         }
         delete [] name;
 
-        if (threads > 1) bgzf_mt(file, threads, 256);
+        if (n_threads > 1) bgzf_mt(file, n_threads, 256);
 
     }
     // Serial version
     FileBGZF(const std::string& out_prefix,
-             const int& compress_level) {
+             const int& compress) {
 
-        if (compress_level < -1 || compress_level > 9) {
+        if (compress < -1 || compress > 9) {
             str_stop({"\nInvalid bgzip compress level of ",
-                     std::to_string(compress_level),
+                     std::to_string(compress),
                      ". It must be in range [0,9]."});
         }
         char out_mode[3] = "w\0";
-        if (compress_level >= 0) out_mode[1] = compress_level + '0';
+        if (compress >= 0) out_mode[1] = compress + '0';
 
         char *name = new char[out_prefix.size() + 5];
         strcpy(name, out_prefix.c_str());
@@ -148,15 +147,15 @@ struct FileGZ {
     gzFile file;
 
     FileGZ(const std::string& out_prefix,
-               const int& compress_level) {
+               const int& compress) {
 
-        if (compress_level < 0 || compress_level > 9) {
+        if (compress < 0 || compress > 9) {
             str_stop({"\nInvalid bgzip compress level of ",
-                     std::to_string(compress_level),
+                     std::to_string(compress),
                      ". It must be in range [0,9]."});
         }
         char out_mode[3] = "w\0";
-        out_mode[1] = compress_level + '0';
+        out_mode[1] = compress + '0';
 
         std::string file_name = out_prefix + ".gz";
 
@@ -229,7 +228,7 @@ struct FileGZ {
 
 private:
     int code;
-    int err;
+    // int err;
 
 };
 
@@ -316,6 +315,69 @@ inline void expand_path(std::string& file_name) {
 }
 
 
+
+
+//' bgzip a file, potentially using multiple threads.
+//'
+//' @noRd
+//'
+inline int bgzip_file(const std::string& file_name,
+                      const int& n_threads,
+                      const int& compress) {
+
+    // Make writer object:
+    FileBGZF bgzf(file_name, n_threads, compress);
+    // Others used below:
+    void *buffer;
+    int c;
+    struct stat sbuf;
+    int f_src = fileno(stdin);
+
+    const int WINDOW_SIZE = 64 * 1024;
+
+
+    // Checking source file:
+    if (stat(file_name.c_str(), &sbuf) < 0) {
+        str_stop({"\nIn bgzip step, file ", file_name,
+                 " had non-zero status: ", strerror(errno), "."});
+    }
+    if ((f_src = open(file_name.c_str(), O_RDONLY)) < 0) {
+        str_stop({"\nIn bgzip step, file ", file_name, " could not be opened."});
+    }
+
+    // Create buffer of info to pass between:
+    buffer = malloc(WINDOW_SIZE);
+#ifdef _WIN32
+    _setmode(f_src, O_BINARY);
+#endif
+    // Writing info from one to another
+    while ((c = read(f_src, buffer, WINDOW_SIZE)) > 0) {
+        bgzf.write(buffer, c);
+    }
+
+    bgzf.close();
+    unlink(file_name.c_str());
+    free(buffer);
+    close(f_src);
+    return 0;
+
+}
+
+
+
+
+
+
+
+/*
+ ========================================================================================
+ ========================================================================================
+
+            VCF file functions
+
+ ========================================================================================
+ ========================================================================================
+ */
 
 
 

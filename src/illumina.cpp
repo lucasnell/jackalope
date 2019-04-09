@@ -16,6 +16,7 @@
 #include "seq_classes_var.h"  // Var* classes
 #include "sequencer.h"  // generic sequencing classes
 #include "illumina.h"  // Illumina-specific classes
+#include "read_write.h"  // File* types
 
 using namespace Rcpp;
 
@@ -345,7 +346,8 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                       const bool& paired,
                       const bool& matepair,
                       const std::string& out_prefix,
-                      const bool& compress,
+                      const int& compress,
+                      const std::string& comp_method,
                       const uint32& n_reads,
                       const double& prob_dup,
                       const uint32& n_threads,
@@ -388,17 +390,10 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                               barcodes[0]);
     }
 
-
-    if (compress) {
-        write_reads_cpp_<IlluminaReference, gzFile>(
-                read_filler_base, out_prefix, n_reads, prob_dup,
-                read_pool_size, n_read_ends, n_threads, show_progress);
-    } else {
-        write_reads_cpp_<IlluminaReference, std::ofstream>(
-                read_filler_base, out_prefix, n_reads, prob_dup,
-                read_pool_size, n_read_ends, n_threads, show_progress);
-    }
-
+    write_reads_cpp_<IlluminaReference>(
+        read_filler_base, out_prefix, n_reads, prob_dup,
+        read_pool_size, n_read_ends, n_threads, show_progress,
+        compress, comp_method);
 
     return;
 }
@@ -418,7 +413,8 @@ void illumina_var_cpp(SEXP var_set_ptr,
                       const bool& paired,
                       const bool& matepair,
                       const std::string& out_prefix,
-                      const bool& compress,
+                      const int& compress,
+                      const std::string& comp_method,
                       const uint32& n_reads,
                       const double& prob_dup,
                       const uint32& n_threads,
@@ -461,15 +457,10 @@ void illumina_var_cpp(SEXP var_set_ptr,
                                             barcodes);
     }
 
-    if (compress) {
-        write_reads_cpp_<IlluminaVariants, gzFile>(
-                read_filler_base, out_prefix, n_reads, prob_dup,
-                read_pool_size, n_read_ends, n_threads, show_progress);
-    } else {
-        write_reads_cpp_<IlluminaVariants, std::ofstream>(
-                read_filler_base, out_prefix, n_reads, prob_dup,
-                read_pool_size, n_read_ends, n_threads, show_progress);
-    }
+    write_reads_cpp_<IlluminaVariants>(
+        read_filler_base, out_prefix, n_reads, prob_dup,
+        read_pool_size, n_read_ends, n_threads, show_progress,
+        compress, comp_method);
 
     return;
 }

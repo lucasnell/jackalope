@@ -17,6 +17,7 @@
 #include "jackalope_types.h"  // uint32
 #include "pcg.h"  // ruinf_01
 #include "util.h"  // str_stop
+#include "read_write.h"  // File* types
 
 
 using namespace Rcpp;
@@ -49,9 +50,10 @@ const std::vector<std::string> mm_nucleos = {"CAG", "TAG", "TCG", "TCA", "NNN"};
 Info for making reads and writing them, for one thread.
 
 `T` can be `[Illumina/PacBio]Reference` or `[Illumina/PacBio]Variants`.
+ `F` should be `FileUncomp`, `FileGZ`, or `FileBGZF`.
 */
 
-template <typename T>
+template <typename T, typename F>
 class ReadWriterOneThread {
 
 public:
@@ -83,36 +85,18 @@ public:
 
 
     // Write contents in `fastq_pools` to UNcompressed file(s).
-    void write(std::vector<std::ofstream>& files) {
+    void write(std::vector<F>& files) {
         for (uint32 i = 0; i < fastq_pools.size(); i++) {
-            files[i].write(fastq_pools[i].data(), fastq_pools[i].size());
+            files[i].write(fastq_pools[i]);
             fastq_pools[i].clear();
         }
         reads_in_pool = 0;
         do_write = false;
         return;
     }
-    // Write contents in `fastq_pools` to compressed file(s).
-    void write(std::vector<gzFile>& files) {
-        for (uint32 i = 0; i < fastq_pools.size(); i++) {
-            gzwrite(files[i], fastq_pools[i].data(), fastq_pools[i].size());
-            fastq_pools[i].clear();
-        }
-        reads_in_pool = 0;
-        do_write = false;
-        return;
-    }
-
     /* Overloaded for one file: */
-    void write(std::ofstream& file) {
-        file.write(fastq_pools[0].data(), fastq_pools[0].size());
-        fastq_pools[0].clear();
-        reads_in_pool = 0;
-        do_write = false;
-        return;
-    }
-    void write(gzFile& file) {
-        gzwrite(file, fastq_pools[0].data(), fastq_pools[0].size());
+    void write(F& file) {
+        file.write(fastq_pools[0]);
         fastq_pools[0].clear();
         reads_in_pool = 0;
         do_write = false;
@@ -185,100 +169,27 @@ inline std::vector<uint32> split_n_reads(const uint32& n_reads,
 
 
 
-/*
- Create and open files (meant to be done NOT in parallel):
- */
-
-// Uncompressed version:
-inline void open_fastq(std::vector<std::ofstream>& files,
-                       const std::string& out_prefix) {
-
-    for (uint32 i = 0; i < files.size(); i++) {
-
-        std::string file_name = out_prefix + "_R" + std::to_string(i+1)+ ".fq";
-
-        files[i].open(file_name, std::ofstream::out);
-
-        if (!files[i].is_open()) {
-            std::string e = "Unable to open file " + file_name + ".\n";
-            Rcpp::stop(e);
-        }
-
-    }
-
-    return;
-
-}
-// Compressed version:
-inline void open_fastq(std::vector<gzFile>& files,
-                       const std::string& out_prefix) {
-
-    for (uint32 i = 0; i < files.size(); i++) {
-
-        std::string file_name = out_prefix + "_R" + std::to_string(i+1)+ ".fq.gz";
-
-        /*
-         Initialize file.
-         Note that gzfile does not tolerate initializing an empty file.
-         Use ofstream instead.
-         */
-        if (!std::ifstream(file_name)){
-            std::ofstream myfile;
-            myfile.open(file_name, std::ios::out | std::ios::binary);
-            myfile.close();
-        }
-
-        gzFile file = gzopen(file_name.c_str(), "wb");
-        if (!file) {
-            str_stop({"gzopen of ", file_name, " failed: ", strerror(errno), ".\n"});
-        }
-
-        files[i] = gzopen(file_name.c_str(), "ab");
-
-    }
-
-    return;
-}
-/*
- Close FASTQ files
- */
-// Uncompressed version:
-inline void close_fastq(std::vector<std::ofstream>& files) {
-    for (uint32 i = 0; i < files.size(); i++) files[i].close();
-    return;
-}
-// Compressed version:
-inline void close_fastq(std::vector<gzFile>& files) {
-    for (uint32 i = 0; i < files.size(); i++) gzclose(files[i]);
-    return;
-}
-
-
-
 
 
 /*
- Make Illumina reads and write them to file(s).
+ For one file type and read filler type, make Illumina reads and write them to file(s).
+ Does most of the work of `write_reads_cpp_` below.
+ This should only be called inside that function.
 
  `T` should be `[Illumina|PacBio]Reference` or `[Illumina|PacBio]Variants`.
- `W` should be `gzFile` or `std::ofstream`.
+ `F` should be `FileUncomp`, `FileGZ`, or `FileBGZF`.
 
  */
-template <typename T, typename W>
-void write_reads_cpp_(const T& read_filler_base,
-                      const std::string& out_prefix,
-                      const uint32& n_reads,
-                      const double& prob_dup,
-                      const uint32& read_pool_size,
-                      const uint32& n_read_ends,
-                      uint32 n_threads,
-                      const bool& show_progress) {
-
-
-    // To make sure reads_per_thread is still accurate if OpenMP not used:
-#ifndef _OPENMP
-    n_threads = 1;
-#endif
+template <typename T, typename F>
+inline void write_reads_one_filetype_(const T& read_filler_base,
+                                      const std::string& out_prefix,
+                                      const uint32& n_reads,
+                                      const double& prob_dup,
+                                      const uint32& read_pool_size,
+                                      const uint32& n_read_ends,
+                                      const uint32& n_threads,
+                                      const bool& show_progress,
+                                      const int& compress) {
 
     const std::vector<uint32> reads_per_thread = split_n_reads(n_reads, n_threads);
 
@@ -289,8 +200,11 @@ void write_reads_cpp_(const T& read_filler_base,
     Progress prog_bar(n_reads, show_progress);
 
     // Create and open files:
-    std::vector<W> files(n_read_ends);
-    open_fastq(files, out_prefix);
+    std::vector<F> files;
+    for (uint32 i = 0; i < n_read_ends; i++) {
+        std::string file_name = out_prefix + "_R" + std::to_string(i+1)+ ".fq";
+        files.push_back(F(file_name, compress));
+    }
 
 
 #ifdef _OPENMP
@@ -312,15 +226,24 @@ void write_reads_cpp_(const T& read_filler_base,
 
     uint32 reads_this_thread = reads_per_thread[active_thread];
 
-    ReadWriterOneThread<T> writer(read_filler_base, reads_this_thread,
-                                  read_pool_size, prob_dup, n_read_ends);
+    ReadWriterOneThread<T,F> writer(read_filler_base, reads_this_thread,
+                                    read_pool_size, prob_dup, n_read_ends);
 
     uint32 reads_written;
+    uint32 n_chars = 0;
 
     while (writer.reads_made < reads_this_thread) {
 
-        // Every 10 reads, check that the user hasn't interrupted the process
-        if (writer.reads_made % 10 == 0 && prog_bar.check_abort()) break;
+        /*
+         Every 10,000 characters written, check that the user hasn't
+         interrupted the process.
+         (Doing it this way makes the check approximately the same between
+          illumina and pacbio.)
+         */
+        if (n_chars > 10000) {
+            if (prog_bar.check_abort()) break;
+            n_chars = 0;
+        }
 
         writer.create_reads(eng);
 
@@ -338,6 +261,8 @@ void write_reads_cpp_(const T& read_filler_base,
 #endif
             // Increment progress bar
             prog_bar.increment(reads_written);
+            // Increment # chars written
+            n_chars += (writer.fastq_pools[0].size() * writer.fastq_pools.size());
         }
     }
 
@@ -346,13 +271,84 @@ void write_reads_cpp_(const T& read_filler_base,
 #endif
 
     // Close files
-    close_fastq(files);
+    for (uint32 i = 0; i < files.size(); i++) {
+        files[i].close();
+    }
 
     return;
 };
 
 
 
+
+/*
+ For one file type, make Illumina reads and write them to file(s).
+ Does most of the work of `write_reads_cpp_` below.
+
+ `T` should be `[Illumina|PacBio]Reference` or `[Illumina|PacBio]Variants`.
+ `F` should be `FileUncomp`, `FileGZ`, or `FileBGZF`.
+
+ */
+
+template <typename T>
+inline void write_reads_cpp_(const T& read_filler_base,
+                             std::string out_prefix,
+                             const uint32& n_reads,
+                             const double& prob_dup,
+                             const uint32& read_pool_size,
+                             const uint32& n_read_ends,
+                             uint32 n_threads,
+                             const bool& show_progress,
+                             const int& compress,
+                             const std::string& comp_method) {
+
+    expand_path(out_prefix);
+
+    // Compressed output run serially
+    if (compress > 0 && n_threads == 1) {
+
+        if (comp_method == "gzip") {
+            write_reads_one_filetype_<T, FileGZ>(
+                    read_filler_base, out_prefix, n_reads, prob_dup,
+                    read_pool_size, n_read_ends, n_threads, show_progress, compress);
+        } else if (comp_method == "bgzip") {
+            write_reads_one_filetype_<T, FileBGZF>(
+                    read_filler_base, out_prefix, n_reads, prob_dup,
+                    read_pool_size, n_read_ends, n_threads, show_progress, compress);
+        } else stop("\nUnrecognized compression method.");
+
+    /*
+     Compressed output run in parallel.
+     The only way I've found to make this actually have a speed advantage over
+     running serially is to make it first write to uncompressed output in parallel,
+     then do the compression using `BGZF` also in parallel.
+     */
+    } else if (compress > 0 && n_threads > 1) {
+
+        if (show_progress) {
+            Rcout << "Progress for writing uncompressed reads..." << std::endl;
+        }
+        // First do it uncompressed:
+        write_reads_one_filetype_<T, FileUncomp>(
+                read_filler_base, out_prefix, n_reads, prob_dup,
+                read_pool_size, n_read_ends, n_threads, show_progress, compress);
+        // Then compress using multiple threads:
+        if (show_progress) Rcout << std::endl << "Now compressing reads..." << std::endl;
+        for (uint32 i = 0; i < n_read_ends; i++) {
+            std::string file_name = out_prefix + "_R" + std::to_string(i+1)+ ".fq";
+            bgzip_file(file_name, static_cast<int>(n_threads),
+                       static_cast<int>(compress));
+            if (show_progress) Rcout << "finished compressing " << file_name << std::endl;
+        }
+    // Uncompressed output run in serial or parallel
+    } else {
+        write_reads_one_filetype_<T, FileUncomp>(
+                read_filler_base, out_prefix, n_reads, prob_dup,
+                read_pool_size, n_read_ends, n_threads, show_progress, compress);
+    }
+
+
+}
 
 
 
