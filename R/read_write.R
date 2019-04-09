@@ -63,7 +63,7 @@ read_fasta <- function(fasta_files, fai_files = NULL,
 #'     If `TRUE`, a compression level of `6` is used.
 #'     Defaults to `FALSE`.
 #' @param comp_method Character specifying which type of compression to use if any
-#'     is desired. Options include `"gzip"` and `"bgzip"`. Defaults to `"gzip"`.
+#'     is desired. Options include `"gzip"` and `"bgzip"`. Defaults to `"bgzip"`.
 #' @param text_width The number of characters per line in the output fasta file.
 #'     Defaults to `80`.
 #' @param show_progress Logical for whether to show a progress bar.
@@ -81,7 +81,7 @@ read_fasta <- function(fasta_files, fai_files = NULL,
 #'
 write_fasta <- function(seq_obj, out_prefix,
                         compress = FALSE,
-                        comp_method = "gzip",
+                        comp_method = "bgzip",
                         text_width = 80,
                         show_progress = FALSE,
                         n_threads = 1,

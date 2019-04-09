@@ -283,7 +283,7 @@ check_illumina_args <- function(seq_object, n_reads,
                                 ins_prob2, del_prob2,
                                 frag_len_min, frag_len_max,
                                 variant_probs, barcodes, prob_dup,
-                                compress, n_threads, read_pool_size,
+                                compress, comp_method, n_threads, read_pool_size,
                                 show_progress) {
 
     # Checking types:
@@ -297,6 +297,12 @@ check_illumina_args <- function(seq_object, n_reads,
     for (x in c("read_length", "n_reads", "n_threads", "read_pool_size")) {
         z <- eval(parse(text = x))
         if (!single_integer(z, 1)) err_msg("illumina", x, "a single integer >= 1")
+    }
+    if (!is_type(compress, "logical", 1) && !single_integer(compress, 1, 9)) {
+        err_msg("illumina", "compress", "a single logical or integer from 1 to 9")
+    }
+    if (!is_type(comp_method, "character", 1) || !comp_method %in% c("gzip", "bgzip")) {
+        err_msg("illumina", "comp_method", "\"gzip\" or \"bgzip\"")
     }
     for (x in c("paired", "matepair", "compress", "show_progress")) {
         z <- eval(parse(text = x))
@@ -549,6 +555,7 @@ illumina <- function(seq_object,
                      barcodes = NULL,
                      prob_dup = 0.02,
                      compress = FALSE,
+                     comp_method = "bgzip",
                      n_threads = 1L,
                      read_pool_size = 1000L,
                      show_progress = FALSE,
@@ -564,7 +571,11 @@ illumina <- function(seq_object,
                         frag_mean, frag_sd, matepair, seq_sys, profile1, profile2,
                         ins_prob1, del_prob1, ins_prob2, del_prob2,
                         frag_len_min, frag_len_max, variant_probs, barcodes, prob_dup,
-                        compress, n_threads, read_pool_size, show_progress)
+                        compress, comp_method, n_threads, read_pool_size, show_progress)
+
+    # Set compression level:
+    if (is_type(compress, "logical", 1) && compress) compress <- 6 # default compression
+    if (is_type(compress, "logical", 1) && !compress) compress <- 0 # no compression
 
     # Change mean and SD to shape and scale of Gamma distribution:
     frag_len_shape <- (frag_mean / frag_sd)^2
@@ -605,6 +616,7 @@ illumina <- function(seq_object,
     # Assembling list of arguments for inner cpp function:
     args <- list(out_prefix = out_prefix,
                  compress = compress,
+                 comp_method = comp_method,
                  n_reads = n_reads,
                  paired = paired,
                  matepair = matepair,
