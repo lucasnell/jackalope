@@ -812,13 +812,18 @@ inline void write_ref_fasta__(T& file,
 
         const std::string& seq_str(ref[i].nucleos);
         uint32 num_rows = seq_str.length() / text_width;
+        uint64 n_chars = 0;
 
         for (uint32 i = 0; i < num_rows; i++) {
-            // Check every 10 lines:
-            if (i % 10 == 0 && prog_bar.check_abort()) break;
+            // Check every 10,000 characters for user interrupt:
+            if (n_chars > 10000) {
+                if (prog_bar.check_abort()) break;
+                n_chars = 0;
+            }
             one_line = seq_str.substr(i * text_width, text_width);
             one_line += '\n';
             file.write(one_line);
+            n_chars += text_width;
         }
 
         if (prog_bar.is_aborted() || prog_bar.check_abort()) break;
@@ -916,12 +921,14 @@ void write_vars_fasta__(const std::string& out_prefix,
 #endif
     for (uint32 v = 0; v < var_set.size(); v++) {
 
+        if (prog_bar.is_aborted() || prog_bar.check_abort()) continue;
+
         std::string file_name = out_prefix + "__" + var_set[v].name + ".fa";
         T out_file(file_name, compress);
 
         for (uint32 s = 0; s < var_set.reference->size(); s++) {
 
-            if (prog_bar.check_abort()) break;
+            if (prog_bar.is_aborted() || prog_bar.check_abort()) break;
 
             name = '>';
             name += (*var_set.reference)[s].name;
@@ -931,13 +938,20 @@ void write_vars_fasta__(const std::string& out_prefix,
             const VarSequence& var_seq(var_set[v][s]);
             uint32 mut_i = 0;
             uint32 line_start = 0;
+            uint32 n_chars = 0;
 
             while (line_start < var_seq.seq_size) {
+                // Check every 10,000 characters for user interrupt:
+                if (n_chars > 10000) {
+                    if (prog_bar.check_abort()) break;
+                    n_chars = 0;
+                }
                 var_seq.set_seq_chunk(line, line_start,
                                       text_width, mut_i);
                 line += '\n';
                 out_file.write(line);
                 line_start += text_width;
+                n_chars += text_width;
             }
 
             prog_bar.increment(var_set.reference[s].size());
