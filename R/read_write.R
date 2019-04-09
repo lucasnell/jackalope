@@ -63,14 +63,17 @@ read_fasta <- function(fasta_files, fai_files = NULL,
 #'     If `TRUE`, a compression level of `6` is used.
 #'     Defaults to `FALSE`.
 #' @param comp_method Character specifying which type of compression to use if any
-#'     is desired. Options include `"gzip"` and `"bgzip"`. Defaults to `"bgzip"`.
+#'     is desired. Options include `"gzip"` and `"bgzip"`.
+#'     This is ignored if `compress` is `FALSE`. Defaults to `"bgzip"`.
 #' @param text_width The number of characters per line in the output fasta file.
 #'     Defaults to `80`.
 #' @param show_progress Logical for whether to show a progress bar.
 #'     Defaults to `FALSE`.
 #' @param n_threads Number of threads to use if writing from a `variants` object.
 #'     Threads are split among variants, so it's not useful to provide more threads
-#'     than variants. This argument is ignored if `seq_obj` is a `ref_genome` object.
+#'     than variants.
+#'     This argument is ignored if `seq_obj` is a `ref_genome` object, or if
+#'     OpenMP is not enabled.
 #'     Defaults to `1`.
 #' @param overwrite Logical for whether to overwrite existing file(s) of the
 #'     same name, if they exist. Defaults to `FALSE`.

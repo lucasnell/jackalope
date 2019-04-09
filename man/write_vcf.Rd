@@ -4,7 +4,8 @@
 \alias{write_vcf}
 \title{Write variant info from a \code{variants} object to a VCF file.}
 \usage{
-write_vcf(vars, out_prefix, compress = FALSE, sample_matrix = NULL)
+write_vcf(vars, out_prefix, compress = FALSE, sample_matrix = NULL,
+  show_progress = FALSE, overwrite = FALSE)
 }
 \arguments{
 \item{vars}{A \code{variants} object.}
@@ -26,6 +27,12 @@ there is no limit to the ploidy level.
 If this argument is \code{NULL}, it's assumed that each variant is its own
 separate sample.
 Defaults to \code{NULL}.}
+
+\item{show_progress}{Logical for whether to show a progress bar.
+Defaults to \code{FALSE}.}
+
+\item{overwrite}{Logical for whether to overwrite existing file(s) of the
+same name, if they exist. Defaults to \code{FALSE}.}
 }
 \value{
 \code{NULL}

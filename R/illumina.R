@@ -505,9 +505,25 @@ check_illumina_args <- function(seq_object, n_reads,
 #'     Defaults to `NULL`.
 #' @param prob_dup A single number indicating the probability of duplicates.
 #'     Defaults to `0.02`.
-#' @param compress A logical for whether to compress output FASTQ files using gzip.
+#' @param compress Logical specifying whether or not to compress output file, or
+#'     an integer specifying the level of compression, from 1 to 9.
+#'     If `TRUE`, a compression level of `6` is used.
 #'     Defaults to `FALSE`.
+#' @param comp_method Character specifying which type of compression to use if any
+#'     is desired. Options include `"gzip"` and `"bgzip"`.
+#'     This is ignored if `compress` is `FALSE`, and it throws an error if
+#'     it's set to `"gzip"` when `n_threads > 1` (since I don't have a method to
+#'     do gzip compression in parallel).
+#'     Defaults to `"bgzip"`.
 #' @param n_threads The number of threads to use in processing.
+#'     If `compress` is `TRUE` or `> 0` (indicating compressed output),
+#'     setting `n_threads` to `2` or more makes this function first create an
+#'     uncompressed file/files using `n_threads` threads, then compress that/those
+#'     file/files also using `n_threads` threads.
+#'     There is no speed increase if you try to use multiple threads to create
+#'     compressed output on the fly, so that option is not included.
+#'     If you want to be conservative with disk space (by not having an uncompressed
+#'     file present even temporarily), set `n_threads` to `1`.
 #'     This argument is ignored if the package was not compiled with OpenMP.
 #'     Defaults to `1`.
 #' @param read_pool_size The number of reads to store before writing to disk.

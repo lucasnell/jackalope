@@ -13,8 +13,9 @@ illumina(seq_object, out_prefix, n_reads, read_length, paired, frag_mean,
   profile2 = NULL, ins_prob1 = 9e-05, del_prob1 = 0.00011,
   ins_prob2 = 0.00015, del_prob2 = 0.00023, frag_len_min = NULL,
   frag_len_max = NULL, variant_probs = NULL, barcodes = NULL,
-  prob_dup = 0.02, compress = FALSE, n_threads = 1L,
-  read_pool_size = 1000L, show_progress = FALSE, overwrite = FALSE)
+  prob_dup = 0.02, compress = FALSE, comp_method = "bgzip",
+  n_threads = 1L, read_pool_size = 1000L, show_progress = FALSE,
+  overwrite = FALSE)
 }
 \arguments{
 \item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
@@ -80,10 +81,27 @@ Defaults to \code{NULL}.}
 \item{prob_dup}{A single number indicating the probability of duplicates.
 Defaults to \code{0.02}.}
 
-\item{compress}{A logical for whether to compress output FASTQ files using gzip.
+\item{compress}{Logical specifying whether or not to compress output file, or
+an integer specifying the level of compression, from 1 to 9.
+If \code{TRUE}, a compression level of \code{6} is used.
 Defaults to \code{FALSE}.}
 
+\item{comp_method}{Character specifying which type of compression to use if any
+is desired. Options include \code{"gzip"} and \code{"bgzip"}.
+This is ignored if \code{compress} is \code{FALSE}, and it throws an error if
+it's set to \code{"gzip"} when \code{n_threads > 1} (since I don't have a method to
+do gzip compression in parallel).
+Defaults to \code{"bgzip"}.}
+
 \item{n_threads}{The number of threads to use in processing.
+If \code{compress} is \code{TRUE} or \code{> 0} (indicating compressed output),
+setting \code{n_threads} to \code{2} or more makes this function first create an
+uncompressed file/files using \code{n_threads} threads, then compress that/those
+file/files also using \code{n_threads} threads.
+There is no speed increase if you try to use multiple threads to create
+compressed output on the fly, so that option is not included.
+If you want to be conservative with disk space (by not having an uncompressed
+file present even temporarily), set \code{n_threads} to \code{1}.
 This argument is ignored if the package was not compiled with OpenMP.
 Defaults to \code{1}.}
 
