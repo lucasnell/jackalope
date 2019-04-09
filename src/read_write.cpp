@@ -15,7 +15,7 @@
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 #include "str_manip.h"  // filter_nucleos
-#include "util.h"  // str_stop
+#include "util.h"  // str_stop, thread_check
 #include "read_write.h"
 
 using namespace Rcpp;
@@ -974,11 +974,14 @@ void write_vars_fasta(std::string out_prefix,
                       const uint32& text_width,
                       const int& compress,
                       const std::string& comp_method,
-                      const uint32& n_threads,
+                      uint32 n_threads,
                       const bool& show_progress) {
 
     XPtr<VarSet> vars_xptr(var_set_ptr);
     VarSet& var_set(*vars_xptr);
+
+    // Check that # threads isn't too high and change to 1 if not using OpenMP
+    thread_check(n_threads);
 
     expand_path(out_prefix);
 

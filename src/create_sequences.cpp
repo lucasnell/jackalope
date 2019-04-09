@@ -23,6 +23,7 @@
 #include "seq_classes_ref.h"  // Ref* classes
 #include "alias_sampler.h" // alias sampling
 #include "pcg.h" // pcg::max, mt_seeds, seeded_pcg
+#include "util.h" // thread_check
 
 using namespace Rcpp;
 
@@ -59,7 +60,10 @@ OuterClass create_sequences_(const uint32& n_seqs,
                              const double& len_mean,
                              const double& len_sd,
                              const std::vector<double>& pi_tcag,
-                             const uint32& n_threads) {
+                             uint32 n_threads) {
+
+    // Check that # threads isn't too high and change to 1 if not using OpenMP:
+    thread_check(n_threads);
 
     // Generate seeds for random number generators (1 RNG per thread)
     const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);

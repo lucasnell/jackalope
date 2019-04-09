@@ -17,6 +17,7 @@
 #include "alias_sampler.h"  // alias method of sampling
 #include "weighted_reservoir.h"  // weighted reservoir sampling
 #include "mevo_gammas.h"  // SequenceGammas class
+#include "util.h"  // thread_check
 
 using namespace Rcpp;
 
@@ -170,9 +171,8 @@ SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
     // Initialize new VarSet object
     XPtr<VarSet> var_set(new VarSet(*ref_genome, var_names), true);
 
-#ifndef _OPENMP
-    n_threads = 1;
-#endif
+    // Check that # threads isn't too high and change to 1 if not using OpenMP:
+    thread_check(n_threads);
 
     const uint32 n_seqs = ref_genome->size();
     const uint64 total_seq = ref_genome->total_size;

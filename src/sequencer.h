@@ -16,7 +16,7 @@
 
 #include "jackalope_types.h"  // uint32
 #include "pcg.h"  // ruinf_01
-#include "util.h"  // str_stop
+#include "util.h"  // str_stop, thread_check
 #include "read_write.h"  // File* types
 
 
@@ -303,6 +303,10 @@ inline void write_reads_cpp_(const T& read_filler_base,
                              const std::string& comp_method) {
 
     expand_path(out_prefix);
+
+    // To make sure the following if statements are still accurate if OpenMP not used,
+    // check that # threads isn't too high and change to 1 if not using OpenMP:
+    thread_check(n_threads);
 
     // Compressed output run serially
     if (compress > 0 && n_threads == 1) {

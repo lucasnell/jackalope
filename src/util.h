@@ -17,6 +17,11 @@
 #include <string>
 #include <pcg/pcg_random.hpp> // pcg prng
 
+#ifdef _OPENMP
+#include <omp.h>  // omp
+#endif
+
+
 #include "jackalope_types.h"  // integer types
 #include "pcg.h"  // runif_* methods
 
@@ -221,6 +226,30 @@ inline void str_warn(const std::vector<std::string>& warn_msg_vec) {
 }
 
 
+
+
+
+
+//' Check that the number of threads doesn't exceed the number available, and change
+//' to 1 if OpenMP isn't enabled.
+//'
+//' @noRd
+//'
+inline void thread_check(uint32& n_threads) {
+
+#ifdef _OPENMP
+    if (n_threads == 0) n_threads = 1;
+    if (n_threads > omp_get_max_threads()) {
+        std::string max_threads = std::to_string(omp_get_max_threads());
+        str_stop({"\nThe number of requested threads (", std::to_string(n_threads),
+                 ") exceeds the max available on the system (", max_threads, ")."});
+    }
+#else
+    n_threads = 1;
+#endif
+
+    return;
+}
 
 
 # endif

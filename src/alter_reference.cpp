@@ -20,7 +20,7 @@
 #include "seq_classes_ref.h"  // Ref* classes
 #include "jackalope_types.h"  // integer types
 #include "alias_sampler.h"  // alias string sampler
-#include "util.h"  // clear_memory
+#include "util.h"  // clear_memory, thread_check
 
 
 using namespace Rcpp;
@@ -206,10 +206,13 @@ void filter_sequences(SEXP ref_genome_ptr,
 //[[Rcpp::export]]
 void replace_Ns_cpp(SEXP ref_genome_ptr,
                     const std::vector<double>& pi_tcag,
-                    const uint32& n_threads,
+                    uint32 n_threads,
                     const bool& show_progress) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
+
+    // Check that # threads isn't too high and change to 1 if not using OpenMP:
+    thread_check(n_threads);
 
     // Generate seeds for random number generators (1 RNG per thread)
     const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);

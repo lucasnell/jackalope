@@ -24,6 +24,7 @@
 #include "mevo.h"  // samplers
 #include "pcg.h" // pcg sampler types
 #include "mevo_phylo.h"
+#include "util.h"  // thread_check
 
 
 using namespace Rcpp;
@@ -374,10 +375,13 @@ SEXP evolve_seqs(
         SEXP& sampler_base_ptr,
         SEXP& phylo_info_ptr,
         const std::vector<arma::mat>& gamma_mats,
-        const uint32& n_threads,
+        uint32 n_threads,
         const bool& show_progress) {
 
     XPtr<PhyloInfo<MutationSampler>> phylo_info(phylo_info_ptr);
+
+    // Check that # threads isn't too high and change to 1 if not using OpenMP:
+    thread_check(n_threads);
 
     XPtr<VarSet> var_set = phylo_info->evolve_seqs(
         ref_genome_ptr, sampler_base_ptr,
@@ -396,10 +400,13 @@ SEXP evolve_seqs_chunk(
         SEXP& sampler_base_ptr,
         SEXP& phylo_info_ptr,
         const std::vector<arma::mat>& gamma_mats,
-        const uint32& n_threads,
+        uint32 n_threads,
         const bool& show_progress) {
 
     XPtr<PhyloInfo<ChunkMutationSampler>> phylo_info(phylo_info_ptr);
+
+    // Check that # threads isn't too high and change to 1 if not using OpenMP:
+    thread_check(n_threads);
 
     XPtr<VarSet> var_set = phylo_info->evolve_seqs(
         ref_genome_ptr, sampler_base_ptr,
