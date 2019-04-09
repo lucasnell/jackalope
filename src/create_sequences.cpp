@@ -14,6 +14,7 @@
 #include <string>
 #include <random> // C++11 sampling distributions
 #include <pcg/pcg_random.hpp> // pcg prng
+#include <progress.hpp>  // for the progress bar
 #ifdef _OPENMP
 #include <omp.h>  // omp
 #endif
@@ -63,6 +64,8 @@ OuterClass create_sequences_(const uint32& n_seqs,
     // Generate seeds for random number generators (1 RNG per thread)
     const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
 
+    Progress prog_bar(n_seqs, false); // just use as way to check for abort
+
     // Alias-sampling object
     const AliasSampler sampler(pi_tcag);
 
@@ -104,6 +107,8 @@ OuterClass create_sequences_(const uint32& n_seqs,
     #endif
     for (uint32 i = 0; i < n_seqs; i++) {
         InnerClass& seq(seqs_out[i]);
+
+        if (prog_bar.check_abort()) continue;
 
         // Get length of output sequence:
         uint32 len;

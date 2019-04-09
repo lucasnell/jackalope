@@ -243,7 +243,7 @@ void replace_Ns_cpp(SEXP ref_genome_ptr,
 #pragma omp for schedule(static)
 #endif
     for (uint32 i = 0; i < n_seqs; i++) {
-        if (!prog_bar.is_aborted()) {
+        if (!prog_bar.check_abort()) {
             RefSequence& seq(ref_genome->sequences[i]);
             for (char& c : seq.nucleos) {
                 if (c == 'N') c = sampler.sample(eng);

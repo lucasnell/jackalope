@@ -379,7 +379,7 @@ void write_reads_cpp_(const T& read_filler_base,
     while (writer.reads_made < reads_this_thread) {
 
         // Every 10 reads, check that the user hasn't interrupted the process
-        if (writer.reads_made % 10 == 0 && prog_bar.is_aborted()) break;
+        if (writer.reads_made % 10 == 0 && prog_bar.check_abort()) break;
 
         writer.create_reads(eng);
 
