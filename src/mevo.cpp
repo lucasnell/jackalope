@@ -212,7 +212,7 @@ SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
 #endif
     for (uint32 i = 0; i < n_seqs; i++) {
 
-        if (prog_bar.check_abort()) status_code = -1;
+        if (prog_bar.is_aborted() || prog_bar.check_abort()) status_code = -1;
         if (status_code != 0) continue;
 
         add_one_seq_sites(*var_set, *ref_genome, i, seg_sites[i], type, insert, eng);

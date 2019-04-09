@@ -106,9 +106,10 @@ OuterClass create_sequences_(const uint32& n_seqs,
     #pragma omp for schedule(static)
     #endif
     for (uint32 i = 0; i < n_seqs; i++) {
-        InnerClass& seq(seqs_out[i]);
 
-        if (prog_bar.check_abort()) continue;
+        if (prog_bar.is_aborted() || prog_bar.check_abort()) continue;
+
+        InnerClass& seq(seqs_out[i]);
 
         // Get length of output sequence:
         uint32 len;

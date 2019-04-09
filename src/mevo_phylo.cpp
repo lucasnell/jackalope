@@ -93,10 +93,8 @@ int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
     /*
      Check for a user interrupt. Using a Progress object allows the user to interrupt
      the process during multithreaded operations.
-     If recombination == true, I'm only doing this here, not for each edge bc that
-     would likely cause too many checks, which would slow things down.
      */
-    if (prog_bar.check_abort()) return -1;
+    if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
 
     // Exponential distribution to do the time-jumps along the branch lengths:
     std::exponential_distribution<double> distr(1.0);
@@ -107,7 +105,7 @@ int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
     for (uint32 i = 0; i < tree.n_edges; i++) {
 
         // Checking for abort every edge:
-        if (prog_bar.check_abort()) return -1;
+        if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
 
         // Indices for nodes/tips that the branch length in `branch_lens` refers to
         uint32 b1 = tree.edges(i,0);

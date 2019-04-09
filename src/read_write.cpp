@@ -812,7 +812,7 @@ inline void write_ref_fasta__(T& file,
 
     for (uint32 i = 0; i < ref.size(); i++) {
 
-        if (prog_bar.check_abort()) continue;
+        if (prog_bar.check_abort()) break;
 
         std::string name = '>' + ref[i].name + '\n';
         file.write(name);
@@ -822,13 +822,13 @@ inline void write_ref_fasta__(T& file,
 
         for (uint32 i = 0; i < num_rows; i++) {
             // Check every 10 lines:
-            if (i % 10 == 0 && prog_bar.check_abort()) continue;
+            if (i % 10 == 0 && prog_bar.check_abort()) break;
             one_line = seq_str.substr(i * text_width, text_width);
             one_line += '\n';
             file.write(one_line);
         }
 
-        if (prog_bar.check_abort()) continue;
+        if (prog_bar.is_aborted() || prog_bar.check_abort()) break;
 
         // If there are leftover characters, create a shorter item at the end.
         if (seq_str.length() % text_width != 0) {
@@ -928,6 +928,8 @@ void write_vars_fasta__(const std::string& out_prefix,
 
         for (uint32 s = 0; s < var_set.reference->size(); s++) {
 
+            if (prog_bar.check_abort()) break;
+
             name = '>';
             name += (*var_set.reference)[s].name;
             name += '\n';
@@ -944,6 +946,8 @@ void write_vars_fasta__(const std::string& out_prefix,
                 out_file.write(line);
                 line_start += text_width;
             }
+
+            prog_bar.increment(var_set.reference[s].size());
 
         }
 
