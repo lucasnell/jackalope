@@ -5,6 +5,26 @@ context("Testing making of mevo (molecular evolution info) object")
 # library(testthat)
 
 
+# From mevo class:
+# # Average mutation rate
+# mu = function() {
+#     # Indel rates (same for each nucleotide):
+#     indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
+#     # Average mutation rate among all nucleotides:
+#     mu <- sum({rowSums(self$Q) + indel} * self$pi_tcag)
+#     return(mu)
+# },
+#
+# # Overall mutation rate by nucleotide
+# q = function() {
+#     # Indel rates (same for each nucleotide):
+#     indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
+#     # Mutation rates by nucleotides:
+#     q <- rowSums(self$Q) + indel
+#     return(q)
+# }
+
+
 set.seed(4616515)
 
 

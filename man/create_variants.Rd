@@ -4,8 +4,9 @@
 \alias{create_variants}
 \title{Create variants from a reference genome.}
 \usage{
-create_variants(reference, method, method_info, mevo_obj = NULL,
-  n_threads = 1, show_progress = FALSE)
+create_variants(reference, method, method_info, sub = NULL, ins = NULL,
+  del = NULL, gamma_mats = NULL, chunk_size = 100, n_threads = 1,
+  show_progress = FALSE)
 }
 \arguments{
 \item{reference}{A \code{ref_genome} object from which to generate variants.
@@ -35,10 +36,39 @@ variants. This method does not work if the \code{vcfR} package isn't installed.
 \item{method_info}{Object containing information used for the given method.
 See "Method arguments" section for which arguments are used for each method.}
 
-\item{mevo_obj}{A \code{mevo} object that stores molecular-evolution information.
-This argument is needed for all methods except \code{"vcf"}.
-See \code{\link{create_mevo}} for more information.
+\item{sub}{Output from one of the \code{\link{sub_models}} functions that organizes
+information for the substitution models.
+See \code{?sub_models} for more information on these models and
+their required parameters.
 Defaults to \code{NULL}.}
+
+\item{ins}{Output from the \code{\link{indels}} function that specifies rates
+of insertions by length.
+Passing \code{NULL} to this argument results in no insertions.
+Defaults to \code{NULL}.}
+
+\item{del}{Output from the \code{\link{indels}} function that specifies rates
+of deletions by length.
+Passing \code{NULL} to this argument results in no deletions.
+Defaults to \code{NULL}.}
+
+\item{gamma_mats}{Output from the \code{\link{site_var}} function that specifies
+variability in mutation rates among sites (for both substitutions and indels).
+Passing \code{NULL} to this argument results in no variability among sites.
+Defaults to \code{NULL}.}
+
+\item{chunk_size}{The size of "chunks" of sequences to first sample uniformly
+before doing weighted sampling by rates for each sequence location.
+Uniformly sampling before doing weighted sampling dramatically speeds up
+the mutation process (especially for very long sequences) and has little
+effect on the sampling probabilities.
+Higher values will more closely resemble sampling without the uniform-sampling
+step, but will be slower.
+Set this to \code{0} to not uniformly sample first.
+From testing on a chromosome of length \code{1e6}, a \code{chunk_size} value of \code{100}
+offers a ~10x speed increase and doesn't differ significantly from sampling
+without the uniform-sampling step.
+Defaults to \code{100}.}
 
 \item{n_threads}{Number of threads to use for parallel processing.
 This argument is ignored if OpenMP is not enabled.
@@ -127,8 +157,8 @@ This method won't work if the package \code{vcfR} isn't installed.}
 \examples{
 r <- create_genome(10, 1000)
 tree <- ape::rcoal(5)
-m <- create_mevo(r, list(model = "JC69", lambda = 0.1))
-v_phylo <- create_variants(r, "phylo", tree, m)
-v_theta <- create_variants(r, "theta", list(theta = 0.001, n_vars = 5), m)
+v_phylo <- create_variants(r, "phylo", tree, sub_JC69(0.1))
+v_theta <- create_variants(r, "theta", list(theta = 0.001, n_vars = 5),
+                           sub_K80(0.1, 0.2))
 
 }

@@ -21,6 +21,12 @@ single_number <- function(x, .min, .max) {
     if (!missing(.max)) bool <- bool && x <= .max
     return(bool)
 }
+# Check for a vector of positive numbers that sums to > 0 (used often for relative rates)
+positive_vector <- function(x, zero_comp = `>=`) {
+    if (is.null(x) || any(is.na(x))) return(FALSE)
+    bool <- inherits(x, c("integer", "numeric")) && zero_comp(sum(x), 0) && all(x >= 0)
+    return(bool)
+}
 is_type <- function(x, type, L = NULL) {
     if (is.null(x) || any(is.na(x))) return(FALSE)
     if (!inherits(x, type)) return(FALSE)

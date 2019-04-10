@@ -262,10 +262,10 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
 //'
 //[[Rcpp::export]]
 void check_gamma_mats(const std::vector<arma::mat>& mats,
-                          const std::vector<uint32>& seq_sizes) {
+                      const std::vector<uint32>& seq_sizes) {
 
     std::string err_msg = "\nIf providing custom matrices for the ";
-    err_msg += "`site_var` argument to the `create_mevo` function, ";
+    err_msg += "`mats` argument to the `site_var` function, ";
     err_msg += "all matrices ";
 
     bool error = false;

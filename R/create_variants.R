@@ -126,10 +126,35 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'     }
 #' @param method_info Object containing information used for the given method.
 #'     See "Method arguments" section for which arguments are used for each method.
-#' @param mevo_obj A `mevo` object that stores molecular-evolution information.
-#'     This argument is needed for all methods except `"vcf"`.
-#'     See \code{\link{create_mevo}} for more information.
+#' @param sub Output from one of the \code{\link{sub_models}} functions that organizes
+#'     information for the substitution models.
+#'     See `?sub_models` for more information on these models and
+#'     their required parameters.
 #'     Defaults to `NULL`.
+#' @param ins Output from the \code{\link{indels}} function that specifies rates
+#'     of insertions by length.
+#'     Passing `NULL` to this argument results in no insertions.
+#'     Defaults to `NULL`.
+#' @param del Output from the \code{\link{indels}} function that specifies rates
+#'     of deletions by length.
+#'     Passing `NULL` to this argument results in no deletions.
+#'     Defaults to `NULL`.
+#' @param gamma_mats Output from the \code{\link{site_var}} function that specifies
+#'     variability in mutation rates among sites (for both substitutions and indels).
+#'     Passing `NULL` to this argument results in no variability among sites.
+#'     Defaults to `NULL`.
+#' @param chunk_size The size of "chunks" of sequences to first sample uniformly
+#'     before doing weighted sampling by rates for each sequence location.
+#'     Uniformly sampling before doing weighted sampling dramatically speeds up
+#'     the mutation process (especially for very long sequences) and has little
+#'     effect on the sampling probabilities.
+#'     Higher values will more closely resemble sampling without the uniform-sampling
+#'     step, but will be slower.
+#'     Set this to `0` to not uniformly sample first.
+#'     From testing on a chromosome of length `1e6`, a `chunk_size` value of `100`
+#'     offers a ~10x speed increase and doesn't differ significantly from sampling
+#'     without the uniform-sampling step.
+#'     Defaults to `100`.
 #' @param n_threads Number of threads to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
 #'     Threads are spread across sequences, so it
@@ -144,15 +169,19 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #' @examples
 #' r <- create_genome(10, 1000)
 #' tree <- ape::rcoal(5)
-#' m <- create_mevo(r, list(model = "JC69", lambda = 0.1))
-#' v_phylo <- create_variants(r, "phylo", tree, m)
-#' v_theta <- create_variants(r, "theta", list(theta = 0.001, n_vars = 5), m)
+#' v_phylo <- create_variants(r, "phylo", tree, sub_JC69(0.1))
+#' v_theta <- create_variants(r, "theta", list(theta = 0.001, n_vars = 5),
+#'                            sub_K80(0.1, 0.2))
 #'
 # doc end ----
 create_variants <- function(reference,
                             method,
                             method_info,
-                            mevo_obj = NULL,
+                            sub = NULL,
+                            ins = NULL,
+                            del = NULL,
+                            gamma_mats = NULL,
+                            chunk_size = 100,
                             n_threads = 1,
                             show_progress = FALSE) {
 
@@ -175,6 +204,10 @@ create_variants <- function(reference,
                 "Restart by reading a FASTA file or by simulating a genome,",
                 "and do NOT change the `genome` field manually")
     }
+
+    # Do checks and organize molecular-evolution info into `mevo` object:
+    mevo_obj <- create_mevo(reference, sub, ins, del, gamma_mats, chunk_size)
+
     if (!single_integer(n_threads, .min = 1)) {
         err_msg("create_variants", "n_threads", "a single integer >= 1")
     }
@@ -182,11 +215,11 @@ create_variants <- function(reference,
         err_msg("create_variants", "show_progress", "a single logical")
     }
     # Check mevo_obj argument
-    if (method %in% c("coal_sites", methods_$phylo) &&
-        (is.null(mevo_obj) || !inherits(mevo_obj, "mevo"))) {
-        err_msg("create_variants", "mevo_obj", "a \"mevo\" object (if you",
-                "want to use a method other than \"vcf\").",
-                "You should use the `create_mevo` function to create this object")
+    if (method %in% c("coal_sites", methods_$phylo) && is.null(mevo_obj)) {
+        err_msg("create_variants", "sub", "provided if you",
+                "want to use a method other than \"vcf\".",
+                "You should use one of the `sub_models` functions to create this object",
+                "(see `?sub_models`)")
     }
 
 

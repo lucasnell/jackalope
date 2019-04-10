@@ -231,9 +231,8 @@ ref_genome$lock()
 # >> mevo class----
 #' An R6 class containing information needed for molecular evolution.
 #'
-#' You shouldn't need to interact with this class much, if at all.
-#' This class is designed to be made in `create_mevo`, then to store information for use
-#' in `create_variants`.
+#' This class is only used in `create_variants` to organize information.
+#' It is not exported.
 #'
 #' @field Q A matrix of substitution rates for each nucleotide.
 #' @field pi_tcag Vector of nucleotide equilibrium frequencies for "T", "C", "A", and
@@ -258,7 +257,7 @@ ref_genome$lock()
 #'
 #' @seealso \code{\link{create_mevo}}
 #'
-#' @export
+#' @noRd
 #'
 #' @format An \code{\link[R6]{R6Class}} generator object
 #'
