@@ -197,8 +197,7 @@ create_variants <- function(reference,
     if (!inherits(reference, "ref_genome")) {
         err_msg("create_variants", "reference", "a \"ref_genome\" object")
     }
-    ref_genome_ptr <- reference$genome
-    if (!inherits(ref_genome_ptr, "externalptr")) {
+    if (!inherits(reference$genome, "externalptr")) {
         err_msg("create_variants", "mevo_obj", "a \"mevo\" object with a `genome`",
                 "field of class \"externalptr\".",
                 "Restart by reading a FASTA file or by simulating a genome,",
@@ -215,7 +214,7 @@ create_variants <- function(reference,
         err_msg("create_variants", "show_progress", "a single logical")
     }
     # Check mevo_obj argument
-    if (method %in% c("coal_sites", methods_$phylo) && is.null(mevo_obj)) {
+    if (method != "vcf" && is.null(mevo_obj)) {
         err_msg("create_variants", "sub", "provided if you",
                 "want to use a method other than \"vcf\".",
                 "You should use one of the `sub_models` functions to create this object",
@@ -251,7 +250,7 @@ create_variants <- function(reference,
         # -------+
         if (mevo_obj$chunk_size > 0) {
             variants_ptr <- evolve_seqs_chunk(
-                ref_genome_ptr,
+                reference$genome,
                 sampler_base_ptr,
                 phylo_info_ptr,
                 gamma_mats,
@@ -259,7 +258,7 @@ create_variants <- function(reference,
                 show_progress)
         } else {
             variants_ptr <- evolve_seqs(
-                ref_genome_ptr,
+                reference$genome,
                 sampler_base_ptr,
                 phylo_info_ptr,
                 gamma_mats,
@@ -285,7 +284,7 @@ create_variants <- function(reference,
 
     }
 
-    var_obj <- variants$new(variants_ptr, ref_genome_ptr)
+    var_obj <- variants$new(variants_ptr, reference$genome)
 
     return(var_obj)
 

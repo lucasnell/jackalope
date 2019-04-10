@@ -19,6 +19,11 @@ from 1 to the maximum length.
 If provided, all arguments other than \code{rate} are ignored.
 Defaults to \code{NULL}.}
 }
+\value{
+An \code{indel_rates} object, which is just a wrapper around a numeric vector.
+You can access the rates vector for \code{indel_rates} object \code{x} by running
+\code{as.numeric(x)}.
+}
 \description{
 Construct necessary information for insertions and deletions (indels) that will
 be used in \code{create_variants}.

@@ -54,6 +54,13 @@ Item \code{Q[i,j]} is the rate of substitution from nucleotide \code{i} to nucle
 Do not include indel rates here!
 Values on the diagonal are calculated inside the function so are ignored.}
 }
+\value{
+A \code{sub_model_info} object, which is just a wrapper around a list with
+fields \code{Q} and \code{pi_tcag}. The former has the rate matrix, and the latter
+has the equilibrium nucleotide densities for "T", "C", "A", and "G", respectively.
+Access the rate matrix for a \code{sub_model_info} object named \code{x} via \code{x$Q} and
+densities via \code{x$pi_tcag}.
+}
 \description{
 For a more detailed explanation, see \code{vignette("sub-models")}.
 }

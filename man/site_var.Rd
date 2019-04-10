@@ -41,6 +41,12 @@ Defaults to \code{FALSE}.}
 is desired. Options include \code{"gzip"} and \code{"bgzip"}.
 This is ignored if \code{compress} is \code{FALSE}. Defaults to \code{"bgzip"}.}
 }
+\value{
+A \code{site_var_mats} object, which is a wrapper around a list of matrices,
+one for each sequence in the reference genome.
+Although the print method is different, you can otherwise treat these objects
+the same as you would a list (e.g., \code{x[[1]]}, \code{x[1:2]}, \code{length(x)}).
+}
 \description{
 Construct necessary information for among-site variation in mutation rates that will
 be used in \code{create_variants}.
@@ -64,6 +70,14 @@ See argument descriptions for more info.
 }
 }
 \examples{
-
+ref <- create_genome(3, 100)
+# generating from Gamma distribution
+gamma_mats <- site_var(ref, shape = 0.5,
+                       region_size = 5)
+# with custom matrices
+gamma_mats <- site_var(ref,
+                       mats = replicate(3,
+                           cbind(seq(10, 100, 10),
+                           rgamma(10, 0.9))))
 
 }

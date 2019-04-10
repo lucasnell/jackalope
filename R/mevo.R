@@ -7,6 +7,34 @@
 # ====================================================================================`
 # ====================================================================================`
 
+#' Print method for sub_model_info objects.
+#'
+#' I added this mostly to make users less likely to edit it manually and to
+#' give context to the output.
+#'
+#' @noRd
+#' @export
+#'
+print.sub_model_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
+    cat("< Substitution information >\n")
+    fmt <- paste0("%.", digits, "f")
+
+    cat("# Equilibrium densities:\n")
+    cat("  ", sprintf(fmt, x$pi_tcag), "\n")
+
+    cat("# Substitution rate matrix:\n")
+    prmatrix(x$Q, digits = digits,
+             rowlab = paste("  ", c("T", "C", "A", "G")),
+             collab = c("T", "C", "A", "G"))
+
+    cat("(View rate matrix in the \"Q\" field)\n")
+    cat("(View equil. densities in the \"pi_tcag\" field)")
+
+    invisible(NULL)
+}
+
+
+
 #' Insertions and deletions (indels) specification
 #'
 #' Construct necessary information for insertions and deletions (indels) that will
@@ -63,6 +91,10 @@
 #'
 #' @export
 #'
+#' @return An `indel_rates` object, which is just a wrapper around a numeric vector.
+#' You can access the rates vector for `indel_rates` object `x` by running
+#' `as.numeric(x)`.
+#'
 #' @examples
 #' # relative rates are proportional to `exp(-L)` for indel
 #' # length `L` from 1 to 5:
@@ -118,6 +150,20 @@ indels <- function(rate,
     return(rates)
 }
 
+#' Print method for indel_rates objects.
+#'
+#' I added this mostly to make sure a giant vector doesn't ever print.
+#'
+#' @noRd
+#' @export
+#'
+print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) {
+    cat("< Indel rates vector >\n")
+    cat(sprintf("  * Total rate = %.3g\n", sum(x)))
+    cat(sprintf("  * Max length = %i\n", length(x)))
+    cat("(View raw data using `as.numeric`)\n")
+    invisible(NULL)
+}
 
 
 
@@ -170,9 +216,22 @@ indels <- function(rate,
 #'
 #' @export
 #'
+#' @return A `site_var_mats` object, which is a wrapper around a list of matrices,
+#' one for each sequence in the reference genome.
+#' Although the print method is different, you can otherwise treat these objects
+#' the same as you would a list (e.g., `x[[1]]`, `x[1:2]`, `length(x)`).
+#'
 #'
 #' @examples
-#'
+#' ref <- create_genome(3, 100)
+#' # generating from Gamma distribution
+#' gamma_mats <- site_var(ref, shape = 0.5,
+#'                        region_size = 5)
+#' # with custom matrices
+#' gamma_mats <- site_var(ref,
+#'                        mats = replicate(3,
+#'                            cbind(seq(10, 100, 10),
+#'                            rgamma(10, 0.9))))
 #'
 site_var <- function(reference,
                      shape = NULL,
@@ -253,6 +312,21 @@ site_var <- function(reference,
     return(mats)
 }
 
+
+#' Print method for site_var_mats objects.
+#'
+#' I added this mostly to make sure a giant list doesn't print.
+#'
+#' @noRd
+#' @export
+#'
+print.site_var_mats <- function(x, digits = max(3, getOption("digits") - 3), ...) {
+    cat("< Site variability matrices >\n")
+    cat(sprintf("  * Number of sequences = %i\n", length(x)))
+    cat(sprintf("  * Number of regions = %i\n", sum(sapply(x, nrow))))
+    cat("(View raw data the same as you would a list)\n")
+    invisible(NULL)
+}
 
 
 
@@ -458,7 +532,8 @@ fill_coal_mat_pos <- function(sites_mats, seq_sizes) {
             # Converting to 0-based indices:
             sites_mats[[i]][,1] = as.integer(sites_mats[[i]][,1]) - 1;
         } else {
-            stop("\nYour `method_info` argument to `create_variants` is causing problems: ",
+            stop("\nYour `method_info` argument to `create_variants` is causing ",
+                 "problems: ",
                  "Positions in one or more segregating-sites matrices ",
                  "are not obviously from either a finite- or infinite-sites model. ",
                  "The former should have positions in the range ",

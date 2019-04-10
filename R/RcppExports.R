@@ -229,6 +229,12 @@ evolve_seqs_chunk <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, 
 #'
 #' @seealso \code{\link{create_mevo}}
 #'
+#' @return A `sub_model_info` object, which is just a wrapper around a list with
+#' fields `Q` and `pi_tcag`. The former has the rate matrix, and the latter
+#' has the equilibrium nucleotide densities for "T", "C", "A", and "G", respectively.
+#' Access the rate matrix for a `sub_model_info` object named `x` via `x$Q` and
+#' densities via `x$pi_tcag`.
+#'
 #' @examples
 #' # Same substitution rate for all types:
 #' Q_JC69 <- sub_JC69(lambda = 0.1)
