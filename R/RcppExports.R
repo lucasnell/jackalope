@@ -220,116 +220,126 @@ evolve_seqs_chunk <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, 
     .Call(`_jackalope_evolve_seqs_chunk`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress)
 }
 
-#' Estimates equilibrium nucleotide frequencies from an input rate matrix.
+#' Construct necessary information for substitution models.
 #'
-#' It does this by solving for πQ = 0 by finding the left eigenvector of Q that
-#' corresponds to the eigenvalue closest to zero.
-#' This is only needed for the UNREST model.
+#' For a more detailed explanation, see `vignette("sub-models")`.
 #'
-#' @inheritParams Q UNREST_rate_matrix_
-#' @inheritParams pi_tcag UNREST_rate_matrix_
 #'
-#' @noRd
+#' @name sub_models
+#'
+#' @seealso \code{\link{create_mevo}}
+#'
+#' @examples
+#' # Same substitution rate for all types:
+#' Q_JC69 <- sub_JC69(lambda = 0.1)
+#'
+#' # Transitions 2x more likely than transversions:
+#' Q_K80 <- sub_K80(alpha = 0.2, beta = 0.1)
+#'
+#' # Same as above, but incorporating equilibrium frequencies
+#' sub_HKY85(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
+#'           alpha = 0.2, beta = 0.1)
 #'
 NULL
 
-#' Q matrix for rates for a given nucleotide using the UNREST substitution model.
+#' @describeIn sub_models TN93 model.
 #'
-#' This function also fills in a vector of equilibrium frequencies for each nucleotide.
-#' This calculation has to be done for this model only because it uses separate
-#' values for each non-diagonal cell and doesn't use equilibrium frequencies for
-#' creating the matrix.
+#' @param pi_tcag Vector of length 4 indicating the equilibrium distributions of
+#'     T, C, A, and G respectively. Values must be >= 0, and
+#'     they are forced to sum to 1.
+#' @param alpha_1 Substitution rate for T <-> C transition.
+#' @param alpha_2 Substitution rate for A <-> G transition.
+#' @param beta Substitution rate for transversions.
+#'
+#' @export
+#'
+sub_TN93 <- function(pi_tcag, alpha_1, alpha_2, beta) {
+    .Call(`_jackalope_sub_TN93`, pi_tcag, alpha_1, alpha_2, beta)
+}
+
+#' @describeIn sub_models JC69 model.
+#'
+#' @param lambda Substitution rate for all possible substitutions.
+#'
+#' @export
+#'
+#'
+sub_JC69 <- function(lambda) {
+    .Call(`_jackalope_sub_JC69`, lambda)
+}
+
+#' @describeIn sub_models K80 model.
+#'
+#' @param alpha Substitution rate for transitions.
+#' @inheritParams sub_TN93
+#'
+#' @export
+#'
+sub_K80 <- function(alpha, beta) {
+    .Call(`_jackalope_sub_K80`, alpha, beta)
+}
+
+#' @describeIn sub_models F81 model.
+#'
+#' @inheritParams sub_TN93
+#'
+#' @export
+#'
+sub_F81 <- function(pi_tcag) {
+    .Call(`_jackalope_sub_F81`, pi_tcag)
+}
+
+#' @describeIn sub_models HKY85 model.
+#'
+#'
+#' @inheritParams sub_TN93
+#' @inheritParams sub_K80
+#'
+#' @export
+#'
+sub_HKY85 <- function(pi_tcag, alpha, beta) {
+    .Call(`_jackalope_sub_HKY85`, pi_tcag, alpha, beta)
+}
+
+#' @describeIn sub_models F84 model.
+#'
+#'
+#' @inheritParams sub_TN93
+#' @inheritParams sub_K80
+#' @param kappa The transition/transversion rate ratio.
+#'
+#' @export
+#'
+sub_F84 <- function(pi_tcag, beta, kappa) {
+    .Call(`_jackalope_sub_F84`, pi_tcag, beta, kappa)
+}
+
+#' @describeIn sub_models GTR model.
+#'
+#' @inheritParams sub_TN93
+#' @param abcdef A vector of length 6 that contains the off-diagonal elements
+#'     for the substitution rate matrix.
+#'     See `vignette("sub-models")` for how the values are ordered in the matrix.
+#'
+#' @export
+#'
+sub_GTR <- function(pi_tcag, abcdef) {
+    .Call(`_jackalope_sub_GTR`, pi_tcag, abcdef)
+}
+
+#' @describeIn sub_models UNREST model.
 #'
 #'
 #' @param Q Matrix of substitution rates for "T", "C", "A", and "G", respectively.
-#'     Do not include indel rates here! Diagonal values are ignored.
-#' @param pi_tcag Empty vector of equilibrium frequencies for for "T", "C", "A", and "G",
-#'     respectively. This vector will be filled in by this function.
-#' @param xi Overall rate of indels.
+#'     Item `Q[i,j]` is the rate of substitution from nucleotide `i` to nucleotide `j`.
+#'     Do not include indel rates here!
+#'     Values on the diagonal are calculated inside the function so are ignored.
 #'
-#' @noRd
-#'
-NULL
-
-#' Q matrix for rates for a given nucleotide using the TN93 substitution model.
-#'
-#' @noRd
-#'
-TN93_rate_matrix <- function(pi_tcag, alpha_1, alpha_2, beta) {
-    .Call(`_jackalope_TN93_rate_matrix`, pi_tcag, alpha_1, alpha_2, beta)
-}
-
-#' Q matrix for rates for a given nucleotide using the JC69 substitution model.
-#'
-#' JC69 is a special case of TN93.
-#'
-#' @noRd
-#'
-JC69_rate_matrix <- function(lambda) {
-    .Call(`_jackalope_JC69_rate_matrix`, lambda)
-}
-
-#' Q matrix for rates for a given nucleotide using the K80 substitution model.
-#'
-#' K80 is a special case of TN93.
-#'
-#' @noRd
-#'
-K80_rate_matrix <- function(alpha, beta) {
-    .Call(`_jackalope_K80_rate_matrix`, alpha, beta)
-}
-
-#' Q matrix for rates for a given nucleotide using the F81 substitution model.
-#'
-#' F81 is a special case of TN93.
-#'
-#' @noRd
-#'
-F81_rate_matrix <- function(pi_tcag) {
-    .Call(`_jackalope_F81_rate_matrix`, pi_tcag)
-}
-
-#' Q matrix for rates for a given nucleotide using the HKY85 substitution model.
-#'
-#' HKY85 is a special case of TN93.
-#'
-#' @noRd
-#'
-HKY85_rate_matrix <- function(pi_tcag, alpha, beta) {
-    .Call(`_jackalope_HKY85_rate_matrix`, pi_tcag, alpha, beta)
-}
-
-#' Q matrix for rates for a given nucleotide using the F84 substitution model.
-#'
-#' F84 is a special case of TN93.
-#'
-#' @noRd
-#'
-F84_rate_matrix <- function(pi_tcag, beta, kappa) {
-    .Call(`_jackalope_F84_rate_matrix`, pi_tcag, beta, kappa)
-}
-
-#' Q matrix for rates for a given nucleotide using the GTR substitution model.
-#'
-#' @noRd
-#'
-GTR_rate_matrix <- function(pi_tcag, abcdef) {
-    .Call(`_jackalope_GTR_rate_matrix`, pi_tcag, abcdef)
-}
-
-#' Same as above, but it only takes a matrix and indel rate, and outputs a list.
-#'
-#' The list is of the standardized `Q` and the calculated `pi_tcag`.
-#' This is for use in R.
-#'
-#' @inheritParams Q UNREST_rate_matrix
-#' @inheritParams xi UNREST_rate_matrix
-#'
-#' @noRd
+#' @export
 #'
 #'
-UNREST_rate_matrix <- function(Q) {
-    .Call(`_jackalope_UNREST_rate_matrix`, Q)
+sub_UNREST <- function(Q) {
+    .Call(`_jackalope_sub_UNREST`, Q)
 }
 
 #' PacBio sequence for reference object.

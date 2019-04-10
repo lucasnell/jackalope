@@ -265,100 +265,100 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// TN93_rate_matrix
-arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta);
-RcppExport SEXP _jackalope_TN93_rate_matrix(SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP) {
+// sub_TN93
+List sub_TN93(std::vector<double> pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta);
+RcppExport SEXP _jackalope_sub_TN93(SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type pi_tcag(pi_tcagSEXP);
     Rcpp::traits::input_parameter< const double& >::type alpha_1(alpha_1SEXP);
     Rcpp::traits::input_parameter< const double& >::type alpha_2(alpha_2SEXP);
     Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
-    rcpp_result_gen = Rcpp::wrap(TN93_rate_matrix(pi_tcag, alpha_1, alpha_2, beta));
+    rcpp_result_gen = Rcpp::wrap(sub_TN93(pi_tcag, alpha_1, alpha_2, beta));
     return rcpp_result_gen;
 END_RCPP
 }
-// JC69_rate_matrix
-arma::mat JC69_rate_matrix(const double& lambda);
-RcppExport SEXP _jackalope_JC69_rate_matrix(SEXP lambdaSEXP) {
+// sub_JC69
+List sub_JC69(const double& lambda);
+RcppExport SEXP _jackalope_sub_JC69(SEXP lambdaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const double& >::type lambda(lambdaSEXP);
-    rcpp_result_gen = Rcpp::wrap(JC69_rate_matrix(lambda));
+    rcpp_result_gen = Rcpp::wrap(sub_JC69(lambda));
     return rcpp_result_gen;
 END_RCPP
 }
-// K80_rate_matrix
-arma::mat K80_rate_matrix(const double& alpha, const double& beta);
-RcppExport SEXP _jackalope_K80_rate_matrix(SEXP alphaSEXP, SEXP betaSEXP) {
+// sub_K80
+List sub_K80(const double& alpha, const double& beta);
+RcppExport SEXP _jackalope_sub_K80(SEXP alphaSEXP, SEXP betaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
-    rcpp_result_gen = Rcpp::wrap(K80_rate_matrix(alpha, beta));
+    rcpp_result_gen = Rcpp::wrap(sub_K80(alpha, beta));
     return rcpp_result_gen;
 END_RCPP
 }
-// F81_rate_matrix
-arma::mat F81_rate_matrix(const std::vector<double>& pi_tcag);
-RcppExport SEXP _jackalope_F81_rate_matrix(SEXP pi_tcagSEXP) {
+// sub_F81
+List sub_F81(const std::vector<double>& pi_tcag);
+RcppExport SEXP _jackalope_sub_F81(SEXP pi_tcagSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    rcpp_result_gen = Rcpp::wrap(F81_rate_matrix(pi_tcag));
+    rcpp_result_gen = Rcpp::wrap(sub_F81(pi_tcag));
     return rcpp_result_gen;
 END_RCPP
 }
-// HKY85_rate_matrix
-arma::mat HKY85_rate_matrix(const std::vector<double>& pi_tcag, const double& alpha, const double& beta);
-RcppExport SEXP _jackalope_HKY85_rate_matrix(SEXP pi_tcagSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
+// sub_HKY85
+List sub_HKY85(const std::vector<double>& pi_tcag, const double& alpha, const double& beta);
+RcppExport SEXP _jackalope_sub_HKY85(SEXP pi_tcagSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
     Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
-    rcpp_result_gen = Rcpp::wrap(HKY85_rate_matrix(pi_tcag, alpha, beta));
+    rcpp_result_gen = Rcpp::wrap(sub_HKY85(pi_tcag, alpha, beta));
     return rcpp_result_gen;
 END_RCPP
 }
-// F84_rate_matrix
-arma::mat F84_rate_matrix(const std::vector<double>& pi_tcag, const double& beta, const double& kappa);
-RcppExport SEXP _jackalope_F84_rate_matrix(SEXP pi_tcagSEXP, SEXP betaSEXP, SEXP kappaSEXP) {
+// sub_F84
+List sub_F84(const std::vector<double>& pi_tcag, const double& beta, const double& kappa);
+RcppExport SEXP _jackalope_sub_F84(SEXP pi_tcagSEXP, SEXP betaSEXP, SEXP kappaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
     Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
     Rcpp::traits::input_parameter< const double& >::type kappa(kappaSEXP);
-    rcpp_result_gen = Rcpp::wrap(F84_rate_matrix(pi_tcag, beta, kappa));
+    rcpp_result_gen = Rcpp::wrap(sub_F84(pi_tcag, beta, kappa));
     return rcpp_result_gen;
 END_RCPP
 }
-// GTR_rate_matrix
-arma::mat GTR_rate_matrix(const std::vector<double>& pi_tcag, const std::vector<double>& abcdef);
-RcppExport SEXP _jackalope_GTR_rate_matrix(SEXP pi_tcagSEXP, SEXP abcdefSEXP) {
+// sub_GTR
+List sub_GTR(std::vector<double> pi_tcag, const std::vector<double>& abcdef);
+RcppExport SEXP _jackalope_sub_GTR(SEXP pi_tcagSEXP, SEXP abcdefSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type pi_tcag(pi_tcagSEXP);
     Rcpp::traits::input_parameter< const std::vector<double>& >::type abcdef(abcdefSEXP);
-    rcpp_result_gen = Rcpp::wrap(GTR_rate_matrix(pi_tcag, abcdef));
+    rcpp_result_gen = Rcpp::wrap(sub_GTR(pi_tcag, abcdef));
     return rcpp_result_gen;
 END_RCPP
 }
-// UNREST_rate_matrix
-List UNREST_rate_matrix(arma::mat Q);
-RcppExport SEXP _jackalope_UNREST_rate_matrix(SEXP QSEXP) {
+// sub_UNREST
+List sub_UNREST(arma::mat Q);
+RcppExport SEXP _jackalope_sub_UNREST(SEXP QSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::mat >::type Q(QSEXP);
-    rcpp_result_gen = Rcpp::wrap(UNREST_rate_matrix(Q));
+    rcpp_result_gen = Rcpp::wrap(sub_UNREST(Q));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -901,14 +901,14 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_phylo_info_to_trees_chunk", (DL_FUNC) &_jackalope_phylo_info_to_trees_chunk, 1},
     {"_jackalope_evolve_seqs", (DL_FUNC) &_jackalope_evolve_seqs, 6},
     {"_jackalope_evolve_seqs_chunk", (DL_FUNC) &_jackalope_evolve_seqs_chunk, 6},
-    {"_jackalope_TN93_rate_matrix", (DL_FUNC) &_jackalope_TN93_rate_matrix, 4},
-    {"_jackalope_JC69_rate_matrix", (DL_FUNC) &_jackalope_JC69_rate_matrix, 1},
-    {"_jackalope_K80_rate_matrix", (DL_FUNC) &_jackalope_K80_rate_matrix, 2},
-    {"_jackalope_F81_rate_matrix", (DL_FUNC) &_jackalope_F81_rate_matrix, 1},
-    {"_jackalope_HKY85_rate_matrix", (DL_FUNC) &_jackalope_HKY85_rate_matrix, 3},
-    {"_jackalope_F84_rate_matrix", (DL_FUNC) &_jackalope_F84_rate_matrix, 3},
-    {"_jackalope_GTR_rate_matrix", (DL_FUNC) &_jackalope_GTR_rate_matrix, 2},
-    {"_jackalope_UNREST_rate_matrix", (DL_FUNC) &_jackalope_UNREST_rate_matrix, 1},
+    {"_jackalope_sub_TN93", (DL_FUNC) &_jackalope_sub_TN93, 4},
+    {"_jackalope_sub_JC69", (DL_FUNC) &_jackalope_sub_JC69, 1},
+    {"_jackalope_sub_K80", (DL_FUNC) &_jackalope_sub_K80, 2},
+    {"_jackalope_sub_F81", (DL_FUNC) &_jackalope_sub_F81, 1},
+    {"_jackalope_sub_HKY85", (DL_FUNC) &_jackalope_sub_HKY85, 3},
+    {"_jackalope_sub_F84", (DL_FUNC) &_jackalope_sub_F84, 3},
+    {"_jackalope_sub_GTR", (DL_FUNC) &_jackalope_sub_GTR, 2},
+    {"_jackalope_sub_UNREST", (DL_FUNC) &_jackalope_sub_UNREST, 1},
     {"_jackalope_pacbio_ref_cpp", (DL_FUNC) &_jackalope_pacbio_ref_cpp, 24},
     {"_jackalope_pacbio_var_cpp", (DL_FUNC) &_jackalope_pacbio_var_cpp, 25},
     {"_jackalope_read_ms_trees_", (DL_FUNC) &_jackalope_read_ms_trees_, 1},
@@ -919,6 +919,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_write_ref_fasta", (DL_FUNC) &_jackalope_write_ref_fasta, 6},
     {"_jackalope_write_vars_fasta", (DL_FUNC) &_jackalope_write_vars_fasta, 7},
     {"_jackalope_write_vcf_cpp", (DL_FUNC) &_jackalope_write_vcf_cpp, 5},
+    {"_jackalope_write_bed", (DL_FUNC) &_jackalope_write_bed, 5},
     {"_jackalope_print_ref_genome", (DL_FUNC) &_jackalope_print_ref_genome, 1},
     {"_jackalope_print_var_set", (DL_FUNC) &_jackalope_print_var_set, 1},
     {"_jackalope_make_ref_genome", (DL_FUNC) &_jackalope_make_ref_genome, 1},

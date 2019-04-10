@@ -15,19 +15,91 @@
 #include <RcppArmadillo.h>
 
 #include "jackalope_types.h" // integer types
+#include "util.h" // str_stop
 
 using namespace Rcpp;
 
 
 
-//' Q matrix for rates for a given nucleotide using the TN93 substitution model.
+/*
+ Check that vectors meet criteria. Used for `pi_tcag` and `abcdef` below.
+ */
+inline void vec_check(const std::vector<double>& in_vec,
+                      const std::string& vec_name,
+                      const bool& zero_check,
+                      const uint32& needed_size) {
+    if (in_vec.size() != needed_size) {
+        str_stop({"\nFor substitution models, the vector `", vec_name,
+                 "` should always be of length ", std::to_string(needed_size), "."});
+    }
+    bool all_zero = true;
+    for (const double& d : in_vec) {
+        if (d < 0) {
+            str_stop({"\nFor substitution models, all values in vector `", vec_name,
+                     "` should be >= 0."});
+        }
+        if (d > 0) all_zero = false;
+    }
+    if (zero_check && all_zero) {
+        str_stop({"\nFor substitution models, at least one value in vector `", vec_name,
+                 "` should be > 0."});
+    }
+    return;
+}
+
+
+
+//' Construct necessary information for substitution models.
 //'
-//' @noRd
+//' For a more detailed explanation, see `vignette("sub-models")`.
+//'
+//'
+//' @name sub_models
+//'
+//' @seealso \code{\link{create_mevo}}
+//'
+//' @examples
+//' # Same substitution rate for all types:
+//' Q_JC69 <- sub_JC69(lambda = 0.1)
+//'
+//' # Transitions 2x more likely than transversions:
+//' Q_K80 <- sub_K80(alpha = 0.2, beta = 0.1)
+//'
+//' # Same as above, but incorporating equilibrium frequencies
+//' sub_HKY85(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
+//'           alpha = 0.2, beta = 0.1)
+//'
+NULL_ENTRY;
+
+
+
+//' @describeIn sub_models TN93 model.
+//'
+//' @param pi_tcag Vector of length 4 indicating the equilibrium distributions of
+//'     T, C, A, and G respectively. Values must be >= 0, and
+//'     they are forced to sum to 1.
+//' @param alpha_1 Substitution rate for T <-> C transition.
+//' @param alpha_2 Substitution rate for A <-> G transition.
+//' @param beta Substitution rate for transversions.
+//'
+//' @export
 //'
 //[[Rcpp::export]]
-arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag,
-                           const double& alpha_1, const double& alpha_2,
-                           const double& beta) {
+List sub_TN93(std::vector<double> pi_tcag,
+              const double& alpha_1,
+              const double& alpha_2,
+              const double& beta) {
+
+    // Check that pi_tcag is proper size, no values < 0, at least one value > 0.
+    vec_check(pi_tcag, "pi_tcag", true, 4);
+
+    if (alpha_1 < 0) str_stop({"\nFor the TN93 model, `alpha_1` should be >= 0."});
+    if (alpha_2 < 0) str_stop({"\nFor the TN93 model, `alpha_2` should be >= 0."});
+    if (beta < 0) str_stop({"\nFor the TN93 model, `beta` should be >= 0."});
+
+    // Standardize pi_tcag first:
+    double pi_sum = std::accumulate(pi_tcag.begin(), pi_tcag.end(), 0.0);
+    for (double& d : pi_tcag) d /= pi_sum;
 
     arma::mat Q(4,4);
     Q.fill(beta);
@@ -38,85 +110,110 @@ arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag,
     // Reset diagonals to zero
     Q.diag().fill(0.0);
 
-    return Q;
+    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag);
+
+    out.attr("class") = "sub_model_info";
+
+    return out;
 }
 
 
 
-//' Q matrix for rates for a given nucleotide using the JC69 substitution model.
+//' @describeIn sub_models JC69 model.
 //'
-//' JC69 is a special case of TN93.
+//' @param lambda Substitution rate for all possible substitutions.
 //'
-//' @noRd
+//' @export
+//'
 //'
 //[[Rcpp::export]]
-arma::mat JC69_rate_matrix(const double& lambda) {
+List sub_JC69(const double& lambda) {
 
-    std::vector<double> pi_tcag = {1, 1, 1, 1};
+    if (lambda < 0) str_stop({"\nFor the JC69 model, `lambda` should be >= 0."});
 
-    arma::mat Q = TN93_rate_matrix(pi_tcag, lambda, lambda, lambda);
+    std::vector<double> pi_tcag(4, 0.25);
 
-    return Q;
+    List out = sub_TN93(pi_tcag, lambda, lambda, lambda);
+
+    return out;
 }
 
 
-//' Q matrix for rates for a given nucleotide using the K80 substitution model.
+//' @describeIn sub_models K80 model.
 //'
-//' K80 is a special case of TN93.
+//' @param alpha Substitution rate for transitions.
+//' @inheritParams sub_TN93
 //'
-//' @noRd
+//' @export
 //'
 //[[Rcpp::export]]
-arma::mat K80_rate_matrix(const double& alpha, const double& beta) {
+List sub_K80(const double& alpha,
+             const double& beta) {
 
-    std::vector<double> pi_tcag = {1, 1, 1, 1};
+    if (alpha < 0) str_stop({"\nFor the K80 model, `alpha` should be >= 0."});
+    if (beta < 0) str_stop({"\nFor the K80 model, `beta` should be >= 0."});
 
-    arma::mat Q = TN93_rate_matrix(pi_tcag, alpha, alpha, beta);
+    std::vector<double> pi_tcag(4, 0.25);
 
-    return Q;
+    List out = sub_TN93(pi_tcag, alpha, alpha, beta);
+
+    return out;
 }
 
 
-//' Q matrix for rates for a given nucleotide using the F81 substitution model.
+//' @describeIn sub_models F81 model.
 //'
-//' F81 is a special case of TN93.
+//' @inheritParams sub_TN93
 //'
-//' @noRd
+//' @export
 //'
 //[[Rcpp::export]]
-arma::mat F81_rate_matrix(const std::vector<double>& pi_tcag) {
+List sub_F81(const std::vector<double>& pi_tcag) {
 
-    arma::mat Q = TN93_rate_matrix(pi_tcag, 1, 1, 1);
+    List out = sub_TN93(pi_tcag, 1, 1, 1);
 
-    return Q;
+    return out;
 }
 
 
-//' Q matrix for rates for a given nucleotide using the HKY85 substitution model.
+//' @describeIn sub_models HKY85 model.
 //'
-//' HKY85 is a special case of TN93.
 //'
-//' @noRd
+//' @inheritParams sub_TN93
+//' @inheritParams sub_K80
+//'
+//' @export
 //'
 //[[Rcpp::export]]
-arma::mat HKY85_rate_matrix(const std::vector<double>& pi_tcag,
-                            const double& alpha, const double& beta) {
+List sub_HKY85(const std::vector<double>& pi_tcag,
+               const double& alpha,
+               const double& beta) {
 
-    arma::mat Q = TN93_rate_matrix(pi_tcag, alpha, alpha, beta);
+    if (alpha < 0) str_stop({"\nFor the HKY85 model, `alpha` should be >= 0."});
+    if (beta < 0) str_stop({"\nFor the HKY85 model, `beta` should be >= 0."});
 
-    return Q;
+    List out = sub_TN93(pi_tcag, alpha, alpha, beta);
+
+    return out;
 }
 
 
-//' Q matrix for rates for a given nucleotide using the F84 substitution model.
+//' @describeIn sub_models F84 model.
 //'
-//' F84 is a special case of TN93.
 //'
-//' @noRd
+//' @inheritParams sub_TN93
+//' @inheritParams sub_K80
+//' @param kappa The transition/transversion rate ratio.
+//'
+//' @export
 //'
 //[[Rcpp::export]]
-arma::mat F84_rate_matrix(const std::vector<double>& pi_tcag,
-                          const double& beta, const double& kappa) {
+List sub_F84(const std::vector<double>& pi_tcag,
+             const double& beta,
+             const double& kappa) {
+
+    if (beta < 0) str_stop({"\nFor the F84 model, `beta` should be >= 0."});
+    if (kappa < 0) str_stop({"\nFor the F84 model, `kappa` should be >= 0."});
 
     double pi_y = pi_tcag[0] + pi_tcag[1];
     double pi_r = pi_tcag[2] + pi_tcag[3];
@@ -124,21 +221,35 @@ arma::mat F84_rate_matrix(const std::vector<double>& pi_tcag,
     double alpha_1 = (1 + kappa / pi_y) * beta;
     double alpha_2 = (1 + kappa / pi_r) * beta;
 
-    arma::mat Q = TN93_rate_matrix(pi_tcag, alpha_1, alpha_2, beta);
+    List out = sub_TN93(pi_tcag, alpha_1, alpha_2, beta);
 
-    return Q;
+    return out;
 }
 
 
 
 
-//' Q matrix for rates for a given nucleotide using the GTR substitution model.
+//' @describeIn sub_models GTR model.
 //'
-//' @noRd
+//' @inheritParams sub_TN93
+//' @param abcdef A vector of length 6 that contains the off-diagonal elements
+//'     for the substitution rate matrix.
+//'     See `vignette("sub-models")` for how the values are ordered in the matrix.
+//'
+//' @export
 //'
 //[[Rcpp::export]]
-arma::mat GTR_rate_matrix(const std::vector<double>& pi_tcag,
-                          const std::vector<double>& abcdef) {
+List sub_GTR(std::vector<double> pi_tcag,
+             const std::vector<double>& abcdef) {
+
+    // Check that pi_tcag is proper size, no values < 0, at least one value > 0.
+    vec_check(pi_tcag, "pi_tcag", true, 4);
+    // Check that abcdef is proper size, no values < 0.
+    vec_check(abcdef, "abcdef", false, 6);
+
+    // Standardize pi_tcag first:
+    double pi_sum = std::accumulate(pi_tcag.begin(), pi_tcag.end(), 0.0);
+    for (double& d : pi_tcag) d /= pi_sum;
 
     arma::mat Q(4, 4, arma::fill::zeros);
 
@@ -153,29 +264,58 @@ arma::mat GTR_rate_matrix(const std::vector<double>& pi_tcag,
     }
     for (uint32 i = 0; i < 4; i++) Q.col(i) *= pi_tcag[i];
 
-    return Q;
+    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag);
+
+    out.attr("class") = "sub_model_info";
+
+    return out;
 
 }
 
 
 
 
-
-
-
-//' Estimates equilibrium nucleotide frequencies from an input rate matrix.
+//' @describeIn sub_models UNREST model.
 //'
-//' It does this by solving for πQ = 0 by finding the left eigenvector of Q that
-//' corresponds to the eigenvalue closest to zero.
-//' This is only needed for the UNREST model.
 //'
-//' @inheritParams Q UNREST_rate_matrix_
-//' @inheritParams pi_tcag UNREST_rate_matrix_
+//' @param Q Matrix of substitution rates for "T", "C", "A", and "G", respectively.
+//'     Item `Q[i,j]` is the rate of substitution from nucleotide `i` to nucleotide `j`.
+//'     Do not include indel rates here!
+//'     Values on the diagonal are calculated inside the function so are ignored.
 //'
-//' @noRd
+//' @export
 //'
-inline void est_pi_tcag(const arma::mat& Q, std::vector<double>& pi_tcag) {
+//'
+//[[Rcpp::export]]
+List sub_UNREST(arma::mat Q) {
 
+    /*
+     This function also fills in a vector of equilibrium frequencies for each nucleotide.
+     This calculation has to be done for this model only because it uses separate
+     values for each non-diagonal cell and doesn't use equilibrium frequencies for
+     creating the matrix.
+     It does this by solving for πQ = 0 by finding the left eigenvector of Q that
+     corresponds to the eigenvalue closest to zero.
+     */
+
+    if (Q.n_rows != 4 || Q.n_cols != 4) {
+        str_stop({"\nIn UNREST model, the matrix `Q` should have 4 rows and 4 columns."});
+    }
+
+    /*
+     Standardize `Q` matrix
+     */
+    // Make sure diagonals are set to zero so summing by row works
+    Q.diag().fill(0.0);
+    // Filling in diagonals
+    arma::vec rowsums = arma::sum(Q, 1);
+    rowsums *= -1;
+    Q.diag() = rowsums;
+
+    /*
+     Estimate pi_tcag:
+     */
+    std::vector<double> pi_tcag(4);
     arma::cx_vec eigvals;
     arma::cx_mat eigvecs;
 
@@ -189,73 +329,17 @@ inline void est_pi_tcag(const arma::mat& Q, std::vector<double>& pi_tcag) {
     arma::vec left_vec = vecs.col(i);
     double sumlv = arma::accu(left_vec);
 
-    pi_tcag.resize(4);
     for (uint32 i = 0; i < 4; i++) pi_tcag[i] = left_vec(i) / sumlv;
 
-    return;
-}
-
-
-
-
-
-//' Q matrix for rates for a given nucleotide using the UNREST substitution model.
-//'
-//' This function also fills in a vector of equilibrium frequencies for each nucleotide.
-//' This calculation has to be done for this model only because it uses separate
-//' values for each non-diagonal cell and doesn't use equilibrium frequencies for
-//' creating the matrix.
-//'
-//'
-//' @param Q Matrix of substitution rates for "T", "C", "A", and "G", respectively.
-//'     Do not include indel rates here! Diagonal values are ignored.
-//' @param pi_tcag Empty vector of equilibrium frequencies for for "T", "C", "A", and "G",
-//'     respectively. This vector will be filled in by this function.
-//' @param xi Overall rate of indels.
-//'
-//' @noRd
-//'
-void UNREST_rate_matrix_(arma::mat& Q, std::vector<double>& pi_tcag) {
-
-    if (Q.n_rows != 4 || Q.n_cols != 4) stop("Q matrix should be 4 x 4");
-
-    // Make sure diagonals are set to zero so summing by row works
+    /*
+     Assemble final output:
+    */
+    // Reset diagonal to zero for later steps
     Q.diag().fill(0.0);
-    // Filling in diagonals
-    arma::vec rowsums = arma::sum(Q, 1);
-    rowsums *= -1;
-    Q.diag() = rowsums;
-
-    // Estimate pi_tcag:
-    est_pi_tcag(Q, pi_tcag);
-
-    // Now reset diagonal to zero for later steps
-    Q.diag().fill(0.0);
-
-
-    return;
-}
-
-
-//' Same as above, but it only takes a matrix and indel rate, and outputs a list.
-//'
-//' The list is of the standardized `Q` and the calculated `pi_tcag`.
-//' This is for use in R.
-//'
-//' @inheritParams Q UNREST_rate_matrix
-//' @inheritParams xi UNREST_rate_matrix
-//'
-//' @noRd
-//'
-//'
-//[[Rcpp::export]]
-List UNREST_rate_matrix(arma::mat Q) {
-
-    std::vector<double> pi_tcag;
-
-    UNREST_rate_matrix_(Q, pi_tcag);
 
     List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag);
+
+    out.attr("class") = "sub_model_info";
 
     return out;
 }
