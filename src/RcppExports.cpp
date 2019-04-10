@@ -538,6 +538,20 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// write_bed
+void write_bed(std::string out_prefix, const std::vector<arma::mat>& gamma_mats, const std::vector<std::string>& seq_names, const int& compress, const std::string& comp_method);
+RcppExport SEXP _jackalope_write_bed(SEXP out_prefixSEXP, SEXP gamma_matsSEXP, SEXP seq_namesSEXP, SEXP compressSEXP, SEXP comp_methodSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type gamma_mats(gamma_matsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type seq_names(seq_namesSEXP);
+    Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
+    write_bed(out_prefix, gamma_mats, seq_names, compress, comp_method);
+    return R_NilValue;
+END_RCPP
+}
 // print_ref_genome
 void print_ref_genome(SEXP ref_genome_ptr);
 RcppExport SEXP _jackalope_print_ref_genome(SEXP ref_genome_ptrSEXP) {

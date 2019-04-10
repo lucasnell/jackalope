@@ -459,6 +459,16 @@ write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, show
     invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix, show_progress))
 }
 
+#' Write Gamma matrix info to a tab-delimited BED file.
+#'
+#'
+#'
+#' @noRd
+#'
+write_bed <- function(out_prefix, gamma_mats, seq_names, compress, comp_method) {
+    invisible(.Call(`_jackalope_write_bed`, out_prefix, gamma_mats, seq_names, compress, comp_method))
+}
+
 #' Add mutations manually from R.
 #'
 #' This section applies to the next 3 functions.
