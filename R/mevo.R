@@ -440,11 +440,16 @@ create_mevo <- function(reference,
 # ====================================================================================`
 # ====================================================================================`
 
-#   COAL SITES -----
+#   SEG. SITES METHOD -----
 
 # ====================================================================================`
 # ====================================================================================`
 
+
+
+# vars_ssites <- function() {}
+# print.vars_ssites_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {}
+### ~100% not needed: to_trees.vars_ssites_info <- function(x, reference, mevo_obj, ...) {}
 
 
 #' Process one segregating-sites matrix from a coalescent simulator with ms-style output.
@@ -615,4 +620,19 @@ read_coal_sites <- function(method_info, reference, mevo_obj, n_threads, show_pr
 
 }
 
+
+
+
+# ====================================================================================`
+# ====================================================================================`
+
+#   VCF METHOD -----
+
+# ====================================================================================`
+# ====================================================================================`
+
+
+# vars_vcf <- function() {}
+# print.vars_vcf_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {}
+### ~100% not needed: to_trees.vars_vcf_info <- function(x, reference, mevo_obj, ...) {}
 

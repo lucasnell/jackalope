@@ -1,5 +1,90 @@
 
 
+
+
+# ======================================================================================`
+# ======================================================================================`
+
+# HELPER FUNCTIONS -----
+
+# ======================================================================================`
+# ======================================================================================`
+
+
+#' Used to convert phylogenetic info to pointer to trees info.
+#'
+#' @noRd
+#'
+to_trees <- function (x, ...) {
+    UseMethod("to_trees", x)
+}
+
+#' Read info from a `phylo` object.
+#'
+#' @inheritParams make_phylo_info
+#'
+#' @return An external pointer to the phylogenetic info needed to do the sequence
+#'     simulations.
+#'
+#' @noRd
+#'
+phylo_to_ptr <- function(phy, n_seqs, chunked) {
+
+    if ((!inherits(phy, "phylo") && !inherits(phy, "multiPhylo") &&
+        !inherits(phy, "list")) ||
+        (inherits(phy, "list") && !all(sapply(phy, inherits, what = "phylo")))) {
+        stop("\nThe `phy` argument to the internal function `phylo_to_ptr` should ",
+             "only ever be an object of class \"phylo\", \"multiPhylo\", or a ",
+             "list of \"phylo\" objects.")
+    }
+
+    if ((inherits(phy, "multiPhylo") || inherits(phy, "list")) &&
+        length(phy) != n_seqs) {
+        stop("\nThe `phy` argument to the internal function `phylo_to_ptr` should ",
+             "have a length of 1 or equal to the number of sequences if it's of class",
+                "\"multiPhylo\" or list.")
+    }
+    # So all inputs are lists of the proper length:
+    if (inherits(phy, "phylo")) phy <- rep(list(phy), n_seqs)
+    if (inherits(phy, "multiPhylo")) class(phy) <- "list"
+
+    phylo_info <- lapply(phy,
+                         function(p) {
+                             p <- ape::reorder.phylo(p, order = "cladewise")
+                             labels <- paste(p$tip.label)# <-- making sure they're strings
+                             branch_lens <- p$edge.length
+                             edges <- p$edge
+                             phy_info <- list(branch_lens = branch_lens, edges = edges,
+                                              labels = labels, start = 0, end = 0)
+                             return(list(phy_info))
+                         })
+
+    if (!chunked) {
+        trees_ptr <- phylo_info_to_trees(phylo_info)
+    } else {
+        trees_ptr <- phylo_info_to_trees_chunk(phylo_info)
+    }
+
+    return(trees_ptr)
+}
+
+
+
+
+# ======================================================================================`
+# ======================================================================================`
+
+# GENE_TREES METHOD -----
+
+# ======================================================================================`
+# ======================================================================================`
+
+
+# vars_gtrees <- function() {}
+# print.vars_gtrees_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {}
+# to_trees.vars_gtrees_info <- function(x, reference, mevo_obj, ...) {}
+
+
 #' Process one gene-tree string from a coalescent simulator with ms-style output.
 #'
 #' @param str The string to process.
@@ -62,69 +147,6 @@ process_coal_tree_string <- function(str, seq_size) {
 
     return(out)
 }
-
-
-
-
-
-#' Read info from a `phylo` object.
-#'
-#' @inheritParams make_phylo_info
-#'
-#' @return An external pointer to the phylogenetic info needed to do the sequence
-#'     simulations.
-#'
-#' @noRd
-#'
-read_phy_obj <- function(phy, n_seqs, chunked) {
-
-    if ((!inherits(phy, "phylo") && !inherits(phy, "multiPhylo") &&
-        !inherits(phy, "list")) ||
-        (inherits(phy, "list") && !all(sapply(phy, inherits, what = "phylo")))) {
-        err_msg("create_variants", "method_info",
-                "of class \"phylo\", \"multiPhylo\", or a list of \"phylo\" objects",
-                "when `method` = \"phylo\"")
-    }
-
-    if ((inherits(phy, "multiPhylo") || inherits(phy, "list")) &&
-        length(phy) != n_seqs) {
-            stop(paste0("\nFor `create_variants` method \"phy\", ",
-                        "if providing a list or `multiPhylo` object, its length ",
-                        "must equal the number of sequences."),
-                 call. = FALSE)
-        err_msg("create_variants", "method_info",
-                "the same length as the number of sequences if it's of class",
-                "\"multiPhylo\" or list and when `method` = \"phylo\"")
-    }
-    # So all inputs are lists of the proper length:
-    if (inherits(phy, "phylo")) phy <- rep(list(phy), n_seqs)
-    if (inherits(phy, "multiPhylo")) class(phy) <- "list"
-
-    phylo_info <- lapply(phy,
-                         function(p) {
-                             p <- ape::reorder.phylo(p, order = "cladewise")
-                             labels <- paste(p$tip.label)# <-- making sure they're strings
-                             branch_lens <- p$edge.length
-                             edges <- p$edge
-                             phy_info <- list(branch_lens = branch_lens, edges = edges,
-                                              labels = labels, start = 0, end = 0)
-                             return(list(phy_info))
-                         })
-
-    if (!chunked) {
-        trees_ptr <- phylo_info_to_trees(phylo_info)
-    } else {
-        trees_ptr <- phylo_info_to_trees_chunk(phylo_info)
-    }
-
-    return(trees_ptr)
-}
-
-
-
-
-
-
 
 #' Read gene-tree info from a coalescent object from scrm or coala.
 #'
@@ -285,79 +307,200 @@ read_ms_trees <- function(ms_filename, seq_sizes, chunked) {
 
 
 
-#' Read info from a NEWICK file.
-#'
-#' @inheritParams make_phylo_info
-#'
-#' @return An external pointer to the phylogenetic info needed to do the sequence
-#'     simulations.
-#'
-#' @noRd
-#'
-read_newick <- function(newick_filename, n_seqs, chunked) {
+# ======================================================================================`
+# ======================================================================================`
 
-    if (!is_type(newick_filename, "character", c(1, n_seqs))) {
-        err_msg("create_variants", "method_info",
-                "a single string or a vector of strings of the same length as",
-                "the number of sequences, when `method` = \"newick\"")
+# PHYLO METHOD -----
+
+# ======================================================================================`
+# ======================================================================================`
+
+
+#' Create necessary information to create variants using phylogenetic tree(s)
+#'
+#'
+#' @param obj Object containing phylogenetic tree(s).
+#'     This can be (1) a single \code{\link[ape]{phylo}} object that represents all
+#'     sequences in the genome or
+#'     (2) a `list` or `multiPhylo` object containing a `phylo` object for
+#'     each reference sequence.
+#'     In the latter case, phylogenies will be assigned to sequences in the
+#'     order provided.
+#'     Defaults to `NULL`.
+#' @param fn One or more string(s), each of which specifies the file name
+#'     of a NEWICK file containing a phylogeny.
+#'     If one name is provided, that phylogeny will be used for all sequences.
+#'     If more than one is provided, there must be a phylogeny for each reference
+#'     genome sequence, and phylogenies will be assigned to sequences
+#'     in the order provided.
+#'     Defaults to `NULL`.
+#'
+#'
+#' @return A `vars_phylo_info` object containing information used in `create_variants`
+#'     to create haploid variants.
+#'     This class is just a wrapper around a list containing phylogenetic tree
+#'     information for each reference sequence.
+#'
+#' @export
+#'
+vars_phylo <- function(obj = NULL,
+                       fn = NULL) {
+
+    if (is.null(obj) && is.null(fn)) {
+        stop("\nIn function `vars_phylo`, either argument `obj` or `fn` ",
+             "must be provided.", call. = FALSE)
+    }
+    if (!is.null(obj) && !is.null(fn)) {
+        stop("\nIn function `vars_phylo`, only one argument (`obj` or `fn`) ",
+             "should be provided.", call. = FALSE)
     }
 
-    phy <- lapply(newick_filename, ape::read.tree)
+    phy <- NULL
+    if (!is.null(obj)) {
+
+        if ((!inherits(obj, "phylo") && !inherits(obj, "multiPhylo") &&
+             !inherits(obj, "list")) ||
+            (inherits(obj, "list") && !all(sapply(obj, inherits,
+                                                        what = "phylo")))) {
+            err_msg("vars_phylo", "obj",
+                    "of class \"phylo\", \"multiPhylo\", or a list of \"phylo\" objects")
+        }
+
+        phy <- obj
+        # So all output is a list
+        if (inherits(phy, "phylo")) phy <- list(phy)
+        if (inherits(phy, "multiPhylo")) class(phy) <- "list"
+
+    }
+    if (!is.null(fn)) {
+        if (!is_type(fn, "character")) {
+            err_msg("vars_phylo", "fn", "a character vector")
+        }
+        phy <- lapply(fn, ape::read.tree)
+    }
+
+    out <- list(phylo = phy)
+    class(out) <- "vars_phylo_info"
+
+    return(out)
+
+}
+
+
+#'
+#' @export
+#'
+print.vars_phylo_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
+
+    cat("< Phylo variant-creation info >\n")
+    cat(sprintf("  * Number of variants: %i\n", length(x$phylo[[1]]$tip.label)))
+    cat(sprintf("  * Number of trees: %i\n", length(x$phylo)))
+    invisible(NULL)
+
+}
+
+to_trees.vars_phylo_info <- function(x, reference, mevo_obj, ...) {
+
+    n_vars <- length(phy$tip.label)
+    n_seqs <- as.integer(reference$n_seqs())
+    chunked <- mevo_obj$chunk_size > 0
+
+    phy <- x$phylo
+    class(phy) <- "list"
+
+    if (!length(phy) %in% c(1L, n_seqs)) {
+        stop("\nIn function `vars_phylo`, you must provide information for 1 tree ",
+             "or a tree for each reference genome sequence. ",
+             "It appears you need to re-run `vars_phylo` before attempting to ",
+             "run `create_variants` again.")
+    }
 
     if (length(phy) == 1) phy <- rep(phy, n_seqs)
 
-    trees_ptr <- read_phy_obj(phy, n_seqs, chunked)
+    trees_ptr <- phylo_to_ptr(phy, n_seqs, chunked)
 
     return(trees_ptr)
+
 }
 
 
 
-#' Random phylogenetic tree from theta and mu parameters.
-#'
-#' Note that mu should be derived from the mutation object, not passed to the function
-#' by the user.
-#'
-#' @inheritParams make_phylo_info
-#'
-#' @return An external pointer to the phylogenetic info needed to do the sequence
-#'     simulations.
-#'
-#' @noRd
-#'
-read_theta <- function(theta_n_vars, mu, n_seqs, chunked) {
 
-    if (!is_type(theta_n_vars, c("list", "numeric")) ||
-        is.null(names(theta_n_vars)) ||
-        !single_number(theta_n_vars[["theta"]]) ||
-        theta_n_vars[["theta"]] <= 0 ||
-        !single_integer(theta_n_vars[["n_vars"]], 1)) {
+# ======================================================================================`
+# ======================================================================================`
 
-        err_msg("create_variants", "method_info",
-                "a named list or numeric vector, with the names",
-                "\"theta\" and \"n_vars\".",
-                "\"theta\" must be a single number > 0, and",
-                "\"n_vars\" must be a single whole number >= 1.")
+# THETA METHOD -----
 
+# ======================================================================================`
+# ======================================================================================`
+
+
+#' Create necessary information to create variants using theta parameter
+#'
+#'
+#' @param theta Population-scaled mutation rate.
+#' @param n_vars Mumber of desired variants.
+#'
+#'
+#' @return A `vars_theta_info` object containing information used in `create_variants`
+#'     to create haploid variants.
+#'     This class is just a wrapper around a list containing the phylogenetic tree
+#'     and `theta` parameter.
+#'
+#' @export
+#'
+vars_theta <- function(theta, n_vars) {
+
+    if (!single_number(theta, 0)) {
+        err_msg("vars_theta", "theta", "a single number >= 0")
+    }
+    if (!single_integer(n_vars, 2)) {
+        err_msg("vars_theta", "n_vars", "a single integer >= 2")
     }
 
-    theta <- theta_n_vars[["theta"]]
-    n_vars <- theta_n_vars[["n_vars"]]
 
     # Generate random coalescent tree:
     phy <- ape::rcoal(n_vars)
+
+    out <- list(phylo = phy, theta = theta)
+    class(out) <- "vars_theta_info"
+
+    return(out)
+
+}
+
+#'
+#' @export
+#'
+print.vars_theta_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
+
+    cat("< Theta variant-creation info >\n")
+    cat(sprintf("  * Theta: %.3g\n", x$theta))
+    cat("# Phylogenetic tree:\n")
+    print(x$phylo)
+    invisible(NULL)
+
+}
+
+to_trees.vars_theta_info <- function(x, reference, mevo_obj, ...) {
+
+    phy <- x$phylo
+    theta <- x$theta
+
+    n_vars <- length(phy$tip.label)
+    n_seqs <- reference$n_seqs()
+    chunked <- mevo_obj$chunk_size > 0
 
     # Calculating L from theta:
     # E(L) = 4 * N * a; a = sum(1 / (1:(n_seqs-1)))
     a <- sum(1 / (1:(n_vars-1)))
     # theta = 4 * N * mu
     # So if we know theta and mu, then...
-    L <- theta * a / mu
-
+    L <- theta * a / mevo_obj$mu()
     # Now rescale to have total tree length of `L`:
     phy$edge.length <- phy$edge.length / max(ape::node.depth.edgelength(phy)) * L
 
-    trees_ptr <- read_phy_obj(phy, n_seqs, chunked)
+    trees_ptr <- phylo_to_ptr(phy, n_seqs, chunked)
 
     return(trees_ptr)
 
@@ -366,8 +509,65 @@ read_theta <- function(theta_n_vars, mu, n_seqs, chunked) {
 
 
 
+
+
+
+
+# ======================================================================================`
+# ======================================================================================`
+
+# COMBINED -----
+
+# ======================================================================================`
+# ======================================================================================`
+
+# This function will probably need to be removed or changed drastically
+
+
 #' Create phylogenetic information object from one of multiple methods.
 #'
+#'
+#' \describe{
+#'     \item{`method = "phylo"`}{One of the following object types is allowed:
+#'         \itemize{
+#'             \item A single \code{\link[ape]{phylo}} object that represents all
+#'                 sequences in the genome.
+#'             \item A `list` or `multiPhylo` object containing a `phylo` object for
+#'                 each reference sequence.
+#'                 Phylogenies will be assigned to sequences in the order provided.
+#'             \item One or more string(s), each of which specifies
+#'                 a name of a NEWICK file containing a phylogeny.
+#'                 If one name is provided, that phylogeny will be used for
+#'                 all sequences.
+#'                 If more than one is provided, there must be a phylogeny for
+#'                 each sequence, and phylogenies will be assigned to sequences
+#'                 in the order provided.
+#'         }
+#'     }
+#'     \item{`method = "coal_trees"`}{One of the following object types is allowed:
+#'         \itemize{
+#'             \item A single `list` with a `trees` field inside. This field must
+#'                 contain a set of gene trees for each sequence.
+#'             \item A list of lists, each sub-list containing a `trees` field of
+#'                 length 1. The top-level list must be of the same length as the
+#'                 number of sequences.
+#'             \item A single string specifying the name of the file containing
+#'                 the `ms`-style coalescent output with gene trees.
+#'         }
+#'         The top two options are designed after the `trees` fields in the output from
+#'         the `scrm` and `coala` packages.
+#'         (These packages are not required to be installed when installing
+#'         `jackalope`.)
+#'         To get gene trees, make sure to add `+ sumstat_trees()`
+#'         to the `coalmodel` for `coala`, or
+#'         make sure that `"-T"` is present in `args` for `scrm`.
+#'         If using an output file from a command-line program like `ms`/`msms`,
+#'         add the `-T` option.
+#'     }
+#'     \item{`method = "theta"`}{A named vector or list containing the fields `theta`
+#'         and `n_vars`, specifying the theta parameter (population-scaled mutation rate)
+#'         and number of desired variants, respectively.}
+#' }
 #'
 #' @inheritParams create_variants
 #' @param seq_sizes Vector of sequence sizes.
@@ -379,8 +579,7 @@ read_theta <- function(theta_n_vars, mu, n_seqs, chunked) {
 #'
 #' @noRd
 #'
-make_phylo_info <- function(method,
-                            method_info,
+make_phylo_info <- function(phylo_obj,
                             reference,
                             mevo_obj) {
 
@@ -393,7 +592,7 @@ make_phylo_info <- function(method,
 
     if (method == "phylo") {
 
-        trees_ptr <- read_phy_obj(method_info, n_seqs, chunked)
+        trees_ptr <- phylo_to_ptr(method_info, n_seqs, chunked)
 
     } else if (method == "coal_trees") {
 

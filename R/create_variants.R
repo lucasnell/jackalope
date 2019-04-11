@@ -41,6 +41,13 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'             \item A `list` or `multiPhylo` object containing a `phylo` object for
 #'                 each reference sequence.
 #'                 Phylogenies will be assigned to sequences in the order provided.
+#'             \item One or more string(s), each of which specifies
+#'                 a name of a NEWICK file containing a phylogeny.
+#'                 If one name is provided, that phylogeny will be used for
+#'                 all sequences.
+#'                 If more than one is provided, there must be a phylogeny for
+#'                 each sequence, and phylogenies will be assigned to sequences
+#'                 in the order provided.
 #'         }
 #'     }
 #'     \item{`method = "coal_trees"`}{One of the following object types is allowed:
@@ -84,11 +91,6 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'         (These packages are not required to be installed when installing
 #'         `jackalope`.)
 #'     }
-#'     \item{`method = "newick"`}{One or more string(s), each of which specifies
-#'         a name of a NEWICK file containing a phylogeny.
-#'         If one name is provided, that phylogeny will be used for all sequences.
-#'         If more than one is provided, there must be a phylogeny for each sequence,
-#'         and phylogenies will be assigned to sequences in the order provided.}
 #'     \item{`method = "theta"`}{A named vector or list containing the fields `theta`
 #'         and `n_vars`, specifying the theta parameter (population-scaled mutation rate)
 #'         and number of desired variants, respectively.}
@@ -107,7 +109,8 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #' @param method Method to use for generating variants.
 #'     Options are as follows:
 #'     \describe{
-#'         \item{`"phylo"`}{phylogenetic tree(s) from `phylo` object(s).}
+#'         \item{`"phylo"`}{phylogenetic tree(s) from `phylo` object(s) or
+#'             NEWICK file(s).}
 #'         \item{`"coal_trees"`}{information from gene trees, either in the form of
 #'             (1) coalescent-simulator object(s) from the `scrm` or `coala` package, or
 #'             (2) a file containing output from a coalescent simulator in the
@@ -117,7 +120,6 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'             (1) coalescent-simulator object(s) from the `scrm` or `coala` package, or
 #'             (2) a file containing output from a coalescent simulator in the
 #'             format of the `ms` program.}
-#'         \item{`"newick"`}{NEWICK file(s) containing phylogenetic tree(s).}
 #'         \item{`"theta"`}{an estimate for theta, the population-scaled mutation rate.}
 #'         \item{`"vcf"`}{a variant call format (VCF) file that directly specifies
 #'             variants. This method does not work if the `vcfR` package isn't installed.
@@ -185,7 +187,7 @@ create_variants <- function(reference,
                             n_threads = 1,
                             show_progress = FALSE) {
 
-    methods_ <- list(phylo = c("phylo", "coal_trees", "newick", "theta"),
+    methods_ <- list(phylo = c("phylo", "coal_trees", "theta"),
                      non = c("coal_sites", "vcf"))
 
     method <- match.arg(method, as.character(do.call(c, methods_)))
