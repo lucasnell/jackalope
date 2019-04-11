@@ -1,4 +1,4 @@
-# >> ref_genome class----
+# >> CLASS ref_genome----
 #' An R6 class representing a reference genome.
 #'
 #'
@@ -228,143 +228,10 @@ ref_genome$lock()
 
 
 
-# >> mevo class----
-#' An R6 class containing information needed for molecular evolution.
-#'
-#' This class is only used in `create_variants` to organize information.
-#' It is not exported.
-#'
-#' @field Q A matrix of substitution rates for each nucleotide.
-#' @field pi_tcag Vector of nucleotide equilibrium frequencies for "T", "C", "A", and
-#'     "G", respectively.
-#' @field insertion_rates Vector of insertion rates by length.
-#' @field deletion_rates Vector of deletion rates by length.
-#' @field gamma_mats List of matrices specifying "gamma distances" (see definition in
-#'     `?create_mevo`) for each sequence.
-#' @field chunk_size The size of "chunks" of sequences to first sample uniformly
-#'     before doing weighted sampling by rates for each sequence location.
-#'     See `?create_mevo` for more information.
-#'
-#' @section Methods:
-#' \describe{
-#'     \item{`mu()`}{Calculates the average overall mutation rate at equilibrium.}
-#'     \item{`q()`}{Calculates the mutation rate for each nucleotide.}
-#' }
-#'
-#' @return An object of class \code{mevo}.
-#'
-#' @docType class
-#'
-#' @seealso \code{\link{create_mevo}}
-#'
-#' @noRd
-#'
-#' @format An \code{\link[R6]{R6Class}} generator object
-#'
-mevo <- R6::R6Class(
-
-    "mevo",
-
-    public = list(
-
-        Q = NULL,
-        pi_tcag = NULL,
-        insertion_rates = NULL,
-        deletion_rates = NULL,
-        gamma_mats = NULL,
-        chunk_size = NULL,
-
-        initialize = function(sub_info,
-                              insertion_rates,
-                              deletion_rates,
-                              gamma_mats,
-                              chunk_size) {
-
-            self$Q <- sub_info$Q
-            self$pi_tcag <- sub_info$pi_tcag
-            self$insertion_rates <- insertion_rates
-            self$deletion_rates <- deletion_rates
-            self$gamma_mats <- gamma_mats
-            self$chunk_size <- chunk_size
-
-        },
-
-
-        print = function(digits = max(3, getOption("digits") - 3), ...) {
-            fmt <- paste0("%.", digits, "f")
-            cat("< Molecular evolution info >\n")
-
-            cat("# Equilibrium densities:\n")
-            cat("  ", sprintf(fmt, self$pi_tcag), "\n")
-
-            cat("# Chunk size: ", self$chunk_size, "\n", sep = "")
-
-            cat("# Among-site variability: ")
-            using_gammas <- !all(sapply(self$gamma_mats,
-                                        function(x) nrow(x) == 1 && all(x[,2] == 1)))
-            cat(using_gammas, "\n")
-
-            cat("# Insertion rates:")
-            if (length(self$insertion_rates) == 0) {
-                cat(" <none>\n")
-            } else if (length(self$insertion_rates) > 10) {
-                cat("\n")
-                cat(sprintf(fmt, self$insertion_rates[1:10]), "...\n")
-            } else {
-                cat("\n")
-                cat(sprintf(fmt, self$insertion_rates), "\n")
-            }
-            cat("# Deletion rates:")
-            if (length(self$deletion_rates) == 0) {
-                cat(" <none>\n")
-            } else if (length(self$deletion_rates) > 10) {
-                cat("\n ", sprintf(fmt, self$deletion_rates[1:10]), "...\n")
-            } else {
-                cat("\n ", sprintf(fmt, self$deletion_rates), "\n")
-            }
-
-            cat("# Substitution rate matrix:\n")
-            prmatrix(self$Q, digits = digits,
-                     rowlab = paste("  ", c("T", "C", "A", "G")),
-                     collab = c("T", "C", "A", "G"))
-
-            invisible(self)
-        },
-
-
-        # Average mutation rate
-        mu = function() {
-            # Indel rates (same for each nucleotide):
-            indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
-            # Average mutation rate among all nucleotides:
-            mu <- sum({rowSums(self$Q) + indel} * self$pi_tcag)
-            return(mu)
-        },
-
-        # Overall mutation rate by nucleotide
-        q = function() {
-            # Indel rates (same for each nucleotide):
-            indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
-            # Mutation rates by nucleotides:
-            q <- rowSums(self$Q) + indel
-            return(q)
-        }
-
-    ),
-
-
-    private = list()
-
-)
-
-mevo$lock()
 
 
 
-
-
-
-# >> variants class----
+# >> CLASS variants----
 #' An R6 class representing haploid variants from a reference genome.
 #'
 #' \emph{Note:} This class wraps a pointer to a C++ object, so
@@ -624,4 +491,142 @@ variants <- R6::R6Class(
 )
 
 variants$lock()
+
+
+
+
+
+# >> CLASS mevo ----
+#' An R6 class containing information needed for molecular evolution.
+#'
+#' This class is only used in `create_variants` to organize information.
+#' It is not exported.
+#'
+#' @field Q A matrix of substitution rates for each nucleotide.
+#' @field pi_tcag Vector of nucleotide equilibrium frequencies for "T", "C", "A", and
+#'     "G", respectively.
+#' @field insertion_rates Vector of insertion rates by length.
+#' @field deletion_rates Vector of deletion rates by length.
+#' @field gamma_mats List of matrices specifying "gamma distances" (see definition in
+#'     `?create_mevo`) for each sequence.
+#' @field chunk_size The size of "chunks" of sequences to first sample uniformly
+#'     before doing weighted sampling by rates for each sequence location.
+#'     See `?create_mevo` for more information.
+#'
+#' @section Methods:
+#' \describe{
+#'     \item{`mu()`}{Calculates the average overall mutation rate at equilibrium.}
+#'     \item{`q()`}{Calculates the mutation rate for each nucleotide.}
+#' }
+#'
+#' @return An object of class \code{mevo}.
+#'
+#' @docType class
+#'
+#' @seealso \code{\link{create_mevo}}
+#'
+#' @noRd
+#'
+#' @format An \code{\link[R6]{R6Class}} generator object
+#'
+mevo <- R6::R6Class(
+
+    "mevo",
+
+    public = list(
+
+        Q = NULL,
+        pi_tcag = NULL,
+        insertion_rates = NULL,
+        deletion_rates = NULL,
+        gamma_mats = NULL,
+        chunk_size = NULL,
+
+        initialize = function(sub_info,
+                              insertion_rates,
+                              deletion_rates,
+                              gamma_mats,
+                              chunk_size) {
+
+            self$Q <- sub_info$Q
+            self$pi_tcag <- sub_info$pi_tcag
+            self$insertion_rates <- insertion_rates
+            self$deletion_rates <- deletion_rates
+            self$gamma_mats <- gamma_mats
+            self$chunk_size <- chunk_size
+
+        },
+
+
+        print = function(digits = max(3, getOption("digits") - 3), ...) {
+            fmt <- paste0("%.", digits, "f")
+            cat("< Molecular evolution info >\n")
+
+            cat("# Equilibrium densities:\n")
+            cat("  ", sprintf(fmt, self$pi_tcag), "\n")
+
+            cat("# Chunk size: ", self$chunk_size, "\n", sep = "")
+
+            cat("# Among-site variability: ")
+            using_gammas <- !all(sapply(self$gamma_mats,
+                                        function(x) nrow(x) == 1 && all(x[,2] == 1)))
+            cat(using_gammas, "\n")
+
+            cat("# Insertion rates:")
+            if (length(self$insertion_rates) == 0) {
+                cat(" <none>\n")
+            } else if (length(self$insertion_rates) > 10) {
+                cat("\n")
+                cat(sprintf(fmt, self$insertion_rates[1:10]), "...\n")
+            } else {
+                cat("\n")
+                cat(sprintf(fmt, self$insertion_rates), "\n")
+            }
+            cat("# Deletion rates:")
+            if (length(self$deletion_rates) == 0) {
+                cat(" <none>\n")
+            } else if (length(self$deletion_rates) > 10) {
+                cat("\n ", sprintf(fmt, self$deletion_rates[1:10]), "...\n")
+            } else {
+                cat("\n ", sprintf(fmt, self$deletion_rates), "\n")
+            }
+
+            cat("# Substitution rate matrix:\n")
+            prmatrix(self$Q, digits = digits,
+                     rowlab = paste("  ", c("T", "C", "A", "G")),
+                     collab = c("T", "C", "A", "G"))
+
+            invisible(self)
+        },
+
+
+        # Average mutation rate
+        mu = function() {
+            # Indel rates (same for each nucleotide):
+            indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
+            # Average mutation rate among all nucleotides:
+            mu <- sum({rowSums(self$Q) + indel} * self$pi_tcag)
+            return(mu)
+        },
+
+        # Overall mutation rate by nucleotide
+        q = function() {
+            # Indel rates (same for each nucleotide):
+            indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
+            # Mutation rates by nucleotides:
+            q <- rowSums(self$Q) + indel
+            return(q)
+        }
+
+    ),
+
+
+    private = list()
+
+)
+
+mevo$lock()
+
+
+
 
