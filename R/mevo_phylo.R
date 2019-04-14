@@ -80,9 +80,127 @@ phylo_to_ptr <- function(phy, n_seqs, chunked) {
 # ======================================================================================`
 
 
-# vars_gtrees <- function() {}
-# print.vars_gtrees_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {}
-# to_trees.vars_gtrees_info <- function(x, reference, mevo_obj, ...) {}
+#' Create necessary information to create variants using phylogenetic tree(s)
+#'
+#'
+#' @param obj Object containing gene trees.
+#'     This can be one of the following:
+#'     (1) A single `list` with a `trees` field inside. This field must
+#'     contain a set of gene trees for each sequence.
+#'     (2) A list of lists, each sub-list containing a `trees` field of
+#'     length 1. The top-level list must be of the same length as the
+#'     number of sequences.
+#'     Defaults to `NULL`.
+#' @param fn A single string specifying the name of the file containing
+#'     the `ms`-style coalescent output with gene trees.
+#'     Defaults to `NULL`.
+#'
+#'
+#' @return A `vars_gtrees_info` object containing information used in `create_variants`
+#'     to create haploid variants.
+#'     This class is just a wrapper around a list of NEWICK tree strings, one for
+#'     each gene tree.
+#'
+#' @export
+#'
+vars_gtrees <- function(obj = NULL,
+                        fn = NULL) {
+
+    if (is.null(obj) && is.null(fn)) {
+        stop("\nIn function `vars_gtrees`, either argument `obj` or `fn` ",
+             "must be provided.", call. = FALSE)
+    }
+    if (!is.null(obj) && !is.null(fn)) {
+        stop("\nIn function `vars_gtrees`, only one argument (`obj` or `fn`) ",
+             "should be provided.", call. = FALSE)
+    }
+
+    trees <- NULL
+    type <- NULL
+
+    if (!is.null(obj)) {
+
+        type <- "object"
+
+        # Check for `obj` being a list and either having a `trees` field or all its
+        # items within having `trees` fields
+        err <- FALSE
+        nested <- FALSE
+        if (!inherits(obj, "list")) {
+            err <- TRUE
+        } else if (is.null(obj$trees)) {
+            if (any(sapply(obj, function(x) !inherits(x, "list") || is.null(x$trees)))) {
+                err <- TRUE
+            } else {
+                nested <- TRUE
+                if (any(sapply(obj, function(x) length(x$trees)) != 1)) err <- TRUE
+                if (any(!sapply(obj, function(x) inherits(x$trees, "list")))) err <- TRUE
+            }
+        }
+        if (err) {
+            err_msg("vars_gtrees", "obj",
+                    "(1) a list with a `trees` field present or",
+                    "(2) a list of lists, each sub-list containing a `trees`",
+                    "field of length 1")
+        }
+
+        if (nested) {
+            trees <- lapply(obj, function(x) x$trees[[1]])
+        } else trees <- obj$trees
+
+    } else {
+
+        type <- "file"
+
+        if (!is_type(fn, "character", 1)) {
+            err_msg("vars_gtrees", "fn", "NULL or a single string")
+        }
+
+        trees <- read_ms_trees_(fn)
+
+        if (any(sapply(trees, length) == 0)) {
+            stop("\nIn ms-style output file, one or more sequences have no trees.",
+                 call. = FALSE)
+        }
+
+    }
+
+    out <- list(trees = trees, type = type)
+    class(out) <- "vars_gtrees_info"
+
+    return(out)
+
+}
+
+
+#'
+#' @export
+#'
+print.vars_gtrees_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
+
+    cat("< Gene trees variant-creation info >\n")
+    cat(sprintf("  * Number of sequences: %i\n", length(x$trees)))
+    invisible(NULL)
+
+}
+
+
+to_trees.vars_gtrees_info <- function(x, reference, mevo_obj, ...) {
+
+    trees_ptr <- NULL
+
+    if (x$type == "object") {
+        trees_ptr <- read_coal_trees(x$trees, reference, mevo_obj)
+    } else if (x$type == "file") {
+        trees_ptr <- read_ms_trees(x$trees, reference, mevo_obj)
+    } else {
+        stop("\nAll `vars_gtrees_info` objects should have a type field that's either ",
+             "\"object\" or \"file\".", call. = FALSE)
+    }
+
+    return(trees_ptr)
+
+}
 
 
 #' Process one gene-tree string from a coalescent simulator with ms-style output.
@@ -158,33 +276,10 @@ process_coal_tree_string <- function(str, seq_size) {
 #' @noRd
 #'
 #'
-read_coal_trees <- function(coal_obj, seq_sizes, chunked) {
+read_coal_trees <- function(trees, reference, mevo_obj) {
 
-    # Check for coal_obj being a list and either having a `trees` field or all its
-    # items within having `trees` fields
-    err <- FALSE
-    nested <- FALSE
-    if (!inherits(coal_obj, "list")) {
-        err <- TRUE
-    } else if (is.null(coal_obj$trees)) {
-        if (any(sapply(coal_obj, function(x) !inherits(x, "list") || is.null(x$trees)))) {
-            err <- TRUE
-        } else {
-            nested <- TRUE
-            if (any(sapply(coal_obj, function(x) length(x$trees)) != 1)) err <- TRUE
-            if (any(!sapply(coal_obj, function(x) inherits(x$trees, "list")))) err <- TRUE
-        }
-    }
-    if (err) {
-        err_msg("create_variants", "method_info",
-                "(1) a list with a `trees` field present or",
-                "(2) a list of lists, each sub-list containing a `trees`",
-                "field of length 1, when `method` = \"coal_trees\"")
-    }
-
-    if (nested) {
-        trees <- lapply(coal_obj, function(x) x$trees[[1]])
-    } else trees <- coal_obj$trees
+    seq_sizes <- reference$sizes()
+    chunked <- mevo_obj$chunk_size > 0
 
     if (length(trees) != length(seq_sizes)) {
         err_msg("create_variants", "method_info",
@@ -251,14 +346,10 @@ read_coal_trees <- function(coal_obj, seq_sizes, chunked) {
 #' @noRd
 #'
 #'
-read_ms_trees <- function(ms_filename, seq_sizes, chunked) {
+read_ms_trees <- function(trees, reference, mevo_obj) {
 
-    trees <- read_ms_trees_(ms_filename)
-
-    if (any(sapply(trees, length) == 0)) {
-        stop("\nIn ms-style output file, one or more sequences have no trees.",
-             call. = FALSE)
-    }
+    seq_sizes <- reference$sizes()
+    chunked <- mevo_obj$chunk_size > 0
 
     phylo_info <- mapply(process_coal_tree_string, trees, seq_sizes,
                          SIMPLIFY = FALSE, USE.NAMES = FALSE)
@@ -579,7 +670,7 @@ to_trees.vars_theta_info <- function(x, reference, mevo_obj, ...) {
 #'
 #' @noRd
 #'
-make_phylo_info <- function(phylo_obj,
+make_phylo_info <- function(obj,
                             reference,
                             mevo_obj) {
 

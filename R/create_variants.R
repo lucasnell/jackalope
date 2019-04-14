@@ -34,6 +34,9 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #' @section Method arguments:
 #' Below, I describe what the `method_info` should look like for each possible method.
 #' \describe{
+#'     \item{`method = "theta"`}{A named vector or list containing the fields `theta`
+#'         and `n_vars`, specifying the theta parameter (population-scaled mutation rate)
+#'         and number of desired variants, respectively.}
 #'     \item{`method = "phylo"`}{One of the following object types is allowed:
 #'         \itemize{
 #'             \item A single \code{\link[ape]{phylo}} object that represents all
@@ -50,7 +53,7 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'                 in the order provided.
 #'         }
 #'     }
-#'     \item{`method = "coal_trees"`}{One of the following object types is allowed:
+#'     \item{`method = "gtrees"`}{One of the following object types is allowed:
 #'         \itemize{
 #'             \item A single `list` with a `trees` field inside. This field must
 #'                 contain a set of gene trees for each sequence.
@@ -70,7 +73,7 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'         If using an output file from a command-line program like `ms`/`msms`,
 #'         add the `-T` option.
 #'     }
-#'     \item{`method = "coal_sites"`}{One of the following object types is allowed:
+#'     \item{`method = "ssites"`}{One of the following object types is allowed:
 #'         \itemize{
 #'             \item A single `list` with a `seg_sites` field inside. This field must
 #'                 contain a matrix for segregating sites for each sequence.
@@ -91,9 +94,6 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'         (These packages are not required to be installed when installing
 #'         `jackalope`.)
 #'     }
-#'     \item{`method = "theta"`}{A named vector or list containing the fields `theta`
-#'         and `n_vars`, specifying the theta parameter (population-scaled mutation rate)
-#'         and number of desired variants, respectively.}
 #'     \item{`method = "vcf"`}{Either (a) a single string specifying the name of
 #'         the VCF file or (b) a list of arguments to pass to `vcfR::read.vcfR`.
 #'         For the latter, the list can also contain the `print_chroms` field, which,
