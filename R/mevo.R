@@ -1,6 +1,18 @@
 
+#' ========================================================================`
+#'
+#' This file stores functions for molecular-evolution info.
+#' This includes those for substitutions, indels,
+#' among-site variability in mutation rates, and
+#' creating `mevo` objects that organize molecular-evolution info.
+#'
+#' ========================================================================`
 
-#' Print method for sub_model_info objects.
+
+# substitutions -----
+
+
+#' Print method for `sub_model_info` objects, output from `sub_models` functions.
 #'
 #' I added this mostly to make users less likely to edit it manually and to
 #' give context to the output.
@@ -26,6 +38,11 @@ print.sub_model_info <- function(x, digits = max(3, getOption("digits") - 3), ..
     invisible(NULL)
 }
 
+
+
+
+
+# indels -----
 
 
 #' Insertions and deletions (indels) specification
@@ -158,6 +175,9 @@ print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) 
     invisible(NULL)
 }
 
+
+
+# among-site var. -----
 
 
 #' Specify variation in mutation rates among sites
@@ -321,6 +341,10 @@ print.site_var_mats <- function(x, digits = max(3, getOption("digits") - 3), ...
     invisible(NULL)
 }
 
+
+
+
+# mevo objects -----
 
 
 #' Make a `mevo` object to store information needed for molecular evolution simulation.
