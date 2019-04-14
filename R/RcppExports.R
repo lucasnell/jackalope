@@ -227,7 +227,7 @@ evolve_seqs_chunk <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, 
 #'
 #' @name sub_models
 #'
-#' @seealso \code{\link{create_mevo}}
+#' @seealso \code{\link{create_variants}}
 #'
 #' @return A `sub_model_info` object, which is just a wrapper around a list with
 #' fields `Q` and `pi_tcag`. The former has the rate matrix, and the latter
