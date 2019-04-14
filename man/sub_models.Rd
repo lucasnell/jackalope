@@ -96,5 +96,5 @@ sub_HKY85(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
 
 }
 \seealso{
-\code{\link{create_mevo}}
+\code{\link{create_variants}}
 }

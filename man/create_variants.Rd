@@ -4,42 +4,24 @@
 \alias{create_variants}
 \title{Create variants from a reference genome.}
 \usage{
-create_variants(reference, method, method_info, sub = NULL, ins = NULL,
-  del = NULL, gamma_mats = NULL, chunk_size = 100, n_threads = 1,
+create_variants(reference, vars_info, sub, ins = NULL, del = NULL,
+  gamma_mats = NULL, chunk_size = 100, n_threads = 1,
   show_progress = FALSE)
 }
 \arguments{
 \item{reference}{A \code{ref_genome} object from which to generate variants.
 This argument is required.}
 
-\item{method}{Method to use for generating variants.
-Options are as follows:
-\describe{
-\item{\code{"phylo"}}{phylogenetic tree(s) from \code{phylo} object(s).}
-\item{\code{"coal_trees"}}{information from gene trees, either in the form of
-(1) coalescent-simulator object(s) from the \code{scrm} or \code{coala} package, or
-(2) a file containing output from a coalescent simulator in the
-format of the \code{ms} program.}
-\item{\code{"coal_sites"}}{information from matrices of segregating sites,
-either in the form of
-(1) coalescent-simulator object(s) from the \code{scrm} or \code{coala} package, or
-(2) a file containing output from a coalescent simulator in the
-format of the \code{ms} program.}
-\item{\code{"newick"}}{NEWICK file(s) containing phylogenetic tree(s).}
-\item{\code{"theta"}}{an estimate for theta, the population-scaled mutation rate.}
-\item{\code{"vcf"}}{a variant call format (VCF) file that directly specifies
-variants. This method does not work if the \code{vcfR} package isn't installed.
-\strong{\emph{NOTE:}} If this method is chosen, all arguments other than
-\code{reference}, \code{method}, and \code{method_info} are ignored.}
-}}
-
-\item{method_info}{Object containing information used for the given method.
-See "Method arguments" section for which arguments are used for each method.}
+\item{vars_info}{Output from one of the \code{\link{vars_functions}}.
+These functions organize higher-level information for use here.
+See \code{\link{vars_functions}} for brief descriptions and links to each method.}
 
 \item{sub}{Output from one of the \code{\link{sub_models}} functions that organizes
 information for the substitution models.
-See \code{?sub_models} for more information on these models and
+See \code{\link{sub_models}} for more information on these models and
 their required parameters.
+This argument is only allowed to be missing if you are using a VCF file to create
+variants.
 Defaults to \code{NULL}.}
 
 \item{ins}{Output from the \code{\link{indels}} function that specifies rates
@@ -80,85 +62,12 @@ Defaults to \code{1}.}
 Defaults to \code{FALSE}.}
 }
 \description{
-Create variants from a reference genome.
+Uses one of multiple methods to create haploid variants from a reference genome.
+See \code{\link{vars_functions}} for the methods available.
 }
-\section{Method arguments}{
-
-Below, I describe what the \code{method_info} should look like for each possible method.
-\describe{
-\item{\code{method = "phylo"}}{One of the following object types is allowed:
-\itemize{
-\item A single \code{\link[ape]{phylo}} object that represents all
-sequences in the genome.
-\item A \code{list} or \code{multiPhylo} object containing a \code{phylo} object for
-each reference sequence.
-Phylogenies will be assigned to sequences in the order provided.
-}
-}
-\item{\code{method = "coal_trees"}}{One of the following object types is allowed:
-\itemize{
-\item A single \code{list} with a \code{trees} field inside. This field must
-contain a set of gene trees for each sequence.
-\item A list of lists, each sub-list containing a \code{trees} field of
-length 1. The top-level list must be of the same length as the
-number of sequences.
-\item A single string specifying the name of the file containing
-the \code{ms}-style coalescent output with gene trees.
-}
-The top two options are designed after the \code{trees} fields in the output from
-the \code{scrm} and \code{coala} packages.
-(These packages are not required to be installed when installing
-\code{jackalope}.)
-To get gene trees, make sure to add \code{+ sumstat_trees()}
-to the \code{coalmodel} for \code{coala}, or
-make sure that \code{"-T"} is present in \code{args} for \code{scrm}.
-If using an output file from a command-line program like \code{ms}/\code{msms},
-add the \code{-T} option.
-}
-\item{\code{method = "coal_sites"}}{One of the following object types is allowed:
-\itemize{
-\item A single \code{list} with a \code{seg_sites} field inside. This field must
-contain a matrix for segregating sites for each sequence.
-The matrix itself should contain the haplotype information, coded
-using 0s and 1s: 0s indicate the ancestral state and 1s indicate
-mutant.
-The matrix column names should be numbers in the range (0,1) and
-indicate the relative positions of the polymorphisms on the
-chromosome.
-\item A single string specifying the name of the file containing
-the \code{ms}-style coalescent output with segregating site info.
-\item A list containing \code{names} and \code{info} fields. The \code{info} field should
-be one of the options above, and the \code{names} field provides a name
-for each variant.
-}
-For what the \code{seg_sites} field should look like in a list, see output from the
-\code{scrm} or \code{coala} package.
-(These packages are not required to be installed when installing
-\code{jackalope}.)
-}
-\item{\code{method = "newick"}}{One or more string(s), each of which specifies
-a name of a NEWICK file containing a phylogeny.
-If one name is provided, that phylogeny will be used for all sequences.
-If more than one is provided, there must be a phylogeny for each sequence,
-and phylogenies will be assigned to sequences in the order provided.}
-\item{\code{method = "theta"}}{A named vector or list containing the fields \code{theta}
-and \code{n_vars}, specifying the theta parameter (population-scaled mutation rate)
-and number of desired variants, respectively.}
-\item{\code{method = "vcf"}}{Either (a) a single string specifying the name of
-the VCF file or (b) a list of arguments to pass to \code{vcfR::read.vcfR}.
-For the latter, the list can also contain the \code{print_chroms} field, which,
-if set to \code{TRUE}, prints all unique sequence names from the VCF file
-when VCF sequence names don't match those from the reference genome.
-This can be useful for troubleshooting.
-This method won't work if the package \code{vcfR} isn't installed.}
-}
-}
-
 \examples{
 r <- create_genome(10, 1000)
-tree <- ape::rcoal(5)
-v_phylo <- create_variants(r, "phylo", tree, sub_JC69(0.1))
-v_theta <- create_variants(r, "theta", list(theta = 0.001, n_vars = 5),
-                           sub_K80(0.1, 0.2))
+v_phylo <- create_variants(r, vars_phylo(ape::rcoal(5)), sub_JC69(0.1))
+v_theta <- create_variants(r, vars_theta(0.001, 5), sub_K80(0.1, 0.2))
 
 }
