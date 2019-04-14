@@ -136,8 +136,8 @@ make_mutation_sampler_chunk_base <- function(Q, pi_tcag, insertion_rates, deleti
 #'
 #' @noRd
 #'
-add_coal_sites_cpp <- function(ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress) {
-    .Call(`_jackalope_add_coal_sites_cpp`, ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress)
+add_coal_sites_cpp <- function(ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress) {
+    .Call(`_jackalope_add_coal_sites_cpp`, ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress)
 }
 
 #' Fill matrix of Gamma-region end points and Gamma values.

@@ -169,13 +169,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // add_coal_sites_cpp
-SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr, const std::vector<std::string>& var_names, const std::vector<arma::mat>& seg_sites, const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, uint32 n_threads, const bool& show_progress);
-RcppExport SEXP _jackalope_add_coal_sites_cpp(SEXP ref_genome_ptrSEXP, SEXP var_namesSEXP, SEXP seg_sitesSEXP, SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
+SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr, const std::vector<arma::mat>& seg_sites, const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, uint32 n_threads, const bool& show_progress);
+RcppExport SEXP _jackalope_add_coal_sites_cpp(SEXP ref_genome_ptrSEXP, SEXP seg_sitesSEXP, SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP& >::type ref_genome_ptr(ref_genome_ptrSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type var_names(var_namesSEXP);
     Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type seg_sites(seg_sitesSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
     Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
@@ -183,7 +182,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
     Rcpp::traits::input_parameter< uint32 >::type n_threads(n_threadsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
-    rcpp_result_gen = Rcpp::wrap(add_coal_sites_cpp(ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress));
+    rcpp_result_gen = Rcpp::wrap(add_coal_sites_cpp(ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -894,7 +893,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_illumina_var_cpp", (DL_FUNC) &_jackalope_illumina_var_cpp, 25},
     {"_jackalope_make_mutation_sampler_base", (DL_FUNC) &_jackalope_make_mutation_sampler_base, 4},
     {"_jackalope_make_mutation_sampler_chunk_base", (DL_FUNC) &_jackalope_make_mutation_sampler_chunk_base, 5},
-    {"_jackalope_add_coal_sites_cpp", (DL_FUNC) &_jackalope_add_coal_sites_cpp, 9},
+    {"_jackalope_add_coal_sites_cpp", (DL_FUNC) &_jackalope_add_coal_sites_cpp, 8},
     {"_jackalope_make_gamma_mats", (DL_FUNC) &_jackalope_make_gamma_mats, 3},
     {"_jackalope_check_gamma_mats", (DL_FUNC) &_jackalope_check_gamma_mats, 2},
     {"_jackalope_phylo_info_to_trees", (DL_FUNC) &_jackalope_phylo_info_to_trees, 1},

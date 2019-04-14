@@ -11,13 +11,54 @@
 # ======================================================================================`
 
 
-#' Used to convert phylogenetic info to pointer to trees info.
+#' Used to convert info to pointer to VarSet info.
 #'
 #' @noRd
 #'
-to_trees <- function (x, ...) {
-    UseMethod("to_trees", x)
+to_var_set <- function (x, reference, mevo_obj, n_threads, show_progress) {
+    UseMethod("to_var_set", x)
 }
+#' Go from pointer to trees info to a pointer to a VarSet object
+#'
+#' Used below in `to_var_set` methods
+#'
+#' @noRd
+#'
+trees_to_var_set <- function(phylo_info_ptr, reference, mevo_obj, n_threads,
+                             show_progress) {
+
+    # Make sampler_base_ptr
+    sampler_base_ptr <- mevo_obj_to_ptr(mevo_obj)
+
+    # Make Gamma matrices (for mutation-rate variability among sites):
+    gamma_mats <- mevo_obj$gamma_mats
+
+    # Make variants pointer:
+    variants_ptr <- NULL
+    if (mevo_obj$chunk_size > 0) {
+        variants_ptr <- evolve_seqs_chunk(
+            reference$genome,
+            sampler_base_ptr,
+            phylo_info_ptr,
+            gamma_mats,
+            n_threads,
+            show_progress)
+    } else {
+        variants_ptr <- evolve_seqs(
+            reference$genome,
+            sampler_base_ptr,
+            phylo_info_ptr,
+            gamma_mats,
+            n_threads,
+            show_progress)
+    }
+
+    return(variants_ptr)
+
+}
+
+
+
 
 #' Read info from a `phylo` object.
 #'
@@ -80,7 +121,20 @@ phylo_to_ptr <- function(phy, n_seqs, chunked) {
 # ======================================================================================`
 
 
-#' Create necessary information to create variants using phylogenetic tree(s)
+#' Create necessary information to create variants using gene trees
+#'
+#' This function organizes higher-level information for creating variants from
+#' gene trees output from coalescent simulations.
+#'
+#' Using the `obj` argument is designed after the `trees` fields in the output from
+#' the `scrm` and `coala` packages.
+#' (These packages are not required to be installed when installing `jackalope`.)
+#' To get gene trees, make sure to add `+ sumstat_trees()`
+#' to the `coalmodel` for `coala`, or
+#' make sure that `"-T"` is present in `args` for `scrm`.
+#'
+#' If using an output file from a command-line program like `ms`/`msms`,
+#' add the `-T` option.
 #'
 #'
 #' @param obj Object containing gene trees.
@@ -173,7 +227,11 @@ vars_gtrees <- function(obj = NULL,
 }
 
 
+#' Print output from `vars_gtrees`
 #'
+#'
+#'
+#' @noRd
 #' @export
 #'
 print.vars_gtrees_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
@@ -185,7 +243,8 @@ print.vars_gtrees_info <- function(x, digits = max(3, getOption("digits") - 3), 
 }
 
 
-to_trees.vars_gtrees_info <- function(x, reference, mevo_obj, ...) {
+to_var_set.vars_gtrees_info <- function(x, reference, mevo_obj,
+                                        n_threads, show_progress) {
 
     trees_ptr <- NULL
 
@@ -198,7 +257,10 @@ to_trees.vars_gtrees_info <- function(x, reference, mevo_obj, ...) {
              "\"object\" or \"file\".", call. = FALSE)
     }
 
-    return(trees_ptr)
+    var_set_ptr <- trees_to_var_set(trees_ptr, reference, mevo_obj, n_threads,
+                                    show_progress)
+
+    return(var_set_ptr)
 
 }
 
@@ -409,6 +471,8 @@ read_ms_trees <- function(trees, reference, mevo_obj) {
 
 #' Create necessary information to create variants using phylogenetic tree(s)
 #'
+#' This function organizes higher-level information for creating variants from
+#' phylogenetic tree(s) output as `phylo` objects or NEWICK files.
 #'
 #' @param obj Object containing phylogenetic tree(s).
 #'     This can be (1) a single \code{\link[ape]{phylo}} object that represents all
@@ -478,7 +542,10 @@ vars_phylo <- function(obj = NULL,
 }
 
 
+#' Print output from `vars_phylo`
 #'
+#'
+#' @noRd
 #' @export
 #'
 print.vars_phylo_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
@@ -490,7 +557,8 @@ print.vars_phylo_info <- function(x, digits = max(3, getOption("digits") - 3), .
 
 }
 
-to_trees.vars_phylo_info <- function(x, reference, mevo_obj, ...) {
+to_var_set.vars_phylo_info <- function(x, reference, mevo_obj,
+                                       n_threads, show_progress) {
 
     n_vars <- length(phy$tip.label)
     n_seqs <- as.integer(reference$n_seqs())
@@ -510,7 +578,10 @@ to_trees.vars_phylo_info <- function(x, reference, mevo_obj, ...) {
 
     trees_ptr <- phylo_to_ptr(phy, n_seqs, chunked)
 
-    return(trees_ptr)
+    var_set_ptr <- trees_to_var_set(trees_ptr, reference, mevo_obj, n_threads,
+                                    show_progress)
+
+    return(var_set_ptr)
 
 }
 
@@ -527,6 +598,9 @@ to_trees.vars_phylo_info <- function(x, reference, mevo_obj, ...) {
 
 
 #' Create necessary information to create variants using theta parameter
+#'
+#' This function organizes higher-level information for creating variants from
+#' the population-scaled mutation rate and a desired number of variants.
 #'
 #'
 #' @param theta Population-scaled mutation rate.
@@ -560,7 +634,10 @@ vars_theta <- function(theta, n_vars) {
 
 }
 
+#' Print output from `vars_theta`
 #'
+#'
+#' @noRd
 #' @export
 #'
 print.vars_theta_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
@@ -573,7 +650,8 @@ print.vars_theta_info <- function(x, digits = max(3, getOption("digits") - 3), .
 
 }
 
-to_trees.vars_theta_info <- function(x, reference, mevo_obj, ...) {
+to_var_set.vars_theta_info <- function(x, reference, mevo_obj,
+                                       n_threads, show_progress) {
 
     phy <- x$phylo
     theta <- x$theta
@@ -593,7 +671,10 @@ to_trees.vars_theta_info <- function(x, reference, mevo_obj, ...) {
 
     trees_ptr <- phylo_to_ptr(phy, n_seqs, chunked)
 
-    return(trees_ptr)
+    var_set_ptr <- trees_to_var_set(trees_ptr, reference, mevo_obj, n_threads,
+                                    show_progress)
+
+    return(var_set_ptr)
 
 }
 

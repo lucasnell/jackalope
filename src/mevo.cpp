@@ -157,7 +157,6 @@ void add_one_seq_sites(VarSet& var_set,
 //'
 //[[Rcpp::export]]
 SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
-                        const std::vector<std::string>& var_names,
                         const std::vector<arma::mat>& seg_sites,
                         const arma::mat& Q,
                         const std::vector<double>& pi_tcag,
@@ -169,7 +168,7 @@ SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
 
     // Initialize new VarSet object
-    XPtr<VarSet> var_set(new VarSet(*ref_genome, var_names), true);
+    XPtr<VarSet> var_set(new VarSet(*ref_genome), true);
 
     // Check that # threads isn't too high and change to 1 if not using OpenMP:
     thread_check(n_threads);

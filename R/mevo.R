@@ -313,7 +313,7 @@ site_var <- function(reference,
 }
 
 
-#' Print method for site_var_mats objects.
+#' Print output from `site_var`
 #'
 #' I added this mostly to make sure a giant list doesn't print.
 #'
@@ -446,16 +446,11 @@ create_mevo <- function(reference,
 # ====================================================================================`
 
 
-
-# vars_ssites <- function() {}
-# print.vars_ssites_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {}
-### ~100% not needed: to_trees.vars_ssites_info <- function(x, reference, mevo_obj, ...) {}
-
-
 #' Process one segregating-sites matrix from a coalescent simulator with ms-style output.
 #'
+#' Used in `vars_ssites` below.
+#'
 #' @param mat The matrix to process.
-#' @param seq_size The number of bp in the sequence associated with the input string.
 #'
 #' @noRd
 #'
@@ -484,71 +479,157 @@ process_coal_obj_sites <- function(mat) {
 }
 
 
-
-#' Read segregating-site info from a coalescent object from scrm or coala.
-#'
-#' @inheritParams make_phylo_info
-#'
-#' @return An XPtr to the info needed from the phylogenies to do the sequence
-#'     simulations.
-#'
-#' @noRd
-#'
-#'
-coal_obj_sites <- function(coal_obj) {
-
-    # Check for coal_obj being a list and having a `seg_sites` field
-    if (!inherits(coal_obj, "list") || is.null(coal_obj$seg_sites)) {
-        err_msg("create_variants", "method_info",
-                "a list with a `seg_sites` field present (when method = \"coal_sites\").",
-                "This must also be true of the inner list if also providing a",
-                "`names` field")
-    }
-
-    sites <- coal_obj$seg_sites
-
-    sites_mats <- lapply(sites, process_coal_obj_sites)
-
-    return(sites_mats)
-}
-
-
 #' Check validity of position columns in segregating-sites matrices.
+#'
+#' Used in `to_var_set.vars_ssites_info` below.
 #'
 #' @noRd
 #'
 fill_coal_mat_pos <- function(sites_mats, seq_sizes) {
 
     if (length(sites_mats) != length(seq_sizes)) {
-        err_msg("create_variants", "method_info",
-                "a list with `seg_sites` field that contains the same number of",
-                "matrices as the number of sequences.")
+        stop("\nIn function `vars_ssites`, there must be exactly one segregating sites ",
+             "matrix for each reference genome sequence. ",
+             "It appears you need to re-run `vars_ssites` before attempting to ",
+             "run `create_variants` again.")
     }
 
     for (i in 1:length(sites_mats)) {
         if (nrow(sites_mats[[i]]) == 0) next;
-        if (all(sites_mats[[i]][,1] < 1 && sites_mats[[i]][,1] > 0)) {
+        pos <- sites_mats[[i]][,1]
+        if (all(pos < 1 && pos > 0)) {
             # Converting to integer positions (0-based):
-            sites_mats[[i]][,1]  <- as.integer(sites_mats[[i]][,1] * seq_sizes[i]);
-        } else if (all(sites_mats[[i]][,1] < seq_sizes[i] && sites_mats[[i]][,1] >= 0)) {
-            # Keeping them in 0-based indices:
-            sites_mats[[i]][,1] = as.integer(sites_mats[[i]][,1]);
-        } else if (all(sites_mats[[i]][,1] <= seq_sizes[i] && sites_mats[[i]][,1] >= 1)) {
-            # Converting to 0-based indices:
-            sites_mats[[i]][,1] = as.integer(sites_mats[[i]][,1]) - 1;
+            pos  <- as.integer(pos * seq_sizes[i]);
         } else {
-            stop("\nYour `method_info` argument to `create_variants` is causing ",
-                 "problems: ",
-                 "Positions in one or more segregating-sites matrices ",
-                 "are not obviously from either a finite- or infinite-sites model. ",
-                 "The former should have positions in the range ",
-                 "[0, sequence length - 1] or [1, sequence length], ",
-                 "the latter in (0,1).", call. = FALSE)
+            all_ints <- all(pos %% 1 == 0)
+            if (all_ints && all(pos < seq_sizes[i] && pos >= 0)) {
+                # Keeping them in 0-based indices:
+                pos = as.integer(pos);
+            } else if (all_ints && all(pos <= seq_sizes[i] && pos >= 1)) {
+                # Converting to 0-based indices:
+                pos = as.integer(pos) - 1;
+            } else {
+                stop("\nPositions in one or more segregating-sites matrices ",
+                     "are not obviously from either a finite- or infinite-sites model. ",
+                     "The former should have integer positions in the range ",
+                     "[0, sequence length - 1] or [1, sequence length], ",
+                     "the latter numeric in (0,1).",
+                     "It appears you need to re-run `vars_ssites` before attempting to ",
+                     "run `create_variants` again.")
+            }
         }
+        sites_mats[[i]][,1] <- pos
 
     }
 
     return(sites_mats)
+
+}
+
+
+
+
+#' Create necessary information to create variants using segregating sites matrices
+#'
+#'
+#' This function organizes higher-level information for creating variants from
+#' matrices of segregating sites output from coalescent simulations.
+#'
+#'
+#' For what the `seg_sites` field should look like in a list, see output from the
+#' `scrm` or `coala` package.
+#' (These packages are not required to be installed when installing
+#' `jackalope`.)
+#'
+#' @param obj Object containing segregating sites information.
+#'     This can be one of the following:
+#'     (1) A single `list` with a `seg_sites` field inside. This field must
+#'     contain a matrix for segregating sites for each sequence.
+#'     The matrix itself should contain the haplotype information, coded
+#'     using 0s and 1s: 0s indicate the ancestral state and 1s indicate
+#'     mutant.
+#'     The matrix column names should indicate the positions of the polymorphisms on the
+#'     chromosome.
+#'     If positions are in the range `(0,1)`, they're assumed to come from an infinite-
+#'     sites model and are relative positions.
+#'     If positions are integers in the range `[0, sequence length - 1]`
+#'     or `[1, sequence length]`, they're assumed to come from an finite-sites
+#'     model and are absolute positions.
+#'     Defaults to `NULL`.
+#' @param fn A single string specifying the name of the file containing
+#'     the `ms`-style coalescent output with segregating site info.
+#'     Defaults to `NULL`.
+#'
+#'
+#' @return A `vars_ssites_info` object containing information used in `create_variants`
+#'     to create haploid variants.
+#'     This class is just a wrapper around a list of matrices of segregating site info.
+#'
+#' @export
+#'
+vars_ssites <- function(obj = NULL,
+                        fn = NULL) {
+
+    if (is.null(obj) && is.null(fn)) {
+        stop("\nIn function `vars_ssites`, either argument `obj` or `fn` ",
+             "must be provided.", call. = FALSE)
+    }
+    if (!is.null(obj) && !is.null(fn)) {
+        stop("\nIn function `vars_ssites`, only one argument (`obj` or `fn`) ",
+             "should be provided.", call. = FALSE)
+    }
+
+    sites_mats <- NULL
+    if (!is.null(obj)) {
+
+        # Check for coal_obj being a list and having a `seg_sites` field
+        if (!inherits(obj, "list") || is.null(obj$seg_sites)) {
+            err_msg("vars_ssites", "obj", "a list with a `seg_sites` field present")
+        }
+
+        sites_mats <- lapply(obj$seg_sites, process_coal_obj_sites)
+
+    } else {
+
+        if (!is_type(fn, "character", 1)) err_msg("vars_ssites", "fn", "a single string")
+
+        sites_mats <- coal_file_sites(fn)
+        # Revert back to list (from arma::field which adds dims):
+        dim(sites_mats) <- NULL
+        n_cols <- sapply(sites_mats, ncol)
+        if (any(n_cols < 2)) {
+            stop("\nOne or more seg. sites matrices from a ms-style file output ",
+                 "have no variant information specified.",
+                 call. = FALSE)
+        }
+
+    }
+
+    if (length(unique(sapply(sites_mats, ncol))) != 1) {
+        stop("\nIn function `vars_ssites`, one or more of the segregating sites ",
+             "matrices has a number of rows that differs from the rest.")
+    }
+
+
+    out <- list(mats = sites_mats)
+    class(out) <- "vars_ssites_info"
+
+    return(out)
+
+}
+
+#' Print output from `vars_ssites`
+#'
+#' @noRd
+#' @export
+#'
+print.vars_ssites_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
+
+    cat("< Seg. site variant-creation info >\n")
+    cat(sprintf("  * Number of variants: %i\n", ncol(x$mats[[1]]) - 1))
+    cat(sprintf("  * Number of sites: %s\n", format(as.integer(sum(sapply(x$mats, nrow))),
+                                                    big.mark = ",")))
+    invisible(NULL)
 
 }
 
@@ -558,57 +639,17 @@ fill_coal_mat_pos <- function(sites_mats, seq_sizes) {
 #'
 #' @noRd
 #'
-read_coal_sites <- function(method_info, reference, mevo_obj, n_threads, show_progress) {
+to_var_set.vars_ssites_info <- function(x, reference, mevo_obj,
+                                        n_threads, show_progress, ...) {
 
-    var_names <- character(0)
-    if (inherits(method_info, "list") && !is.null(method_info$names) &&
-        !is.null(method_info$info)) {
-        var_names <- method_info$names
-        method_info <- method_info$info
-    }
-
-    if (inherits(method_info, "list")) {
-        sites_mats <- coal_obj_sites(method_info)
-    } else if (is_type(method_info, "character", 1)) {
-        sites_mats <- coal_file_sites(method_info)
-        # Revert back to list (from arma::field which adds dims)
-        dim(sites_mats) <- NULL
-        n_cols <- sapply(sites_mats, ncol)
-        if (any(n_cols < 2)) {
-            stop("\nOne or more seg. sites matrices from a ms-style file output ",
-                 "have no variant information specified.",
-                 call. = FALSE)
-        }
-    } else {
-        err_msg("create_variants", "method_info", "a single string or a list",
-                "(for method = \"coal_sites\")")
-    }
-
-
-    if (length(var_names) == 0) {
-        var_names <- sprintf("var%i", 0:(ncol(sites_mats[[1]])-2))
-    }
-    if (length(unique(sapply(sites_mats, ncol))) != 1) {
-        err_msg("create_variants", "method_info", "a list containing matrices with",
-                "the same number of rows, if `method` is \"coal_sites\"")
-    }
-    if (unique(sapply(sites_mats, ncol))[1] != (length(var_names) + 1)) {
-        err_msg("create_variants", "method_info",
-                "(when `method` is \"coal_sites\" and when providing a names field in",
-                "`method_info`)",
-                "a list containing a `names` field",
-                "with the same number of items as the number of rows in each",
-                "segregating-sites matrix")
-    }
 
     seq_sizes <- reference$sizes()
 
-    # Fill and check the position column in sites_mats
-    sites_mats <- fill_coal_mat_pos(sites_mats, seq_sizes)
+    # Fill and check the position column in `x$mats`
+    x$mats <- fill_coal_mat_pos(x$mats, seq_sizes)
 
     variants_ptr <- add_coal_sites_cpp(reference$genome,
-                                       var_names,
-                                       sites_mats,
+                                       x$mats,
                                        mevo_obj$Q,
                                        mevo_obj$pi_tcag,
                                        mevo_obj$insertion_rates,
@@ -623,6 +664,9 @@ read_coal_sites <- function(method_info, reference, mevo_obj, n_threads, show_pr
 
 
 
+
+
+
 # ====================================================================================`
 # ====================================================================================`
 
@@ -631,8 +675,161 @@ read_coal_sites <- function(method_info, reference, mevo_obj, n_threads, show_pr
 # ====================================================================================`
 # ====================================================================================`
 
+#' Create necessary information to create variants using a VCF file
+#'
+#' This function organizes higher-level information for creating variants from
+#' Variant Call Format (VCF) files.
+#'
+#' This function won't work if the package `vcfR` isn't installed.
+#'
+#' @param fn A single string specifying the name of the VCF file
+#' @param print_names Logical for whether to print all unique sequence names from
+#'     the VCF file when VCF sequence names don't match those from the reference genome.
+#'     This printing doesn't happen until this object is passed to `create_variants`.
+#'     This can be useful for troubleshooting.
+#'     Defaults to `FALSE`.
+#' @param ... Arguments to pass to `vcfR::read.vcfR`, excluding the `file` argument
+#'     that will be overridden with the `fn` argument to this function.
+#'
+#' @export
+#'
+#' @return A `vars_vcf_info` object containing information used in `create_variants`
+#'     to create haploid variants.
+#'     This class is just a wrapper around a list containing relevant output from
+#'     `vcfR::read.vcfR`:
+#'     haplotypes, reference sequences, positions, sequence names, and variant names.
+#'
+vars_vcf <- function(fn, print_names = FALSE, ...) {
 
-# vars_vcf <- function() {}
-# print.vars_vcf_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {}
-### ~100% not needed: to_trees.vars_vcf_info <- function(x, reference, mevo_obj, ...) {}
+    if (!requireNamespace("vcfR", quietly = TRUE)) {
+        stop("\nPackage \"vcfR\" is needed for reading VCF files. ",
+             "Please install it.",
+             call. = FALSE)
+    }
 
+    if (!is_type(fn, "character", 1)) {
+        err_msg("vars_vcf", "fn", "a single string")
+    }
+
+    other_args <- list(...)
+    if (is.null(other_args$verbose)) other_args$verbose <- FALSE
+    method_info$file <- fn
+
+    if (!all(names(other_args) %in% names(formals(vcfR::read.vcfR)))) {
+        bad_names <- names(other_args)[!names(other_args) %in%
+                                           names(formals(vcfR::read.vcfR))]
+        stop("\nIn function `vars_vcf` in jackalope, the following extra ",
+             "arguments provided don't match any arguments in `vcfR::read.vcfR`: ",
+             paste(bad_names, collapse = ", "), ".", call. = FALSE)
+    }
+
+    vcf <- do.call(vcfR::read.vcfR, read_args)
+
+    chrom <- vcf@fix[,"CHROM"]
+    pos <- as.integer(vcf@fix[,"POS"]) - 1  # -1 is to convert to C++ indices
+    ref_seq <- vcf@fix[,"REF"]
+    alts <- strsplit(vcf@fix[,"ALT"], ",")
+
+    if (length(chrom) != length(pos) | length(chrom) != length(ref_seq)) {
+        stop("\nVCF not parsing correctly. ",
+             "Vectors of chromosomes, positions, and reference-sequences aren't ",
+             "all the same length.",
+             call. = FALSE)
+    }
+
+    haps <- vcfR::extract.haps(vcf, unphased_as_NA = FALSE, verbose = FALSE)
+
+    if (length(chrom) != length(pos) | length(chrom) != length(ref_seq)) {
+        stop("\nVCF not parsing correctly. ",
+             "Vectors of chromosomes, positions, and reference-sequences aren't ",
+             "all the same length.",
+             call. = FALSE)
+    }
+    if (nrow(haps) != length(pos)) {
+        stop("\nVCF not parsing correctly. ",
+             "Number of haplotypes doesn't match with number of positions.",
+             call. = FALSE)
+    }
+
+
+    # I'm assuming NAs mean no mutation
+    haps[is.na(haps)] <- ""
+
+    var_names <- colnames(haps)
+    colnames(haps) <- NULL
+    rownames(haps) <- NULL
+
+    # Split into list for easier processing in `read_vcfr`
+    haps <- split(haps, row(haps))
+
+    # We treat things differently if vcfR has output numbers rather than nucleotides.
+    # (The below line should be TRUE when it outputs numbers.)
+    if (any(!is.na(suppressWarnings(as.integer(do.call(c, haps)))))) {
+        # Change string integers to actual genotypes:
+        haps <-
+            lapply(1:length(haps),
+                   function(i) {
+                       as.character(sapply(haps[[i]],
+                                           function(j) {
+                                               ifelse(j == "" | j == "0", "",
+                                                      alts[[i]][as.integer(j)])
+                                           }))
+                   })
+    }
+
+    out <- list(haps = haps, pos = pos, chrom = chrom, var_names = var_names,
+                ref_seq = ref_seq)
+
+    class(out) <- "vars_vcf_info"
+
+    return(out)
+
+}
+
+
+#' Print output from `vars_vcf`
+#'
+#'
+#' @noRd
+#' @export
+#'
+print.vars_vcf_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
+    cat("< VCF variant-creation info >\n")
+    cat(sprintf("  * Number of variants: %i\n", ncol(x$haps[[1]])))
+    cat(sprintf("  * Number of sequences: %i\n", length(unique(x$chrom))))
+    cat(sprintf("  * Number of sites: %s\n", format(as.integer(length(x$pos)),
+                                                    big.mark = ",")))
+    invisible(NULL)
+}
+
+
+#' Create variants from VCF file
+#'
+#'
+#' @noRd
+#'
+to_var_set.vars_vcf_info <- function(x, reference, mevo_obj, n_threads, show_progress) {
+
+    seq_names <- view_ref_genome_seq_names(reference$genome)
+    unq_chrom <- unique(x$chrom)
+
+    if (!all(unq_chrom %in% seq_names)) {
+        if (print_names) print(unq_chrom)
+        stop("\nSequence name(s) in VCF file don't match those in the ",
+             "`ref_genome` object. ",
+             "It's probably easiest to manually change the `ref_genome` object ",
+             "(using `$set_names()` method) to have the same names as the VCF file. ",
+             "Re-run this function with `print_names = TRUE` to see the VCF-file names.",
+             call. = FALSE)
+    }
+
+    # Converts items in `chrom` to 0-based indices of sequences in ref. genome
+    chrom_inds <- match(x$chrom, seq_names) - 1
+
+
+    variants_ptr <- read_vcfr(reference$genome, x$var_names,
+                              x$haps, chrom_inds, x$pos, x$ref_seq)
+
+    return(variants_ptr)
+
+}
