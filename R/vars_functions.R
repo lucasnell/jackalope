@@ -40,97 +40,17 @@ NULL
 # ====================================================================================`
 # ====================================================================================`
 
-# MAIN + HELPERS -----
+# * MAIN * -----
 
 # ====================================================================================`
 # ====================================================================================`
 
+
+# -------------*
+#  Non-phylogenomic -----
+# -------------*
 
 #   __seg. sites -----
-
-
-#' Process one segregating-sites matrix from a coalescent simulator with ms-style output.
-#'
-#' Used in `vars_ssites` below.
-#'
-#' @param mat The matrix to process.
-#'
-#' @noRd
-#'
-process_coal_obj_sites <- function(mat) {
-
-    err_msg_ <- paste("\nPositions in one or more segregating-sites matrices %s.",
-                      "They are derived from column names, so check those for nonsense.")
-
-    # Dealing with coala objects:
-    if (inherits(mat, "segsites")) mat <- mat$snps
-
-    pos <- as.numeric(colnames(mat))
-
-    if (any(is.na(pos))) {
-        stop(sprintf(err_msg_, "are producing NAs when trying to coerce them to numbers"),
-             call. = FALSE)
-    } else if (length(pos) != ncol(mat)) {
-        stop(sprintf(err_msg_, paste("are not the same length as the number of rows",
-                                     "in the matrix")), call. = FALSE)
-    }
-
-    new_mat <- cbind(pos, t(mat))
-    rownames(new_mat) <- colnames(new_mat) <- NULL
-
-    return(new_mat)
-}
-
-
-#' Check validity of position columns in segregating-sites matrices.
-#'
-#' Used in `to_var_set.vars_ssites_info` below.
-#'
-#' @noRd
-#'
-fill_coal_mat_pos <- function(sites_mats, seq_sizes) {
-
-    if (length(sites_mats) != length(seq_sizes)) {
-        stop("\nIn function `vars_ssites`, there must be exactly one segregating sites ",
-             "matrix for each reference genome sequence. ",
-             "It appears you need to re-run `vars_ssites` before attempting to ",
-             "run `create_variants` again.")
-    }
-
-    for (i in 1:length(sites_mats)) {
-        if (nrow(sites_mats[[i]]) == 0) next;
-        pos <- sites_mats[[i]][,1]
-        if (all(pos < 1 && pos > 0)) {
-            # Converting to integer positions (0-based):
-            pos  <- as.integer(pos * seq_sizes[i]);
-        } else {
-            all_ints <- all(pos %% 1 == 0)
-            if (all_ints && all(pos < seq_sizes[i] && pos >= 0)) {
-                # Keeping them in 0-based indices:
-                pos = as.integer(pos);
-            } else if (all_ints && all(pos <= seq_sizes[i] && pos >= 1)) {
-                # Converting to 0-based indices:
-                pos = as.integer(pos) - 1;
-            } else {
-                stop("\nPositions in one or more segregating-sites matrices ",
-                     "are not obviously from either a finite- or infinite-sites model. ",
-                     "The former should have integer positions in the range ",
-                     "[0, sequence length - 1] or [1, sequence length], ",
-                     "the latter numeric in (0,1).",
-                     "It appears you need to re-run `vars_ssites` before attempting to ",
-                     "run `create_variants` again.")
-            }
-        }
-        sites_mats[[i]][,1] <- pos
-
-    }
-
-    return(sites_mats)
-
-}
-
-
-
 
 #' Create necessary information to create variants using segregating sites matrices
 #'
@@ -341,6 +261,10 @@ vars_vcf <- function(fn, print_names = FALSE, ...) {
 
 
 
+
+# -------------*
+#  Phylogenomic -----
+# -------------*
 
 
 # __phylo -----
@@ -564,6 +488,209 @@ vars_gtrees <- function(obj = NULL,
 
 }
 
+
+
+# ====================================================================================`
+# ====================================================================================`
+
+# * HELPERS * -----
+
+# ====================================================================================`
+# ====================================================================================`
+
+
+# -------------*
+#  Non-phylogenomic -----
+# -------------*
+
+#   __seg. sites -----
+
+
+#' Process one segregating-sites matrix from a coalescent simulator with ms-style output.
+#'
+#' Used in `vars_ssites` below.
+#'
+#' @param mat The matrix to process.
+#'
+#' @noRd
+#'
+process_coal_obj_sites <- function(mat) {
+
+    err_msg_ <- paste("\nPositions in one or more segregating-sites matrices %s.",
+                      "They are derived from column names, so check those for nonsense.")
+
+    # Dealing with coala objects:
+    if (inherits(mat, "segsites")) mat <- mat$snps
+
+    pos <- as.numeric(colnames(mat))
+
+    if (any(is.na(pos))) {
+        stop(sprintf(err_msg_, "are producing NAs when trying to coerce them to numbers"),
+             call. = FALSE)
+    } else if (length(pos) != ncol(mat)) {
+        stop(sprintf(err_msg_, paste("are not the same length as the number of rows",
+                                     "in the matrix")), call. = FALSE)
+    }
+
+    new_mat <- cbind(pos, t(mat))
+    rownames(new_mat) <- colnames(new_mat) <- NULL
+
+    return(new_mat)
+}
+
+
+#' Check validity of position columns in segregating-sites matrices.
+#'
+#' Used in `to_var_set.vars_ssites_info` below.
+#'
+#' @noRd
+#'
+fill_coal_mat_pos <- function(sites_mats, seq_sizes) {
+
+    if (length(sites_mats) != length(seq_sizes)) {
+        stop("\nIn function `vars_ssites`, there must be exactly one segregating sites ",
+             "matrix for each reference genome sequence. ",
+             "It appears you need to re-run `vars_ssites` before attempting to ",
+             "run `create_variants` again.")
+    }
+
+    for (i in 1:length(sites_mats)) {
+        if (nrow(sites_mats[[i]]) == 0) next;
+        pos <- sites_mats[[i]][,1]
+        if (all(pos < 1 && pos > 0)) {
+            # Converting to integer positions (0-based):
+            pos  <- as.integer(pos * seq_sizes[i]);
+        } else {
+            all_ints <- all(pos %% 1 == 0)
+            if (all_ints && all(pos < seq_sizes[i] && pos >= 0)) {
+                # Keeping them in 0-based indices:
+                pos = as.integer(pos);
+            } else if (all_ints && all(pos <= seq_sizes[i] && pos >= 1)) {
+                # Converting to 0-based indices:
+                pos = as.integer(pos) - 1;
+            } else {
+                stop("\nPositions in one or more segregating-sites matrices ",
+                     "are not obviously from either a finite- or infinite-sites model. ",
+                     "The former should have integer positions in the range ",
+                     "[0, sequence length - 1] or [1, sequence length], ",
+                     "the latter numeric in (0,1).",
+                     "It appears you need to re-run `vars_ssites` before attempting to ",
+                     "run `create_variants` again.")
+            }
+        }
+        sites_mats[[i]][,1] <- pos
+
+    }
+
+    return(sites_mats)
+
+}
+
+
+
+
+# -------------*
+#  Phylogenomic -----
+# -------------*
+
+
+# These first two are helpers for multiple phylogenomic methods
+
+
+#' Go from pointer to trees info to a pointer to a VarSet object
+#'
+#' Used below in `to_var_set` methods
+#'
+#' @noRd
+#'
+trees_to_var_set <- function(phylo_info_ptr, reference, mevo_obj, n_threads,
+                             show_progress) {
+
+    # Make sampler_base_ptr
+    sampler_base_ptr <- mevo_obj_to_ptr(mevo_obj)
+
+    # Make Gamma matrices (for mutation-rate variability among sites):
+    gamma_mats <- mevo_obj$gamma_mats
+
+    # Make variants pointer:
+    variants_ptr <- NULL
+    if (mevo_obj$chunk_size > 0) {
+        variants_ptr <- evolve_seqs_chunk(
+            reference$genome,
+            sampler_base_ptr,
+            phylo_info_ptr,
+            gamma_mats,
+            n_threads,
+            show_progress)
+    } else {
+        variants_ptr <- evolve_seqs(
+            reference$genome,
+            sampler_base_ptr,
+            phylo_info_ptr,
+            gamma_mats,
+            n_threads,
+            show_progress)
+    }
+
+    return(variants_ptr)
+
+}
+
+
+
+
+#' Read info from a `phylo` object.
+#'
+#' @return An external pointer to the phylogenetic info needed to do the sequence
+#'     simulations.
+#'
+#' @noRd
+#'
+phylo_to_ptr <- function(phy, n_seqs, chunked) {
+
+    if ((!inherits(phy, "phylo") && !inherits(phy, "multiPhylo") &&
+         !inherits(phy, "list")) ||
+        (inherits(phy, "list") && !all(sapply(phy, inherits, what = "phylo")))) {
+        stop("\nThe `phy` argument to the internal function `phylo_to_ptr` should ",
+             "only ever be an object of class \"phylo\", \"multiPhylo\", or a ",
+             "list of \"phylo\" objects.")
+    }
+
+    if ((inherits(phy, "multiPhylo") || inherits(phy, "list")) &&
+        length(phy) != n_seqs) {
+        stop("\nThe `phy` argument to the internal function `phylo_to_ptr` should ",
+             "have a length of 1 or equal to the number of sequences if it's of class",
+             "\"multiPhylo\" or list.")
+    }
+    # So all inputs are lists of the proper length:
+    if (inherits(phy, "phylo")) phy <- rep(list(phy), n_seqs)
+    if (inherits(phy, "multiPhylo")) class(phy) <- "list"
+
+    phylo_info <- lapply(phy,
+                         function(p) {
+                             p <- ape::reorder.phylo(p, order = "cladewise")
+                             labels <- paste(p$tip.label)# <-- making sure they're strings
+                             branch_lens <- p$edge.length
+                             edges <- p$edge
+                             phy_info <- list(branch_lens = branch_lens, edges = edges,
+                                              labels = labels, start = 0, end = 0)
+                             return(list(phy_info))
+                         })
+
+    if (!chunked) {
+        trees_ptr <- phylo_info_to_trees(phylo_info)
+    } else {
+        trees_ptr <- phylo_info_to_trees_chunk(phylo_info)
+    }
+
+    return(trees_ptr)
+}
+
+
+
+# __gtrees -----
+
+
 #' Process one gene-tree string from a coalescent simulator with ms-style output.
 #'
 #' Used in `gtrees_to_ptr`.
@@ -704,10 +831,11 @@ gtrees_to_ptr <- function(trees, reference, mevo_obj) {
 
 
 
+
 # ====================================================================================`
 # ====================================================================================`
 
-# PRINT -----
+# * PRINT * -----
 
 # ====================================================================================`
 # ====================================================================================`
@@ -801,7 +929,7 @@ print.vars_gtrees_info <- function(x, digits = max(3, getOption("digits") - 3), 
 # ====================================================================================`
 # ====================================================================================`
 
-# TO_VAR_SET -----
+# * TO_VAR_SET * -----
 
 # ====================================================================================`
 # ====================================================================================`
