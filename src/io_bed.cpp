@@ -2,6 +2,9 @@
 
 #include <string>
 #include <vector>
+#include <sstream>  // ostringstream
+#include <iomanip> // setting precision on ostringstream
+
 
 #include "jackalope_types.h"  // integer types
 #include "util.h"  // str_stop
@@ -21,6 +24,11 @@ void write_bed__(const std::string& file_name,
     // Open file:
     T out_file(file_name, compress);
 
+    // ostringstream to make sure doubles are printed with many digits
+    std::ostringstream dbl_stream;
+    // Set fixed-point notation and precision
+    dbl_stream << std::fixed << std::setprecision(12);
+
     // Write to file
     std::string line;
     line.reserve(500);  // <- should be more than enough
@@ -32,7 +40,9 @@ void write_bed__(const std::string& file_name,
         line += "0\t";
         line += std::to_string(static_cast<int>(gm(0,0))) + '\t';
         line += seq_names[i] + "_0" + '\t';
-        line += std::to_string(gm(0,1)) + '\n';
+        dbl_stream << gm(0,1);
+        line += dbl_stream.str() + '\n';
+        dbl_stream.str(std::string()); // clear stream
         out_file.write(line);
         // The rest of the lines:
         for (uint32 j = 1; j < gm.n_rows; j++) {
@@ -40,7 +50,9 @@ void write_bed__(const std::string& file_name,
             line += std::to_string(static_cast<int>(gm(j-1,0))) + '\t';
             line += std::to_string(static_cast<int>(gm(j,0))) + '\t';
             line += seq_names[i] + '_' + std::to_string(j) + '\t';
-            line += std::to_string(gm(j,1)) + '\n';
+            dbl_stream << gm(j,1);
+            line += dbl_stream.str() + '\n';
+            dbl_stream.str(std::string()); // clear stream
             out_file.write(line);
         }
     }
