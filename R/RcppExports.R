@@ -220,134 +220,6 @@ evolve_seqs_chunk <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, 
     .Call(`_jackalope_evolve_seqs_chunk`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress)
 }
 
-#' Construct necessary information for substitution models.
-#'
-#' For a more detailed explanation, see `vignette("sub-models")`.
-#'
-#'
-#' @name sub_models
-#'
-#' @seealso \code{\link{create_variants}}
-#'
-#' @return A `sub_model_info` object, which is just a wrapper around a list with
-#' fields `Q` and `pi_tcag`. The former has the rate matrix, and the latter
-#' has the equilibrium nucleotide densities for "T", "C", "A", and "G", respectively.
-#' Access the rate matrix for a `sub_model_info` object named `x` via `x$Q` and
-#' densities via `x$pi_tcag`.
-#'
-#' @examples
-#' # Same substitution rate for all types:
-#' Q_JC69 <- sub_JC69(lambda = 0.1)
-#'
-#' # Transitions 2x more likely than transversions:
-#' Q_K80 <- sub_K80(alpha = 0.2, beta = 0.1)
-#'
-#' # Same as above, but incorporating equilibrium frequencies
-#' sub_HKY85(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
-#'           alpha = 0.2, beta = 0.1)
-#'
-NULL
-
-#' @describeIn sub_models TN93 model.
-#'
-#' @param pi_tcag Vector of length 4 indicating the equilibrium distributions of
-#'     T, C, A, and G respectively. Values must be >= 0, and
-#'     they are forced to sum to 1.
-#' @param alpha_1 Substitution rate for T <-> C transition.
-#' @param alpha_2 Substitution rate for A <-> G transition.
-#' @param beta Substitution rate for transversions.
-#'
-#' @export
-#'
-sub_TN93 <- function(pi_tcag, alpha_1, alpha_2, beta) {
-    .Call(`_jackalope_sub_TN93`, pi_tcag, alpha_1, alpha_2, beta)
-}
-
-#' @describeIn sub_models JC69 model.
-#'
-#' @param lambda Substitution rate for all possible substitutions.
-#'
-#' @export
-#'
-#'
-sub_JC69 <- function(lambda) {
-    .Call(`_jackalope_sub_JC69`, lambda)
-}
-
-#' @describeIn sub_models K80 model.
-#'
-#' @param alpha Substitution rate for transitions.
-#' @inheritParams sub_TN93
-#'
-#' @export
-#'
-sub_K80 <- function(alpha, beta) {
-    .Call(`_jackalope_sub_K80`, alpha, beta)
-}
-
-#' @describeIn sub_models F81 model.
-#'
-#' @inheritParams sub_TN93
-#'
-#' @export
-#'
-sub_F81 <- function(pi_tcag) {
-    .Call(`_jackalope_sub_F81`, pi_tcag)
-}
-
-#' @describeIn sub_models HKY85 model.
-#'
-#'
-#' @inheritParams sub_TN93
-#' @inheritParams sub_K80
-#'
-#' @export
-#'
-sub_HKY85 <- function(pi_tcag, alpha, beta) {
-    .Call(`_jackalope_sub_HKY85`, pi_tcag, alpha, beta)
-}
-
-#' @describeIn sub_models F84 model.
-#'
-#'
-#' @inheritParams sub_TN93
-#' @inheritParams sub_K80
-#' @param kappa The transition/transversion rate ratio.
-#'
-#' @export
-#'
-sub_F84 <- function(pi_tcag, beta, kappa) {
-    .Call(`_jackalope_sub_F84`, pi_tcag, beta, kappa)
-}
-
-#' @describeIn sub_models GTR model.
-#'
-#' @inheritParams sub_TN93
-#' @param abcdef A vector of length 6 that contains the off-diagonal elements
-#'     for the substitution rate matrix.
-#'     See `vignette("sub-models")` for how the values are ordered in the matrix.
-#'
-#' @export
-#'
-sub_GTR <- function(pi_tcag, abcdef) {
-    .Call(`_jackalope_sub_GTR`, pi_tcag, abcdef)
-}
-
-#' @describeIn sub_models UNREST model.
-#'
-#'
-#' @param Q Matrix of substitution rates for "T", "C", "A", and "G", respectively.
-#'     Item `Q[i,j]` is the rate of substitution from nucleotide `i` to nucleotide `j`.
-#'     Do not include indel rates here!
-#'     Values on the diagonal are calculated inside the function so are ignored.
-#'
-#' @export
-#'
-#'
-sub_UNREST <- function(Q) {
-    .Call(`_jackalope_sub_UNREST`, Q)
-}
-
 #' PacBio sequence for reference object.
 #'
 #'
@@ -602,6 +474,38 @@ view_var_set_var_names <- function(var_set_ptr) {
     .Call(`_jackalope_view_var_set_var_names`, var_set_ptr)
 }
 
+#' See GC content in a RefGenome object.
+#'
+#' @noRd
+#'
+view_ref_genome_gc_content <- function(ref_genome_ptr, seq_ind, start, end) {
+    .Call(`_jackalope_view_ref_genome_gc_content`, ref_genome_ptr, seq_ind, start, end)
+}
+
+#' See GC content in a VarSet object.
+#'
+#' @noRd
+#'
+view_var_set_gc_content <- function(var_set_ptr, seq_ind, var_ind, start, end) {
+    .Call(`_jackalope_view_var_set_gc_content`, var_set_ptr, seq_ind, var_ind, start, end)
+}
+
+#' See any nucleotide's content in a RefGenome object.
+#'
+#' @noRd
+#'
+view_ref_genome_nt_content <- function(ref_genome_ptr, nt, seq_ind, start, end) {
+    .Call(`_jackalope_view_ref_genome_nt_content`, ref_genome_ptr, nt, seq_ind, start, end)
+}
+
+#' See any nucleotide's content in a VarSet object.
+#'
+#' @noRd
+#'
+view_var_set_nt_content <- function(var_set_ptr, nt, seq_ind, var_ind, start, end) {
+    .Call(`_jackalope_view_var_set_nt_content`, var_set_ptr, nt, seq_ind, var_ind, start, end)
+}
+
 set_ref_genome_seq_names <- function(ref_genome_ptr, seq_inds, names) {
     invisible(.Call(`_jackalope_set_ref_genome_seq_names`, ref_genome_ptr, seq_inds, names))
 }
@@ -696,6 +600,134 @@ add_deletion <- function(var_set_ptr, var_ind, seq_ind, size_, new_pos_) {
 #'
 test_rate <- function(start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_) {
     .Call(`_jackalope_test_rate`, start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_)
+}
+
+#' Construct necessary information for substitution models.
+#'
+#' For a more detailed explanation, see `vignette("sub-models")`.
+#'
+#'
+#' @name sub_models
+#'
+#' @seealso \code{\link{create_variants}}
+#'
+#' @return A `sub_model_info` object, which is just a wrapper around a list with
+#' fields `Q` and `pi_tcag`. The former has the rate matrix, and the latter
+#' has the equilibrium nucleotide densities for "T", "C", "A", and "G", respectively.
+#' Access the rate matrix for a `sub_model_info` object named `x` via `x$Q` and
+#' densities via `x$pi_tcag`.
+#'
+#' @examples
+#' # Same substitution rate for all types:
+#' Q_JC69 <- sub_JC69(lambda = 0.1)
+#'
+#' # Transitions 2x more likely than transversions:
+#' Q_K80 <- sub_K80(alpha = 0.2, beta = 0.1)
+#'
+#' # Same as above, but incorporating equilibrium frequencies
+#' sub_HKY85(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
+#'           alpha = 0.2, beta = 0.1)
+#'
+NULL
+
+#' @describeIn sub_models TN93 model.
+#'
+#' @param pi_tcag Vector of length 4 indicating the equilibrium distributions of
+#'     T, C, A, and G respectively. Values must be >= 0, and
+#'     they are forced to sum to 1.
+#' @param alpha_1 Substitution rate for T <-> C transition.
+#' @param alpha_2 Substitution rate for A <-> G transition.
+#' @param beta Substitution rate for transversions.
+#'
+#' @export
+#'
+sub_TN93 <- function(pi_tcag, alpha_1, alpha_2, beta) {
+    .Call(`_jackalope_sub_TN93`, pi_tcag, alpha_1, alpha_2, beta)
+}
+
+#' @describeIn sub_models JC69 model.
+#'
+#' @param lambda Substitution rate for all possible substitutions.
+#'
+#' @export
+#'
+#'
+sub_JC69 <- function(lambda) {
+    .Call(`_jackalope_sub_JC69`, lambda)
+}
+
+#' @describeIn sub_models K80 model.
+#'
+#' @param alpha Substitution rate for transitions.
+#' @inheritParams sub_TN93
+#'
+#' @export
+#'
+sub_K80 <- function(alpha, beta) {
+    .Call(`_jackalope_sub_K80`, alpha, beta)
+}
+
+#' @describeIn sub_models F81 model.
+#'
+#' @inheritParams sub_TN93
+#'
+#' @export
+#'
+sub_F81 <- function(pi_tcag) {
+    .Call(`_jackalope_sub_F81`, pi_tcag)
+}
+
+#' @describeIn sub_models HKY85 model.
+#'
+#'
+#' @inheritParams sub_TN93
+#' @inheritParams sub_K80
+#'
+#' @export
+#'
+sub_HKY85 <- function(pi_tcag, alpha, beta) {
+    .Call(`_jackalope_sub_HKY85`, pi_tcag, alpha, beta)
+}
+
+#' @describeIn sub_models F84 model.
+#'
+#'
+#' @inheritParams sub_TN93
+#' @inheritParams sub_K80
+#' @param kappa The transition/transversion rate ratio.
+#'
+#' @export
+#'
+sub_F84 <- function(pi_tcag, beta, kappa) {
+    .Call(`_jackalope_sub_F84`, pi_tcag, beta, kappa)
+}
+
+#' @describeIn sub_models GTR model.
+#'
+#' @inheritParams sub_TN93
+#' @param abcdef A vector of length 6 that contains the off-diagonal elements
+#'     for the substitution rate matrix.
+#'     See `vignette("sub-models")` for how the values are ordered in the matrix.
+#'
+#' @export
+#'
+sub_GTR <- function(pi_tcag, abcdef) {
+    .Call(`_jackalope_sub_GTR`, pi_tcag, abcdef)
+}
+
+#' @describeIn sub_models UNREST model.
+#'
+#'
+#' @param Q Matrix of substitution rates for "T", "C", "A", and "G", respectively.
+#'     Item `Q[i,j]` is the rate of substitution from nucleotide `i` to nucleotide `j`.
+#'     Do not include indel rates here!
+#'     Values on the diagonal are calculated inside the function so are ignored.
+#'
+#' @export
+#'
+#'
+sub_UNREST <- function(Q) {
+    .Call(`_jackalope_sub_UNREST`, Q)
 }
 
 using_openmp <- function() {

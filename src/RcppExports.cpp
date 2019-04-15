@@ -264,103 +264,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// sub_TN93
-List sub_TN93(std::vector<double> pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta);
-RcppExport SEXP _jackalope_sub_TN93(SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<double> >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const double& >::type alpha_1(alpha_1SEXP);
-    Rcpp::traits::input_parameter< const double& >::type alpha_2(alpha_2SEXP);
-    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_TN93(pi_tcag, alpha_1, alpha_2, beta));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sub_JC69
-List sub_JC69(const double& lambda);
-RcppExport SEXP _jackalope_sub_JC69(SEXP lambdaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const double& >::type lambda(lambdaSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_JC69(lambda));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sub_K80
-List sub_K80(const double& alpha, const double& beta);
-RcppExport SEXP _jackalope_sub_K80(SEXP alphaSEXP, SEXP betaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_K80(alpha, beta));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sub_F81
-List sub_F81(const std::vector<double>& pi_tcag);
-RcppExport SEXP _jackalope_sub_F81(SEXP pi_tcagSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_F81(pi_tcag));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sub_HKY85
-List sub_HKY85(const std::vector<double>& pi_tcag, const double& alpha, const double& beta);
-RcppExport SEXP _jackalope_sub_HKY85(SEXP pi_tcagSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_HKY85(pi_tcag, alpha, beta));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sub_F84
-List sub_F84(const std::vector<double>& pi_tcag, const double& beta, const double& kappa);
-RcppExport SEXP _jackalope_sub_F84(SEXP pi_tcagSEXP, SEXP betaSEXP, SEXP kappaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type kappa(kappaSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_F84(pi_tcag, beta, kappa));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sub_GTR
-List sub_GTR(std::vector<double> pi_tcag, const std::vector<double>& abcdef);
-RcppExport SEXP _jackalope_sub_GTR(SEXP pi_tcagSEXP, SEXP abcdefSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<double> >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type abcdef(abcdefSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_GTR(pi_tcag, abcdef));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sub_UNREST
-List sub_UNREST(arma::mat Q);
-RcppExport SEXP _jackalope_sub_UNREST(SEXP QSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type Q(QSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_UNREST(Q));
-    return rcpp_result_gen;
-END_RCPP
-}
 // pacbio_ref_cpp
 void pacbio_ref_cpp(SEXP ref_genome_ptr, const std::string& out_prefix, const int& compress, const std::string& comp_method, const uint32& n_reads, const uint32& n_threads, const bool& show_progress, const uint32& read_pool_size, const double& prob_dup, const double& scale, const double& sigma, const double& loc, const double& min_read_len, const std::vector<double>& read_probs, const std::vector<uint32>& read_lens, const uint32& max_passes, const std::vector<double>& chi2_params_n, const std::vector<double>& chi2_params_s, const std::vector<double>& sqrt_params, const std::vector<double>& norm_params, const double& prob_thresh, const double& prob_ins, const double& prob_del, const double& prob_subst);
 RcppExport SEXP _jackalope_pacbio_ref_cpp(SEXP ref_genome_ptrSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP comp_methodSEXP, SEXP n_readsSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP, SEXP read_pool_sizeSEXP, SEXP prob_dupSEXP, SEXP scaleSEXP, SEXP sigmaSEXP, SEXP locSEXP, SEXP min_read_lenSEXP, SEXP read_probsSEXP, SEXP read_lensSEXP, SEXP max_passesSEXP, SEXP chi2_params_nSEXP, SEXP chi2_params_sSEXP, SEXP sqrt_paramsSEXP, SEXP norm_paramsSEXP, SEXP prob_threshSEXP, SEXP prob_insSEXP, SEXP prob_delSEXP, SEXP prob_substSEXP) {
@@ -720,6 +623,66 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// view_ref_genome_gc_content
+double view_ref_genome_gc_content(SEXP ref_genome_ptr, const uint32& seq_ind, const uint32& start, const uint32& end);
+RcppExport SEXP _jackalope_view_ref_genome_gc_content(SEXP ref_genome_ptrSEXP, SEXP seq_indSEXP, SEXP startSEXP, SEXP endSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type seq_ind(seq_indSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type start(startSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type end(endSEXP);
+    rcpp_result_gen = Rcpp::wrap(view_ref_genome_gc_content(ref_genome_ptr, seq_ind, start, end));
+    return rcpp_result_gen;
+END_RCPP
+}
+// view_var_set_gc_content
+double view_var_set_gc_content(SEXP var_set_ptr, const uint32& seq_ind, const uint32& var_ind, const uint32& start, const uint32& end);
+RcppExport SEXP _jackalope_view_var_set_gc_content(SEXP var_set_ptrSEXP, SEXP seq_indSEXP, SEXP var_indSEXP, SEXP startSEXP, SEXP endSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type seq_ind(seq_indSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type var_ind(var_indSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type start(startSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type end(endSEXP);
+    rcpp_result_gen = Rcpp::wrap(view_var_set_gc_content(var_set_ptr, seq_ind, var_ind, start, end));
+    return rcpp_result_gen;
+END_RCPP
+}
+// view_ref_genome_nt_content
+double view_ref_genome_nt_content(SEXP ref_genome_ptr, const char& nt, const uint32& seq_ind, const uint32& start, const uint32& end);
+RcppExport SEXP _jackalope_view_ref_genome_nt_content(SEXP ref_genome_ptrSEXP, SEXP ntSEXP, SEXP seq_indSEXP, SEXP startSEXP, SEXP endSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    Rcpp::traits::input_parameter< const char& >::type nt(ntSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type seq_ind(seq_indSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type start(startSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type end(endSEXP);
+    rcpp_result_gen = Rcpp::wrap(view_ref_genome_nt_content(ref_genome_ptr, nt, seq_ind, start, end));
+    return rcpp_result_gen;
+END_RCPP
+}
+// view_var_set_nt_content
+double view_var_set_nt_content(SEXP var_set_ptr, const char& nt, const uint32& seq_ind, const uint32& var_ind, const uint32& start, const uint32& end);
+RcppExport SEXP _jackalope_view_var_set_nt_content(SEXP var_set_ptrSEXP, SEXP ntSEXP, SEXP seq_indSEXP, SEXP var_indSEXP, SEXP startSEXP, SEXP endSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
+    Rcpp::traits::input_parameter< const char& >::type nt(ntSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type seq_ind(seq_indSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type var_ind(var_indSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type start(startSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type end(endSEXP);
+    rcpp_result_gen = Rcpp::wrap(view_var_set_nt_content(var_set_ptr, nt, seq_ind, var_ind, start, end));
+    return rcpp_result_gen;
+END_RCPP
+}
 // set_ref_genome_seq_names
 void set_ref_genome_seq_names(SEXP ref_genome_ptr, const std::vector<uint32>& seq_inds, const std::vector<std::string>& names);
 RcppExport SEXP _jackalope_set_ref_genome_seq_names(SEXP ref_genome_ptrSEXP, SEXP seq_indsSEXP, SEXP namesSEXP) {
@@ -872,6 +835,103 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sub_TN93
+List sub_TN93(std::vector<double> pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta);
+RcppExport SEXP _jackalope_sub_TN93(SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<double> >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const double& >::type alpha_1(alpha_1SEXP);
+    Rcpp::traits::input_parameter< const double& >::type alpha_2(alpha_2SEXP);
+    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_TN93(pi_tcag, alpha_1, alpha_2, beta));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_JC69
+List sub_JC69(const double& lambda);
+RcppExport SEXP _jackalope_sub_JC69(SEXP lambdaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const double& >::type lambda(lambdaSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_JC69(lambda));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_K80
+List sub_K80(const double& alpha, const double& beta);
+RcppExport SEXP _jackalope_sub_K80(SEXP alphaSEXP, SEXP betaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_K80(alpha, beta));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_F81
+List sub_F81(const std::vector<double>& pi_tcag);
+RcppExport SEXP _jackalope_sub_F81(SEXP pi_tcagSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_F81(pi_tcag));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_HKY85
+List sub_HKY85(const std::vector<double>& pi_tcag, const double& alpha, const double& beta);
+RcppExport SEXP _jackalope_sub_HKY85(SEXP pi_tcagSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_HKY85(pi_tcag, alpha, beta));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_F84
+List sub_F84(const std::vector<double>& pi_tcag, const double& beta, const double& kappa);
+RcppExport SEXP _jackalope_sub_F84(SEXP pi_tcagSEXP, SEXP betaSEXP, SEXP kappaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type kappa(kappaSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_F84(pi_tcag, beta, kappa));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_GTR
+List sub_GTR(std::vector<double> pi_tcag, const std::vector<double>& abcdef);
+RcppExport SEXP _jackalope_sub_GTR(SEXP pi_tcagSEXP, SEXP abcdefSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<double> >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type abcdef(abcdefSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_GTR(pi_tcag, abcdef));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_UNREST
+List sub_UNREST(arma::mat Q);
+RcppExport SEXP _jackalope_sub_UNREST(SEXP QSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type Q(QSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_UNREST(Q));
+    return rcpp_result_gen;
+END_RCPP
+}
 // using_openmp
 bool using_openmp();
 RcppExport SEXP _jackalope_using_openmp() {
@@ -900,14 +960,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_phylo_info_to_trees_chunk", (DL_FUNC) &_jackalope_phylo_info_to_trees_chunk, 1},
     {"_jackalope_evolve_seqs", (DL_FUNC) &_jackalope_evolve_seqs, 6},
     {"_jackalope_evolve_seqs_chunk", (DL_FUNC) &_jackalope_evolve_seqs_chunk, 6},
-    {"_jackalope_sub_TN93", (DL_FUNC) &_jackalope_sub_TN93, 4},
-    {"_jackalope_sub_JC69", (DL_FUNC) &_jackalope_sub_JC69, 1},
-    {"_jackalope_sub_K80", (DL_FUNC) &_jackalope_sub_K80, 2},
-    {"_jackalope_sub_F81", (DL_FUNC) &_jackalope_sub_F81, 1},
-    {"_jackalope_sub_HKY85", (DL_FUNC) &_jackalope_sub_HKY85, 3},
-    {"_jackalope_sub_F84", (DL_FUNC) &_jackalope_sub_F84, 3},
-    {"_jackalope_sub_GTR", (DL_FUNC) &_jackalope_sub_GTR, 2},
-    {"_jackalope_sub_UNREST", (DL_FUNC) &_jackalope_sub_UNREST, 1},
     {"_jackalope_pacbio_ref_cpp", (DL_FUNC) &_jackalope_pacbio_ref_cpp, 24},
     {"_jackalope_pacbio_var_cpp", (DL_FUNC) &_jackalope_pacbio_var_cpp, 25},
     {"_jackalope_read_ms_trees_", (DL_FUNC) &_jackalope_read_ms_trees_, 1},
@@ -934,6 +986,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_view_var_genome", (DL_FUNC) &_jackalope_view_var_genome, 2},
     {"_jackalope_view_ref_genome_seq_names", (DL_FUNC) &_jackalope_view_ref_genome_seq_names, 1},
     {"_jackalope_view_var_set_var_names", (DL_FUNC) &_jackalope_view_var_set_var_names, 1},
+    {"_jackalope_view_ref_genome_gc_content", (DL_FUNC) &_jackalope_view_ref_genome_gc_content, 4},
+    {"_jackalope_view_var_set_gc_content", (DL_FUNC) &_jackalope_view_var_set_gc_content, 5},
+    {"_jackalope_view_ref_genome_nt_content", (DL_FUNC) &_jackalope_view_ref_genome_nt_content, 5},
+    {"_jackalope_view_var_set_nt_content", (DL_FUNC) &_jackalope_view_var_set_nt_content, 6},
     {"_jackalope_set_ref_genome_seq_names", (DL_FUNC) &_jackalope_set_ref_genome_seq_names, 3},
     {"_jackalope_clean_ref_genome_seq_names", (DL_FUNC) &_jackalope_clean_ref_genome_seq_names, 1},
     {"_jackalope_set_var_set_var_names", (DL_FUNC) &_jackalope_set_var_set_var_names, 3},
@@ -946,6 +1002,14 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_add_insertion", (DL_FUNC) &_jackalope_add_insertion, 5},
     {"_jackalope_add_deletion", (DL_FUNC) &_jackalope_add_deletion, 5},
     {"_jackalope_test_rate", (DL_FUNC) &_jackalope_test_rate, 7},
+    {"_jackalope_sub_TN93", (DL_FUNC) &_jackalope_sub_TN93, 4},
+    {"_jackalope_sub_JC69", (DL_FUNC) &_jackalope_sub_JC69, 1},
+    {"_jackalope_sub_K80", (DL_FUNC) &_jackalope_sub_K80, 2},
+    {"_jackalope_sub_F81", (DL_FUNC) &_jackalope_sub_F81, 1},
+    {"_jackalope_sub_HKY85", (DL_FUNC) &_jackalope_sub_HKY85, 3},
+    {"_jackalope_sub_F84", (DL_FUNC) &_jackalope_sub_F84, 3},
+    {"_jackalope_sub_GTR", (DL_FUNC) &_jackalope_sub_GTR, 2},
+    {"_jackalope_sub_UNREST", (DL_FUNC) &_jackalope_sub_UNREST, 1},
     {"_jackalope_using_openmp", (DL_FUNC) &_jackalope_using_openmp, 0},
     {NULL, NULL, 0}
 };
