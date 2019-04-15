@@ -55,53 +55,6 @@ void clear_memory(U& x) {
 }
 
 
-//' C++ equivalent of R's \code{choose} function.
-//'
-//'
-//' @param n Unsigned integer value. Make sure this isn't negative!
-//' @param k Unsigned integer value. Make sure this isn't negative!
-//'
-//' @return Binomial coefficient (also integer).
-//'
-//' @noRd
-//'
-inline uint32 cpp_choose(const uint32& n, uint32 k) {
-    if (k > n) return 0;
-    if (k * 2 > n) k = n - k;
-    if (k == 0) return 1;
-
-    uint32 result = n;
-    for (uint32 i = 2; i <= k; ++i) {
-        result *= (n - i + 1);
-        result /= i;
-    }
-    return result;
-}
-// Same as above, but for doubles (even as doubles, they should be input as whole numbers)
-inline double cpp_choose(const double& n, double k) {
-    if (k > n) return 0;
-    if (k * 2 > n) k = n - k;
-    if (k == 0) return 1;
-
-    double result = n;
-    for (uint32 i = 2; i <= k; ++i) {
-        result *= (n - i + 1);
-        result /= i;
-    }
-    return result;
-}
-
-/*
- Get a size from either an arma::uvec or std::vector<uint32>.
- This is used in template functions that work for either class.
- */
-inline uint32 uints_get_size(std::vector<uint32>& uints) {
-    return uints.size();
-}
-inline uint32 uints_get_size(arma::uvec& uints) {
-    return uints.n_elem;
-}
-
 
 //' GC proportion of a single string.
 //'
@@ -139,70 +92,6 @@ inline double gc_prop(const std::string& sequence,
 }
 
 
-
-// To return indices of sorted vector `values`.
-template <typename T>
-std::vector<uint32> increasing_indices(const std::vector<T>& values) {
-
-    std::vector<uint32> indices(values.size());
-    std::iota(begin(indices), end(indices), static_cast<uint32>(0));
-
-    std::sort(
-        begin(indices), end(indices),
-        [&](size_t a, size_t b) { return values[a] < values[b]; }
-    );
-    return indices;
-}
-template <typename T>
-std::vector<uint32> decreasing_indices(const std::vector<T>& values) {
-
-    std::vector<uint32> indices(values.size());
-    std::iota(begin(indices), end(indices), static_cast<uint32>(0));
-
-    std::sort(
-        begin(indices), end(indices),
-        [&](size_t a, size_t b) { return values[a] > values[b]; }
-    );
-    return indices;
-}
-
-
-
-
-// Truncated normal when limit is not very far from the mean (< 5 SD away):
-inline void trunc_rnorm_near(double& out,
-                             const double& a_bar,
-                             const double& mu,
-                             const double& sigma,
-                             pcg64& eng) {
-
-    double p = R::pnorm5(a_bar, 0, 1, 1, 0);
-    double u = runif_ab(eng, p, 1);
-
-    double x = R::qnorm5(u, 0, 1, 1, 0);
-    out = x * sigma + mu;
-
-    return;
-}
-// And for when it IS very far from the mean:
-inline void trunc_rnorm_far(double& out,
-                            const double& a_bar,
-                            const double& mu,
-                            const double& sigma,
-                            pcg64& eng) {
-    double u, x_bar, v;
-    u = runif_01(eng);
-    x_bar = std::sqrt(a_bar * a_bar  - 2 * std::log(1 - u));
-    v = runif_01(eng);
-    while (v > (x_bar / a_bar)) {
-        u = runif_01(eng);
-        x_bar = std::sqrt(a_bar * a_bar  - 2 * std::log(1 - u));
-        v = runif_01(eng);
-    }
-    out = sigma * x_bar + mu;
-
-    return;
-}
 
 
 

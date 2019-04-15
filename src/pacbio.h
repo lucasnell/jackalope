@@ -32,6 +32,8 @@ using namespace Rcpp;
 
 
 
+
+
 /*
  Sample for read lengths.
 
@@ -338,17 +340,35 @@ private:
         double a_bar = (lower_thresh - norm_params[0]) / norm_params[1];
 
         /*
-         The "near" method is preferred over the "far" method unless we're truncating
+         The first method is preferred over the second unless we're truncating
          all but the tail of the distribution:
          */
         if (lower_thresh < (norm_params[0] + 5 * norm_params[1])) {
-            trunc_rnorm_near(rnd, a_bar, norm_params[0], norm_params[1], eng);
+
+            double p = R::pnorm5(a_bar, 0, 1, 1, 0);
+            double u = runif_ab(eng, p, 1);
+
+            double x = R::qnorm5(u, 0, 1, 1, 0);
+            rnd = x * norm_params[1] + norm_params[0];
+
         } else {
-            trunc_rnorm_far(rnd, a_bar, norm_params[0], norm_params[1], eng);
+
+            double u, x_bar, v;
+            u = runif_01(eng);
+            x_bar = std::sqrt(a_bar * a_bar  - 2 * std::log(1 - u));
+            v = runif_01(eng);
+            while (v > (x_bar / a_bar)) {
+                u = runif_01(eng);
+                x_bar = std::sqrt(a_bar * a_bar  - 2 * std::log(1 - u));
+                v = runif_01(eng);
+            }
+            rnd = norm_params[1] * x_bar + norm_params[0];
+
         }
 
         return rnd;
     }
+
 
 
     /*
