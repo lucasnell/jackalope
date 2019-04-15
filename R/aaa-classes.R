@@ -107,6 +107,27 @@ ref_genome <- R6::R6Class(
             }
             return(view_ref_genome_seq(self$genome, seq_ind - 1))
         },
+        # GC proportion for part of one reference sequence
+        gc_prop = function(seq_ind, start, end) {
+            private$check_pos(seq_ind, start)
+            private$check_pos(seq_ind, end)
+            if (end < start) stop("end arg must be >= start arg", call. = FALSE)
+            gcp <- view_ref_genome_gc_content(self$genome, seq_ind - 1,
+                                              start - 1, end - 1)
+            return(gcp)
+        },
+        # Nucleotide content for part of one reference sequence
+        nt_prop = function(nt, seq_ind, start, end) {
+            private$check_pos(seq_ind, start)
+            private$check_pos(seq_ind, end)
+            if (end < start) stop("end arg must be >= start arg", call. = FALSE)
+            if (!is_type(nt, "character", 1) || nchar(nt) != 1) {
+                stop("arg nt must be a single character", call. = FALSE)
+            }
+            ntp <- view_ref_genome_nt_content(self$genome, nt, seq_ind - 1,
+                                              start - 1, end - 1)
+            return(ntp)
+        },
 
         # ----------*
         # __edit__ ----
@@ -215,7 +236,21 @@ ref_genome <- R6::R6Class(
 
     private = list(
 
-        check_ptr = function() stopifnot(inherits(self$genome, "externalptr"))
+        check_ptr = function() {
+            stopifnot(inherits(self$genome, "externalptr"))
+        },
+
+        check_pos = function(seq_ind, pos) {
+            private$check_ptr()
+            if (!single_integer(seq_ind, 1, self$n_seqs())) {
+                stop("seq_ind arg must be integer in range [1, <# sequences>]",
+                     call. = FALSE)
+            }
+            if (!single_integer(pos, 1, self$sizes()[seq_ind])) {
+                stop("pos arg must be integer in range [1, <sequence size>]",
+                     call. = FALSE)
+            }
+        }
 
     )
 
@@ -381,6 +416,29 @@ variants <- R6::R6Class(
             return(view_var_genome_seq(self$genomes, var_ind - 1, seq_ind - 1))
         },
 
+        # GC proportion for part of one variant sequence
+        gc_prop = function(var_ind, seq_ind, start, end) {
+            private$check_pos(var_ind, seq_ind, start)
+            private$check_pos(var_ind, seq_ind, end)
+            if (end < start) stop("end arg must be >= start arg", call. = FALSE)
+            gcp <- view_var_set_gc_content(self$genomes, seq_ind - 1, var_ind - 1,
+                                           start - 1, end - 1)
+            return(gcp)
+        },
+
+        # Nucleotide content for part of one reference sequence
+        nt_prop = function(nt, var_ind, seq_ind, start, end) {
+            private$check_pos(var_ind, seq_ind, start)
+            private$check_pos(var_ind, seq_ind, end)
+            if (end < start) stop("end arg must be >= start arg", call. = FALSE)
+            if (!is_type(nt, "character", 1) || nchar(nt) != 1) {
+                stop("arg nt must be a single character", call. = FALSE)
+            }
+            ntp <- view_var_set_nt_content(self$genomes, nt, seq_ind - 1, var_ind - 1,
+                                           start - 1, end - 1)
+            return(ntp)
+        },
+
 
         # ----------*
         # __edit__ ----
@@ -461,24 +519,26 @@ variants <- R6::R6Class(
         # go out of scope:
         reference = NULL,
 
-        check_ptr = function() stopifnot(inherits(self$genomes, "externalptr")),
+        check_ptr = function() {
+            stopifnot(inherits(self$genomes, "externalptr"))
+        },
 
         check_seq_ind = function(seq_ind) {
-            stopifnot(inherits(self$genomes, "externalptr"))
+            private$check_ptr()
             if (!single_integer(seq_ind, 1, self$n_seqs())) {
                 stop("seq_ind arg must be integer in range [1, <# sequences>]",
                      call. = FALSE)
             }
         },
         check_var_ind = function(var_ind) {
-            stopifnot(inherits(self$genomes, "externalptr"))
+            private$check_ptr()
             if (!single_integer(var_ind, 1, self$n_vars())) {
                 stop("var_ind arg must be integer in range [1, <# variants>]",
                      call. = FALSE)
             }
         },
         check_pos = function(var_ind, seq_ind, pos) {
-            stopifnot(inherits(self$genomes, "externalptr"))
+            private$check_ptr()
             private$check_seq_ind(seq_ind)
             private$check_var_ind(var_ind)
             if (!single_integer(pos, 1, self$sizes(var_ind)[seq_ind])) {

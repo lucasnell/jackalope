@@ -92,6 +92,39 @@ inline double gc_prop(const std::string& sequence,
 }
 
 
+//' Same as above, but for any one nucleotide.
+//'
+//'
+//' @param sequence String for a single sequence.
+//'
+//' @return Proportion of sequence that's a `nt`.
+//'
+//' @noRd
+//'
+inline double nt_prop(const std::string& sequence,
+                      const char& nt) {
+    double total_seq = sequence.size();
+    double total_nt = 0;
+    for (uint32 i = 0; i < total_seq; i++) {
+        if (sequence[i] == nt) total_nt += 1;
+    }
+    double nt_prop = total_nt / total_seq;
+    return nt_prop;
+}
+// ... overloaded for portion of a string
+inline double nt_prop(const std::string& sequence,
+                      const char& nt,
+                      const uint32& start,
+                      const uint32& stop) {
+    double total_seq = stop - start + 1;
+    double total_nt = 0;
+    for (uint32 i = start; i <= stop; i++) {
+        if (sequence[i] == nt) total_nt += 1;
+    }
+    double nt_prop = total_nt / total_seq;
+    return nt_prop;
+}
+
 
 
 
