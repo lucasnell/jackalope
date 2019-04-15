@@ -79,6 +79,9 @@ NULL_ENTRY;
 
 
 
+
+
+
 //' @describeIn sub_models TN93 model.
 //'
 //' @param pi_tcag Vector of length 4 indicating the equilibrium distributions of
@@ -133,11 +136,12 @@ List sub_TN93(std::vector<double> pi_tcag,
 //'
 //'
 //[[Rcpp::export]]
-List sub_JC69(const double& lambda) {
+List sub_JC69(double lambda) {
 
     if (lambda < 0) str_stop({"\nFor the JC69 model, `lambda` should be >= 0."});
 
     std::vector<double> pi_tcag(4, 0.25);
+    lambda *= 4; // bc it's being multiplied by pi_tcag
 
     List out = sub_TN93(pi_tcag, lambda, lambda, lambda);
 
@@ -153,13 +157,15 @@ List sub_JC69(const double& lambda) {
 //' @export
 //'
 //[[Rcpp::export]]
-List sub_K80(const double& alpha,
-             const double& beta) {
+List sub_K80(double alpha,
+             double beta) {
 
     if (alpha < 0) str_stop({"\nFor the K80 model, `alpha` should be >= 0."});
     if (beta < 0) str_stop({"\nFor the K80 model, `beta` should be >= 0."});
 
     std::vector<double> pi_tcag(4, 0.25);
+    alpha *= 4;  // bc they're being multiplied by pi_tcag
+    beta *= 4;  // bc they're being multiplied by pi_tcag
 
     List out = sub_TN93(pi_tcag, alpha, alpha, beta);
 
