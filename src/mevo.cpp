@@ -167,8 +167,10 @@ SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
 
+    const uint32 n_vars = seg_sites[0].n_cols - 1;
+
     // Initialize new VarSet object
-    XPtr<VarSet> var_set(new VarSet(*ref_genome), true);
+    XPtr<VarSet> var_set(new VarSet(*ref_genome, n_vars), true);
 
     // Check that # threads isn't too high and change to 1 if not using OpenMP:
     thread_check(n_threads);
