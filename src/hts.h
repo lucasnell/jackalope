@@ -17,7 +17,7 @@
 #include "jackalope_types.h"  // uint32
 #include "pcg.h"  // ruinf_01
 #include "util.h"  // str_stop, thread_check
-#include "read_write.h"  // File* types
+#include "io.h"  // File* types
 
 
 using namespace Rcpp;
@@ -41,6 +41,53 @@ const std::vector<std::string> mm_nucleos = {"CAG", "TAG", "TCG", "TCA", "NNN"};
 
 }
 
+
+
+//' bgzip a file, potentially using multiple threads.
+//'
+//' @noRd
+//'
+inline int bgzip_file(const std::string& file_name,
+                      const int& n_threads,
+                      const int& compress) {
+
+    // Make writer object:
+    FileBGZF bgzf(file_name, n_threads, compress);
+    // Others used below:
+    void *buffer;
+    int c;
+    struct stat sbuf;
+    int f_src = fileno(stdin);
+
+    const int WINDOW_SIZE = 64 * 1024;
+
+
+    // Checking source file:
+    if (stat(file_name.c_str(), &sbuf) < 0) {
+        str_stop({"\nIn bgzip step, file ", file_name,
+                 " had non-zero status: ", strerror(errno), "."});
+    }
+    if ((f_src = open(file_name.c_str(), O_RDONLY)) < 0) {
+        str_stop({"\nIn bgzip step, file ", file_name, " could not be opened."});
+    }
+
+    // Create buffer of info to pass between:
+    buffer = malloc(WINDOW_SIZE);
+#ifdef _WIN32
+    _setmode(f_src, O_BINARY);
+#endif
+    // Writing info from one to another
+    while ((c = read(f_src, buffer, WINDOW_SIZE)) > 0) {
+        bgzf.write(buffer, c);
+    }
+
+    bgzf.close();
+    unlink(file_name.c_str());
+    free(buffer);
+    close(f_src);
+    return 0;
+
+}
 
 
 

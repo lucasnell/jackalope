@@ -16,9 +16,9 @@
 #include "alias_sampler.h"  // AliasSampler
 #include "util.h"  // clear_memory
 #include "str_manip.h"  // rev_comp
-#include "sequencer.h"  // generic sequencer classes
-#include "pacbio.h"  // PacBio* types
-#include "read_write.h"  // File* types
+#include "hts.h"  // generic sequencer classes
+#include "hts_pacbio.h"  // PacBio* types
+#include "io.h"  // File* types
 
 
 

@@ -14,8 +14,8 @@
 #'
 #' @noRd
 #'
-merge_sequences <- function(ref_genome_ptr) {
-    invisible(.Call(`_jackalope_merge_sequences`, ref_genome_ptr))
+merge_sequences_cpp <- function(ref_genome_ptr) {
+    invisible(.Call(`_jackalope_merge_sequences_cpp`, ref_genome_ptr))
 }
 
 #' Filter reference genome sequences by size or for a proportion of total nucleotides.
@@ -34,8 +34,8 @@ merge_sequences <- function(ref_genome_ptr) {
 #' @noRd
 #'
 #'
-filter_sequences <- function(ref_genome_ptr, min_seq_size = 0L, out_seq_prop = 0) {
-    invisible(.Call(`_jackalope_filter_sequences`, ref_genome_ptr, min_seq_size, out_seq_prop))
+filter_sequences_cpp <- function(ref_genome_ptr, min_seq_size = 0L, out_seq_prop = 0) {
+    invisible(.Call(`_jackalope_filter_sequences_cpp`, ref_genome_ptr, min_seq_size, out_seq_prop))
 }
 
 #' Replace Ns with randome nucleotides.
@@ -74,8 +74,8 @@ replace_Ns_cpp <- function(ref_genome_ptr, pi_tcag, n_threads, show_progress) {
 #' @examples
 #'
 #'
-create_genome_ <- function(n_seqs, len_mean, len_sd, pi_tcag, n_threads) {
-    .Call(`_jackalope_create_genome_`, n_seqs, len_mean, len_sd, pi_tcag, n_threads)
+create_genome_cpp <- function(n_seqs, len_mean, len_sd, pi_tcag, n_threads) {
+    .Call(`_jackalope_create_genome_cpp`, n_seqs, len_mean, len_sd, pi_tcag, n_threads)
 }
 
 #' Create random sequences as a character vector.
@@ -110,6 +110,143 @@ illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compr
 #'
 illumina_var_cpp <- function(var_set_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
     invisible(.Call(`_jackalope_illumina_var_cpp`, var_set_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
+}
+
+#' PacBio sequence for reference object.
+#'
+#'
+#' @noRd
+#'
+pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
+    invisible(.Call(`_jackalope_pacbio_ref_cpp`, ref_genome_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
+}
+
+#' PacBio sequence for reference object.
+#'
+#'
+#' @noRd
+#'
+pacbio_var_cpp <- function(var_set_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
+    invisible(.Call(`_jackalope_pacbio_var_cpp`, var_set_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
+}
+
+#' Write Gamma matrix info to a tab-delimited BED file.
+#'
+#'
+#'
+#' @noRd
+#'
+write_bed <- function(out_prefix, gamma_mats, seq_names, compress, comp_method) {
+    invisible(.Call(`_jackalope_write_bed`, out_prefix, gamma_mats, seq_names, compress, comp_method))
+}
+
+#' Read a non-indexed fasta file to a \code{RefGenome} object.
+#'
+#' @param file_names File names of the fasta file(s).
+#' @param cut_names Boolean for whether to cut sequence names at the first space.
+#'     Defaults to \code{TRUE}.
+#' @param remove_soft_mask Boolean for whether to remove soft-masking by making
+#'    sequences all uppercase. Defaults to \code{TRUE}.
+#'
+#' @return Nothing.
+#'
+#' @noRd
+#'
+read_fasta_noind <- function(fasta_files, cut_names, remove_soft_mask) {
+    .Call(`_jackalope_read_fasta_noind`, fasta_files, cut_names, remove_soft_mask)
+}
+
+#' Read an indexed fasta file to a \code{RefGenome} object.
+#'
+#' @param file_name File name of the fasta file.
+#' @param remove_soft_mask Boolean for whether to remove soft-masking by making
+#'    sequences all uppercase. Defaults to \code{TRUE}.
+#' @param offsets Vector of sequence offsets from the fasta index file.
+#' @param names Vector of sequence names from the fasta index file.
+#' @param lengths Vector of sequence lengths from the fasta index file.
+#' @param line_lens Vector of sequence line lengths from the fasta index file.
+#'
+#' @return Nothing.
+#'
+#' @noRd
+#'
+#'
+read_fasta_ind <- function(fasta_files, fai_files, remove_soft_mask) {
+    .Call(`_jackalope_read_fasta_ind`, fasta_files, fai_files, remove_soft_mask)
+}
+
+#' Write \code{RefGenome} to an uncompressed fasta file.
+#'
+#' @param out_prefix Prefix to file name of output fasta file.
+#' @param ref_genome_ptr An external pointer to a \code{RefGenome} C++ object.
+#' @param text_width The number of characters per line in the output fasta file.
+#' @param compress Boolean for whether to compress output.
+#'
+#' @return Nothing.
+#'
+#' @noRd
+#'
+#'
+write_ref_fasta <- function(out_prefix, ref_genome_ptr, text_width, compress, comp_method, show_progress) {
+    invisible(.Call(`_jackalope_write_ref_fasta`, out_prefix, ref_genome_ptr, text_width, compress, comp_method, show_progress))
+}
+
+#' Write \code{VarSet} to an uncompressed fasta file.
+#'
+#' @param out_prefix Prefix to file name of output fasta file.
+#' @param var_set_ptr An external pointer to a \code{VarSet} C++ object.
+#' @param text_width The number of characters per line in the output fasta file.
+#' @param compress Boolean for whether to compress output.
+#'
+#' @return Nothing.
+#'
+#' @noRd
+#'
+#'
+write_vars_fasta <- function(out_prefix, var_set_ptr, text_width, compress, comp_method, n_threads, show_progress) {
+    invisible(.Call(`_jackalope_write_vars_fasta`, out_prefix, var_set_ptr, text_width, compress, comp_method, n_threads, show_progress))
+}
+
+#' Read a ms output file with newick gene trees and return the gene tree strings.
+#'
+#' @param ms_file File name of the ms output file.
+#'
+#' @return A vector of strings for each set of gene trees.
+#'
+#' @noRd
+#'
+read_ms_trees_ <- function(ms_file) {
+    .Call(`_jackalope_read_ms_trees_`, ms_file)
+}
+
+#' Read a ms output file with segregating sites and return the matrices of site info.
+#'
+#' @param ms_file File name of the ms output file.
+#'
+#' @return A vector of strings for each set of gene trees.
+#'
+#' @noRd
+#'
+coal_file_sites <- function(ms_file) {
+    .Call(`_jackalope_coal_file_sites`, ms_file)
+}
+
+#' Read VCF from a vcfR object.
+#'
+#'
+#' @noRd
+#'
+read_vcfr <- function(reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq) {
+    .Call(`_jackalope_read_vcfr`, reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq)
+}
+
+#' Write `variants` to VCF file.
+#'
+#'
+#' @noRd
+#'
+write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, show_progress) {
+    invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix, show_progress))
 }
 
 #' Used below to directly make a MutationTypeSampler
@@ -218,143 +355,6 @@ evolve_seqs <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_
 #'
 evolve_seqs_chunk <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress) {
     .Call(`_jackalope_evolve_seqs_chunk`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress)
-}
-
-#' PacBio sequence for reference object.
-#'
-#'
-#' @noRd
-#'
-pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
-    invisible(.Call(`_jackalope_pacbio_ref_cpp`, ref_genome_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
-}
-
-#' PacBio sequence for reference object.
-#'
-#'
-#' @noRd
-#'
-pacbio_var_cpp <- function(var_set_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
-    invisible(.Call(`_jackalope_pacbio_var_cpp`, var_set_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
-}
-
-#' Read a ms output file with newick gene trees and return the gene tree strings.
-#'
-#' @param ms_file File name of the ms output file.
-#'
-#' @return A vector of strings for each set of gene trees.
-#'
-#' @noRd
-#'
-read_ms_trees_ <- function(ms_file) {
-    .Call(`_jackalope_read_ms_trees_`, ms_file)
-}
-
-#' Read a ms output file with segregating sites and return the matrices of site info.
-#'
-#' @param ms_file File name of the ms output file.
-#'
-#' @return A vector of strings for each set of gene trees.
-#'
-#' @noRd
-#'
-coal_file_sites <- function(ms_file) {
-    .Call(`_jackalope_coal_file_sites`, ms_file)
-}
-
-#' Read VCF from a vcfR object.
-#'
-#'
-#' @noRd
-#'
-read_vcfr <- function(reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq) {
-    .Call(`_jackalope_read_vcfr`, reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq)
-}
-
-#' Read a non-indexed fasta file to a \code{RefGenome} object.
-#'
-#' @param file_names File names of the fasta file(s).
-#' @param cut_names Boolean for whether to cut sequence names at the first space.
-#'     Defaults to \code{TRUE}.
-#' @param remove_soft_mask Boolean for whether to remove soft-masking by making
-#'    sequences all uppercase. Defaults to \code{TRUE}.
-#'
-#' @return Nothing.
-#'
-#' @noRd
-#'
-read_fasta_noind <- function(fasta_files, cut_names, remove_soft_mask) {
-    .Call(`_jackalope_read_fasta_noind`, fasta_files, cut_names, remove_soft_mask)
-}
-
-#' Read an indexed fasta file to a \code{RefGenome} object.
-#'
-#' @param file_name File name of the fasta file.
-#' @param remove_soft_mask Boolean for whether to remove soft-masking by making
-#'    sequences all uppercase. Defaults to \code{TRUE}.
-#' @param offsets Vector of sequence offsets from the fasta index file.
-#' @param names Vector of sequence names from the fasta index file.
-#' @param lengths Vector of sequence lengths from the fasta index file.
-#' @param line_lens Vector of sequence line lengths from the fasta index file.
-#'
-#' @return Nothing.
-#'
-#' @noRd
-#'
-#'
-read_fasta_ind <- function(fasta_files, fai_files, remove_soft_mask) {
-    .Call(`_jackalope_read_fasta_ind`, fasta_files, fai_files, remove_soft_mask)
-}
-
-#' Write \code{RefGenome} to an uncompressed fasta file.
-#'
-#' @param out_prefix Prefix to file name of output fasta file.
-#' @param ref_genome_ptr An external pointer to a \code{RefGenome} C++ object.
-#' @param text_width The number of characters per line in the output fasta file.
-#' @param compress Boolean for whether to compress output.
-#'
-#' @return Nothing.
-#'
-#' @noRd
-#'
-#'
-write_ref_fasta <- function(out_prefix, ref_genome_ptr, text_width, compress, comp_method, show_progress) {
-    invisible(.Call(`_jackalope_write_ref_fasta`, out_prefix, ref_genome_ptr, text_width, compress, comp_method, show_progress))
-}
-
-#' Write \code{VarSet} to an uncompressed fasta file.
-#'
-#' @param out_prefix Prefix to file name of output fasta file.
-#' @param var_set_ptr An external pointer to a \code{VarSet} C++ object.
-#' @param text_width The number of characters per line in the output fasta file.
-#' @param compress Boolean for whether to compress output.
-#'
-#' @return Nothing.
-#'
-#' @noRd
-#'
-#'
-write_vars_fasta <- function(out_prefix, var_set_ptr, text_width, compress, comp_method, n_threads, show_progress) {
-    invisible(.Call(`_jackalope_write_vars_fasta`, out_prefix, var_set_ptr, text_width, compress, comp_method, n_threads, show_progress))
-}
-
-#' Write `variants` to VCF file.
-#'
-#'
-#' @noRd
-#'
-write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, show_progress) {
-    invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix, show_progress))
-}
-
-#' Write Gamma matrix info to a tab-delimited BED file.
-#'
-#'
-#'
-#' @noRd
-#'
-write_bed <- function(out_prefix, gamma_mats, seq_names, compress, comp_method) {
-    invisible(.Call(`_jackalope_write_bed`, out_prefix, gamma_mats, seq_names, compress, comp_method))
 }
 
 #' Add mutations manually from R.

@@ -19,9 +19,7 @@
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // runif_01
 #include "alias_sampler.h"  // AliasSampler
-#include "util.h"  // clear_memory
-#include "str_manip.h"  // rev_comp
-#include "sequencer.h"  // generic sequencing class
+#include "hts.h"  // generic sequencing class
 
 
 using namespace Rcpp;

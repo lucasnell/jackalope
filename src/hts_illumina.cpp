@@ -14,9 +14,10 @@
 #include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
-#include "sequencer.h"  // generic sequencing classes
-#include "illumina.h"  // Illumina-specific classes
-#include "read_write.h"  // File* types
+#include "hts.h"  // generic sequencing classes
+#include "hts_illumina.h"  // Illumina-specific classes
+#include "str_manip.h"  // rev_comp
+#include "io.h"  // File* types
 
 using namespace Rcpp;
 
