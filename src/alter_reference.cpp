@@ -59,7 +59,7 @@ namespace alter_scaffs {
 //' @noRd
 //'
 //[[Rcpp::export]]
-void merge_sequences(SEXP ref_genome_ptr) {
+void merge_sequences_cpp(SEXP ref_genome_ptr) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::deque<RefSequence>& seqs(ref_genome->sequences);
@@ -121,9 +121,9 @@ void merge_sequences(SEXP ref_genome_ptr) {
 //'
 //'
 //[[Rcpp::export]]
-void filter_sequences(SEXP ref_genome_ptr,
-                      const uint32& min_seq_size = 0,
-                      const double& out_seq_prop = 0) {
+void filter_sequences_cpp(SEXP ref_genome_ptr,
+                          const uint32& min_seq_size = 0,
+                          const double& out_seq_prop = 0) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::deque<RefSequence>& seqs(ref_genome->sequences);

@@ -163,11 +163,11 @@ OuterClass create_sequences_(const uint32& n_seqs,
 //'
 //'
 //[[Rcpp::export]]
-SEXP create_genome_(const uint32& n_seqs,
-                    const double& len_mean,
-                    const double& len_sd,
-                    std::vector<double> pi_tcag,
-                    const uint32& n_threads) {
+SEXP create_genome_cpp(const uint32& n_seqs,
+                       const double& len_mean,
+                       const double& len_sd,
+                       std::vector<double> pi_tcag,
+                       const uint32& n_threads) {
 
     XPtr<RefGenome> ref_xptr(new RefGenome(), true);
     RefGenome& ref(*ref_xptr);

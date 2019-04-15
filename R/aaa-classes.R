@@ -171,7 +171,7 @@ ref_genome <- R6::R6Class(
         # Merge all ref_genome genome sequences into one
         merge_seqs = function() {
             private$check_ptr()
-            merge_sequences(self$genome)
+            merge_sequences_cpp(self$genome)
             invisible(self)
         },
 
@@ -201,7 +201,7 @@ ref_genome <- R6::R6Class(
                 }
                 out_seq_prop <- threshold
             }
-            filter_sequences(self$genome, min_seq_size, out_seq_prop)
+            filter_sequences_cpp(self$genome, min_seq_size, out_seq_prop)
             invisible(self)
         },
 

@@ -48,7 +48,7 @@ create_genome <- function(n_seqs,
         err_msg("create_genome", "n_threads", "a single integer >= 1")
     }
 
-    ptr <- create_genome_(n_seqs, len_mean, len_sd, pi_tcag, n_threads)
+    ptr <- create_genome_cpp(n_seqs, len_mean, len_sd, pi_tcag, n_threads)
 
     ref_obj <- ref_genome$new(ptr)
 
