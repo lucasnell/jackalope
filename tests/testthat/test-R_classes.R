@@ -108,13 +108,11 @@ test_that("ref_genome class methods produce correct output", {
 # Restart object:
 ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
 
-# Molecular evolution info:
-mev <- create_mevo(ref, list(model = "JC69", lambda = 0.05))
-# <test-create_mevo.R already tested this class>
+
 
 # Create variants:
 phy <- ape::rcoal(n_vars)
-vars <- create_variants(ref, "phy", phy, mevo_obj = mev)
+vars <- create_variants(ref, vars_phylo(phy), sub = sub_JC69(0.01))
 test_that("variants class starts with the correct fields", {
     expect_is(vars$genomes, "externalptr")
 })
@@ -186,16 +184,15 @@ for (v in 1:n_vars) {
                 if (nchar(str) != size) stop("Improper size in insertion")
                 vars$add_ins(v, s, pos, str)
                 ts[s] <- paste0(substr(ts[s], 1, pos), str,
-                                    substr(ts[s], pos + 1, nchar(ts[s])))
+                                substr(ts[s], pos + 1, nchar(ts[s])))
                 max_size <- max_size + size
             } else {
                 size = as.integer(rexp(1, 2.0) + 1.0)
                 if (size > 10) size = 10
-                if (size > (max_size - pos)) size = max_size - pos;
-                if (size < 1) size = 1
+                if ((pos + size - 1) > max_size) size = max_size - pos + 1;
                 vars$add_del(v, s, pos, size)
                 ts[s] <- paste0(substr(ts[s], 1, pos - 1),
-                                    substr(ts[s], pos + size, nchar(ts[s])))
+                                substr(ts[s], pos + size, nchar(ts[s])))
                 max_size <- max_size - size
             }
             m <- m + 1
@@ -225,5 +222,39 @@ test_that("Replacing Ns works as predicted", {
     expect_identical(ref$sequence(1), "CCAATTTGG")
     expect_identical(ref$sequence(2), "TTTTCCAAGG")
     expect_identical(ref$sequence(3), "AACCTTGGGGGTTTTTT")
+})
+
+
+# Testing that gc_prop and nt_prob work
+ref <- ref_genome$new(jackalope:::make_ref_genome(
+    c(paste(c(rep("T", 50), rep("C", 50), rep("A", 50), rep("G", 50)), collapse = ""),
+      paste(c(rep("T", 100), rep("C", 50), rep("A", 25), rep("G", 25)), collapse = ""),
+      paste(c(rep("T", 50), rep("C", 25), rep("A", 25), rep("G", 100)), collapse = ""),
+      paste(c(rep("T", 25), rep("C", 25), rep("A", 100), rep("G", 50)), collapse = ""))
+    ))
+
+test_that("gc_prop and nt_prob work as predicted", {
+
+    expect_equal(ref$gc_prop(1, 1, 200), 100 / 200)
+    expect_equal(ref$gc_prop(2, 1, 200), 75 / 200)
+    expect_equal(ref$gc_prop(3, 1, 200), 125 / 200)
+    expect_equal(ref$gc_prop(4, 1, 200), 75 / 200)
+
+    expect_equal(ref$gc_prop(1, 1, 100), 50 / 100)
+    expect_equal(ref$gc_prop(2, 1, 100), 0 / 100)
+    expect_equal(ref$gc_prop(3, 1, 100), 25 / 100)
+    expect_equal(ref$gc_prop(4, 1, 100), 25 / 100)
+
+
+    expect_equal(ref$nt_prop('T', 1, 1, 200), 50 / 200)
+    expect_equal(ref$nt_prop('T', 2, 1, 200), 100 / 200)
+    expect_equal(ref$nt_prop('T', 3, 1, 200), 50 / 200)
+    expect_equal(ref$nt_prop('T', 4, 1, 200), 25 / 200)
+
+    expect_equal(ref$nt_prop('T', 1, 1, 100), 50 / 100)
+    expect_equal(ref$nt_prop('T', 2, 1, 100), 100 / 100)
+    expect_equal(ref$nt_prop('T', 3, 1, 100), 50 / 100)
+    expect_equal(ref$nt_prop('T', 4, 1, 100), 25 / 100)
+
 })
 

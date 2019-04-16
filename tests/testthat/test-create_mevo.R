@@ -68,6 +68,14 @@ with(pars, {
     mats_err4[[4]][1,1] = mats_err4[[4]][2,1]
 })
 
+# This will be used a lot
+create_mevo <- function(reference, sub,
+                        ins = NULL,
+                        del = NULL,
+                        gamma_mats = NULL,
+                        chunk_size = 100) {
+    jackalope:::create_mevo(reference, sub, ins, del, gamma_mats, chunk_size)
+}
 
 # Create reference genome
 ref <- with(pars, create_genome(n_seqs, seq_len))
@@ -80,7 +88,7 @@ ref <- with(pars, create_genome(n_seqs, seq_len))
 # ==============================*
 
 # *  JC69 ----
-M <- with(pars, create_mevo(ref, sub = list(model = "JC69", lambda = lambda)))
+M <- create_mevo(ref, sub = sub_JC69(pars$lambda))
 
 # These only need to be checked once:
 test_that("proper output common to all models with no site variability or indels", {
@@ -100,7 +108,7 @@ test_that("proper output for JC69 model", {
 })
 
 # *  K80 ----
-M <- with(pars, {create_mevo(ref, sub = list(model = "K80", alpha = alpha, beta = beta))})
+M <- with(pars, {create_mevo(ref, sub = sub_K80(alpha = alpha, beta = beta))})
 
 test_that("proper output for K80 model", {
     Q <- matrix(pars$beta, 4, 4)
@@ -113,7 +121,7 @@ test_that("proper output for K80 model", {
 
 
 # *  F81 ----
-M <- with(pars, {create_mevo(ref, sub = list(model = "F81", pi_tcag = pi_tcag))})
+M <- with(pars, {create_mevo(ref, sub_F81(pi_tcag = pi_tcag))})
 
 test_that("proper output for F81 model", {
     Q <- matrix(rep(pars$pi_tcag, each = 4), 4, 4)
@@ -125,7 +133,7 @@ test_that("proper output for F81 model", {
 
 
 # *  HKY85 ----
-M <- with(pars, {create_mevo(ref, sub = list(model = "HKY85", alpha = alpha, beta = beta,
+M <- with(pars, {create_mevo(ref, sub_HKY85(alpha = alpha, beta = beta,
                                            pi_tcag = pi_tcag))})
 
 test_that("proper output for HKY85 model", {
@@ -139,7 +147,7 @@ test_that("proper output for HKY85 model", {
 })
 
 # *  TN93 ----
-M <- with(pars, {create_mevo(ref, sub = list(model = "TN93", alpha_1 = alpha_1,
+M <- with(pars, {create_mevo(ref, sub_TN93(alpha_1 = alpha_1,
                                            alpha_2 = alpha_2, beta = beta,
                                            pi_tcag = pi_tcag))})
 
@@ -155,7 +163,7 @@ test_that("proper output for TN93 model", {
 })
 
 # *  F84 ----
-M <- with(pars, {create_mevo(ref, sub = list(model = "F84", beta = beta, kappa = kappa,
+M <- with(pars, {create_mevo(ref, sub_F84(beta = beta, kappa = kappa,
                                            pi_tcag = pi_tcag))})
 
 test_that("proper output for F84 model", {
@@ -172,7 +180,7 @@ test_that("proper output for F84 model", {
 })
 
 # *  GTR ----
-M <- with(pars, {create_mevo(ref, sub = list(model = "GTR", pi_tcag = pi_tcag,
+M <- with(pars, {create_mevo(ref, sub_GTR(pi_tcag = pi_tcag,
                                            abcdef = abcdef))})
 
 test_that("proper output for GTR model", {
@@ -186,7 +194,7 @@ test_that("proper output for GTR model", {
 })
 
 # *  UNREST ----
-M <- with(pars, {create_mevo(ref, sub = list(model = "UNREST", Q = Q))})
+M <- with(pars, {create_mevo(ref, sub_UNREST(Q = Q))})
 
 test_that("proper output for UNREST model", {
     Q <- pars$Q
@@ -211,9 +219,9 @@ test_that("proper output for UNREST model", {
 # ==============================*
 
 # *  exp(-L) ----
-M <- with(pars, create_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                          ins = list(rate = rates[1], max_length = M[1]),
-                          del = list(rate = rates[2], max_length = M[2])))
+M <- with(pars, create_mevo(ref, sub_JC69(lambda = lambda),
+                          ins = indels(rate = rates[1], max_length = M[1]),
+                          del = indels(rate = rates[2], max_length = M[2])))
 test_that("proper indel rates with `rate` and `max_length` inputs", {
     ins <- exp(-1 * 1:pars$M[1])
     ins <- (ins / sum(ins)) * pars$rates[1]
@@ -224,9 +232,9 @@ test_that("proper indel rates with `rate` and `max_length` inputs", {
 })
 
 # *  Lavalette ----
-M <- with(pars, create_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                          ins = list(rate = rates[1], max_length = M[1], a = a[1]),
-                          del = list(rate = rates[2], max_length = M[2], a = a[2])))
+M <- with(pars, create_mevo(ref, sub_JC69(lambda = lambda),
+                          ins = indels(rate = rates[1], max_length = M[1], a = a[1]),
+                          del = indels(rate = rates[2], max_length = M[2], a = a[2])))
 test_that("proper indel rates with `rate`, `max_length`, and `a` inputs", {
     u <- 1:pars$M[1]
     M_ <- pars$M[1]
@@ -243,9 +251,9 @@ test_that("proper indel rates with `rate`, `max_length`, and `a` inputs", {
 })
 
 # * custom ----
-M <- with(pars, create_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                          ins = list(rate = rates[1], rel_rates = rel_rates[[1]]),
-                          del = list(rate = rates[2], rel_rates = rel_rates[[2]])))
+M <- with(pars, create_mevo(ref, sub_JC69(lambda = lambda),
+                          ins = indels(rate = rates[1], rel_rates = rel_rates[[1]]),
+                          del = indels(rate = rates[2], rel_rates = rel_rates[[2]])))
 test_that("proper indel rates with `rate` and `rel_rates` inputs", {
     ins <- pars$rel_rates[[1]]
     ins <- (ins / sum(ins)) * pars$rates[1]
@@ -275,21 +283,20 @@ test_that("proper output for JC69 model when indels are included", {
 
 dir <- tempdir()
 
-M <- with(pars, create_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                          site_var = list(shape = shape, region_size = region_size),
-                          gamma_bed = paste0(dir, "/mevo")))
+M <- site_var(ref, shape = pars$shape, region_size = pars$region_size,
+              out_prefix = paste0(dir, "/mevo"))
 
 # *  generate ----
 test_that("proper gamma distance values with `shape` and `region_size` inputs", {
     # Testing end points:
-    expect_equal(sapply(M$gamma_mats, function(x) x[,1]),
+    expect_equal(sapply(M, function(x) x[,1]),
                  matrix(rep(seq(pars$region_size, pars$seq_len, pars$region_size),
                             pars$n_seqs),
                         ceiling(pars$seq_len / pars$region_size), pars$n_seqs))
     # Testing mean:
-    expect_equal(mean(sapply(M$gamma_mats, function(x) mean(x[,2]))), 1)
+    expect_equal(mean(sapply(M, function(x) mean(x[,2]))), 1)
     # Testing SD:
-    G <- do.call(c, lapply(M$gamma_mats, function(x) x[,2]))
+    G <- do.call(c, lapply(M, function(x) x[,2]))
     s <- sd(G)                 # observed SD
     s0 <- sqrt(1 / pars$shape)      # expected SD
     rel_diff <- abs((s - s0) / s0)
@@ -302,10 +309,10 @@ test_that("BED file of gamma values is correct", {
 
     bed_df <- utils::read.table(paste0(dir, "/mevo.bed"), sep = "\t")
 
-    gmat_df <- do.call(rbind, lapply(1:length(M$gamma_mats),
+    gmat_df <- do.call(rbind, lapply(1:length(M),
                                      function(i) {
                                          cbind(nm = ref$names()[i],
-                                               as.data.frame(M$gamma_mats[[i]]))
+                                               as.data.frame(M[[i]]))
                                          }))
 
     expect_equal(bed_df[,1], gmat_df[,1])
@@ -314,32 +321,29 @@ test_that("BED file of gamma values is correct", {
 
 })
 
+
 # *  custom ----
-M <- with(pars, create_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                          site_var = pars$mats))
+
+M <- site_var(ref, mats = pars$mats)
 
 test_that("proper gamma distance values with `mats` inputs", {
-    expect_identical(M$gamma_mats, pars$mats)
+    MM <- M
+    class(MM) <- "list"
+    expect_identical(MM, pars$mats)
 })
 
 
 # *  proper errors ----
 test_that("throws proper errors when inputting an incorrect `site_var$mats` input", {
-    expect_error({
-        M <- with(pars, create_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                                  site_var = pars$mats_err1))
-    })
-    expect_error({
-        M <- with(pars, create_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                                  site_var = pars$mats_err2))
-    })
-    expect_error({
-        M <- with(pars, create_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                                  site_var = pars$mats_err3))
-    })
-    expect_error({
-        M <- with(pars, create_mevo(ref, sub = list(model = "JC69", lambda = lambda),
-                                  site_var = pars$mats_err4))
-    })
+    expect_error(site_var(ref, mats = pars$mats_err1),
+                 regexp = "argument `mats` must be NULL or a list of matrices")
+    expect_error(site_var(ref, mats = pars$mats_err2),
+                 regexp = paste("all matrices need to have a maximum end point",
+                                "\\(in the first column\\) equal to the size of",
+                                "the associated sequence"))
+    expect_error(site_var(ref, mats = pars$mats_err3),
+                 regexp = "all matrices should contain only whole numbers as end points")
+    expect_error(site_var(ref, mats = pars$mats_err4),
+                 regexp = "all matrices should contain no duplicate end points")
 })
 

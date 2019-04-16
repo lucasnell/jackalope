@@ -30,8 +30,9 @@ test_that("Read/writing FASTA files produces errors when nonsense is input", {
     expect_error(write_fasta(ref, 3),
                  regexp = "argument `out_prefix` must be a single string")
 
-    expect_error(write_fasta(ref, fa_fn, compress = 3),
-                 regexp = "argument `compress` must be a single logical")
+    expect_error(write_fasta(ref, fa_fn, compress = "3"),
+                 regexp = paste("argument `compress` must be a single logical",
+                                "or integer from 1 to 9"))
 
     expect_error(write_fasta(ref, fa_fn, text_width = "y"),
                  regexp = "argument `text_width` must be a single integer >= 1")
@@ -74,10 +75,11 @@ test_that("Read/writing FASTA files produces errors when nonsense is input", {
 
 test_that("Read/writing single non-indexed FASTA files works with uncompressed output", {
 
-    fa_fn <- sprintf("%s/%s.fa", dir, "test")
+    fa_fn <- sprintf("%s/%s", dir, "test")
 
     write_fasta(ref, fa_fn, compress = FALSE)
 
+    fa_fn <- sprintf("%s/%s.fa", dir, "test")
     new_ref <- read_fasta(fa_fn)
 
     expect_identical(ref$n_seqs(), new_ref$n_seqs())
@@ -89,12 +91,31 @@ test_that("Read/writing single non-indexed FASTA files works with uncompressed o
 })
 
 
-test_that("Read/writing single non-indexed FASTA files works with compressed output", {
+test_that("Read/writing single non-indexed FASTA files works with gzipped output", {
+
+    fa_fn <- sprintf("%s/%s", dir, "test")
+
+    write_fasta(ref, fa_fn, compress = TRUE, comp_method = "gzip")
 
     fa_fn <- sprintf("%s/%s.fa.gz", dir, "test")
+    new_ref <- read_fasta(fa_fn)
 
-    write_fasta(ref, fa_fn, compress = TRUE)
+    expect_identical(ref$n_seqs(), new_ref$n_seqs())
 
+    for (i in 1:ref$n_seqs()) {
+        expect_identical(ref$sequence(i), ref$sequence(i))
+    }
+
+})
+
+
+test_that("Read/writing single non-indexed FASTA files works with bgzipped output", {
+
+    fa_fn <- sprintf("%s/%s", dir, "test")
+
+    write_fasta(ref, fa_fn, compress = TRUE, comp_method = "bgzip", overwrite = TRUE)
+
+    fa_fn <- sprintf("%s/%s.fa.gz", dir, "test")
     new_ref <- read_fasta(fa_fn)
 
     expect_identical(ref$n_seqs(), new_ref$n_seqs())
@@ -119,11 +140,12 @@ ref2 <- ref_genome$new(jackalope:::make_ref_genome(seqs[6:10]))
 
 test_that("Read/writing multiple non-indexed FASTA files works with uncompressed output", {
 
-    fa_fns <- sprintf("%s/%s%i.fa", dir, "test", 1:2)
+    fa_fns <- sprintf("%s/%s%i", dir, "test", 1:2)
 
     write_fasta(ref1, fa_fns[1], compress = FALSE)
     write_fasta(ref2, fa_fns[2], compress = FALSE)
 
+    fa_fns <- sprintf("%s/%s%i.fa", dir, "test", 1:2)
     new_ref <- read_fasta(fa_fns)
 
     expect_identical(ref$n_seqs(), new_ref$n_seqs())
@@ -135,13 +157,32 @@ test_that("Read/writing multiple non-indexed FASTA files works with uncompressed
 })
 
 
-test_that("Read/writing multiple non-indexed FASTA files works with compressed output", {
+test_that("Read/writing multiple non-indexed FASTA files works with gzipped output", {
+
+    fa_fns <- sprintf("%s/%s%i", dir, "test", 1:2)
+
+    write_fasta(ref1, fa_fns[1], compress = TRUE, comp_method = "gzip")
+    write_fasta(ref2, fa_fns[2], compress = TRUE, comp_method = "gzip")
 
     fa_fns <- sprintf("%s/%s%i.fa.gz", dir, "test", 1:2)
+    new_ref <- read_fasta(fa_fns)
 
-    write_fasta(ref1, fa_fns[1], compress = TRUE)
-    write_fasta(ref2, fa_fns[2], compress = TRUE)
+    expect_identical(ref$n_seqs(), new_ref$n_seqs())
 
+    for (i in 1:ref$n_seqs()) {
+        expect_identical(ref$sequence(i), ref$sequence(i))
+    }
+
+})
+
+test_that("Read/writing multiple non-indexed FASTA files works with bgzipped output", {
+
+    fa_fns <- sprintf("%s/%s%i", dir, "test", 1:2)
+
+    write_fasta(ref1, fa_fns[1], compress = TRUE, comp_method = "bgzip", overwrite = TRUE)
+    write_fasta(ref2, fa_fns[2], compress = TRUE, comp_method = "bgzip", overwrite = TRUE)
+
+    fa_fns <- sprintf("%s/%s%i.fa.gz", dir, "test", 1:2)
     new_ref <- read_fasta(fa_fns)
 
     expect_identical(ref$n_seqs(), new_ref$n_seqs())
@@ -194,11 +235,12 @@ utils::write.table(fa_index_df, sprintf("%s/%s.fa.fai", dir, "test"), quote = FA
 
 test_that("Read/writing single indexed FASTA files works with uncompressed output", {
 
-    fa_fn <- sprintf("%s/%s.fa", dir, "test")
+    fa_fn <- sprintf("%s/%s", dir, "test")
     fai_fn <- sprintf("%s/%s.fa.fai", dir, "test")
 
-    write_fasta(ref, fa_fn, compress = FALSE)
+    write_fasta(ref, fa_fn, compress = FALSE, overwrite = TRUE)
 
+    fa_fn <- sprintf("%s/%s.fa", dir, "test")
     new_ref <- read_fasta(fa_fn, fai_fn)
 
     expect_identical(ref$n_seqs(), new_ref$n_seqs())
@@ -210,13 +252,33 @@ test_that("Read/writing single indexed FASTA files works with uncompressed outpu
 })
 
 
-test_that("Read/writing single indexed FASTA files works with compressed output", {
+test_that("Read/writing single indexed FASTA files works with gzipped output", {
 
-    fa_fn <- sprintf("%s/%s.fa.gz", dir, "test")
+    fa_fn <- sprintf("%s/%s", dir, "test")
     fai_fn <- sprintf("%s/%s.fa.fai", dir, "test")
 
-    write_fasta(ref, fa_fn, compress = TRUE)
+    write_fasta(ref, fa_fn, compress = TRUE, comp_method = "gzip", overwrite = TRUE)
 
+    fa_fn <- sprintf("%s/%s.fa.gz", dir, "test")
+    new_ref <- read_fasta(fa_fn, fai_fn)
+
+    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+
+    for (i in 1:ref$n_seqs()) {
+        expect_identical(ref$sequence(i), ref$sequence(i))
+    }
+
+})
+
+
+test_that("Read/writing single indexed FASTA files works with bgzipped output", {
+
+    fa_fn <- sprintf("%s/%s", dir, "test")
+    fai_fn <- sprintf("%s/%s.fa.fai", dir, "test")
+
+    write_fasta(ref, fa_fn, compress = TRUE, comp_method = "bgzip", overwrite = TRUE)
+
+    fa_fn <- sprintf("%s/%s.fa.gz", dir, "test")
     new_ref <- read_fasta(fa_fn, fai_fn)
 
     expect_identical(ref$n_seqs(), new_ref$n_seqs())
@@ -252,12 +314,13 @@ utils::write.table(fa_index_df2, sprintf("%s/%s2.fa.fai", dir, "test"),
 
 test_that("Read/writing multiple indexed FASTA files works with uncompressed output", {
 
-    fa_fns <- sprintf("%s/%s%i.fa", dir, "test", 1:2)
+    fa_fns <- sprintf("%s/%s%i", dir, "test", 1:2)
     fai_fns <- sprintf("%s/%s%i.fa.fai", dir, "test", 1:2)
 
-    write_fasta(ref1, fa_fns[1], compress = FALSE)
-    write_fasta(ref2, fa_fns[2], compress = FALSE)
+    write_fasta(ref1, fa_fns[1], compress = FALSE, overwrite = TRUE)
+    write_fasta(ref2, fa_fns[2], compress = FALSE, overwrite = TRUE)
 
+    fa_fns <- sprintf("%s/%s%i.fa", dir, "test", 1:2)
     new_ref <- read_fasta(fa_fns, fai_fns)
 
     expect_identical(ref$n_seqs(), new_ref$n_seqs())
@@ -269,14 +332,36 @@ test_that("Read/writing multiple indexed FASTA files works with uncompressed out
 })
 
 
-test_that("Read/writing multiple indexed FASTA files works with compressed output", {
+test_that("Read/writing multiple indexed FASTA files works with gzipped output", {
 
-    fa_fns <- sprintf("%s/%s%i.fa.gz", dir, "test", 1:2)
+    fa_fns <- sprintf("%s/%s%i", dir, "test", 1:2)
     fai_fns <- sprintf("%s/%s%i.fa.fai", dir, "test", 1:2)
 
-    write_fasta(ref1, fa_fns[1], compress = TRUE)
-    write_fasta(ref2, fa_fns[2], compress = TRUE)
+    write_fasta(ref1, fa_fns[1], compress = TRUE, comp_method = "gzip", overwrite = TRUE)
+    write_fasta(ref2, fa_fns[2], compress = TRUE, comp_method = "gzip", overwrite = TRUE)
 
+    fa_fns <- sprintf("%s/%s%i.fa.gz", dir, "test", 1:2)
+    new_ref <- read_fasta(fa_fns, fai_fns)
+
+    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+
+    for (i in 1:ref$n_seqs()) {
+        expect_identical(ref$sequence(i), ref$sequence(i))
+    }
+
+})
+
+
+
+test_that("Read/writing multiple indexed FASTA files works with bgzipped output", {
+
+    fa_fns <- sprintf("%s/%s%i", dir, "test", 1:2)
+    fai_fns <- sprintf("%s/%s%i.fa.fai", dir, "test", 1:2)
+
+    write_fasta(ref1, fa_fns[1], compress = TRUE, comp_method = "bgzip", overwrite = TRUE)
+    write_fasta(ref2, fa_fns[2], compress = TRUE, comp_method = "bgzip", overwrite = TRUE)
+
+    fa_fns <- sprintf("%s/%s%i.fa.gz", dir, "test", 1:2)
     new_ref <- read_fasta(fa_fns, fai_fns)
 
     expect_identical(ref$n_seqs(), new_ref$n_seqs())

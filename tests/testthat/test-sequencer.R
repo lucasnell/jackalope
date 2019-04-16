@@ -13,9 +13,7 @@ dir <- tempdir()
 
 ref <- create_genome(5, 100)
 tr <- ape::rcoal(4)
-vars <- create_variants(ref, method = "phy", method_info = tr,
-                        mevo_obj = create_mevo(ref, sub = list(model = "JC69",
-                                                               lambda = 0.1)))
+vars <- create_variants(ref, vars_phylo(tr), sub = sub_JC69(0.1))
 
 
 # ================================================================================`
@@ -96,7 +94,7 @@ test_that("no weirdness with Illumina single-end reads on variants", {
 
     illumina(vars, out_prefix = sprintf("%s/%s", dir, "test"),
              n_reads = 100, read_length = 100, paired = FALSE,
-             frag_mean = 400, frag_sd = 100)
+             frag_mean = 400, frag_sd = 100, overwrite = TRUE)
 
     expect_true(sprintf("%s_R1.fq", "test") %in% list.files(dir))
 
@@ -117,7 +115,7 @@ test_that("no weirdness with Illumina paired-end reads on variants", {
 
     illumina(vars, out_prefix = sprintf("%s/%s", dir, "test"),
              n_reads = 100, read_length = 100, paired = TRUE,
-             frag_mean = 400, frag_sd = 100)
+             frag_mean = 400, frag_sd = 100, overwrite = TRUE)
 
     expect_true(sprintf("%s_R1.fq", "test") %in% list.files(dir))
     expect_true(sprintf("%s_R2.fq", "test") %in% list.files(dir))
@@ -153,7 +151,7 @@ test_that("no weirdness with Illumina paired-end reads on variants", {
 test_that("no weirdness with PacBio reads on ref. genome", {
 
     pacbio(ref, out_prefix = sprintf("%s/%s", dir, "test"),
-           n_reads = 100)
+           n_reads = 100, overwrite = TRUE)
 
     expect_true(sprintf("%s_R1.fq", "test") %in% list.files(dir))
 
@@ -172,7 +170,7 @@ test_that("no weirdness with PacBio reads on ref. genome", {
 test_that("no weirdness with PacBio reads on variants", {
 
     pacbio(vars, out_prefix = sprintf("%s/%s", dir, "test"),
-           n_reads = 100)
+           n_reads = 100, overwrite = TRUE)
 
     expect_true(sprintf("%s_R1.fq", "test") %in% list.files(dir))
 
