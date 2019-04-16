@@ -254,7 +254,7 @@ vars_vcf <- function(fn, print_names = FALSE, ...) {
     }
 
     out <- list(haps = haps, pos = pos, chrom = chrom, var_names = var_names,
-                ref_seq = ref_seq)
+                ref_seq = ref_seq, print_names = print_names)
 
     class(out) <- "vars_vcf_info"
 
@@ -985,12 +985,12 @@ to_var_set.vars_vcf_info <- function(x, reference, mevo_obj, n_threads, show_pro
     unq_chrom <- unique(x$chrom)
 
     if (!all(unq_chrom %in% seq_names)) {
-        if (print_names) print(unq_chrom)
+        if (x$print_names) print(unq_chrom)
         stop("\nSequence name(s) in VCF file don't match those in the ",
              "`ref_genome` object. ",
              "It's probably easiest to manually change the `ref_genome` object ",
              "(using `$set_names()` method) to have the same names as the VCF file. ",
-             "Re-run this function with `print_names = TRUE` to see the VCF-file names.",
+             "Re-run `vars_vcf` with `print_names = TRUE` to see the VCF-file names.",
              call. = FALSE)
     }
 

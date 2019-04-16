@@ -49,15 +49,6 @@ inline void expand_path(std::string& file_name) {
 }
 
 
-static void bgzip_error(const char *format, ...) {
-    va_list ap;
-    va_start(ap, format);
-    vfprintf(stderr, format, ap);
-    va_end(ap);
-    exit(EXIT_FAILURE);
-}
-
-
 
 // Simple wrapper aroung BGZF class to have `write` and `close` methods
 struct FileBGZF {
@@ -116,31 +107,20 @@ struct FileBGZF {
 
     inline void write(void *buffer, const int& c) {
         code = bgzf_write(file, buffer, c);
-        // if (code < 0) {
-        //     bgzip_error("Could not write %d bytes: Error %d\n", c, file->errcode);
-        // }
         return;
     }
     inline void write(const std::vector<char>& buffer) {
         code = bgzf_write(file, buffer.data(), buffer.size());
-        // if (code < 0) {
-        //     bgzip_error("Could not write %d bytes: Error %d\n", buffer.size(),
-        //                 file->errcode);
-        // }
         return;
     }
     inline void write(const std::string& buffer) {
         code = bgzf_write(file, buffer.c_str(), buffer.size());
-        // if (code < 0) {
-        //     bgzip_error("Could not write %d bytes: Error %d\n", buffer.size(),
-        //                 file->errcode);
-        // }
         return;
     }
 
     int close() {
         code = bgzf_close(file);
-        if (code < 0) bgzip_error("Close failed: Error %d", file->errcode);
+        if (code < 0) str_warn({"Close failed: Error ", std::to_string(file->errcode)});
         return code;
     }
 
@@ -187,18 +167,10 @@ struct FileGZ {
 
     inline void write(const std::vector<char>& buffer) {
         code = gzwrite(file, buffer.data(), buffer.size());
-        // if (code <= 0) {
-        //     bgzip_error("Could not write %d bytes: Error %d\n", buffer.size(),
-        //                 gzerror(file, &err));
-        // }
         return;
     }
     inline void write(const std::string& buffer) {
         code = gzwrite(file, buffer.c_str(), buffer.size());
-        // if (code <= 0) {
-        //     bgzip_error("Could not write %d bytes: Error %d\n", buffer.size(),
-        //                 gzerror(file, &err));
-        // }
         return;
     }
 
@@ -238,7 +210,6 @@ struct FileGZ {
 
 private:
     int code;
-    // int err;
 
 };
 

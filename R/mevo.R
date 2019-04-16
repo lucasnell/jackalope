@@ -203,7 +203,8 @@ print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) 
 #'         See argument descriptions for more info.
 #' }
 #'
-#'
+#' @param reference A \code{ref_genome} object from which you will eventually
+#'     generate variants.
 #' @param shape Shape parameter for the Gamma distribution that generates gamma distances,
 #'     The variance of the distribution is `1 / shape`, and its mean is fixed to 1.
 #'     Defaults to `NULL`.
@@ -244,7 +245,8 @@ print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) 
 #' gamma_mats <- site_var(ref,
 #'                        mats = replicate(3,
 #'                            cbind(seq(10, 100, 10),
-#'                            rgamma(10, 0.9))))
+#'                            rgamma(10, 0.9)),
+#'                            simplify = FALSE))
 #'
 site_var <- function(reference,
                      shape = NULL,

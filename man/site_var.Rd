@@ -8,6 +8,9 @@ site_var(reference, shape = NULL, region_size = NULL, mats = NULL,
   out_prefix = NULL, compress = FALSE, comp_method = "bgzip")
 }
 \arguments{
+\item{reference}{A \code{ref_genome} object from which you will eventually
+generate variants.}
+
 \item{shape}{Shape parameter for the Gamma distribution that generates gamma distances,
 The variance of the distribution is \code{1 / shape}, and its mean is fixed to 1.
 Defaults to \code{NULL}.}
@@ -78,6 +81,7 @@ gamma_mats <- site_var(ref, shape = 0.5,
 gamma_mats <- site_var(ref,
                        mats = replicate(3,
                            cbind(seq(10, 100, 10),
-                           rgamma(10, 0.9))))
+                           rgamma(10, 0.9)),
+                           simplify = FALSE))
 
 }
