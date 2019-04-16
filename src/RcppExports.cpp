@@ -850,24 +850,24 @@ BEGIN_RCPP
 END_RCPP
 }
 // sub_JC69
-List sub_JC69(const double& lambda);
+List sub_JC69(double lambda);
 RcppExport SEXP _jackalope_sub_JC69(SEXP lambdaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const double& >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
     rcpp_result_gen = Rcpp::wrap(sub_JC69(lambda));
     return rcpp_result_gen;
 END_RCPP
 }
 // sub_K80
-List sub_K80(const double& alpha, const double& beta);
+List sub_K80(double alpha, double beta);
 RcppExport SEXP _jackalope_sub_K80(SEXP alphaSEXP, SEXP betaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
     rcpp_result_gen = Rcpp::wrap(sub_K80(alpha, beta));
     return rcpp_result_gen;
 END_RCPP

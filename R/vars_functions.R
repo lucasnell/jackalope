@@ -107,14 +107,17 @@ vars_ssites <- function(obj = NULL,
 
         # Check for coal_obj being a list and having a `seg_sites` field
         if (!inherits(obj, "list") || is.null(obj$seg_sites)) {
-            err_msg("vars_ssites", "obj", "a list with a `seg_sites` field present")
+            err_msg("vars_ssites", "obj", "NULL or a list with a `seg_sites`",
+                    "field present")
         }
 
         sites_mats <- lapply(obj$seg_sites, process_coal_obj_sites)
 
     } else {
 
-        if (!is_type(fn, "character", 1)) err_msg("vars_ssites", "fn", "a single string")
+        if (!is_type(fn, "character", 1)) {
+            err_msg("vars_ssites", "fn", "NULL or a single string")
+        }
 
         sites_mats <- coal_file_sites(fn)
         # Revert back to list (from arma::field which adds dims):
@@ -184,12 +187,12 @@ vars_vcf <- function(fn, print_names = FALSE, ...) {
         err_msg("vars_vcf", "fn", "a single string")
     }
 
-    other_args <- list(...)
-    if (is.null(other_args$verbose)) other_args$verbose <- FALSE
-    method_info$file <- fn
+    read_args <- list(...)
+    if (is.null(read_args$verbose)) read_args$verbose <- FALSE
+    read_args$file <- fn
 
-    if (!all(names(other_args) %in% names(formals(vcfR::read.vcfR)))) {
-        bad_names <- names(other_args)[!names(other_args) %in%
+    if (!all(names(read_args) %in% names(formals(vcfR::read.vcfR)))) {
+        bad_names <- names(read_args)[!names(read_args) %in%
                                            names(formals(vcfR::read.vcfR))]
         stop("\nIn function `vars_vcf` in jackalope, the following extra ",
              "arguments provided don't match any arguments in `vcfR::read.vcfR`: ",
@@ -319,7 +322,8 @@ vars_phylo <- function(obj = NULL,
             (inherits(obj, "list") && !all(sapply(obj, inherits,
                                                   what = "phylo")))) {
             err_msg("vars_phylo", "obj",
-                    "of class \"phylo\", \"multiPhylo\", or a list of \"phylo\" objects")
+                    "NULL or of class \"phylo\", \"multiPhylo\", or a list of",
+                    "\"phylo\" objects")
         }
 
         phy <- obj
@@ -330,7 +334,7 @@ vars_phylo <- function(obj = NULL,
     }
     if (!is.null(fn)) {
         if (!is_type(fn, "character")) {
-            err_msg("vars_phylo", "fn", "a character vector")
+            err_msg("vars_phylo", "fn", "NULL or a character vector")
         }
         phy <- lapply(fn, ape::read.tree)
     }
@@ -1010,12 +1014,12 @@ to_var_set.vars_vcf_info <- function(x, reference, mevo_obj, n_threads, show_pro
 to_var_set.vars_phylo_info <- function(x, reference, mevo_obj,
                                        n_threads, show_progress) {
 
+    phy <- x$phylo
+    class(phy) <- "list"
+
     n_vars <- length(phy$tip.label)
     n_seqs <- as.integer(reference$n_seqs())
     chunked <- mevo_obj$chunk_size > 0
-
-    phy <- x$phylo
-    class(phy) <- "list"
 
     if (!length(phy) %in% c(1L, n_seqs)) {
         stop("\nIn function `vars_phylo`, you must provide information for 1 tree ",
