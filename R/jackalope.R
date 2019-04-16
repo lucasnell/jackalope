@@ -11,6 +11,7 @@
 #'
 #'
 #' @importFrom Rcpp evalCpp
+#' @import Rhtslib
 #' @useDynLib jackalope, .registration = TRUE
 #'
 #' @docType package
