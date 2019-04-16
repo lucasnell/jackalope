@@ -276,11 +276,12 @@ vars_vcf <- function(fn, print_names = FALSE, ...) {
 #' Create necessary information to create variants using phylogenetic tree(s)
 #'
 #' This function organizes higher-level information for creating variants from
-#' phylogenetic tree(s) output as `phylo` objects or NEWICK files.
+#' phylogenetic tree(s) output as `phylo` or `multiPhylo` objects
+#' (both from the `ape` package) or NEWICK files.
 #'
 #' @param obj Object containing phylogenetic tree(s).
-#'     This can be (1) a single \code{\link[ape]{phylo}} object that represents all
-#'     sequences in the genome or
+#'     This can be (1) a single `phylo` object
+#'     that represents all sequences in the genome or
 #'     (2) a `list` or `multiPhylo` object containing a `phylo` object for
 #'     each reference sequence.
 #'     In the latter case, phylogenies will be assigned to sequences in the

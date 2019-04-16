@@ -8,8 +8,8 @@ vars_phylo(obj = NULL, fn = NULL)
 }
 \arguments{
 \item{obj}{Object containing phylogenetic tree(s).
-This can be (1) a single \code{\link[ape]{phylo}} object that represents all
-sequences in the genome or
+This can be (1) a single \code{phylo} object
+that represents all sequences in the genome or
 (2) a \code{list} or \code{multiPhylo} object containing a \code{phylo} object for
 each reference sequence.
 In the latter case, phylogenies will be assigned to sequences in the
@@ -32,5 +32,6 @@ information for each reference sequence.
 }
 \description{
 This function organizes higher-level information for creating variants from
-phylogenetic tree(s) output as \code{phylo} objects or NEWICK files.
+phylogenetic tree(s) output as \code{phylo} or \code{multiPhylo} objects
+(both from the \code{ape} package) or NEWICK files.
 }
