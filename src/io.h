@@ -50,6 +50,8 @@ struct FileBGZF {
 
     BGZF *file;
 
+    FileBGZF() {};
+
     FileBGZF(const std::string& out_prefix,
              const int& n_threads,
              const int& compress) {
@@ -99,6 +101,13 @@ struct FileBGZF {
 
     }
 
+    // Allows to set after initializing blank
+    void set(const std::string& out_prefix,
+             const int& compress) {
+        *this = FileBGZF(out_prefix, compress);
+        return;
+    }
+
 
     inline void write(void *buffer, const int& c) {
         code = bgzf_write(file, buffer, c);
@@ -131,6 +140,8 @@ struct FileGZ {
 
     gzFile file;
 
+    FileGZ() {};
+
     FileGZ(const std::string& out_prefix,
                const int& compress) {
 
@@ -157,6 +168,13 @@ struct FileGZ {
         if (!file) {
             str_stop({"gzopen of ", file_name, " failed: ", strerror(errno), ".\n"});
         }
+    }
+
+    // Allows to set after initializing blank
+    void set(const std::string& out_prefix,
+             const int& compress) {
+        *this = FileGZ(out_prefix, compress);
+        return;
     }
 
 
@@ -216,14 +234,10 @@ struct FileUncomp {
 
     std::ofstream file;
 
+    FileUncomp() {};
+
     FileUncomp(const std::string& file_name) {
-
-        file.open(file_name, std::ofstream::out);
-
-        if (!file.is_open()) {
-            str_stop({"Unable to open file ", file_name, ".\n"});
-        }
-
+        construct(file_name, 0);
     }
     /*
      The compress argument is added here for compatibility with templates that
@@ -231,13 +245,14 @@ struct FileUncomp {
      */
     FileUncomp(const std::string& file_name,
                const int& compress) {
+        construct(file_name, compress);
+    }
 
-        file.open(file_name, std::ofstream::out);
-
-        if (!file.is_open()) {
-            str_stop({"Unable to open file ", file_name, ".\n"});
-        }
-
+    // Allows to set after initializing blank
+    void set(const std::string& file_name,
+             const int& compress) {
+        construct(file_name, compress);
+        return;
     }
 
     inline void write(const std::vector<char>& buffer) {
@@ -254,6 +269,20 @@ struct FileUncomp {
         return 0;
     }
 
+
+private:
+
+    void construct(const std::string& file_name,
+                   const int& compress) {
+
+        file.open(file_name, std::ofstream::out);
+
+        if (!file.is_open()) {
+            str_stop({"Unable to open file ", file_name, ".\n"});
+        }
+
+        return;
+    }
 
 };
 

@@ -250,10 +250,10 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
     Progress prog_bar(n_reads, show_progress);
 
     // Create and open files:
-    std::vector<F> files;
+    std::vector<F> files(n_read_ends);
     for (uint32 i = 0; i < n_read_ends; i++) {
         std::string file_name = out_prefix + "_R" + std::to_string(i+1)+ ".fq";
-        files.push_back(F(file_name, compress));
+        files[i].set(file_name, compress);
     }
 
 
@@ -332,11 +332,9 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
 
 
 /*
- For one file type, make Illumina reads and write them to file(s).
- Does most of the work of `write_reads_cpp_` below.
+ For one sequencing-filler type, make reads and write them to file(s).
 
  `T` should be `[Illumina|PacBio]Reference` or `[Illumina|PacBio]Variants`.
- `F` should be `FileUncomp`, `FileGZ`, or `FileBGZF`.
 
  */
 

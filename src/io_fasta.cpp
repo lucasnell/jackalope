@@ -416,12 +416,16 @@ SEXP read_fasta_ind(const std::vector<std::string>& fasta_files,
 /*
  Template that does most of the work to write from RefGenome to FASTA files of
  varying formats (gzip, bgzip, uncompressed).
+ `T` should be `FileUncomp` or `FileBGZF` from `io.h`
  */
 template <typename T>
-inline void write_ref_fasta__(T& file,
+inline void write_ref_fasta__(const std::string& file_name,
+                              const int& compress,
                               const RefGenome& ref,
                               const uint32& text_width,
                               const bool& show_progress) {
+
+    T file(file_name, compress);
 
     Progress prog_bar(ref.total_size, show_progress);
 
@@ -463,6 +467,9 @@ inline void write_ref_fasta__(T& file,
         prog_bar.increment(seq_str.size());
 
     }
+
+    file.close();
+
     return;
 }
 
@@ -496,21 +503,16 @@ void write_ref_fasta(const std::string& out_prefix,
     if (compress > 0) {
 
         if (comp_method == "gzip") {
-            FileGZ file(file_name, compress);
-            write_ref_fasta__<FileGZ>(file, ref, text_width, show_progress);
-            file.close();
+            write_ref_fasta__<FileGZ>(file_name, compress, ref, text_width,
+                                      show_progress);
         } else if (comp_method == "bgzip") {
-            FileBGZF file(file_name, 1, compress);
-            write_ref_fasta__<FileBGZF>(file, ref, text_width, show_progress);
-            file.close();
+            write_ref_fasta__<FileBGZF>(file_name, compress, ref, text_width,
+                                        show_progress);
         } else stop("\nUnrecognized compression method.");
 
     } else {
-
-        FileUncomp file(file_name);
-        write_ref_fasta__<FileUncomp>(file, ref, text_width, show_progress);
-        file.close();
-
+        write_ref_fasta__<FileUncomp>(file_name, compress, ref, text_width,
+                                      show_progress);
     }
 
     return;
