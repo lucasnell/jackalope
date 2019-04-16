@@ -775,7 +775,8 @@ void add_insertion(SEXP var_set_ptr, const uint32& var_ind,
 //' @noRd
 //'
 //[[Rcpp::export]]
-void add_deletion(SEXP var_set_ptr, const uint32& var_ind,
+void add_deletion(SEXP var_set_ptr,
+                  const uint32& var_ind,
                   const uint32& seq_ind,
                   const uint32& size_,
                   const uint32& new_pos_) {

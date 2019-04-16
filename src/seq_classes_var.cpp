@@ -489,6 +489,8 @@ void VarSequence::calc_positions(uint32 mut_i, const sint32& modifier) {
  */
 void VarSequence::add_deletion(const uint32& size_, const uint32& new_pos_) {
 
+    if (size_ == 0 || new_pos_ >= seq_size) return;
+
     uint32 mut_i;
 
     // Renaming this for a more descriptive name and to allow it to change
@@ -750,10 +752,12 @@ void VarSequence::deletion_blowup_(uint32& mut_i, uint32& deletion_start,
 
     /*
      If `mut_i` no longer overlaps this deletion or if the deletion is gone (bc it
-     absorbed part/all of an insertion), return now
+     absorbed part/all of an insertion), return now.
+     (The first check is to prevent segfault when two deletions are the first
+     to be added to a mutations deque.)
      */
-    if (mutations[mut_i].new_pos > deletion_end || size_mod == 0) {
-        return;
+    if (mut_i < mutations.size()) {
+        if (mutations[mut_i].new_pos > deletion_end || size_mod == 0) return;
     }
 
     /*
