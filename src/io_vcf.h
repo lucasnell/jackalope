@@ -8,14 +8,7 @@
 #include <fstream>
 #include "zlib.h"
 
-
-// for BZGF method
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-// From Rhtslib package, used in `bgzip_C`:
-#include "htslib/bgzf.h"
-#include "htslib/hts.h"
+#include "htslib/bgzf.h"  // BGZF
 
 #include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes

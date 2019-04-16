@@ -12,7 +12,10 @@
 #include <progress.hpp>  // for the progress bar
 
 
-
+// for bgzip_file
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "jackalope_types.h"  // uint32
 #include "pcg.h"  // ruinf_01

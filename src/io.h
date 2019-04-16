@@ -13,12 +13,7 @@
 #include "zlib.h"
 
 
-// for BZGF method
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include "htslib/bgzf.h"  // BGZF
-#include "htslib/hts.h"
 
 #include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
@@ -30,9 +25,9 @@ using namespace Rcpp;
 
 
 
+
 // Size of the block of memory to use for reading non-indexed fasta files and fai files.
 #define LENGTH 0x1000 // hexadecimel for 4096.
-
 
 
 
