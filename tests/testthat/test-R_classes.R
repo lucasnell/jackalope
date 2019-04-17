@@ -233,7 +233,7 @@ ref <- ref_genome$new(jackalope:::make_ref_genome(
       paste(c(rep("T", 25), rep("C", 25), rep("A", 100), rep("G", 50)), collapse = ""))
     ))
 
-test_that("gc_prop and nt_prob work as predicted", {
+test_that("gc_prop and nt_prob work for ref_genome as predicted", {
 
     expect_equal(ref$gc_prop(1, 1, 200), 100 / 200)
     expect_equal(ref$gc_prop(2, 1, 200), 75 / 200)
@@ -255,6 +255,47 @@ test_that("gc_prop and nt_prob work as predicted", {
     expect_equal(ref$nt_prop('T', 2, 1, 100), 100 / 100)
     expect_equal(ref$nt_prop('T', 3, 1, 100), 50 / 100)
     expect_equal(ref$nt_prop('T', 4, 1, 100), 25 / 100)
+
+})
+
+
+
+
+vars <- variants$new(jackalope:::make_var_set(ref$genome, 2), ref$genome)
+
+test_that("gc_prop and nt_prob work for variants as predicted", {
+
+    expect_equal(vars$gc_prop(1, 1, 1, 200), 100 / 200)
+    expect_equal(vars$gc_prop(1, 2, 1, 200), 75 / 200)
+    expect_equal(vars$gc_prop(1, 3, 1, 200), 125 / 200)
+    expect_equal(vars$gc_prop(1, 4, 1, 200), 75 / 200)
+
+    expect_equal(vars$gc_prop(1, 1, 1, 100), 50 / 100)
+    expect_equal(vars$gc_prop(1, 2, 1, 100), 0 / 100)
+    expect_equal(vars$gc_prop(1, 3, 1, 100), 25 / 100)
+    expect_equal(vars$gc_prop(1, 4, 1, 100), 25 / 100)
+
+
+    expect_equal(vars$nt_prop('T', 1, 1, 1, 200), 50 / 200)
+    expect_equal(vars$nt_prop('T', 1, 2, 1, 200), 100 / 200)
+    expect_equal(vars$nt_prop('T', 1, 3, 1, 200), 50 / 200)
+    expect_equal(vars$nt_prop('T', 1, 4, 1, 200), 25 / 200)
+
+    expect_equal(vars$nt_prop('T', 1, 1, 1, 100), 50 / 100)
+    expect_equal(vars$nt_prop('T', 1, 2, 1, 100), 100 / 100)
+    expect_equal(vars$nt_prop('T', 1, 3, 1, 100), 50 / 100)
+    expect_equal(vars$nt_prop('T', 1, 4, 1, 100), 25 / 100)
+
+    # Adding some substitutions
+    for (i in 1:100) vars$add_sub(2, 1, i, 'C')
+    for (i in 101:200) vars$add_sub(2, 1, i, 'T')
+
+    expect_equal(vars$gc_prop(2, 1, 1, 200), 100 / 200)
+    expect_equal(vars$gc_prop(2, 1, 1, 100), 100 / 100)
+    expect_equal(vars$gc_prop(2, 1, 101, 200), 0 / 100)
+
+    expect_equal(vars$nt_prop('C', 2, 1, 1, 100), 100 / 100)
+    expect_equal(vars$nt_prop('T', 2, 1, 101, 200), 100 / 100)
 
 })
 

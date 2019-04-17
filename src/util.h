@@ -73,7 +73,7 @@ void clear_memory(U& x) {
 
 
 
-//' GC proportion for part of a single string.
+//' GC proportion for a single string.
 //'
 //'
 //' @param sequence String for a single sequence.
@@ -84,6 +84,17 @@ void clear_memory(U& x) {
 //'
 //' @noRd
 //'
+inline double gc_prop(const std::string& sequence) {
+    double total_seq = sequence.size();
+    double total_gc = 0;
+    for (uint32 i = 0; i < total_seq; i++) {
+        if (sequence[i] == 'G' || sequence[i] == 'C') {
+            total_gc += 1;
+        }
+    }
+    double gc_prop = total_gc / total_seq;
+    return gc_prop;
+}
 inline double gc_prop(const std::string& sequence,
                       const uint32& start,
                       const uint32& stop) {
@@ -109,6 +120,17 @@ inline double gc_prop(const std::string& sequence,
 //'
 //' @noRd
 //'
+inline double nt_prop(const std::string& sequence,
+                      const char& nt) {
+    double total_seq = sequence.size();
+    double total_nt = 0;
+    for (uint32 i = 0; i < total_seq; i++) {
+        if (sequence[i] == nt) total_nt += 1;
+    }
+    double nt_prop = total_nt / total_seq;
+    return nt_prop;
+}
+// Overloaded for part of a sequence
 inline double nt_prop(const std::string& sequence,
                       const char& nt,
                       const uint32& start,
