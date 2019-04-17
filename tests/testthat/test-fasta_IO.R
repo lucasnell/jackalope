@@ -16,6 +16,7 @@ ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
 
 
 
+
 # ----------*
 # Errors ----
 # ----------*
@@ -372,4 +373,32 @@ test_that("Read/writing multiple indexed FASTA files works with bgzipped output"
 
 })
 
+
+
+
+
+
+# ___ Writing variants -----
+
+vars <- create_variants(ref, vars_theta(0.1, 2), sub_JC69(0.001))
+
+test_that("Writing FASTA files with variants", {
+
+    fa_fn <- sprintf("%s/%s", dir, "test")
+
+    write_fasta(vars, fa_fn, compress = FALSE, overwrite = TRUE)
+
+    fa_fn <- sprintf("%s/%s__%s.fa", dir, "test", vars$var_names())
+    new_ref1 <- read_fasta(fa_fn[1])
+    new_ref2 <- read_fasta(fa_fn[2])
+
+    expect_identical(vars$n_seqs(), new_ref1$n_seqs())
+    expect_identical(vars$n_seqs(), new_ref2$n_seqs())
+
+    expect_identical(sapply(1:vars$n_seqs(), function(i) vars$sequence(1, i)),
+                     sapply(1:vars$n_seqs(), function(i) new_ref1$sequence(i)))
+    expect_identical(sapply(1:vars$n_seqs(), function(i) vars$sequence(2, i)),
+                     sapply(1:vars$n_seqs(), function(i) new_ref2$sequence(i)))
+
+})
 

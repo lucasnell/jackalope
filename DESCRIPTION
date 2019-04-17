@@ -37,8 +37,8 @@ RoxygenNote: 6.1.1
 Roxygen: list(markdown = TRUE)
 Suggests:
     knitr,
-    vcfR,
-    testthat
+    testthat,
+    vcfR
 VignetteBuilder: knitr
 URL: https://github.com/lucasnell/jackalope
 BugReports: https://github.com/lucasnell/jackalope/issues
