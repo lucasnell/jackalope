@@ -10,23 +10,13 @@ init:
 install:
   ps: Bootstrap
 
-branches:
-  only:
-    - master
-
-platform: x64
-
-environment:
-  R_VERSION: devel
-  R_ARCH: x64
-  GCC_PATH: mingw_64
-
 cache:
   - C:\RLibrary
 
 # Adapt as necessary starting from here
 
 build_script:
+  - R -e source('https://install-github.me/r-lib/remotes')
   - travis-tool.sh install_deps
   - travis-tool.sh install_bioc_deps
 
@@ -55,3 +45,19 @@ artifacts:
 
   - path: '\*_*.zip'
     name: Bits
+
+
+branches:
+  only:
+    - master
+
+
+environment:
+    global:
+      WARNINGS_ARE_ERRORS: true
+      R_COMPILE_AND_INSTALL_PACKAGES: always
+      R_ARCH: x64
+      GCC_PATH: mingw_64
+      USE_RTOOLS: true
+    matrix:
+      - R_VERSION: devel
