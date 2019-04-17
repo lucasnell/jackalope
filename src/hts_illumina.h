@@ -180,7 +180,7 @@ public:
 
         qual_prob_map.reserve(max_qual+1);  // `+1` bc we're using qualities as indices
         qual_prob_map.push_back(1);
-        for (uint32 q = 1; q < (max_qual+1); q++) {
+        for (uint32 q = 1; q < (static_cast<uint32>(max_qual)+1U); q++) {
             double prob = std::pow(10, static_cast<double>(q) / -10.0);
             qual_prob_map.push_back(prob);
         }

@@ -650,7 +650,7 @@ List examine_mutations(SEXP var_set_ptr, const uint32& var_ind, const uint32& se
         sint32 mi = var_seq.mutations[i].size_modifier;
         if (mi == 0) continue;
         if (mi > 0) {
-            if (mi > max_ins) max_ins = mi;
+            if (mi > static_cast<sint32>(max_ins)) max_ins = mi;
         } else {
             uint32 mid = static_cast<uint32>(std::abs(mi));
             if (mid > max_del) max_del = mid;

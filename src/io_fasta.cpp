@@ -339,7 +339,7 @@ void append_ref_ind(RefGenome& ref,
             ref.total_size += seq_str.size();
 
             // Check for errors.
-            if (bytes_read < partial_len) {
+            if (bytes_read < static_cast<sint64>(partial_len)) {
                 if ( gzeof(file) ) {
                     warning("fai file lengths appear incorrect; re-index or "
                                 "check output manually for accuracy");
