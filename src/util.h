@@ -44,6 +44,23 @@ inline int get_width() {
 }
 
 
+
+// Makes integers print with commas
+// Do NOT use this with doubles
+template <typename T>
+inline std::string big_int_format(const T& x) {
+    std::string y = std::to_string(x);
+    if (y.size() > 3) {
+        uint32 i = 3;
+        while (i < y.size()) {
+            y.insert(y.end()-i, ',');
+            i += 3 + 1;
+        }
+    }
+    return y;
+}
+
+
 /*
  Clear memory from a std::vector, std::deque, or std::string.
  Simply erasing objects does not clear memory.

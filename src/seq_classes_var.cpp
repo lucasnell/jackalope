@@ -1011,9 +1011,8 @@ void VarSet::print() const noexcept {
     for (int i = 0; i < n_spaces; i++) Rcout << ' ';
     Rcout << "<< Variants object >>" << std::endl;
 
-    Rcout.imbue(std::locale(""));
-    Rcout << "# Variants: " << size() << std::endl;
-    Rcout << "# Mutations: " << total_muts << std::endl;
+    Rcout << "# Variants: " << big_int_format<uint32>(size()) << std::endl;
+    Rcout << "# Mutations: " << big_int_format<uint32>(total_muts) << std::endl;
     Rcout << std::endl;
 
     n_spaces = static_cast<int>(
