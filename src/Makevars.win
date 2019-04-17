@@ -17,14 +17,14 @@ PKG_CPPFLAGS = -I../inst/include/
 # For htslib headers:
 RHTSLIB_LIBS = $(shell echo 'Rhtslib::pkgconfig("PKG_LIBS")'| "${R_HOME}/bin/R" --vanilla --slave)
 # For portable zlib headers
-ZLIBIOC_CFLAGS = $(shell echo 'zlibbioc::pkgconfig("PKG_CFLAGS")'| "${R_HOME}/bin/R" --vanilla --slave)
-ZLIBIOC_LIBS = $(shell echo 'zlibbioc::pkgconfig("PKG_LIBS_shared")' | "${R_HOME}/bin/R" --vanilla --slave)
+ZLIBBIOC_CFLAGS = $(shell echo 'zlibbioc::pkgconfig("PKG_CFLAGS")'| "${R_HOME}/bin/R" --vanilla --slave)
+ZLIBBIOC_LIBS = $(shell echo 'zlibbioc::pkgconfig("PKG_LIBS_shared")' | "${R_HOME}/bin/R" --vanilla --slave)
 
 
 # Compression library and others
-PKG_LIBS = -lws2_32 $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(RHTSLIB_LIBS) $(ZLIBIOC_LIBS)
+PKG_LIBS = -lws2_32 $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(RHTSLIB_LIBS) $(ZLIBBIOC_LIBS)
 # zlib
-ZLIB_CFLAGS += $(ZLIBIOC_CFLAGS)
+ZLIB_CFLAGS += $(ZLIBBIOC_CFLAGS)
 
 %.o: %.c
 	$(CC) $(ZLIB_CFLAGS) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $< -o $@
