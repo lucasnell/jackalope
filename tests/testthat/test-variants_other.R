@@ -17,11 +17,19 @@ cv <- function(vars_info, al = arg_list) {
     return(vars)
 }
 
+test_that("missing `sub` arg throws error", {
+    al2 <- arg_list
+    al2$sub <- NULL
+    expect_error(cv(vars_theta(0.1, n_vars = 4), al2),
+                 regexp = paste("argument `sub` must be provided if you want to create",
+                                "variants using any method other than a VCF file"))
+})
+
 
 # vars_theta -----
 test_that("basics of vars_theta work", {
 
-    vars <- cv(vars_theta(0.1, n_vars = 4))
+    vars <- cv(vars_theta(0.1, n_vars = 4), c(list(chunk_size = 0), arg_list))
 
     expect_identical(vars$n_seqs(), arg_list$reference$n_seqs())
     expect_identical(vars$n_vars(), 4L)

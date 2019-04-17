@@ -73,27 +73,17 @@ void clear_memory(U& x) {
 
 
 
-//' GC proportion of a single string.
+//' GC proportion for part of a single string.
 //'
 //'
 //' @param sequence String for a single sequence.
+//' @param start Position in sequence at which to begin the calculation.
+//' @param stop Position in sequence at which to end the calculation.
 //'
 //' @return Proportion of sequence that's a `'G'` or `'C'`.
 //'
 //' @noRd
 //'
-inline double gc_prop(const std::string& sequence) {
-    double total_seq = sequence.size();
-    double total_gc = 0;
-    for (uint32 i = 0; i < total_seq; i++) {
-        if (sequence[i] == 'G' || sequence[i] == 'C') {
-            total_gc += 1;
-        }
-    }
-    double gc_prop = total_gc / total_seq;
-    return gc_prop;
-}
-// ... overloaded for portion of a string
 inline double gc_prop(const std::string& sequence,
                       const uint32& start,
                       const uint32& stop) {
@@ -112,23 +102,13 @@ inline double gc_prop(const std::string& sequence,
 //' Same as above, but for any one nucleotide.
 //'
 //'
-//' @param sequence String for a single sequence.
+//' @inheritParams gc_prop
+//' @param nt Character to count for the proportion.
 //'
 //' @return Proportion of sequence that's a `nt`.
 //'
 //' @noRd
 //'
-inline double nt_prop(const std::string& sequence,
-                      const char& nt) {
-    double total_seq = sequence.size();
-    double total_nt = 0;
-    for (uint32 i = 0; i < total_seq; i++) {
-        if (sequence[i] == nt) total_nt += 1;
-    }
-    double nt_prop = total_nt / total_seq;
-    return nt_prop;
-}
-// ... overloaded for portion of a string
 inline double nt_prop(const std::string& sequence,
                       const char& nt,
                       const uint32& start,
