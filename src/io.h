@@ -86,13 +86,13 @@ struct FileBGZF {
                      std::to_string(compress),
                      ". It must be in range [0,9]."});
         }
-        char out_mode[3] = "w\0";
-        if (compress >= 0) out_mode[1] = compress + '0';
+        std::string out_mode= "w";
+        if (compress >= 0) out_mode += std::to_string(compress);
 
         char *name = new char[out_prefix.size() + 5];
         strcpy(name, out_prefix.c_str());
         strcat(name, ".gz");
-        file = bgzf_open(name, out_mode);
+        file = bgzf_open(name, out_mode.c_str());
         if (file == NULL) {
             delete [] name;
             str_stop({"\nIn bgzip step, it can't create ", out_prefix, ".gz"});

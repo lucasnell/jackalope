@@ -163,53 +163,6 @@ std::string VarSequence::get_seq_full() const {
 
 
 
-/*
- ------------------
- Retrieve the first part of a sequence from the variant sequence.
- ------------------
- */
-std::string VarSequence::get_seq_start(uint32 out_length) const {
-
-    if (out_length > seq_size) out_length = seq_size;
-
-    if (mutations.empty()) return ref_seq->nucleos.substr(0, out_length);
-
-    std::string out(out_length, 'x');
-
-    uint32 mut_i = 0;
-
-    uint32 pos = 0;
-
-    // Picking up any nucleotides before the first mutation
-    while (pos < mutations[mut_i].new_pos) {
-        out[pos] = (*ref_seq)[pos];
-        if (pos == out_length - 1) return out;
-        ++pos;
-    }
-
-    // Now, for each subsequent mutation except the last, add all nucleotides
-    // at or after its position but before the next one
-    uint32 next_mut_i = mut_i + 1;
-    while (next_mut_i < mutations.size()) {
-        while (pos < mutations[next_mut_i].new_pos) {
-            out[pos] = get_char_(pos, mut_i);
-            if (pos == out_length - 1) return out;
-            ++pos;
-        }
-        ++mut_i;
-        ++next_mut_i;
-    }
-
-    // Now taking care of nucleotides after the last Mutation
-    while (pos < seq_size) {
-        out[pos] = get_char_(pos, mut_i);
-        if (pos == out_length - 1) return out;
-        ++pos;
-    }
-
-    return out;
-}
-
 
 /*
  ------------------
