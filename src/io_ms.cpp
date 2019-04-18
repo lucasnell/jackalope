@@ -87,9 +87,8 @@ std::vector<std::vector<std::string>> read_ms_trees_(std::string ms_file) {
         std::string mystring(reinterpret_cast<char*>(buffer));
         mystring = lastline + mystring;
 
-        char split = '\n';
         // std::vector of strings for parsed buffer:
-        std::vector<std::string> svec = cpp_str_split_delim(mystring, split);
+        std::vector<std::string> svec = cpp_str_split_newline(mystring);
 
         // Scroll through lines derived from the buffer.
         for (uint32 i = 0; i < svec.size() - 1; i++){
@@ -232,9 +231,8 @@ arma::field<arma::mat> coal_file_sites(std::string ms_file) {
         std::string mystring(reinterpret_cast<char*>(buffer));
         mystring = lastline + mystring;
 
-        char split = '\n';
         // std::vector of strings for parsed buffer:
-        std::vector<std::string> svec = cpp_str_split_delim(mystring, split);
+        std::vector<std::string> svec = cpp_str_split_newline(mystring);
 
         // Scroll through lines derived from the buffer.
         for (uint32 i = 0; i < svec.size() - 1; i++){

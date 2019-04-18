@@ -99,9 +99,8 @@ void append_ref_noind(RefGenome& ref,
         std::string mystring(reinterpret_cast<char*>(buffer));
         mystring = lastline + mystring;
 
-        char split = '\n'; // Must be single quotes!
         // std::vector of strings for parsed buffer:
-        std::vector<std::string> svec = cpp_str_split_delim(mystring, split);
+        std::vector<std::string> svec = cpp_str_split_newline(mystring);
 
         // Scroll through lines derived from the buffer.
         for (uint32 i = 0; i < svec.size() - 1; i++){
@@ -232,9 +231,8 @@ void read_fai(const std::string& fai_file,
         std::string mystring(reinterpret_cast<char*>(buffer));
         mystring = lastline + mystring;
 
-        char split = '\n'; // Must be single quotes!
         // std::vector of strings for parsed buffer:
-        std::vector<std::string> svec = cpp_str_split_delim(mystring, split);
+        std::vector<std::string> svec = cpp_str_split_newline(mystring);
 
         // Scroll through lines derived from the buffer.
         for (uint32 i = 0; i < svec.size() - 1; i++){

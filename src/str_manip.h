@@ -133,6 +133,45 @@ inline std::vector<std::string> cpp_str_split_delim(const std::string& in_string
     return out;
 }
 
+/*
+ Split a string based on newlines. It also checks for Windows '\r\n' newlines and
+ removes the '\r'.
+ */
+inline std::vector<std::string> cpp_str_split_newline(const std::string& in_string) {
+
+    const char split = '\n';
+
+    std::vector<std::string> out(1, "");
+    std::string::size_type n = 1;
+
+    std::string::size_type i = in_string.find(split);
+    if (i != std::string::npos) {
+        // Index for the output vector
+        uint32 j = 0;
+        // Index for the previous i:
+        uint32 i0 = 0;
+        while (i != std::string::npos) {
+            for (std::string::size_type k = i0; k < i; k++) {
+                out[j] += in_string[k];
+            }
+            if (out[j].back() == '\r') out[j].pop_back();
+            i0 = i + n;
+            i = in_string.find(split, i0);
+            j++;
+            out.push_back("");
+        }
+        for (std::string::size_type k = i0; k < in_string.size(); k++) {
+            out[j] += in_string[k];
+        }
+        if (out[j].back() == '\r') out[j].pop_back();
+    } else {
+        out[0] = in_string;
+        if (out[0].back() == '\r') out[0].pop_back();
+    }
+
+    return out;
+}
+
 
 /*
  Reverse complement of a DNA sequence.
