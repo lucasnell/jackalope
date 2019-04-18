@@ -12,7 +12,7 @@
 #include <string>  // string class
 #include <random>  // distributions
 #include <fstream> // for writing FASTQ files
-#include <zlib.h>  // for writing to compressed FASTQ
+#include "zlib.h"  // for writing to compressed FASTQ
 #ifdef _OPENMP
 #include <omp.h>  // omp
 #endif
@@ -24,9 +24,11 @@
 #include "alias_sampler.h"  // AliasSampler
 #include "util.h"  // clear_memory
 #include "str_manip.h"  // rev_comp
-#include "sequencer.h"  // generic sequencer classes
+#include "hts.h"  // generic sequencer classes
 
 using namespace Rcpp;
+
+
 
 
 
@@ -338,17 +340,35 @@ private:
         double a_bar = (lower_thresh - norm_params[0]) / norm_params[1];
 
         /*
-         The "near" method is preferred over the "far" method unless we're truncating
+         The first method is preferred over the second unless we're truncating
          all but the tail of the distribution:
          */
         if (lower_thresh < (norm_params[0] + 5 * norm_params[1])) {
-            trunc_rnorm_near(rnd, a_bar, norm_params[0], norm_params[1], eng);
+
+            double p = R::pnorm5(a_bar, 0, 1, 1, 0);
+            double u = runif_ab(eng, p, 1);
+
+            double x = R::qnorm5(u, 0, 1, 1, 0);
+            rnd = x * norm_params[1] + norm_params[0];
+
         } else {
-            trunc_rnorm_far(rnd, a_bar, norm_params[0], norm_params[1], eng);
+
+            double u, x_bar, v;
+            u = runif_01(eng);
+            x_bar = std::sqrt(a_bar * a_bar  - 2 * std::log(1 - u));
+            v = runif_01(eng);
+            while (v > (x_bar / a_bar)) {
+                u = runif_01(eng);
+                x_bar = std::sqrt(a_bar * a_bar  - 2 * std::log(1 - u));
+                v = runif_01(eng);
+            }
+            rnd = norm_params[1] * x_bar + norm_params[0];
+
         }
 
         return rnd;
     }
+
 
 
     /*
@@ -478,14 +498,15 @@ public:
 
 
     // Add one read string (with 4 lines: ID, sequence, "+", quality) to a FASTQ pool
-    void one_read(std::vector<std::string>& fastq_pools,
-                  pcg64& eng);
+    // `U` should be a std::string or std::vector<char>
+    template <typename U>
+    void one_read(std::vector<U>& fastq_pools, pcg64& eng);
     /*
      Same as above, but for a duplicate. It's assumed that `one_read` has been
      run once before.
      */
-    void re_read(std::vector<std::string>& fastq_pools,
-                 pcg64& eng);
+    template <typename U>
+    void re_read(std::vector<U>& fastq_pools, pcg64& eng);
 
 
     /*
@@ -536,8 +557,8 @@ private:
     }
 
     // Append quality and read to fastq pool
-    void append_pool(std::string& fastq_pool,
-                      pcg64& eng);
+    template <typename U>
+    void append_pool(U& fastq_pool, pcg64& eng);
 
 
 };
@@ -624,10 +645,10 @@ public:
      -------------
      */
     // If only providing rng and id info, sample for a variant, then make read(s):
-    void one_read(std::vector<std::string>& fastq_pools,
-                  pcg64& eng) {
+    template <typename U>
+    void one_read(std::vector<U>& fastq_pools, pcg64& eng) {
         var = variant_sampler.sample(eng);
-        read_makers[var].one_read(fastq_pools, eng);
+        read_makers[var].one_read<U>(fastq_pools, eng);
         return;
     }
     /*
@@ -635,9 +656,9 @@ public:
      `re_read` methods (for duplicates)
     -------------
     */
-    void re_read(std::vector<std::string>& fastq_pools,
-                 pcg64& eng) {
-        read_makers[var].re_read(fastq_pools, eng);
+    template <typename U>
+    void re_read(std::vector<U>& fastq_pools, pcg64& eng) {
+        read_makers[var].re_read<U>(fastq_pools, eng);
         return;
     }
 

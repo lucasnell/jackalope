@@ -2,24 +2,46 @@
 % Please edit documentation in R/read_write.R
 \name{write_fasta}
 \alias{write_fasta}
-\title{Write a \code{ref_genome} object to a FASTA file.}
+\title{Write a sequence object to a FASTA file.}
 \usage{
-write_fasta(reference, file_name, text_width = 80, compress = FALSE)
+write_fasta(seq_obj, out_prefix, compress = FALSE,
+  comp_method = "bgzip", text_width = 80, show_progress = FALSE,
+  n_threads = 1, overwrite = FALSE)
 }
 \arguments{
-\item{reference}{A \code{ref_genome} object.}
+\item{seq_obj}{A \code{ref_genome} or \code{variants} object.}
 
-\item{file_name}{File name of the output fasta file.}
+\item{out_prefix}{Prefix for the output file.}
+
+\item{compress}{Logical specifying whether or not to compress output file, or
+an integer specifying the level of compression, from 1 to 9.
+If \code{TRUE}, a compression level of \code{6} is used.
+Defaults to \code{FALSE}.}
+
+\item{comp_method}{Character specifying which type of compression to use if any
+is desired. Options include \code{"gzip"} and \code{"bgzip"}.
+This is ignored if \code{compress} is \code{FALSE}. Defaults to \code{"bgzip"}.}
 
 \item{text_width}{The number of characters per line in the output fasta file.
 Defaults to \code{80}.}
 
-\item{compress}{Boolean for whether to compress using \code{"gzip"}.
+\item{show_progress}{Logical for whether to show a progress bar.
 Defaults to \code{FALSE}.}
+
+\item{n_threads}{Number of threads to use if writing from a \code{variants} object.
+Threads are split among variants, so it's not useful to provide more threads
+than variants.
+This argument is ignored if \code{seq_obj} is a \code{ref_genome} object, or if
+OpenMP is not enabled.
+Defaults to \code{1}.}
+
+\item{overwrite}{Logical for whether to overwrite existing file(s) of the
+same name, if they exist. Defaults to \code{FALSE}.}
 }
 \value{
 \code{NULL}
 }
 \description{
-Write a \code{ref_genome} object to a FASTA file.
+This file produces 1 FASTA file for a \code{ref_genome} object and one file
+for each variant in a \code{variants} object.
 }

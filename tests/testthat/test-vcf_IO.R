@@ -4,6 +4,8 @@
 # library(jackalope)
 # library(testthat)
 
+# SETUP -----
+
 context("Testing VCF file input/output")
 
 options(stringsAsFactors = FALSE)
@@ -103,6 +105,15 @@ vcf_info <-
 write_vcf(vars, paste0(dir, "/test"))
 vcf <- readLines(paste0(dir, "/test.vcf"))
 
+
+test_that("VCF writing produces error when attempting to overwrite files", {
+    expect_error(write_vcf(vars, paste0(dir, "/test")), "test.vcf already exists")
+})
+
+
+
+
+
 test_that("VCF file header is accurate for haploid samples", {
 
     header <-
@@ -122,7 +133,6 @@ test_that("VCF file header is accurate for haploid samples", {
     expect_identical(vcf[1:length(header)], header)
 
 })
-
 
 # Remove header lines
 vcf <- vcf[!grepl("^#", vcf)]
@@ -159,7 +169,7 @@ test_that("VCF file data lines are accurate for haploid samples", {
 # Haploid compressed -----
 
 
-write_vcf(vars, paste0(dir, "/test"), compress = TRUE)
+write_vcf(vars, paste0(dir, "/test"), compress = TRUE, overwrite = TRUE)
 vcf_gz <- gzfile(paste0(dir, "/test.vcf.gz"), "rt")
 vcf <- readLines(vcf_gz)
 close(vcf_gz)
@@ -224,20 +234,22 @@ test_that("VCF file data lines are accurate for haploid samples", {
 
 sample_mat <- t(combn(vars$n_vars(), 2))
 
-write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat)
+write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat, overwrite = TRUE)
 vcf <- readLines(paste0(dir, "/test.vcf"))
 
 
 
 test_that("VCF writing produces error with nonsense sample matrix", {
 
-    expect_error(write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat * 0),
+    expect_error(write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat * 0,
+                           overwrite = TRUE),
                  "there are values < 1.")
 
     sample_mat2 <- sample_mat
     sample_mat2[nrow(sample_mat2),ncol(sample_mat2)] <- vars$n_vars() + 1
 
-    expect_error(write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat2),
+    expect_error(write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat2,
+                           overwrite = TRUE),
                  "there are values > the number of variants")
 
 })
@@ -326,12 +338,12 @@ test_that("VCF file data lines are accurate for diploid samples", {
 
 test_that("reading haploid variant info from VCF produces proper output", {
 
-    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"))
+    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"), overwrite = TRUE)
 
     skip_if_not_installed("vcfR")
 
-    vars2 <- create_variants(ref, method = "vcf",
-                             method_info = sprintf("%s/%s.vcf", dir, "test"))
+    vars2 <- create_variants(ref, vars_info = vars_vcf(sprintf("%s/%s.vcf", dir, "test")))
+
 
     expect_identical(vars$n_vars(), vars2$n_vars())
 
@@ -351,10 +363,9 @@ test_that("reading diploid variant info from VCF produces proper output", {
     sample_mat <- matrix(1:4, 2, 2, byrow = TRUE)
 
     write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"),
-              sample_matrix = sample_mat)
+              sample_matrix = sample_mat, overwrite = TRUE)
 
-    vars2 <- create_variants(ref, method = "vcf",
-                             method_info = sprintf("%s/%s.vcf", dir, "test"))
+    vars2 <- create_variants(ref, vars_info = vars_vcf(sprintf("%s/%s.vcf", dir, "test")))
 
     expect_identical(vars$n_vars(), vars2$n_vars())
 

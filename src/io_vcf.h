@@ -1,47 +1,28 @@
-#ifndef __JACKAL_READ_WRITE_H
-#define __JACKAL_READ_WRITE_H
+#ifndef __JACKAL_VCF_IO_H
+#define __JACKAL_VCF_IO_H
 
 #include <RcppArmadillo.h>
 #include <vector>               // vector class
 #include <string>               // string class
-#include <iomanip>
-#include <ctime>
 
 #include <fstream>
-#include <zlib.h>
+#include "zlib.h"
 
-// #ifdef _OPENMP
-// #include <omp.h>  // omp
-// #endif
-
+#include "htslib/bgzf.h"  // BGZF
 
 #include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
-
-
-//[[Rcpp::depends(RcppArmadillo)]]
-//[[Rcpp::plugins(cpp11)]]
+#include "io.h"  // File* classes
 
 
 
 using namespace Rcpp;
 
 
-
-// Size of the block of memory to use for reading non-indexed fasta files and fai files.
-#define LENGTH 0x1000 // hexadecimel for 4096.
 // Maximum uint32 value:
 #define MAX_INT 4294967295UL
 
-
-
-
-// For parsing segregating sites from ms-style output files
-namespace parse_ms {
-const std::string site = "segsites:";
-const std::string pos = "positions:";
-}
 
 
 // Formatted date as "20190331"
@@ -57,22 +38,6 @@ inline std::string vcf_date() {
     std::string vcf_date_str = as<std::string>(fmt_date);
     return vcf_date_str;
 }
-
-
-
-
-
-inline void expand_path(std::string& file_name) {
-    // Obtain environment containing function
-    Environment base("package:base");
-    // Make function callable from C++
-    Function pe_r = base["path.expand"];
-    // Call the function and receive its list output
-    SEXP fai_file_exp = pe_r(file_name);
-    file_name = as<std::string>(fai_file_exp);
-    return;
-}
-
 
 
 
@@ -556,34 +521,22 @@ private:
 };
 
 
-// Overloaded for writing to uncompressed or gzipped file
-inline void pool_to_output(std::ofstream& out_file,
-                            const std::string& pool) {
-    out_file << pool;
-    return;
-}
-inline void pool_to_output(gzFile& out_file,
-                            const std::string& pool) {
-    gzwrite(out_file, pool.c_str(), pool.size());
-    return;
-}
-
-
-
 
 
 
 //' Template doing most of the work for writing to a VCF file.
 //'
-//' `T` should be `std::ofstream` or `gzFile`, for the three
-//' specializations of the `pool_to_output` function above.
+//' `T` should be `FileUncomp` or `FileBGZF` from `io.h`
 //'
 //' @noRd
 //'
 template <typename T>
-void write_vcf_(XPtr<VarSet> var_set,
-                T& out_file,
-                WriterVCF writer) {
+inline void write_vcf_(XPtr<VarSet> var_set,
+                       const std::string& file_name,
+                       const int& compress,
+                       WriterVCF writer) {
+
+    T out_file(file_name, compress);
 
     // Very high quality that will essentially round to Pr(correct) = 1
     // (only needed as string):
@@ -600,7 +553,7 @@ void write_vcf_(XPtr<VarSet> var_set,
      Header
      */
     writer.fill_header(pool);
-    pool_to_output(out_file, pool);
+    out_file.write(pool);
 
     /*
      Data lines
@@ -614,6 +567,7 @@ void write_vcf_(XPtr<VarSet> var_set,
     for (uint32 seq = 0; seq < n_seqs; seq++) {
         writer.new_seq(seq);
         while (writer.mut_pos.first < MAX_INT) {
+            Rcpp::checkUserInterrupt();
             // Set information for this line:
             writer.iterate(pos_str, ref_str, alt_str, gt_strs);
             // CHROM
@@ -640,10 +594,11 @@ void write_vcf_(XPtr<VarSet> var_set,
                 pool += ':' + max_qual;
             }
             pool += '\n';
-            pool_to_output(out_file, pool);
+            out_file.write(pool);
         }
     }
 
+    out_file.close();
 
     return;
 

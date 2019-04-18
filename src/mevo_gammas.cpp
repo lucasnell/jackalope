@@ -40,12 +40,12 @@ void GammaRegion::deletion_adjust(const uint32& ind, std::vector<uint32>& erase_
                                   const sint32& del_size) {
 
     // Total overlap
-    if (del_start <= start & del_end >= end) {
+    if ((del_start <= start) && (del_end >= end)) {
         erase_inds.push_back(ind);
         return;
     }
     // Deletion is totally inside this region but doesn't entirely overlap it
-    if (del_start > start & del_end < end) {
+    if ((del_start > start) && (del_end < end)) {
         end += del_size;
         return;
     }
@@ -58,13 +58,13 @@ void GammaRegion::deletion_adjust(const uint32& ind, std::vector<uint32>& erase_
         return;
     }
     // Partial overlap at the start
-    if (del_end >= start & del_start < start) {
+    if ((del_end >= start) && (del_start < start)) {
         start = del_start;
         end += del_size;
         return;
     }
     // Partial overlap at the end
-    if (del_start <= end & del_end > end) {
+    if ((del_start <= end) && (del_end > end)) {
         end = del_start - 1;
     }
     return;
@@ -262,10 +262,10 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
 //'
 //[[Rcpp::export]]
 void check_gamma_mats(const std::vector<arma::mat>& mats,
-                          const std::vector<uint32>& seq_sizes) {
+                      const std::vector<uint32>& seq_sizes) {
 
     std::string err_msg = "\nIf providing custom matrices for the ";
-    err_msg += "`site_var` argument to the `make_mevo` function, ";
+    err_msg += "`mats` argument to the `site_var` function, ";
     err_msg += "all matrices ";
 
     bool error = false;

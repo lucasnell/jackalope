@@ -9,6 +9,7 @@ check_pacbio_args <- function(seq_object,
                               n_reads,
                               variant_probs,
                               compress,
+                              comp_method,
                               n_threads,
                               read_pool_size,
                               chi2_params_s,
@@ -84,11 +85,15 @@ check_pacbio_args <- function(seq_object,
         err_msg("pacbio", "variant_probs", "NULL or a numeric/integer vector",
                 "with no values < 0 and at least one value > 0")
     }
-    for (x in c("compress", "show_progress")) {
-        z <- eval(parse(text = x))
-        if (!is_type(z, "logical", 1)) err_msg("pacbio", x, "a single logical.")
+    if (!is_type(compress, "logical", 1) && !single_integer(compress, 1, 9)) {
+        err_msg("pacbio", "compress", "a single logical or integer from 1 to 9")
     }
-
+    if (!is_type(comp_method, "character", 1) || !comp_method %in% c("gzip", "bgzip")) {
+        err_msg("pacbio", "comp_method", "\"gzip\" or \"bgzip\"")
+    }
+    if (!is_type(show_progress, "logical", 1)) {
+        err_msg("pacbio", "show_progress", "a single logical")
+    }
     # Checking proper variant_probs
     if (!is.null(variant_probs) && !inherits(seq_object, "variants")) {
         stop("\nFor PacBio sequencing, it makes no sense to provide ",
@@ -209,21 +214,33 @@ pacbio <- function(seq_object,
                    prob_dup = 0.0,
                    variant_probs = NULL,
                    compress = FALSE,
+                   comp_method = "bgzip",
                    n_threads = 1L,
                    read_pool_size = 100L,
-                   show_progress = FALSE) {
+                   show_progress = FALSE,
+                   overwrite = FALSE) {
+
 
     out_prefix <- path.expand(out_prefix)
-    check_fastq(out_prefix)
+    check_file_existence(paste0(out_prefix, "_R1.fq"), compress, overwrite)
 
     # Check for improper argument types:
     check_pacbio_args(seq_object, n_reads, variant_probs,
-                      compress, n_threads, read_pool_size,
+                      compress, comp_method, n_threads, read_pool_size,
                       chi2_params_s, chi2_params_n, max_passes,
                       sqrt_params, norm_params,
                       prob_thresh, ins_prob, del_prob, sub_prob,
                       min_read_length, lognorm_read_length, custom_read_lengths,
                       prob_dup, show_progress)
+
+    # Set compression level:
+    if (is_type(compress, "logical", 1) && compress) compress <- 6 # default compression
+    if (is_type(compress, "logical", 1) && !compress) compress <- 0 # no compression
+
+    if (n_threads > 1 && compress > 0 && comp_method == "gzip") {
+        stop("\nCompression using gzip cannot be performed using multiple threads. ",
+             "Please use bgzip compression instead.")
+    }
 
     if (!is.null(custom_read_lengths)) {
         if (inherits(custom_read_lengths, "matrix")) {
@@ -245,6 +262,7 @@ pacbio <- function(seq_object,
     # Assembling list of arguments for inner cpp function:
     args <- list(out_prefix = out_prefix,
                  compress = compress,
+                 comp_method = comp_method,
                  n_reads = n_reads,
                  n_threads = n_threads,
                  read_pool_size = read_pool_size,

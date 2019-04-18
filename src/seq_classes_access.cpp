@@ -320,6 +320,90 @@ std::vector<std::string> view_var_set_var_names(SEXP var_set_ptr) {
 }
 
 
+/*
+ ========================================================================================
+ ========================================================================================
+
+ Viewing GC and other nucleotide content
+
+ ========================================================================================
+ ========================================================================================
+ */
+
+
+//' See GC content in a RefGenome object.
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+double view_ref_genome_gc_content(SEXP ref_genome_ptr,
+                                  const uint32& seq_ind,
+                                  const uint32& start,
+                                  const uint32& end) {
+
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
+    const std::string& seq = (*ref_genome)[seq_ind].nucleos;
+    double gc = gc_prop(seq, start, end);
+    return gc;
+}
+
+//' See GC content in a VarSet object.
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+double view_var_set_gc_content(SEXP var_set_ptr,
+                               const uint32& seq_ind,
+                               const uint32& var_ind,
+                               const uint32& start,
+                               const uint32& end) {
+    XPtr<VarSet> var_set(var_set_ptr);
+    const VarSequence& var_seq((*var_set)[var_ind][seq_ind]);
+    std::string seq;
+    uint32 mut_i = 0;
+    var_seq.set_seq_chunk(seq, start, end - start + 1, mut_i);
+    double gc = gc_prop(seq);
+    return gc;
+}
+
+//' See any nucleotide's content in a RefGenome object.
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+double view_ref_genome_nt_content(SEXP ref_genome_ptr,
+                                  const char& nt,
+                                  const uint32& seq_ind,
+                                  const uint32& start,
+                                  const uint32& end) {
+
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
+    const std::string& seq = (*ref_genome)[seq_ind].nucleos;
+    double ntp = nt_prop(seq, nt, start, end);
+    return ntp;
+}
+
+//' See any nucleotide's content in a VarSet object.
+//'
+//' @noRd
+//'
+//[[Rcpp::export]]
+double view_var_set_nt_content(SEXP var_set_ptr,
+                               const char& nt,
+                               const uint32& seq_ind,
+                               const uint32& var_ind,
+                               const uint32& start,
+                               const uint32& end) {
+    XPtr<VarSet> var_set(var_set_ptr);
+    const VarSequence& var_seq((*var_set)[var_ind][seq_ind]);
+    std::string seq;
+    uint32 mut_i = 0;
+    var_seq.set_seq_chunk(seq, start, end - start + 1, mut_i);
+    double ntp = nt_prop(seq, nt);
+    return ntp;
+}
+
+
 
 
 /*
@@ -566,7 +650,7 @@ List examine_mutations(SEXP var_set_ptr, const uint32& var_ind, const uint32& se
         sint32 mi = var_seq.mutations[i].size_modifier;
         if (mi == 0) continue;
         if (mi > 0) {
-            if (mi > max_ins) max_ins = mi;
+            if (mi > static_cast<sint32>(max_ins)) max_ins = mi;
         } else {
             uint32 mid = static_cast<uint32>(std::abs(mi));
             if (mid > max_del) max_del = mid;
@@ -691,7 +775,8 @@ void add_insertion(SEXP var_set_ptr, const uint32& var_ind,
 //' @noRd
 //'
 //[[Rcpp::export]]
-void add_deletion(SEXP var_set_ptr, const uint32& var_ind,
+void add_deletion(SEXP var_set_ptr,
+                  const uint32& var_ind,
                   const uint32& seq_ind,
                   const uint32& size_,
                   const uint32& new_pos_) {

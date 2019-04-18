@@ -10,5 +10,24 @@ CXX_STD = CXX11
 # Access to pgc RNG header files
 PKG_CPPFLAGS = -I../inst/include/
 
+## From "Writing R Extensions":
+## > Since the only viable make for Windows is GNU make, it is permissible to
+## > use GNU extensions in files Makevars.win or Makefile.win.
+
+# For htslib headers:
+RHTSLIB_LIBS = $(shell echo 'Rhtslib::pkgconfig("PKG_LIBS")'| "${R_HOME}/bin/R" --vanilla --slave)
+# For portable zlib headers
+ZLIBIOC_CFLAGS = $(shell echo 'zlibbioc::pkgconfig("PKG_CFLAGS")'| "${R_HOME}/bin/R" --vanilla --slave)
+ZLIBIOC_LIBS = $(shell echo 'zlibbioc::pkgconfig("PKG_LIBS_shared")' | "${R_HOME}/bin/R" --vanilla --slave)
+
+
 # Compression library and others
-PKG_LIBS = -lz $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
+PKG_LIBS = -lws2_32 $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(RHTSLIB_LIBS) $(ZLIBIOC_LIBS)
+# zlib
+ZLIB_CFLAGS += $(ZLIBIOC_CFLAGS)
+
+%.o: %.c
+	$(CC) $(ZLIB_CFLAGS) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $< -o $@
+%.o: %.cpp
+	$(CXX) $(ZLIB_CFLAGS) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c $< -o $@
+

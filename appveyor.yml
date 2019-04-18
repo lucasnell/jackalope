@@ -10,13 +10,12 @@ init:
 install:
   ps: Bootstrap
 
-cache:
-  - C:\RLibrary
 
 # Adapt as necessary starting from here
 
 build_script:
   - travis-tool.sh install_deps
+  - travis-tool.sh install_bioc_deps
 
 test_script:
   - travis-tool.sh run_tests
@@ -43,3 +42,21 @@ artifacts:
 
   - path: '\*_*.zip'
     name: Bits
+
+
+branches:
+  only:
+    - master
+
+
+platform: x64
+
+
+environment:
+    global:
+      R_ARCH: x64
+      GCC_PATH: mingw_64
+      USE_RTOOLS: true
+    matrix:
+      - R_VERSION: patched
+        BIOC_USE_DEVEL: "FALSE"

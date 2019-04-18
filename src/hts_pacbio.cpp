@@ -16,8 +16,9 @@
 #include "alias_sampler.h"  // AliasSampler
 #include "util.h"  // clear_memory
 #include "str_manip.h"  // rev_comp
-#include "sequencer.h"  // generic sequencer classes
-#include "pacbio.h"  // PacBio* types
+#include "hts.h"  // generic sequencer classes
+#include "hts_pacbio.h"  // PacBio* types
+#include "io.h"  // File* types
 
 
 
@@ -41,6 +42,7 @@ uint32 PacBioReadLenSampler::sample(pcg64& eng) {
     }
     return len_;
 }
+
 
 
 
@@ -129,10 +131,11 @@ void PacBioQualityError::update_probs(pcg64& eng,
 
 
 template <typename T>
-void PacBioOneGenome<T>::one_read(std::vector<std::string>& fastq_pools,
+template <typename U>
+void PacBioOneGenome<T>::one_read(std::vector<U>& fastq_pools,
                                   pcg64& eng) {
 
-    std::string& fastq_pool(fastq_pools[0]);
+    U& fastq_pool(fastq_pools[0]);
 
     /*
     Sample read info, and set the sequence space(s) required for these read(s).
@@ -171,7 +174,7 @@ void PacBioOneGenome<T>::one_read(std::vector<std::string>& fastq_pools,
     }
 
     // Fill the reads and qualities
-    append_pool(fastq_pool, eng);
+    append_pool<U>(fastq_pool, eng);
 
     return;
 }
@@ -179,10 +182,11 @@ void PacBioOneGenome<T>::one_read(std::vector<std::string>& fastq_pools,
 
 
 template <typename T>
-void PacBioOneGenome<T>::re_read(std::vector<std::string>& fastq_pools,
+template <typename U>
+void PacBioOneGenome<T>::re_read(std::vector<U>& fastq_pools,
                                  pcg64& eng) {
 
-    std::string& fastq_pool(fastq_pools[0]);
+    U& fastq_pool(fastq_pools[0]);
 
     /*
      Use the same read info as before.
@@ -218,7 +222,7 @@ void PacBioOneGenome<T>::re_read(std::vector<std::string>& fastq_pools,
     if ((read_seq_space + read_start) > seq_len) return;
 
     // Fill the reads and qualities
-    append_pool(fastq_pool, eng);
+    append_pool<U>(fastq_pool, eng);
 
     return;
 }
@@ -227,14 +231,20 @@ void PacBioOneGenome<T>::re_read(std::vector<std::string>& fastq_pools,
 
 
 template <typename T>
-void PacBioOneGenome<T>::append_pool(std::string& fastq_pool,
-                                      pcg64& eng) {
+template <typename U>
+void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
 
     // Make sure it has enough memory reserved:
     fastq_pool.reserve(fastq_pool.size() + read_length * 3 + 10);
 
-    fastq_pool += '@' + this->name + '-' + (*sequences)[seq_ind].name +
-        '-' + std::to_string(read_start) + '\n';
+    // ID line:
+    fastq_pool.push_back('@');
+    for (const char& c : this->name) fastq_pool.push_back(c);
+    fastq_pool.push_back('-');
+    for (const char& c : (*sequences)[seq_ind].name) fastq_pool.push_back(c);
+    fastq_pool.push_back('-');
+    for (const char& c : std::to_string(read_start)) fastq_pool.push_back(c);
+    fastq_pool.push_back('\n');
 
     // Boolean for whether we take the reverse side:
     bool reverse = runif_01(eng) < 0.5;
@@ -254,30 +264,32 @@ void PacBioOneGenome<T>::append_pool(std::string& fastq_pool,
     while (current_length < read_length) {
         if (!insertions.empty() && read_pos == insertions.front()) {
             rndi = static_cast<uint32>(runif_01(eng) * 4);
-            fastq_pool += read[read_pos];
-            fastq_pool += alias_sampler::bases[rndi];
+            fastq_pool.push_back(read[read_pos]);
+            fastq_pool.push_back(alias_sampler::bases[rndi]);
             insertions.pop_front();
             current_length += 2;
         } else if (!deletions.empty() && read_pos == deletions.front()) {
             deletions.pop_front();
         } else if (!substitutions.empty() && read_pos == substitutions.front()) {
             rndi = static_cast<uint32>(runif_01(eng) * 3);
-            fastq_pool += mm_nucleos[nt_map[read[read_pos]]][rndi];
+            fastq_pool.push_back(mm_nucleos[nt_map[read[read_pos]]][rndi]);
             substitutions.pop_front();
             current_length++;
         } else {
-            fastq_pool += read[read_pos];
+            fastq_pool.push_back(read[read_pos]);
             current_length++;
         }
         read_pos++;
     }
 
-    fastq_pool += "\n+\n";
+    fastq_pool.push_back('\n');
+    fastq_pool.push_back('+');
+    fastq_pool.push_back('\n');
 
     // Adding qualities:
-    for (uint32 i = 0; i < split_pos; i++) fastq_pool += qual_left;
-    for (uint32 i = split_pos; i < read_length; i++) fastq_pool += qual_right;
-    fastq_pool += '\n';
+    for (uint32 i = 0; i < split_pos; i++) fastq_pool.push_back(qual_left);
+    for (uint32 i = split_pos; i < read_length; i++) fastq_pool.push_back(qual_right);
+    fastq_pool.push_back('\n');
 
     return;
 }
@@ -308,7 +320,8 @@ void PacBioOneGenome<T>::append_pool(std::string& fastq_pool,
 //[[Rcpp::export]]
 void pacbio_ref_cpp(SEXP ref_genome_ptr,
                       const std::string& out_prefix,
-                      const bool& compress,
+                      const int& compress,
+                      const std::string& comp_method,
                       const uint32& n_reads,
                       const uint32& n_threads,
                       const bool& show_progress,
@@ -349,15 +362,9 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
                             prob_ins, prob_del, prob_subst);
     }
 
-    if (compress) {
-        write_reads_cpp_<PacBioReference, gzFile>(
-                read_filler_base, out_prefix, n_reads,
-                prob_dup, read_pool_size, 1U, n_threads, show_progress);
-    } else {
-        write_reads_cpp_<PacBioReference, std::ofstream>(
-                read_filler_base, out_prefix, n_reads,
-                prob_dup, read_pool_size, 1U, n_threads, show_progress);
-    }
+    write_reads_cpp_<PacBioReference>(
+        read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size, 1,
+        n_threads, show_progress, compress, comp_method);
 
 
     return;
@@ -374,7 +381,8 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
 //[[Rcpp::export]]
 void pacbio_var_cpp(SEXP var_set_ptr,
                     const std::string& out_prefix,
-                    const bool& compress,
+                    const int& compress,
+                    const std::string& comp_method,
                     const uint32& n_reads,
                     const uint32& n_threads,
                     const bool& show_progress,
@@ -416,15 +424,9 @@ void pacbio_var_cpp(SEXP var_set_ptr,
                            prob_ins, prob_del, prob_subst);
     }
 
-    if (compress) {
-        write_reads_cpp_<PacBioVariants, gzFile>(
-                read_filler_base, out_prefix, n_reads,
-                prob_dup, read_pool_size, 1U, n_threads, show_progress);
-    } else {
-        write_reads_cpp_<PacBioVariants, std::ofstream>(
-                read_filler_base, out_prefix, n_reads,
-                prob_dup, read_pool_size, 1U, n_threads, show_progress);
-    }
+    write_reads_cpp_<PacBioVariants>(
+        read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size, 1,
+        n_threads, show_progress, compress, comp_method);
 
     return;
 }

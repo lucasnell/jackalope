@@ -191,10 +191,10 @@ struct RefGenome {
             for (int i = (num_seqs - 5 + 1); i < num_seqs; i++) inds.push_back(i);
         }
 
-        Rcout.imbue(std::locale(""));
-        Rcout << "< Set of " << num_seqs << " sequences >" << std::endl;
-        Rcout << "# Total size: " << total_size << " bp" << std::endl;
-        // Rcout << "# Sequences:" << std::endl;
+        Rcout << "< Set of " << big_int_format<int>(num_seqs) << " sequences >";
+        Rcout << std::endl;
+        Rcout << "# Total size: " << big_int_format<uint64>(total_size) << " bp";
+        Rcout << std::endl;
 
         int ind_i, name_width = 10, length_width = 9;
         // Console width minus name width AND length width AND spaces between

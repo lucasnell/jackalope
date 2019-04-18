@@ -6,7 +6,7 @@
 #include <pcg/pcg_random.hpp> // pcg prng
 
 #include <fstream> // for writing FASTQ files
-#include <zlib.h>  // for writing to compressed FASTQ
+#include "zlib.h" // for writing to compressed FASTQ
 #ifdef _OPENMP
 #include <omp.h>  // omp
 #endif
@@ -14,8 +14,10 @@
 #include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
-#include "sequencer.h"  // generic sequencing classes
-#include "illumina.h"  // Illumina-specific classes
+#include "hts.h"  // generic sequencing classes
+#include "hts_illumina.h"  // Illumina-specific classes
+#include "str_manip.h"  // rev_comp
+#include "io.h"  // File* types
 
 using namespace Rcpp;
 
@@ -23,12 +25,10 @@ using namespace Rcpp;
 
 
 
-// template <typename T>
-// IlluminaOneGenome<T>::
-
 // Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality)
 template <typename T>
-void IlluminaOneGenome<T>::one_read(std::vector<std::string>& fastq_pools,
+template <typename U>
+void IlluminaOneGenome<T>::one_read(std::vector<U>& fastq_pools,
                                     pcg64& eng) {
 
     /*
@@ -37,7 +37,7 @@ void IlluminaOneGenome<T>::one_read(std::vector<std::string>& fastq_pools,
     seq_indels_frag(eng);
 
     // Fill the reads and qualities
-    append_pools(fastq_pools, eng);
+    append_pools<U>(fastq_pools, eng);
 
     return;
 }
@@ -47,14 +47,15 @@ void IlluminaOneGenome<T>::one_read(std::vector<std::string>& fastq_pools,
  run once before.
  */
 template <typename T>
-void IlluminaOneGenome<T>::re_read(std::vector<std::string>& fastq_pools,
+template <typename U>
+void IlluminaOneGenome<T>::re_read(std::vector<U>& fastq_pools,
                                    pcg64& eng) {
 
     // Here I'm just re-doing indels bc it's a duplicate.
     just_indels(eng);
 
     // Fill the reads and qualities
-    append_pools(fastq_pools, eng);
+    append_pools<U>(fastq_pools, eng);
 
     return;
 }
@@ -226,7 +227,8 @@ void IlluminaOneGenome<T>::just_indels(pcg64& eng) {
  That should be done outside this function.
  */
 template <typename T>
-void IlluminaOneGenome<T>::append_pools(std::vector<std::string>& fastq_pools,
+template <typename U>
+void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
                                          pcg64& eng) {
 
     uint32 n_read_ends = ins_probs.size();
@@ -288,11 +290,24 @@ void IlluminaOneGenome<T>::append_pools(std::vector<std::string>& fastq_pools,
 
         // Combine into 4 lines of output per read:
         // ID line:
-        fastq_pools[i] += '@' + this->name + '-' + (*sequences)[seq_ind].name +
-            '-' + std::to_string(start);
-        if (paired) fastq_pools[i] += '/' + std::to_string(i+1);
+        fastq_pools[i].push_back('@');
+        for (const char& c : this->name) fastq_pools[i].push_back(c);
+        fastq_pools[i].push_back('-');
+        for (const char& c : (*sequences)[seq_ind].name) fastq_pools[i].push_back(c);
+        fastq_pools[i].push_back('-');
+        for (const char& c : std::to_string(start)) fastq_pools[i].push_back(c);
+        if (paired) {
+            fastq_pools[i].push_back('/');
+            for (const char& c : std::to_string(i+1)) fastq_pools[i].push_back(c);
+        }
         // The rest:
-        fastq_pools[i] += '\n' + read + "\n+\n" + qual + '\n';
+        fastq_pools[i].push_back('\n');
+        for (const char& c : read) fastq_pools[i].push_back(c);
+        fastq_pools[i].push_back('\n');
+        fastq_pools[i].push_back('+');
+        fastq_pools[i].push_back('\n');
+        for (const char& c : qual) fastq_pools[i].push_back(c);
+        fastq_pools[i].push_back('\n');
     }
 
     return;
@@ -332,7 +347,8 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                       const bool& paired,
                       const bool& matepair,
                       const std::string& out_prefix,
-                      const bool& compress,
+                      const int& compress,
+                      const std::string& comp_method,
                       const uint32& n_reads,
                       const double& prob_dup,
                       const uint32& n_threads,
@@ -375,16 +391,10 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                               barcodes[0]);
     }
 
-    if (compress) {
-        write_reads_cpp_<IlluminaReference, gzFile>(
-                read_filler_base, out_prefix, n_reads, prob_dup,
-                read_pool_size, n_read_ends, n_threads, show_progress);
-    } else {
-        write_reads_cpp_<IlluminaReference, std::ofstream>(
-                read_filler_base, out_prefix, n_reads, prob_dup,
-                read_pool_size, n_read_ends, n_threads, show_progress);
-    }
-
+    write_reads_cpp_<IlluminaReference>(
+        read_filler_base, out_prefix, n_reads, prob_dup,
+        read_pool_size, n_read_ends, n_threads, show_progress,
+        compress, comp_method);
 
     return;
 }
@@ -404,7 +414,8 @@ void illumina_var_cpp(SEXP var_set_ptr,
                       const bool& paired,
                       const bool& matepair,
                       const std::string& out_prefix,
-                      const bool& compress,
+                      const int& compress,
+                      const std::string& comp_method,
                       const uint32& n_reads,
                       const double& prob_dup,
                       const uint32& n_threads,
@@ -447,15 +458,10 @@ void illumina_var_cpp(SEXP var_set_ptr,
                                             barcodes);
     }
 
-    if (compress) {
-        write_reads_cpp_<IlluminaVariants, gzFile>(
-                read_filler_base, out_prefix, n_reads, prob_dup,
-                read_pool_size, n_read_ends, n_threads, show_progress);
-    }else {
-        write_reads_cpp_<IlluminaVariants, std::ofstream>(
-                read_filler_base, out_prefix, n_reads, prob_dup,
-                read_pool_size, n_read_ends, n_threads, show_progress);
-    }
+    write_reads_cpp_<IlluminaVariants>(
+        read_filler_base, out_prefix, n_reads, prob_dup,
+        read_pool_size, n_read_ends, n_threads, show_progress,
+        compress, comp_method);
 
     return;
 }

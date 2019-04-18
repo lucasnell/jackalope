@@ -18,6 +18,8 @@
 #include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
+#include "util.h"  // get_width
+
 
 using namespace Rcpp;
 
@@ -161,53 +163,6 @@ std::string VarSequence::get_seq_full() const {
 
 
 
-/*
- ------------------
- Retrieve the first part of a sequence from the variant sequence.
- ------------------
- */
-std::string VarSequence::get_seq_start(uint32 out_length) const {
-
-    if (out_length > seq_size) out_length = seq_size;
-
-    if (mutations.empty()) return ref_seq->nucleos.substr(0, out_length);
-
-    std::string out(out_length, 'x');
-
-    uint32 mut_i = 0;
-
-    uint32 pos = 0;
-
-    // Picking up any nucleotides before the first mutation
-    while (pos < mutations[mut_i].new_pos) {
-        out[pos] = (*ref_seq)[pos];
-        if (pos == out_length - 1) return out;
-        ++pos;
-    }
-
-    // Now, for each subsequent mutation except the last, add all nucleotides
-    // at or after its position but before the next one
-    uint32 next_mut_i = mut_i + 1;
-    while (next_mut_i < mutations.size()) {
-        while (pos < mutations[next_mut_i].new_pos) {
-            out[pos] = get_char_(pos, mut_i);
-            if (pos == out_length - 1) return out;
-            ++pos;
-        }
-        ++mut_i;
-        ++next_mut_i;
-    }
-
-    // Now taking care of nucleotides after the last Mutation
-    while (pos < seq_size) {
-        out[pos] = get_char_(pos, mut_i);
-        if (pos == out_length - 1) return out;
-        ++pos;
-    }
-
-    return out;
-}
-
 
 /*
  ------------------
@@ -249,9 +204,8 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
         ++mut_i;
     }
     if (mut_i != 0) --mut_i;
-    // Reserve memory for input string
+    // Clearing string if necessary (reserving memory should happen outside this method)
     if (chunk_str.size() > 0) chunk_str.clear();
-    chunk_str.reserve(out_length);
 
     uint32 pos = start;
     uint32 next_mut_i = mut_i + 1;
@@ -487,6 +441,8 @@ void VarSequence::calc_positions(uint32 mut_i, const sint32& modifier) {
  ------------------
  */
 void VarSequence::add_deletion(const uint32& size_, const uint32& new_pos_) {
+
+    if (size_ == 0 || new_pos_ >= seq_size) return;
 
     uint32 mut_i;
 
@@ -749,10 +705,12 @@ void VarSequence::deletion_blowup_(uint32& mut_i, uint32& deletion_start,
 
     /*
      If `mut_i` no longer overlaps this deletion or if the deletion is gone (bc it
-     absorbed part/all of an insertion), return now
+     absorbed part/all of an insertion), return now.
+     (The first check is to prevent segfault when two deletions are the first
+     to be added to a mutations deque.)
      */
-    if (mutations[mut_i].new_pos > deletion_end || size_mod == 0) {
-        return;
+    if (mut_i < mutations.size()) {
+        if (mutations[mut_i].new_pos > deletion_end || size_mod == 0) return;
     }
 
     /*
@@ -1006,9 +964,8 @@ void VarSet::print() const noexcept {
     for (int i = 0; i < n_spaces; i++) Rcout << ' ';
     Rcout << "<< Variants object >>" << std::endl;
 
-    Rcout.imbue(std::locale(""));
-    Rcout << "# Variants: " << size() << std::endl;
-    Rcout << "# Mutations: " << total_muts << std::endl;
+    Rcout << "# Variants: " << big_int_format<uint32>(size()) << std::endl;
+    Rcout << "# Mutations: " << big_int_format<uint32>(total_muts) << std::endl;
     Rcout << std::endl;
 
     n_spaces = static_cast<int>(

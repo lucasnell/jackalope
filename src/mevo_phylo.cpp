@@ -24,6 +24,7 @@
 #include "mevo.h"  // samplers
 #include "pcg.h" // pcg sampler types
 #include "mevo_phylo.h"
+#include "util.h"  // thread_check
 
 
 using namespace Rcpp;
@@ -93,10 +94,8 @@ int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
     /*
      Check for a user interrupt. Using a Progress object allows the user to interrupt
      the process during multithreaded operations.
-     If recombination == true, I'm only doing this here, not for each edge bc that
-     would likely cause too many checks, which would slow things down.
      */
-    if (prog_bar.is_aborted()) return -1;
+    if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
 
     // Exponential distribution to do the time-jumps along the branch lengths:
     std::exponential_distribution<double> distr(1.0);
@@ -107,7 +106,7 @@ int PhyloOneSeq<T>::one_tree(PhyloTree& tree,
     for (uint32 i = 0; i < tree.n_edges; i++) {
 
         // Checking for abort every edge:
-        if (prog_bar.is_aborted()) return -1;
+        if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
 
         // Indices for nodes/tips that the branch length in `branch_lens` refers to
         uint32 b1 = tree.edges(i,0);
@@ -376,10 +375,13 @@ SEXP evolve_seqs(
         SEXP& sampler_base_ptr,
         SEXP& phylo_info_ptr,
         const std::vector<arma::mat>& gamma_mats,
-        const uint32& n_threads,
+        uint32 n_threads,
         const bool& show_progress) {
 
     XPtr<PhyloInfo<MutationSampler>> phylo_info(phylo_info_ptr);
+
+    // Check that # threads isn't too high and change to 1 if not using OpenMP:
+    thread_check(n_threads);
 
     XPtr<VarSet> var_set = phylo_info->evolve_seqs(
         ref_genome_ptr, sampler_base_ptr,
@@ -398,10 +400,13 @@ SEXP evolve_seqs_chunk(
         SEXP& sampler_base_ptr,
         SEXP& phylo_info_ptr,
         const std::vector<arma::mat>& gamma_mats,
-        const uint32& n_threads,
+        uint32 n_threads,
         const bool& show_progress) {
 
     XPtr<PhyloInfo<ChunkMutationSampler>> phylo_info(phylo_info_ptr);
+
+    // Check that # threads isn't too high and change to 1 if not using OpenMP:
+    thread_check(n_threads);
 
     XPtr<VarSet> var_set = phylo_info->evolve_seqs(
         ref_genome_ptr, sampler_base_ptr,

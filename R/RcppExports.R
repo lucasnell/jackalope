@@ -14,8 +14,8 @@
 #'
 #' @noRd
 #'
-merge_sequences <- function(ref_genome_ptr) {
-    invisible(.Call(`_jackalope_merge_sequences`, ref_genome_ptr))
+merge_sequences_cpp <- function(ref_genome_ptr) {
+    invisible(.Call(`_jackalope_merge_sequences_cpp`, ref_genome_ptr))
 }
 
 #' Filter reference genome sequences by size or for a proportion of total nucleotides.
@@ -34,8 +34,8 @@ merge_sequences <- function(ref_genome_ptr) {
 #' @noRd
 #'
 #'
-filter_sequences <- function(ref_genome_ptr, min_seq_size = 0L, out_seq_prop = 0) {
-    invisible(.Call(`_jackalope_filter_sequences`, ref_genome_ptr, min_seq_size, out_seq_prop))
+filter_sequences_cpp <- function(ref_genome_ptr, min_seq_size = 0L, out_seq_prop = 0) {
+    invisible(.Call(`_jackalope_filter_sequences_cpp`, ref_genome_ptr, min_seq_size, out_seq_prop))
 }
 
 #' Replace Ns with randome nucleotides.
@@ -74,8 +74,8 @@ replace_Ns_cpp <- function(ref_genome_ptr, pi_tcag, n_threads, show_progress) {
 #' @examples
 #'
 #'
-create_genome_ <- function(n_seqs, len_mean, len_sd, pi_tcag, n_threads) {
-    .Call(`_jackalope_create_genome_`, n_seqs, len_mean, len_sd, pi_tcag, n_threads)
+create_genome_cpp <- function(n_seqs, len_mean, len_sd, pi_tcag, n_threads) {
+    .Call(`_jackalope_create_genome_cpp`, n_seqs, len_mean, len_sd, pi_tcag, n_threads)
 }
 
 #' Create random sequences as a character vector.
@@ -99,8 +99,8 @@ rando_seqs <- function(n_seqs, len_mean, len_sd = 0, pi_tcag = numeric(0), n_thr
 #'
 #' @noRd
 #'
-illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_threads, show_progress, read_pool_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
-    invisible(.Call(`_jackalope_illumina_ref_cpp`, ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_threads, show_progress, read_pool_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
+illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
+    invisible(.Call(`_jackalope_illumina_ref_cpp`, ref_genome_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
 }
 
 #' Illumina sequence for reference object.
@@ -108,8 +108,145 @@ illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compr
 #'
 #' @noRd
 #'
-illumina_var_cpp <- function(var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
-    invisible(.Call(`_jackalope_illumina_var_cpp`, var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
+illumina_var_cpp <- function(var_set_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
+    invisible(.Call(`_jackalope_illumina_var_cpp`, var_set_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
+}
+
+#' PacBio sequence for reference object.
+#'
+#'
+#' @noRd
+#'
+pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
+    invisible(.Call(`_jackalope_pacbio_ref_cpp`, ref_genome_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
+}
+
+#' PacBio sequence for reference object.
+#'
+#'
+#' @noRd
+#'
+pacbio_var_cpp <- function(var_set_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
+    invisible(.Call(`_jackalope_pacbio_var_cpp`, var_set_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
+}
+
+#' Write Gamma matrix info to a tab-delimited BED file.
+#'
+#'
+#'
+#' @noRd
+#'
+write_bed <- function(out_prefix, gamma_mats, seq_names, compress, comp_method) {
+    invisible(.Call(`_jackalope_write_bed`, out_prefix, gamma_mats, seq_names, compress, comp_method))
+}
+
+#' Read a non-indexed fasta file to a \code{RefGenome} object.
+#'
+#' @param file_names File names of the fasta file(s).
+#' @param cut_names Boolean for whether to cut sequence names at the first space.
+#'     Defaults to \code{TRUE}.
+#' @param remove_soft_mask Boolean for whether to remove soft-masking by making
+#'    sequences all uppercase. Defaults to \code{TRUE}.
+#'
+#' @return Nothing.
+#'
+#' @noRd
+#'
+read_fasta_noind <- function(fasta_files, cut_names, remove_soft_mask) {
+    .Call(`_jackalope_read_fasta_noind`, fasta_files, cut_names, remove_soft_mask)
+}
+
+#' Read an indexed fasta file to a \code{RefGenome} object.
+#'
+#' @param file_name File name of the fasta file.
+#' @param remove_soft_mask Boolean for whether to remove soft-masking by making
+#'    sequences all uppercase. Defaults to \code{TRUE}.
+#' @param offsets Vector of sequence offsets from the fasta index file.
+#' @param names Vector of sequence names from the fasta index file.
+#' @param lengths Vector of sequence lengths from the fasta index file.
+#' @param line_lens Vector of sequence line lengths from the fasta index file.
+#'
+#' @return Nothing.
+#'
+#' @noRd
+#'
+#'
+read_fasta_ind <- function(fasta_files, fai_files, remove_soft_mask) {
+    .Call(`_jackalope_read_fasta_ind`, fasta_files, fai_files, remove_soft_mask)
+}
+
+#' Write \code{RefGenome} to an uncompressed fasta file.
+#'
+#' @param out_prefix Prefix to file name of output fasta file.
+#' @param ref_genome_ptr An external pointer to a \code{RefGenome} C++ object.
+#' @param text_width The number of characters per line in the output fasta file.
+#' @param compress Boolean for whether to compress output.
+#'
+#' @return Nothing.
+#'
+#' @noRd
+#'
+#'
+write_ref_fasta <- function(out_prefix, ref_genome_ptr, text_width, compress, comp_method, show_progress) {
+    invisible(.Call(`_jackalope_write_ref_fasta`, out_prefix, ref_genome_ptr, text_width, compress, comp_method, show_progress))
+}
+
+#' Write \code{VarSet} to an uncompressed fasta file.
+#'
+#' @param out_prefix Prefix to file name of output fasta file.
+#' @param var_set_ptr An external pointer to a \code{VarSet} C++ object.
+#' @param text_width The number of characters per line in the output fasta file.
+#' @param compress Boolean for whether to compress output.
+#'
+#' @return Nothing.
+#'
+#' @noRd
+#'
+#'
+write_vars_fasta <- function(out_prefix, var_set_ptr, text_width, compress, comp_method, n_threads, show_progress) {
+    invisible(.Call(`_jackalope_write_vars_fasta`, out_prefix, var_set_ptr, text_width, compress, comp_method, n_threads, show_progress))
+}
+
+#' Read a ms output file with newick gene trees and return the gene tree strings.
+#'
+#' @param ms_file File name of the ms output file.
+#'
+#' @return A vector of strings for each set of gene trees.
+#'
+#' @noRd
+#'
+read_ms_trees_ <- function(ms_file) {
+    .Call(`_jackalope_read_ms_trees_`, ms_file)
+}
+
+#' Read a ms output file with segregating sites and return the matrices of site info.
+#'
+#' @param ms_file File name of the ms output file.
+#'
+#' @return A vector of strings for each set of gene trees.
+#'
+#' @noRd
+#'
+coal_file_sites <- function(ms_file) {
+    .Call(`_jackalope_coal_file_sites`, ms_file)
+}
+
+#' Read VCF from a vcfR object.
+#'
+#'
+#' @noRd
+#'
+read_vcfr <- function(reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq) {
+    .Call(`_jackalope_read_vcfr`, reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq)
+}
+
+#' Write `variants` to VCF file.
+#'
+#'
+#' @noRd
+#'
+write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, show_progress) {
+    invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix, show_progress))
 }
 
 #' Used below to directly make a MutationTypeSampler
@@ -136,8 +273,8 @@ make_mutation_sampler_chunk_base <- function(Q, pi_tcag, insertion_rates, deleti
 #'
 #' @noRd
 #'
-add_coal_sites_cpp <- function(ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress) {
-    .Call(`_jackalope_add_coal_sites_cpp`, ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress)
+add_coal_sites_cpp <- function(ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress) {
+    .Call(`_jackalope_add_coal_sites_cpp`, ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress)
 }
 
 #' Fill matrix of Gamma-region end points and Gamma values.
@@ -219,249 +356,6 @@ evolve_seqs <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_
 evolve_seqs_chunk <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress) {
     .Call(`_jackalope_evolve_seqs_chunk`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress)
 }
-
-#' Estimates equilibrium nucleotide frequencies from an input rate matrix.
-#'
-#' It does this by solving for πQ = 0 by finding the left eigenvector of Q that
-#' corresponds to the eigenvalue closest to zero.
-#' This is only needed for the UNREST model.
-#'
-#' @inheritParams Q UNREST_rate_matrix_
-#' @inheritParams pi_tcag UNREST_rate_matrix_
-#'
-#' @noRd
-#'
-NULL
-
-#' Q matrix for rates for a given nucleotide using the UNREST substitution model.
-#'
-#' This function also fills in a vector of equilibrium frequencies for each nucleotide.
-#' This calculation has to be done for this model only because it uses separate
-#' values for each non-diagonal cell and doesn't use equilibrium frequencies for
-#' creating the matrix.
-#'
-#'
-#' @param Q Matrix of substitution rates for "T", "C", "A", and "G", respectively.
-#'     Do not include indel rates here! Diagonal values are ignored.
-#' @param pi_tcag Empty vector of equilibrium frequencies for for "T", "C", "A", and "G",
-#'     respectively. This vector will be filled in by this function.
-#' @param xi Overall rate of indels.
-#'
-#' @noRd
-#'
-NULL
-
-#' Q matrix for rates for a given nucleotide using the TN93 substitution model.
-#'
-#' @noRd
-#'
-TN93_rate_matrix <- function(pi_tcag, alpha_1, alpha_2, beta) {
-    .Call(`_jackalope_TN93_rate_matrix`, pi_tcag, alpha_1, alpha_2, beta)
-}
-
-#' Q matrix for rates for a given nucleotide using the JC69 substitution model.
-#'
-#' JC69 is a special case of TN93.
-#'
-#' @noRd
-#'
-JC69_rate_matrix <- function(lambda) {
-    .Call(`_jackalope_JC69_rate_matrix`, lambda)
-}
-
-#' Q matrix for rates for a given nucleotide using the K80 substitution model.
-#'
-#' K80 is a special case of TN93.
-#'
-#' @noRd
-#'
-K80_rate_matrix <- function(alpha, beta) {
-    .Call(`_jackalope_K80_rate_matrix`, alpha, beta)
-}
-
-#' Q matrix for rates for a given nucleotide using the F81 substitution model.
-#'
-#' F81 is a special case of TN93.
-#'
-#' @noRd
-#'
-F81_rate_matrix <- function(pi_tcag) {
-    .Call(`_jackalope_F81_rate_matrix`, pi_tcag)
-}
-
-#' Q matrix for rates for a given nucleotide using the HKY85 substitution model.
-#'
-#' HKY85 is a special case of TN93.
-#'
-#' @noRd
-#'
-HKY85_rate_matrix <- function(pi_tcag, alpha, beta) {
-    .Call(`_jackalope_HKY85_rate_matrix`, pi_tcag, alpha, beta)
-}
-
-#' Q matrix for rates for a given nucleotide using the F84 substitution model.
-#'
-#' F84 is a special case of TN93.
-#'
-#' @noRd
-#'
-F84_rate_matrix <- function(pi_tcag, beta, kappa) {
-    .Call(`_jackalope_F84_rate_matrix`, pi_tcag, beta, kappa)
-}
-
-#' Q matrix for rates for a given nucleotide using the GTR substitution model.
-#'
-#' @noRd
-#'
-GTR_rate_matrix <- function(pi_tcag, abcdef) {
-    .Call(`_jackalope_GTR_rate_matrix`, pi_tcag, abcdef)
-}
-
-#' Same as above, but it only takes a matrix and indel rate, and outputs a list.
-#'
-#' The list is of the standardized `Q` and the calculated `pi_tcag`.
-#' This is for use in R.
-#'
-#' @inheritParams Q UNREST_rate_matrix
-#' @inheritParams xi UNREST_rate_matrix
-#'
-#' @noRd
-#'
-#'
-UNREST_rate_matrix <- function(Q) {
-    .Call(`_jackalope_UNREST_rate_matrix`, Q)
-}
-
-#' PacBio sequence for reference object.
-#'
-#'
-#' @noRd
-#'
-pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, n_reads, n_threads, show_progress, read_pool_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
-    invisible(.Call(`_jackalope_pacbio_ref_cpp`, ref_genome_ptr, out_prefix, compress, n_reads, n_threads, show_progress, read_pool_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
-}
-
-#' PacBio sequence for reference object.
-#'
-#'
-#' @noRd
-#'
-pacbio_var_cpp <- function(var_set_ptr, out_prefix, compress, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
-    invisible(.Call(`_jackalope_pacbio_var_cpp`, var_set_ptr, out_prefix, compress, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
-}
-
-#' Read a ms output file with newick gene trees and return the gene tree strings.
-#'
-#' @param ms_file File name of the ms output file.
-#'
-#' @return A vector of strings for each set of gene trees.
-#'
-#' @noRd
-#'
-read_ms_trees_ <- function(ms_file) {
-    .Call(`_jackalope_read_ms_trees_`, ms_file)
-}
-
-#' Read a ms output file with segregating sites and return the matrices of site info.
-#'
-#' @param ms_file File name of the ms output file.
-#'
-#' @return A vector of strings for each set of gene trees.
-#'
-#' @noRd
-#'
-coal_file_sites <- function(ms_file) {
-    .Call(`_jackalope_coal_file_sites`, ms_file)
-}
-
-#' Read VCF from a vcfR object.
-#'
-#'
-#' @noRd
-#'
-read_vcfr <- function(reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq) {
-    .Call(`_jackalope_read_vcfr`, reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq)
-}
-
-#' Read a non-indexed fasta file to a \code{RefGenome} object.
-#'
-#' @param file_names File names of the fasta file(s).
-#' @param cut_names Boolean for whether to cut sequence names at the first space.
-#'     Defaults to \code{TRUE}.
-#' @param remove_soft_mask Boolean for whether to remove soft-masking by making
-#'    sequences all uppercase. Defaults to \code{TRUE}.
-#'
-#' @return Nothing.
-#'
-#' @noRd
-#'
-read_fasta_noind <- function(fasta_files, cut_names, remove_soft_mask) {
-    .Call(`_jackalope_read_fasta_noind`, fasta_files, cut_names, remove_soft_mask)
-}
-
-#' Read an indexed fasta file to a \code{RefGenome} object.
-#'
-#' @param file_name File name of the fasta file.
-#' @param remove_soft_mask Boolean for whether to remove soft-masking by making
-#'    sequences all uppercase. Defaults to \code{TRUE}.
-#' @param offsets Vector of sequence offsets from the fasta index file.
-#' @param names Vector of sequence names from the fasta index file.
-#' @param lengths Vector of sequence lengths from the fasta index file.
-#' @param line_lens Vector of sequence line lengths from the fasta index file.
-#'
-#' @return Nothing.
-#'
-#' @noRd
-#'
-#'
-read_fasta_ind <- function(fasta_files, fai_files, remove_soft_mask) {
-    .Call(`_jackalope_read_fasta_ind`, fasta_files, fai_files, remove_soft_mask)
-}
-
-#' Write \code{RefGenome} to an uncompressed fasta file.
-#'
-#' @param file_name File name of output fasta file.
-#' @param ref_genome_ptr An external pointer to a \code{RefGenome} C++ object.
-#' @param text_width The number of characters per line in the output fasta file.
-#'
-#' @return Nothing.
-#'
-#' @noRd
-#'
-#'
-write_fasta_fa <- function(file_name, ref_genome_ptr, text_width) {
-    invisible(.Call(`_jackalope_write_fasta_fa`, file_name, ref_genome_ptr, text_width))
-}
-
-#' Write \code{RefGenome} to a compressed fasta file.
-#'
-#' @inheritParams write_fasta_fa
-#'
-#' @return Nothing.
-#'
-#' @noRd
-#'
-write_fasta_gz <- function(file_name, ref_genome_ptr, text_width) {
-    invisible(.Call(`_jackalope_write_fasta_gz`, file_name, ref_genome_ptr, text_width))
-}
-
-#' Write `variants` to VCF file.
-#'
-#'
-#' @noRd
-#'
-write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix) {
-    invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix))
-}
-
-#' Template doing most of the work for writing to a VCF file.
-#'
-#' `T` should be `std::ofstream` or `gzFile`, for the three
-#' specializations of the `pool_to_output` function above.
-#'
-#' @noRd
-#'
-NULL
 
 #' Add mutations manually from R.
 #'
@@ -580,6 +474,38 @@ view_var_set_var_names <- function(var_set_ptr) {
     .Call(`_jackalope_view_var_set_var_names`, var_set_ptr)
 }
 
+#' See GC content in a RefGenome object.
+#'
+#' @noRd
+#'
+view_ref_genome_gc_content <- function(ref_genome_ptr, seq_ind, start, end) {
+    .Call(`_jackalope_view_ref_genome_gc_content`, ref_genome_ptr, seq_ind, start, end)
+}
+
+#' See GC content in a VarSet object.
+#'
+#' @noRd
+#'
+view_var_set_gc_content <- function(var_set_ptr, seq_ind, var_ind, start, end) {
+    .Call(`_jackalope_view_var_set_gc_content`, var_set_ptr, seq_ind, var_ind, start, end)
+}
+
+#' See any nucleotide's content in a RefGenome object.
+#'
+#' @noRd
+#'
+view_ref_genome_nt_content <- function(ref_genome_ptr, nt, seq_ind, start, end) {
+    .Call(`_jackalope_view_ref_genome_nt_content`, ref_genome_ptr, nt, seq_ind, start, end)
+}
+
+#' See any nucleotide's content in a VarSet object.
+#'
+#' @noRd
+#'
+view_var_set_nt_content <- function(var_set_ptr, nt, seq_ind, var_ind, start, end) {
+    .Call(`_jackalope_view_var_set_nt_content`, var_set_ptr, nt, seq_ind, var_ind, start, end)
+}
+
 set_ref_genome_seq_names <- function(ref_genome_ptr, seq_inds, names) {
     invisible(.Call(`_jackalope_set_ref_genome_seq_names`, ref_genome_ptr, seq_inds, names))
 }
@@ -674,6 +600,134 @@ add_deletion <- function(var_set_ptr, var_ind, seq_ind, size_, new_pos_) {
 #'
 test_rate <- function(start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_) {
     .Call(`_jackalope_test_rate`, start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_)
+}
+
+#' Construct necessary information for substitution models.
+#'
+#' For a more detailed explanation, see `vignette("sub-models")`.
+#'
+#'
+#' @name sub_models
+#'
+#' @seealso \code{\link{create_variants}}
+#'
+#' @return A `sub_model_info` object, which is just a wrapper around a list with
+#' fields `Q` and `pi_tcag`. The former has the rate matrix, and the latter
+#' has the equilibrium nucleotide densities for "T", "C", "A", and "G", respectively.
+#' Access the rate matrix for a `sub_model_info` object named `x` via `x$Q` and
+#' densities via `x$pi_tcag`.
+#'
+#' @examples
+#' # Same substitution rate for all types:
+#' Q_JC69 <- sub_JC69(lambda = 0.1)
+#'
+#' # Transitions 2x more likely than transversions:
+#' Q_K80 <- sub_K80(alpha = 0.2, beta = 0.1)
+#'
+#' # Same as above, but incorporating equilibrium frequencies
+#' sub_HKY85(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
+#'           alpha = 0.2, beta = 0.1)
+#'
+NULL
+
+#' @describeIn sub_models TN93 model.
+#'
+#' @param pi_tcag Vector of length 4 indicating the equilibrium distributions of
+#'     T, C, A, and G respectively. Values must be >= 0, and
+#'     they are forced to sum to 1.
+#' @param alpha_1 Substitution rate for T <-> C transition.
+#' @param alpha_2 Substitution rate for A <-> G transition.
+#' @param beta Substitution rate for transversions.
+#'
+#' @export
+#'
+sub_TN93 <- function(pi_tcag, alpha_1, alpha_2, beta) {
+    .Call(`_jackalope_sub_TN93`, pi_tcag, alpha_1, alpha_2, beta)
+}
+
+#' @describeIn sub_models JC69 model.
+#'
+#' @param lambda Substitution rate for all possible substitutions.
+#'
+#' @export
+#'
+#'
+sub_JC69 <- function(lambda) {
+    .Call(`_jackalope_sub_JC69`, lambda)
+}
+
+#' @describeIn sub_models K80 model.
+#'
+#' @param alpha Substitution rate for transitions.
+#' @inheritParams sub_TN93
+#'
+#' @export
+#'
+sub_K80 <- function(alpha, beta) {
+    .Call(`_jackalope_sub_K80`, alpha, beta)
+}
+
+#' @describeIn sub_models F81 model.
+#'
+#' @inheritParams sub_TN93
+#'
+#' @export
+#'
+sub_F81 <- function(pi_tcag) {
+    .Call(`_jackalope_sub_F81`, pi_tcag)
+}
+
+#' @describeIn sub_models HKY85 model.
+#'
+#'
+#' @inheritParams sub_TN93
+#' @inheritParams sub_K80
+#'
+#' @export
+#'
+sub_HKY85 <- function(pi_tcag, alpha, beta) {
+    .Call(`_jackalope_sub_HKY85`, pi_tcag, alpha, beta)
+}
+
+#' @describeIn sub_models F84 model.
+#'
+#'
+#' @inheritParams sub_TN93
+#' @inheritParams sub_K80
+#' @param kappa The transition/transversion rate ratio.
+#'
+#' @export
+#'
+sub_F84 <- function(pi_tcag, beta, kappa) {
+    .Call(`_jackalope_sub_F84`, pi_tcag, beta, kappa)
+}
+
+#' @describeIn sub_models GTR model.
+#'
+#' @inheritParams sub_TN93
+#' @param abcdef A vector of length 6 that contains the off-diagonal elements
+#'     for the substitution rate matrix.
+#'     See `vignette("sub-models")` for how the values are ordered in the matrix.
+#'
+#' @export
+#'
+sub_GTR <- function(pi_tcag, abcdef) {
+    .Call(`_jackalope_sub_GTR`, pi_tcag, abcdef)
+}
+
+#' @describeIn sub_models UNREST model.
+#'
+#'
+#' @param Q Matrix of substitution rates for "T", "C", "A", and "G", respectively.
+#'     Item `Q[i,j]` is the rate of substitution from nucleotide `i` to nucleotide `j`.
+#'     Do not include indel rates here!
+#'     Values on the diagonal are calculated inside the function so are ignored.
+#'
+#' @export
+#'
+#'
+sub_UNREST <- function(Q) {
+    .Call(`_jackalope_sub_UNREST`, Q)
 }
 
 using_openmp <- function() {

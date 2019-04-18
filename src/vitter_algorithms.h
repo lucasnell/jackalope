@@ -17,12 +17,63 @@
 #endif
 
 #include "jackalope_types.h"
-#include "util.h"  // uints_get_size
 #include "pcg.h"  // pcg::max
 
 
 using namespace Rcpp;
 
+
+
+
+
+//' C++ equivalent of R's \code{choose} function.
+//'
+//'
+//' @param n Unsigned integer value. Make sure this isn't negative!
+//' @param k Unsigned integer value. Make sure this isn't negative!
+//'
+//' @return Binomial coefficient (also integer).
+//'
+//' @noRd
+//'
+inline uint32 cpp_choose(const uint32& n, uint32 k) {
+    if (k > n) return 0;
+    if (k * 2 > n) k = n - k;
+    if (k == 0) return 1;
+
+    uint32 result = n;
+    for (uint32 i = 2; i <= k; ++i) {
+        result *= (n - i + 1);
+        result /= i;
+    }
+    return result;
+}
+// Same as above, but for doubles (even as doubles, they should be input as whole numbers)
+inline double cpp_choose(const double& n, double k) {
+    if (k > n) return 0;
+    if (k * 2 > n) k = n - k;
+    if (k == 0) return 1;
+
+    double result = n;
+    for (uint32 i = 2; i <= k; ++i) {
+        result *= (n - i + 1);
+        result /= i;
+    }
+    return result;
+}
+
+
+
+/*
+ Get a size from either an arma::uvec or std::vector<uint32>.
+ This is used in template functions that work for either class.
+ */
+inline uint32 uints_get_size(std::vector<uint32>& uints) {
+    return uints.size();
+}
+inline uint32 uints_get_size(arma::uvec& uints) {
+    return uints.n_elem;
+}
 
 
 

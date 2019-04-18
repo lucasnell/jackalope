@@ -14,6 +14,7 @@
 #include <string>
 #include <random> // C++11 sampling distributions
 #include <pcg/pcg_random.hpp> // pcg prng
+#include <progress.hpp>  // for the progress bar
 #ifdef _OPENMP
 #include <omp.h>  // omp
 #endif
@@ -22,6 +23,7 @@
 #include "seq_classes_ref.h"  // Ref* classes
 #include "alias_sampler.h" // alias sampling
 #include "pcg.h" // pcg::max, mt_seeds, seeded_pcg
+#include "util.h" // thread_check
 
 using namespace Rcpp;
 
@@ -58,10 +60,15 @@ OuterClass create_sequences_(const uint32& n_seqs,
                              const double& len_mean,
                              const double& len_sd,
                              const std::vector<double>& pi_tcag,
-                             const uint32& n_threads) {
+                             uint32 n_threads) {
+
+    // Check that # threads isn't too high and change to 1 if not using OpenMP:
+    thread_check(n_threads);
 
     // Generate seeds for random number generators (1 RNG per thread)
     const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
+
+    Progress prog_bar(n_seqs, false); // just use as way to check for abort
 
     // Alias-sampling object
     const AliasSampler sampler(pi_tcag);
@@ -103,6 +110,9 @@ OuterClass create_sequences_(const uint32& n_seqs,
     #pragma omp for schedule(static)
     #endif
     for (uint32 i = 0; i < n_seqs; i++) {
+
+        if (prog_bar.is_aborted() || prog_bar.check_abort()) continue;
+
         InnerClass& seq(seqs_out[i]);
 
         // Get length of output sequence:
@@ -153,11 +163,11 @@ OuterClass create_sequences_(const uint32& n_seqs,
 //'
 //'
 //[[Rcpp::export]]
-SEXP create_genome_(const uint32& n_seqs,
-                    const double& len_mean,
-                    const double& len_sd,
-                    std::vector<double> pi_tcag,
-                    const uint32& n_threads) {
+SEXP create_genome_cpp(const uint32& n_seqs,
+                       const double& len_mean,
+                       const double& len_sd,
+                       std::vector<double> pi_tcag,
+                       const uint32& n_threads) {
 
     XPtr<RefGenome> ref_xptr(new RefGenome(), true);
     RefGenome& ref(*ref_xptr);

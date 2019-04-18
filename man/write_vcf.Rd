@@ -4,14 +4,17 @@
 \alias{write_vcf}
 \title{Write variant info from a \code{variants} object to a VCF file.}
 \usage{
-write_vcf(vars, out_prefix, compress = FALSE, sample_matrix = NULL)
+write_vcf(vars, out_prefix, compress = FALSE, sample_matrix = NULL,
+  show_progress = FALSE, overwrite = FALSE)
 }
 \arguments{
 \item{vars}{A \code{variants} object.}
 
-\item{out_prefix}{Prefix for the output file VCF.}
+\item{out_prefix}{Prefix for the output file.}
 
-\item{compress}{Boolean for whether to compress using \code{"gzip"}.
+\item{compress}{Logical specifying whether or not to compress output file, or
+an integer specifying the level of compression, from 1 to 9.
+If \code{TRUE}, a compression level of \code{6} is used.
 Defaults to \code{FALSE}.}
 
 \item{sample_matrix}{Matrix to specify how haploid variants are grouped into samples
@@ -24,10 +27,16 @@ there is no limit to the ploidy level.
 If this argument is \code{NULL}, it's assumed that each variant is its own
 separate sample.
 Defaults to \code{NULL}.}
+
+\item{show_progress}{Logical for whether to show a progress bar.
+Defaults to \code{FALSE}.}
+
+\item{overwrite}{Logical for whether to overwrite existing file(s) of the
+same name, if they exist. Defaults to \code{FALSE}.}
 }
 \value{
 \code{NULL}
 }
 \description{
-Write variant info from a \code{variants} object to a VCF file.
+Compression in this function always uses \code{"bgzip"} for compatibility with \code{"tabix"}.
 }

@@ -7,44 +7,44 @@
 
 using namespace Rcpp;
 
-// merge_sequences
-void merge_sequences(SEXP ref_genome_ptr);
-RcppExport SEXP _jackalope_merge_sequences(SEXP ref_genome_ptrSEXP) {
+// merge_sequences_cpp
+void merge_sequences_cpp(SEXP ref_genome_ptr);
+RcppExport SEXP _jackalope_merge_sequences_cpp(SEXP ref_genome_ptrSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
-    merge_sequences(ref_genome_ptr);
+    merge_sequences_cpp(ref_genome_ptr);
     return R_NilValue;
 END_RCPP
 }
-// filter_sequences
-void filter_sequences(SEXP ref_genome_ptr, const uint32& min_seq_size, const double& out_seq_prop);
-RcppExport SEXP _jackalope_filter_sequences(SEXP ref_genome_ptrSEXP, SEXP min_seq_sizeSEXP, SEXP out_seq_propSEXP) {
+// filter_sequences_cpp
+void filter_sequences_cpp(SEXP ref_genome_ptr, const uint32& min_seq_size, const double& out_seq_prop);
+RcppExport SEXP _jackalope_filter_sequences_cpp(SEXP ref_genome_ptrSEXP, SEXP min_seq_sizeSEXP, SEXP out_seq_propSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
     Rcpp::traits::input_parameter< const uint32& >::type min_seq_size(min_seq_sizeSEXP);
     Rcpp::traits::input_parameter< const double& >::type out_seq_prop(out_seq_propSEXP);
-    filter_sequences(ref_genome_ptr, min_seq_size, out_seq_prop);
+    filter_sequences_cpp(ref_genome_ptr, min_seq_size, out_seq_prop);
     return R_NilValue;
 END_RCPP
 }
 // replace_Ns_cpp
-void replace_Ns_cpp(SEXP ref_genome_ptr, const std::vector<double>& pi_tcag, const uint32& n_threads, const bool& show_progress);
+void replace_Ns_cpp(SEXP ref_genome_ptr, const std::vector<double>& pi_tcag, uint32 n_threads, const bool& show_progress);
 RcppExport SEXP _jackalope_replace_Ns_cpp(SEXP ref_genome_ptrSEXP, SEXP pi_tcagSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
     Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< uint32 >::type n_threads(n_threadsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
     replace_Ns_cpp(ref_genome_ptr, pi_tcag, n_threads, show_progress);
     return R_NilValue;
 END_RCPP
 }
-// create_genome_
-SEXP create_genome_(const uint32& n_seqs, const double& len_mean, const double& len_sd, std::vector<double> pi_tcag, const uint32& n_threads);
-RcppExport SEXP _jackalope_create_genome_(SEXP n_seqsSEXP, SEXP len_meanSEXP, SEXP len_sdSEXP, SEXP pi_tcagSEXP, SEXP n_threadsSEXP) {
+// create_genome_cpp
+SEXP create_genome_cpp(const uint32& n_seqs, const double& len_mean, const double& len_sd, std::vector<double> pi_tcag, const uint32& n_threads);
+RcppExport SEXP _jackalope_create_genome_cpp(SEXP n_seqsSEXP, SEXP len_meanSEXP, SEXP len_sdSEXP, SEXP pi_tcagSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -53,7 +53,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double& >::type len_sd(len_sdSEXP);
     Rcpp::traits::input_parameter< std::vector<double> >::type pi_tcag(pi_tcagSEXP);
     Rcpp::traits::input_parameter< const uint32& >::type n_threads(n_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(create_genome_(n_seqs, len_mean, len_sd, pi_tcag, n_threads));
+    rcpp_result_gen = Rcpp::wrap(create_genome_cpp(n_seqs, len_mean, len_sd, pi_tcag, n_threads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -73,15 +73,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // illumina_ref_cpp
-void illumina_ref_cpp(SEXP ref_genome_ptr, const bool& paired, const bool& matepair, const std::string& out_prefix, const bool& compress, const uint32& n_reads, const double& prob_dup, const uint32& n_threads, const bool& show_progress, const uint32& read_pool_size, const double& frag_len_shape, const double& frag_len_scale, const uint32& frag_len_min, const uint32& frag_len_max, const std::vector<std::vector<std::vector<double>>>& qual_probs1, const std::vector<std::vector<std::vector<uint8>>>& quals1, const double& ins_prob1, const double& del_prob1, const std::vector<std::vector<std::vector<double>>>& qual_probs2, const std::vector<std::vector<std::vector<uint8>>>& quals2, const double& ins_prob2, const double& del_prob2, const std::vector<std::string>& barcodes);
-RcppExport SEXP _jackalope_illumina_ref_cpp(SEXP ref_genome_ptrSEXP, SEXP pairedSEXP, SEXP matepairSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP n_readsSEXP, SEXP prob_dupSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP, SEXP read_pool_sizeSEXP, SEXP frag_len_shapeSEXP, SEXP frag_len_scaleSEXP, SEXP frag_len_minSEXP, SEXP frag_len_maxSEXP, SEXP qual_probs1SEXP, SEXP quals1SEXP, SEXP ins_prob1SEXP, SEXP del_prob1SEXP, SEXP qual_probs2SEXP, SEXP quals2SEXP, SEXP ins_prob2SEXP, SEXP del_prob2SEXP, SEXP barcodesSEXP) {
+void illumina_ref_cpp(SEXP ref_genome_ptr, const bool& paired, const bool& matepair, const std::string& out_prefix, const int& compress, const std::string& comp_method, const uint32& n_reads, const double& prob_dup, const uint32& n_threads, const bool& show_progress, const uint32& read_pool_size, const double& frag_len_shape, const double& frag_len_scale, const uint32& frag_len_min, const uint32& frag_len_max, const std::vector<std::vector<std::vector<double>>>& qual_probs1, const std::vector<std::vector<std::vector<uint8>>>& quals1, const double& ins_prob1, const double& del_prob1, const std::vector<std::vector<std::vector<double>>>& qual_probs2, const std::vector<std::vector<std::vector<uint8>>>& quals2, const double& ins_prob2, const double& del_prob2, const std::vector<std::string>& barcodes);
+RcppExport SEXP _jackalope_illumina_ref_cpp(SEXP ref_genome_ptrSEXP, SEXP pairedSEXP, SEXP matepairSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP comp_methodSEXP, SEXP n_readsSEXP, SEXP prob_dupSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP, SEXP read_pool_sizeSEXP, SEXP frag_len_shapeSEXP, SEXP frag_len_scaleSEXP, SEXP frag_len_minSEXP, SEXP frag_len_maxSEXP, SEXP qual_probs1SEXP, SEXP quals1SEXP, SEXP ins_prob1SEXP, SEXP del_prob1SEXP, SEXP qual_probs2SEXP, SEXP quals2SEXP, SEXP ins_prob2SEXP, SEXP del_prob2SEXP, SEXP barcodesSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
     Rcpp::traits::input_parameter< const bool& >::type paired(pairedSEXP);
     Rcpp::traits::input_parameter< const bool& >::type matepair(matepairSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
     Rcpp::traits::input_parameter< const uint32& >::type n_reads(n_readsSEXP);
     Rcpp::traits::input_parameter< const double& >::type prob_dup(prob_dupSEXP);
     Rcpp::traits::input_parameter< const uint32& >::type n_threads(n_threadsSEXP);
@@ -100,20 +101,21 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double& >::type ins_prob2(ins_prob2SEXP);
     Rcpp::traits::input_parameter< const double& >::type del_prob2(del_prob2SEXP);
     Rcpp::traits::input_parameter< const std::vector<std::string>& >::type barcodes(barcodesSEXP);
-    illumina_ref_cpp(ref_genome_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_threads, show_progress, read_pool_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes);
+    illumina_ref_cpp(ref_genome_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes);
     return R_NilValue;
 END_RCPP
 }
 // illumina_var_cpp
-void illumina_var_cpp(SEXP var_set_ptr, const bool& paired, const bool& matepair, const std::string& out_prefix, const bool& compress, const uint32& n_reads, const double& prob_dup, const uint32& n_threads, const bool& show_progress, const uint32& read_pool_size, const std::vector<double>& variant_probs, const double& frag_len_shape, const double& frag_len_scale, const uint32& frag_len_min, const uint32& frag_len_max, const std::vector<std::vector<std::vector<double>>>& qual_probs1, const std::vector<std::vector<std::vector<uint8>>>& quals1, const double& ins_prob1, const double& del_prob1, const std::vector<std::vector<std::vector<double>>>& qual_probs2, const std::vector<std::vector<std::vector<uint8>>>& quals2, const double& ins_prob2, const double& del_prob2, const std::vector<std::string>& barcodes);
-RcppExport SEXP _jackalope_illumina_var_cpp(SEXP var_set_ptrSEXP, SEXP pairedSEXP, SEXP matepairSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP n_readsSEXP, SEXP prob_dupSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP, SEXP read_pool_sizeSEXP, SEXP variant_probsSEXP, SEXP frag_len_shapeSEXP, SEXP frag_len_scaleSEXP, SEXP frag_len_minSEXP, SEXP frag_len_maxSEXP, SEXP qual_probs1SEXP, SEXP quals1SEXP, SEXP ins_prob1SEXP, SEXP del_prob1SEXP, SEXP qual_probs2SEXP, SEXP quals2SEXP, SEXP ins_prob2SEXP, SEXP del_prob2SEXP, SEXP barcodesSEXP) {
+void illumina_var_cpp(SEXP var_set_ptr, const bool& paired, const bool& matepair, const std::string& out_prefix, const int& compress, const std::string& comp_method, const uint32& n_reads, const double& prob_dup, const uint32& n_threads, const bool& show_progress, const uint32& read_pool_size, const std::vector<double>& variant_probs, const double& frag_len_shape, const double& frag_len_scale, const uint32& frag_len_min, const uint32& frag_len_max, const std::vector<std::vector<std::vector<double>>>& qual_probs1, const std::vector<std::vector<std::vector<uint8>>>& quals1, const double& ins_prob1, const double& del_prob1, const std::vector<std::vector<std::vector<double>>>& qual_probs2, const std::vector<std::vector<std::vector<uint8>>>& quals2, const double& ins_prob2, const double& del_prob2, const std::vector<std::string>& barcodes);
+RcppExport SEXP _jackalope_illumina_var_cpp(SEXP var_set_ptrSEXP, SEXP pairedSEXP, SEXP matepairSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP comp_methodSEXP, SEXP n_readsSEXP, SEXP prob_dupSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP, SEXP read_pool_sizeSEXP, SEXP variant_probsSEXP, SEXP frag_len_shapeSEXP, SEXP frag_len_scaleSEXP, SEXP frag_len_minSEXP, SEXP frag_len_maxSEXP, SEXP qual_probs1SEXP, SEXP quals1SEXP, SEXP ins_prob1SEXP, SEXP del_prob1SEXP, SEXP qual_probs2SEXP, SEXP quals2SEXP, SEXP ins_prob2SEXP, SEXP del_prob2SEXP, SEXP barcodesSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
     Rcpp::traits::input_parameter< const bool& >::type paired(pairedSEXP);
     Rcpp::traits::input_parameter< const bool& >::type matepair(matepairSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
     Rcpp::traits::input_parameter< const uint32& >::type n_reads(n_readsSEXP);
     Rcpp::traits::input_parameter< const double& >::type prob_dup(prob_dupSEXP);
     Rcpp::traits::input_parameter< const uint32& >::type n_threads(n_threadsSEXP);
@@ -133,7 +135,197 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double& >::type ins_prob2(ins_prob2SEXP);
     Rcpp::traits::input_parameter< const double& >::type del_prob2(del_prob2SEXP);
     Rcpp::traits::input_parameter< const std::vector<std::string>& >::type barcodes(barcodesSEXP);
-    illumina_var_cpp(var_set_ptr, paired, matepair, out_prefix, compress, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes);
+    illumina_var_cpp(var_set_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes);
+    return R_NilValue;
+END_RCPP
+}
+// pacbio_ref_cpp
+void pacbio_ref_cpp(SEXP ref_genome_ptr, const std::string& out_prefix, const int& compress, const std::string& comp_method, const uint32& n_reads, const uint32& n_threads, const bool& show_progress, const uint32& read_pool_size, const double& prob_dup, const double& scale, const double& sigma, const double& loc, const double& min_read_len, const std::vector<double>& read_probs, const std::vector<uint32>& read_lens, const uint32& max_passes, const std::vector<double>& chi2_params_n, const std::vector<double>& chi2_params_s, const std::vector<double>& sqrt_params, const std::vector<double>& norm_params, const double& prob_thresh, const double& prob_ins, const double& prob_del, const double& prob_subst);
+RcppExport SEXP _jackalope_pacbio_ref_cpp(SEXP ref_genome_ptrSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP comp_methodSEXP, SEXP n_readsSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP, SEXP read_pool_sizeSEXP, SEXP prob_dupSEXP, SEXP scaleSEXP, SEXP sigmaSEXP, SEXP locSEXP, SEXP min_read_lenSEXP, SEXP read_probsSEXP, SEXP read_lensSEXP, SEXP max_passesSEXP, SEXP chi2_params_nSEXP, SEXP chi2_params_sSEXP, SEXP sqrt_paramsSEXP, SEXP norm_paramsSEXP, SEXP prob_threshSEXP, SEXP prob_insSEXP, SEXP prob_delSEXP, SEXP prob_substSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_reads(n_readsSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type read_pool_size(read_pool_sizeSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_dup(prob_dupSEXP);
+    Rcpp::traits::input_parameter< const double& >::type scale(scaleSEXP);
+    Rcpp::traits::input_parameter< const double& >::type sigma(sigmaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type loc(locSEXP);
+    Rcpp::traits::input_parameter< const double& >::type min_read_len(min_read_lenSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type read_probs(read_probsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type read_lens(read_lensSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type max_passes(max_passesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type chi2_params_n(chi2_params_nSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type chi2_params_s(chi2_params_sSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type sqrt_params(sqrt_paramsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type norm_params(norm_paramsSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_thresh(prob_threshSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_ins(prob_insSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_del(prob_delSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_subst(prob_substSEXP);
+    pacbio_ref_cpp(ref_genome_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst);
+    return R_NilValue;
+END_RCPP
+}
+// pacbio_var_cpp
+void pacbio_var_cpp(SEXP var_set_ptr, const std::string& out_prefix, const int& compress, const std::string& comp_method, const uint32& n_reads, const uint32& n_threads, const bool& show_progress, const uint32& read_pool_size, const std::vector<double>& variant_probs, const double& prob_dup, const double& scale, const double& sigma, const double& loc, const double& min_read_len, const std::vector<double>& read_probs, const std::vector<uint32>& read_lens, const uint32& max_passes, const std::vector<double>& chi2_params_n, const std::vector<double>& chi2_params_s, const std::vector<double>& sqrt_params, const std::vector<double>& norm_params, const double& prob_thresh, const double& prob_ins, const double& prob_del, const double& prob_subst);
+RcppExport SEXP _jackalope_pacbio_var_cpp(SEXP var_set_ptrSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP comp_methodSEXP, SEXP n_readsSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP, SEXP read_pool_sizeSEXP, SEXP variant_probsSEXP, SEXP prob_dupSEXP, SEXP scaleSEXP, SEXP sigmaSEXP, SEXP locSEXP, SEXP min_read_lenSEXP, SEXP read_probsSEXP, SEXP read_lensSEXP, SEXP max_passesSEXP, SEXP chi2_params_nSEXP, SEXP chi2_params_sSEXP, SEXP sqrt_paramsSEXP, SEXP norm_paramsSEXP, SEXP prob_threshSEXP, SEXP prob_insSEXP, SEXP prob_delSEXP, SEXP prob_substSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_reads(n_readsSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type read_pool_size(read_pool_sizeSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type variant_probs(variant_probsSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_dup(prob_dupSEXP);
+    Rcpp::traits::input_parameter< const double& >::type scale(scaleSEXP);
+    Rcpp::traits::input_parameter< const double& >::type sigma(sigmaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type loc(locSEXP);
+    Rcpp::traits::input_parameter< const double& >::type min_read_len(min_read_lenSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type read_probs(read_probsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type read_lens(read_lensSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type max_passes(max_passesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type chi2_params_n(chi2_params_nSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type chi2_params_s(chi2_params_sSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type sqrt_params(sqrt_paramsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type norm_params(norm_paramsSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_thresh(prob_threshSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_ins(prob_insSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_del(prob_delSEXP);
+    Rcpp::traits::input_parameter< const double& >::type prob_subst(prob_substSEXP);
+    pacbio_var_cpp(var_set_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst);
+    return R_NilValue;
+END_RCPP
+}
+// write_bed
+void write_bed(std::string out_prefix, const std::vector<arma::mat>& gamma_mats, const std::vector<std::string>& seq_names, const int& compress, const std::string& comp_method);
+RcppExport SEXP _jackalope_write_bed(SEXP out_prefixSEXP, SEXP gamma_matsSEXP, SEXP seq_namesSEXP, SEXP compressSEXP, SEXP comp_methodSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type gamma_mats(gamma_matsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type seq_names(seq_namesSEXP);
+    Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
+    write_bed(out_prefix, gamma_mats, seq_names, compress, comp_method);
+    return R_NilValue;
+END_RCPP
+}
+// read_fasta_noind
+SEXP read_fasta_noind(const std::vector<std::string>& fasta_files, const bool& cut_names, const bool& remove_soft_mask);
+RcppExport SEXP _jackalope_read_fasta_noind(SEXP fasta_filesSEXP, SEXP cut_namesSEXP, SEXP remove_soft_maskSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type fasta_files(fasta_filesSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type cut_names(cut_namesSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type remove_soft_mask(remove_soft_maskSEXP);
+    rcpp_result_gen = Rcpp::wrap(read_fasta_noind(fasta_files, cut_names, remove_soft_mask));
+    return rcpp_result_gen;
+END_RCPP
+}
+// read_fasta_ind
+SEXP read_fasta_ind(const std::vector<std::string>& fasta_files, const std::vector<std::string>& fai_files, const bool& remove_soft_mask);
+RcppExport SEXP _jackalope_read_fasta_ind(SEXP fasta_filesSEXP, SEXP fai_filesSEXP, SEXP remove_soft_maskSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type fasta_files(fasta_filesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type fai_files(fai_filesSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type remove_soft_mask(remove_soft_maskSEXP);
+    rcpp_result_gen = Rcpp::wrap(read_fasta_ind(fasta_files, fai_files, remove_soft_mask));
+    return rcpp_result_gen;
+END_RCPP
+}
+// write_ref_fasta
+void write_ref_fasta(const std::string& out_prefix, SEXP ref_genome_ptr, const uint32& text_width, const int& compress, const std::string& comp_method, const bool& show_progress);
+RcppExport SEXP _jackalope_write_ref_fasta(SEXP out_prefixSEXP, SEXP ref_genome_ptrSEXP, SEXP text_widthSEXP, SEXP compressSEXP, SEXP comp_methodSEXP, SEXP show_progressSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type text_width(text_widthSEXP);
+    Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    write_ref_fasta(out_prefix, ref_genome_ptr, text_width, compress, comp_method, show_progress);
+    return R_NilValue;
+END_RCPP
+}
+// write_vars_fasta
+void write_vars_fasta(std::string out_prefix, SEXP var_set_ptr, const uint32& text_width, const int& compress, const std::string& comp_method, uint32 n_threads, const bool& show_progress);
+RcppExport SEXP _jackalope_write_vars_fasta(SEXP out_prefixSEXP, SEXP var_set_ptrSEXP, SEXP text_widthSEXP, SEXP compressSEXP, SEXP comp_methodSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type text_width(text_widthSEXP);
+    Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
+    Rcpp::traits::input_parameter< uint32 >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    write_vars_fasta(out_prefix, var_set_ptr, text_width, compress, comp_method, n_threads, show_progress);
+    return R_NilValue;
+END_RCPP
+}
+// read_ms_trees_
+std::vector<std::vector<std::string>> read_ms_trees_(std::string ms_file);
+RcppExport SEXP _jackalope_read_ms_trees_(SEXP ms_fileSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type ms_file(ms_fileSEXP);
+    rcpp_result_gen = Rcpp::wrap(read_ms_trees_(ms_file));
+    return rcpp_result_gen;
+END_RCPP
+}
+// coal_file_sites
+arma::field<arma::mat> coal_file_sites(std::string ms_file);
+RcppExport SEXP _jackalope_coal_file_sites(SEXP ms_fileSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type ms_file(ms_fileSEXP);
+    rcpp_result_gen = Rcpp::wrap(coal_file_sites(ms_file));
+    return rcpp_result_gen;
+END_RCPP
+}
+// read_vcfr
+SEXP read_vcfr(SEXP reference_ptr, const std::vector<std::string>& var_names, const std::vector<std::vector<std::string>>& haps_list, const std::vector<uint32>& seq_inds, const std::vector<uint32>& pos, const std::vector<std::string>& ref_seq);
+RcppExport SEXP _jackalope_read_vcfr(SEXP reference_ptrSEXP, SEXP var_namesSEXP, SEXP haps_listSEXP, SEXP seq_indsSEXP, SEXP posSEXP, SEXP ref_seqSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type reference_ptr(reference_ptrSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type var_names(var_namesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::vector<std::string>>& >::type haps_list(haps_listSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type seq_inds(seq_indsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type pos(posSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type ref_seq(ref_seqSEXP);
+    rcpp_result_gen = Rcpp::wrap(read_vcfr(reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq));
+    return rcpp_result_gen;
+END_RCPP
+}
+// write_vcf_cpp
+void write_vcf_cpp(std::string out_prefix, const int& compress, SEXP var_set_ptr, const IntegerMatrix& sample_matrix, const bool& show_progress);
+RcppExport SEXP _jackalope_write_vcf_cpp(SEXP out_prefixSEXP, SEXP compressSEXP, SEXP var_set_ptrSEXP, SEXP sample_matrixSEXP, SEXP show_progressSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type sample_matrix(sample_matrixSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
+    write_vcf_cpp(out_prefix, compress, var_set_ptr, sample_matrix, show_progress);
     return R_NilValue;
 END_RCPP
 }
@@ -167,13 +359,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // add_coal_sites_cpp
-SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr, const std::vector<std::string>& var_names, const std::vector<arma::mat>& seg_sites, const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, uint32 n_threads, const bool& show_progress);
-RcppExport SEXP _jackalope_add_coal_sites_cpp(SEXP ref_genome_ptrSEXP, SEXP var_namesSEXP, SEXP seg_sitesSEXP, SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
+SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr, const std::vector<arma::mat>& seg_sites, const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, uint32 n_threads, const bool& show_progress);
+RcppExport SEXP _jackalope_add_coal_sites_cpp(SEXP ref_genome_ptrSEXP, SEXP seg_sitesSEXP, SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP& >::type ref_genome_ptr(ref_genome_ptrSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type var_names(var_namesSEXP);
     Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type seg_sites(seg_sitesSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
     Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
@@ -181,7 +372,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
     Rcpp::traits::input_parameter< uint32 >::type n_threads(n_threadsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
-    rcpp_result_gen = Rcpp::wrap(add_coal_sites_cpp(ref_genome_ptr, var_names, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress));
+    rcpp_result_gen = Rcpp::wrap(add_coal_sites_cpp(ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -232,7 +423,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // evolve_seqs
-SEXP evolve_seqs(SEXP& ref_genome_ptr, SEXP& sampler_base_ptr, SEXP& phylo_info_ptr, const std::vector<arma::mat>& gamma_mats, const uint32& n_threads, const bool& show_progress);
+SEXP evolve_seqs(SEXP& ref_genome_ptr, SEXP& sampler_base_ptr, SEXP& phylo_info_ptr, const std::vector<arma::mat>& gamma_mats, uint32 n_threads, const bool& show_progress);
 RcppExport SEXP _jackalope_evolve_seqs(SEXP ref_genome_ptrSEXP, SEXP sampler_base_ptrSEXP, SEXP phylo_info_ptrSEXP, SEXP gamma_matsSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -241,14 +432,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP& >::type sampler_base_ptr(sampler_base_ptrSEXP);
     Rcpp::traits::input_parameter< SEXP& >::type phylo_info_ptr(phylo_info_ptrSEXP);
     Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type gamma_mats(gamma_matsSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< uint32 >::type n_threads(n_threadsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
     rcpp_result_gen = Rcpp::wrap(evolve_seqs(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress));
     return rcpp_result_gen;
 END_RCPP
 }
 // evolve_seqs_chunk
-SEXP evolve_seqs_chunk(SEXP& ref_genome_ptr, SEXP& sampler_base_ptr, SEXP& phylo_info_ptr, const std::vector<arma::mat>& gamma_mats, const uint32& n_threads, const bool& show_progress);
+SEXP evolve_seqs_chunk(SEXP& ref_genome_ptr, SEXP& sampler_base_ptr, SEXP& phylo_info_ptr, const std::vector<arma::mat>& gamma_mats, uint32 n_threads, const bool& show_progress);
 RcppExport SEXP _jackalope_evolve_seqs_chunk(SEXP ref_genome_ptrSEXP, SEXP sampler_base_ptrSEXP, SEXP phylo_info_ptrSEXP, SEXP gamma_matsSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -257,273 +448,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP& >::type sampler_base_ptr(sampler_base_ptrSEXP);
     Rcpp::traits::input_parameter< SEXP& >::type phylo_info_ptr(phylo_info_ptrSEXP);
     Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type gamma_mats(gamma_matsSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< uint32 >::type n_threads(n_threadsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
     rcpp_result_gen = Rcpp::wrap(evolve_seqs_chunk(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress));
     return rcpp_result_gen;
-END_RCPP
-}
-// TN93_rate_matrix
-arma::mat TN93_rate_matrix(const std::vector<double>& pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta);
-RcppExport SEXP _jackalope_TN93_rate_matrix(SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const double& >::type alpha_1(alpha_1SEXP);
-    Rcpp::traits::input_parameter< const double& >::type alpha_2(alpha_2SEXP);
-    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
-    rcpp_result_gen = Rcpp::wrap(TN93_rate_matrix(pi_tcag, alpha_1, alpha_2, beta));
-    return rcpp_result_gen;
-END_RCPP
-}
-// JC69_rate_matrix
-arma::mat JC69_rate_matrix(const double& lambda);
-RcppExport SEXP _jackalope_JC69_rate_matrix(SEXP lambdaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const double& >::type lambda(lambdaSEXP);
-    rcpp_result_gen = Rcpp::wrap(JC69_rate_matrix(lambda));
-    return rcpp_result_gen;
-END_RCPP
-}
-// K80_rate_matrix
-arma::mat K80_rate_matrix(const double& alpha, const double& beta);
-RcppExport SEXP _jackalope_K80_rate_matrix(SEXP alphaSEXP, SEXP betaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
-    rcpp_result_gen = Rcpp::wrap(K80_rate_matrix(alpha, beta));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F81_rate_matrix
-arma::mat F81_rate_matrix(const std::vector<double>& pi_tcag);
-RcppExport SEXP _jackalope_F81_rate_matrix(SEXP pi_tcagSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    rcpp_result_gen = Rcpp::wrap(F81_rate_matrix(pi_tcag));
-    return rcpp_result_gen;
-END_RCPP
-}
-// HKY85_rate_matrix
-arma::mat HKY85_rate_matrix(const std::vector<double>& pi_tcag, const double& alpha, const double& beta);
-RcppExport SEXP _jackalope_HKY85_rate_matrix(SEXP pi_tcagSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
-    rcpp_result_gen = Rcpp::wrap(HKY85_rate_matrix(pi_tcag, alpha, beta));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F84_rate_matrix
-arma::mat F84_rate_matrix(const std::vector<double>& pi_tcag, const double& beta, const double& kappa);
-RcppExport SEXP _jackalope_F84_rate_matrix(SEXP pi_tcagSEXP, SEXP betaSEXP, SEXP kappaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type kappa(kappaSEXP);
-    rcpp_result_gen = Rcpp::wrap(F84_rate_matrix(pi_tcag, beta, kappa));
-    return rcpp_result_gen;
-END_RCPP
-}
-// GTR_rate_matrix
-arma::mat GTR_rate_matrix(const std::vector<double>& pi_tcag, const std::vector<double>& abcdef);
-RcppExport SEXP _jackalope_GTR_rate_matrix(SEXP pi_tcagSEXP, SEXP abcdefSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type abcdef(abcdefSEXP);
-    rcpp_result_gen = Rcpp::wrap(GTR_rate_matrix(pi_tcag, abcdef));
-    return rcpp_result_gen;
-END_RCPP
-}
-// UNREST_rate_matrix
-List UNREST_rate_matrix(arma::mat Q);
-RcppExport SEXP _jackalope_UNREST_rate_matrix(SEXP QSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type Q(QSEXP);
-    rcpp_result_gen = Rcpp::wrap(UNREST_rate_matrix(Q));
-    return rcpp_result_gen;
-END_RCPP
-}
-// pacbio_ref_cpp
-void pacbio_ref_cpp(SEXP ref_genome_ptr, const std::string& out_prefix, const bool& compress, const uint32& n_reads, const uint32& n_threads, const bool& show_progress, const uint32& read_pool_size, const double& prob_dup, const double& scale, const double& sigma, const double& loc, const double& min_read_len, const std::vector<double>& read_probs, const std::vector<uint32>& read_lens, const uint32& max_passes, const std::vector<double>& chi2_params_n, const std::vector<double>& chi2_params_s, const std::vector<double>& sqrt_params, const std::vector<double>& norm_params, const double& prob_thresh, const double& prob_ins, const double& prob_del, const double& prob_subst);
-RcppExport SEXP _jackalope_pacbio_ref_cpp(SEXP ref_genome_ptrSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP n_readsSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP, SEXP read_pool_sizeSEXP, SEXP prob_dupSEXP, SEXP scaleSEXP, SEXP sigmaSEXP, SEXP locSEXP, SEXP min_read_lenSEXP, SEXP read_probsSEXP, SEXP read_lensSEXP, SEXP max_passesSEXP, SEXP chi2_params_nSEXP, SEXP chi2_params_sSEXP, SEXP sqrt_paramsSEXP, SEXP norm_paramsSEXP, SEXP prob_threshSEXP, SEXP prob_insSEXP, SEXP prob_delSEXP, SEXP prob_substSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type n_reads(n_readsSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type n_threads(n_threadsSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type read_pool_size(read_pool_sizeSEXP);
-    Rcpp::traits::input_parameter< const double& >::type prob_dup(prob_dupSEXP);
-    Rcpp::traits::input_parameter< const double& >::type scale(scaleSEXP);
-    Rcpp::traits::input_parameter< const double& >::type sigma(sigmaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type loc(locSEXP);
-    Rcpp::traits::input_parameter< const double& >::type min_read_len(min_read_lenSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type read_probs(read_probsSEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type read_lens(read_lensSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type max_passes(max_passesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type chi2_params_n(chi2_params_nSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type chi2_params_s(chi2_params_sSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type sqrt_params(sqrt_paramsSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type norm_params(norm_paramsSEXP);
-    Rcpp::traits::input_parameter< const double& >::type prob_thresh(prob_threshSEXP);
-    Rcpp::traits::input_parameter< const double& >::type prob_ins(prob_insSEXP);
-    Rcpp::traits::input_parameter< const double& >::type prob_del(prob_delSEXP);
-    Rcpp::traits::input_parameter< const double& >::type prob_subst(prob_substSEXP);
-    pacbio_ref_cpp(ref_genome_ptr, out_prefix, compress, n_reads, n_threads, show_progress, read_pool_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst);
-    return R_NilValue;
-END_RCPP
-}
-// pacbio_var_cpp
-void pacbio_var_cpp(SEXP var_set_ptr, const std::string& out_prefix, const bool& compress, const uint32& n_reads, const uint32& n_threads, const bool& show_progress, const uint32& read_pool_size, const std::vector<double>& variant_probs, const double& prob_dup, const double& scale, const double& sigma, const double& loc, const double& min_read_len, const std::vector<double>& read_probs, const std::vector<uint32>& read_lens, const uint32& max_passes, const std::vector<double>& chi2_params_n, const std::vector<double>& chi2_params_s, const std::vector<double>& sqrt_params, const std::vector<double>& norm_params, const double& prob_thresh, const double& prob_ins, const double& prob_del, const double& prob_subst);
-RcppExport SEXP _jackalope_pacbio_var_cpp(SEXP var_set_ptrSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP n_readsSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP, SEXP read_pool_sizeSEXP, SEXP variant_probsSEXP, SEXP prob_dupSEXP, SEXP scaleSEXP, SEXP sigmaSEXP, SEXP locSEXP, SEXP min_read_lenSEXP, SEXP read_probsSEXP, SEXP read_lensSEXP, SEXP max_passesSEXP, SEXP chi2_params_nSEXP, SEXP chi2_params_sSEXP, SEXP sqrt_paramsSEXP, SEXP norm_paramsSEXP, SEXP prob_threshSEXP, SEXP prob_insSEXP, SEXP prob_delSEXP, SEXP prob_substSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type n_reads(n_readsSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type n_threads(n_threadsSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type read_pool_size(read_pool_sizeSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type variant_probs(variant_probsSEXP);
-    Rcpp::traits::input_parameter< const double& >::type prob_dup(prob_dupSEXP);
-    Rcpp::traits::input_parameter< const double& >::type scale(scaleSEXP);
-    Rcpp::traits::input_parameter< const double& >::type sigma(sigmaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type loc(locSEXP);
-    Rcpp::traits::input_parameter< const double& >::type min_read_len(min_read_lenSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type read_probs(read_probsSEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type read_lens(read_lensSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type max_passes(max_passesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type chi2_params_n(chi2_params_nSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type chi2_params_s(chi2_params_sSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type sqrt_params(sqrt_paramsSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type norm_params(norm_paramsSEXP);
-    Rcpp::traits::input_parameter< const double& >::type prob_thresh(prob_threshSEXP);
-    Rcpp::traits::input_parameter< const double& >::type prob_ins(prob_insSEXP);
-    Rcpp::traits::input_parameter< const double& >::type prob_del(prob_delSEXP);
-    Rcpp::traits::input_parameter< const double& >::type prob_subst(prob_substSEXP);
-    pacbio_var_cpp(var_set_ptr, out_prefix, compress, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst);
-    return R_NilValue;
-END_RCPP
-}
-// read_ms_trees_
-std::vector<std::vector<std::string>> read_ms_trees_(std::string ms_file);
-RcppExport SEXP _jackalope_read_ms_trees_(SEXP ms_fileSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type ms_file(ms_fileSEXP);
-    rcpp_result_gen = Rcpp::wrap(read_ms_trees_(ms_file));
-    return rcpp_result_gen;
-END_RCPP
-}
-// coal_file_sites
-arma::field<arma::mat> coal_file_sites(std::string ms_file);
-RcppExport SEXP _jackalope_coal_file_sites(SEXP ms_fileSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type ms_file(ms_fileSEXP);
-    rcpp_result_gen = Rcpp::wrap(coal_file_sites(ms_file));
-    return rcpp_result_gen;
-END_RCPP
-}
-// read_vcfr
-SEXP read_vcfr(SEXP reference_ptr, const std::vector<std::string>& var_names, const std::vector<std::vector<std::string>>& haps_list, const std::vector<uint32>& seq_inds, const std::vector<uint32>& pos, const std::vector<std::string>& ref_seq);
-RcppExport SEXP _jackalope_read_vcfr(SEXP reference_ptrSEXP, SEXP var_namesSEXP, SEXP haps_listSEXP, SEXP seq_indsSEXP, SEXP posSEXP, SEXP ref_seqSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type reference_ptr(reference_ptrSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type var_names(var_namesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::vector<std::string>>& >::type haps_list(haps_listSEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type seq_inds(seq_indsSEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint32>& >::type pos(posSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type ref_seq(ref_seqSEXP);
-    rcpp_result_gen = Rcpp::wrap(read_vcfr(reference_ptr, var_names, haps_list, seq_inds, pos, ref_seq));
-    return rcpp_result_gen;
-END_RCPP
-}
-// read_fasta_noind
-SEXP read_fasta_noind(const std::vector<std::string>& fasta_files, const bool& cut_names, const bool& remove_soft_mask);
-RcppExport SEXP _jackalope_read_fasta_noind(SEXP fasta_filesSEXP, SEXP cut_namesSEXP, SEXP remove_soft_maskSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type fasta_files(fasta_filesSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type cut_names(cut_namesSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type remove_soft_mask(remove_soft_maskSEXP);
-    rcpp_result_gen = Rcpp::wrap(read_fasta_noind(fasta_files, cut_names, remove_soft_mask));
-    return rcpp_result_gen;
-END_RCPP
-}
-// read_fasta_ind
-SEXP read_fasta_ind(const std::vector<std::string>& fasta_files, const std::vector<std::string>& fai_files, const bool& remove_soft_mask);
-RcppExport SEXP _jackalope_read_fasta_ind(SEXP fasta_filesSEXP, SEXP fai_filesSEXP, SEXP remove_soft_maskSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type fasta_files(fasta_filesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type fai_files(fai_filesSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type remove_soft_mask(remove_soft_maskSEXP);
-    rcpp_result_gen = Rcpp::wrap(read_fasta_ind(fasta_files, fai_files, remove_soft_mask));
-    return rcpp_result_gen;
-END_RCPP
-}
-// write_fasta_fa
-void write_fasta_fa(std::string file_name, SEXP ref_genome_ptr, const uint32& text_width);
-RcppExport SEXP _jackalope_write_fasta_fa(SEXP file_nameSEXP, SEXP ref_genome_ptrSEXP, SEXP text_widthSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type file_name(file_nameSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type text_width(text_widthSEXP);
-    write_fasta_fa(file_name, ref_genome_ptr, text_width);
-    return R_NilValue;
-END_RCPP
-}
-// write_fasta_gz
-void write_fasta_gz(std::string file_name, SEXP ref_genome_ptr, const uint32& text_width);
-RcppExport SEXP _jackalope_write_fasta_gz(SEXP file_nameSEXP, SEXP ref_genome_ptrSEXP, SEXP text_widthSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type file_name(file_nameSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type text_width(text_widthSEXP);
-    write_fasta_gz(file_name, ref_genome_ptr, text_width);
-    return R_NilValue;
-END_RCPP
-}
-// write_vcf_cpp
-void write_vcf_cpp(std::string out_prefix, const bool& compress, SEXP var_set_ptr, const IntegerMatrix& sample_matrix);
-RcppExport SEXP _jackalope_write_vcf_cpp(SEXP out_prefixSEXP, SEXP compressSEXP, SEXP var_set_ptrSEXP, SEXP sample_matrixSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type out_prefix(out_prefixSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type compress(compressSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
-    Rcpp::traits::input_parameter< const IntegerMatrix& >::type sample_matrix(sample_matrixSEXP);
-    write_vcf_cpp(out_prefix, compress, var_set_ptr, sample_matrix);
-    return R_NilValue;
 END_RCPP
 }
 // print_ref_genome
@@ -695,6 +623,66 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// view_ref_genome_gc_content
+double view_ref_genome_gc_content(SEXP ref_genome_ptr, const uint32& seq_ind, const uint32& start, const uint32& end);
+RcppExport SEXP _jackalope_view_ref_genome_gc_content(SEXP ref_genome_ptrSEXP, SEXP seq_indSEXP, SEXP startSEXP, SEXP endSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type seq_ind(seq_indSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type start(startSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type end(endSEXP);
+    rcpp_result_gen = Rcpp::wrap(view_ref_genome_gc_content(ref_genome_ptr, seq_ind, start, end));
+    return rcpp_result_gen;
+END_RCPP
+}
+// view_var_set_gc_content
+double view_var_set_gc_content(SEXP var_set_ptr, const uint32& seq_ind, const uint32& var_ind, const uint32& start, const uint32& end);
+RcppExport SEXP _jackalope_view_var_set_gc_content(SEXP var_set_ptrSEXP, SEXP seq_indSEXP, SEXP var_indSEXP, SEXP startSEXP, SEXP endSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type seq_ind(seq_indSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type var_ind(var_indSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type start(startSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type end(endSEXP);
+    rcpp_result_gen = Rcpp::wrap(view_var_set_gc_content(var_set_ptr, seq_ind, var_ind, start, end));
+    return rcpp_result_gen;
+END_RCPP
+}
+// view_ref_genome_nt_content
+double view_ref_genome_nt_content(SEXP ref_genome_ptr, const char& nt, const uint32& seq_ind, const uint32& start, const uint32& end);
+RcppExport SEXP _jackalope_view_ref_genome_nt_content(SEXP ref_genome_ptrSEXP, SEXP ntSEXP, SEXP seq_indSEXP, SEXP startSEXP, SEXP endSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    Rcpp::traits::input_parameter< const char& >::type nt(ntSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type seq_ind(seq_indSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type start(startSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type end(endSEXP);
+    rcpp_result_gen = Rcpp::wrap(view_ref_genome_nt_content(ref_genome_ptr, nt, seq_ind, start, end));
+    return rcpp_result_gen;
+END_RCPP
+}
+// view_var_set_nt_content
+double view_var_set_nt_content(SEXP var_set_ptr, const char& nt, const uint32& seq_ind, const uint32& var_ind, const uint32& start, const uint32& end);
+RcppExport SEXP _jackalope_view_var_set_nt_content(SEXP var_set_ptrSEXP, SEXP ntSEXP, SEXP seq_indSEXP, SEXP var_indSEXP, SEXP startSEXP, SEXP endSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
+    Rcpp::traits::input_parameter< const char& >::type nt(ntSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type seq_ind(seq_indSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type var_ind(var_indSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type start(startSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type end(endSEXP);
+    rcpp_result_gen = Rcpp::wrap(view_var_set_nt_content(var_set_ptr, nt, seq_ind, var_ind, start, end));
+    return rcpp_result_gen;
+END_RCPP
+}
 // set_ref_genome_seq_names
 void set_ref_genome_seq_names(SEXP ref_genome_ptr, const std::vector<uint32>& seq_inds, const std::vector<std::string>& names);
 RcppExport SEXP _jackalope_set_ref_genome_seq_names(SEXP ref_genome_ptrSEXP, SEXP seq_indsSEXP, SEXP namesSEXP) {
@@ -847,6 +835,103 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sub_TN93
+List sub_TN93(std::vector<double> pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta);
+RcppExport SEXP _jackalope_sub_TN93(SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<double> >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const double& >::type alpha_1(alpha_1SEXP);
+    Rcpp::traits::input_parameter< const double& >::type alpha_2(alpha_2SEXP);
+    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_TN93(pi_tcag, alpha_1, alpha_2, beta));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_JC69
+List sub_JC69(double lambda);
+RcppExport SEXP _jackalope_sub_JC69(SEXP lambdaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_JC69(lambda));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_K80
+List sub_K80(double alpha, double beta);
+RcppExport SEXP _jackalope_sub_K80(SEXP alphaSEXP, SEXP betaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_K80(alpha, beta));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_F81
+List sub_F81(const std::vector<double>& pi_tcag);
+RcppExport SEXP _jackalope_sub_F81(SEXP pi_tcagSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_F81(pi_tcag));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_HKY85
+List sub_HKY85(const std::vector<double>& pi_tcag, const double& alpha, const double& beta);
+RcppExport SEXP _jackalope_sub_HKY85(SEXP pi_tcagSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_HKY85(pi_tcag, alpha, beta));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_F84
+List sub_F84(const std::vector<double>& pi_tcag, const double& beta, const double& kappa);
+RcppExport SEXP _jackalope_sub_F84(SEXP pi_tcagSEXP, SEXP betaSEXP, SEXP kappaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type kappa(kappaSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_F84(pi_tcag, beta, kappa));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_GTR
+List sub_GTR(std::vector<double> pi_tcag, const std::vector<double>& abcdef);
+RcppExport SEXP _jackalope_sub_GTR(SEXP pi_tcagSEXP, SEXP abcdefSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<double> >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type abcdef(abcdefSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_GTR(pi_tcag, abcdef));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_UNREST
+List sub_UNREST(arma::mat Q);
+RcppExport SEXP _jackalope_sub_UNREST(SEXP QSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type Q(QSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_UNREST(Q));
+    return rcpp_result_gen;
+END_RCPP
+}
 // using_openmp
 bool using_openmp();
 RcppExport SEXP _jackalope_using_openmp() {
@@ -859,40 +944,33 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_jackalope_merge_sequences", (DL_FUNC) &_jackalope_merge_sequences, 1},
-    {"_jackalope_filter_sequences", (DL_FUNC) &_jackalope_filter_sequences, 3},
+    {"_jackalope_merge_sequences_cpp", (DL_FUNC) &_jackalope_merge_sequences_cpp, 1},
+    {"_jackalope_filter_sequences_cpp", (DL_FUNC) &_jackalope_filter_sequences_cpp, 3},
     {"_jackalope_replace_Ns_cpp", (DL_FUNC) &_jackalope_replace_Ns_cpp, 4},
-    {"_jackalope_create_genome_", (DL_FUNC) &_jackalope_create_genome_, 5},
+    {"_jackalope_create_genome_cpp", (DL_FUNC) &_jackalope_create_genome_cpp, 5},
     {"_jackalope_rando_seqs", (DL_FUNC) &_jackalope_rando_seqs, 5},
-    {"_jackalope_illumina_ref_cpp", (DL_FUNC) &_jackalope_illumina_ref_cpp, 23},
-    {"_jackalope_illumina_var_cpp", (DL_FUNC) &_jackalope_illumina_var_cpp, 24},
+    {"_jackalope_illumina_ref_cpp", (DL_FUNC) &_jackalope_illumina_ref_cpp, 24},
+    {"_jackalope_illumina_var_cpp", (DL_FUNC) &_jackalope_illumina_var_cpp, 25},
+    {"_jackalope_pacbio_ref_cpp", (DL_FUNC) &_jackalope_pacbio_ref_cpp, 24},
+    {"_jackalope_pacbio_var_cpp", (DL_FUNC) &_jackalope_pacbio_var_cpp, 25},
+    {"_jackalope_write_bed", (DL_FUNC) &_jackalope_write_bed, 5},
+    {"_jackalope_read_fasta_noind", (DL_FUNC) &_jackalope_read_fasta_noind, 3},
+    {"_jackalope_read_fasta_ind", (DL_FUNC) &_jackalope_read_fasta_ind, 3},
+    {"_jackalope_write_ref_fasta", (DL_FUNC) &_jackalope_write_ref_fasta, 6},
+    {"_jackalope_write_vars_fasta", (DL_FUNC) &_jackalope_write_vars_fasta, 7},
+    {"_jackalope_read_ms_trees_", (DL_FUNC) &_jackalope_read_ms_trees_, 1},
+    {"_jackalope_coal_file_sites", (DL_FUNC) &_jackalope_coal_file_sites, 1},
+    {"_jackalope_read_vcfr", (DL_FUNC) &_jackalope_read_vcfr, 6},
+    {"_jackalope_write_vcf_cpp", (DL_FUNC) &_jackalope_write_vcf_cpp, 5},
     {"_jackalope_make_mutation_sampler_base", (DL_FUNC) &_jackalope_make_mutation_sampler_base, 4},
     {"_jackalope_make_mutation_sampler_chunk_base", (DL_FUNC) &_jackalope_make_mutation_sampler_chunk_base, 5},
-    {"_jackalope_add_coal_sites_cpp", (DL_FUNC) &_jackalope_add_coal_sites_cpp, 9},
+    {"_jackalope_add_coal_sites_cpp", (DL_FUNC) &_jackalope_add_coal_sites_cpp, 8},
     {"_jackalope_make_gamma_mats", (DL_FUNC) &_jackalope_make_gamma_mats, 3},
     {"_jackalope_check_gamma_mats", (DL_FUNC) &_jackalope_check_gamma_mats, 2},
     {"_jackalope_phylo_info_to_trees", (DL_FUNC) &_jackalope_phylo_info_to_trees, 1},
     {"_jackalope_phylo_info_to_trees_chunk", (DL_FUNC) &_jackalope_phylo_info_to_trees_chunk, 1},
     {"_jackalope_evolve_seqs", (DL_FUNC) &_jackalope_evolve_seqs, 6},
     {"_jackalope_evolve_seqs_chunk", (DL_FUNC) &_jackalope_evolve_seqs_chunk, 6},
-    {"_jackalope_TN93_rate_matrix", (DL_FUNC) &_jackalope_TN93_rate_matrix, 4},
-    {"_jackalope_JC69_rate_matrix", (DL_FUNC) &_jackalope_JC69_rate_matrix, 1},
-    {"_jackalope_K80_rate_matrix", (DL_FUNC) &_jackalope_K80_rate_matrix, 2},
-    {"_jackalope_F81_rate_matrix", (DL_FUNC) &_jackalope_F81_rate_matrix, 1},
-    {"_jackalope_HKY85_rate_matrix", (DL_FUNC) &_jackalope_HKY85_rate_matrix, 3},
-    {"_jackalope_F84_rate_matrix", (DL_FUNC) &_jackalope_F84_rate_matrix, 3},
-    {"_jackalope_GTR_rate_matrix", (DL_FUNC) &_jackalope_GTR_rate_matrix, 2},
-    {"_jackalope_UNREST_rate_matrix", (DL_FUNC) &_jackalope_UNREST_rate_matrix, 1},
-    {"_jackalope_pacbio_ref_cpp", (DL_FUNC) &_jackalope_pacbio_ref_cpp, 23},
-    {"_jackalope_pacbio_var_cpp", (DL_FUNC) &_jackalope_pacbio_var_cpp, 24},
-    {"_jackalope_read_ms_trees_", (DL_FUNC) &_jackalope_read_ms_trees_, 1},
-    {"_jackalope_coal_file_sites", (DL_FUNC) &_jackalope_coal_file_sites, 1},
-    {"_jackalope_read_vcfr", (DL_FUNC) &_jackalope_read_vcfr, 6},
-    {"_jackalope_read_fasta_noind", (DL_FUNC) &_jackalope_read_fasta_noind, 3},
-    {"_jackalope_read_fasta_ind", (DL_FUNC) &_jackalope_read_fasta_ind, 3},
-    {"_jackalope_write_fasta_fa", (DL_FUNC) &_jackalope_write_fasta_fa, 3},
-    {"_jackalope_write_fasta_gz", (DL_FUNC) &_jackalope_write_fasta_gz, 3},
-    {"_jackalope_write_vcf_cpp", (DL_FUNC) &_jackalope_write_vcf_cpp, 4},
     {"_jackalope_print_ref_genome", (DL_FUNC) &_jackalope_print_ref_genome, 1},
     {"_jackalope_print_var_set", (DL_FUNC) &_jackalope_print_var_set, 1},
     {"_jackalope_make_ref_genome", (DL_FUNC) &_jackalope_make_ref_genome, 1},
@@ -908,6 +986,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_view_var_genome", (DL_FUNC) &_jackalope_view_var_genome, 2},
     {"_jackalope_view_ref_genome_seq_names", (DL_FUNC) &_jackalope_view_ref_genome_seq_names, 1},
     {"_jackalope_view_var_set_var_names", (DL_FUNC) &_jackalope_view_var_set_var_names, 1},
+    {"_jackalope_view_ref_genome_gc_content", (DL_FUNC) &_jackalope_view_ref_genome_gc_content, 4},
+    {"_jackalope_view_var_set_gc_content", (DL_FUNC) &_jackalope_view_var_set_gc_content, 5},
+    {"_jackalope_view_ref_genome_nt_content", (DL_FUNC) &_jackalope_view_ref_genome_nt_content, 5},
+    {"_jackalope_view_var_set_nt_content", (DL_FUNC) &_jackalope_view_var_set_nt_content, 6},
     {"_jackalope_set_ref_genome_seq_names", (DL_FUNC) &_jackalope_set_ref_genome_seq_names, 3},
     {"_jackalope_clean_ref_genome_seq_names", (DL_FUNC) &_jackalope_clean_ref_genome_seq_names, 1},
     {"_jackalope_set_var_set_var_names", (DL_FUNC) &_jackalope_set_var_set_var_names, 3},
@@ -920,6 +1002,14 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_add_insertion", (DL_FUNC) &_jackalope_add_insertion, 5},
     {"_jackalope_add_deletion", (DL_FUNC) &_jackalope_add_deletion, 5},
     {"_jackalope_test_rate", (DL_FUNC) &_jackalope_test_rate, 7},
+    {"_jackalope_sub_TN93", (DL_FUNC) &_jackalope_sub_TN93, 4},
+    {"_jackalope_sub_JC69", (DL_FUNC) &_jackalope_sub_JC69, 1},
+    {"_jackalope_sub_K80", (DL_FUNC) &_jackalope_sub_K80, 2},
+    {"_jackalope_sub_F81", (DL_FUNC) &_jackalope_sub_F81, 1},
+    {"_jackalope_sub_HKY85", (DL_FUNC) &_jackalope_sub_HKY85, 3},
+    {"_jackalope_sub_F84", (DL_FUNC) &_jackalope_sub_F84, 3},
+    {"_jackalope_sub_GTR", (DL_FUNC) &_jackalope_sub_GTR, 2},
+    {"_jackalope_sub_UNREST", (DL_FUNC) &_jackalope_sub_UNREST, 1},
     {"_jackalope_using_openmp", (DL_FUNC) &_jackalope_using_openmp, 0},
     {NULL, NULL, 0}
 };

@@ -17,6 +17,7 @@
 #include "alias_sampler.h"  // alias method of sampling
 #include "weighted_reservoir.h"  // weighted reservoir sampling
 #include "mevo_gammas.h"  // SequenceGammas class
+#include "util.h"  // thread_check
 
 using namespace Rcpp;
 
@@ -156,7 +157,6 @@ void add_one_seq_sites(VarSet& var_set,
 //'
 //[[Rcpp::export]]
 SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
-                        const std::vector<std::string>& var_names,
                         const std::vector<arma::mat>& seg_sites,
                         const arma::mat& Q,
                         const std::vector<double>& pi_tcag,
@@ -167,12 +167,13 @@ SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
 
-    // Initialize new VarSet object
-    XPtr<VarSet> var_set(new VarSet(*ref_genome, var_names), true);
+    const uint32 n_vars = seg_sites[0].n_cols - 1;
 
-#ifndef _OPENMP
-    n_threads = 1;
-#endif
+    // Initialize new VarSet object
+    XPtr<VarSet> var_set(new VarSet(*ref_genome, n_vars), true);
+
+    // Check that # threads isn't too high and change to 1 if not using OpenMP:
+    thread_check(n_threads);
 
     const uint32 n_seqs = ref_genome->size();
     const uint64 total_seq = ref_genome->total_size;
@@ -212,7 +213,7 @@ SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
 #endif
     for (uint32 i = 0; i < n_seqs; i++) {
 
-        if (prog_bar.is_aborted()) status_code = -1;
+        if (prog_bar.is_aborted() || prog_bar.check_abort()) status_code = -1;
         if (status_code != 0) continue;
 
         add_one_seq_sites(*var_set, *ref_genome, i, seg_sites[i], type, insert, eng);

@@ -196,12 +196,6 @@ public:
     std::string get_seq_full() const;
 
 
-    /*
-     ------------------
-     Retrieve the first part of a sequence from the variant sequence.
-     ------------------
-     */
-    std::string get_seq_start(uint32 out_length) const;
 
     /*
      ------------------

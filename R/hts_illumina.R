@@ -283,7 +283,7 @@ check_illumina_args <- function(seq_object, n_reads,
                                 ins_prob2, del_prob2,
                                 frag_len_min, frag_len_max,
                                 variant_probs, barcodes, prob_dup,
-                                compress, n_threads, read_pool_size,
+                                compress, comp_method, n_threads, read_pool_size,
                                 show_progress) {
 
     # Checking types:
@@ -297,6 +297,12 @@ check_illumina_args <- function(seq_object, n_reads,
     for (x in c("read_length", "n_reads", "n_threads", "read_pool_size")) {
         z <- eval(parse(text = x))
         if (!single_integer(z, 1)) err_msg("illumina", x, "a single integer >= 1")
+    }
+    if (!is_type(compress, "logical", 1) && !single_integer(compress, 1, 9)) {
+        err_msg("illumina", "compress", "a single logical or integer from 1 to 9")
+    }
+    if (!is_type(comp_method, "character", 1) || !comp_method %in% c("gzip", "bgzip")) {
+        err_msg("illumina", "comp_method", "\"gzip\" or \"bgzip\"")
     }
     for (x in c("paired", "matepair", "compress", "show_progress")) {
         z <- eval(parse(text = x))
@@ -499,9 +505,25 @@ check_illumina_args <- function(seq_object, n_reads,
 #'     Defaults to `NULL`.
 #' @param prob_dup A single number indicating the probability of duplicates.
 #'     Defaults to `0.02`.
-#' @param compress A logical for whether to compress output FASTQ files using gzip.
+#' @param compress Logical specifying whether or not to compress output file, or
+#'     an integer specifying the level of compression, from 1 to 9.
+#'     If `TRUE`, a compression level of `6` is used.
 #'     Defaults to `FALSE`.
+#' @param comp_method Character specifying which type of compression to use if any
+#'     is desired. Options include `"gzip"` and `"bgzip"`.
+#'     This is ignored if `compress` is `FALSE`, and it throws an error if
+#'     it's set to `"gzip"` when `n_threads > 1` (since I don't have a method to
+#'     do gzip compression in parallel).
+#'     Defaults to `"bgzip"`.
 #' @param n_threads The number of threads to use in processing.
+#'     If `compress` is `TRUE` or `> 0` (indicating compressed output),
+#'     setting `n_threads` to `2` or more makes this function first create an
+#'     uncompressed file/files using `n_threads` threads, then compress that/those
+#'     file/files also using `n_threads` threads.
+#'     There is no speed increase if you try to use multiple threads to create
+#'     compressed output on the fly, so that option is not included.
+#'     If you want to be conservative with disk space (by not having an uncompressed
+#'     file present even temporarily), set `n_threads` to `1`.
 #'     This argument is ignored if the package was not compiled with OpenMP.
 #'     Defaults to `1`.
 #' @param read_pool_size The number of reads to store before writing to disk.
@@ -509,6 +531,8 @@ check_illumina_args <- function(seq_object, n_reads,
 #'     Defaults to `1000`.
 #' @param show_progress Logical for whether to show a progress bar.
 #'     Defaults to `FALSE`.
+#' @param overwrite Logical for whether to overwrite existing FASTQ file(s) of the
+#'     same name, if they exist.
 #'
 #' @return Nothing is returned.
 #'
@@ -547,19 +571,32 @@ illumina <- function(seq_object,
                      barcodes = NULL,
                      prob_dup = 0.02,
                      compress = FALSE,
+                     comp_method = "bgzip",
                      n_threads = 1L,
                      read_pool_size = 1000L,
-                     show_progress = FALSE) {
+                     show_progress = FALSE,
+                     overwrite = FALSE) {
+
 
     out_prefix <- path.expand(out_prefix)
-    check_fastq(out_prefix, n_read_ends = ifelse(paired, 2, 1))
+    check_file_existence(paste0(out_prefix, "_R", 1:ifelse(paired, 2, 1), ".fq"),
+                         compress, overwrite)
 
     # Check for improper argument types:
     check_illumina_args(seq_object, n_reads, read_length, paired,
                         frag_mean, frag_sd, matepair, seq_sys, profile1, profile2,
                         ins_prob1, del_prob1, ins_prob2, del_prob2,
                         frag_len_min, frag_len_max, variant_probs, barcodes, prob_dup,
-                        compress, n_threads, read_pool_size, show_progress)
+                        compress, comp_method, n_threads, read_pool_size, show_progress)
+
+    # Set compression level:
+    if (is_type(compress, "logical", 1) && compress) compress <- 6 # default compression
+    if (is_type(compress, "logical", 1) && !compress) compress <- 0 # no compression
+
+    if (n_threads > 1 && compress > 0 && comp_method == "gzip") {
+        stop("\nCompression using gzip cannot be performed using multiple threads. ",
+             "Please use bgzip compression instead.")
+    }
 
     # Change mean and SD to shape and scale of Gamma distribution:
     frag_len_shape <- (frag_mean / frag_sd)^2
@@ -600,6 +637,7 @@ illumina <- function(seq_object,
     # Assembling list of arguments for inner cpp function:
     args <- list(out_prefix = out_prefix,
                  compress = compress,
+                 comp_method = comp_method,
                  n_reads = n_reads,
                  paired = paired,
                  matepair = matepair,
