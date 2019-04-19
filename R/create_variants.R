@@ -1,32 +1,4 @@
 
-#' Convert to a XPtr<[Chunk]MutationSampler> object
-#'
-#' @noRd
-#'
-mevo_obj_to_ptr <- function(mevo_obj) {
-
-    if (!single_integer(mevo_obj$chunk_size, 0)) {
-        stop("\nIn internal jackalope function `mevo_obj_to_ptr`, ",
-             "a `chunk_size` of < 0 was specified, which makes no sense.")
-    }
-
-    if (mevo_obj$chunk_size <= 0) {
-        sampler_ptr <- make_mutation_sampler_base(mevo_obj$Q,
-                                                  mevo_obj$pi_tcag,
-                                                  mevo_obj$insertion_rates,
-                                                  mevo_obj$deletion_rates)
-    } else {
-        sampler_ptr <- make_mutation_sampler_chunk_base(mevo_obj$Q,
-                                                        mevo_obj$pi_tcag,
-                                                        mevo_obj$insertion_rates,
-                                                        mevo_obj$deletion_rates,
-                                                        mevo_obj$chunk_size)
-    }
-
-    return(sampler_ptr)
-}
-
-
 
 # doc start ----
 #' Create variants from a reference genome.
