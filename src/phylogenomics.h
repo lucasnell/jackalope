@@ -131,26 +131,23 @@ struct PhyloTree {
  multiple phylogenies, as will be the case when recombination is included.
  If not including recombination, `trees` will simply be of length 1.
 
- `T` should be `MutationSampler` or `ChunkMutationSampler`.
-
  */
 
 
-template <typename T>
 class PhyloOneSeq {
 
 public:
     std::vector<PhyloTree> trees;
     std::vector<VarSequence*> var_seq_ptrs;    // pointers to original VarSequence objects
     std::vector<VarSequence> var_seqs;  // blank VarSequence objects to evolve across tree
-    std::vector<T> samplers;         // samplers to do the mutation additions across tree
+    std::vector<MutationSampler> samplers; // to do the mutation additions across tree
     std::vector<double> seq_rates;   // sequence rates
     uint32 n_tips;                  // number of tips (i.e., variants)
 
     PhyloOneSeq() {}
     PhyloOneSeq(
         VarSet& var_set,
-        const T& sampler_base,
+        const MutationSampler& sampler_base,
         const uint32& seq_ind,
         const arma::mat& gamma_mat_,
         const std::vector<uint32>& n_bases_,
@@ -204,7 +201,7 @@ public:
                                             VarSequence((*var_set.reference)[seq_ind]));
 
         // Fill in samplers:
-        samplers = std::vector<T>(tree_size, sampler_base);
+        samplers = std::vector<MutationSampler>(tree_size, sampler_base);
         for (uint32 i = 0; i < tree_size; i++) {
             samplers[i].fill_ptrs(var_seqs[i]);
             samplers[i].fill_gamma(gamma_mat);
@@ -259,7 +256,7 @@ public:
      Set sampler and variant info:
      */
     void set_samp_var_info(VarSet& var_set,
-                           const T& sampler_base,
+                           const MutationSampler& sampler_base,
                            const uint32& seq_ind,
                            const arma::mat& gamma_mat_) {
 
@@ -282,7 +279,7 @@ public:
                                             VarSequence((*var_set.reference)[seq_ind]));
 
         // Fill in samplers:
-        samplers = std::vector<T>(tree_size, sampler_base);
+        samplers = std::vector<MutationSampler>(tree_size, sampler_base);
         for (uint32 i = 0; i < tree_size; i++) {
             samplers[i].fill_ptrs(var_seqs[i]);
             samplers[i].fill_gamma(gamma_mat);
@@ -361,7 +358,7 @@ public:
         }
 
 
-        *this = PhyloOneSeq<T>(n_bases_, branch_lens_, edges_, tip_labels_);
+        *this = PhyloOneSeq(n_bases_, branch_lens_, edges_, tip_labels_);
 
         return;
 
@@ -487,13 +484,11 @@ private:
 /*
  Phylogenetic tree info for all sequences in a genome.
 
- `T` should be `MutationSampler` or `ChunkMutationSampler`.
  */
-template <typename T>
 class PhyloInfo {
 public:
 
-    std::vector<PhyloOneSeq<T>> phylo_one_seqs;
+    std::vector<PhyloOneSeq> phylo_one_seqs;
 
     PhyloInfo(const List& genome_phylo_info) {
 
@@ -504,7 +499,7 @@ public:
                                   false));
         }
 
-        phylo_one_seqs = std::vector<PhyloOneSeq<T>>(n_seqs);
+        phylo_one_seqs = std::vector<PhyloOneSeq>(n_seqs);
 
         for (uint32 i = 0; i < n_seqs; i++) {
             phylo_one_seqs[i].fill_from_list(genome_phylo_info, i);

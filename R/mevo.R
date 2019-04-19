@@ -409,8 +409,8 @@ create_mevo <- function(reference,
     if (!is.null(gamma_mats) && !is_type(gamma_mats, "site_var_mats")) {
         err_msg("create_variants", "gamma_mats", "NULL or a \"site_var_mats\" object")
     }
-    if (!single_integer(chunk_size, 0)) {
-        err_msg("create_variants", "chunk_size", "an integer >= 0")
+    if (!single_integer(chunk_size, 1)) {
+        err_msg("create_variants", "chunk_size", "an integer >= 1")
     }
 
     # `sub` must be provided if others are:

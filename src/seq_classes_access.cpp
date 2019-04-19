@@ -21,7 +21,7 @@
 #include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
-#include "mutator.h"    // ChunkMutationSampler in test_rate fxn
+#include "mutator.h"    // MutationSampler in test_rate fxn
 #include "pcg.h"  // pcg seeding
 #include "weighted_reservoir.h"  // weighted reservoir sampling
 #include "site_var.h"  // SequenceGammas class
@@ -804,9 +804,9 @@ double test_rate(const uint32& start, const uint32& end,
 
     VarSequence& var_seq((*var_set)[var_ind][seq_ind]);
 
-    XPtr<ChunkMutationSampler> sampler_base(sampler_base_ptr);
+    XPtr<MutationSampler> sampler_base(sampler_base_ptr);
 
-    ChunkMutationSampler sampler(*sampler_base);
+    MutationSampler sampler(*sampler_base);
     sampler.fill_ptrs(var_seq);
     sampler.fill_gamma(gamma_mat_);
 

@@ -34,13 +34,10 @@ using namespace Rcpp;
 
 
 /*
- OneSeqMutationSampler combines objects for sampling mutation types and new
+ MutationSampler combines objects for sampling mutation types and new
  nucleotides for insertions.
-
- Class `C` should be `LocationSampler` or `ChunkLocationSampler`.
  */
-template <class C>
-class OneSeqMutationSampler {
+class MutationSampler {
 
     /*
      Sample for mutation location based on rates by sequence region and nucleotide,
@@ -53,16 +50,16 @@ class OneSeqMutationSampler {
     }
 
     /*
-    Sample for mutation type based on nucleotide and rng engine
-    */
+     Sample for mutation type based on nucleotide and rng engine
+     */
     inline MutationInfo sample_type(const char& c, pcg64& eng) const {
         return type.sample(c, eng);
     }
 
     /*
-    Create a new string of nucleotides (for insertions) of a given length and using
-    an input rng engine
-    */
+     Create a new string of nucleotides (for insertions) of a given length and using
+     an input rng engine
+     */
     inline std::string new_nucleos(const uint32& len, pcg64& eng) const {
         std::string str(len, 'x');
         insert.sample(str, eng);
@@ -74,25 +71,25 @@ public:
     // VarSequence object pointer to be manipulated
     VarSequence* var_seq;
     // For sampling the mutation location:
-    C location;
+    LocationSampler location;
     // For sampling the type of mutation:
     MutationTypeSampler type;
     // For new insertion sequences:
     AliasStringSampler<std::string> insert;
 
-    OneSeqMutationSampler() {}
+    MutationSampler() {}
 
-    OneSeqMutationSampler(VarSequence& vs_,
-                          const C& location_,
-                          const MutationTypeSampler& type_,
-                          const AliasStringSampler<std::string>& insert_)
+    MutationSampler(VarSequence& vs_,
+                    const LocationSampler& location_,
+                    const MutationTypeSampler& type_,
+                    const AliasStringSampler<std::string>& insert_)
         : var_seq(&vs_), location(location_), type(type_), insert(insert_) {}
 
-    OneSeqMutationSampler(const OneSeqMutationSampler<C>& other)
+    MutationSampler(const MutationSampler& other)
         : var_seq(other.var_seq), location(other.location), type(other.type),
           insert(other.insert) {}
 
-    OneSeqMutationSampler<C>& operator=(const OneSeqMutationSampler<C>& other) {
+    MutationSampler& operator=(const MutationSampler& other) {
         if (other.var_seq) var_seq = other.var_seq;
         location = other.location;
         type = other.type;
@@ -130,11 +127,6 @@ public:
         return location.total_rate(start, end, ranged);
     }
 };
-
-
-// Shortening these names
-typedef OneSeqMutationSampler<LocationSampler> MutationSampler;
-typedef OneSeqMutationSampler<ChunkLocationSampler> ChunkMutationSampler;
 
 
 
@@ -224,62 +216,6 @@ inline void fill_mut_lengths(std::vector<sint32>& mut_lengths,
     return;
 }
 
-
-
-//' Creates MutationSampler without any of the pointers.
-//'
-//'
-//' `T` should be MutationSampler or ChunkMutationSampler
-//' `T` should be LocationSampler or ChunkLocationSampler
-//' MutationSampler should always go with LocationSampler, and
-//' ChunkMutationSampler with ChunkLocationSampler
-//'
-//' Before actually using the object output from this function, make sure to...
-//' * use `[Chunk]MutationSampler.fill_ptrs(VarSequence& var_seq)` to fill pointers.
-//' * use `[Chunk]MutationSampler.fill_gamma(const arma::mat& gamma_mat)` to fill
-//'   the gamma matrix.
-//' * use `ChunkMutationSampler.location.change_chunk(chunk_size)` if using chunked
-//'   version.
-//'
-//' @param Q A 4x4 matrix of substitution rates for each nucleotide.
-//' @param pi_tcag Vector of nucleotide equilibrium frequencies for
-//'     "T", "C", "A", and "G", respectively.
-//' @param insertion_rates Vector of insertion rates.
-//' @param deletion_rates Vector of deletion rates.
-//'
-//' @noRd
-//'
-template <typename T, typename U>
-XPtr<T> make_mutation_sampler_base_(const arma::mat& Q,
-                                    const std::vector<double>& pi_tcag,
-                                    const std::vector<double>& insertion_rates,
-                                    const std::vector<double>& deletion_rates) {
-
-    std::vector<std::vector<double>> probs;
-    std::vector<sint32> mut_lengths;
-    std::vector<double> q_tcag;
-    /*
-    (1) Combine substitution, insertion, and deletion rates into a single vector
-    (2) Fill the `q_tcag` vector with mutation rates for each nucleotide
-    */
-    fill_probs_q_tcag(probs, q_tcag, Q, pi_tcag, insertion_rates, deletion_rates);
-
-    // Now filling in mut_lengths vector
-    fill_mut_lengths(mut_lengths, insertion_rates, deletion_rates);
-
-    /*
-     Now create and fill output pointer to base sampler:
-     */
-    XPtr<T> out(new T());
-
-    out->type = MutationTypeSampler(probs, mut_lengths);
-    out->insert = AliasStringSampler<std::string>("TCAG", pi_tcag);
-
-    MutationRates mr(q_tcag);
-    out->location = U(mr);
-
-    return out;
-}
 
 
 

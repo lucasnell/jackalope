@@ -12,9 +12,9 @@
 using namespace Rcpp;
 
 // Add mutation and return the change in the sequence rate that results
-template <class C>
-double OneSeqMutationSampler<C>::mutate(pcg64& eng) {
-    uint32 pos = sample_location(eng);
+double MutationSampler::mutate(pcg64& eng) {
+    uint32 pos = sample_location(eng, 0, 0, false);
+    // uint32 pos = runif_01(eng) * var_seq->size();
     char c = var_seq->get_nt(pos);
     MutationInfo m = sample_type(c, eng);
     double rate_change;
@@ -48,10 +48,10 @@ double OneSeqMutationSampler<C>::mutate(pcg64& eng) {
  is empty).
  `// ***` mark difference between this and previous `mutate` versions
  */
-template <class C>
-double OneSeqMutationSampler<C>::mutate(pcg64& eng, const uint32& start, sint64& end) {
-    if (end < 0) stop("end is negative in [Chunk]MutationSampler.mutate");
+double MutationSampler::mutate(pcg64& eng, const uint32& start, sint64& end) {
+    if (end < 0) stop("end is negative in MutationSampler.mutate");
     uint32 pos = sample_location(eng, start, static_cast<uint32>(end), true);  // ***
+    // uint32 pos = (runif_01(eng) * (static_cast<uint32>(end) - start + 1)) + start;
     char c = var_seq->get_nt(pos);
     MutationInfo m = sample_type(c, eng);
     double rate_change;
@@ -80,39 +80,38 @@ double OneSeqMutationSampler<C>::mutate(pcg64& eng, const uint32& start, sint64&
 }
 
 
-// Explicit template instantiation
-template class OneSeqMutationSampler<LocationSampler>;
-template class OneSeqMutationSampler<ChunkLocationSampler>;
 
-
-
-// Wrapper to make non-chunked version available from R
+// Wrapper to make mutation sampler available from R
 
 //[[Rcpp::export]]
 SEXP make_mutation_sampler_base(const arma::mat& Q,
                                 const std::vector<double>& pi_tcag,
                                 const std::vector<double>& insertion_rates,
-                                const std::vector<double>& deletion_rates) {
+                                const std::vector<double>& deletion_rates,
+                                const uint32& chunk_size) {
 
-    XPtr<MutationSampler> out =
-        make_mutation_sampler_base_<MutationSampler,LocationSampler>(
-                Q, pi_tcag, insertion_rates, deletion_rates);
+    std::vector<std::vector<double>> probs;
+    std::vector<sint32> mut_lengths;
+    std::vector<double> q_tcag;
+    /*
+     (1) Combine substitution, insertion, and deletion rates into a single vector
+     (2) Fill the `q_tcag` vector with mutation rates for each nucleotide
+     */
+    fill_probs_q_tcag(probs, q_tcag, Q, pi_tcag, insertion_rates, deletion_rates);
 
-    return out;
-}
+    // Now filling in mut_lengths vector
+    fill_mut_lengths(mut_lengths, insertion_rates, deletion_rates);
 
-// Same thing, but with chunks
+    /*
+     Now create and fill output pointer to base sampler:
+     */
+    XPtr<MutationSampler> out(new MutationSampler());
 
-//[[Rcpp::export]]
-SEXP make_mutation_sampler_chunk_base(const arma::mat& Q,
-                                      const std::vector<double>& pi_tcag,
-                                      const std::vector<double>& insertion_rates,
-                                      const std::vector<double>& deletion_rates,
-                                      const uint32& chunk_size) {
+    out->type = MutationTypeSampler(probs, mut_lengths);
+    out->insert = AliasStringSampler<std::string>("TCAG", pi_tcag);
 
-    XPtr<ChunkMutationSampler> out =
-        make_mutation_sampler_base_<ChunkMutationSampler,ChunkLocationSampler>(
-                Q, pi_tcag, insertion_rates, deletion_rates);
+    MutationRates mr(q_tcag);
+    out->location = LocationSampler(mr);
 
     out->location.change_chunk(chunk_size);
 

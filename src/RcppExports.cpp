@@ -330,22 +330,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // make_mutation_sampler_base
-SEXP make_mutation_sampler_base(const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates);
-RcppExport SEXP _jackalope_make_mutation_sampler_base(SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type insertion_rates(insertion_ratesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
-    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_base(Q, pi_tcag, insertion_rates, deletion_rates));
-    return rcpp_result_gen;
-END_RCPP
-}
-// make_mutation_sampler_chunk_base
-SEXP make_mutation_sampler_chunk_base(const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, const uint32& chunk_size);
-RcppExport SEXP _jackalope_make_mutation_sampler_chunk_base(SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP chunk_sizeSEXP) {
+SEXP make_mutation_sampler_base(const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, const uint32& chunk_size);
+RcppExport SEXP _jackalope_make_mutation_sampler_base(SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP chunk_sizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -354,7 +340,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::vector<double>& >::type insertion_rates(insertion_ratesSEXP);
     Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
     Rcpp::traits::input_parameter< const uint32& >::type chunk_size(chunk_sizeSEXP);
-    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_chunk_base(Q, pi_tcag, insertion_rates, deletion_rates, chunk_size));
+    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_base(Q, pi_tcag, insertion_rates, deletion_rates, chunk_size));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -366,17 +352,6 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const List& >::type genome_phylo_info(genome_phylo_infoSEXP);
     rcpp_result_gen = Rcpp::wrap(phylo_info_to_trees(genome_phylo_info));
-    return rcpp_result_gen;
-END_RCPP
-}
-// phylo_info_to_trees_chunk
-SEXP phylo_info_to_trees_chunk(const List& genome_phylo_info);
-RcppExport SEXP _jackalope_phylo_info_to_trees_chunk(SEXP genome_phylo_infoSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List& >::type genome_phylo_info(genome_phylo_infoSEXP);
-    rcpp_result_gen = Rcpp::wrap(phylo_info_to_trees_chunk(genome_phylo_info));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -393,22 +368,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint32 >::type n_threads(n_threadsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
     rcpp_result_gen = Rcpp::wrap(evolve_seqs(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress));
-    return rcpp_result_gen;
-END_RCPP
-}
-// evolve_seqs_chunk
-SEXP evolve_seqs_chunk(SEXP& ref_genome_ptr, SEXP& sampler_base_ptr, SEXP& phylo_info_ptr, const std::vector<arma::mat>& gamma_mats, uint32 n_threads, const bool& show_progress);
-RcppExport SEXP _jackalope_evolve_seqs_chunk(SEXP ref_genome_ptrSEXP, SEXP sampler_base_ptrSEXP, SEXP phylo_info_ptrSEXP, SEXP gamma_matsSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP& >::type ref_genome_ptr(ref_genome_ptrSEXP);
-    Rcpp::traits::input_parameter< SEXP& >::type sampler_base_ptr(sampler_base_ptrSEXP);
-    Rcpp::traits::input_parameter< SEXP& >::type phylo_info_ptr(phylo_info_ptrSEXP);
-    Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type gamma_mats(gamma_matsSEXP);
-    Rcpp::traits::input_parameter< uint32 >::type n_threads(n_threadsSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
-    rcpp_result_gen = Rcpp::wrap(evolve_seqs_chunk(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -962,12 +921,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_coal_file_sites", (DL_FUNC) &_jackalope_coal_file_sites, 1},
     {"_jackalope_read_vcfr", (DL_FUNC) &_jackalope_read_vcfr, 6},
     {"_jackalope_write_vcf_cpp", (DL_FUNC) &_jackalope_write_vcf_cpp, 5},
-    {"_jackalope_make_mutation_sampler_base", (DL_FUNC) &_jackalope_make_mutation_sampler_base, 4},
-    {"_jackalope_make_mutation_sampler_chunk_base", (DL_FUNC) &_jackalope_make_mutation_sampler_chunk_base, 5},
+    {"_jackalope_make_mutation_sampler_base", (DL_FUNC) &_jackalope_make_mutation_sampler_base, 5},
     {"_jackalope_phylo_info_to_trees", (DL_FUNC) &_jackalope_phylo_info_to_trees, 1},
-    {"_jackalope_phylo_info_to_trees_chunk", (DL_FUNC) &_jackalope_phylo_info_to_trees_chunk, 1},
     {"_jackalope_evolve_seqs", (DL_FUNC) &_jackalope_evolve_seqs, 6},
-    {"_jackalope_evolve_seqs_chunk", (DL_FUNC) &_jackalope_evolve_seqs_chunk, 6},
     {"_jackalope_print_ref_genome", (DL_FUNC) &_jackalope_print_ref_genome, 1},
     {"_jackalope_print_var_set", (DL_FUNC) &_jackalope_print_var_set, 1},
     {"_jackalope_make_ref_genome", (DL_FUNC) &_jackalope_make_ref_genome, 1},

@@ -303,149 +303,28 @@ public:
  This class uses the info above, plus a class and fxn from `weighted_reservoir.h` to
  do weighted reservoir sampling for a single location at which to put a mutation.
  The weights are based on the nucleotide and sequence region.
-
- Class `C` should be `ReservoirRates` or `ChunkReservoirRates`.
-
- If using `ReservoirRates`, this samples the entire sequence, which can be
- inefficient for large sequences.
-
- If using `ChunkReservoirRates`, this samples a set number of sequence locations
- at a time instead of the whole thing.
- It extracts a "chunk" for weighted sampling by using non-weighted sampling without
- replacement.
- For large sequences, this is much more efficient and, from my testing, produces
- similar results.
  */
-template <template <typename> class C>
-class OneSeqLocationSampler {
+class LocationSampler {
 
 public:
 
-    C<MutationRates> rates;
+    ReservoirRates<MutationRates> rates;
 
-    OneSeqLocationSampler() : rates() {};
-    OneSeqLocationSampler(const MutationRates& mr_, const uint32& chunk)
+    LocationSampler() : rates() {};
+    LocationSampler(const MutationRates& mr_, const uint32& chunk = 0)
         : rates(mr_, chunk) {}
-    OneSeqLocationSampler(const OneSeqLocationSampler<C>& other)
+    LocationSampler(const LocationSampler& other)
         : rates(other.rates) {}
-    OneSeqLocationSampler<C>& operator=(const OneSeqLocationSampler<C>& other) {
+    LocationSampler& operator=(const LocationSampler& other) {
         rates = other.rates;
         return *this;
     }
-
 
     inline uint32 sample(pcg64& eng, const uint32& start, const uint32& end,
                          const bool& ranged) {
         return rates.sample(eng, start, end, ranged);
     }
 
-};
-
-
-
-/*
- Simplifying names and adding the following functionality:
- - return rate changes for given substitutions, insertions, or deletions
- - return rate of the whole sequence with `total_rate()` method
- - change gamma region bounds with the `update_gamma_regions()` method
- */
-class LocationSampler: public OneSeqLocationSampler<ReservoirRates> {
-public:
-
-    // Constructors:
-    LocationSampler() : OneSeqLocationSampler<ReservoirRates>() {}
-    LocationSampler(const MutationRates& mr_)
-        : OneSeqLocationSampler<ReservoirRates>(mr_, 0) {};
-    // Copy constructor
-    LocationSampler(const LocationSampler& other)
-        : OneSeqLocationSampler<ReservoirRates>(other) {};
-    // Assignment operator
-    LocationSampler& operator=(const LocationSampler& other) {
-        OneSeqLocationSampler<ReservoirRates>::operator=(other);
-        return *this;
-    }
-
-    /*
-     Return reference to inner MutationRates field.
-     */
-    inline MutationRates& mr() {
-        return rates.res_rates;
-    }
-    // const version
-    inline const MutationRates& mr() const {
-        return rates.res_rates;
-    }
-
-    // Fill pointer
-    void fill_ptrs(const VarSequence& vs_) {
-        mr().var_seq = &vs_;
-        return;
-    }
-
-    /*
-     Get the change in mutation rate for a substitution at a location given a
-     position and the character it'll change to
-     */
-    double substitution_rate_change(const char& c, const uint32& pos) const {
-        const MutationRates& mr_(mr());
-        return mr_.sub_rate_change(pos, c);
-    }
-    /*
-     Get the change in mutation rate for an insertion at a location given a
-     position and the characters that'll be inserted.
-     */
-    double insertion_rate_change(const std::string& seq, const uint32& pos) const {
-        const MutationRates& mr_(mr());
-        double gamma = mr_.gammas[pos];
-        double rate = mr_.raw_rate(seq);
-        return gamma * rate;
-    }
-    /*
-     Get the change in mutation rate for a deletion at a location given a
-     position and the deletion size.
-     */
-    double deletion_rate_change(const sint32& size_mod, const uint32& start) const {
-        uint32 end = start - size_mod - 1;
-        const MutationRates& mr_(mr());
-        double out = mr_(start, end);
-        out *= -1;
-        return out;
-    }
-    /*
-     Return the total rate for a VarSequence object
-    */
-    inline double total_rate(const uint32& start, const uint32& end,
-                             const bool& ranged) const {
-        const MutationRates& mr_(mr());
-        return mr_.total_rate(start, end, ranged);
-    }
-    /*
-     To update gamma boundaries when indels occur:
-     */
-    inline void update_gamma_regions(const sint32& size_change, const uint32& pos) {
-        MutationRates& mr_(mr());
-        mr_.gammas.update(pos, size_change);
-        return;
-    }
-
-};
-
-class ChunkLocationSampler: public OneSeqLocationSampler<ChunkReservoirRates> {
-public:
-
-
-    // Constructors:
-    ChunkLocationSampler() : OneSeqLocationSampler<ChunkReservoirRates>() {}
-    ChunkLocationSampler(const MutationRates& mr_, const uint32 chunk = 0)
-        : OneSeqLocationSampler<ChunkReservoirRates>(mr_, chunk) {}
-    // Copy constructor
-    ChunkLocationSampler(const ChunkLocationSampler& other)
-        : OneSeqLocationSampler<ChunkReservoirRates>(other) {};
-    // Assignment operator
-    ChunkLocationSampler& operator=(const ChunkLocationSampler& other) {
-        OneSeqLocationSampler<ChunkReservoirRates>::operator=(other);
-        return *this;
-    }
 
     inline MutationRates& mr() {
         return rates.res_rates.all_rates;

@@ -35,26 +35,24 @@
  */
 
 /*
- Templates that do weighted reservoir sampling for a vector, returning
+ Template that does weighted reservoir sampling for a vector, returning
  one unsigned integer index to the sampled location in the `rates` vector.
 
- The first version simply samples along the entire vector.
-
- The second, "chunk" version first sub-samples (*not* weighted) a set number of
+ This "chunk" version first sub-samples (*not* weighted) a set number of
  indices, then only does weighted sampling on rates with those indices.
  This can improve performance pretty significantly, depending on the number of
  sub-samples compared to the whole vector's size.
 
- Both versions require that class `T` has...
+ It requires that class `T` has...
  (1) a bracket-operator method (`operator[]`) that returns the rate (type `double`)
      for a given index
  (2) a `size()` method that returns the max index to sample + 1
 
- Both versions also require that you pre-construct an object to retrieve the rates
+ It also requires that you pre-construct an object to retrieve the rates
  from. The classes you need to construct are different for the first and second
  sampling functions below, and they are templates with the same requirements for
  class `T` as listed above.
- See the classes `ReservoirRates` and `ChunkReservoirRates` below for more info.
+ See the class `ReservoirRates` below for more info.
 
  */
 
@@ -63,8 +61,7 @@
 
 /*
  Regular weighted reservoir sampling.
- This template does most of the work for the two `sample` methods for the two classes
- in this file.
+ This template does most of the work for the `sample` method.
 
  If `end` is set to zero and `start >= end`, then `end` will be reset to the maximum
  possible value.
@@ -118,61 +115,6 @@ inline uint32 weighted_reservoir_(R& obj, pcg64& eng,
 
 
 
-/*
- A class for weighted reservoir sampling.
- This is just a wrapper for a reference to a vector of rates plus an exponential
- distribution object.
- I made this class to make sure the exponential distribution isn't messed with, plus
- to be consistent with the "chunked" version below.
- Class `T` needs to return a double with square brackets and have a `size()` method.
- */
-template <typename T>
-class ReservoirRates {
-
-public:
-
-    T res_rates;
-
-    ReservoirRates() : res_rates(), distr(1.0) {};
-    ReservoirRates(const T& r) : res_rates(r), distr(1.0) {};
-    ReservoirRates(const ReservoirRates<T>& other)
-        : res_rates(other.res_rates), distr(1.0) {}
-    /*
-     `cs` is ignored here, and this constructor is only to allow for template use along
-     with chunked version:
-     */
-    ReservoirRates(const T& r, const uint32& cs) : res_rates(r), distr(1.0) {};
-    // Assignment operator
-    ReservoirRates<T>& operator=(const ReservoirRates<T>& other) {
-        res_rates = other.res_rates;
-        return *this;
-    }
-
-    inline double rexp_(pcg64& eng) {
-        return distr(eng);
-    }
-
-
-    // Sample for one location across the whole object or inside a range
-    inline uint32 sample(pcg64& eng, const uint32& start, const uint32& end,
-                         const bool& ranged) {
-        uint32 i;
-        if (ranged) {
-            i = weighted_reservoir_<ReservoirRates<T>>(*this, eng, start, end);
-        } else {
-            i = weighted_reservoir_<ReservoirRates<T>>(*this, eng);
-        }
-        return i;
-    }
-
-protected:
-    std::exponential_distribution<double> distr;
-
-};
-
-
-
-
 
 
 
@@ -193,12 +135,12 @@ protected:
 
 
 template <typename T>
-class ChunkReservoirRates;
+class ReservoirRates;
 
 template <typename T>
 class ChunkRateGetter {
 
-    friend class ChunkReservoirRates<T>;
+    friend class ReservoirRates<T>;
 
 public:
 
@@ -433,19 +375,19 @@ private:
 
 
 template <typename T>
-class ChunkReservoirRates {
+class ReservoirRates {
 
 public:
 
     ChunkRateGetter<T> res_rates;
 
-    ChunkReservoirRates() : res_rates(), distr(1.0) {};
-    ChunkReservoirRates(const T& r, const uint32& chunk)
+    ReservoirRates() : res_rates(), distr(1.0) {};
+    ReservoirRates(const T& r, const uint32& chunk)
         : res_rates(r, chunk), distr(1.0) {};
-    ChunkReservoirRates(const ChunkReservoirRates<T>& other)
+    ReservoirRates(const ReservoirRates<T>& other)
         : res_rates(other.res_rates), distr(1.0) {}
     // Assignment operator
-    ChunkReservoirRates<T>& operator=(const ChunkReservoirRates<T>& other) {
+    ReservoirRates<T>& operator=(const ReservoirRates<T>& other) {
         res_rates = other.res_rates;
         return *this;
     }
@@ -460,7 +402,7 @@ public:
         if (ranged) {
             res_rates.reset(eng, start, end);
         } else res_rates.reset(eng);
-        uint32 i = weighted_reservoir_<ChunkReservoirRates<T>>(*this, eng);
+        uint32 i = weighted_reservoir_<ReservoirRates<T>>(*this, eng);
         return res_rates.inds[i];
     }
 

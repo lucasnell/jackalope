@@ -614,28 +614,13 @@ trees_to_var_set <- function(phylo_info_ptr, reference, mevo_obj, n_threads,
     # Make sampler_base_ptr
     sampler_base_ptr <- mevo_obj_to_ptr(mevo_obj)
 
-    # Make Gamma matrices (for mutation-rate variability among sites):
-    gamma_mats <- mevo_obj$gamma_mats
-
     # Make variants pointer:
-    variants_ptr <- NULL
-    if (mevo_obj$chunk_size > 0) {
-        variants_ptr <- evolve_seqs_chunk(
-            reference$genome,
-            sampler_base_ptr,
-            phylo_info_ptr,
-            gamma_mats,
-            n_threads,
-            show_progress)
-    } else {
-        variants_ptr <- evolve_seqs(
-            reference$genome,
-            sampler_base_ptr,
-            phylo_info_ptr,
-            gamma_mats,
-            n_threads,
-            show_progress)
-    }
+    variants_ptr <- evolve_seqs(reference$genome,
+                                sampler_base_ptr,
+                                phylo_info_ptr,
+                                mevo_obj$gamma_mats,
+                                n_threads,
+                                show_progress)
 
     return(variants_ptr)
 
@@ -651,7 +636,7 @@ trees_to_var_set <- function(phylo_info_ptr, reference, mevo_obj, n_threads,
 #'
 #' @noRd
 #'
-phylo_to_ptr <- function(phy, n_seqs, chunked) {
+phylo_to_ptr <- function(phy, n_seqs) {
 
     if ((!inherits(phy, "phylo") && !inherits(phy, "multiPhylo") &&
          !inherits(phy, "list")) ||
@@ -682,11 +667,7 @@ phylo_to_ptr <- function(phy, n_seqs, chunked) {
                              return(list(phy_info))
                          })
 
-    if (!chunked) {
-        trees_ptr <- phylo_info_to_trees(phylo_info)
-    } else {
-        trees_ptr <- phylo_info_to_trees_chunk(phylo_info)
-    }
+    trees_ptr <- phylo_info_to_trees(phylo_info)
 
     return(trees_ptr)
 }
@@ -772,10 +753,9 @@ process_coal_tree_string <- function(str, seq_size) {
 #' @noRd
 #'
 #'
-gtrees_to_ptr <- function(trees, reference, mevo_obj) {
+gtrees_to_ptr <- function(trees, reference) {
 
     seq_sizes <- reference$sizes()
-    chunked <- mevo_obj$chunk_size > 0
 
     if (length(trees) != length(seq_sizes)) {
         stop("\nIn function `vars_gtrees`, there must be a set of gene trees ",
@@ -823,11 +803,7 @@ gtrees_to_ptr <- function(trees, reference, mevo_obj) {
         }
     }
 
-    if (!chunked) {
-        trees_ptr <- phylo_info_to_trees(phylo_info)
-    } else {
-        trees_ptr <- phylo_info_to_trees_chunk(phylo_info)
-    }
+    trees_ptr <- phylo_info_to_trees(phylo_info)
 
     return(trees_ptr)
 }
@@ -1020,7 +996,6 @@ to_var_set.vars_phylo_info <- function(x, reference, mevo_obj,
 
     n_vars <- length(phy$tip.label)
     n_seqs <- as.integer(reference$n_seqs())
-    chunked <- mevo_obj$chunk_size > 0
 
     if (!length(phy) %in% c(1L, n_seqs)) {
         stop("\nIn function `vars_phylo`, you must provide information for 1 tree ",
@@ -1031,7 +1006,7 @@ to_var_set.vars_phylo_info <- function(x, reference, mevo_obj,
 
     if (length(phy) == 1) phy <- rep(phy, n_seqs)
 
-    trees_ptr <- phylo_to_ptr(phy, n_seqs, chunked)
+    trees_ptr <- phylo_to_ptr(phy, n_seqs)
 
     var_set_ptr <- trees_to_var_set(trees_ptr, reference, mevo_obj, n_threads,
                                     show_progress)
@@ -1054,7 +1029,6 @@ to_var_set.vars_theta_info <- function(x, reference, mevo_obj,
 
     n_vars <- length(phy$tip.label)
     n_seqs <- reference$n_seqs()
-    chunked <- mevo_obj$chunk_size > 0
 
     # Calculating L from theta:
     # E(L) = 4 * N * a; a = sum(1 / (1:(n_seqs-1)))
@@ -1065,7 +1039,7 @@ to_var_set.vars_theta_info <- function(x, reference, mevo_obj,
     # Now rescale to have total tree length of `L`:
     phy$edge.length <- phy$edge.length / max(ape::node.depth.edgelength(phy)) * L
 
-    trees_ptr <- phylo_to_ptr(phy, n_seqs, chunked)
+    trees_ptr <- phylo_to_ptr(phy, n_seqs)
 
     var_set_ptr <- trees_to_var_set(trees_ptr, reference, mevo_obj, n_threads,
                                     show_progress)
@@ -1083,7 +1057,7 @@ to_var_set.vars_theta_info <- function(x, reference, mevo_obj,
 to_var_set.vars_gtrees_info <- function(x, reference, mevo_obj,
                                         n_threads, show_progress) {
 
-    trees_ptr <- gtrees_to_ptr(x$trees, reference, mevo_obj)
+    trees_ptr <- gtrees_to_ptr(x$trees, reference)
 
     var_set_ptr <- trees_to_var_set(trees_ptr, reference, mevo_obj, n_threads,
                                     show_progress)
