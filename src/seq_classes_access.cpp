@@ -21,11 +21,11 @@
 #include "jackalope_types.h"  // integer types
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
-#include "mevo.h"
+#include "mutator.h"    // ChunkMutationSampler in test_rate fxn
 #include "pcg.h"  // pcg seeding
 #include "weighted_reservoir.h"  // weighted reservoir sampling
-#include "mevo_gammas.h"  // SequenceGammas class
-#include "mevo_phylo.h"  // match_ and template functions
+#include "site_var.h"  // SequenceGammas class
+#include "phylogenomics.h"  // match_ and template functions
 
 
 

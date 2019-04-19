@@ -249,78 +249,12 @@ write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, show
     invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix, show_progress))
 }
 
-#' Used below to directly make a MutationTypeSampler
-#'
-#' @noRd
-#'
-NULL
-
-#' Add mutations at segregating sites for one sequence from coalescent simulation output.
-#'
-#' @noRd
-#'
-NULL
-
 make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates) {
     .Call(`_jackalope_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates)
 }
 
 make_mutation_sampler_chunk_base <- function(Q, pi_tcag, insertion_rates, deletion_rates, chunk_size) {
     .Call(`_jackalope_make_mutation_sampler_chunk_base`, Q, pi_tcag, insertion_rates, deletion_rates, chunk_size)
-}
-
-#' Add mutations at segregating sites from coalescent simulation output.
-#'
-#' @noRd
-#'
-add_coal_sites_cpp <- function(ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress) {
-    .Call(`_jackalope_add_coal_sites_cpp`, ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress)
-}
-
-#' Fill matrix of Gamma-region end points and Gamma values.
-#'
-#' @param gamma_mat The gamma matrix to fill.
-#' @param gammas_x_sizes The value of `sum(gamma[i] * region_size[i])` to fill in.
-#'     This value is used to later determine (in fxn `make_gamma_mats`) the
-#'     mean gamma value across the whole genome, which is then used to make sure that
-#'     the overall mean is 1.
-#' @param seq_size_ Length of the focal sequence.
-#' @param gamma_size_ Size of each Gamma region.
-#' @param shape The shape parameter for the Gamma distribution from which
-#'     Gamma values will be derived.
-#' @param eng A random number generator.
-#'
-#'
-#' @noRd
-#'
-NULL
-
-#' Make matrices of Gamma-region end points and Gamma values for multiple sequences.
-#'
-#' @param seq_sizes Lengths of the sequences in the genome.
-#' @param gamma_size_ Size of each Gamma region.
-#' @param shape The shape parameter for the Gamma distribution from which
-#'     Gamma values will be derived.
-#'
-#'
-#' @noRd
-#'
-make_gamma_mats <- function(seq_sizes, gamma_size_, shape) {
-    .Call(`_jackalope_make_gamma_mats`, seq_sizes, gamma_size_, shape)
-}
-
-#' Check input Gamma matrices for proper # columns and end points.
-#'
-#' @param mats List of matrices to check.
-#' @param seq_sizes Vector of sequences sizes for all sequences.
-#'
-#' @return A length-2 vector of potential error codes and the index (1-based indexing)
-#'     to which matrix was a problem.
-#'
-#' @noRd
-#'
-check_gamma_mats <- function(mats, seq_sizes) {
-    invisible(.Call(`_jackalope_check_gamma_mats`, mats, seq_sizes))
 }
 
 #' Create XPtr to nested vector of PhyloTree objects from phylogeny information.
@@ -602,6 +536,52 @@ test_rate <- function(start, end, var_ind, seq_ind, var_set_ptr, sampler_base_pt
     .Call(`_jackalope_test_rate`, start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_)
 }
 
+#' Fill matrix of Gamma-region end points and Gamma values.
+#'
+#' @param gamma_mat The gamma matrix to fill.
+#' @param gammas_x_sizes The value of `sum(gamma[i] * region_size[i])` to fill in.
+#'     This value is used to later determine (in fxn `make_gamma_mats`) the
+#'     mean gamma value across the whole genome, which is then used to make sure that
+#'     the overall mean is 1.
+#' @param seq_size_ Length of the focal sequence.
+#' @param gamma_size_ Size of each Gamma region.
+#' @param shape The shape parameter for the Gamma distribution from which
+#'     Gamma values will be derived.
+#' @param eng A random number generator.
+#'
+#'
+#' @noRd
+#'
+NULL
+
+#' Make matrices of Gamma-region end points and Gamma values for multiple sequences.
+#'
+#' @param seq_sizes Lengths of the sequences in the genome.
+#' @param gamma_size_ Size of each Gamma region.
+#' @param shape The shape parameter for the Gamma distribution from which
+#'     Gamma values will be derived.
+#'
+#'
+#' @noRd
+#'
+make_gamma_mats <- function(seq_sizes, gamma_size_, shape) {
+    .Call(`_jackalope_make_gamma_mats`, seq_sizes, gamma_size_, shape)
+}
+
+#' Check input Gamma matrices for proper # columns and end points.
+#'
+#' @param mats List of matrices to check.
+#' @param seq_sizes Vector of sequences sizes for all sequences.
+#'
+#' @return A length-2 vector of potential error codes and the index (1-based indexing)
+#'     to which matrix was a problem.
+#'
+#' @noRd
+#'
+check_gamma_mats <- function(mats, seq_sizes) {
+    invisible(.Call(`_jackalope_check_gamma_mats`, mats, seq_sizes))
+}
+
 #' Construct necessary information for substitution models.
 #'
 #' For a more detailed explanation, see `vignette("sub-models")`.
@@ -732,5 +712,25 @@ sub_UNREST <- function(Q) {
 
 using_openmp <- function() {
     .Call(`_jackalope_using_openmp`)
+}
+
+#' Used below to directly make a MutationTypeSampler
+#'
+#' @noRd
+#'
+NULL
+
+#' Add mutations at segregating sites for one sequence from coalescent simulation output.
+#'
+#' @noRd
+#'
+NULL
+
+#' Add mutations at segregating sites from coalescent simulation output.
+#'
+#' @noRd
+#'
+add_ssites_cpp <- function(ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress) {
+    .Call(`_jackalope_add_ssites_cpp`, ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress)
 }
 

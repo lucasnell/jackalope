@@ -19,7 +19,7 @@
 
 #include "jackalope_types.h"       // integer types
 #include "pcg.h"                // pcg seeding
-#include "mevo_gammas.h"        // Gamma* classes
+#include "site_var.h"        // Gamma* classes
 
 
 

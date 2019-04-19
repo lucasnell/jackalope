@@ -1,11 +1,11 @@
-#ifndef __JACKAL_MEVO_PHYLO_H
-#define __JACKAL_MEVO_PHYLO_H
+#ifndef __JACKAL_PHYLOGENOMICS_H
+#define __JACKAL_PHYLOGENOMICS_H
 
 
 /*
  ********************************************************
 
- Methods for molecular evolution using phylogenies
+ Methods for evolving sequences along phylogenies / gene trees
 
  ********************************************************
  */
@@ -25,7 +25,7 @@
 
 #include "jackalope_types.h"  // integer types
 #include "seq_classes_var.h"  // Var* classes
-#include "mevo.h"  // samplers
+#include "mutator.h"  // samplers
 #include "alias_sampler.h" // alias sampling
 #include "pcg.h" // pcg sampler types
 

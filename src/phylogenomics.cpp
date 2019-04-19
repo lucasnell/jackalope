@@ -2,7 +2,7 @@
 /*
  ********************************************************
 
- Methods for molecular evolution using phylogenies
+ Methods for evolving sequences along phylogenies / gene trees
 
  ********************************************************
  */
@@ -21,53 +21,15 @@
 
 #include "jackalope_types.h"  // integer types
 #include "seq_classes_var.h"  // Var* classes
-#include "mevo.h"  // samplers
+#include "mutator.h"  // samplers
 #include "pcg.h" // pcg sampler types
-#include "mevo_phylo.h"
+#include "phylogenomics.h"
 #include "util.h"  // thread_check
 
 
 using namespace Rcpp;
 
 
-
-/*
- Overloaded for only mutating within a range.
- It also updates `end` if an indel occurs in the range.
- Make sure to keep checking for situation where `end < start` (i.e., sequence section
- is empty).
- `// ***` mark difference between this and previous `mutate` versions
- */
-template <class C>
-double OneSeqMutationSampler<C>::mutate(pcg64& eng, const uint32& start, sint64& end) {
-    if (end < 0) stop("end is negative in [Chunk]MutationSampler.mutate");
-    uint32 pos = sample_location(eng, start, static_cast<uint32>(end), true);  // ***
-    char c = var_seq->get_nt(pos);
-    MutationInfo m = sample_type(c, eng);
-    double rate_change;
-    if (m.length == 0) {
-        rate_change = location.substitution_rate_change(m.nucleo, pos);
-        var_seq->add_substitution(m.nucleo, pos);
-    } else {
-        if (m.length > 0) {
-            std::string nts = new_nucleos(m.length, eng);
-            rate_change = location.insertion_rate_change(nts, pos);
-            var_seq->add_insertion(nts, pos);
-        } else {
-            sint64 pos_ = static_cast<sint64>(pos);
-            sint64 size_ = end + 1;  // ***
-            if (pos_ - m.length > size_) m.length = static_cast<sint32>(pos_-size_);
-            uint32 del_size = std::abs(m.length);
-            rate_change = location.deletion_rate_change(m.length, pos);
-            var_seq->add_deletion(del_size, pos);
-        }
-        // Update Gamma region bounds:
-        location.update_gamma_regions(m.length, pos);
-        // Update end point:
-        end += static_cast<sint64>(m.length);  // ***
-    }
-    return rate_change;
-}
 
 
 

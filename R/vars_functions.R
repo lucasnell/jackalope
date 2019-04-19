@@ -961,14 +961,14 @@ to_var_set.vars_ssites_info <- function(x, reference, mevo_obj,
     # Fill and check the position column in `x$mats`
     x$mats <- fill_coal_mat_pos(x$mats, seq_sizes)
 
-    variants_ptr <- add_coal_sites_cpp(reference$genome,
-                                       x$mats,
-                                       mevo_obj$Q,
-                                       mevo_obj$pi_tcag,
-                                       mevo_obj$insertion_rates,
-                                       mevo_obj$deletion_rates,
-                                       n_threads,
-                                       show_progress)
+    variants_ptr <- add_ssites_cpp(reference$genome,
+                                   x$mats,
+                                   mevo_obj$Q,
+                                   mevo_obj$pi_tcag,
+                                   mevo_obj$insertion_rates,
+                                   mevo_obj$deletion_rates,
+                                   n_threads,
+                                   show_progress)
 
     return(variants_ptr)
 
