@@ -16,8 +16,6 @@
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling
-#include "weighted_reservoir.h"  // weighted reservoir sampling
-#include "site_var.h"  // SequenceGammas class
 #include "util.h"  // thread_check
 
 using namespace Rcpp;

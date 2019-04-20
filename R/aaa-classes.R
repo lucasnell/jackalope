@@ -569,9 +569,6 @@ variants$lock()
 #' @field deletion_rates Vector of deletion rates by length.
 #' @field gamma_mats List of matrices specifying "gamma distances" (see definition in
 #'     `?create_mevo`) for each sequence.
-#' @field chunk_size The size of "chunks" of sequences to first sample uniformly
-#'     before doing weighted sampling by rates for each sequence location.
-#'     See `?create_mevo` for more information.
 #'
 #' @section Methods:
 #' \describe{
@@ -600,20 +597,17 @@ mevo <- R6::R6Class(
         insertion_rates = NULL,
         deletion_rates = NULL,
         gamma_mats = NULL,
-        chunk_size = NULL,
 
         initialize = function(sub_info,
                               insertion_rates,
                               deletion_rates,
-                              gamma_mats,
-                              chunk_size) {
+                              gamma_mats) {
 
             self$Q <- sub_info$Q
             self$pi_tcag <- sub_info$pi_tcag
             self$insertion_rates <- insertion_rates
             self$deletion_rates <- deletion_rates
             self$gamma_mats <- gamma_mats
-            self$chunk_size <- chunk_size
 
         },
 
@@ -624,8 +618,6 @@ mevo <- R6::R6Class(
 
             cat("# Equilibrium densities:\n")
             cat("  ", sprintf(fmt, self$pi_tcag), "\n")
-
-            cat("# Chunk size: ", self$chunk_size, "\n", sep = "")
 
             cat("# Among-site variability: ")
             using_gammas <- !all(sapply(self$gamma_mats,

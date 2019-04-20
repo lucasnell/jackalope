@@ -203,8 +203,7 @@ public:
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
         for (uint32 i = 0; i < tree_size; i++) {
-            samplers[i].fill_ptrs(var_seqs[i]);
-            samplers[i].fill_gamma(gamma_mat);
+            samplers[i].new_seq(var_seqs[i], gamma_mat);
         }
 
     }
@@ -281,8 +280,7 @@ public:
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
         for (uint32 i = 0; i < tree_size; i++) {
-            samplers[i].fill_ptrs(var_seqs[i]);
-            samplers[i].fill_gamma(gamma_mat);
+            samplers[i].new_seq(var_seqs[i], gamma_mat);
         }
 
         return;
@@ -405,8 +403,7 @@ private:
         }
         // Fill in sampler pointers and original gamma matrix:
         for (uint32 i = 0; i < tree_size; i++) {
-            samplers[i].fill_ptrs(var_seqs[i]);
-            samplers[i].fill_gamma(gamma_mat);
+            samplers[i].new_seq(var_seqs[i], gamma_mat);
         }
         /*
          Set up vector of overall sequence rates.
@@ -414,8 +411,8 @@ private:
          */
         double rate_;
         if (!recombination) {
-            rate_ = samplers[0].total_rate();
-        } else rate_ = samplers[0].total_rate(start, static_cast<uint32>(end), true);
+            rate_ = samplers[0].calc_rate();
+        } else rate_ = samplers[0].calc_rate(start, static_cast<uint32>(end), true);
         seq_rates = std::vector<double>(tree_size, rate_);
 
         return;
@@ -437,7 +434,10 @@ private:
         /*
          Do the same for the SeqGammas in the sampler:
          */
-        samplers[b2].location.mr().gammas = samplers[b1].location.mr().gammas;
+        samplers[b2].location.regions = samplers[b1].location.regions;
+        samplers[b2].location.seq_size = samplers[b1].location.seq_size;
+        samplers[b2].location.total_rate = samplers[b1].location.total_rate;
+
         /*
          Update overall sequence rate:
          */

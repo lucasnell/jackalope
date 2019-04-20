@@ -24,7 +24,6 @@
 #include "mutator.h"    // MutationSampler in test_rate fxn
 #include "pcg.h"  // pcg seeding
 #include "weighted_reservoir.h"  // weighted reservoir sampling
-#include "site_var.h"  // SequenceGammas class
 #include "phylogenomics.h"  // match_ and template functions
 
 
@@ -807,10 +806,9 @@ double test_rate(const uint32& start, const uint32& end,
     XPtr<MutationSampler> sampler_base(sampler_base_ptr);
 
     MutationSampler sampler(*sampler_base);
-    sampler.fill_ptrs(var_seq);
-    sampler.fill_gamma(gamma_mat_);
+    sampler.new_seq(var_seq, gamma_mat_);
 
-    double out = sampler.total_rate(start, end, true);
+    double out = sampler.calc_rate(start, end, true);
 
     return out;
 

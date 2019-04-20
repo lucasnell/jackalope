@@ -19,8 +19,6 @@
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling
-#include "site_var.h"  // SequenceGammas class
-#include "weighted_reservoir.h"  // weighted_reservoir_* functions
 #include "mutator_location.h"  // mutator location sampling classes
 #include "mutator_type.h"      // mutator type sampling classes
 #include "util.h"  // str_stop
@@ -79,12 +77,6 @@ public:
 
     MutationSampler() {}
 
-    MutationSampler(VarSequence& vs_,
-                    const LocationSampler& location_,
-                    const MutationTypeSampler& type_,
-                    const AliasStringSampler<std::string>& insert_)
-        : var_seq(&vs_), location(location_), type(type_), insert(insert_) {}
-
     MutationSampler(const MutationSampler& other)
         : var_seq(other.var_seq), location(other.location), type(other.type),
           insert(other.insert) {}
@@ -97,14 +89,9 @@ public:
         return *this;
     }
 
-    void fill_ptrs(VarSequence& vs_) {
+    void new_seq(VarSequence& vs_, const arma::mat& gamma_mat) {
         var_seq = &vs_;
-        location.fill_ptrs(vs_);
-        return;
-    }
-
-    void fill_gamma(const arma::mat& gamma_mat) {
-        location.mr().gammas = SequenceGammas(gamma_mat);
+        location.new_seq(vs_, gamma_mat);
         return;
     }
 
@@ -122,9 +109,9 @@ public:
 
 
 
-    double total_rate(const uint32& start = 0, const uint32& end = 0,
+    double calc_rate(const uint32& start = 0, const uint32& end = 0,
                       const bool& ranged = false) {
-        return location.total_rate(start, end, ranged);
+        return location.calc_rate(start, end, ranged);
     }
 };
 

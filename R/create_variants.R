@@ -31,18 +31,6 @@
 #'     variability in mutation rates among sites (for both substitutions and indels).
 #'     Passing `NULL` to this argument results in no variability among sites.
 #'     Defaults to `NULL`.
-#' @param chunk_size The size of "chunks" of sequences to first sample uniformly
-#'     before doing weighted sampling by rates for each sequence location.
-#'     Uniformly sampling before doing weighted sampling dramatically speeds up
-#'     the mutation process (especially for very long sequences) and has little
-#'     effect on the sampling probabilities.
-#'     Higher values will more closely resemble sampling without the uniform-sampling
-#'     step, but will be slower.
-#'     Set this to `0` to not uniformly sample first.
-#'     From testing on a chromosome of length `1e6`, a `chunk_size` value of `100`
-#'     offers a ~10x speed increase and doesn't differ significantly from sampling
-#'     without the uniform-sampling step.
-#'     Defaults to `100`.
 #' @param n_threads Number of threads to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
 #'     Threads are spread across sequences, so it
@@ -66,7 +54,6 @@ create_variants <- function(reference,
                             ins = NULL,
                             del = NULL,
                             gamma_mats = NULL,
-                            chunk_size = 100,
                             n_threads = 1,
                             show_progress = FALSE) {
 
@@ -104,7 +91,7 @@ create_variants <- function(reference,
 
     # Do checks and organize molecular-evolution info into `mevo` object
     # (or `NULL` if `sub` was not provided):
-    mevo_obj <- create_mevo(reference, sub, ins, del, gamma_mats, chunk_size)
+    mevo_obj <- create_mevo(reference, sub, ins, del, gamma_mats)
 
     if (!single_integer(n_threads, .min = 1)) {
         err_msg("create_variants", "n_threads", "a single integer >= 1")

@@ -112,7 +112,7 @@ struct Mutation {
  */
 
 // (This class will later need access to private members of VarSequence.)
-class MutationRates;
+class LocationSampler;
 
 
 /*
@@ -123,7 +123,7 @@ class MutationRates;
 
 class VarSequence {
 
-    friend class MutationRates;
+    friend class LocationSampler;
 
 public:
 

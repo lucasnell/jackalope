@@ -13,7 +13,7 @@ using namespace Rcpp;
 
 // Add mutation and return the change in the sequence rate that results
 double MutationSampler::mutate(pcg64& eng) {
-    uint32 pos = sample_location(eng, 0, 0, false);
+    uint32 pos = sample_location(eng);
     // uint32 pos = runif_01(eng) * var_seq->size();
     char c = var_seq->get_nt(pos);
     MutationInfo m = sample_type(c, eng);
@@ -87,8 +87,7 @@ double MutationSampler::mutate(pcg64& eng, const uint32& start, sint64& end) {
 SEXP make_mutation_sampler_base(const arma::mat& Q,
                                 const std::vector<double>& pi_tcag,
                                 const std::vector<double>& insertion_rates,
-                                const std::vector<double>& deletion_rates,
-                                const uint32& chunk_size) {
+                                const std::vector<double>& deletion_rates) {
 
     std::vector<std::vector<double>> probs;
     std::vector<sint32> mut_lengths;
@@ -110,10 +109,7 @@ SEXP make_mutation_sampler_base(const arma::mat& Q,
     out->type = MutationTypeSampler(probs, mut_lengths);
     out->insert = AliasStringSampler<std::string>("TCAG", pi_tcag);
 
-    MutationRates mr(q_tcag);
-    out->location = LocationSampler(mr);
-
-    out->location.change_chunk(chunk_size);
+    out->location = LocationSampler(q_tcag);
 
     return out;
 }

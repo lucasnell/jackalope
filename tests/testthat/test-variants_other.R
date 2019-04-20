@@ -29,7 +29,7 @@ test_that("missing `sub` arg throws error", {
 # vars_theta -----
 test_that("basics of vars_theta work", {
 
-    vars <- cv(vars_theta(0.1, n_vars = 4), c(list(chunk_size = 10), arg_list))
+    vars <- cv(vars_theta(0.1, n_vars = 4))
 
     expect_identical(vars$n_seqs(), arg_list$reference$n_seqs())
     expect_identical(vars$n_vars(), 4L)

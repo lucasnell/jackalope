@@ -262,8 +262,8 @@ site_var <- function(reference,
     if (!inherits(reference, "ref_genome")) {
         err_msg("site_var", "reference", "a \"ref_genome\" object")
     }
-    if (!is.null(shape) && (!single_number(shape) || shape <= 0)) {
-        err_msg("site_var", "shape", "NULL or a single number > 0")
+    if (!is.null(shape) && !single_number(shape, 0)) {
+        err_msg("site_var", "shape", "NULL or a single number >= 0")
     }
     if (!is.null(region_size) && !single_integer(region_size, 1)) {
         err_msg("site_var", "region_size", "NULL or a single integer >= 1")
@@ -370,18 +370,6 @@ print.site_var_mats <- function(x, digits = max(3, getOption("digits") - 3), ...
 #'     variability in mutation rates among sites (for both substitutions and indels).
 #'     Passing `NULL` to this argument results in no variability among sites.
 #'     Defaults to `NULL`.
-#' @param chunk_size The size of "chunks" of sequences to first sample uniformly
-#'     before doing weighted sampling by rates for each sequence location.
-#'     Uniformly sampling before doing weighted sampling dramatically speeds up
-#'     the mutation process (especially for very long sequences) and has little
-#'     effect on the sampling probabilities.
-#'     Higher values will more closely resemble sampling without the uniform-sampling
-#'     step, but will be slower.
-#'     Set this to `0` to not uniformly sample first.
-#'     From testing on a chromosome of length `1e6`, a `chunk_size` value of `100`
-#'     offers a ~10x speed increase and doesn't differ significantly from sampling
-#'     without the uniform-sampling step.
-#'     Defaults to `100`.
 #'
 #' @return An object of class \code{\link{mevo}}.
 #'
@@ -391,8 +379,7 @@ create_mevo <- function(reference,
                         sub,
                         ins,
                         del,
-                        gamma_mats,
-                        chunk_size) {
+                        gamma_mats) {
 
     if (!inherits(reference, "ref_genome")) {
         err_msg("create_variants", "reference", "a \"ref_genome\" object")
@@ -409,9 +396,6 @@ create_mevo <- function(reference,
     if (!is.null(gamma_mats) && !is_type(gamma_mats, "site_var_mats")) {
         err_msg("create_variants", "gamma_mats", "NULL or a \"site_var_mats\" object")
     }
-    if (!single_integer(chunk_size, 1)) {
-        err_msg("create_variants", "chunk_size", "an integer >= 1")
-    }
 
     # `sub` must be provided if others are:
     if (is.null(sub) && (!is.null(ins) ||
@@ -422,7 +406,7 @@ create_mevo <- function(reference,
              "via one of the `sub_models` functions.", call. = FALSE)
     }
 
-    # If no molecular evolution is provided, return NULL
+    # If no molecular evolution is provided, return NULL (only happens for VCF method)
     if (is.null(sub)) return(NULL)
 
     # Below will turn `NULL` into `numeric(0)` and
@@ -437,7 +421,7 @@ create_mevo <- function(reference,
     # -------+
     if (is.null(gamma_mats)) {
         # This results in no variability among sites:
-        gamma_mats <- make_gamma_mats(reference$sizes(), gamma_size_ = 0, shape = 1)
+        gamma_mats <- make_gamma_mats(reference$sizes(), gamma_size_ = 100, shape = 0)
         dim(gamma_mats) <- NULL # so it's just a list now
     }
 
@@ -447,8 +431,7 @@ create_mevo <- function(reference,
     out <- mevo$new(sub,
                     ins,
                     del,
-                    gamma_mats,
-                    chunk_size)
+                    gamma_mats)
 
     return(out)
 }
@@ -463,16 +446,10 @@ create_mevo <- function(reference,
 #'
 mevo_obj_to_ptr <- function(mevo_obj) {
 
-    if (!single_integer(mevo_obj$chunk_size, 0)) {
-        stop("\nIn internal jackalope function `mevo_obj_to_ptr`, ",
-             "a `chunk_size` of < 0 was specified, which makes no sense.")
-    }
-
     sampler_ptr <- make_mutation_sampler_base(mevo_obj$Q,
                                               mevo_obj$pi_tcag,
                                               mevo_obj$insertion_rates,
-                                              mevo_obj$deletion_rates,
-                                              mevo_obj$chunk_size)
+                                              mevo_obj$deletion_rates)
 
     return(sampler_ptr)
 }

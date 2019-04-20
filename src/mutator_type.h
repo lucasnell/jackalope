@@ -20,8 +20,6 @@
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling
-#include "site_var.h"  // SequenceGammas class
-#include "weighted_reservoir.h"  // weighted_reservoir_* functions
 #include "util.h"  // str_stop
 
 
@@ -70,7 +68,7 @@ struct MutationInfo {
  and get out an index to which AliasSampler object to sample from.
  This way is much faster than using an unordered_map.
  Using 8-bit uints bc the char should never be >= 256.
- It's only of length 85 (versus 256 in MutationRates class) because characters other
+ It's only of length 85 (versus 256 in LocationSampler class) because characters other
  than T, C, A, or G have rates hard-coded to zero and should never be chosen.
  */
 inline std::vector<uint8> make_base_inds() {

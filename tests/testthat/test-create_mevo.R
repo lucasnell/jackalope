@@ -72,9 +72,8 @@ with(pars, {
 create_mevo <- function(reference, sub,
                         ins = NULL,
                         del = NULL,
-                        gamma_mats = NULL,
-                        chunk_size = 100) {
-    jackalope:::create_mevo(reference, sub, ins, del, gamma_mats, chunk_size)
+                        gamma_mats = NULL) {
+    jackalope:::create_mevo(reference, sub, ins, del, gamma_mats)
 }
 
 # Create reference genome
@@ -96,7 +95,6 @@ test_that("proper output common to all models with no site variability or indels
     expect_equal(M$gamma_mats, X)
     expect_equal(M$insertion_rates, numeric(0))
     expect_equal(M$deletion_rates, numeric(0))
-    expect_equal(M$chunk_size, 100)
 })
 
 test_that("proper output for JC69 model", {
