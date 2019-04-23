@@ -13,10 +13,10 @@ using namespace Rcpp;
 
 // Add mutation and return the change in the sequence rate that results
 double MutationSampler::mutate(pcg64& eng) {
-    uint32 pos = sample_location(eng);
+    uint32 pos = location.sample(eng);
     // uint32 pos = runif_01(eng) * var_seq->size();
     char c = var_seq->get_nt(pos);
-    MutationInfo m = sample_type(c, eng);
+    MutationInfo m = type.sample(c, eng);
     double rate_change;
     if (m.length == 0) {
         rate_change = location.substitution_rate_change(m.nucleo, pos);
@@ -50,10 +50,10 @@ double MutationSampler::mutate(pcg64& eng) {
  */
 double MutationSampler::mutate(pcg64& eng, const uint32& start, sint64& end) {
     if (end < 0) stop("end is negative in MutationSampler.mutate");
-    uint32 pos = sample_location(eng, start, static_cast<uint32>(end), true);  // ***
+    uint32 pos = location.sample(eng, start, static_cast<uint32>(end));  // ***
     // uint32 pos = (runif_01(eng) * (static_cast<uint32>(end) - start + 1)) + start;
     char c = var_seq->get_nt(pos);
-    MutationInfo m = sample_type(c, eng);
+    MutationInfo m = type.sample(c, eng);
     double rate_change;
     if (m.length == 0) {
         rate_change = location.substitution_rate_change(m.nucleo, pos);

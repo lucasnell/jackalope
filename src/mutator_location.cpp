@@ -251,16 +251,46 @@ double LocationSampler::calc_rate(uint32 start,
 
 
 
-uint32 LocationSampler::sample(pcg64& eng, const uint32& start, const uint32& end,
-                               const bool& ranged) {
+double LocationSampler::deletion_rate_change(const sint32& size_mod,
+                                             const uint32& start) {
 
-    uint32 pos;
-    if (ranged) {
-        pos = (runif_01(eng) * (end - start + 1)) + start;
-    } else {
-        pos = runif_01(eng) * var_seq->size();
+    uint32 n_del = std::abs(size_mod); // # bp deleted
+
+    uint32 end = start + n_del - 1;
+    if (end >= var_seq->size()) end = var_seq->size() - 1;
+
+    std::string seq;
+    seq.reserve(n_del);
+    uint32 mut_ = var_seq->get_mut_(start);
+    var_seq->set_seq_chunk(seq, start, end - start + 1, mut_);
+
+    double r, out = 0;
+    uint32 seq_i = 0;
+    uint32 idx = get_gamma_idx(start);
+
+    while (seq_i < seq.size()) {
+        GammaRegion& reg(regions[idx]);
+        while (((seq_i + start) <= reg.end) && (seq_i < seq.size())) {
+            r = reg.gamma * nt_rates[seq[seq_i]];
+            out -= r;
+            reg.rate -= r;
+            total_rate -= r;
+            seq_i++;
+        }
+        idx++;
     }
 
-    return pos;
+    return out;
+}
 
+
+
+
+uint32 LocationSampler::sample(pcg64& eng, const uint32& start, const uint32& end) {
+    uint32 pos = (runif_01(eng) * (end - start + 1)) + start;
+    return pos;
+}
+uint32 LocationSampler::sample(pcg64& eng) {
+    uint32 pos = runif_01(eng) * var_seq->size();
+    return pos;
 }

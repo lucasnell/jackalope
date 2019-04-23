@@ -38,23 +38,6 @@ using namespace Rcpp;
 class MutationSampler {
 
     /*
-     Sample for mutation location based on rates by sequence region and nucleotide,
-     for the whole sequence or a range.
-     */
-    inline uint32 sample_location(pcg64& eng,
-                                  const uint32& start = 0, const uint32& end = 0,
-                                  const bool& ranged = false) {
-        return location.sample(eng, start, end, ranged);
-    }
-
-    /*
-     Sample for mutation type based on nucleotide and rng engine
-     */
-    inline MutationInfo sample_type(const char& c, pcg64& eng) const {
-        return type.sample(c, eng);
-    }
-
-    /*
      Create a new string of nucleotides (for insertions) of a given length and using
      an input rng engine
      */

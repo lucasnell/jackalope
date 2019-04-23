@@ -175,8 +175,8 @@ public:
         return var_seq->size();
     }
 
-    uint32 sample(pcg64& eng, const uint32& start, const uint32& end,
-                  const bool& ranged);
+    uint32 sample(pcg64& eng, const uint32& start, const uint32& end);
+    uint32 sample(pcg64& eng);
 
 
     // Fill pointer for a new VarSequence
@@ -209,32 +209,7 @@ public:
         return d_rate;
     }
 
-    double deletion_rate_change(const sint32& size_mod, const uint32& start) {
-
-        const uint32 end = start - size_mod - 1;
-
-        std::string seq;
-        seq.reserve(end - start + 1);
-        uint32 mut_ = var_seq->get_mut_(start);
-        var_seq->set_seq_chunk(seq, start, end - start + 1, mut_);
-
-        double r, out = 0;
-        uint32 i = 0;
-        uint32 idx = get_gamma_idx(start);
-        while (i < seq.size()) {
-            GammaRegion& reg(regions[idx]);
-            while ((i + start) <= reg.end) {
-                r = reg.gamma * nt_rates[seq[i]];
-                out -= r;
-                reg.rate -= r;
-                total_rate -= r;
-                i++;
-            }
-            idx++;
-        }
-
-        return out;
-    }
+    double deletion_rate_change(const sint32& size_mod, const uint32& start);
 
     double calc_rate(uint32 start,
                       uint32 end,
