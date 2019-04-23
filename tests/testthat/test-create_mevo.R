@@ -5,25 +5,6 @@ context("Testing making of mevo (molecular evolution info) object")
 # library(testthat)
 
 
-# From mevo class:
-# # Average mutation rate
-# mu = function() {
-#     # Indel rates (same for each nucleotide):
-#     indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
-#     # Average mutation rate among all nucleotides:
-#     mu <- sum({rowSums(self$Q) + indel} * self$pi_tcag)
-#     return(mu)
-# },
-#
-# # Overall mutation rate by nucleotide
-# q = function() {
-#     # Indel rates (same for each nucleotide):
-#     indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
-#     # Mutation rates by nucleotides:
-#     q <- rowSums(self$Q) + indel
-#     return(q)
-# }
-
 
 set.seed(4616515)
 
@@ -91,8 +72,11 @@ M <- create_mevo(ref, sub = sub_JC69(pars$lambda))
 
 # These only need to be checked once:
 test_that("proper output common to all models with no site variability or indels", {
-    X <- rep(list(cbind(1000, 1)), length(M$gamma_mats))
-    expect_equal(M$gamma_mats, X)
+
+    seq_ <- seq(min(c(pars$seq_len, 100)), max(c(pars$seq_len, 100)), 100)
+    X <- rep(list(cbind(seq_, 1)), length(M$gamma_mats))
+
+    expect_equal(M$gamma_mats, X, check.attributes = FALSE)
     expect_equal(M$insertion_rates, numeric(0))
     expect_equal(M$deletion_rates, numeric(0))
 })

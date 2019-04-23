@@ -102,7 +102,7 @@ vcf_info <-
 # (i.e., each variant is a separate sample)
 # ------------------------*
 
-write_vcf(vars, paste0(dir, "/test"))
+write_vcf(vars, paste0(dir, "/test"), overwrite = TRUE)
 vcf <- readLines(paste0(dir, "/test.vcf"))
 
 
