@@ -143,18 +143,13 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
 
 // To return the overall rate for an entire sequence or part of it:
 
-double LocationSampler::calc_rate(uint32 start,
-                                  uint32 end,
-                                  const bool& ranged) const {
+// Inner method that does most of the work for `calc_rate` below
+
+double LocationSampler::calc_rate__(uint32 start, uint32 end) const {
 
     double out = 0;
 
     if (var_seq->size() == 0) return out;
-
-    if (!ranged) {
-        start = 0;
-        end = var_seq->size() - 1;
-    }
 
     if ((var_seq->size() - 1) != regions.back().end) {
         stop("gammas and var_seq sizes don't match inside LocationSampler");
@@ -247,6 +242,32 @@ double LocationSampler::calc_rate(uint32 start,
 
     return out;
 }
+
+
+
+double LocationSampler::calc_rate() const {
+
+    if (var_seq->size() == 0) return 0.0;
+
+    uint32 start = 0;
+    uint32 end = var_seq->size() - 1;
+
+    double out = calc_rate__(start, end);
+
+    return out;
+}
+
+double LocationSampler::calc_rate(const uint32& start, const uint32& end) const {
+
+    if (var_seq->size() == 0) return 0.0;
+
+    double out = calc_rate__(start, end);
+
+    return out;
+}
+
+
+
 
 
 

@@ -412,7 +412,7 @@ private:
         double rate_;
         if (!recombination) {
             rate_ = samplers[0].calc_rate();
-        } else rate_ = samplers[0].calc_rate(start, static_cast<uint32>(end), true);
+        } else rate_ = samplers[0].calc_rate(start, static_cast<uint32>(end));
         seq_rates = std::vector<double>(tree_size, rate_);
 
         return;

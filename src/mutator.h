@@ -92,9 +92,11 @@ public:
 
 
 
-    double calc_rate(const uint32& start = 0, const uint32& end = 0,
-                      const bool& ranged = false) {
-        return location.calc_rate(start, end, ranged);
+    double calc_rate() {
+        return location.calc_rate();
+    }
+    double calc_rate(const uint32& start, const uint32& end) {
+        return location.calc_rate(start, end);
     }
 };
 

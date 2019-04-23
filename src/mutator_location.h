@@ -211,9 +211,8 @@ public:
 
     double deletion_rate_change(const sint32& size_mod, const uint32& start);
 
-    double calc_rate(uint32 start,
-                      uint32 end,
-                      const bool& ranged) const;
+    double calc_rate() const;
+    double calc_rate(const uint32& start, const uint32& end) const;
 
     void update_gamma_regions(const sint32& size_change,
                               const uint32& pos);
@@ -290,6 +289,10 @@ private:
         }
         return;
     }
+
+
+    // Inner method that does most of the work for `calc_rate`
+    double calc_rate__(uint32 start, uint32 end) const;
 
 };
 
