@@ -46,6 +46,8 @@ class MutationSampler {
         insert.sample(str, eng);
         return str;
     }
+    // Does most of the work for the mutate methods (all but location sampling)
+    inline double mutate__(pcg64& eng, const uint32& start, sint64& end);
 
 public:
 

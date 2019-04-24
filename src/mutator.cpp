@@ -11,10 +11,9 @@
 
 using namespace Rcpp;
 
-// Add mutation and return the change in the sequence rate that results
-double MutationSampler::mutate(pcg64& eng) {
-    uint32 pos = location.sample(eng);
-    // uint32 pos = runif_01(eng) * var_seq->size();
+// Does most of the work of mutating for the below methods (all but location sampling)
+inline double MutationSampler::mutate__(pcg64& eng, const uint32& pos, sint64& end) {
+
     char c = var_seq->get_nt(pos);
     MutationInfo m = type.sample(c, eng);
     double rate_change;
@@ -22,22 +21,65 @@ double MutationSampler::mutate(pcg64& eng) {
         rate_change = location.substitution_rate_change(m.nucleo, pos);
         var_seq->add_substitution(m.nucleo, pos);
     } else {
+        uint32 end__ = location.regions.back().end;  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        if (end__ != (var_seq->size() - 1)) {
+            Rcout << std::endl <<  "(region, seq) " << end__ << ", " <<
+                var_seq->size() << std::endl;
+            if (m.length > 0) stop("error before insertion");
+            if (m.length < 0) stop("error before deletion");
+        }
         if (m.length > 0) {
             std::string nts = new_nucleos(m.length, eng);
             rate_change = location.insertion_rate_change(nts, pos);
             var_seq->add_insertion(nts, pos);
         } else {
             sint64 pos_ = static_cast<sint64>(pos);
-            sint64 size_ = static_cast<sint64>(var_seq->size());
+            sint64 size_ = end + 1;
             if (pos_ - m.length > size_) m.length = static_cast<sint32>(pos_-size_);
             uint32 del_size = std::abs(m.length);
-            rate_change = location.deletion_rate_change(m.length, pos);
+            rate_change = location.deletion_rate_change(del_size, pos);
             var_seq->add_deletion(del_size, pos);
         }
         // Update Gamma region bounds:
         location.update_gamma_regions(m.length, pos);
-
+        // Update end point:
+        end += static_cast<sint64>(m.length);
+        uint32 me_i = 0, max_end = 0;
+        for (uint32 i = 0; i < location.regions.size(); i++) {
+            const GammaRegion& gr(location.regions[i]);
+            if (gr.end > max_end) {
+                max_end = gr.end;
+                me_i = i;
+            }
+        }
+        if ((end__ + m.length) != max_end) {
+            Rcout << std::endl <<  "(obs, i, obs.size, back, exp) " << max_end <<
+                ", " << me_i << ", " << location.regions.size() << ", " << location.regions.back().end << ", " << (end__ + m.length) << std::endl;
+            if (m.length > 0) stop("error after insertion");
+            if (m.length < 0) stop("error after deletion");
+        }
+        if (max_end != (var_seq->size() - 1)) {
+            Rcout << std::endl <<  "(region, i, seq) " << max_end <<
+                ", " << me_i << ", " << var_seq->size() << std::endl;
+            if (m.length > 0) stop("error after insertion");
+            if (m.length < 0) stop("error after deletion");
+        }
     }
+    return rate_change;
+}
+
+
+// Add mutation and return the change in the sequence rate that results
+double MutationSampler::mutate(pcg64& eng) {
+
+    uint32 pos = location.sample(eng);
+    // uint32 pos = runif_01(eng) * var_seq->size();
+
+    // Dummy end point for use in mutate__
+    sint64 end = var_seq->size() - 1;
+
+    double rate_change = mutate__(eng, pos, end);
+
     return rate_change;
 }
 
@@ -46,36 +88,15 @@ double MutationSampler::mutate(pcg64& eng) {
  It also updates `end` if an indel occurs in the range.
  Make sure to keep checking for situation where `end < start` (i.e., sequence section
  is empty).
- `// ***` mark difference between this and previous `mutate` versions
  */
 double MutationSampler::mutate(pcg64& eng, const uint32& start, sint64& end) {
+
     if (end < 0) stop("end is negative in MutationSampler.mutate");
-    uint32 pos = location.sample(eng, start, static_cast<uint32>(end));  // ***
+    uint32 pos = location.sample(eng, start, static_cast<uint32>(end));
     // uint32 pos = (runif_01(eng) * (static_cast<uint32>(end) - start + 1)) + start;
-    char c = var_seq->get_nt(pos);
-    MutationInfo m = type.sample(c, eng);
-    double rate_change;
-    if (m.length == 0) {
-        rate_change = location.substitution_rate_change(m.nucleo, pos);
-        var_seq->add_substitution(m.nucleo, pos);
-    } else {
-        if (m.length > 0) {
-            std::string nts = new_nucleos(m.length, eng);
-            rate_change = location.insertion_rate_change(nts, pos);
-            var_seq->add_insertion(nts, pos);
-        } else {
-            sint64 pos_ = static_cast<sint64>(pos);
-            sint64 size_ = end + 1;  // ***
-            if (pos_ - m.length > size_) m.length = static_cast<sint32>(pos_-size_);
-            uint32 del_size = std::abs(m.length);
-            rate_change = location.deletion_rate_change(m.length, pos);
-            var_seq->add_deletion(del_size, pos);
-        }
-        // Update Gamma region bounds:
-        location.update_gamma_regions(m.length, pos);
-        // Update end point:
-        end += static_cast<sint64>(m.length);  // ***
-    }
+
+    double rate_change = mutate__(eng, pos, end);
+
     return rate_change;
 }
 
