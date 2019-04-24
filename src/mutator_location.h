@@ -90,7 +90,7 @@ struct GammaRegion {
                          std::vector<uint32>& erase_inds,
                          const uint32& del_start,
                          const uint32& del_end,
-                         const sint32& del_size);
+                         const uint32& del_size);
 
     inline double size() const {
         return static_cast<double>(end - start + 1);
@@ -134,14 +134,13 @@ public:
     const VarSequence * var_seq;  // pointer to const VarSequence
     std::vector<double> nt_rates = std::vector<double>(256, 0.0);
     std::vector<GammaRegion> regions;
-    double seq_size;
     long double total_rate = 0;
 
-    LocationSampler() : var_seq(), regions(), seq_size() {};
+    LocationSampler() : var_seq(), regions() {};
     LocationSampler(const VarSequence& vs_,
                     const std::vector<double>& q_tcag,
                     const arma::mat& gamma_mat)
-        : var_seq(&vs_), regions(), seq_size(vs_.size()) {
+        : var_seq(&vs_), regions() {
         for (uint32 i = 0; i < 4; i++) {
             uint32 bi = mut_loc::bases[i];
             nt_rates[bi] = q_tcag[i];
@@ -149,7 +148,7 @@ public:
         construct_gammas(gamma_mat);
     }
     LocationSampler(const std::vector<double>& q_tcag)
-        : var_seq(), regions(), seq_size() {
+        : var_seq(), regions() {
         for (uint32 i = 0; i < 4; i++) {
             uint32 bi = mut_loc::bases[i];
             nt_rates[bi] = q_tcag[i];
@@ -157,13 +156,11 @@ public:
     }
     LocationSampler(const LocationSampler& other)
         : var_seq(other.var_seq), nt_rates(other.nt_rates),
-          regions(other.regions), seq_size(other.seq_size),
-          total_rate(other.total_rate) {}
+          regions(other.regions), total_rate(other.total_rate) {}
     LocationSampler& operator=(const LocationSampler& other) {
         var_seq = other.var_seq;
         nt_rates = other.nt_rates;
         regions = other.regions;
-        seq_size = other.seq_size;
         total_rate = other.total_rate;
         return *this;
     }
@@ -175,14 +172,13 @@ public:
         return var_seq->size();
     }
 
-    uint32 sample(pcg64& eng, const uint32& start, const uint32& end);
-    uint32 sample(pcg64& eng);
+    uint32 sample(pcg64& eng, const uint32& start, const uint32& end) const;
+    uint32 sample(pcg64& eng) const;
 
 
     // Fill pointer for a new VarSequence
     void new_seq(const VarSequence& vs_, const arma::mat& gamma_mat) {
         var_seq = &vs_;
-        seq_size = vs_.size();
         construct_gammas(gamma_mat);
         return;
     }
@@ -209,7 +205,7 @@ public:
         return d_rate;
     }
 
-    double deletion_rate_change(const sint32& size_mod, const uint32& start);
+    double deletion_rate_change(const uint32& del_size, const uint32& start);
 
     double calc_rate() const;
     double calc_rate(const uint32& start, const uint32& end) const;
@@ -224,53 +220,15 @@ public:
 private:
 
 
-    void construct_gammas(arma::mat gamma_mat) {
-
-        total_rate = 0;
-
-        if (!var_seq) stop("Cannot do construct_gammas method when var_seq isn't set.");
-        // Sort from first to last region
-        arma::uvec sort_inds = arma::sort_index(gamma_mat.col(0));
-        gamma_mat = gamma_mat.rows(sort_inds);
-        // Now fill in the regions vector
-        regions.reserve(gamma_mat.n_rows);
-
-        double gamma;
-        uint32 start;
-        uint32 end;
-        double rate;
-        uint32 mut_i = 0;
-
-        for (uint32 i = 0; i < gamma_mat.n_rows; i++) {
-
-            // Below, I'm subtracting 1 to go back to 0-based indexing
-            end = static_cast<uint32>(gamma_mat(i,0)) - 1;
-
-            if (i > 0) {
-                start = static_cast<uint32>(gamma_mat(i-1,0));
-            } else start = 0;
-
-            gamma = gamma_mat(i,1);
-
-            std::string seq;
-            rate = 0;
-            var_seq->set_seq_chunk(seq, start, end - i + 1, mut_i);
-            for (const char& c : seq) rate += nt_rates[c];
-
-            regions.push_back(GammaRegion(gamma, start, end, rate));
-
-            total_rate += rate;
-        }
-
-        return;
-    }
+    void construct_gammas(arma::mat gamma_mat);
 
 
     /*
      Based on a sequence position, return an index to the Gamma region it's inside.
      */
     inline uint32 get_gamma_idx(const uint32& pos) const {
-        uint32 idx = pos * (static_cast<double>(regions.size()) / seq_size);
+        uint32 idx = pos * (static_cast<double>(regions.size()) /
+            static_cast<double>(var_seq->size()));
         if (idx >= regions.size()) idx = regions.size() - 1;
         while (regions[idx].end < pos) idx++;
         while (regions[idx].start > pos) idx--;
@@ -293,6 +251,13 @@ private:
 
     // Inner method that does most of the work for `calc_rate`
     double calc_rate__(uint32 start, uint32 end) const;
+
+
+    inline uint32 gamma_sample(long double& u,
+                               long double& cum_wt,
+                               const uint32& gam_i) const;
+
+    inline void safe_get_mut(const uint32& pos, uint32& mut_i) const;
 
 };
 

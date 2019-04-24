@@ -435,7 +435,6 @@ private:
          Do the same for the SeqGammas in the sampler:
          */
         samplers[b2].location.regions = samplers[b1].location.regions;
-        samplers[b2].location.seq_size = samplers[b1].location.seq_size;
         samplers[b2].location.total_rate = samplers[b1].location.total_rate;
 
         /*

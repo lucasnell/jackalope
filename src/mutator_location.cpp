@@ -36,36 +36,93 @@ void GammaRegion::deletion_adjust(const uint32& ind,
                                   std::vector<uint32>& erase_inds,
                                   const uint32& del_start,
                                   const uint32& del_end,
-                                  const sint32& del_size) {
+                                  const uint32& del_size) {
 
+    // No overlap and deletion starts after it
+    if (del_start > end) return;
+    // No overlap and deletion starts before it
+    if (del_end < start) {
+        start -= del_size;
+        end -= del_size;
+        return;
+    }
     // Total overlap
     if ((del_start <= start) && (del_end >= end)) {
         erase_inds.push_back(ind);
         return;
     }
-    // Deletion is totally inside this region but doesn't entirely overlap it
+    /*
+     Deletion is totally inside this region but doesn't entirely overlap it
+     or touch any of the end points
+     */
     if ((del_start > start) && (del_end < end)) {
-        end += del_size;
-        return;
-    }
-    // No overlap and deletion starts after it
-    if (del_start > end) return;
-    // No overlap and deletion starts before it
-    if (del_end < start) {
-        start += del_size;
-        end += del_size;
+        end -= del_size;
         return;
     }
     // Partial overlap at the start
-    if ((del_end >= start) && (del_start < start)) {
+    if ((del_end >= start) && (del_start <= start)) {
         start = del_start;
-        end += del_size;
+        end -= del_size;
         return;
     }
     // Partial overlap at the end
-    if ((del_start <= end) && (del_end > end)) {
+    if ((del_start <= end) && (del_end >= end)) {
         end = del_start - 1;
     }
+    return;
+}
+
+
+
+
+
+void LocationSampler::construct_gammas(arma::mat gamma_mat) {
+
+    total_rate = 0;
+
+    if (!var_seq) stop("Cannot do construct_gammas method when var_seq isn't set.");
+    // Sort from first to last region
+    arma::uvec sort_inds = arma::sort_index(gamma_mat.col(0));
+    gamma_mat = gamma_mat.rows(sort_inds);
+    if (gamma_mat(gamma_mat.n_rows - 1, 0) != var_seq->size()) {
+        stop("gamma_mat doesn't end with size of variant sequence");
+    }
+    // Now clear and fill in the regions vector
+    regions.clear();
+    regions.reserve(gamma_mat.n_rows);
+
+    double gamma;
+    uint32 start;
+    uint32 end;
+    double rate;
+    uint32 mut_i = 0;
+
+    for (uint32 i = 0; i < gamma_mat.n_rows; i++) {
+
+        // Below, I'm subtracting 1 to go back to 0-based indexing
+        end = static_cast<uint32>(gamma_mat(i,0)) - 1;
+
+        if (i > 0) {
+            start = static_cast<uint32>(gamma_mat(i-1,0));  // not subtracting -1
+        } else start = 0;
+
+        gamma = gamma_mat(i,1);
+
+        std::string seq;
+        seq.reserve(end - start + 1);
+        rate = 0;
+        var_seq->set_seq_chunk(seq, start, end - start + 1, mut_i);
+        for (const char& c : seq) rate += nt_rates[c];
+
+        regions.push_back(GammaRegion(gamma, start, end, rate));
+
+        total_rate += rate;
+    }
+
+    if (regions.back().end >= var_seq->size()) {
+        stop("on setup, regions.back().end >= var_seq->size()");
+    }
+
     return;
 }
 
@@ -88,7 +145,6 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
     -----------
     */
 
-    seq_size += static_cast<double>(size_change);
     uint32 idx = get_gamma_idx(pos);
 
 
@@ -104,6 +160,13 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
             regions[idx].start += size_change;
             idx++;
         }
+
+        if (regions.back().end != (var_seq->size() - 1)) {
+            Rcout << std::endl <<  "INS (region, seq) " << regions.back().end << ", " <<
+                var_seq->size() << std::endl;
+            stop("while running, regions.back().end != (var_seq->size() - 1)");
+        }
+
         return;
     }
 
@@ -111,14 +174,14 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
     Deletions
     */
     const uint32& del_start(pos);
-    uint32 del_end = pos;
-    del_end -= (size_change + 1);
+    uint32 del_size = std::abs(size_change);
+    uint32 del_end = pos + del_size - 1;
 
     // Iterate through and adjust all regions including and following the deletion:
     std::vector<uint32> erase_inds;
     while (idx < regions.size()) {
         regions[idx].deletion_adjust(idx, erase_inds, del_start, del_end,
-                                     size_change);
+                                     del_size);
         idx++;
     }
 
@@ -131,6 +194,13 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
     } else if (erase_inds.size() > 1) {
         regions.erase(regions.begin() + erase_inds.front(),
                       regions.begin() + erase_inds.back() + 1);
+    }
+
+
+    if (regions.back().end != (var_seq->size() - 1)) {
+        Rcout << std::endl <<  "DEL (region, seq) " << regions.back().end << ", " <<
+            var_seq->size() << std::endl;
+        stop("while running, regions.back().end != (var_seq->size() - 1)");
     }
 
     return;
@@ -156,10 +226,10 @@ double LocationSampler::calc_rate__(uint32 start, uint32 end) const {
     }
 
     /*
-    If there are no mutations or if `end` is before the first mutation,
-    then we don't need to use the `mutations` field at all.
-    (I'm using separate statements to avoid calling `front()` on an empty deque.)
-    */
+     If there are no mutations or if `end` is before the first mutation,
+     then we don't need to use the `mutations` field at all.
+     (I'm using separate statements to avoid calling `front()` on an empty deque.)
+     */
     bool use_mutations = true;
     if (var_seq->mutations.empty()) {
         use_mutations = false;
@@ -200,10 +270,10 @@ double LocationSampler::calc_rate__(uint32 start, uint32 end) const {
     uint32 pos = start;
 
     /*
-    If `start` is before the first mutation (resulting in
-    `mut_i == var_seq->mutations.size()`),
-    we must pick up any nucleotides before the first mutation.
-    */
+     If `start` is before the first mutation (resulting in
+     `mut_i == var_seq->mutations.size()`),
+     we must pick up any nucleotides before the first mutation.
+     */
     if (mut_i == var_seq->mutations.size()) {
         mut_i = 0;
         for (; pos < var_seq->mutations[mut_i].new_pos; pos++) {
@@ -215,11 +285,11 @@ double LocationSampler::calc_rate__(uint32 start, uint32 end) const {
 
 
     /*
-    Now, for each subsequent mutation except the last, add all nucleotides
-    at or after its position but before the next one.
-    I'm adding `pos <= end` inside all while-statement checks to make sure
-    it doesn't keep going after we've reached `end`.
-    */
+     Now, for each subsequent mutation except the last, add all nucleotides
+     at or after its position but before the next one.
+     I'm adding `pos <= end` inside all while-statement checks to make sure
+     it doesn't keep going after we've reached `end`.
+     */
     uint32 next_mut_i = mut_i + 1;
     while (pos <= end && next_mut_i < var_seq->mutations.size()) {
         while (pos <= end && pos < var_seq->mutations[next_mut_i].new_pos) {
@@ -272,18 +342,18 @@ double LocationSampler::calc_rate(const uint32& start, const uint32& end) const 
 
 
 
-double LocationSampler::deletion_rate_change(const sint32& size_mod,
+double LocationSampler::deletion_rate_change(const uint32& del_size,
                                              const uint32& start) {
 
-    uint32 n_del = std::abs(size_mod); // # bp deleted
-
-    uint32 end = start + n_del - 1;
+    uint32 end = start + del_size - 1;
     if (end >= var_seq->size()) end = var_seq->size() - 1;
 
     std::string seq;
-    seq.reserve(n_del);
-    uint32 mut_ = var_seq->get_mut_(start);
-    var_seq->set_seq_chunk(seq, start, end - start + 1, mut_);
+    seq.reserve(del_size);
+    uint32 mut_i;
+    safe_get_mut(start, mut_i);
+
+    var_seq->set_seq_chunk(seq, start, end - start + 1, mut_i);
 
     double r, out = 0;
     uint32 seq_i = 0;
@@ -307,11 +377,125 @@ double LocationSampler::deletion_rate_change(const sint32& size_mod,
 
 
 
-uint32 LocationSampler::sample(pcg64& eng, const uint32& start, const uint32& end) {
+
+
+
+/*
+ This more-efficiently retrieves the index to the Mutation object inside mutations
+ field, much like `VarSequence::get_mut_`.
+ The difference is that it returns 0 in the situations where the`get_mut_` returns
+ mutations.size(). This works more safely for methods here.
+ */
+inline void LocationSampler::safe_get_mut(const uint32& pos, uint32& mut_i) const {
+
+    mut_i = 0;
+
+    const std::deque<Mutation>& mutations(var_seq->mutations);
+
+    /*
+     If new_pos is less than the position for the first mutation, we return
+     keep it at zero.
+    */
+    if (mutations.empty() || (pos < mutations.front().new_pos)) return;
+
+    /*
+     If the new_pos is greater than or equal to the position for the last
+     mutation, we return the last Mutation:
+     */
+    if (pos >= mutations.back().new_pos) {
+        mut_i = mutations.size() - 1;
+        return;
+    }
+
+    /*
+     If not either of the above, then we will first try to guess the approximate
+     position to minimize how many iterations we have to perform.
+     */
+    mut_i = static_cast<double>(mutations.size() * pos) /
+        static_cast<double>(var_seq->size());
+    /*
+     If the current mutation is not past `pos`, iterate until it is.
+     I'm intentionally going past the mutation to make sure we're not getting a deletion
+     immediately followed by another mutation.
+     (We don't need to check for `mut_i` getting to the last index
+     (`mutations.size() - 1`) because we've already checked for that situation above.)
+     */
+    while (mutations[mut_i].new_pos <= pos) ++mut_i;
+    /*
+     Now move mutation to the proper spot: the last mutation that is <= `pos`.
+     */
+    while (mutations[mut_i].new_pos > pos) --mut_i;
+
+    return;
+
+}
+
+
+
+
+
+
+
+
+uint32 LocationSampler::sample(pcg64& eng,
+                               const uint32& start,
+                               const uint32& end) const {
     uint32 pos = (runif_01(eng) * (end - start + 1)) + start;
     return pos;
 }
-uint32 LocationSampler::sample(pcg64& eng) {
-    uint32 pos = runif_01(eng) * var_seq->size();
+uint32 LocationSampler::sample(pcg64& eng) const {
+
+    long double u = runif_01(eng) * total_rate;
+
+    // Find the GammaRegion:
+    uint32 i = 0;
+    long double cum_wt = 0;
+    for (; i < regions.size(); i++) {
+        cum_wt += regions[i].rate;
+        if (cum_wt > u) break;
+    }
+
+    /*
+     Find the location within the Gamma region:
+     */
+    uint32 pos = gamma_sample(u, cum_wt, i);
+
     return pos;
 }
+
+
+
+
+inline uint32 LocationSampler::gamma_sample(long double& u,
+                                            long double& cum_wt,
+                                            const uint32& gam_i) const {
+
+    const GammaRegion& reg(regions[gam_i]);
+
+    // Fill sequence of Gamma region:
+    std::string reg_seq;
+    uint32 reg_size = reg.end - reg.start + 1;
+    reg_seq.reserve(reg_size);
+    uint32 mut_i;
+    safe_get_mut(reg.start, mut_i);
+    var_seq->set_seq_chunk(reg_seq, reg.start, reg_size, mut_i);
+
+    // Now see where `u` points to:
+    cum_wt -= reg.rate;
+    u -= cum_wt;
+    u /= reg.gamma;
+    uint32 pos = 0;
+    cum_wt = 0;
+    for (; pos < reg_size; pos++) {
+        cum_wt += nt_rates[reg_seq[pos]];
+        if (cum_wt > u) break;
+    }
+
+    pos += reg.start;
+
+    return pos;
+
+}
+
+
+
