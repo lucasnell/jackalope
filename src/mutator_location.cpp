@@ -458,7 +458,8 @@ uint32 LocationSampler::sample(pcg64& eng) const {
     /*
      Find the location within the Gamma region:
      */
-    uint32 pos = gamma_sample(u, cum_wt, i);
+    uint32 pos;
+    gamma_sample(pos, u, cum_wt, i);
 
     return pos;
 }
@@ -466,34 +467,82 @@ uint32 LocationSampler::sample(pcg64& eng) const {
 
 
 
-inline uint32 LocationSampler::gamma_sample(long double& u,
-                                            long double& cum_wt,
-                                            const uint32& gam_i) const {
+inline void LocationSampler::gamma_sample(uint32& pos,
+                                          long double& u,
+                                          long double& cum_wt,
+                                          const uint32& gam_i) const {
 
     const GammaRegion& reg(regions[gam_i]);
+    const uint32& start(reg.start);
+    const uint32& end(reg.end);
 
-    // Fill sequence of Gamma region:
-    std::string reg_seq;
-    uint32 reg_size = reg.end - reg.start + 1;
-    reg_seq.reserve(reg_size);
-    uint32 mut_i;
-    safe_get_mut(reg.start, mut_i);
-    var_seq->set_seq_chunk(reg_seq, reg.start, reg_size, mut_i);
 
-    // Now see where `u` points to:
+    // Update numbers so that `u` points to a place inside this region:
     cum_wt -= reg.rate;
     u -= cum_wt;
     u /= reg.gamma;
-    uint32 pos = 0;
     cum_wt = 0;
-    for (; pos < reg_size; pos++) {
-        cum_wt += nt_rates[reg_seq[pos]];
-        if (cum_wt > u) break;
+    pos = start;
+
+    /*
+     If there are no mutations or if `end` is before the first mutation,
+     then we don't need to use the `mutations` field at all.
+    */
+    if (var_seq->mutations.empty() || (end < var_seq->mutations.front().new_pos)) {
+
+        for (; pos <= end; pos++) {
+            cum_wt += nt_rates[var_seq->ref_seq->nucleos[pos]];
+            if (cum_wt > u) break;
+        }
+        return;
+
     }
 
-    pos += reg.start;
+    // Index to the first Mutation object not past `start` position:
+    uint32 mut_i = var_seq->get_mut_(start);
+    // Current position
+    pos = start;
 
-    return pos;
+    /*
+     If `start` is before the first mutation (resulting in
+     `mut_i == var_seq->mutations.size()`),
+     we must pick up any nucleotides before the first mutation.
+     */
+    if (mut_i == var_seq->mutations.size()) {
+        mut_i = 0;
+        for (; pos < var_seq->mutations[mut_i].new_pos; pos++) {
+            cum_wt += nt_rates[var_seq->ref_seq->nucleos[pos]];
+            if (cum_wt > u) return;
+        }
+    }
+
+    /*
+     Now, for each subsequent mutation except the last, add all nucleotides
+     at or after its position but before the next one.
+     I'm adding `pos <= end` inside all while-statement checks to make sure
+     it doesn't keep going after we've reached `end`.
+     */
+    uint32 next_mut_i = mut_i + 1;
+    while (pos <= end && next_mut_i < var_seq->mutations.size()) {
+        while (pos <= end && pos < var_seq->mutations[next_mut_i].new_pos) {
+            char c = var_seq->get_char_(pos, mut_i);
+            cum_wt += nt_rates[c];
+            if (cum_wt > u) return;
+            ++pos;
+        }
+        ++mut_i;
+        ++next_mut_i;
+    }
+
+    // Now taking care of nucleotides after the last Mutation
+    while (pos <= end && pos < var_seq->seq_size) {
+        char c = var_seq->get_char_(pos, mut_i);
+        cum_wt += nt_rates[c];
+        if (cum_wt > u) return;
+        ++pos;
+    }
+
+    return;
 
 }
 

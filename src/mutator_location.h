@@ -253,9 +253,10 @@ private:
     double calc_rate__(uint32 start, uint32 end) const;
 
 
-    inline uint32 gamma_sample(long double& u,
-                               long double& cum_wt,
-                               const uint32& gam_i) const;
+    inline void gamma_sample(uint32& pos,
+                             long double& u,
+                             long double& cum_wt,
+                             const uint32& gam_i) const;
 
     inline void safe_get_mut(const uint32& pos, uint32& mut_i) const;
 
