@@ -21,13 +21,6 @@ inline double MutationSampler::mutate__(pcg64& eng, const uint32& pos, sint64& e
         rate_change = location.substitution_rate_change(m.nucleo, pos);
         var_seq->add_substitution(m.nucleo, pos);
     } else {
-        uint32 end__ = location.regions.back().end;  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        if (end__ != (var_seq->size() - 1)) {
-            Rcout << std::endl <<  "(region, seq) " << end__ << ", " <<
-                var_seq->size() << std::endl;
-            if (m.length > 0) stop("error before insertion");
-            if (m.length < 0) stop("error before deletion");
-        }
         if (m.length > 0) {
             std::string nts = new_nucleos(m.length, eng);
             rate_change = location.insertion_rate_change(nts, pos);
@@ -52,18 +45,6 @@ inline double MutationSampler::mutate__(pcg64& eng, const uint32& pos, sint64& e
                 me_i = i;
             }
         }
-        if ((end__ + m.length) != max_end) {
-            Rcout << std::endl <<  "(obs, i, obs.size, back, exp) " << max_end <<
-                ", " << me_i << ", " << location.regions.size() << ", " << location.regions.back().end << ", " << (end__ + m.length) << std::endl;
-            if (m.length > 0) stop("error after insertion");
-            if (m.length < 0) stop("error after deletion");
-        }
-        if (max_end != (var_seq->size() - 1)) {
-            Rcout << std::endl <<  "(region, i, seq) " << max_end <<
-                ", " << me_i << ", " << var_seq->size() << std::endl;
-            if (m.length > 0) stop("error after insertion");
-            if (m.length < 0) stop("error after deletion");
-        }
     }
     return rate_change;
 }
@@ -73,7 +54,6 @@ inline double MutationSampler::mutate__(pcg64& eng, const uint32& pos, sint64& e
 double MutationSampler::mutate(pcg64& eng) {
 
     uint32 pos = location.sample(eng);
-    // uint32 pos = runif_01(eng) * var_seq->size();
 
     // Dummy end point for use in mutate__
     sint64 end = var_seq->size() - 1;
@@ -93,7 +73,6 @@ double MutationSampler::mutate(pcg64& eng, const uint32& start, sint64& end) {
 
     if (end < 0) stop("end is negative in MutationSampler.mutate");
     uint32 pos = location.sample(eng, start, static_cast<uint32>(end));
-    // uint32 pos = (runif_01(eng) * (static_cast<uint32>(end) - start + 1)) + start;
 
     double rate_change = mutate__(eng, pos, end);
 

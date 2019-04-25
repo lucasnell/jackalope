@@ -119,10 +119,6 @@ void LocationSampler::construct_gammas(arma::mat gamma_mat) {
         total_rate += rate;
     }
 
-    if (regions.back().end >= var_seq->size()) {
-        stop("on setup, regions.back().end >= var_seq->size()");
-    }
-
     return;
 }
 
@@ -161,12 +157,6 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
             idx++;
         }
 
-        if (regions.back().end != (var_seq->size() - 1)) {
-            Rcout << std::endl <<  "INS (region, seq) " << regions.back().end << ", " <<
-                var_seq->size() << std::endl;
-            stop("while running, regions.back().end != (var_seq->size() - 1)");
-        }
-
         return;
     }
 
@@ -196,13 +186,6 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
                       regions.begin() + erase_inds.back() + 1);
     }
 
-
-    if (regions.back().end != (var_seq->size() - 1)) {
-        Rcout << std::endl <<  "DEL (region, seq) " << regions.back().end << ", " <<
-            var_seq->size() << std::endl;
-        stop("while running, regions.back().end != (var_seq->size() - 1)");
-    }
-
     return;
 }
 
@@ -221,10 +204,6 @@ double LocationSampler::calc_rate__(uint32 start, uint32 end) const {
 
     if (var_seq->size() == 0) return out;
 
-    if ((var_seq->size() - 1) != regions.back().end) {
-        stop("gammas and var_seq sizes don't match inside LocationSampler");
-    }
-
     /*
      If there are no mutations or if `end` is before the first mutation,
      then we don't need to use the `mutations` field at all.
@@ -233,9 +212,6 @@ double LocationSampler::calc_rate__(uint32 start, uint32 end) const {
     bool use_mutations = true;
     if (var_seq->mutations.empty()) {
         use_mutations = false;
-        if ((var_seq->ref_seq->nucleos.size() - 1) != regions.back().end) {
-            stop("gammas and var_seq ref sizes don't match inside LocationSampler");
-        }
     } else if (var_seq->mutations.front().new_pos > end) {
         use_mutations = false;
     }
