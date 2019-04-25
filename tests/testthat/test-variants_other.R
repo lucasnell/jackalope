@@ -10,6 +10,8 @@ arg_list <- list(reference = create_genome(3, 100),
                  sub = sub_JC69(0.1),
                  ins = indels(rate = 0.1, max_length = 10),
                  del = indels(rate = 0.1, max_length = 10))
+arg_list$gamma_mats <- site_var(arg_list$reference, shape = 2, region_size = 10)
+
 
 cv <- function(vars_info, al = arg_list) {
     arg_list_ <- c(list(vars_info = vars_info), al)

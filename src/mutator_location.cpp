@@ -113,6 +113,7 @@ void LocationSampler::construct_gammas(arma::mat gamma_mat) {
         rate = 0;
         var_seq->set_seq_chunk(seq, start, end - start + 1, mut_i);
         for (const char& c : seq) rate += nt_rates[c];
+        rate *= gamma;
 
         regions.push_back(GammaRegion(gamma, start, end, rate));
 

@@ -421,7 +421,7 @@ create_mevo <- function(reference,
     # -------+
     if (is.null(gamma_mats)) {
         # This results in no variability among sites:
-        gamma_mats <- make_gamma_mats(reference$sizes(), gamma_size_ = 100, shape = 0)
+        gamma_mats <- make_gamma_mats(reference$sizes(), gamma_size_ = 10, shape = 0)
         dim(gamma_mats) <- NULL # so it's just a list now
     }
 
