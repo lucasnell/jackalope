@@ -135,12 +135,18 @@ public:
     std::vector<double> nt_rates = std::vector<double>(256, 0.0);
     std::vector<GammaRegion> regions;
     long double total_rate = 0;
+    // For sampling with a starting and ending location:
+    uint32 start_pos = 0;
+    uint32 end_pos;
+    long double start_rate = 0;
+    long double end_rate = 0;
+    bool start_end_set = false; // whether pos and rates have been set
 
     LocationSampler() : var_seq(), regions() {};
     LocationSampler(const VarSequence& vs_,
                     const std::vector<double>& q_tcag,
                     const arma::mat& gamma_mat)
-        : var_seq(&vs_), regions() {
+        : var_seq(&vs_), regions(), end_pos(vs_.size()) {
         for (uint32 i = 0; i < 4; i++) {
             uint32 bi = mut_loc::bases[i];
             nt_rates[bi] = q_tcag[i];
@@ -156,23 +162,23 @@ public:
     }
     LocationSampler(const LocationSampler& other)
         : var_seq(other.var_seq), nt_rates(other.nt_rates),
-          regions(other.regions), total_rate(other.total_rate) {}
+          regions(other.regions), total_rate(other.total_rate),
+          start_pos(other.start_pos), end_pos(other.end_pos),
+          start_rate(other.start_rate), end_rate(other.end_rate) {}
     LocationSampler& operator=(const LocationSampler& other) {
         var_seq = other.var_seq;
         nt_rates = other.nt_rates;
         regions = other.regions;
         total_rate = other.total_rate;
+        start_pos = other.start_pos;
+        end_pos = other.end_pos;
+        start_rate = other.start_rate;
+        end_rate = other.end_rate;
         return *this;
     }
 
-    // inline uint32 size() const noexcept {
-    inline uint32 size() const {
-        // If a null pointer, throw error
-        if (!var_seq) stop("null pointer when accessing LocationSampler");
-        return var_seq->size();
-    }
 
-    uint32 sample(pcg64& eng, const uint32& start, const uint32& end) const;
+    uint32 sample(pcg64& eng, const uint32& start, const uint32& end);
     uint32 sample(pcg64& eng) const;
 
 
@@ -191,6 +197,7 @@ public:
         d_rate *= gamma;
         reg.rate += d_rate;
         total_rate += d_rate;
+        end_rate += d_rate;
         return d_rate;
     }
 
@@ -202,6 +209,7 @@ public:
         d_rate *= gamma;
         reg.rate += d_rate;
         total_rate += d_rate;
+        end_rate += d_rate;
         return d_rate;
     }
 
@@ -212,8 +220,6 @@ public:
 
     void update_gamma_regions(const sint32& size_change,
                               const uint32& pos);
-
-
 
 
 
@@ -259,6 +265,13 @@ private:
                              const uint32& gam_i) const;
 
     inline void safe_get_mut(const uint32& pos, uint32& mut_i) const;
+
+
+    inline long double partial_gamma_rate___(const uint32& end,
+                                             const GammaRegion& reg) const;
+
+
+    void update_start_end(const uint32& start, const uint32& end);
 
 };
 

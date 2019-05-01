@@ -120,6 +120,8 @@ void LocationSampler::construct_gammas(arma::mat gamma_mat) {
         total_rate += rate;
     }
 
+    end_rate = total_rate;
+
     return;
 }
 
@@ -319,6 +321,7 @@ double LocationSampler::calc_rate(const uint32& start, const uint32& end) const 
 
 
 
+
 double LocationSampler::deletion_rate_change(const uint32& del_size,
                                              const uint32& start) {
 
@@ -343,6 +346,7 @@ double LocationSampler::deletion_rate_change(const uint32& del_size,
             out -= r;
             reg.rate -= r;
             total_rate -= r;
+            end_rate -= r;
             seq_i++;
         }
         idx++;
@@ -411,13 +415,184 @@ inline void LocationSampler::safe_get_mut(const uint32& pos, uint32& mut_i) cons
 
 
 
+/*
+ For a given position within a gamma region, find the rate associated with it.
+ It just returns the rate (inclusive) from `reg.start` to `end`
+ */
+inline long double LocationSampler::partial_gamma_rate___(
+        const uint32& end,
+        const GammaRegion& reg) const {
+
+    long double out = 0;
+
+    if (end > reg.end) stop("end > reg.end");
+    if (end < reg.start) stop("end < reg.start");
+    if (end == reg.end) return reg.rate;
+
+    /*
+    If there are no mutations or if `end` is before the first mutation,
+    then we don't need to use the `mutations` field at all.
+    */
+    if (var_seq->mutations.empty() || (end < var_seq->mutations.front().new_pos)) {
+
+        for (uint32 i = reg.start; i <= end; i++) {
+            out += nt_rates[var_seq->ref_seq->nucleos[i]];
+        }
+        out *= reg.gamma;
+        return out;
+
+    }
+
+    // Current position
+    uint32 pos = reg.start;
+    // Index to the first Mutation object not past `pos`:
+    uint32 mut_i = var_seq->get_mut_(pos);
+
+    /*
+     If `pos` is before the first mutation (resulting in
+     `mut_i == var_seq->mutations.size()`),
+     we must pick up any nucleotides before the first mutation.
+     */
+    if (mut_i == var_seq->mutations.size()) {
+        mut_i = 0;
+        for (; pos < var_seq->mutations[mut_i].new_pos; pos++) {
+            out += nt_rates[var_seq->ref_seq->nucleos[pos]];
+        }
+    }
+
+    /*
+     Now, for each subsequent mutation except the last, add all nucleotides
+     at or after its position but before the next one.
+     I'm adding `pos <= end` inside all while-statement checks to make sure
+     it doesn't keep going after we've reached `end`.
+     */
+    uint32 next_mut_i = mut_i + 1;
+    while (pos <= end && next_mut_i < var_seq->mutations.size()) {
+        while (pos <= end && pos < var_seq->mutations[next_mut_i].new_pos) {
+            char c = var_seq->get_char_(pos, mut_i);
+            out += nt_rates[c];
+            ++pos;
+        }
+        ++mut_i;
+        ++next_mut_i;
+    }
+
+    // Now taking care of nucleotides after the last Mutation
+    while (pos <= end && pos < var_seq->seq_size) {
+        char c = var_seq->get_char_(pos, mut_i);
+        out += nt_rates[c];
+        ++pos;
+    }
+
+    out *= reg.gamma;
+
+    return out;
+
+}
+
+
+
+/*
+ Update starting and ending positions and rates
+ */
+void LocationSampler::update_start_end(const uint32& start, const uint32& end) {
+
+    // If they don't need updated, then don't do it:
+    if (start_end_set && (start == start_pos) && (end == end_pos)) return;
+
+    if ((start >= var_seq->size()) || (end >= var_seq->size())) {
+        stop("start or end in update_start_end is >= variant sequence size");
+    }
+    if (start > end) stop("start > end in update_start_end");
+
+    start_pos = start;
+    end_pos = end;
+
+    // If they point to full sequence starts and ends, then this is easy:
+    if ((start == 0) && (end == var_seq->size())) {
+        start_rate = 0;
+        end_rate = total_rate;
+        return;
+    }
+
+    long double cum_wt = 0;
+    uint32 gamm_i = 0;
+    long double part_rate = 0;
+
+    uint32 mut_i = 0;
+
+    /*
+     Rate for starting position:
+     */
+    if (start_pos == 0) {
+        start_rate = 0;
+    } else {
+        /*
+         Below, I'm using `start_pos - 1` for things because to sample for positions
+         from `start` to `end` inclusively, I want the starting rate to be for the
+         position before `start`
+         */
+        safe_get_mut(start_pos - 1, mut_i);
+        gamm_i = 0;
+        cum_wt = regions[gamm_i].rate;
+        // Find the GammaRegion for the new start:
+        while ((gamm_i < (regions.size() - 1)) &&
+               (regions[gamm_i].end < (start_pos - 1))) {
+            gamm_i++;
+            cum_wt += regions[gamm_i].rate;
+        }
+        cum_wt -= regions[gamm_i].rate;
+        // Rate from reg.start to `start_pos - 1`:
+        part_rate = partial_gamma_rate___(start_pos - 1, regions[gamm_i]);
+        // Set `start_rate`:
+        start_rate = cum_wt + part_rate;
+    }
+
+    /*
+     Rate for ending position:
+     */
+    safe_get_mut(end_pos, mut_i);
+    cum_wt += regions[gamm_i].rate;
+    // Find the GammaRegion for the new end:
+    while ((gamm_i < (regions.size() - 1)) && (regions[gamm_i].end < end_pos)) {
+        gamm_i++;
+        cum_wt += regions[gamm_i].rate;
+    }
+    cum_wt -= regions[gamm_i].rate;
+    // Rate from reg.start to `end_pos`:
+    part_rate = partial_gamma_rate___(end_pos, regions[gamm_i]);
+    // Set `start_rate`:
+    end_rate = cum_wt + part_rate;
+
+    start_end_set = true;
+
+    return;
+}
 
 
 
 uint32 LocationSampler::sample(pcg64& eng,
                                const uint32& start,
-                               const uint32& end) const {
-    uint32 pos = (runif_01(eng) * (end - start + 1)) + start;
+                               const uint32& end) {
+
+    update_start_end(start, end);
+
+    long double u = runif_ab(eng, start_rate, end_rate);
+
+    // Find the GammaRegion:
+    uint32 i = 0;
+    long double cum_wt = 0;
+    for (; i < regions.size(); i++) {
+        cum_wt += regions[i].rate;
+        if (cum_wt > u) break;
+    }
+
+    /*
+     Find the location within the Gamma region:
+     */
+    uint32 pos;
+    gamma_sample(pos, u, cum_wt, i);
+
     return pos;
 }
 uint32 LocationSampler::sample(pcg64& eng) const {
@@ -443,7 +618,9 @@ uint32 LocationSampler::sample(pcg64& eng) const {
 
 
 
-
+/*
+ Sample within a gamma region:
+ */
 inline void LocationSampler::gamma_sample(uint32& pos,
                                           long double& u,
                                           long double& cum_wt,

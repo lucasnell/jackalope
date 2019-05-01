@@ -35,6 +35,7 @@ inline double MutationSampler::mutate__(pcg64& eng, const uint32& pos, sint64& e
         }
         // Update Gamma region bounds:
         location.update_gamma_regions(m.length, pos);
+        location.end_pos += m.length;
         // Update end point:
         end += static_cast<sint64>(m.length);
         uint32 me_i = 0, max_end = 0;
