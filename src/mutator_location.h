@@ -145,16 +145,18 @@ public:
     LocationSampler() : var_seq(), regions() {};
     LocationSampler(const VarSequence& vs_,
                     const std::vector<double>& q_tcag,
-                    const arma::mat& gamma_mat)
-        : var_seq(&vs_), regions(), end_pos(vs_.size()) {
+                    const arma::mat& gamma_mat,
+                    const uint32& gamma_size_)
+        : var_seq(&vs_), regions(), end_pos(vs_.size()), gamma_size(gamma_size_) {
         for (uint32 i = 0; i < 4; i++) {
             uint32 bi = mut_loc::bases[i];
             nt_rates[bi] = q_tcag[i];
         }
         construct_gammas(gamma_mat);
     }
-    LocationSampler(const std::vector<double>& q_tcag)
-        : var_seq(), regions() {
+    LocationSampler(const std::vector<double>& q_tcag,
+                    const uint32& gamma_size_)
+        : var_seq(), regions(), gamma_size(gamma_size_) {
         for (uint32 i = 0; i < 4; i++) {
             uint32 bi = mut_loc::bases[i];
             nt_rates[bi] = q_tcag[i];
@@ -164,7 +166,8 @@ public:
         : var_seq(other.var_seq), nt_rates(other.nt_rates),
           regions(other.regions), total_rate(other.total_rate),
           start_pos(other.start_pos), end_pos(other.end_pos),
-          start_rate(other.start_rate), end_rate(other.end_rate) {}
+          start_rate(other.start_rate), end_rate(other.end_rate),
+          gamma_size(other.gamma_size) {}
     LocationSampler& operator=(const LocationSampler& other) {
         var_seq = other.var_seq;
         nt_rates = other.nt_rates;
@@ -174,6 +177,7 @@ public:
         end_pos = other.end_pos;
         start_rate = other.start_rate;
         end_rate = other.end_rate;
+        gamma_size = other.gamma_size;
         return *this;
     }
 
@@ -225,6 +229,7 @@ public:
 
 private:
 
+    uint32 gamma_size;
 
     void construct_gammas(arma::mat gamma_mat);
 
@@ -253,6 +258,11 @@ private:
         }
         return;
     }
+
+    inline void one_gamma_row(const arma::mat& gamma_mat,
+                              const uint32& i,
+                              uint32& mut_i,
+                              std::vector<uint32>& sizes);
 
 
     // Inner method that does most of the work for `calc_rate`

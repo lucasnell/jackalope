@@ -31,6 +31,8 @@
 #'     variability in mutation rates among sites (for both substitutions and indels).
 #'     Passing `NULL` to this argument results in no variability among sites.
 #'     Defaults to `NULL`.
+#' @param chunk_size Size of chunks used for sampling sequences. Higher numbers will
+#'     result in less RAM usage but slower speed. Defaults to `10`.
 #' @param n_threads Number of threads to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
 #'     Threads are spread across sequences, so it
@@ -54,6 +56,7 @@ create_variants <- function(reference,
                             ins = NULL,
                             del = NULL,
                             gamma_mats = NULL,
+                            chunk_size = 10,
                             n_threads = 1,
                             show_progress = FALSE) {
 
@@ -91,7 +94,7 @@ create_variants <- function(reference,
 
     # Do checks and organize molecular-evolution info into `mevo` object
     # (or `NULL` if `sub` was not provided):
-    mevo_obj <- create_mevo(reference, sub, ins, del, gamma_mats)
+    mevo_obj <- create_mevo(reference, sub, ins, del, gamma_mats, chunk_size)
 
     if (!single_integer(n_threads, .min = 1)) {
         err_msg("create_variants", "n_threads", "a single integer >= 1")

@@ -379,7 +379,8 @@ create_mevo <- function(reference,
                         sub,
                         ins,
                         del,
-                        gamma_mats) {
+                        gamma_mats,
+                        chunk_size) {
 
     if (!inherits(reference, "ref_genome")) {
         err_msg("create_variants", "reference", "a \"ref_genome\" object")
@@ -395,6 +396,9 @@ create_mevo <- function(reference,
     }
     if (!is.null(gamma_mats) && !is_type(gamma_mats, "site_var_mats")) {
         err_msg("create_variants", "gamma_mats", "NULL or a \"site_var_mats\" object")
+    }
+    if (!single_integer(chunk_size, 1)) {
+        err_msg("create_variants", "chunk_size", "a single integer >= 1")
     }
 
     # `sub` must be provided if others are:
@@ -431,7 +435,8 @@ create_mevo <- function(reference,
     out <- mevo$new(sub,
                     ins,
                     del,
-                    gamma_mats)
+                    gamma_mats,
+                    chunk_size)
 
     return(out)
 }
@@ -449,7 +454,8 @@ mevo_obj_to_ptr <- function(mevo_obj) {
     sampler_ptr <- make_mutation_sampler_base(mevo_obj$Q,
                                               mevo_obj$pi_tcag,
                                               mevo_obj$insertion_rates,
-                                              mevo_obj$deletion_rates)
+                                              mevo_obj$deletion_rates,
+                                              mevo_obj$chunk_size)
 
     return(sampler_ptr)
 }

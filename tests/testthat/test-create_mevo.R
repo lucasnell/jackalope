@@ -54,7 +54,7 @@ create_mevo <- function(reference, sub,
                         ins = NULL,
                         del = NULL,
                         gamma_mats = NULL) {
-    jackalope:::create_mevo(reference, sub, ins, del, gamma_mats)
+    jackalope:::create_mevo(reference, sub, ins, del, gamma_mats, 10)
 }
 
 # Create reference genome

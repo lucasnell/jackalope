@@ -19,7 +19,7 @@
 
 #include "jackalope_types.h"  // uint32
 #include "pcg.h"  // ruinf_01
-#include "util.h"  // str_stop, thread_check
+#include "util.h"  // str_stop, thread_check, split_int
 #include "io.h"  // File* types
 
 
@@ -185,23 +185,6 @@ public:
 
 
 
-//' Split number of reads by number of threads.
-//'
-//' @noRd
-//'
-inline std::vector<uint32> split_n_reads(const uint32& n_reads,
-                                         const uint32& n_threads) {
-    std::vector<uint32> out(n_threads, n_reads / n_threads);
-    uint32 sum_reads = std::accumulate(out.begin(), out.end(), 0U);
-    uint32 i = 0;
-    while (sum_reads < n_reads) {
-        out[i]++;
-        i++;
-        sum_reads++;
-    }
-    return out;
-}
-
 
 
 
@@ -241,7 +224,7 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
                                       const bool& show_progress,
                                       const int& compress) {
 
-    const std::vector<uint32> reads_per_thread = split_n_reads(n_reads, n_threads);
+    const std::vector<uint32> reads_per_thread = split_int(n_reads, n_threads);
 
     // Generate seeds for random number generators (1 RNG per thread)
     const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);

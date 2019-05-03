@@ -76,7 +76,80 @@ void GammaRegion::deletion_adjust(const uint32& ind,
 
 
 
+/*
+ Process one row in Gamma matrix, adding GammaRegion(s) associated with it to the
+ `regions` field.
+ It also splits up each GammaRegion so that it only ever refers to a region of
+ size `gamma_size`, or as close to this as possible.
+ */
+inline void LocationSampler::one_gamma_row(const arma::mat& gamma_mat,
+                                           const uint32& i,
+                                           uint32& mut_i,
+                                           std::vector<uint32>& sizes) {
+
+    GammaRegion reg;
+    reg.gamma = gamma_mat(i,1); // this will be same even if it gets split
+
+    uint32 start, size, n_regs;
+    if (i > 0) {
+        /*
+         Even though `gamma_mat.col(0)` uses 1-based indices, I'm not subtracting 1
+         below because I'm looking at previous row:
+         */
+        start = static_cast<uint32>(gamma_mat(i-1,0));
+    } else start = 0;
+
+    /*
+     Because `size = end - start + 1` and bc `end = gamma_mat(i,0) - 1`
+     (`gamma_mat.col(0)` uses 1-based indices),
+     we don't need to add or subtract 1.
+     */
+    size = static_cast<uint32>(gamma_mat(i,0)) - start;
+
+    n_regs = std::round(static_cast<double>(size) / static_cast<double>(gamma_size));
+
+    // Vector of # bases per GammaRegion
+    if (n_regs > 1) {
+        sizes = split_int(size, n_regs);
+    } else {
+        sizes = std::vector<uint32>(1, size);
+    }
+
+    // String to store sequence info:
+    std::string seq;
+    seq.reserve(sizes[0] + 1);
+
+    for (uint32 j = 0; j < sizes.size(); j++) {
+
+        // Set bounds:
+        reg.start = start;
+        reg.end = start + sizes[j] - 1;
+
+        // Calculate rate:
+        reg.rate = 0;
+        // (in `set_seq_chunk` below, `seq` gets cleared before it's filled)
+        var_seq->set_seq_chunk(seq, reg.start, sizes[j], mut_i);
+        for (const char& c : seq) reg.rate += nt_rates[c];
+        reg.rate *= reg.gamma;
+
+        // Set LocationSampler info:
+        total_rate += reg.rate;
+        regions.push_back(reg);
+
+        // Update start for next iteration:
+        start += sizes[j];
+    }
+
+    return;
+}
+
+
+
+
+
 void LocationSampler::construct_gammas(arma::mat gamma_mat) {
+
+    if (gamma_size < 1) stop("Gamma size cannot be < 1.");
 
     total_rate = 0;
 
@@ -89,36 +162,17 @@ void LocationSampler::construct_gammas(arma::mat gamma_mat) {
     }
     // Now clear and fill in the regions vector
     regions.clear();
-    regions.reserve(gamma_mat.n_rows);
+    regions.reserve((var_seq->size() / gamma_size) * 1.5);
 
-    double gamma;
-    uint32 start;
-    uint32 end;
-    double rate;
     uint32 mut_i = 0;
+    std::vector<uint32> sizes;
+    sizes.reserve(1000); // arbitrarily chosen
 
     for (uint32 i = 0; i < gamma_mat.n_rows; i++) {
-
-        // Below, I'm subtracting 1 to go back to 0-based indexing
-        end = static_cast<uint32>(gamma_mat(i,0)) - 1;
-
-        if (i > 0) {
-            start = static_cast<uint32>(gamma_mat(i-1,0));  // not subtracting -1
-        } else start = 0;
-
-        gamma = gamma_mat(i,1);
-
-        std::string seq;
-        seq.reserve(end - start + 1);
-        rate = 0;
-        var_seq->set_seq_chunk(seq, start, end - start + 1, mut_i);
-        for (const char& c : seq) rate += nt_rates[c];
-        rate *= gamma;
-
-        regions.push_back(GammaRegion(gamma, start, end, rate));
-
-        total_rate += rate;
+        one_gamma_row(gamma_mat, i, mut_i, sizes);
     }
+
+    clear_memory<std::vector<GammaRegion>>(regions);
 
     end_rate = total_rate;
 
@@ -191,7 +245,6 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
 
     return;
 }
-
 
 
 

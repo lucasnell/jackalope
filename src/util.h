@@ -193,4 +193,30 @@ inline void thread_check(uint32& n_threads) {
 }
 
 
+
+
+
+//' Split integer `x` into `n` chunks that are as even as possible.
+//'
+//' @noRd
+//'
+inline std::vector<uint32> split_int(const uint32& x,
+                                     const uint32& n) {
+
+    std::vector<uint32> out(n, x / n);
+    uint32 sum_reads = n * static_cast<uint32>(x / n);
+    uint32 i = 0;
+    while (sum_reads < x) {
+        out[i]++;
+        i++;
+        sum_reads++;
+    }
+    return out;
+
+}
+
+
+
+
+
 # endif
