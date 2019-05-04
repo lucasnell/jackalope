@@ -26,30 +26,34 @@ using namespace Rcpp;
 
 
 /*
-Adjust for a deletion.
-`ind` is the index to the current region in the vector of regions.
-`erase_inds` stores indices for region(s) to be erased if the deletion
-entirely spans one or more region(s).
-Adding to this variable will result in the current region being erased.
+ Adjust for a deletion.
+ If the deletion totally overlaps it, this function changes this regions's rate
+ to -1, and makes both start and end 0;
+ it lastly returns true.
+ Otherwise, it returns false.
 */
-void GammaRegion::deletion_adjust(const uint32& ind,
-                                  std::vector<uint32>& erase_inds,
-                                  const uint32& del_start,
+bool GammaRegion::deletion_adjust(const uint32& del_start,
                                   const uint32& del_end,
                                   const uint32& del_size) {
 
+    if (rate == -1) return false;
+
     // No overlap and deletion starts after it
-    if (del_start > end) return;
+    if (del_start > end) return false;
     // No overlap and deletion starts before it
     if (del_end < start) {
         start -= del_size;
         end -= del_size;
-        return;
+        return false;
     }
-    // Total overlap
+    /*
+     ----- Total overlap  -----
+    */
     if ((del_start <= start) && (del_end >= end)) {
-        erase_inds.push_back(ind);
-        return;
+        start = 0;
+        end = 0;
+        rate = -1;
+        return true;
     }
     /*
      Deletion is totally inside this region but doesn't entirely overlap it
@@ -57,19 +61,19 @@ void GammaRegion::deletion_adjust(const uint32& ind,
      */
     if ((del_start > start) && (del_end < end)) {
         end -= del_size;
-        return;
+        return false;
     }
     // Partial overlap at the start
     if ((del_end >= start) && (del_start <= start)) {
         start = del_start;
         end -= del_size;
-        return;
+        return false;
     }
     // Partial overlap at the end
     if ((del_start <= end) && (del_end >= end)) {
         end = del_start - 1;
     }
-    return;
+    return false;
 }
 
 
@@ -209,8 +213,10 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
         idx++;
         // update all following ranges:
         while (idx < regions.size()) {
-            regions[idx].end += size_change;
-            regions[idx].start += size_change;
+            if (regions[idx].rate >= 0) {
+                regions[idx].end += size_change;
+                regions[idx].start += size_change;
+            }
             idx++;
         }
 
@@ -218,34 +224,55 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
     }
 
     /*
-    Deletions
-    */
+     Deletions
+     */
     const uint32& del_start(pos);
     uint32 del_size = std::abs(size_change);
     uint32 del_end = pos + del_size - 1;
 
     // Iterate through and adjust all regions including and following the deletion:
-    std::vector<uint32> erase_inds;
+    // std::vector<uint32> erase_inds;
     while (idx < regions.size()) {
-        regions[idx].deletion_adjust(idx, erase_inds, del_start, del_end,
-                                     del_size);
+        if (regions[idx].deletion_adjust(del_start, del_end, del_size)) {
+            // erase_inds.push_back(idx);
+        }
         idx++;
     }
 
-    /*
-    If any regions need erasing, their indices will be stored in erase_inds.
-    They will be consecutive indices, so we only need to access the front and back.
-    */
-    if (erase_inds.size() == 1) {
-        regions.erase(regions.begin() + erase_inds.front());
-    } else if (erase_inds.size() > 1) {
-        regions.erase(regions.begin() + erase_inds.front(),
-                      regions.begin() + erase_inds.back() + 1);
-    }
+    // /*
+    // If any regions need erasing, their indices will be stored in erase_inds.
+    // They will be consecutive indices, so we only need to access the front and back.
+    // */
+    // if (erase_inds.size() == 1) {
+    //     regions.erase(regions.begin() + erase_inds.front());
+    // } else if (erase_inds.size() > 1) {
+    //     regions.erase(regions.begin() + erase_inds.front(),
+    //                   regions.begin() + erase_inds.back() + 1);
+    // }
 
     return;
 }
 
+
+
+
+
+// Used to check if gamma region needs to be iterated to the next one.
+inline void LocationSampler::check_gamma(const uint32& pos,
+                        uint32& gamma_end,
+                        uint32& gam_i,
+                        double& gamma) const {
+
+    if (pos > gamma_end) {
+        gam_i++;
+        // Skip over deleted region(s) if necessary:
+        while (gam_i < regions.size() && regions[gam_i].rate < 0) gam_i++;
+        // Now set info:
+        gamma = regions[gam_i].gamma;
+        gamma_end = regions[gam_i].end;
+    }
+    return;
+}
 
 
 
@@ -284,6 +311,8 @@ double LocationSampler::calc_rate__(uint32 start, uint32 end) const {
             }
             out += (tmp * gamma);
             gam_i++;
+            // If the next one's been deleted, then keep going:
+            while (gam_i < regions.size() && regions[gam_i].rate < 0) gam_i++;
         }
 
         return out;
@@ -394,6 +423,11 @@ double LocationSampler::deletion_rate_change(const uint32& del_size,
 
     while (seq_i < seq.size()) {
         GammaRegion& reg(regions[idx]);
+        // Skip over deleted region if necessary:
+        if (reg.rate < 0) {
+            idx++;
+            continue;
+        }
         while (((seq_i + start) <= reg.end) && (seq_i < seq.size())) {
             r = reg.gamma * nt_rates[seq[seq_i]];
             out -= r;
@@ -470,7 +504,8 @@ inline void LocationSampler::safe_get_mut(const uint32& pos, uint32& mut_i) cons
 
 /*
  For a given position within a gamma region, find the rate associated with it.
- It just returns the rate (inclusive) from `reg.start` to `end`
+ It just returns the rate (inclusive) from `reg.start` to `end`.
+ This function should never be fed a deleted region!
  */
 inline long double LocationSampler::partial_gamma_rate___(
         const uint32& end,
@@ -480,7 +515,8 @@ inline long double LocationSampler::partial_gamma_rate___(
 
     if (end > reg.end) stop("end > reg.end");
     if (end < reg.start) stop("end < reg.start");
-    if (end == reg.end) return reg.rate;
+    if (reg.rate < 0) stop("partial_gamma_rate___ should not be run on a deleted region");
+    if (end == reg.end || reg.rate == 0) return reg.rate;
 
     /*
     If there are no mutations or if `end` is before the first mutation,
@@ -570,6 +606,8 @@ void LocationSampler::update_start_end(const uint32& start, const uint32& end) {
 
     long double cum_wt = 0;
     uint32 gamm_i = 0;
+    // Skip over deleted region(s) if necessary:
+    while (regions[gamm_i].rate < 0) gamm_i++;
     long double part_rate = 0;
 
     uint32 mut_i = 0;
@@ -586,14 +624,14 @@ void LocationSampler::update_start_end(const uint32& start, const uint32& end) {
          position before `start`
          */
         safe_get_mut(start_pos - 1, mut_i);
-        gamm_i = 0;
         cum_wt = regions[gamm_i].rate;
         // Find the GammaRegion for the new start:
         while ((gamm_i < (regions.size() - 1)) &&
                (regions[gamm_i].end < (start_pos - 1))) {
             gamm_i++;
-            cum_wt += regions[gamm_i].rate;
+            if (regions[gamm_i].rate > 0) cum_wt += regions[gamm_i].rate;
         }
+        if (regions[gamm_i].rate < 0) stop("update should not end on deleted region");
         cum_wt -= regions[gamm_i].rate;
         // Rate from reg.start to `start_pos - 1`:
         part_rate = partial_gamma_rate___(start_pos - 1, regions[gamm_i]);
@@ -609,8 +647,9 @@ void LocationSampler::update_start_end(const uint32& start, const uint32& end) {
     // Find the GammaRegion for the new end:
     while ((gamm_i < (regions.size() - 1)) && (regions[gamm_i].end < end_pos)) {
         gamm_i++;
-        cum_wt += regions[gamm_i].rate;
+        if (regions[gamm_i].rate > 0) cum_wt += regions[gamm_i].rate;
     }
+    if (regions[gamm_i].rate < 0) stop("update should not end on deleted region (start)");
     cum_wt -= regions[gamm_i].rate;
     // Rate from reg.start to `end_pos`:
     part_rate = partial_gamma_rate___(end_pos, regions[gamm_i]);
@@ -636,7 +675,7 @@ uint32 LocationSampler::sample(pcg64& eng,
     uint32 i = 0;
     long double cum_wt = 0;
     for (; i < regions.size(); i++) {
-        cum_wt += regions[i].rate;
+        if (regions[i].rate > 0) cum_wt += regions[i].rate;
         if (cum_wt > u) break;
     }
 
@@ -656,7 +695,7 @@ uint32 LocationSampler::sample(pcg64& eng) const {
     uint32 i = 0;
     long double cum_wt = 0;
     for (; i < regions.size(); i++) {
-        cum_wt += regions[i].rate;
+        if (regions[i].rate > 0) cum_wt += regions[i].rate;
         if (cum_wt > u) break;
     }
 
@@ -678,6 +717,8 @@ inline void LocationSampler::gamma_sample(uint32& pos,
                                           long double& u,
                                           long double& cum_wt,
                                           const uint32& gam_i) const {
+
+    if (regions[gam_i].rate < 0) stop("Cannot sample from a deleted region");
 
     const GammaRegion& reg(regions[gam_i]);
     const uint32& start(reg.start);

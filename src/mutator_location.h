@@ -80,15 +80,13 @@ struct GammaRegion {
     }
 
     /*
-    Adjust for a deletion.
-    `ind` is the index to the current region in the vector of regions.
-    `erase_inds` stores indices for region(s) to be erased if the deletion
-    entirely spans one or more region(s).
-    Adding to this variable will result in the current region being erased.
+     Adjust for a deletion.
+     If the deletion totally overlaps it, this function changes this regions's rate
+     to -1, and makes both start and end 0;
+     it lastly returns true.
+     Otherwise, it returns false.
     */
-    void deletion_adjust(const uint32& ind,
-                         std::vector<uint32>& erase_inds,
-                         const uint32& del_start,
+    bool deletion_adjust(const uint32& del_start,
                          const uint32& del_end,
                          const uint32& del_size);
 
@@ -241,8 +239,8 @@ private:
         uint32 idx = pos * (static_cast<double>(regions.size()) /
             static_cast<double>(var_seq->size()));
         if (idx >= regions.size()) idx = regions.size() - 1;
-        while (regions[idx].end < pos) idx++;
-        while (regions[idx].start > pos) idx--;
+        while (regions[idx].end < pos || regions[idx].rate < 0) idx++;
+        while (regions[idx].start > pos || regions[idx].rate < 0) idx--;
         return idx;
     }
 
@@ -250,14 +248,7 @@ private:
     inline void check_gamma(const uint32& pos,
                             uint32& gamma_end,
                             uint32& gam_i,
-                            double& gamma) const {
-        if (pos > gamma_end) {
-            gam_i++;
-            gamma = regions[gam_i].gamma;
-            gamma_end = regions[gam_i].end;
-        }
-        return;
-    }
+                            double& gamma) const;
 
     inline void one_gamma_row(const arma::mat& gamma_mat,
                               const uint32& i,
