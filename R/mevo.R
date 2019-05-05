@@ -128,8 +128,8 @@ indels <- function(rate,
     if (!single_number(rate) || rate <= 0) {
         err_msg("indels", "rate", "a single number > 0")
     }
-    if (!single_integer(max_length, 1)) {
-        err_msg("indels", "max_length", "a single integer >= 1")
+    if (!single_integer(max_length, 1, 1e6)) {
+        err_msg("indels", "max_length", "a single integer in range [1, 1e6]")
     }
     if (!is.null(a) && !single_number(a, 0)) {
         err_msg("indels", "a", "NULL or a single number >= 0")
