@@ -112,8 +112,11 @@ inline void LocationSampler::one_gamma_row(const arma::mat& gamma_mat,
 
     n_regs = std::round(static_cast<double>(size) / static_cast<double>(gamma_size));
 
-    // Vector of # bases per GammaRegion
-    if (n_regs > 1) {
+    /*
+     Vector of # bases per GammaRegion, if splitting is needed for non-rejection
+     sampling:
+     */
+    if (!rej_sample && n_regs > 1) {
         sizes = split_int(size, n_regs);
     } else {
         sizes = std::vector<uint32>(1, size);
@@ -166,11 +169,14 @@ void LocationSampler::construct_gammas(arma::mat gamma_mat) {
     }
     // Now clear and fill in the regions vector
     regions.clear();
-    regions.reserve((var_seq->size() / gamma_size) * 1.5);
+    if (rej_sample) {
+        regions.reserve(gamma_mat.n_rows);
+    } else regions.reserve((var_seq->size() / gamma_size) * 1.5);
+
 
     uint32 mut_i = 0;
     std::vector<uint32> sizes;
-    sizes.reserve(1000); // arbitrarily chosen
+    if (!rej_sample) sizes.reserve(1000); // arbitrarily chosen
 
     for (uint32 i = 0; i < gamma_mat.n_rows; i++) {
         one_gamma_row(gamma_mat, i, mut_i, sizes);
@@ -259,9 +265,9 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
 
 // Used to check if gamma region needs to be iterated to the next one.
 inline void LocationSampler::check_gamma(const uint32& pos,
-                        uint32& gamma_end,
-                        uint32& gam_i,
-                        double& gamma) const {
+                                         uint32& gamma_end,
+                                         uint32& gam_i,
+                                         double& gamma) const {
 
     if (pos > gamma_end) {
         gam_i++;
@@ -281,7 +287,7 @@ inline void LocationSampler::check_gamma(const uint32& pos,
 
 // Inner method that does most of the work for `calc_rate` below
 
-double LocationSampler::calc_rate__(uint32 start, uint32 end) const {
+double LocationSampler::calc_rate__(const uint32& start, const uint32& end) const {
 
     double out = 0;
 
@@ -290,15 +296,8 @@ double LocationSampler::calc_rate__(uint32 start, uint32 end) const {
     /*
      If there are no mutations or if `end` is before the first mutation,
      then we don't need to use the `mutations` field at all.
-     (I'm using separate statements to avoid calling `front()` on an empty deque.)
      */
-    bool use_mutations = true;
-    if (var_seq->mutations.empty()) {
-        use_mutations = false;
-    } else if (var_seq->mutations.front().new_pos > end) {
-        use_mutations = false;
-    }
-    if (!use_mutations) {
+    if (var_seq->mutations.empty() || (end < var_seq->mutations.front().new_pos)) {
 
         uint32 i = start, gam_i = get_gamma_idx(start);
 
@@ -364,7 +363,7 @@ double LocationSampler::calc_rate__(uint32 start, uint32 end) const {
     }
 
     // Now taking care of nucleotides after the last Mutation
-    while (pos <= end &&pos < var_seq->seq_size) {
+    while (pos <= end && pos < var_seq->seq_size) {
         char c = var_seq->get_char_(pos, mut_i);
         out += nt_rates[c] * gamma;
         ++pos;
@@ -683,27 +682,41 @@ uint32 LocationSampler::sample(pcg64& eng,
      Find the location within the Gamma region:
      */
     uint32 pos;
-    gamma_sample(pos, u, cum_wt, i);
+    cdf_region_sample(pos, u, cum_wt, i);
+    // if (rej_sample) {
+    //     rej_region_sample(pos, start, end, eng, i);
+    // } else {
+    //     cdf_region_sample(pos, u, cum_wt, i);
+    // }
 
     return pos;
 }
 uint32 LocationSampler::sample(pcg64& eng) const {
 
-    long double u = runif_01(eng) * total_rate;
-
-    // Find the GammaRegion:
-    uint32 i = 0;
-    long double cum_wt = 0;
-    for (; i < regions.size(); i++) {
-        if (regions[i].rate > 0) cum_wt += regions[i].rate;
-        if (cum_wt > u) break;
-    }
-
-    /*
-     Find the location within the Gamma region:
-     */
     uint32 pos;
-    gamma_sample(pos, u, cum_wt, i);
+    // cdf_region_sample(pos, u, cum_wt, i);
+    if (rej_sample) {
+
+        uint32 i = runif_01(eng) * regions.size();
+        while (regions[i].rate < 0) i = runif_01(eng) * regions.size();
+
+        rej_region_sample(pos, regions[i].start, regions[i].end, eng, i);
+
+    } else {
+
+        long double u = runif_01(eng) * total_rate;
+
+        // Find the GammaRegion:
+        uint32 i = 0;
+        long double cum_wt = 0;
+        for (; i < regions.size(); i++) {
+            if (regions[i].rate > 0) cum_wt += regions[i].rate;
+            if (cum_wt > u) break;
+        }
+
+        cdf_region_sample(pos, u, cum_wt, i);
+
+    }
 
     return pos;
 }
@@ -711,12 +724,53 @@ uint32 LocationSampler::sample(pcg64& eng) const {
 
 
 /*
- Sample within a gamma region:
+ Sample within one GammaRegion using rejection method:
  */
-inline void LocationSampler::gamma_sample(uint32& pos,
-                                          long double& u,
-                                          long double& cum_wt,
-                                          const uint32& gam_i) const {
+inline void LocationSampler::rej_region_sample(uint32& pos,
+                                               const uint32& start_,
+                                               const uint32& end_,
+                                               pcg64& eng,
+                                               const uint32& gam_i) const {
+
+    if (regions[gam_i].rate < 0) stop("Cannot sample from a deleted region");
+
+    const GammaRegion& reg(regions[gam_i]);
+    // Update `start` and `end` for this region
+    uint32 start = start_, end = end_;
+    if (start < reg.start) start = reg.start;
+    if (end > reg.end) end = reg.end;
+
+    if (start == end) {
+        pos = start;
+        return;
+    }
+
+    long double u, q;
+    char c;
+    int iters = 0;
+    uint32 size_ = end + 1;
+    size_ -= start;
+
+    while (iters < 100) {
+        pos = runif_01(eng) * size_;
+        pos += start;
+        c = var_seq->get_nt(pos);
+        q = nt_rates[c];
+        u = runif_01(eng) * max_q;
+        if (u <= q) break;
+        iters++;
+    }
+
+    return;
+
+}
+/*
+ Sample within one GammaRegion using cdf (non-rejection) method:
+ */
+inline void LocationSampler::cdf_region_sample(uint32& pos,
+                                               long double& u,
+                                               long double& cum_wt,
+                                               const uint32& gam_i) const {
 
     if (regions[gam_i].rate < 0) stop("Cannot sample from a deleted region");
 

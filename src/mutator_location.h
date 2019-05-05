@@ -133,6 +133,12 @@ public:
     std::vector<double> nt_rates = std::vector<double>(256, 0.0);
     std::vector<GammaRegion> regions;
     long double total_rate = 0;
+    /*
+     Whether to sample within a GammaRegion using rejection sampling.
+     The alternative is to make GammaRegions quite small and use CDF method.
+     */
+    bool rej_sample;
+    double max_q;
     // For sampling with a starting and ending location:
     uint32 start_pos = 0;
     uint32 end_pos;
@@ -140,21 +146,31 @@ public:
     long double end_rate = 0;
     bool start_end_set = false; // whether pos and rates have been set
 
+    // If gamma_size == 0, then it won't split GammaRegions
     LocationSampler() : var_seq(), regions() {};
     LocationSampler(const VarSequence& vs_,
                     const std::vector<double>& q_tcag,
+                    const bool& rej_sample_,
                     const arma::mat& gamma_mat,
                     const uint32& gamma_size_)
-        : var_seq(&vs_), regions(), end_pos(vs_.size()), gamma_size(gamma_size_) {
+        : var_seq(&vs_), regions(),
+          rej_sample(rej_sample_),
+          max_q(*std::max_element(q_tcag.begin(), q_tcag.end())),
+          end_pos(vs_.size()), gamma_size(gamma_size_) {
         for (uint32 i = 0; i < 4; i++) {
             uint32 bi = mut_loc::bases[i];
             nt_rates[bi] = q_tcag[i];
         }
+
         construct_gammas(gamma_mat);
     }
     LocationSampler(const std::vector<double>& q_tcag,
+                    const bool& rej_sample_,
                     const uint32& gamma_size_)
-        : var_seq(), regions(), gamma_size(gamma_size_) {
+        : var_seq(), regions(),
+          rej_sample(rej_sample_),
+          max_q(*std::max_element(q_tcag.begin(), q_tcag.end())),
+          gamma_size(gamma_size_) {
         for (uint32 i = 0; i < 4; i++) {
             uint32 bi = mut_loc::bases[i];
             nt_rates[bi] = q_tcag[i];
@@ -163,6 +179,7 @@ public:
     LocationSampler(const LocationSampler& other)
         : var_seq(other.var_seq), nt_rates(other.nt_rates),
           regions(other.regions), total_rate(other.total_rate),
+          rej_sample(other.rej_sample), max_q(other.max_q),
           start_pos(other.start_pos), end_pos(other.end_pos),
           start_rate(other.start_rate), end_rate(other.end_rate),
           gamma_size(other.gamma_size) {}
@@ -171,6 +188,8 @@ public:
         nt_rates = other.nt_rates;
         regions = other.regions;
         total_rate = other.total_rate;
+        rej_sample = other.rej_sample;
+        max_q = other.max_q;
         start_pos = other.start_pos;
         end_pos = other.end_pos;
         start_rate = other.start_rate;
@@ -229,6 +248,7 @@ private:
 
     uint32 gamma_size;
 
+
     void construct_gammas(arma::mat gamma_mat);
 
 
@@ -257,13 +277,20 @@ private:
 
 
     // Inner method that does most of the work for `calc_rate`
-    double calc_rate__(uint32 start, uint32 end) const;
+    double calc_rate__(const uint32& start, const uint32& end) const;
 
 
-    inline void gamma_sample(uint32& pos,
-                             long double& u,
-                             long double& cum_wt,
-                             const uint32& gam_i) const;
+    // Sample within one GammaRegion using rejection method:
+    inline void rej_region_sample(uint32& pos,
+                                  const uint32& start_,
+                                  const uint32& end_,
+                                  pcg64& eng,
+                                  const uint32& gam_i) const;
+    // Sample within one GammaRegion using cdf (non-rejection) method:
+    inline void cdf_region_sample(uint32& pos,
+                                  long double& u,
+                                  long double& cum_wt,
+                                  const uint32& gam_i) const;
 
     inline void safe_get_mut(const uint32& pos, uint32& mut_i) const;
 

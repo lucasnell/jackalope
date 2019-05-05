@@ -89,6 +89,7 @@ SEXP make_mutation_sampler_base(const arma::mat& Q,
                                 const std::vector<double>& pi_tcag,
                                 const std::vector<double>& insertion_rates,
                                 const std::vector<double>& deletion_rates,
+                                const bool& rej_sample,
                                 const uint32& gamma_size) {
 
     std::vector<std::vector<double>> probs;
@@ -111,7 +112,7 @@ SEXP make_mutation_sampler_base(const arma::mat& Q,
     out->type = MutationTypeSampler(probs, mut_lengths);
     out->insert = AliasStringSampler<std::string>("TCAG", pi_tcag);
 
-    out->location = LocationSampler(q_tcag, gamma_size);
+    out->location = LocationSampler(q_tcag, rej_sample, gamma_size);
 
     return out;
 }

@@ -27,12 +27,21 @@
 #'     of deletions by length.
 #'     Passing `NULL` to this argument results in no deletions.
 #'     Defaults to `NULL`.
+#' @param rej_sample Boolean for whether to use rejection sampling for sampling
+#'     mutation locations.
+#'     For substitution rates where the different nucleotides have at least somewhat
+#'     similar rates (max rate / min rate < ~5), this is probably the best option.
+#'     If this is `FALSE`, a more memory-intensive method is used that will be much
+#'     faster when substitution rates differ significantly.
+#'     Defaults to `TRUE`.
 #' @param gamma_mats Output from the \code{\link{site_var}} function that specifies
 #'     variability in mutation rates among sites (for both substitutions and indels).
 #'     Passing `NULL` to this argument results in no variability among sites.
 #'     Defaults to `NULL`.
-#' @param chunk_size Size of chunks used for sampling sequences. Higher numbers will
-#'     result in less RAM usage but slower speed. Defaults to `10`.
+#' @param chunk_size Size of chunks used for sampling sequences if not using rejection
+#'     sampling. Higher numbers will result in less RAM usage but slower speed.
+#'     This argument is ignored if `rej_sample` is `TRUE`.
+#'     Defaults to `10`.
 #' @param n_threads Number of threads to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
 #'     Threads are spread across sequences, so it
@@ -55,6 +64,7 @@ create_variants <- function(reference,
                             sub,
                             ins = NULL,
                             del = NULL,
+                            rej_sample = TRUE,
                             gamma_mats = NULL,
                             chunk_size = 10,
                             n_threads = 1,
@@ -94,7 +104,7 @@ create_variants <- function(reference,
 
     # Do checks and organize molecular-evolution info into `mevo` object
     # (or `NULL` if `sub` was not provided):
-    mevo_obj <- create_mevo(reference, sub, ins, del, gamma_mats, chunk_size)
+    mevo_obj <- create_mevo(reference, sub, ins, del, rej_sample, gamma_mats, chunk_size)
 
     if (!single_integer(n_threads, .min = 1)) {
         err_msg("create_variants", "n_threads", "a single integer >= 1")

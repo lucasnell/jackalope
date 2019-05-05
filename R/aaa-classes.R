@@ -598,10 +598,12 @@ mevo <- R6::R6Class(
         deletion_rates = NULL,
         gamma_mats = NULL,
         chunk_size = NULL,
+        rej_sample = NULL,
 
         initialize = function(sub_info,
                               insertion_rates,
                               deletion_rates,
+                              rej_sample,
                               gamma_mats,
                               chunk_size) {
 
@@ -609,6 +611,7 @@ mevo <- R6::R6Class(
             self$pi_tcag <- sub_info$pi_tcag
             self$insertion_rates <- insertion_rates
             self$deletion_rates <- deletion_rates
+            self$rej_sample <- rej_sample
             self$gamma_mats <- gamma_mats
             self$chunk_size <- chunk_size
 

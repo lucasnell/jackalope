@@ -44,9 +44,12 @@ using namespace Rcpp;
 //'
 //' @noRd
 //'
-void fill_gamma_mat_(arma::mat& gamma_mat, double& gammas_x_sizes,
-                     const uint32& seq_size_, const uint32& gamma_size_,
-                     const double& shape, pcg64& eng) {
+void fill_gamma_mat_(arma::mat& gamma_mat,
+                     double& gammas_x_sizes,
+                     const uint32& seq_size_,
+                     const uint32& gamma_size_,
+                     const double& shape,
+                     pcg64& eng) {
 
     // Number of gamma values needed:
     uint32 n_gammas = static_cast<uint32>(std::ceil(
@@ -55,52 +58,30 @@ void fill_gamma_mat_(arma::mat& gamma_mat, double& gammas_x_sizes,
     // Initialize output matrix
     gamma_mat.set_size(n_gammas, 2);
 
+    // Initialize Gamma distribution
+    std::gamma_distribution<double> distr(shape, shape);
 
-    if (shape > 0) {
+    /*
+     Fill matrix.
+     Note that I'm setting `start_` to 1 bc the SequenceGammas constructor assumes
+     1-based indexing.
+     I'm doing it this way to make it more straightforward if someone wants to pass
+     their own matrix directly from R (since R obviously uses 1-based).
+     */
+    double gamma_, size_;
+    uint32 end_;
+    for (uint32 i = 0, start_ = 1; i < n_gammas; i++, start_ += gamma_size_) {
 
-        // Initialize Gamma distribution
-        std::gamma_distribution<double> distr(shape, shape);
+        gamma_ = distr(eng);
 
-        /*
-        Fill matrix.
-        Note that I'm setting `start_` to 1 bc the SequenceGammas constructor assumes
-        1-based indexing.
-        I'm doing it this way to make it more straightforward if someone wants to pass
-        their own matrix directly from R (since R obviously uses 1-based).
-        */
-        double gamma_, size_;
-        uint32 end_;
-        for (uint32 i = 0, start_ = 1; i < n_gammas; i++, start_ += gamma_size_) {
+        end_ = start_ + gamma_size_ - 1;
+        if (i == n_gammas - 1) end_ = seq_size_;
 
-            gamma_ = distr(eng);
+        gamma_mat(i,0) = end_;
+        gamma_mat(i,1) = gamma_;
 
-            end_ = start_ + gamma_size_ - 1;
-            if (i == n_gammas - 1) end_ = seq_size_;
-
-            gamma_mat(i,0) = end_;
-            gamma_mat(i,1) = gamma_;
-
-            size_ = end_ - start_ + 1;
-            gammas_x_sizes += (size_ * gamma_);
-
-        }
-
-    } else {
-
-        double size_;
-        uint32 end_;
-        for (uint32 i = 0, start_ = 1; i < n_gammas; i++, start_ += gamma_size_) {
-
-            end_ = start_ + gamma_size_ - 1;
-            if (i == n_gammas - 1) end_ = seq_size_;
-
-            gamma_mat(i,0) = end_;
-            gamma_mat(i,1) = 1;
-
-            size_ = end_ - start_ + 1;
-            gammas_x_sizes += size_;
-
-        }
+        size_ = end_ - start_ + 1;
+        gammas_x_sizes += (size_ * gamma_);
 
     }
 
@@ -123,13 +104,25 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
                                        const uint32& gamma_size_,
                                        const double& shape) {
 
-    if (gamma_size_ == 0) {
-        stop("\nIn internal function make_gamma_mats, gamma_size_ == 0");
+    uint32 n_seqs = seq_sizes.size();
+    arma::field<arma::mat> gamma_mats(n_seqs);
+
+    if (gamma_size_ == 0) stop("Gamma sizes cannot be zero");
+
+    /*
+     If `shape` is set to <= zero, then we'll assume everything's the same:
+     */
+    if (shape <= 0) {
+        for (uint32 i = 0; i < n_seqs; i++) {
+            gamma_mats[i] = arma::mat(1, 2, arma::fill::zeros);
+            gamma_mats[i](0,0) = seq_sizes[i];
+            gamma_mats[i](0,1) = 1;
+        }
+        return gamma_mats;
     }
 
     pcg64 eng = seeded_pcg();
 
-    uint32 n_seqs = seq_sizes.size();
 
     /*
      These are used later to make sure the average gamma value across the whole
@@ -141,7 +134,6 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
     // Sum of each gamma value times the region size it represents:
     double gammas_x_sizes = 0;
 
-    arma::field<arma::mat> gamma_mats(n_seqs);
     for (uint32 i = 0; i < n_seqs; i++) {
         fill_gamma_mat_(gamma_mats(i), gammas_x_sizes, seq_sizes[i],
                         gamma_size_, shape, eng);
@@ -149,12 +141,9 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
 
     /*
      Making sure mean value of gammas across genome equals exactly 1.
-     (Only necessary if shape is > 0.)
      */
-    if (shape > 0) {
-        double mean_gamma = gammas_x_sizes / total_size;
-        for (uint32 i = 0; i < n_seqs; i++) gamma_mats(i).col(1) /= mean_gamma;
-    }
+    double mean_gamma = gammas_x_sizes / total_size;
+    for (uint32 i = 0; i < n_seqs; i++) gamma_mats(i).col(1) /= mean_gamma;
 
     return gamma_mats;
 

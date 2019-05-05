@@ -54,7 +54,7 @@ create_mevo <- function(reference, sub,
                         ins = NULL,
                         del = NULL,
                         gamma_mats = NULL) {
-    jackalope:::create_mevo(reference, sub, ins, del, gamma_mats, 10)
+    jackalope:::create_mevo(reference, sub, ins, del, TRUE, gamma_mats, 10)
 }
 
 # Create reference genome
@@ -74,7 +74,7 @@ M <- create_mevo(ref, sub = sub_JC69(pars$lambda))
 test_that("proper output common to all models with no site variability or indels", {
 
     seq_ <- seq(min(c(pars$seq_len, 10)), max(c(pars$seq_len, 10)), 10)
-    X <- rep(list(cbind(seq_, 1)), length(M$gamma_mats))
+    X <- lapply(ref$sizes(), function(x) {z <- cbind(x, 1); colnames(z) <- NULL; return(z)})
 
     expect_equal(M$gamma_mats, X, check.attributes = FALSE)
     expect_equal(M$insertion_rates, numeric(0))

@@ -379,6 +379,7 @@ create_mevo <- function(reference,
                         sub,
                         ins,
                         del,
+                        rej_sample,
                         gamma_mats,
                         chunk_size) {
 
@@ -393,6 +394,9 @@ create_mevo <- function(reference,
     }
     if (!is.null(del) && !is_type(del, "indel_rates")) {
         err_msg("create_variants", "del", "NULL or a \"indel_rates\" object")
+    }
+    if (!is_type(rej_sample, "logical", 1)) {
+        err_msg("create_variants", "rej_sample", "a single logical")
     }
     if (!is.null(gamma_mats) && !is_type(gamma_mats, "site_var_mats")) {
         err_msg("create_variants", "gamma_mats", "NULL or a \"site_var_mats\" object")
@@ -419,15 +423,12 @@ create_mevo <- function(reference,
     del <- as.numeric(del)
 
 
-    # -------+
-    # Process info for mutation-rate variability among sites and write to BED
-    # file if desired
-    # -------+
+    # This results in no variability among sites and 1 Gamma region per sequence:
     if (is.null(gamma_mats)) {
-        # This results in no variability among sites:
-        gamma_mats <- make_gamma_mats(reference$sizes(), gamma_size_ = 10, shape = 0)
+        gamma_mats <- make_gamma_mats(reference$sizes(), gamma_size_ = 100, shape = 0)
         dim(gamma_mats) <- NULL # so it's just a list now
     }
+
 
     # -------+
     # Make final output object
@@ -435,6 +436,7 @@ create_mevo <- function(reference,
     out <- mevo$new(sub,
                     ins,
                     del,
+                    rej_sample,
                     gamma_mats,
                     chunk_size)
 
@@ -455,6 +457,7 @@ mevo_obj_to_ptr <- function(mevo_obj) {
                                               mevo_obj$pi_tcag,
                                               mevo_obj$insertion_rates,
                                               mevo_obj$deletion_rates,
+                                              mevo_obj$rej_sample,
                                               mevo_obj$chunk_size)
 
     return(sampler_ptr)
