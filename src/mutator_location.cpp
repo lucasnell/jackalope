@@ -58,7 +58,7 @@ bool GammaRegion::deletion_adjust(const uint32& del_start,
         auto iter = std::find(inds.begin(), inds.end(), i);
         if (iter == inds.end()) stop("i cannot be removed bc it's not here");
         inds.erase(iter);
-        for (uint32 j = 0; j < inds.size(); j++) if (inds[j] == i) stop("inds still has i");
+        // for (uint32 j = 0; j < inds.size(); j++) if (inds[j] == i) stop("inds still has i");
         if (inds.size() == 0) {
             region_sampler.all_lvl_rate -= region_sampler.levels[this->level].lvl_rate;
             region_sampler.levels[this->level].lvl_rate = 0;
@@ -187,28 +187,28 @@ RegionRejSampler::RegionRejSampler(std::vector<GammaRegion>& regions)
     } else {
 
 
-        // /*
-        //  Go through once to get min and max rates:
-        //  */
-        // double max_rate = 0;
-        // // (below, chose very large number that I'm sure is larger
-        // // than any/most rates)
-        // double min_rate = 1e10;
-        // for (uint32 i = 0; i < regions.size(); i++) {
-        //     const GammaRegion& reg(regions[i]);
-        //     if (reg.deleted()) continue; // <-- refers to deleted/invariant region
-        //     if (reg.rate > max_rate) max_rate = reg.rate;
-        //     if (reg.rate < min_rate) min_rate = reg.rate;
-        // }
-        // // Just in case...
-        // if (min_rate == 1e10) {
-        //     stop("Min. rate that's > 0 is also > 1e10. This is entirely too high.");
-        // }
+        /*
+         Go through once to get min and max rates:
+         */
+        double max_rate = 0;
+        // (below, chose very large number that I'm sure is larger
+        // than any/most rates)
+        double min_rate = 1e10;
+        for (uint32 i = 0; i < regions.size(); i++) {
+            const GammaRegion& reg(regions[i]);
+            if (reg.deleted()) continue; // <-- refers to deleted/invariant region
+            if (reg.rate > max_rate) max_rate = reg.rate;
+            if (reg.rate < min_rate) min_rate = reg.rate;
+        }
+        // Just in case...
+        if (min_rate == 1e10) {
+            stop("Min. rate that's > 0 is also > 1e10. This is entirely too high.");
+        }
 
         /*
          Calculate how many levels we'll need, then add to `levels`:
          */
-        uint32 n_levels = 1; //static_cast<uint32>(std::log2l(max_rate / min_rate)) + 1U;
+        uint32 n_levels = static_cast<uint32>(std::log2l(max_rate / min_rate)) + 1U;
         levels.reserve(n_levels);
         for (uint32 i = 0; i < n_levels; i++) levels.push_back(RejLevel());
 
@@ -220,8 +220,8 @@ RegionRejSampler::RegionRejSampler(std::vector<GammaRegion>& regions)
             // below refers to deleted/invariant region:
             if (regions[i].deleted()) continue;
             // If not one of those, then add it:
-            // lvl_i = static_cast<uint32>(std::log2l(regions[i].rate / min_rate));
-            lvl_i = 0;
+            lvl_i = static_cast<uint32>(std::log2l(regions[i].rate / min_rate));
+            // lvl_i = 0;
             levels[lvl_i].add(regions, i, lvl_i);
             all_lvl_rate += regions[i].rate;
         }
@@ -413,13 +413,13 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
     -----------
     */
 
+    uint32 idx = get_gamma_idx(pos);
 
 
     /*
     Insertions
     */
     if (size_change > 0) {
-        uint32 idx = get_gamma_idx(pos);
         regions[idx].end += size_change;
         idx++;
         // update all following ranges:
@@ -450,7 +450,7 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
     // Iterate through and adjust all regions including and following the deletion:
     // bool weird = false;
     bool rm;
-    for (uint32 idx = 0; idx < regions.size(); idx++) {
+    for (; idx < regions.size(); idx++) {
         if (regions[idx].end < pos || regions[idx].deleted()) continue;
         // Next line returns true if the region is totally deleted:
         rm = regions[idx].deletion_adjust(del_start, del_end, del_size,
@@ -1064,43 +1064,43 @@ uint32 LocationSampler::sample(pcg64& eng) const {
 
     uint32 pos;
 
-    for (uint32 i = 0; i < region_sampler.levels.size(); i++) {
-        const std::deque<uint32>& inds(region_sampler.levels[i].inds);
-        for (uint32 j = 0; j < inds.size(); j++) {
-            uint32 k = inds[j];
-            if (regions[k].deleted() || regions[k].rate <= 0) {
-                Rcout << std::endl << regions[k].rate << ' ' << regions[k].deleted() << std::endl;
-                stop("regions[k].rate <= 0 || deleted in LocationSampler::sample");
-            }
-        }
-    }
+    // for (uint32 i = 0; i < region_sampler.levels.size(); i++) {
+    //     const std::deque<uint32>& inds(region_sampler.levels[i].inds);
+    //     for (uint32 j = 0; j < inds.size(); j++) {
+    //         uint32 k = inds[j];
+    //         if (regions[k].deleted() || regions[k].rate <= 0) {
+    //             Rcout << std::endl << regions[k].rate << ' ' << regions[k].deleted() << std::endl;
+    //             stop("regions[k].rate <= 0 || deleted in LocationSampler::sample");
+    //         }
+    //     }
+    // }
 
 
     uint32 i = region_sampler.sample(eng, regions);
 
-    if (regions[i].rate <= 0 || regions[i].deleted()) {
-        Rcout << std::endl << regions[i].rate << ' ' << regions[i].deleted() << std::endl;
-        stop("regions[i] <= 0");
-    }
-    if (i > regions.size()) stop("i > regions.size()");
+    // if (regions[i].rate <= 0 || regions[i].deleted()) {
+    //     Rcout << std::endl << regions[i].rate << ' ' << regions[i].deleted() << std::endl;
+    //     stop("regions[i] <= 0");
+    // }
+    // if (i > regions.size()) stop("i > regions.size()");
 
     if (rej_sample) {
 
         rej_region_sample(pos, eng, i);
 
-        if (pos >= var_seq->size()) {
-            Rcout << std::endl << pos << ' ' << var_seq->size() << std::endl;
-            stop("pos > var_seq->size()");
-        }
+        // if (pos >= var_seq->size()) {
+        //     Rcout << std::endl << pos << ' ' << var_seq->size() << std::endl;
+        //     stop("pos > var_seq->size()");
+        // }
 
     } else {
 
         cdf_region_sample(pos, eng, i);
 
-        if (pos >= var_seq->size()) {
-            Rcout << std::endl << pos << ' ' << var_seq->size() << std::endl;
-            stop("pos > var_seq->size() in cdf");
-        }
+        // if (pos >= var_seq->size()) {
+        //     Rcout << std::endl << pos << ' ' << var_seq->size() << std::endl;
+        //     stop("pos > var_seq->size() in cdf");
+        // }
 
     }
 
@@ -1123,12 +1123,12 @@ inline void LocationSampler::rej_region_sample(uint32& pos,
     const uint32& start(reg.start);
     const uint32& end(reg.end);
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    if (start > end) {
-        Rcout << std::endl << start << ' ' << end << std::endl;
-        stop("start > end");
-    }
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // if (start > end) {
+    //     Rcout << std::endl << start << ' ' << end << std::endl;
+    //     stop("start > end");
+    // }
+    // // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     if (start == end) {
         pos = start;
@@ -1144,13 +1144,13 @@ inline void LocationSampler::rej_region_sample(uint32& pos,
     while (n_iters < 100) {
         pos = runif_01(eng) * size_;
         pos += start;
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        if (pos > var_seq->size()) {
-            Rcout << std::endl << pos << ' ' << start <<
-                ' ' << end << ' ' << size_ << ' ' << var_seq->size() << std::endl;
-            stop("pos > var_seq->size() #1");
-        }
-        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // if (pos > var_seq->size()) {
+        //     Rcout << std::endl << pos << ' ' << start <<
+        //         ' ' << end << ' ' << size_ << ' ' << var_seq->size() << std::endl;
+        //     stop("pos > var_seq->size() #1");
+        // }
+        // // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         c = var_seq->get_nt(pos);
         q = nt_rates[c];
         u = runif_01(eng) * max_q;
@@ -1358,11 +1358,11 @@ inline void LocationSampler::cdf_region_sample(uint32& pos,
         ++pos;
     }
 
-    if (pos > end) {
-        Rcout << std::endl << pos << ' ' << end << std::endl;
-        Rcout << cum_wt << ' ' << (reg.rate / reg.gamma) << std::endl;
-        stop("pos > end in cdf - end");
-    }
+    // if (pos > end) {
+    //     Rcout << std::endl << pos << ' ' << end << std::endl;
+    //     Rcout << cum_wt << ' ' << (reg.rate / reg.gamma) << std::endl;
+    //     stop("pos > end in cdf - end");
+    // }
 
     return;
 
