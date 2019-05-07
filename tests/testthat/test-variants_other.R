@@ -5,17 +5,18 @@ context("Testing basics of creating variants")
 # library(jackalope)
 # library(testthat)
 
-# .seed <- as.integer(difftime(Sys.time(), as.POSIXct("2019-01-01"), units = "secs"))
-# print(.seed)
-# set.seed(.seed)
+.seed <- as.integer(difftime(Sys.time(), as.POSIXct("2019-01-01"), units = "secs"))
+print(.seed)
+set.seed(.seed)
 
-set.seed(10685979)
+# set.seed(10685979)
 
 
-arg_list <- list(reference = create_genome(3, 100),
-                 sub = sub_JC69(0.1),
-                 ins = indels(rate = 0.1, max_length = 10),
-                 del = indels(rate = 0.1, max_length = 10))
+arg_list <- list(reference = create_genome(3, 100, pi_tcag = c(0, 1, 0, 1)),
+                 # sub = sub_JC69(0.1))
+                 sub = sub_HKY85(c(0, 0, 1, 1), 0.1, 0.1))
+arg_list$ins <- indels(rate = 0.1, max_length = 10)
+# arg_list$del  <- indels(rate = 0.1, max_length = 10)
 arg_list$gamma_mats <- site_var(arg_list$reference, shape = 2, region_size = 10)
 
 

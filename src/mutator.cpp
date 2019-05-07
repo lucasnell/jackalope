@@ -18,14 +18,17 @@ inline double MutationSampler::mutate__(pcg64& eng, const uint32& pos, sint64& e
     MutationInfo m = type.sample(c, eng);
     double rate_change;
     if (m.length == 0) {
+        // Rcout << "sub ";
         rate_change = location.substitution_rate_change(m.nucleo, pos);
         var_seq->add_substitution(m.nucleo, pos);
     } else {
         if (m.length > 0) {
+            // Rcout << "ins ";
             std::string nts = new_nucleos(m.length, eng);
             rate_change = location.insertion_rate_change(nts, pos);
             var_seq->add_insertion(nts, pos);
         } else {
+            // Rcout << "del ";
             sint64 pos_ = static_cast<sint64>(pos);
             sint64 size_ = end + 1;
             if (pos_ - m.length > size_) m.length = static_cast<sint32>(pos_-size_);
@@ -47,6 +50,7 @@ inline double MutationSampler::mutate__(pcg64& eng, const uint32& pos, sint64& e
             }
         }
     }
+
     return rate_change;
 }
 

@@ -24,9 +24,8 @@ using namespace Rcpp;
 
 
 
-
 /*
- Adjust for a deletion.
+ Adjust positions (NOT rate, except for a full deletion) for a deletion.
  If the deletion totally overlaps it, this function changes this regions's rate
  to -1, and makes both start and end 0;
  it lastly returns true.
@@ -34,9 +33,11 @@ using namespace Rcpp;
 */
 bool GammaRegion::deletion_adjust(const uint32& del_start,
                                   const uint32& del_end,
-                                  const uint32& del_size) {
+                                  const uint32& del_size,
+                                  const uint32& i,
+                                  RegionRejSampler& region_sampler) {
 
-    if (rate == -1) return false;
+    if (deleted_) return false;
 
     // No overlap and deletion starts after it
     if (del_start > end) return false;
@@ -50,9 +51,18 @@ bool GammaRegion::deletion_adjust(const uint32& del_start,
      ----- Total overlap  -----
     */
     if ((del_start <= start) && (del_end >= end)) {
-        start = 0;
-        end = 0;
-        rate = -1;
+        // rate = -1;
+        Rcout << "<del true> ";
+        deleted_ = true;
+        std::deque<uint32>& inds(region_sampler.levels[this->level].inds);
+        auto iter = std::find(inds.begin(), inds.end(), i);
+        if (iter == inds.end()) stop("i cannot be removed bc it's not here");
+        inds.erase(iter);
+        for (uint32 j = 0; j < inds.size(); j++) if (inds[j] == i) stop("inds still has i");
+        if (inds.size() == 0) {
+            region_sampler.all_lvl_rate -= region_sampler.levels[this->level].lvl_rate;
+            region_sampler.levels[this->level].lvl_rate = 0;
+        }
         return true;
     }
     /*
@@ -77,7 +87,205 @@ bool GammaRegion::deletion_adjust(const uint32& del_start,
 }
 
 
+void GammaRegion::check_rate(const double& threshold) {
+    if (rate <= threshold) {
+        Rcout << "<sub true> ";
+        // rate = -1000;
+        deleted_ = true;
+    }
+    return;
+}
 
+
+
+
+
+
+
+/*
+ =======================================================================================
+ =======================================================================================
+
+ RejLevel and RegionRejSampler methods
+
+ =======================================================================================
+ =======================================================================================
+ */
+
+
+
+
+uint32 RejLevel::sample(pcg64& eng, const std::vector<GammaRegion>& regions) const {
+
+    if (inds.size() == 0) stop("inds.size() == 0");
+
+    double u;
+    uint32 j;
+    uint32 iters = 0;
+    while (iters < 10) {
+        j = runif_01(eng) * inds.size();
+        u = runif_01(eng) * max_rate;
+        if (u <= regions[inds[j]].rate) break;
+        iters++;
+    }
+    return inds[j];
+}
+/*
+ Add a Gamma region to this level.Used in constructing the object.
+ A check is used before this function that keeps it from being used if
+ the region's rate is <= 0 (thus is an invariant or deleted region), so no check for
+ that is needed here.
+ */
+void RejLevel::add(std::vector<GammaRegion>& regions,
+                   const uint32& i,
+                   const uint32& lvl) {
+    if (regions[i].rate > max_rate) max_rate = regions[i].rate;
+    inds.push_back(i);
+    lvl_rate += regions[i].rate;
+    regions[i].level = lvl;
+    return;
+}
+/*
+ Remove a Gamma region from this level.
+ Used in `LocationSampler::update_gamma_regions` when a deletion totally
+ removes a Gamma region.
+ It's not necessary for this function to update `*_rate` fields bc that's done
+ inside the `deletion_rate_change` method.
+ */
+void RejLevel::rm(const uint32& i) {
+    auto iter = std::find(inds.begin(), inds.end(), i);
+    if (iter == inds.end()) stop("i cannot be removed bc it's not here");
+    inds.erase(iter);
+    return;
+}
+
+inline void RejLevel::reset_max(const std::vector<GammaRegion>& regions) {
+    if (inds.size() == 0) {
+        max_rate = 0;
+        return;
+    }
+    max_rate = regions[inds[0]].rate;
+    for (uint32 i = 1; i < inds.size(); i++) {
+        if (regions[inds[i]].rate > max_rate) max_rate = regions[inds[i]].rate;
+    }
+    return;
+}
+
+
+
+
+RegionRejSampler::RegionRejSampler(std::vector<GammaRegion>& regions)
+    : levels(0), all_lvl_rate(0) {
+
+    if (regions.size() == 0) stop("cannot have 0-sized regions");
+    if (regions.size() == 1) {
+
+        all_lvl_rate = regions[0].rate;
+        levels = std::vector<RejLevel>(1, RejLevel());
+        levels[0].add(regions, 0, 0);
+
+    } else {
+
+
+        // /*
+        //  Go through once to get min and max rates:
+        //  */
+        // double max_rate = 0;
+        // // (below, chose very large number that I'm sure is larger
+        // // than any/most rates)
+        // double min_rate = 1e10;
+        // for (uint32 i = 0; i < regions.size(); i++) {
+        //     const GammaRegion& reg(regions[i]);
+        //     if (reg.deleted()) continue; // <-- refers to deleted/invariant region
+        //     if (reg.rate > max_rate) max_rate = reg.rate;
+        //     if (reg.rate < min_rate) min_rate = reg.rate;
+        // }
+        // // Just in case...
+        // if (min_rate == 1e10) {
+        //     stop("Min. rate that's > 0 is also > 1e10. This is entirely too high.");
+        // }
+
+        /*
+         Calculate how many levels we'll need, then add to `levels`:
+         */
+        uint32 n_levels = 1; //static_cast<uint32>(std::log2l(max_rate / min_rate)) + 1U;
+        levels.reserve(n_levels);
+        for (uint32 i = 0; i < n_levels; i++) levels.push_back(RejLevel());
+
+        /*
+         Now go back through regions and add each's info to proper level:
+         */
+        uint32 lvl_i;
+        for (uint32 i = 0; i < regions.size(); i++) {
+            // below refers to deleted/invariant region:
+            if (regions[i].deleted()) continue;
+            // If not one of those, then add it:
+            // lvl_i = static_cast<uint32>(std::log2l(regions[i].rate / min_rate));
+            lvl_i = 0;
+            levels[lvl_i].add(regions, i, lvl_i);
+            all_lvl_rate += regions[i].rate;
+        }
+
+
+    }
+
+}
+
+
+
+
+// Sample a Gamma region:
+uint32 RegionRejSampler::sample(pcg64& eng,
+                                const std::vector<GammaRegion>& regions) const {
+    // Sample for the sampling-weight level:
+    double u = runif_01(eng) * all_lvl_rate;
+    double r = 0;
+    uint32 i = 0;
+    while (i < levels.size()) {
+        r += levels[i].lvl_rate;
+        if (u < r) break;
+        i++;
+    }
+    if (i >= levels.size()) {
+        Rcout << std::endl << std::endl << i << ' ' << levels.size() << std::endl;
+        Rcout << r << ' ' << u << ' ' << all_lvl_rate << std::endl << std::endl;
+        stop("i >= levels.size() in rej. region sampling");
+    }
+    // Sample for Gamma region within that level:
+    uint32 pos = levels[i].sample(eng, regions);
+    return pos;
+};
+
+
+
+
+
+
+
+/*
+ ========================================================================================
+ ========================================================================================
+
+ LocationSampler methods
+
+ ========================================================================================
+ ========================================================================================
+ */
+
+
+
+
+/*
+ Based on a sequence position, return an index to the Gamma region it's inside.
+ */
+inline uint32 LocationSampler::get_gamma_idx(const uint32& pos) const {
+    uint32 idx = pos * (static_cast<double>(regions.size()) /
+        static_cast<double>(var_seq->size()));
+    if (idx >= regions.size()) idx = regions.size() - 1;
+    while (regions[idx].end < pos || regions[idx].deleted()) idx++;
+    while (regions[idx].start > pos || regions[idx].deleted()) idx--;
+    return idx;
+}
 
 
 /*
@@ -91,8 +299,7 @@ inline void LocationSampler::one_gamma_row(const arma::mat& gamma_mat,
                                            uint32& mut_i,
                                            std::vector<uint32>& sizes) {
 
-    GammaRegion reg;
-    reg.gamma = gamma_mat(i,1); // this will be same even if it gets split
+    double gamma = gamma_mat(i,1); // this will be same even if it gets split
 
     uint32 start, size, n_regs;
     if (i > 0) {
@@ -126,22 +333,20 @@ inline void LocationSampler::one_gamma_row(const arma::mat& gamma_mat,
     std::string seq;
     seq.reserve(sizes[0] + 1);
 
+    double rate;
+
     for (uint32 j = 0; j < sizes.size(); j++) {
 
-        // Set bounds:
-        reg.start = start;
-        reg.end = start + sizes[j] - 1;
-
         // Calculate rate:
-        reg.rate = 0;
+        rate = 0;
         // (in `set_seq_chunk` below, `seq` gets cleared before it's filled)
-        var_seq->set_seq_chunk(seq, reg.start, sizes[j], mut_i);
-        for (const char& c : seq) reg.rate += nt_rates[c];
-        reg.rate *= reg.gamma;
+        var_seq->set_seq_chunk(seq, start, sizes[j], mut_i);
+        for (const char& c : seq) rate += nt_rates[c];
+        rate *= gamma;
 
         // Set LocationSampler info:
-        total_rate += reg.rate;
-        regions.push_back(reg);
+        total_rate += rate;
+        regions.push_back(GammaRegion(gamma, start, start + sizes[j] - 1, rate));
 
         // Update start for next iteration:
         start += sizes[j];
@@ -208,18 +413,18 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
     -----------
     */
 
-    uint32 idx = get_gamma_idx(pos);
 
 
     /*
     Insertions
     */
     if (size_change > 0) {
+        uint32 idx = get_gamma_idx(pos);
         regions[idx].end += size_change;
         idx++;
         // update all following ranges:
         while (idx < regions.size()) {
-            if (regions[idx].rate >= 0) {
+            if (!regions[idx].deleted()) {
                 regions[idx].end += size_change;
                 regions[idx].start += size_change;
             }
@@ -232,29 +437,39 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
     /*
      Deletions
      */
+    // uint32 idx = pos * (static_cast<double>(regions.size()) /
+    //     static_cast<double>(var_seq->size()));
+    // if (idx >= regions.size()) idx = regions.size() - 1;
+    // while (regions[idx].end < pos || regions[idx].deleted()) idx++;
+    // while (regions[idx].start > pos || regions[idx].deleted()) idx--;
+
     const uint32& del_start(pos);
     uint32 del_size = std::abs(size_change);
     uint32 del_end = pos + del_size - 1;
 
     // Iterate through and adjust all regions including and following the deletion:
-    // std::vector<uint32> erase_inds;
-    while (idx < regions.size()) {
-        if (regions[idx].deletion_adjust(del_start, del_end, del_size)) {
-            // erase_inds.push_back(idx);
+    // bool weird = false;
+    bool rm;
+    for (uint32 idx = 0; idx < regions.size(); idx++) {
+        if (regions[idx].end < pos || regions[idx].deleted()) continue;
+        // Next line returns true if the region is totally deleted:
+        rm = regions[idx].deletion_adjust(del_start, del_end, del_size,
+                                          idx, region_sampler);
+        if (rm) {
+            std::deque<uint32>& inds(region_sampler.levels[regions[idx].level].inds);
+            for (uint32 j = 0; j < inds.size(); j++) {
+                if (inds[j] == idx) stop("inds still has idx");
+            }
         }
-        idx++;
+        // weird = regions[idx].rate <= 0 && !regions[idx].deleted();
+        // if (rm || weird) {
+        if (!rm && regions[idx].deleted())  stop("wtf");
+        // if (rm || regions[idx].deleted()) {
+        //     // If it's deleted, then remove it from sampling:
+        //     RejLevel& lvl(region_sampler.levels[regions[idx].level]);
+        //     lvl.rm(idx);
+        // }
     }
-
-    // /*
-    // If any regions need erasing, their indices will be stored in erase_inds.
-    // They will be consecutive indices, so we only need to access the front and back.
-    // */
-    // if (erase_inds.size() == 1) {
-    //     regions.erase(regions.begin() + erase_inds.front());
-    // } else if (erase_inds.size() > 1) {
-    //     regions.erase(regions.begin() + erase_inds.front(),
-    //                   regions.begin() + erase_inds.back() + 1);
-    // }
 
     return;
 }
@@ -401,7 +616,78 @@ double LocationSampler::calc_rate(const uint32& start, const uint32& end) const 
 
 
 
+double LocationSampler::substitution_rate_change(const char& c, const uint32& pos) {
+    uint32 i = get_gamma_idx(pos);
+    GammaRegion& reg(regions[i]);
+    RejLevel& lvl(region_sampler.levels[reg.level]);
+    /*
+     If the region affected by the substitution was the max at the sampling level
+     and its rate is reduced by the substitution,
+     then we must re-check that level to find the new max.
+     This shouldn't happen too often.
+     */
+    bool was_max = (lvl.max_rate <= reg.rate);
 
+    char c0 = var_seq->get_nt(pos);
+    double d_rate = nt_rates[c] - nt_rates[c0];
+
+    if (d_rate != 0) {
+
+        d_rate *= reg.gamma;
+
+        // Add to the rate for `reg` and check to see if that makes it zero
+        reg.rate += d_rate;
+        reg.check_rate();
+
+        total_rate += d_rate;
+        end_rate += d_rate;
+        // If it was the max but decreased in rate, check that it's still the max:
+        if (was_max && d_rate < 0) lvl.reset_max(regions);
+        /*
+         Also check to make sure it isn't the new max if it increased in rate:
+         */
+        if (lvl.max_rate < reg.rate) lvl.max_rate = reg.rate;
+        // Update total rate for that level and for all levels:
+        lvl.lvl_rate += d_rate;
+        region_sampler.all_lvl_rate += d_rate;
+        // Now remove from sampler if this mutation caused it to have a rate of 0
+        if (reg.deleted()) {
+            Rcout << "< sub rm > ";
+            lvl.rm(i);
+            if (lvl.inds.size() == 0 && lvl.lvl_rate != 0) {
+                Rcout << "weird " << lvl.lvl_rate << ' ';
+                region_sampler.all_lvl_rate -= lvl.lvl_rate;
+                lvl.lvl_rate = 0;
+            }
+        }
+
+    }
+
+    return d_rate;
+}
+
+double LocationSampler::insertion_rate_change(const std::string& seq, const uint32& pos) {
+    GammaRegion& reg(regions[get_gamma_idx(pos)]);
+    RejLevel& lvl(region_sampler.levels[reg.level]);
+    double gamma = reg.gamma;
+    double d_rate = 0;
+    for (const char& c : seq) d_rate += nt_rates[c];
+    if (d_rate != 0) {
+        d_rate *= gamma;
+        reg.rate += d_rate;
+        total_rate += d_rate;
+        end_rate += d_rate;
+        /*
+         Because insertions will only ever increase the region's rate, we only need
+         to check to make sure it isn't the new max:
+         */
+        if (lvl.max_rate < reg.rate) lvl.max_rate = reg.rate;
+        // Update total rate for that level and for all levels:
+        lvl.lvl_rate += d_rate;
+        region_sampler.all_lvl_rate += d_rate;
+    }
+    return d_rate;
+}
 
 double LocationSampler::deletion_rate_change(const uint32& del_size,
                                              const uint32& start) {
@@ -416,29 +702,68 @@ double LocationSampler::deletion_rate_change(const uint32& del_size,
 
     var_seq->set_seq_chunk(seq, start, end - start + 1, mut_i);
 
-    double r, out = 0;
+    double r, d_rate = 0;
     uint32 seq_i = 0;
     uint32 idx = get_gamma_idx(start);
 
     while (seq_i < seq.size()) {
-        GammaRegion& reg(regions[idx]);
-        // Skip over deleted region if necessary:
-        if (reg.rate < 0) {
+
+        // Skip over deleted/invariant region if necessary:
+        if (regions[idx].deleted()) {
             idx++;
             continue;
         }
+
+        GammaRegion& reg(regions[idx]);
+        RejLevel& lvl(region_sampler.levels[reg.level]);
+        /*
+         If any region affected by the deletion was the max at the sampling level,
+         then we must re-check that level to find the new max.
+         This shouldn't happen too often.
+         */
+        bool recheck_lvl_max = (lvl.max_rate == reg.rate);
+        r = 0;
         while (((seq_i + start) <= reg.end) && (seq_i < seq.size())) {
-            r = reg.gamma * nt_rates[seq[seq_i]];
-            out -= r;
-            reg.rate -= r;
-            total_rate -= r;
-            end_rate -= r;
+            r += nt_rates[seq[seq_i]];
             seq_i++;
+        }
+        r *= (-1.0 * reg.gamma);
+        d_rate += r;
+
+        // Add to the rate for `reg` and check to see if that makes it zero
+        reg.rate += d_rate;
+        reg.check_rate();
+
+        total_rate += r;
+        end_rate += r;
+        lvl.lvl_rate += r;
+        region_sampler.all_lvl_rate += r;
+        if (recheck_lvl_max) lvl.reset_max(regions);
+        // If this deletion totally removed this region, remove it from sampling:
+        if (reg.deleted()) {
+            Rcout << "< del rm > ";
+            lvl.rm(idx);
+            for (uint32 ii = 0; ii < region_sampler.levels.size(); ii++) {
+                RejLevel& lvl_(region_sampler.levels[ii]);
+                auto iii = std::find(lvl_.inds.begin(), lvl_.inds.end(), idx);
+                if (iii != lvl_.inds.end()) stop("duplicate idx found");
+            }
+            if (lvl.inds.size() == 0 && lvl.lvl_rate != 0) {
+                Rcout << std::endl << std::endl << region_sampler.all_lvl_rate <<
+                    ' ' << lvl.lvl_rate << ' ';
+                double oo = 0;
+                for (const RejLevel& l : region_sampler.levels) oo += l.lvl_rate;
+                Rcout << oo << std::endl;
+                stop("del rm making sized-0 lvl inds not have rate of 0");
+                region_sampler.all_lvl_rate -= lvl.lvl_rate;
+                lvl.lvl_rate = 0;
+            }
         }
         idx++;
     }
 
-    return out;
+
+    return d_rate;
 }
 
 
@@ -506,11 +831,11 @@ inline void LocationSampler::safe_get_mut(const uint32& pos, uint32& mut_i) cons
  It just returns the rate (inclusive) from `reg.start` to `end`.
  This function should never be fed a deleted region!
  */
-inline long double LocationSampler::partial_gamma_rate___(
+inline double LocationSampler::partial_gamma_rate___(
         const uint32& end,
         const GammaRegion& reg) const {
 
-    long double out = 0;
+    double out = 0;
 
     if (end > reg.end) stop("end > reg.end");
     if (end < reg.start) stop("end < reg.start");
@@ -588,6 +913,12 @@ void LocationSampler::update_start_end(const uint32& start, const uint32& end) {
     // If they don't need updated, then don't do it:
     if (start_end_set && (start == start_pos) && (end == end_pos)) return;
 
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+    stop("start end doesn't work");
+
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
     if ((start >= var_seq->size()) || (end >= var_seq->size())) {
         stop("start or end in update_start_end is >= variant sequence size");
     }
@@ -603,11 +934,11 @@ void LocationSampler::update_start_end(const uint32& start, const uint32& end) {
         return;
     }
 
-    long double cum_wt = 0;
+    double cum_wt = 0;
     uint32 gamm_i = 0;
     // Skip over deleted region(s) if necessary:
-    while (regions[gamm_i].rate < 0) gamm_i++;
-    long double part_rate = 0;
+    while (regions[gamm_i].deleted()) gamm_i++;
+    double part_rate = 0;
 
     uint32 mut_i = 0;
 
@@ -668,11 +999,11 @@ uint32 LocationSampler::sample(pcg64& eng,
 
     update_start_end(start, end);
 
-    long double u = runif_ab(eng, start_rate, end_rate);
+    double u = runif_ab(eng, start_rate, end_rate);
 
     // Find the GammaRegion:
     uint32 i = 0;
-    long double cum_wt = 0;
+    double cum_wt = 0;
     for (; i < regions.size(); i++) {
         if (regions[i].rate > 0) cum_wt += regions[i].rate;
         if (cum_wt > u) break;
@@ -689,32 +1020,87 @@ uint32 LocationSampler::sample(pcg64& eng,
     //     cdf_region_sample(pos, u, cum_wt, i);
     // }
 
+
+    // uint32 pos;
+    //
+    // if (rej_sample) {
+    //
+    //     // uint32 i = runif_01(eng) * regions.size();
+    //     // while (regions[i].rate <= 0) i = runif_01(eng) * regions.size();
+    //
+    //     uint32 i = region_sampler.sample(eng);
+    //
+    //     rej_region_sample(pos, eng, i);
+    //
+    //     if (pos >= var_seq->size()) {
+    //         Rcout << std::endl << pos << ' ' << var_seq->size() << std::endl;
+    //         stop("pos > var_seq->size()");
+    //     }
+    //
+    // } else {
+    //
+    //     double u = runif_01(eng) * total_rate;
+    //
+    //     // Find the GammaRegion:
+    //     uint32 i = 0;
+    //     double cum_wt = 0;
+    //     for (; i < regions.size(); i++) {
+    //         if (regions[i].rate > 0) cum_wt += regions[i].rate;
+    //         if (cum_wt > u) break;
+    //     }
+    //
+    //     cdf_region_sample(pos, u, cum_wt, i);
+    //
+    //     if (pos >= var_seq->size()) {
+    //         Rcout << std::endl << pos << ' ' << var_seq->size() << std::endl;
+    //         stop("pos > var_seq->size() in cdf");
+    //     }
+    //
+    // }
+
     return pos;
 }
 uint32 LocationSampler::sample(pcg64& eng) const {
 
     uint32 pos;
-    // cdf_region_sample(pos, u, cum_wt, i);
+
+    for (uint32 i = 0; i < region_sampler.levels.size(); i++) {
+        const std::deque<uint32>& inds(region_sampler.levels[i].inds);
+        for (uint32 j = 0; j < inds.size(); j++) {
+            uint32 k = inds[j];
+            if (regions[k].deleted() || regions[k].rate <= 0) {
+                Rcout << std::endl << regions[k].rate << ' ' << regions[k].deleted() << std::endl;
+                stop("regions[k].rate <= 0 || deleted in LocationSampler::sample");
+            }
+        }
+    }
+
+
+    uint32 i = region_sampler.sample(eng, regions);
+
+    if (regions[i].rate <= 0 || regions[i].deleted()) {
+        Rcout << std::endl << regions[i].rate << ' ' << regions[i].deleted() << std::endl;
+        stop("regions[i] <= 0");
+    }
+    if (i > regions.size()) stop("i > regions.size()");
+
     if (rej_sample) {
 
-        uint32 i = runif_01(eng) * regions.size();
-        while (regions[i].rate < 0) i = runif_01(eng) * regions.size();
+        rej_region_sample(pos, eng, i);
 
-        rej_region_sample(pos, regions[i].start, regions[i].end, eng, i);
+        if (pos >= var_seq->size()) {
+            Rcout << std::endl << pos << ' ' << var_seq->size() << std::endl;
+            stop("pos > var_seq->size()");
+        }
 
     } else {
 
-        long double u = runif_01(eng) * total_rate;
+        cdf_region_sample(pos, eng, i);
 
-        // Find the GammaRegion:
-        uint32 i = 0;
-        long double cum_wt = 0;
-        for (; i < regions.size(); i++) {
-            if (regions[i].rate > 0) cum_wt += regions[i].rate;
-            if (cum_wt > u) break;
+        if (pos >= var_seq->size()) {
+            Rcout << std::endl << pos << ' ' << var_seq->size() << std::endl;
+            stop("pos > var_seq->size() in cdf");
         }
-
-        cdf_region_sample(pos, u, cum_wt, i);
 
     }
 
@@ -727,38 +1113,49 @@ uint32 LocationSampler::sample(pcg64& eng) const {
  Sample within one GammaRegion using rejection method:
  */
 inline void LocationSampler::rej_region_sample(uint32& pos,
-                                               const uint32& start_,
-                                               const uint32& end_,
                                                pcg64& eng,
                                                const uint32& gam_i) const {
 
-    if (regions[gam_i].rate < 0) stop("Cannot sample from a deleted region");
+    if (regions[gam_i].rate <= 0) stop("Cannot sample from a deleted/invariant region");
 
     const GammaRegion& reg(regions[gam_i]);
-    // Update `start` and `end` for this region
-    uint32 start = start_, end = end_;
-    if (start < reg.start) start = reg.start;
-    if (end > reg.end) end = reg.end;
+    // Make refs for `start` and `end` for this region
+    const uint32& start(reg.start);
+    const uint32& end(reg.end);
+
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    if (start > end) {
+        Rcout << std::endl << start << ' ' << end << std::endl;
+        stop("start > end");
+    }
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     if (start == end) {
         pos = start;
         return;
     }
 
-    long double u, q;
+    double u, q;
     char c;
-    int iters = 0;
     uint32 size_ = end + 1;
     size_ -= start;
+    uint32 n_iters = 0;
 
-    while (iters < 100) {
+    while (n_iters < 100) {
         pos = runif_01(eng) * size_;
         pos += start;
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        if (pos > var_seq->size()) {
+            Rcout << std::endl << pos << ' ' << start <<
+                ' ' << end << ' ' << size_ << ' ' << var_seq->size() << std::endl;
+            stop("pos > var_seq->size() #1");
+        }
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         c = var_seq->get_nt(pos);
         q = nt_rates[c];
         u = runif_01(eng) * max_q;
         if (u <= q) break;
-        iters++;
+        n_iters++;
     }
 
     return;
@@ -768,16 +1165,20 @@ inline void LocationSampler::rej_region_sample(uint32& pos,
  Sample within one GammaRegion using cdf (non-rejection) method:
  */
 inline void LocationSampler::cdf_region_sample(uint32& pos,
-                                               long double& u,
-                                               long double& cum_wt,
+                                               double& u,
+                                               double& cum_wt,
                                                const uint32& gam_i) const {
 
-    if (regions[gam_i].rate < 0) stop("Cannot sample from a deleted region");
+    if (regions[gam_i].rate <= 0) stop("Cannot sample from a deleted region");
 
     const GammaRegion& reg(regions[gam_i]);
     const uint32& start(reg.start);
     const uint32& end(reg.end);
 
+    if (start == end) {
+        pos = start;
+        return;
+    }
 
     // Update numbers so that `u` points to a place inside this region:
     cum_wt -= reg.rate;
@@ -802,8 +1203,6 @@ inline void LocationSampler::cdf_region_sample(uint32& pos,
 
     // Index to the first Mutation object not past `start` position:
     uint32 mut_i = var_seq->get_mut_(start);
-    // Current position
-    pos = start;
 
     /*
      If `start` is before the first mutation (resulting in
@@ -848,5 +1247,125 @@ inline void LocationSampler::cdf_region_sample(uint32& pos,
 
 }
 
+
+/* Same as above, but when using rejection sampling for region */
+inline void LocationSampler::cdf_region_sample(uint32& pos,
+                                               pcg64& eng,
+                                               const uint32& gam_i) const {
+
+    if (regions[gam_i].rate <= 0) stop("Cannot sample from a deleted region");
+
+    const GammaRegion& reg(regions[gam_i]);
+    const uint32& start(reg.start);
+    const uint32& end(reg.end);
+
+    if (end >= var_seq->size() || start >= var_seq->size()) {
+        Rcout << std::endl << start << ' ' << end << ' ' << var_seq->size() << std::endl;
+        stop("end or start >= var_seq->size() inside cdf");
+    }
+
+    if (start == end) {
+        pos = start;
+        return;
+    }
+
+    // Sample for a place inside this region:
+    double cum_wt = 0;
+    double u = runif_01(eng) * (reg.rate / reg.gamma);
+    pos = start;
+
+    /*
+     If there are no mutations or if `end` is before the first mutation,
+     then we don't need to use the `mutations` field at all.
+     */
+    if (var_seq->mutations.empty() || (end < var_seq->mutations.front().new_pos)) {
+
+        for (; pos <= end; pos++) {
+            cum_wt += nt_rates[var_seq->ref_seq->nucleos[pos]];
+            if (cum_wt > u) {
+                if (pos > end) {
+                    Rcout << std::endl << pos << ' ' << end << std::endl;
+                    stop("pos > end in cdf - #0");
+                }
+                break;
+            }
+        }
+        if (pos > end) {
+            Rcout << std::endl << pos << ' ' << end << std::endl;
+            stop("pos > end in cdf - #1");
+        }
+        return;
+
+    }
+
+    // Index to the first Mutation object not past `start` position:
+    uint32 mut_i = var_seq->get_mut_(start);
+
+    /*
+     If `start` is before the first mutation (resulting in
+     `mut_i == var_seq->mutations.size()`),
+     we must pick up any nucleotides before the first mutation.
+     */
+    if (mut_i == var_seq->mutations.size()) {
+        mut_i = 0;
+        for (; pos < var_seq->mutations[mut_i].new_pos; pos++) {
+            cum_wt += nt_rates[var_seq->ref_seq->nucleos[pos]];
+            if (cum_wt > u) {
+                if (pos > end) {
+                    Rcout << std::endl << pos << ' ' << end << std::endl;
+                    stop("pos > end in cdf - #2");
+                }
+                return;
+            }
+        }
+    }
+
+    /*
+     Now, for each subsequent mutation except the last, add all nucleotides
+     at or after its position but before the next one.
+     I'm adding `pos <= end` inside all while-statement checks to make sure
+     it doesn't keep going after we've reached `end`.
+     */
+    uint32 next_mut_i = mut_i + 1;
+    while (pos <= end && next_mut_i < var_seq->mutations.size()) {
+        while (pos <= end && pos < var_seq->mutations[next_mut_i].new_pos) {
+            char c = var_seq->get_char_(pos, mut_i);
+            cum_wt += nt_rates[c];
+            if (cum_wt > u) {
+                if (pos > end) {
+                    Rcout << std::endl << pos << ' ' << end << std::endl;
+                    stop("pos > end in cdf - #3");
+                }
+                return;
+            }
+            ++pos;
+        }
+        ++mut_i;
+        ++next_mut_i;
+    }
+
+    // Now taking care of nucleotides after the last Mutation
+    while (pos <= end && pos < var_seq->seq_size) {
+        char c = var_seq->get_char_(pos, mut_i);
+        cum_wt += nt_rates[c];
+        if (cum_wt > u) {
+            if (pos > end) {
+                Rcout << std::endl << pos << ' ' << end << std::endl;
+                stop("pos > end in cdf - #4");
+            }
+            return;
+        }
+        ++pos;
+    }
+
+    if (pos > end) {
+        Rcout << std::endl << pos << ' ' << end << std::endl;
+        Rcout << cum_wt << ' ' << (reg.rate / reg.gamma) << std::endl;
+        stop("pos > end in cdf - end");
+    }
+
+    return;
+
+}
 
 
