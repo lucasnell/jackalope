@@ -334,8 +334,6 @@ public:
 
     double deletion_rate_change(const uint32& del_size, const uint32& start);
 
-    double calc_rate() const;
-    double calc_rate(const uint32& start, const uint32& end) const;
 
     void update_gamma_regions(const sint32& size_change,
                               const uint32& pos);
@@ -379,9 +377,6 @@ private:
                               uint32& mut_i,
                               std::vector<uint32>& sizes);
 
-
-    // Inner method that does most of the work for `calc_rate`
-    double calc_rate__(uint32 start, uint32 end) const;
 
 
     inline void gamma_sample(uint32& pos,

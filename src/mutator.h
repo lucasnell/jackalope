@@ -92,14 +92,6 @@ public:
      */
     double mutate(pcg64& eng, const uint32& start, sint64& end);
 
-
-
-    double calc_rate() {
-        return location.calc_rate();
-    }
-    double calc_rate(const uint32& start, const uint32& end) {
-        return location.calc_rate(start, end);
-    }
 };
 
 

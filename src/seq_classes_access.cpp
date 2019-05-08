@@ -808,7 +808,11 @@ double test_rate(const uint32& start, const uint32& end,
     MutationSampler sampler(*sampler_base);
     sampler.new_seq(var_seq, gamma_mat_);
 
-    double out = sampler.calc_rate(start, end);
+    double out = 0;
+
+    // Do something like this:
+    // sampler.location.set_bounds(start, end);
+    // double out = sampler.location.end_rate - sampler.location.start_rate;
 
     return out;
 

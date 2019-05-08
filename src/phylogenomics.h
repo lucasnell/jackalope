@@ -411,8 +411,11 @@ private:
          */
         double rate_;
         if (!recombination) {
-            rate_ = samplers[0].calc_rate();
-        } else rate_ = samplers[0].calc_rate(start, static_cast<uint32>(end));
+            rate_ = samplers[0].location.total_rate();
+        } else {
+            rate_ = samplers[0].location.end_rate -
+                samplers[0].location.start_rate;
+        }
         seq_rates = std::vector<double>(tree_size, rate_);
 
         return;
@@ -435,7 +438,6 @@ private:
          Do the same for the SeqGammas in the sampler:
          */
         samplers[b2].location.regions = samplers[b1].location.regions;
-        samplers[b2].location.total_rate = samplers[b1].location.total_rate;
 
         /*
          Update overall sequence rate:
