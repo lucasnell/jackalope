@@ -26,12 +26,12 @@ using namespace Rcpp;
 
 
 /*
-Adjust for a deletion.
-`ind` is the index to the current region in the vector of regions.
-`erase_inds` stores indices for region(s) to be erased if the deletion
-entirely spans one or more region(s).
-Adding to this variable will result in the current region being erased.
-*/
+ Adjust for a deletion.
+ `ind` is the index to the current region in the vector of regions.
+ `erase_inds` stores indices for region(s) to be erased if the deletion
+ entirely spans one or more region(s).
+ Adding to this variable will result in the current region being erased.
+ */
 void GammaRegion::deletion_adjust(const uint32& ind,
                                   std::vector<uint32>& erase_inds,
                                   const uint32& del_start,
@@ -185,25 +185,25 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
                                            const uint32& pos) {
 
     /*
-    -----------
-    Substitutions
-    -----------
-    */
+     -----------
+     Substitutions
+     -----------
+     */
     if (size_change == 0) return;
 
 
     /*
-    -----------
-    InDels
-    -----------
-    */
+     -----------
+     InDels
+     -----------
+     */
 
     uint32 idx = get_gamma_idx(pos);
 
 
     /*
-    Insertions
-    */
+     Insertions
+     */
     if (size_change > 0) {
         regions[idx].end += size_change;
         idx++;
@@ -218,8 +218,8 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
     }
 
     /*
-    Deletions
-    */
+     Deletions
+     */
     const uint32& del_start(pos);
     uint32 del_size = std::abs(size_change);
     uint32 del_end = pos + del_size - 1;
@@ -233,9 +233,9 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
     }
 
     /*
-    If any regions need erasing, their indices will be stored in erase_inds.
-    They will be consecutive indices, so we only need to access the front and back.
-    */
+     If any regions need erasing, their indices will be stored in erase_inds.
+     They will be consecutive indices, so we only need to access the front and back.
+     */
     if (erase_inds.size() == 1) {
         regions.erase(regions.begin() + erase_inds.front());
     } else if (erase_inds.size() > 1) {
@@ -429,7 +429,7 @@ inline void LocationSampler::safe_get_mut(const uint32& pos, uint32& mut_i) cons
     /*
      If new_pos is less than the position for the first mutation, we return
      keep it at zero.
-    */
+     */
     if (mutations.empty() || (pos < mutations.front().new_pos)) return;
 
     /*
@@ -472,20 +472,20 @@ inline void LocationSampler::safe_get_mut(const uint32& pos, uint32& mut_i) cons
  For a given position within a gamma region, find the rate associated with it.
  It just returns the rate (inclusive) from `reg.start` to `end`
  */
-inline long double LocationSampler::partial_gamma_rate___(
+inline double LocationSampler::partial_gamma_rate___(
         const uint32& end,
         const GammaRegion& reg) const {
 
-    long double out = 0;
+    double out = 0;
 
     if (end > reg.end) stop("end > reg.end");
     if (end < reg.start) stop("end < reg.start");
     if (end == reg.end) return reg.rate;
 
     /*
-    If there are no mutations or if `end` is before the first mutation,
-    then we don't need to use the `mutations` field at all.
-    */
+     If there are no mutations or if `end` is before the first mutation,
+     then we don't need to use the `mutations` field at all.
+     */
     if (var_seq->mutations.empty() || (end < var_seq->mutations.front().new_pos)) {
 
         for (uint32 i = reg.start; i <= end; i++) {
@@ -568,9 +568,9 @@ void LocationSampler::update_start_end(const uint32& start, const uint32& end) {
         return;
     }
 
-    long double cum_wt = 0;
+    double cum_wt = 0;
     uint32 gamm_i = 0;
-    long double part_rate = 0;
+    double part_rate = 0;
 
     uint32 mut_i = 0;
 
@@ -630,11 +630,11 @@ uint32 LocationSampler::sample(pcg64& eng,
 
     update_start_end(start, end);
 
-    long double u = runif_ab(eng, start_rate, end_rate);
+    double u = runif_ab(eng, start_rate, end_rate);
 
     // Find the GammaRegion:
     uint32 i = 0;
-    long double cum_wt = 0;
+    double cum_wt = 0;
     for (; i < regions.size(); i++) {
         cum_wt += regions[i].rate;
         if (cum_wt > u) break;
@@ -650,11 +650,11 @@ uint32 LocationSampler::sample(pcg64& eng,
 }
 uint32 LocationSampler::sample(pcg64& eng) const {
 
-    long double u = runif_01(eng) * total_rate;
+    double u = runif_01(eng) * total_rate;
 
     // Find the GammaRegion:
     uint32 i = 0;
-    long double cum_wt = 0;
+    double cum_wt = 0;
     for (; i < regions.size(); i++) {
         cum_wt += regions[i].rate;
         if (cum_wt > u) break;
@@ -675,8 +675,8 @@ uint32 LocationSampler::sample(pcg64& eng) const {
  Sample within a gamma region:
  */
 inline void LocationSampler::gamma_sample(uint32& pos,
-                                          long double& u,
-                                          long double& cum_wt,
+                                          double& u,
+                                          double& cum_wt,
                                           const uint32& gam_i) const {
 
     const GammaRegion& reg(regions[gam_i]);
@@ -694,7 +694,7 @@ inline void LocationSampler::gamma_sample(uint32& pos,
     /*
      If there are no mutations or if `end` is before the first mutation,
      then we don't need to use the `mutations` field at all.
-    */
+     */
     if (var_seq->mutations.empty() || (end < var_seq->mutations.front().new_pos)) {
 
         for (; pos <= end; pos++) {

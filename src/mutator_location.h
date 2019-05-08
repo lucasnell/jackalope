@@ -28,7 +28,7 @@ using namespace Rcpp;
 
 
 namespace mut_loc {
-    const std::string bases = "TCAG";
+const std::string bases = "TCAG";
 }
 
 
@@ -62,11 +62,11 @@ struct GammaRegion {
     double gamma;
     uint32 start;
     uint32 end;
-    long double rate;  // overall rate (including gamma) for the sequence in this region
+    double rate;  // overall rate (including gamma) for the sequence in this region
 
     GammaRegion() {}
     GammaRegion(const double& gamma_, const uint32& start_, const uint32& end_,
-                const long double& rate_)
+                const double& rate_)
         : gamma(gamma_), start(start_), end(end_), rate(rate_) {}
     GammaRegion(const GammaRegion& other)
         : gamma(other.gamma), start(other.start), end(other.end), rate(other.rate) {}
@@ -80,12 +80,12 @@ struct GammaRegion {
     }
 
     /*
-    Adjust for a deletion.
-    `ind` is the index to the current region in the vector of regions.
-    `erase_inds` stores indices for region(s) to be erased if the deletion
-    entirely spans one or more region(s).
-    Adding to this variable will result in the current region being erased.
-    */
+     Adjust for a deletion.
+     `ind` is the index to the current region in the vector of regions.
+     `erase_inds` stores indices for region(s) to be erased if the deletion
+     entirely spans one or more region(s).
+     Adding to this variable will result in the current region being erased.
+     */
     void deletion_adjust(const uint32& ind,
                          std::vector<uint32>& erase_inds,
                          const uint32& del_start,
@@ -134,12 +134,12 @@ public:
     const VarSequence * var_seq;  // pointer to const VarSequence
     std::vector<double> nt_rates = std::vector<double>(256, 0.0);
     std::vector<GammaRegion> regions;
-    long double total_rate = 0;
+    double total_rate = 0;
     // For sampling with a starting and ending location:
     uint32 start_pos = 0;
     uint32 end_pos;
-    long double start_rate = 0;
-    long double end_rate = 0;
+    double start_rate = 0;
+    double end_rate = 0;
     bool start_end_set = false; // whether pos and rates have been set
 
     LocationSampler() : var_seq(), regions() {};
@@ -270,15 +270,15 @@ private:
 
 
     inline void gamma_sample(uint32& pos,
-                             long double& u,
-                             long double& cum_wt,
+                             double& u,
+                             double& cum_wt,
                              const uint32& gam_i) const;
 
     inline void safe_get_mut(const uint32& pos, uint32& mut_i) const;
 
 
-    inline long double partial_gamma_rate___(const uint32& end,
-                                             const GammaRegion& reg) const;
+    inline double partial_gamma_rate___(const uint32& end,
+                                        const GammaRegion& reg) const;
 
 
     void update_start_end(const uint32& start, const uint32& end);
