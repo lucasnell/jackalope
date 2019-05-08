@@ -40,7 +40,7 @@ inline double MutationSampler::mutate__(pcg64& eng, const uint32& pos, sint64& e
         end += static_cast<sint64>(m.length);
         uint32 me_i = 0, max_end = 0;
         for (uint32 i = 0; i < location.regions.size(); i++) {
-            const GammaRegion& gr(location.regions[i]);
+            const Region& gr(location.regions[i]);
             if (gr.end > max_end) {
                 max_end = gr.end;
                 me_i = i;
