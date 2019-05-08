@@ -33,20 +33,13 @@ inline double MutationSampler::mutate__(pcg64& eng, const uint32& pos, sint64& e
             rate_change = location.deletion_rate_change(del_size, pos);
             var_seq->add_deletion(del_size, pos);
         }
-        // Update Gamma region bounds:
-        location.update_gamma_regions(m.length, pos);
-        location.end_pos += m.length;
         // Update end point:
         end += static_cast<sint64>(m.length);
-        uint32 me_i = 0, max_end = 0;
-        for (uint32 i = 0; i < location.regions.size(); i++) {
-            const Region& gr(location.regions[i]);
-            if (gr.end > max_end) {
-                max_end = gr.end;
-                me_i = i;
-            }
-        }
     }
+
+    // Update regions, rates, and bounds:
+    location.update(rate_change, m.length, pos);
+
     return rate_change;
 }
 
@@ -55,6 +48,11 @@ inline double MutationSampler::mutate__(pcg64& eng, const uint32& pos, sint64& e
 double MutationSampler::mutate(pcg64& eng) {
 
     uint32 pos = location.sample(eng);
+
+    if (pos >= var_seq->size()) {
+        Rcout << pos << ' ' << var_seq->size() << std::endl;
+        stop("pos returning too large a pos");
+    }
 
     // Dummy end point for use in mutate__
     sint64 end = var_seq->size() - 1;

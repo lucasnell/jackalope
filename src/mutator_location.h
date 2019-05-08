@@ -62,19 +62,19 @@ struct Region {
     uint32 start;
     uint32 end;
     double rate;  // overall rate (including gamma) for the sequence in this region
+    bool deleted;
 
     Region(const double& gamma_, const uint32& start_, const uint32& end_,
                 const double& rate_)
-        : gamma(gamma_), start(start_), end(end_), rate(rate_) {}
+        : gamma(gamma_), start(start_), end(end_), rate(rate_), deleted(rate_ <= 0) {}
     Region(const Region& other)
-        : gamma(other.gamma), start(other.start), end(other.end), rate(other.rate) {}
+        : gamma(other.gamma), start(other.start), end(other.end), rate(other.rate),
+          deleted(other.deleted) {}
 
     /*
      Adjust for a deletion.
-     It returns true if this region should be deleted.
-     Returns false in all other cases.
      */
-    bool del_adjust_bounds(const uint32& del_start,
+    void del_adjust_bounds(const uint32& del_start,
                            const uint32& del_end);
 
 };
@@ -91,45 +91,6 @@ struct Region {
  ========================================================================================
  */
 
-// Tips of tree. Mostly just a wrapper around a pointer to a Region.
-// This allows the Region to be deleted from memory if its rate == 0.
-struct RegionTip {
-
-    std::unique_ptr<Region> region;
-
-    RegionTip() : region(nullptr) {};
-    RegionTip(const double& gamma_, const uint32& start_, const uint32& end_,
-          const double& rate_)
-        : region(new Region(gamma_, start_, end_, rate_)) {}
-
-    inline double rate() {
-        if (region) return region->rate;
-        return 0;
-    }
-    // Adjust bounds for an insertion that occurs BEFORE this region:
-    void ins_adjust_bounds(const uint32& size) {
-        // If not a NULL pointer, adjust the inner Region:
-        if (region) {
-            region->start += size;
-            region->end += size;
-        }
-        return;
-    }
-    void del_adjust_bounds(const uint32& del_start,
-                           const uint32& del_end) {
-        // If not a NULL pointer, adjust the inner Region, and remove the pointer if
-        // this deletion covers the whole region:
-        if (region) {
-            if (region->del_adjust_bounds(del_start, del_end)) {
-                region.reset();
-            }
-        }
-        return;
-    }
-
-};
-
-
 
 
 // The full tree. This is what outputs a Region position:
@@ -138,66 +99,114 @@ class RegionTree {
 public:
 
     std::vector<std::vector<double>> nodes;
-    std::vector<RegionTip> tips;
+    std::vector<Region> tips;
     double total_rate;
 
-    RegionTree(const arma::mat& gamma_mat)
+    RegionTree() {};
+    RegionTree(const arma::mat& gamma_mat,
+               const uint32& region_size,
+               const VarSequence* var_seq,
+               const std::vector<double>& nt_rates)
         : total_rate(0) {
-        construct_tips(gamma_mat); // also calculates `total_rate`
+        // below also calculates `total_rate`
+        construct_tips(gamma_mat, region_size, var_seq, nt_rates);
         construct_nodes();
+    }
+    RegionTree(const RegionTree& other)
+        : nodes(other.nodes), tips(other.tips), total_rate(other.total_rate) {}
+    RegionTree& operator=(const RegionTree& other) {
+        nodes = other.nodes;
+        tips = other.tips;
+        total_rate = other.total_rate;
+        return *this;
     }
 
     /*
-     For a sampled rate, return the Region it refers to.
-     Note that it changes `u` in place.
+     For a sampled number in range (0, `total_rate`) or
+     (`bounds.start_rate`,`bounds.end_rate`), return the Region it refers to.
+     This function adjusts `u` in place so that it refers to a location inside
+     the region returned.
      This means that if using CDF method within region, `u` just needs to be divided
      by the region's gamma value to be used.
      */
-    Region* search(double& u);
+    const Region* search(double& u) const;
+
+    const Region* current() const {
+        return &tips[mut_tip_];
+    }
+
+    // Get index to mutated tip (but don't allow outside classes to modify it)
+    const uint32& mut_tip() const { return mut_tip_; }
 
     // This adjusts all node, tip, and rate fields for a substitution:
     void sub_update(const double& d_rate) {
         total_rate += d_rate;
-        tips[mut_tip].region->rate += d_rate;
+        tips[mut_tip_].rate += d_rate;
         // Update nodes:
-        update_nodes(mut_tip, d_rate);
+        update_nodes(mut_tip_, d_rate);
         // If the region's rate is now zero, remove the object:
-        if (tips[mut_tip].region->rate == 0) tips[mut_tip].region.reset();
+        if (tips[mut_tip_].rate == 0) tips[mut_tip_].deleted = true;
         return;
     }
     // This adjusts all node, tip, and rate fields for an insertion:
     void ins_update(const double& d_rate, const uint32& size) {
         total_rate += d_rate;
-        tips[mut_tip].region->rate += d_rate;
+        tips[mut_tip_].rate += d_rate;
         // Update nodes:
-        update_nodes(mut_tip, d_rate);
+        update_nodes(mut_tip_, d_rate);
         // Only update end for the region containing the insertion:
-        tips[mut_tip].region->end += size;
+        tips[mut_tip_].end += size;
         // This method is used for all subsequent regions; updates start and end:
-        for (uint32 i = (mut_tip + 1); i < tips.size(); i++) {
-            tips[i].ins_adjust_bounds(size);
+        for (uint32 i = (mut_tip_ + 1); i < tips.size(); i++) {
+            tips[i].start += size;
+            tips[i].end += size;
         }
         return;
     }
     // This adjusts all node, tip, and rate fields for a deletion:
-    void del_update(const double& d_rate, const uint32& start, const uint32& end) {
+    void del_update(const double& d_rate,
+                    const uint32& start,
+                    const uint32& end,
+                    std::deque<double>& del_rate_changes) {
         total_rate += d_rate;
-        tips[mut_tip].region->rate += d_rate;
+        /*
+         We don't want to do the following 2 lines bc deletion rate changes are saved
+         inside `del_rate_changes`. This is done bc `d_rate` can span multiple regions.
+         */
+        // tips[mut_tip_].rate += d_rate;
+        // update_nodes(mut_tip_, d_rate);
+
         // Update nodes:
-        update_nodes(mut_tip, d_rate);
         // Update region bounds for the one containing the deletion and all
         // subsequent ones:
-        for (uint32 i = mut_tip; i < tips.size(); i++) {
+        for (uint32 i = mut_tip_; i < tips.size(); i++) {
             tips[i].del_adjust_bounds(start, end);
+            // If `del_rate_changes` isn't empty, then this region was affected:
+            if (!del_rate_changes.empty()) {
+                double d_rate_ = del_rate_changes.front();
+                tips[i].rate += d_rate_;
+                update_nodes(i, d_rate_);
+                del_rate_changes.pop_front();
+            }
         }
         return;
     }
 
 private:
 
-    uint32 mut_tip = 0; // Keeps index to the most recently mutated tip
+    mutable uint32 mut_tip_ = 0; // Keeps index to the most recently mutated tip
 
-    void construct_tips(arma::mat gamma_mat);
+    inline void construct_tips_one_row(const arma::mat& gamma_mat,
+                                       const uint32& region_size,
+                                       const VarSequence* var_seq,
+                                       const std::vector<double>& nt_rates,
+                                       const uint32& i,
+                                       uint32& mut_i,
+                                       std::vector<uint32>& sizes);
+    void construct_tips(arma::mat gamma_mat,
+                        const uint32& region_size,
+                        const VarSequence* var_seq,
+                        const std::vector<double>& nt_rates);
     void construct_nodes();
 
     // Given a change in a tip, update all nodes above that for the change
@@ -225,6 +234,57 @@ private:
 
 
 
+/*
+ ========================================================================================
+ ========================================================================================
+
+ For setting bounds to sampling
+
+ ========================================================================================
+ ========================================================================================
+ */
+
+
+struct LocationBounds {
+
+    uint32 start_pos;
+    uint32 end_pos;
+    double start_rate;
+    double end_rate;
+    bool start_end_set; // whether pos and rates have been set
+
+    LocationBounds()
+        : start_pos(0), end_pos(0),
+          start_rate(0), end_rate(0),
+          start_end_set(false) {};
+
+    LocationBounds(const VarSequence& vs_)
+        : start_pos(0), end_pos(vs_.size()),
+          start_rate(0), end_rate(0),
+          start_end_set(false) {};
+
+    LocationBounds(const LocationBounds& other)
+        : start_pos(other.start_pos), end_pos(other.end_pos),
+          start_rate(other.start_rate), end_rate(other.end_rate),
+          start_end_set(other.start_end_set) {};
+
+    LocationBounds& operator=(const LocationBounds& other) {
+        start_pos = other.start_pos;
+        end_pos = other.end_pos;
+        start_rate = other.start_rate;
+        end_rate = other.end_rate;
+        start_end_set = other.start_end_set;
+        return *this;
+    }
+
+    void update(const double& d_rate, const sint64& size_change) {
+        end_rate += d_rate;
+        end_pos += size_change;
+        return;
+    }
+
+};
+
 
 
 /*
@@ -237,62 +297,37 @@ private:
  ========================================================================================
  */
 
-/*
- This class uses the info above, plus a class and fxn from `weighted_reservoir.h` to
- do weighted reservoir sampling for a single location at which to put a mutation.
- The weights are based on the nucleotide and sequence region.
- */
+
+
 class LocationSampler {
 
 public:
 
     const VarSequence * var_seq;  // pointer to const VarSequence
     std::vector<double> nt_rates = std::vector<double>(256, 0.0);
-    std::vector<Region> regions;
-    double total_rate = 0;
+    // Binary search tree for sampling regions:
+    RegionTree regions;
     // For sampling with a starting and ending location:
-    uint32 start_pos = 0;
-    uint32 end_pos;
-    double start_rate = 0;
-    double end_rate = 0;
-    bool start_end_set = false; // whether pos and rates have been set
+    LocationBounds bounds;
 
-    LocationSampler() : var_seq(), regions() {};
-    LocationSampler(const VarSequence& vs_,
-                    const std::vector<double>& q_tcag,
-                    const arma::mat& gamma_mat,
-                    const uint32& gamma_size_)
-        : var_seq(&vs_), regions(), end_pos(vs_.size()), gamma_size(gamma_size_) {
-        for (uint32 i = 0; i < 4; i++) {
-            uint32 bi = mut_loc::bases[i];
-            nt_rates[bi] = q_tcag[i];
-        }
-        construct_gammas(gamma_mat);
-    }
+    LocationSampler() : var_seq(), regions(), bounds(), region_size(0) {};
     LocationSampler(const std::vector<double>& q_tcag,
-                    const uint32& gamma_size_)
-        : var_seq(), regions(), gamma_size(gamma_size_) {
+                    const uint32& region_size_)
+        : var_seq(), regions(), bounds(), region_size(region_size_) {
         for (uint32 i = 0; i < 4; i++) {
             uint32 bi = mut_loc::bases[i];
             nt_rates[bi] = q_tcag[i];
         }
     }
     LocationSampler(const LocationSampler& other)
-        : var_seq(other.var_seq), nt_rates(other.nt_rates),
-          regions(other.regions), total_rate(other.total_rate),
-          start_pos(other.start_pos), end_pos(other.end_pos),
-          start_rate(other.start_rate), end_rate(other.end_rate),
-          gamma_size(other.gamma_size) {}
+        : var_seq(other.var_seq), nt_rates(other.nt_rates), regions(other.regions),
+          bounds(other.bounds), region_size(other.region_size) {}
     LocationSampler& operator=(const LocationSampler& other) {
         var_seq = other.var_seq;
         nt_rates = other.nt_rates;
         regions = other.regions;
-        total_rate = other.total_rate;
-        start_pos = other.start_pos;
-        end_pos = other.end_pos;
-        start_rate = other.start_rate;
-        end_rate = other.end_rate;
-        gamma_size = other.gamma_size;
+        bounds = other.bounds;
+        region_size = other.region_size;
         return *this;
     }
 
@@ -304,94 +339,66 @@ public:
     // Fill pointer for a new VarSequence
     void new_seq(const VarSequence& vs_, const arma::mat& gamma_mat) {
         var_seq = &vs_;
-        construct_gammas(gamma_mat);
+        // Reset search tree for regions:
+        regions = RegionTree(gamma_mat, region_size, var_seq, nt_rates);
+        // Reset bounds:
+        bounds = LocationBounds();
         return;
     }
 
-    double substitution_rate_change(const char& c, const uint32& pos) {
-        Region& reg(regions[get_gamma_idx(pos)]);
+    double total_rate() const { return regions.total_rate; }
+
+
+    /*
+     These figure out the change in rates for each type of mutation, but they do
+     NOT change anything.
+     */
+
+    double substitution_rate_change(const char& c, const uint32& pos) const {
+        // Pointer to region where mutation occurred (saved by `regions` object)
+        const Region* reg = regions.current();
         char c0 = var_seq->get_nt(pos);
-        double gamma = reg.gamma;
         double d_rate = nt_rates[c] - nt_rates[c0];
-        d_rate *= gamma;
-        reg.rate += d_rate;
-        total_rate += d_rate;
-        end_rate += d_rate;
+        d_rate *= reg->gamma;
         return d_rate;
     }
 
-    double insertion_rate_change(const std::string& seq, const uint32& pos) {
-        Region& reg(regions[get_gamma_idx(pos)]);
-        double gamma = reg.gamma;
+    double insertion_rate_change(const std::string& seq, const uint32& pos) const {
+        const Region* reg = regions.current();
         double d_rate = 0;
         for (const char& c : seq) d_rate += nt_rates[c];
-        d_rate *= gamma;
-        reg.rate += d_rate;
-        total_rate += d_rate;
-        end_rate += d_rate;
+        d_rate *= reg->gamma;
         return d_rate;
     }
 
-    double deletion_rate_change(const uint32& del_size, const uint32& start);
+    double deletion_rate_change(const uint32& del_size, const uint32& start) const;
 
 
-    void update_gamma_regions(const sint32& size_change,
-                              const uint32& pos);
+
+    /*
+     These DO update and change things:
+     */
+    void update(const double& d_rate, const sint32& size_change, const uint32& pos);
+
+    void new_bounds(const uint32& start, const uint32& end);
 
 
 
 private:
 
-    uint32 gamma_size;
-
-    void construct_gammas(arma::mat gamma_mat);
-
-
-    /*
-     Based on a sequence position, return an index to the Gamma region it's inside.
-     */
-    inline uint32 get_gamma_idx(const uint32& pos) const {
-        uint32 idx = pos * (static_cast<double>(regions.size()) /
-            static_cast<double>(var_seq->size()));
-        if (idx >= regions.size()) idx = regions.size() - 1;
-        while (regions[idx].end < pos) idx++;
-        while (regions[idx].start > pos) idx--;
-        return idx;
-    }
-
-    // Used to check if gamma region needs to be iterated to the next one.
-    inline void check_gamma(const uint32& pos,
-                            uint32& gamma_end,
-                            uint32& gam_i,
-                            double& gamma) const {
-        if (pos > gamma_end) {
-            gam_i++;
-            gamma = regions[gam_i].gamma;
-            gamma_end = regions[gam_i].end;
-        }
-        return;
-    }
-
-    inline void one_gamma_row(const arma::mat& gamma_mat,
-                              const uint32& i,
-                              uint32& mut_i,
-                              std::vector<uint32>& sizes);
+    uint32 region_size;
+    // to store info on deletion rate changes since they affect multiple regions:
+    mutable std::deque<double> del_rate_changes;
 
 
-
-    inline void gamma_sample(uint32& pos,
-                             double& u,
-                             double& cum_wt,
-                             const uint32& gam_i) const;
+    // Sample within a region using CDF method:
+    inline void cdf_region_sample(uint32& pos, const double& u, const Region* reg) const;
 
     inline void safe_get_mut(const uint32& pos, uint32& mut_i) const;
 
 
     inline double partial_gamma_rate___(const uint32& end,
                                         const Region& reg) const;
-
-
-    void update_start_end(const uint32& start, const uint32& end);
 
 };
 

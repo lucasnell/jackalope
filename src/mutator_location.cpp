@@ -27,14 +27,13 @@ using namespace Rcpp;
 
 /*
  Adjust bounds for a deletion.
- It returns true if this region should be deleted.
- Returns false in all other cases.
+ It changes the `deleted` field to true if this region should be deleted.
  */
-bool Region::del_adjust_bounds(const uint32& del_start,
+void Region::del_adjust_bounds(const uint32& del_start,
                                const uint32& del_end) {
 
     // No overlap and deletion starts after it
-    if (del_start > end) return false;
+    if (del_start > end) return;
 
     uint32 del_size = del_end - del_start + 1;
 
@@ -42,13 +41,16 @@ bool Region::del_adjust_bounds(const uint32& del_start,
     if (del_end < start) {
         start -= del_size;
         end -= del_size;
-        return false;
+        return;
     }
     /*
      Total overlap
      */
     if ((del_start <= start) && (del_end >= end)) {
-        return true;
+        start = del_start - 1;
+        end = del_start - 1;
+        deleted = true;
+        return;
     }
     /*
      Deletion is totally inside this region but doesn't entirely overlap it
@@ -56,38 +58,34 @@ bool Region::del_adjust_bounds(const uint32& del_start,
      */
     if ((del_start > start) && (del_end < end)) {
         end -= del_size;
-        return false;
+        return;
     }
     // Partial overlap at the start
     if ((del_end >= start) && (del_start <= start)) {
         start = del_start;
         end -= del_size;
-        return false;
+        return;
     }
     // Partial overlap at the end
     if ((del_start <= end) && (del_end >= end)) {
         end = del_start - 1;
     }
-    return false;
+    return;
 }
 
 
 
 
+inline void RegionTree::construct_tips_one_row(const arma::mat& gamma_mat,
+                                               const uint32& region_size,
+                                               const VarSequence* var_seq,
+                                               const std::vector<double>& nt_rates,
+                                               const uint32& i,
+                                               uint32& mut_i,
+                                               std::vector<uint32>& sizes) {
 
-/*
- Process one row in Gamma matrix, adding Region(s) associated with it to the
- `regions` field.
- It also splits up each Region so that it only ever refers to a region of
- size `gamma_size`, or as close to this as possible.
- */
-inline void LocationSampler::one_gamma_row(const arma::mat& gamma_mat,
-                                           const uint32& i,
-                                           uint32& mut_i,
-                                           std::vector<uint32>& sizes) {
-
-    Region reg;
-    reg.gamma = gamma_mat(i,1); // this will be same even if it gets split
+    double gamma = gamma_mat(i,1); // this will be same even if it gets split
+    if (gamma <= 0) return; // no need to add invariant regions
 
     uint32 start, size, n_regs;
     if (i > 0) {
@@ -105,7 +103,7 @@ inline void LocationSampler::one_gamma_row(const arma::mat& gamma_mat,
      */
     size = static_cast<uint32>(gamma_mat(i,0)) - start;
 
-    n_regs = std::round(static_cast<double>(size) / static_cast<double>(gamma_size));
+    n_regs = std::round(static_cast<double>(size) / static_cast<double>(region_size));
 
     // Vector of # bases per Region
     if (n_regs > 1) {
@@ -117,130 +115,145 @@ inline void LocationSampler::one_gamma_row(const arma::mat& gamma_mat,
     // String to store sequence info:
     std::string seq;
     seq.reserve(sizes[0] + 1);
+    double rate;
 
     for (uint32 j = 0; j < sizes.size(); j++) {
 
-        // Set bounds:
-        reg.start = start;
-        reg.end = start + sizes[j] - 1;
-
         // Calculate rate:
-        reg.rate = 0;
+        rate = 0;
         // (in `set_seq_chunk` below, `seq` gets cleared before it's filled)
-        var_seq->set_seq_chunk(seq, reg.start, sizes[j], mut_i);
-        for (const char& c : seq) reg.rate += nt_rates[c];
-        reg.rate *= reg.gamma;
+        var_seq->set_seq_chunk(seq, start, sizes[j], mut_i);
+        for (const char& c : seq) rate += nt_rates[c];
+        rate *= gamma;
 
-        // Set LocationSampler info:
-        total_rate += reg.rate;
-        regions.push_back(reg);
+        // Set RegionTree info:
+        total_rate += rate;
+        tips.push_back(Region(gamma, start, start + sizes[j] - 1, rate));
 
         // Update start for next iteration:
         start += sizes[j];
     }
 
+
     return;
+
 }
 
 
 
 
 
-void LocationSampler::construct_gammas(arma::mat gamma_mat) {
-
-    if (gamma_size < 1) stop("Gamma size cannot be < 1.");
+void RegionTree::construct_tips(arma::mat gamma_mat,
+                                const uint32& region_size,
+                                const VarSequence* var_seq,
+                                const std::vector<double>& nt_rates) {
 
     total_rate = 0;
 
-    if (!var_seq) stop("Cannot do construct_gammas method when var_seq isn't set.");
+    tips.clear();
+    tips.reserve((var_seq->size() / region_size) * 1.5);
+
     // Sort from first to last region
     arma::uvec sort_inds = arma::sort_index(gamma_mat.col(0));
     gamma_mat = gamma_mat.rows(sort_inds);
-    if (gamma_mat(gamma_mat.n_rows - 1, 0) != var_seq->size()) {
-        stop("gamma_mat doesn't end with size of variant sequence");
-    }
-    // Now clear and fill in the regions vector
-    regions.clear();
-    regions.reserve((var_seq->size() / gamma_size) * 1.5);
 
     uint32 mut_i = 0;
     std::vector<uint32> sizes;
     sizes.reserve(1000); // arbitrarily chosen
 
     for (uint32 i = 0; i < gamma_mat.n_rows; i++) {
-        one_gamma_row(gamma_mat, i, mut_i, sizes);
+        construct_tips_one_row(gamma_mat, region_size, var_seq, nt_rates, i, mut_i, sizes);
     }
 
-    clear_memory<std::vector<Region>>(regions);
-
-    end_rate = total_rate;
+    clear_memory<std::vector<Region>>(tips);  // in case I reserved too much memory
 
     return;
 }
 
 
 
-void LocationSampler::update_gamma_regions(const sint32& size_change,
-                                           const uint32& pos) {
+void RegionTree::construct_nodes() {
 
-    /*
-     -----------
-     Substitutions
-     -----------
-     */
-    if (size_change == 0) return;
+    uint32 n_tips = tips.size();
+    if (n_tips == 0) stop("no tips present");
+    // If just one tip, then we can keep this at size 0:
+    if (n_tips == 1) return;
+
+    // Else, let's figure out how many levels we need first:
+    uint32 n_lvls = std::ceil(std::log2(static_cast<double>(n_tips)));
+
+    // Resize `nodes` and all inside levels by iterating backwards through each level:
+    nodes.resize(n_lvls);
+    double n = n_tips;
+    for (uint32 i = 1; i <= n_lvls; i++) {
+        n = std::ceil(n / 2.0);
+        // Using this type of construction to make sure they're all zeroes
+        nodes[n_lvls-i] = std::vector<double>(static_cast<uint32>(n), 0.0);
+    }
+    // Fill all node values:
+    for (uint32 tip_i = 0; tip_i < n_tips; tip_i++) {
+        double rate = tips[tip_i].rate;
+        // update nodes from a tip:
+        update_nodes(tip_i, rate);
+    }
+
+    return;
+
+}
 
 
-    /*
-     -----------
-     InDels
-     -----------
-     */
 
-    uint32 idx = get_gamma_idx(pos);
+const Region* RegionTree::search(double& u) const {
 
+    if (nodes.size() == 0) return 0;
 
-    /*
-     Insertions
-     */
-    if (size_change > 0) {
-        regions[idx].end += size_change;
-        idx++;
-        // update all following ranges:
-        while (idx < regions.size()) {
-            regions[idx].end += size_change;
-            regions[idx].start += size_change;
-            idx++;
+    // Traverse down tree to see which tip to return:
+    uint32 node_i = 0;
+    bool go_right;
+    // Go up tree and update all necessary nodes:
+    for (uint32 lvl_i = 0; lvl_i < nodes.size(); lvl_i++) {
+        const double& threshold(nodes[lvl_i][node_i]);
+        go_right = u > threshold;
+        node_i <<= 1; // traversing down means using this type of bit-shift
+        if (go_right) {
+            u -= threshold;
+            node_i++;
         }
+    }
 
+    mut_tip_ = node_i; // saving this to later update it for the mutation
+
+    return &tips[node_i];
+
+}
+
+
+
+
+
+
+void LocationSampler::update(const double& d_rate,
+                             const sint32& size_change,
+                             const uint32& pos) {
+
+    // Update `end_rate` and `end_pos` in `bounds`
+    bounds.update(d_rate, size_change);
+
+    // Substitutions
+    if (size_change == 0) {
+        regions.sub_update(d_rate);
         return;
     }
 
-    /*
-     Deletions
-     */
-    const uint32& del_start(pos);
-    uint32 del_size = std::abs(size_change);
-    uint32 del_end = pos + del_size - 1;
-
-    // Iterate through and adjust all regions including and following the deletion:
-    std::vector<uint32> erase_inds;
-    while (idx < regions.size()) {
-        regions[idx].deletion_adjust(idx, erase_inds, del_start, del_end,
-                                     del_size);
-        idx++;
+    // Insertions
+    if (size_change > 0) {
+        regions.ins_update(d_rate, static_cast<uint32>(size_change));
+        return;
     }
 
-    /*
-     If any regions need erasing, their indices will be stored in erase_inds.
-     They will be consecutive indices, so we only need to access the front and back.
-     */
-    if (erase_inds.size() == 1) {
-        regions.erase(regions.begin() + erase_inds.front());
-    } else if (erase_inds.size() > 1) {
-        regions.erase(regions.begin() + erase_inds.front(),
-                      regions.begin() + erase_inds.back() + 1);
-    }
+    // Deletions
+    uint32 end = pos - size_change - 1;
+    regions.del_update(d_rate, pos, end, del_rate_changes);
 
     return;
 }
@@ -256,10 +269,13 @@ void LocationSampler::update_gamma_regions(const sint32& size_change,
 
 
 double LocationSampler::deletion_rate_change(const uint32& del_size,
-                                             const uint32& start) {
+                                             const uint32& start) const {
 
     uint32 end = start + del_size - 1;
     if (end >= var_seq->size()) end = var_seq->size() - 1;
+
+    // Prep `del_rate_changes` to store rate changes for multiple deletions:
+    del_rate_changes.clear();
 
     std::string seq;
     seq.reserve(del_size);
@@ -270,18 +286,19 @@ double LocationSampler::deletion_rate_change(const uint32& del_size,
 
     double r, out = 0;
     uint32 seq_i = 0;
-    uint32 idx = get_gamma_idx(start);
+    uint32 idx = regions.mut_tip();
 
     while (seq_i < seq.size()) {
-        Region& reg(regions[idx]);
-        while (((seq_i + start) <= reg.end) && (seq_i < seq.size())) {
-            r = reg.gamma * nt_rates[seq[seq_i]];
-            out -= r;
-            reg.rate -= r;
-            total_rate -= r;
-            end_rate -= r;
-            seq_i++;
-        }
+        const Region& reg(regions.tips[idx]);
+        if (!reg.deleted) {
+            r = 0;
+            while (((seq_i + start) <= reg.end) && (seq_i < seq.size())) {
+                r -= reg.gamma * nt_rates[seq[seq_i]];
+                seq_i++;
+            }
+            out += r;
+            del_rate_changes.push_back(r);
+        } else del_rate_changes.push_back(0);
         idx++;
     }
 
@@ -428,7 +445,14 @@ inline double LocationSampler::partial_gamma_rate___(
 /*
  Update starting and ending positions and rates
  */
-void LocationSampler::update_start_end(const uint32& start, const uint32& end) {
+void LocationSampler::new_bounds(const uint32& start,
+                                 const uint32& end) {
+
+    uint32& start_pos(bounds.start_pos);
+    uint32& end_pos(bounds.end_pos);
+    double& start_rate(bounds.start_rate);
+    double& end_rate(bounds.end_rate);
+    bool& start_end_set(bounds.start_end_set);
 
     // If they don't need updated, then don't do it:
     if (start_end_set && (start == start_pos) && (end == end_pos)) return;
@@ -444,7 +468,7 @@ void LocationSampler::update_start_end(const uint32& start, const uint32& end) {
     // If they point to full sequence starts and ends, then this is easy:
     if ((start == 0) && (end == var_seq->size())) {
         start_rate = 0;
-        end_rate = total_rate;
+        end_rate = regions.total_rate;
         return;
     }
 
@@ -467,16 +491,16 @@ void LocationSampler::update_start_end(const uint32& start, const uint32& end) {
          */
         safe_get_mut(start_pos - 1, mut_i);
         gamm_i = 0;
-        cum_wt = regions[gamm_i].rate;
+        cum_wt = regions.tips[gamm_i].rate;
         // Find the Region for the new start:
-        while ((gamm_i < (regions.size() - 1)) &&
-               (regions[gamm_i].end < (start_pos - 1))) {
+        while ((gamm_i < (regions.tips.size() - 1)) &&
+               (regions.tips[gamm_i].end < (start_pos - 1))) {
             gamm_i++;
-            cum_wt += regions[gamm_i].rate;
+            cum_wt += regions.tips[gamm_i].rate;
         }
-        cum_wt -= regions[gamm_i].rate;
+        cum_wt -= regions.tips[gamm_i].rate;
         // Rate from reg.start to `start_pos - 1`:
-        part_rate = partial_gamma_rate___(start_pos - 1, regions[gamm_i]);
+        part_rate = partial_gamma_rate___(start_pos - 1, regions.tips[gamm_i]);
         // Set `start_rate`:
         start_rate = cum_wt + part_rate;
     }
@@ -485,15 +509,15 @@ void LocationSampler::update_start_end(const uint32& start, const uint32& end) {
      Rate for ending position:
      */
     safe_get_mut(end_pos, mut_i);
-    cum_wt += regions[gamm_i].rate;
+    cum_wt += regions.tips[gamm_i].rate;
     // Find the Region for the new end:
-    while ((gamm_i < (regions.size() - 1)) && (regions[gamm_i].end < end_pos)) {
+    while ((gamm_i < (regions.tips.size() - 1)) && (regions.tips[gamm_i].end < end_pos)) {
         gamm_i++;
-        cum_wt += regions[gamm_i].rate;
+        cum_wt += regions.tips[gamm_i].rate;
     }
-    cum_wt -= regions[gamm_i].rate;
+    cum_wt -= regions.tips[gamm_i].rate;
     // Rate from reg.start to `end_pos`:
-    part_rate = partial_gamma_rate___(end_pos, regions[gamm_i]);
+    part_rate = partial_gamma_rate___(end_pos, regions.tips[gamm_i]);
     // Set `start_rate`:
     end_rate = cum_wt + part_rate;
 
@@ -508,43 +532,33 @@ uint32 LocationSampler::sample(pcg64& eng,
                                const uint32& start,
                                const uint32& end) {
 
-    update_start_end(start, end);
+    new_bounds(start, end);
 
-    double u = runif_ab(eng, start_rate, end_rate);
+    double u = runif_ab(eng, bounds.start_rate, bounds.end_rate);
 
     // Find the Region:
-    uint32 i = 0;
-    double cum_wt = 0;
-    for (; i < regions.size(); i++) {
-        cum_wt += regions[i].rate;
-        if (cum_wt > u) break;
-    }
+    const Region* reg = regions.search(u);
 
     /*
      Find the location within the Gamma region:
      */
     uint32 pos;
-    gamma_sample(pos, u, cum_wt, i);
+    cdf_region_sample(pos, u, reg);
 
     return pos;
 }
 uint32 LocationSampler::sample(pcg64& eng) const {
 
-    double u = runif_01(eng) * total_rate;
+    double u = runif_01(eng) * regions.total_rate;
 
     // Find the Region:
-    uint32 i = 0;
-    double cum_wt = 0;
-    for (; i < regions.size(); i++) {
-        cum_wt += regions[i].rate;
-        if (cum_wt > u) break;
-    }
+    const Region* reg = regions.search(u);
 
     /*
      Find the location within the Gamma region:
      */
     uint32 pos;
-    gamma_sample(pos, u, cum_wt, i);
+    cdf_region_sample(pos, u, reg);
 
     return pos;
 }
@@ -552,24 +566,17 @@ uint32 LocationSampler::sample(pcg64& eng) const {
 
 
 /*
- Sample within a gamma region:
+ Sample within a gamma region using CDF method:
  */
-inline void LocationSampler::gamma_sample(uint32& pos,
-                                          double& u,
-                                          double& cum_wt,
-                                          const uint32& gam_i) const {
+inline void LocationSampler::cdf_region_sample(uint32& pos,
+                                               const double& u,
+                                               const Region* reg) const {
 
-    const Region& reg(regions[gam_i]);
-    const uint32& start(reg.start);
-    const uint32& end(reg.end);
+    const uint32& start(reg->start);
+    const uint32& end(reg->end);
 
-
-    // Update numbers so that `u` points to a place inside this region:
-    cum_wt -= reg.rate;
-    u -= cum_wt;
-    u /= reg.gamma;
-    cum_wt = 0;
     pos = start;
+    double cum_wt = 0;
 
     /*
      If there are no mutations or if `end` is before the first mutation,

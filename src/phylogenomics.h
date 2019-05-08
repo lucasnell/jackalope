@@ -413,8 +413,11 @@ private:
         if (!recombination) {
             rate_ = samplers[0].location.total_rate();
         } else {
-            rate_ = samplers[0].location.end_rate -
-                samplers[0].location.start_rate;
+            // (This will be checked every call to `sample`, so no need to do it for
+            // all samplers)
+            samplers[0].location.new_bounds(start, end);
+            rate_ = samplers[0].location.bounds.end_rate -
+                samplers[0].location.bounds.start_rate;
         }
         seq_rates = std::vector<double>(tree_size, rate_);
 

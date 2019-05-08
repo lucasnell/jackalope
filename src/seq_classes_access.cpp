@@ -812,7 +812,7 @@ double test_rate(const uint32& start, const uint32& end,
 
     // Do something like this:
     // sampler.location.set_bounds(start, end);
-    // double out = sampler.location.end_rate - sampler.location.start_rate;
+    // double out = sampler.location.bounds.end_rate - sampler.location.bounds.start_rate;
 
     return out;
 
