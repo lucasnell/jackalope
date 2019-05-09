@@ -39,14 +39,19 @@ using namespace Rcpp;
 //' @param region_size_ Size of each Gamma region.
 //' @param shape The shape parameter for the Gamma distribution from which
 //'     Gamma values will be derived.
+//' @param invariant Proportion of invariant regions.
 //' @param eng A random number generator.
 //'
 //'
 //' @noRd
 //'
-void fill_gamma_mat_(arma::mat& gamma_mat, double& gammas_x_sizes,
-                     const uint32& seq_size_, const uint32& region_size_,
-                     const double& shape, pcg64& eng) {
+void fill_gamma_mat_(arma::mat& gamma_mat,
+                     double& gammas_x_sizes,
+                     const uint32& seq_size_,
+                     const uint32& region_size_,
+                     const double& shape,
+                     const double& invariant,
+                     pcg64& eng) {
 
     // Number of gamma values needed:
     uint32 n_gammas = static_cast<uint32>(std::ceil(
@@ -54,6 +59,16 @@ void fill_gamma_mat_(arma::mat& gamma_mat, double& gammas_x_sizes,
 
     // Initialize output matrix
     gamma_mat.set_size(n_gammas, 2);
+
+    // Number of regions that are invariant
+    uint32 n_inv = std::round(n_gammas * invariant);
+    // Sample indices for which ones are invariant:
+    std::deque<uint32> iv_inds;
+    if (n_inv > 0) {
+        iv_inds = as<std::deque<uint32>>(
+            Rcpp::sample(n_gammas, n_inv, false, R_NilValue, false));
+        std::sort(iv_inds.begin(), iv_inds.end());
+    }
 
 
     if (shape > 0) {
@@ -72,7 +87,10 @@ void fill_gamma_mat_(arma::mat& gamma_mat, double& gammas_x_sizes,
         uint32 end_;
         for (uint32 i = 0, start_ = 1; i < n_gammas; i++, start_ += region_size_) {
 
-            gamma_ = distr(eng);
+            if (!iv_inds.empty() && (i == iv_inds.front())) {
+                gamma_ = 0;
+                iv_inds.pop_front();
+            } else gamma_ = distr(eng);
 
             end_ = start_ + region_size_ - 1;
             if (i == n_gammas - 1) end_ = seq_size_;
@@ -87,22 +105,29 @@ void fill_gamma_mat_(arma::mat& gamma_mat, double& gammas_x_sizes,
 
     } else {
 
-        double size_;
+        double gamma_, size_;
         uint32 end_;
         for (uint32 i = 0, start_ = 1; i < n_gammas; i++, start_ += region_size_) {
+
+            if (!iv_inds.empty() && (i == iv_inds.front())) {
+                gamma_ = 0;
+                iv_inds.pop_front();
+            } else gamma_ = 1;
 
             end_ = start_ + region_size_ - 1;
             if (i == n_gammas - 1) end_ = seq_size_;
 
             gamma_mat(i,0) = end_;
-            gamma_mat(i,1) = 1;
+            gamma_mat(i,1) = gamma_;
 
             size_ = end_ - start_ + 1;
-            gammas_x_sizes += size_;
+            gammas_x_sizes += (size_ * gamma_);
 
         }
 
     }
+
+
 
     return;
 }
@@ -121,7 +146,8 @@ void fill_gamma_mat_(arma::mat& gamma_mat, double& gammas_x_sizes,
 //[[Rcpp::export]]
 arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
                                        const uint32& region_size_,
-                                       const double& shape) {
+                                       const double& shape,
+                                       const double& invariant) {
 
     if (region_size_ == 0) {
         stop("\nIn internal function make_gamma_mats, region_size_ == 0");
@@ -144,7 +170,7 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
     arma::field<arma::mat> gamma_mats(n_seqs);
     for (uint32 i = 0; i < n_seqs; i++) {
         fill_gamma_mat_(gamma_mats(i), gammas_x_sizes, seq_sizes[i],
-                        region_size_, shape, eng);
+                        region_size_, shape, invariant, eng);
     }
 
     /*

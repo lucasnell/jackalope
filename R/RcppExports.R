@@ -525,6 +525,7 @@ test_rate <- function(start, end, var_ind, seq_ind, var_set_ptr, sampler_base_pt
 #' @param region_size_ Size of each Gamma region.
 #' @param shape The shape parameter for the Gamma distribution from which
 #'     Gamma values will be derived.
+#' @param invariant Proportion of invariant regions.
 #' @param eng A random number generator.
 #'
 #'
@@ -542,8 +543,8 @@ NULL
 #'
 #' @noRd
 #'
-make_gamma_mats <- function(seq_sizes, region_size_, shape) {
-    .Call(`_jackalope_make_gamma_mats`, seq_sizes, region_size_, shape)
+make_gamma_mats <- function(seq_sizes, region_size_, shape, invariant) {
+    .Call(`_jackalope_make_gamma_mats`, seq_sizes, region_size_, shape, invariant)
 }
 
 #' Check input Gamma matrices for proper # columns and end points.

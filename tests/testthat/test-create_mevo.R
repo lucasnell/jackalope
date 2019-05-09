@@ -333,3 +333,14 @@ test_that("throws proper errors when inputting an incorrect `site_var$mats` inpu
                  regexp = "all matrices should contain no duplicate end points")
 })
 
+
+
+# *  invariants ----
+test_that("invariant sites are produced appropriately", {
+    # Because `ref` is evenly sized we should get exact output:
+    M <- site_var(ref, shape = pars$shape, region_size = pars$region_size,
+                  invariant = 0.50)
+    expect_identical(sapply(M, function(x) mean(x[,2] == 0)),
+                     rep(0.5, length(M)))
+    expect_equal(mean(sapply(M, function(x) mean(x[,2]))), 1.0)
+})

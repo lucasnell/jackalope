@@ -212,6 +212,9 @@ print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) 
 #' @param region_size Size of regions to break the genome into,
 #'     where all sites within a region have the same gamma distance.
 #'     Defaults to `NULL`.
+#' @param invariant Proportion of regions that are invariant.
+#'     Must be in range `[0,1)`.
+#'     Defaults to `0`.
 #' @param mats List of matrices, one for each sequence in the genome.
 #'     Each matrix should have two columns.
 #'     The first should contain the end points for each region.
@@ -252,6 +255,7 @@ print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) 
 site_var <- function(reference,
                      shape = NULL,
                      region_size = NULL,
+                     invariant = 0,
                      mats = NULL,
                      out_prefix = NULL,
                      compress = FALSE,
@@ -268,6 +272,9 @@ site_var <- function(reference,
     }
     if (!is.null(region_size) && !single_integer(region_size, 1)) {
         err_msg("site_var", "region_size", "NULL or a single integer >= 1")
+    }
+    if (!is.null(invariant) && (!single_number(invariant, 0) || invariant >= 1)) {
+        err_msg("site_var", "invariant", "NULL or a single number in range [0,1)")
     }
     if (!is.null(mats) && (!is_type(mats, "list") ||
                            !all(sapply(mats, inherits, what = "matrix")))) {
@@ -308,7 +315,10 @@ site_var <- function(reference,
                  "you need to provide both the `shape` and `region_size` arguments.",
                  call. = FALSE)
         }
-        mats <- make_gamma_mats(seq_sizes, region_size_ = region_size, shape = shape)
+        mats <- make_gamma_mats(seq_sizes,
+                                region_size_ = region_size,
+                                shape = shape,
+                                invariant = invariant)
         dim(mats) <- NULL # so it's just a list now
     }
 
@@ -424,7 +434,8 @@ create_mevo <- function(reference,
     # (they'll get split later if desired):
     if (is.null(gamma_mats)) {
         seq_sizes <- reference$sizes()
-        gamma_mats <- make_gamma_mats(seq_sizes, region_size_ = max(seq_sizes), shape = 0)
+        gamma_mats <- make_gamma_mats(seq_sizes, region_size_ = max(seq_sizes),
+                                      shape = 0, invariant = 0)
         dim(gamma_mats) <- NULL # so it's just a list now
     }
 
