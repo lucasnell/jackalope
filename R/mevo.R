@@ -128,8 +128,8 @@ indels <- function(rate,
     if (!single_number(rate) || rate <= 0) {
         err_msg("indels", "rate", "a single number > 0")
     }
-    if (!single_integer(max_length, 1)) {
-        err_msg("indels", "max_length", "a single integer >= 1")
+    if (!single_integer(max_length, 1, 1e6)) {
+        err_msg("indels", "max_length", "a single integer in range [1, 1e6]")
     }
     if (!is.null(a) && !single_number(a, 0)) {
         err_msg("indels", "a", "NULL or a single number >= 0")
@@ -207,6 +207,7 @@ print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) 
 #'     generate variants.
 #' @param shape Shape parameter for the Gamma distribution that generates gamma distances,
 #'     The variance of the distribution is `1 / shape`, and its mean is fixed to 1.
+#'     Values `<= 0` are not allowed.
 #'     Defaults to `NULL`.
 #' @param region_size Size of regions to break the genome into,
 #'     where all sites within a region have the same gamma distance.
@@ -262,8 +263,8 @@ site_var <- function(reference,
     if (!inherits(reference, "ref_genome")) {
         err_msg("site_var", "reference", "a \"ref_genome\" object")
     }
-    if (!is.null(shape) && !single_number(shape, 0)) {
-        err_msg("site_var", "shape", "NULL or a single number >= 0")
+    if (!is.null(shape) && (!single_number(shape) || shape <= 0)) {
+        err_msg("site_var", "shape", "NULL or a single number > 0")
     }
     if (!is.null(region_size) && !single_integer(region_size, 1)) {
         err_msg("site_var", "region_size", "NULL or a single integer >= 1")
@@ -419,13 +420,11 @@ create_mevo <- function(reference,
     del <- as.numeric(del)
 
 
-    # -------+
-    # Process info for mutation-rate variability among sites and write to BED
-    # file if desired
-    # -------+
+    # This results in no variability among sites and 1 Gamma region per sequence
+    # (they'll get split later if desired):
     if (is.null(gamma_mats)) {
-        # This results in no variability among sites:
-        gamma_mats <- make_gamma_mats(reference$sizes(), region_size_ = 10, shape = 0)
+        seq_sizes <- reference$sizes()
+        gamma_mats <- make_gamma_mats(seq_sizes, region_size_ = max(seq_sizes), shape = 0)
         dim(gamma_mats) <- NULL # so it's just a list now
     }
 
