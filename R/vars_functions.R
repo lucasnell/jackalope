@@ -562,15 +562,15 @@ fill_coal_mat_pos <- function(sites_mats, seq_sizes) {
     for (i in 1:length(sites_mats)) {
         if (nrow(sites_mats[[i]]) == 0) next;
         pos <- sites_mats[[i]][,1]
-        if (all(pos < 1 && pos > 0)) {
+        if (all(pos < 1 & pos > 0)) {
             # Converting to integer positions (0-based):
             pos  <- as.integer(pos * seq_sizes[i]);
         } else {
             all_ints <- all(pos %% 1 == 0)
-            if (all_ints && all(pos < seq_sizes[i] && pos >= 0)) {
+            if (all_ints && all(pos < seq_sizes[i] & pos >= 0)) {
                 # Keeping them in 0-based indices:
                 pos = as.integer(pos);
-            } else if (all_ints && all(pos <= seq_sizes[i] && pos >= 1)) {
+            } else if (all_ints && all(pos <= seq_sizes[i] & pos >= 1)) {
                 # Converting to 0-based indices:
                 pos = as.integer(pos) - 1;
             } else {

@@ -13,6 +13,7 @@ generate variants.}
 
 \item{shape}{Shape parameter for the Gamma distribution that generates gamma distances,
 The variance of the distribution is \code{1 / shape}, and its mean is fixed to 1.
+Values \code{<= 0} are not allowed.
 Defaults to \code{NULL}.}
 
 \item{region_size}{Size of regions to break the genome into,
