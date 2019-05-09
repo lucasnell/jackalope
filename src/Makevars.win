@@ -7,18 +7,25 @@ CXX_STD = CXX11
 # PKG_CFLAGS += $(SHLIB_OPENMP_CFLAGS)
 # PKG_LIBS += $(SHLIB_OPENMP_CFLAGS)
 
-# Access to pgc RNG header files
-PKG_CPPFLAGS = -I../inst/include/
+
+
+# Access to pgc RNG and Rhtslib header files
+RHTSLIB_CPPFLAGS=$(shell echo 'Rhtslib::pkgconfig("PKG_CPPFLAGS")'|\
+    "${R_HOME}/bin/R" --vanilla --slave)
+PKG_CPPFLAGS = -I../inst/include/ $(RHTSLIB_CPPFLAGS)
 
 ## From "Writing R Extensions":
 ## > Since the only viable make for Windows is GNU make, it is permissible to
 ## > use GNU extensions in files Makevars.win or Makefile.win.
 
-# For htslib headers:
-RHTSLIB_LIBS = $(shell echo 'Rhtslib::pkgconfig("PKG_LIBS")'| "${R_HOME}/bin/R" --vanilla --slave)
-# For portable zlib headers
-ZLIBIOC_CFLAGS = $(shell echo 'zlibbioc::pkgconfig("PKG_CFLAGS")'| "${R_HOME}/bin/R" --vanilla --slave)
-ZLIBIOC_LIBS = $(shell echo 'zlibbioc::pkgconfig("PKG_LIBS_shared")' | "${R_HOME}/bin/R" --vanilla --slave)
+# For htslib:
+RHTSLIB_LIBS = $(shell echo 'Rhtslib::pkgconfig("PKG_LIBS")'|\
+	"${R_HOME}/bin/R" --vanilla --slave)
+# For portable zlib:
+ZLIBIOC_CFLAGS = $(shell echo 'zlibbioc::pkgconfig("PKG_CFLAGS")'|\
+	"${R_HOME}/bin/R" --vanilla --slave)
+ZLIBIOC_LIBS = $(shell echo 'zlibbioc::pkgconfig("PKG_LIBS_shared")' |\
+	"${R_HOME}/bin/R" --vanilla --slave)
 
 
 # Compression library and others

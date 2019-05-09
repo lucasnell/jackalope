@@ -5,7 +5,7 @@
 ^\.Rproj\.user$
 ^\.Rprofile$
 ^\.travis\.yml$
-^README
+^README.Rmd$
 ^under_constr
 ^_crash_test\.R$
 ^methods
