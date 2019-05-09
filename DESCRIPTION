@@ -23,9 +23,7 @@ Imports:
     R6,
     Rcpp (>= 0.12.11),
     RcppArmadillo,
-    RcppProgress (>= 0.1),
-    Rhtslib,
-    zlibbioc
+    RcppProgress (>= 0.1)
 LinkingTo:
     Rcpp,
     RcppArmadillo,
