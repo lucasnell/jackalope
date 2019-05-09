@@ -392,7 +392,7 @@ private:
 
 
     // Sample within a region using CDF method:
-    inline void cdf_region_sample(uint32& pos, const double& u, const Region* reg) const;
+    inline void cdf_region_sample(uint32& pos, double& u, const Region* reg) const;
 
     inline void safe_get_mut(const uint32& pos, uint32& mut_i) const;
 

@@ -274,7 +274,7 @@ double LocationSampler::deletion_rate_change(const uint32& del_size,
     uint32 end = start + del_size - 1;
     if (end >= var_seq->size()) end = var_seq->size() - 1;
 
-    // Prep `del_rate_changes` to store rate changes for multiple deletions:
+    // Prep `del_rate_changes` to store rate changes for deletions spanning >1 regions:
     del_rate_changes.clear();
 
     std::string seq;
@@ -569,11 +569,17 @@ uint32 LocationSampler::sample(pcg64& eng) const {
  Sample within a gamma region using CDF method:
  */
 inline void LocationSampler::cdf_region_sample(uint32& pos,
-                                               const double& u,
+                                               double& u,
                                                const Region* reg) const {
 
     const uint32& start(reg->start);
     const uint32& end(reg->end);
+
+    /*
+     Because `reg->rate` incorporates `reg->gamma`, we'd have to multiply all our
+     nucleotide-level rates by `reg->gamma` if we didn't run the following line:
+     */
+    u /= reg->gamma;
 
     pos = start;
     double cum_wt = 0;

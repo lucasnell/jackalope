@@ -8,8 +8,8 @@ context("Testing basics of creating variants")
 
 arg_list <- list(reference = create_genome(3, 100),
                  sub = sub_JC69(0.1))
-# arg_list$ins <- indels(rate = 0.1, max_length = 10)
-# arg_list$del <- indels(rate = 0.1, max_length = 10)
+arg_list$ins <- indels(rate = 0.1, max_length = 10)
+arg_list$del <- indels(rate = 0.1, max_length = 10)
 arg_list$gamma_mats <- site_var(arg_list$reference, shape = 2, region_size = 10)
 
 
