@@ -249,8 +249,8 @@ write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, show
     invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix, show_progress))
 }
 
-make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates, gamma_size) {
-    .Call(`_jackalope_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates, gamma_size)
+make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates, region_size) {
+    .Call(`_jackalope_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates, region_size)
 }
 
 #' Create XPtr to nested vector of PhyloTree objects from phylogeny information.
@@ -522,7 +522,7 @@ test_rate <- function(start, end, var_ind, seq_ind, var_set_ptr, sampler_base_pt
 #'     mean gamma value across the whole genome, which is then used to make sure that
 #'     the overall mean is 1.
 #' @param seq_size_ Length of the focal sequence.
-#' @param gamma_size_ Size of each Gamma region.
+#' @param region_size_ Size of each Gamma region.
 #' @param shape The shape parameter for the Gamma distribution from which
 #'     Gamma values will be derived.
 #' @param eng A random number generator.
@@ -535,15 +535,15 @@ NULL
 #' Make matrices of Gamma-region end points and Gamma values for multiple sequences.
 #'
 #' @param seq_sizes Lengths of the sequences in the genome.
-#' @param gamma_size_ Size of each Gamma region.
+#' @param region_size_ Size of each Gamma region.
 #' @param shape The shape parameter for the Gamma distribution from which
 #'     Gamma values will be derived.
 #'
 #'
 #' @noRd
 #'
-make_gamma_mats <- function(seq_sizes, gamma_size_, shape) {
-    .Call(`_jackalope_make_gamma_mats`, seq_sizes, gamma_size_, shape)
+make_gamma_mats <- function(seq_sizes, region_size_, shape) {
+    .Call(`_jackalope_make_gamma_mats`, seq_sizes, region_size_, shape)
 }
 
 #' Check input Gamma matrices for proper # columns and end points.

@@ -307,7 +307,7 @@ site_var <- function(reference,
                  "you need to provide both the `shape` and `region_size` arguments.",
                  call. = FALSE)
         }
-        mats <- make_gamma_mats(seq_sizes, gamma_size_ = region_size, shape = shape)
+        mats <- make_gamma_mats(seq_sizes, region_size_ = region_size, shape = shape)
         dim(mats) <- NULL # so it's just a list now
     }
 
@@ -380,7 +380,7 @@ create_mevo <- function(reference,
                         ins,
                         del,
                         gamma_mats,
-                        chunk_size) {
+                        region_size) {
 
     if (!inherits(reference, "ref_genome")) {
         err_msg("create_variants", "reference", "a \"ref_genome\" object")
@@ -397,8 +397,8 @@ create_mevo <- function(reference,
     if (!is.null(gamma_mats) && !is_type(gamma_mats, "site_var_mats")) {
         err_msg("create_variants", "gamma_mats", "NULL or a \"site_var_mats\" object")
     }
-    if (!single_integer(chunk_size, 1)) {
-        err_msg("create_variants", "chunk_size", "a single integer >= 1")
+    if (!single_integer(region_size, 1)) {
+        err_msg("create_variants", "region_size", "a single integer >= 1")
     }
 
     # `sub` must be provided if others are:
@@ -425,7 +425,7 @@ create_mevo <- function(reference,
     # -------+
     if (is.null(gamma_mats)) {
         # This results in no variability among sites:
-        gamma_mats <- make_gamma_mats(reference$sizes(), gamma_size_ = 10, shape = 0)
+        gamma_mats <- make_gamma_mats(reference$sizes(), region_size_ = 10, shape = 0)
         dim(gamma_mats) <- NULL # so it's just a list now
     }
 
@@ -436,7 +436,7 @@ create_mevo <- function(reference,
                     ins,
                     del,
                     gamma_mats,
-                    chunk_size)
+                    region_size)
 
     return(out)
 }
@@ -455,7 +455,7 @@ mevo_obj_to_ptr <- function(mevo_obj) {
                                               mevo_obj$pi_tcag,
                                               mevo_obj$insertion_rates,
                                               mevo_obj$deletion_rates,
-                                              mevo_obj$chunk_size)
+                                              mevo_obj$region_size)
 
     return(sampler_ptr)
 }

@@ -330,8 +330,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // make_mutation_sampler_base
-SEXP make_mutation_sampler_base(const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, const uint32& gamma_size);
-RcppExport SEXP _jackalope_make_mutation_sampler_base(SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP gamma_sizeSEXP) {
+SEXP make_mutation_sampler_base(const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, const uint32& region_size);
+RcppExport SEXP _jackalope_make_mutation_sampler_base(SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP region_sizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -339,8 +339,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
     Rcpp::traits::input_parameter< const std::vector<double>& >::type insertion_rates(insertion_ratesSEXP);
     Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type gamma_size(gamma_sizeSEXP);
-    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_base(Q, pi_tcag, insertion_rates, deletion_rates, gamma_size));
+    Rcpp::traits::input_parameter< const uint32& >::type region_size(region_sizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_base(Q, pi_tcag, insertion_rates, deletion_rates, region_size));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -753,15 +753,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // make_gamma_mats
-arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes, const uint32& gamma_size_, const double& shape);
-RcppExport SEXP _jackalope_make_gamma_mats(SEXP seq_sizesSEXP, SEXP gamma_size_SEXP, SEXP shapeSEXP) {
+arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes, const uint32& region_size_, const double& shape);
+RcppExport SEXP _jackalope_make_gamma_mats(SEXP seq_sizesSEXP, SEXP region_size_SEXP, SEXP shapeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::vector<uint32>& >::type seq_sizes(seq_sizesSEXP);
-    Rcpp::traits::input_parameter< const uint32& >::type gamma_size_(gamma_size_SEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type region_size_(region_size_SEXP);
     Rcpp::traits::input_parameter< const double& >::type shape(shapeSEXP);
-    rcpp_result_gen = Rcpp::wrap(make_gamma_mats(seq_sizes, gamma_size_, shape));
+    rcpp_result_gen = Rcpp::wrap(make_gamma_mats(seq_sizes, region_size_, shape));
     return rcpp_result_gen;
 END_RCPP
 }

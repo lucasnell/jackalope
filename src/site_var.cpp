@@ -36,7 +36,7 @@ using namespace Rcpp;
 //'     mean gamma value across the whole genome, which is then used to make sure that
 //'     the overall mean is 1.
 //' @param seq_size_ Length of the focal sequence.
-//' @param gamma_size_ Size of each Gamma region.
+//' @param region_size_ Size of each Gamma region.
 //' @param shape The shape parameter for the Gamma distribution from which
 //'     Gamma values will be derived.
 //' @param eng A random number generator.
@@ -45,12 +45,12 @@ using namespace Rcpp;
 //' @noRd
 //'
 void fill_gamma_mat_(arma::mat& gamma_mat, double& gammas_x_sizes,
-                     const uint32& seq_size_, const uint32& gamma_size_,
+                     const uint32& seq_size_, const uint32& region_size_,
                      const double& shape, pcg64& eng) {
 
     // Number of gamma values needed:
     uint32 n_gammas = static_cast<uint32>(std::ceil(
-        static_cast<double>(seq_size_) / static_cast<double>(gamma_size_)));
+        static_cast<double>(seq_size_) / static_cast<double>(region_size_)));
 
     // Initialize output matrix
     gamma_mat.set_size(n_gammas, 2);
@@ -70,11 +70,11 @@ void fill_gamma_mat_(arma::mat& gamma_mat, double& gammas_x_sizes,
         */
         double gamma_, size_;
         uint32 end_;
-        for (uint32 i = 0, start_ = 1; i < n_gammas; i++, start_ += gamma_size_) {
+        for (uint32 i = 0, start_ = 1; i < n_gammas; i++, start_ += region_size_) {
 
             gamma_ = distr(eng);
 
-            end_ = start_ + gamma_size_ - 1;
+            end_ = start_ + region_size_ - 1;
             if (i == n_gammas - 1) end_ = seq_size_;
 
             gamma_mat(i,0) = end_;
@@ -89,9 +89,9 @@ void fill_gamma_mat_(arma::mat& gamma_mat, double& gammas_x_sizes,
 
         double size_;
         uint32 end_;
-        for (uint32 i = 0, start_ = 1; i < n_gammas; i++, start_ += gamma_size_) {
+        for (uint32 i = 0, start_ = 1; i < n_gammas; i++, start_ += region_size_) {
 
-            end_ = start_ + gamma_size_ - 1;
+            end_ = start_ + region_size_ - 1;
             if (i == n_gammas - 1) end_ = seq_size_;
 
             gamma_mat(i,0) = end_;
@@ -111,7 +111,7 @@ void fill_gamma_mat_(arma::mat& gamma_mat, double& gammas_x_sizes,
 //' Make matrices of Gamma-region end points and Gamma values for multiple sequences.
 //'
 //' @param seq_sizes Lengths of the sequences in the genome.
-//' @param gamma_size_ Size of each Gamma region.
+//' @param region_size_ Size of each Gamma region.
 //' @param shape The shape parameter for the Gamma distribution from which
 //'     Gamma values will be derived.
 //'
@@ -120,11 +120,11 @@ void fill_gamma_mat_(arma::mat& gamma_mat, double& gammas_x_sizes,
 //'
 //[[Rcpp::export]]
 arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
-                                       const uint32& gamma_size_,
+                                       const uint32& region_size_,
                                        const double& shape) {
 
-    if (gamma_size_ == 0) {
-        stop("\nIn internal function make_gamma_mats, gamma_size_ == 0");
+    if (region_size_ == 0) {
+        stop("\nIn internal function make_gamma_mats, region_size_ == 0");
     }
 
     pcg64 eng = seeded_pcg();
@@ -144,7 +144,7 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
     arma::field<arma::mat> gamma_mats(n_seqs);
     for (uint32 i = 0; i < n_seqs; i++) {
         fill_gamma_mat_(gamma_mats(i), gammas_x_sizes, seq_sizes[i],
-                        gamma_size_, shape, eng);
+                        region_size_, shape, eng);
     }
 
     /*
