@@ -106,10 +106,11 @@ public:
     RegionTree(const arma::mat& gamma_mat,
                const uint32& region_size,
                const VarSequence* var_seq,
-               const std::vector<double>& nt_rates)
+               const std::vector<double>& nt_rates,
+               const bool& rej_sample)
         : total_rate(0) {
         // below also calculates `total_rate`
-        construct_tips(gamma_mat, region_size, var_seq, nt_rates);
+        construct_tips(gamma_mat, region_size, var_seq, nt_rates, rej_sample);
         construct_nodes();
     }
     RegionTree(const RegionTree& other)
@@ -200,13 +201,15 @@ private:
                                        const uint32& region_size,
                                        const VarSequence* var_seq,
                                        const std::vector<double>& nt_rates,
+                                       const bool& rej_sample,
                                        const uint32& i,
                                        uint32& mut_i,
                                        std::vector<uint32>& sizes);
     void construct_tips(arma::mat gamma_mat,
                         const uint32& region_size,
                         const VarSequence* var_seq,
-                        const std::vector<double>& nt_rates);
+                        const std::vector<double>& nt_rates,
+                        const bool& rej_sample);
     void construct_nodes();
 
     // Given a change in a tip, update all nodes above that for the change
@@ -309,11 +312,19 @@ public:
     RegionTree regions;
     // For sampling with a starting and ending location:
     LocationBounds bounds;
+    // Rejection sampling info (including whether to do it)
+    bool rej_sample;
+    double max_q;
 
-    LocationSampler() : var_seq(), regions(), bounds(), region_size(0) {};
+    LocationSampler()
+        : var_seq(), regions(), bounds(), rej_sample(), max_q(), region_size(0) {};
     LocationSampler(const std::vector<double>& q_tcag,
-                    const uint32& region_size_)
-        : var_seq(), regions(), bounds(), region_size(region_size_) {
+                    const uint32& region_size_,
+                    const bool& rej_sample_)
+        : var_seq(), regions(), bounds(),
+          rej_sample(rej_sample_),
+          max_q(*std::max_element(q_tcag.begin(), q_tcag.end())),
+          region_size(region_size_) {
         for (uint32 i = 0; i < 4; i++) {
             uint32 bi = mut_loc::bases[i];
             nt_rates[bi] = q_tcag[i];
@@ -321,12 +332,15 @@ public:
     }
     LocationSampler(const LocationSampler& other)
         : var_seq(other.var_seq), nt_rates(other.nt_rates), regions(other.regions),
-          bounds(other.bounds), region_size(other.region_size) {}
+          bounds(other.bounds), rej_sample(other.rej_sample), max_q(other.max_q),
+          region_size(other.region_size) {}
     LocationSampler& operator=(const LocationSampler& other) {
         var_seq = other.var_seq;
         nt_rates = other.nt_rates;
         regions = other.regions;
         bounds = other.bounds;
+        rej_sample = other.rej_sample;
+        max_q = other.max_q;
         region_size = other.region_size;
         return *this;
     }
@@ -340,7 +354,7 @@ public:
     void new_seq(const VarSequence& vs_, const arma::mat& gamma_mat) {
         var_seq = &vs_;
         // Reset search tree for regions:
-        regions = RegionTree(gamma_mat, region_size, var_seq, nt_rates);
+        regions = RegionTree(gamma_mat, region_size, var_seq, nt_rates, rej_sample);
         // Reset bounds:
         bounds = LocationBounds();
         return;
@@ -393,6 +407,8 @@ private:
 
     // Sample within a region using CDF method:
     inline void cdf_region_sample(uint32& pos, double& u, const Region* reg) const;
+    // Sample within a region using rejection sampling:
+    inline void rej_region_sample(uint32& pos, pcg64& eng, const Region* reg) const;
 
     inline void safe_get_mut(const uint32& pos, uint32& mut_i) const;
 

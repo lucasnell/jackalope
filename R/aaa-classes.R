@@ -598,12 +598,14 @@ mevo <- R6::R6Class(
         deletion_rates = NULL,
         gamma_mats = NULL,
         region_size = NULL,
+        rej_sample = NULL,
 
         initialize = function(sub_info,
                               insertion_rates,
                               deletion_rates,
                               gamma_mats,
-                              region_size) {
+                              region_size,
+                              rej_sample) {
 
             self$Q <- sub_info$Q
             self$pi_tcag <- sub_info$pi_tcag
@@ -611,6 +613,7 @@ mevo <- R6::R6Class(
             self$deletion_rates <- deletion_rates
             self$gamma_mats <- gamma_mats
             self$region_size <- region_size
+            self$rej_sample <- rej_sample
 
         },
 

@@ -38,7 +38,16 @@
 #'     Doing this splitting is useful because sampling within a region is more
 #'     computationally costly than sampling among regions.
 #'     Higher numbers will result in lower memory usage but slower speed.
+#'     This argument is ignored if `rej_sample` is `TRUE`.
 #'     Defaults to `10`.
+#' @param rej_sample Boolean for whether to use rejection sampling for sampling
+#'     for mutation locations within regions.
+#'     This method can be faster, but only if two conditions are true:
+#'     (1) the reference genome doesn't have long chunks of `N`s and
+#'     (2) the substitution rates for the different nucleotides are at least
+#'     somewhat similar (max rate / min rate < ~5).
+#'     If any substitution rates are zero, this method will probably be very slow.
+#'     Defaults to `FALSE`.
 #' @param n_threads Number of threads to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
 #'     Threads are spread across sequences, so it
@@ -63,6 +72,7 @@ create_variants <- function(reference,
                             del = NULL,
                             gamma_mats = NULL,
                             region_size = 10,
+                            rej_sample = FALSE,
                             n_threads = 1,
                             show_progress = FALSE) {
 
@@ -100,7 +110,7 @@ create_variants <- function(reference,
 
     # Do checks and organize molecular-evolution info into `mevo` object
     # (or `NULL` if `sub` was not provided):
-    mevo_obj <- create_mevo(reference, sub, ins, del, gamma_mats, region_size)
+    mevo_obj <- create_mevo(reference, sub, ins, del, gamma_mats, region_size, rej_sample)
 
     if (!single_integer(n_threads, .min = 1)) {
         err_msg("create_variants", "n_threads", "a single integer >= 1")
