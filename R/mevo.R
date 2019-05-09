@@ -381,8 +381,7 @@ create_mevo <- function(reference,
                         ins,
                         del,
                         gamma_mats,
-                        region_size,
-                        rej_sample) {
+                        region_size) {
 
     if (!inherits(reference, "ref_genome")) {
         err_msg("create_variants", "reference", "a \"ref_genome\" object")
@@ -401,9 +400,6 @@ create_mevo <- function(reference,
     }
     if (!single_integer(region_size, 1)) {
         err_msg("create_variants", "region_size", "a single integer >= 1")
-    }
-    if (!is_type(rej_sample, "logical", 1)) {
-        err_msg("create_variants", "rej_sample", "a single logical")
     }
 
     # `sub` must be provided if others are:
@@ -439,8 +435,7 @@ create_mevo <- function(reference,
                     ins,
                     del,
                     gamma_mats,
-                    region_size,
-                    rej_sample)
+                    region_size)
 
     return(out)
 }
@@ -459,8 +454,7 @@ mevo_obj_to_ptr <- function(mevo_obj) {
                                               mevo_obj$pi_tcag,
                                               mevo_obj$insertion_rates,
                                               mevo_obj$deletion_rates,
-                                              mevo_obj$region_size,
-                                              mevo_obj$rej_sample)
+                                              mevo_obj$region_size)
 
     return(sampler_ptr)
 }

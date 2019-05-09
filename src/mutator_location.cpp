@@ -80,7 +80,6 @@ inline void RegionTree::construct_tips_one_row(const arma::mat& gamma_mat,
                                                const uint32& region_size,
                                                const VarSequence* var_seq,
                                                const std::vector<double>& nt_rates,
-                                               const bool& rej_sample,
                                                const uint32& i,
                                                uint32& mut_i,
                                                std::vector<uint32>& sizes) {
@@ -106,11 +105,8 @@ inline void RegionTree::construct_tips_one_row(const arma::mat& gamma_mat,
 
     n_regs = std::round(static_cast<double>(size) / static_cast<double>(region_size));
 
-    /*
-     Vector of # bases per GammaRegion, splitting is needed only for non-rejection
-     sampling:
-     */
-    if (!rej_sample && n_regs > 1) {
+    // Vector of # bases per Region
+    if (n_regs > 1) {
         sizes = split_int(size, n_regs);
     } else {
         sizes = std::vector<uint32>(1, size);
@@ -150,15 +146,12 @@ inline void RegionTree::construct_tips_one_row(const arma::mat& gamma_mat,
 void RegionTree::construct_tips(arma::mat gamma_mat,
                                 const uint32& region_size,
                                 const VarSequence* var_seq,
-                                const std::vector<double>& nt_rates,
-                                const bool& rej_sample) {
+                                const std::vector<double>& nt_rates) {
 
     total_rate = 0;
 
     tips.clear();
-    if (rej_sample) {
-        tips.reserve(gamma_mat.n_rows);
-    } else tips.reserve((var_seq->size() / region_size) * 1.5);
+    tips.reserve((var_seq->size() / region_size) * 1.5);
 
     // Sort from first to last region
     arma::uvec sort_inds = arma::sort_index(gamma_mat.col(0));
@@ -166,11 +159,10 @@ void RegionTree::construct_tips(arma::mat gamma_mat,
 
     uint32 mut_i = 0;
     std::vector<uint32> sizes;
-    if (!rej_sample) sizes.reserve(1000); // arbitrarily chosen
+    sizes.reserve(1000); // arbitrarily chosen
 
     for (uint32 i = 0; i < gamma_mat.n_rows; i++) {
-        construct_tips_one_row(gamma_mat, region_size, var_seq, nt_rates, rej_sample,
-                               i, mut_i, sizes);
+        construct_tips_one_row(gamma_mat, region_size, var_seq, nt_rates, i, mut_i, sizes);
     }
 
     clear_memory<std::vector<Region>>(tips);  // in case I reserved too much memory
@@ -551,9 +543,7 @@ uint32 LocationSampler::sample(pcg64& eng,
      Find the location within the Gamma region:
      */
     uint32 pos;
-    if (rej_sample) {
-        rej_region_sample(pos, eng, reg);
-    } else cdf_region_sample(pos, u, reg);
+    cdf_region_sample(pos, u, reg);
 
     return pos;
 }
@@ -568,9 +558,7 @@ uint32 LocationSampler::sample(pcg64& eng) const {
      Find the location within the Gamma region:
      */
     uint32 pos;
-    if (rej_sample) {
-        rej_region_sample(pos, eng, reg);
-    } else cdf_region_sample(pos, u, reg);
+    cdf_region_sample(pos, u, reg);
 
     return pos;
 }
@@ -659,39 +647,4 @@ inline void LocationSampler::cdf_region_sample(uint32& pos,
 }
 
 
-inline void LocationSampler::rej_region_sample(uint32& pos,
-                                               pcg64& eng,
-                                               const Region* reg) const {
-
-    // Update `start` and `end` for this region
-    uint32 start = var_seq->size(); // bounds.start_pos;
-    uint32 end = 0; // bounds.end_pos;
-    if (start < reg->start) start = reg->start;
-    if (end > reg->end) end = reg->end;
-
-    if (start == end) {
-        pos = start;
-        return;
-    }
-
-    double u, q;
-    char c;
-    int iters = 0;
-    uint32 size_ = end - start + 1;
-
-    while (iters < 100) {
-        pos = (runif_01(eng) * size_) + start;
-        c = var_seq->get_nt(pos);
-        q = nt_rates[c];
-        u = runif_01(eng) * max_q;
-        if (u <= q) break;
-        iters++;
-    }
-
-    if (pos < start) stop("pos < start");
-    if (pos > end) stop("pos > end");
-
-    return;
-
-}
 
