@@ -41,13 +41,13 @@ class MutationSampler {
      Create a new string of nucleotides (for insertions) of a given length and using
      an input rng engine
      */
-    inline std::string new_nucleos(const uint32& len, pcg64& eng) const {
+    inline std::string new_nucleos(const uint64& len, pcg64& eng) const {
         std::string str(len, 'x');
         insert.sample(str, eng);
         return str;
     }
     // Does most of the work for the mutate methods (all but location sampling)
-    inline double mutate__(pcg64& eng, const uint32& start, sint64& end);
+    inline double mutate__(pcg64& eng, const uint64& start, sint64& end);
 
 public:
 
@@ -90,7 +90,7 @@ public:
      is empty).
      `// ***` mark difference between this and previous `mutate` versions
      */
-    double mutate(pcg64& eng, const uint32& start, sint64& end);
+    double mutate(pcg64& eng, const uint64& start, sint64& end);
 
 };
 
@@ -113,22 +113,22 @@ inline void fill_probs_q_tcag(std::vector<std::vector<double>>& probs,
                               const std::vector<double>& insertion_rates,
                               const std::vector<double>& deletion_rates) {
 
-    uint32 n_ins = insertion_rates.size();
-    uint32 n_del = deletion_rates.size();
-    uint32 n_muts = 4 + n_ins + n_del;
+    uint64 n_ins = insertion_rates.size();
+    uint64 n_del = deletion_rates.size();
+    uint64 n_muts = 4 + n_ins + n_del;
 
     // 1 vector of probabilities for each nucleotide: T, C, A, then G
     probs.resize(4);
     // Overall mutation rates for each nucleotide: T, C, A, then G
     q_tcag.reserve(4);
 
-    for (uint32 i = 0; i < 4; i++) {
+    for (uint64 i = 0; i < 4; i++) {
 
         std::vector<double>& qc(probs[i]);
 
         qc.reserve(n_muts);
 
-        for (uint32 j = 0; j < Q.n_cols; j++) qc.push_back(Q(i, j));
+        for (uint64 j = 0; j < Q.n_cols; j++) qc.push_back(Q(i, j));
         /*
          Make absolutely sure the diagonal is set to zero bc you don't want to
          mutate back to the same nucleotide
@@ -136,16 +136,16 @@ inline void fill_probs_q_tcag(std::vector<std::vector<double>>& probs,
         qc[i] = 0;
 
         // Add insertions, then deletions
-        for (uint32 j = 0; j < n_ins; j++) {
+        for (uint64 j = 0; j < n_ins; j++) {
             qc.push_back(insertion_rates[j] * 0.25);
         }
-        for (uint32 j = 0; j < n_del; j++) {
+        for (uint64 j = 0; j < n_del; j++) {
             qc.push_back(deletion_rates[j] * 0.25);
         }
         // Get the overall mutation rate for this nucleotide
         double qi = std::accumulate(qc.begin(), qc.end(), 0.0);
         // Divide all in `qc` by `qi` to make them probabilities:
-        for (uint32 j = 0; j < n_muts; j++) qc[j] /= qi;
+        for (uint64 j = 0; j < n_muts; j++) qc[j] /= qi;
         // Add `qi` to vector of rates by nucleotide:
         q_tcag.push_back(qi);
     }
@@ -159,22 +159,22 @@ inline void fill_probs_q_tcag(std::vector<std::vector<double>>& probs,
 //'
 //' @noRd
 //'
-inline void fill_mut_lengths(std::vector<sint32>& mut_lengths,
+inline void fill_mut_lengths(std::vector<sint64>& mut_lengths,
                              const std::vector<double>& insertion_rates,
                              const std::vector<double>& deletion_rates) {
 
-    uint32 n_ins = insertion_rates.size();
-    uint32 n_del = deletion_rates.size();
-    uint32 n_muts = 4 + n_ins + n_del;
+    uint64 n_ins = insertion_rates.size();
+    uint64 n_del = deletion_rates.size();
+    uint64 n_muts = 4 + n_ins + n_del;
 
     // Now filling in mut_lengths vector
     mut_lengths.reserve(n_muts);
-    for (uint32 i = 0; i < 4; i++) mut_lengths.push_back(0);
-    for (uint32 i = 0; i < n_ins; i++) {
-        mut_lengths.push_back(static_cast<sint32>(i+1));
+    for (uint64 i = 0; i < 4; i++) mut_lengths.push_back(0);
+    for (uint64 i = 0; i < n_ins; i++) {
+        mut_lengths.push_back(static_cast<sint64>(i+1));
     }
-    for (uint32 i = 0; i < n_del; i++) {
-        sint32 ds = static_cast<sint32>(i + 1);
+    for (uint64 i = 0; i < n_del; i++) {
+        sint64 ds = static_cast<sint64>(i + 1);
         ds *= -1;
         mut_lengths.push_back(ds);
     }

@@ -38,7 +38,7 @@ namespace mut_type {
  */
 struct MutationInfo {
     char nucleo;
-    sint32 length;
+    sint64 length;
 
     MutationInfo() : nucleo(), length() {}
     MutationInfo(const MutationInfo& other)
@@ -50,7 +50,7 @@ struct MutationInfo {
     }
 
     // Initialize from an index and mut-lengths vector
-    MutationInfo (const uint32& ind, const std::vector<sint32>& mut_lengths)
+    MutationInfo (const uint64& ind, const std::vector<sint64>& mut_lengths)
         : nucleo('\0'), length(0) {
         if (ind < 4) {
             nucleo = mut_type::bases[ind];
@@ -93,17 +93,17 @@ inline std::vector<uint8> make_base_inds() {
 class MutationTypeSampler {
 
     std::vector<AliasSampler> sampler;
-    std::vector<sint32> mut_lengths;
+    std::vector<sint64> mut_lengths;
     std::vector<uint8> base_inds;
 
 public:
 
     MutationTypeSampler() : sampler(4), mut_lengths(), base_inds(make_base_inds()) {};
     MutationTypeSampler(const std::vector<std::vector<double>>& probs,
-                        const std::vector<sint32>& mut_lengths_)
+                        const std::vector<sint64>& mut_lengths_)
     : sampler(4), mut_lengths(mut_lengths_), base_inds(make_base_inds()) {
         if (probs.size() != 4) stop("probs must be size 4.");
-        for (uint32 i = 0; i < 4; i++) sampler[i] = AliasSampler(probs[i]);
+        for (uint64 i = 0; i < 4; i++) sampler[i] = AliasSampler(probs[i]);
     }
     // copy constructor
     MutationTypeSampler(const MutationTypeSampler& other)
@@ -119,11 +119,11 @@ public:
 
     /*
      Sample a mutation based on an input nucleotide.
-     `c` gets cast to an uint32, which is then input to `base_inds` to get the index
+     `c` gets cast to an uint64, which is then input to `base_inds` to get the index
      from 0 to 3.
      */
     MutationInfo sample(const char& c, pcg64& eng) const {
-        uint32 ind = sampler[base_inds[c]].sample(eng);
+        uint64 ind = sampler[base_inds[c]].sample(eng);
         MutationInfo mi(ind, mut_lengths);
         return mi;
     }

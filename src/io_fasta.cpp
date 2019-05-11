@@ -103,7 +103,7 @@ void append_ref_noind(RefGenome& ref,
         std::vector<std::string> svec = cpp_str_split_newline(mystring);
 
         // Scroll through lines derived from the buffer.
-        for (uint32 i = 0; i < svec.size() - 1; i++){
+        for (uint64 i = 0; i < svec.size() - 1; i++){
             parse_fasta_line(svec[i], cut_names, ref);
         }
         // Manage the last line.
@@ -126,7 +126,7 @@ void append_ref_noind(RefGenome& ref,
     gzclose (file);
 
     // Remove weird characters and remove soft masking if desired:
-    for (uint32 i = 0; i < ref.size(); i++) {
+    for (uint64 i = 0; i < ref.size(); i++) {
         filter_nucleos(ref.sequences[i].nucleos, remove_soft_mask);
     }
 
@@ -184,7 +184,7 @@ void parse_line_fai(const std::string& line,
                     std::vector<uint64>& offsets,
                     std::vector<std::string>& names,
                     std::vector<uint64>& lengths,
-                    std::vector<uint32>& line_lens) {
+                    std::vector<uint64>& line_lens) {
 
     char split = '\t';
 
@@ -205,7 +205,7 @@ void read_fai(const std::string& fai_file,
               std::vector<uint64>& offsets,
               std::vector<std::string>& names,
               std::vector<uint64>& lengths,
-              std::vector<uint32>& line_lens) {
+              std::vector<uint64>& line_lens) {
 
 
     gzFile file;
@@ -235,7 +235,7 @@ void read_fai(const std::string& fai_file,
         std::vector<std::string> svec = cpp_str_split_newline(mystring);
 
         // Scroll through lines derived from the buffer.
-        for (uint32 i = 0; i < svec.size() - 1; i++){
+        for (uint64 i = 0; i < svec.size() - 1; i++){
             parse_line_fai(svec[i], offsets, names, lengths, line_lens);
         }
         // Manage the last line.
@@ -277,7 +277,7 @@ void append_ref_ind(RefGenome& ref,
     std::vector<uint64> offsets;
     std::vector<std::string> names;
     std::vector<uint64> lengths;
-    std::vector<uint32> line_lens;
+    std::vector<uint64> line_lens;
 
     expand_path(fasta_file);
     expand_path(fai_file);
@@ -298,12 +298,12 @@ void append_ref_ind(RefGenome& ref,
         Rcpp::stop(e);
     }
 
-    const uint32 n_seqs0 = ref.size(); // starting # sequences
-    uint32 n_new_seqs = offsets.size();
+    const uint64 n_seqs0 = ref.size(); // starting # sequences
+    uint64 n_new_seqs = offsets.size();
     uint64 LIMIT = 4194304;
     ref.sequences.resize(n_seqs0 + n_new_seqs, RefSequence());
 
-    for (uint32 i = 0; i < n_new_seqs; i++) {
+    for (uint64 i = 0; i < n_new_seqs; i++) {
 
         Rcpp::checkUserInterrupt();
 
@@ -317,7 +317,7 @@ void append_ref_ind(RefGenome& ref,
 
         for (uint64 j = 0; j < len; j += (LIMIT-1)) {
             gzseek(file, offsets[i] + j, SEEK_SET);
-            uint32 partial_len = LIMIT;
+            uint64 partial_len = LIMIT;
             if (len - j < LIMIT) partial_len = len - j;
             char buffer[partial_len];
             bytes_read = gzread(file, buffer, partial_len - 1);
@@ -388,7 +388,7 @@ SEXP read_fasta_ind(const std::vector<std::string>& fasta_files,
                  "the vector of fasta files."});
     }
 
-    for (uint32 i = 0; i < fasta_files.size(); i++) {
+    for (uint64 i = 0; i < fasta_files.size(); i++) {
         append_ref_ind(ref, fasta_files[i], fai_files[i], remove_soft_mask);
     }
 
@@ -420,7 +420,7 @@ template <typename T>
 inline void write_ref_fasta__(const std::string& file_name,
                               const int& compress,
                               const RefGenome& ref,
-                              const uint32& text_width,
+                              const uint64& text_width,
                               const bool& show_progress) {
 
     T file(file_name, compress);
@@ -430,7 +430,7 @@ inline void write_ref_fasta__(const std::string& file_name,
     std::string one_line;
     one_line.reserve(text_width + 2);
 
-    for (uint32 i = 0; i < ref.size(); i++) {
+    for (uint64 i = 0; i < ref.size(); i++) {
 
         if (prog_bar.check_abort()) break;
 
@@ -438,10 +438,10 @@ inline void write_ref_fasta__(const std::string& file_name,
         file.write(name);
 
         const std::string& seq_str(ref[i].nucleos);
-        uint32 num_rows = seq_str.length() / text_width;
+        uint64 num_rows = seq_str.length() / text_width;
         uint64 n_chars = 0;
 
-        for (uint32 i = 0; i < num_rows; i++) {
+        for (uint64 i = 0; i < num_rows; i++) {
             // Check every 10,000 characters for user interrupt:
             if (n_chars > 10000) {
                 if (prog_bar.check_abort()) break;
@@ -486,7 +486,7 @@ inline void write_ref_fasta__(const std::string& file_name,
 //[[Rcpp::export]]
 void write_ref_fasta(const std::string& out_prefix,
                      SEXP ref_genome_ptr,
-                     const uint32& text_width,
+                     const uint64& text_width,
                      const int& compress,
                      const std::string& comp_method,
                      const bool& show_progress) {
@@ -524,9 +524,9 @@ void write_ref_fasta(const std::string& out_prefix,
 template <typename T>
 void write_vars_fasta__(const std::string& out_prefix,
                         const VarSet& var_set,
-                        const uint32& text_width,
+                        const uint64& text_width,
                         const int& compress,
-                        const uint32& n_threads,
+                        const uint64& n_threads,
                         const bool& show_progress) {
 
     Progress prog_bar(var_set.reference->size() * var_set.size(), show_progress);
@@ -544,14 +544,14 @@ void write_vars_fasta__(const std::string& out_prefix,
 #ifdef _OPENMP
 #pragma omp for schedule(static)
 #endif
-    for (uint32 v = 0; v < var_set.size(); v++) {
+    for (uint64 v = 0; v < var_set.size(); v++) {
 
         if (prog_bar.is_aborted() || prog_bar.check_abort()) continue;
 
         std::string file_name = out_prefix + "__" + var_set[v].name + ".fa";
         T out_file(file_name, compress);
 
-        for (uint32 s = 0; s < var_set.reference->size(); s++) {
+        for (uint64 s = 0; s < var_set.reference->size(); s++) {
 
             if (prog_bar.is_aborted() || prog_bar.check_abort()) break;
 
@@ -561,9 +561,9 @@ void write_vars_fasta__(const std::string& out_prefix,
             out_file.write(name);
 
             const VarSequence& var_seq(var_set[v][s]);
-            uint32 mut_i = 0;
-            uint32 line_start = 0;
-            uint32 n_chars = 0;
+            uint64 mut_i = 0;
+            uint64 line_start = 0;
+            uint64 n_chars = 0;
 
             while (line_start < var_seq.seq_size) {
                 // Check every 10,000 characters for user interrupt:
@@ -610,10 +610,10 @@ void write_vars_fasta__(const std::string& out_prefix,
 //[[Rcpp::export]]
 void write_vars_fasta(std::string out_prefix,
                       SEXP var_set_ptr,
-                      const uint32& text_width,
+                      const uint64& text_width,
                       const int& compress,
                       const std::string& comp_method,
-                      uint32 n_threads,
+                      uint64 n_threads,
                       const bool& show_progress) {
 
     XPtr<VarSet> vars_xptr(var_set_ptr);

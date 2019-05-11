@@ -17,7 +17,7 @@
 #include <omp.h>  // omp
 #endif
 
-#include "jackalope_types.h"  // uint32
+#include "jackalope_types.h"  // uint64
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // runif_01
@@ -62,7 +62,7 @@ public:
     };
     // Using a vector of read lengths, each with a sampling probability:
     PacBioReadLenSampler(const std::vector<double>& read_probs_,
-                         const std::vector<uint32>& read_lens_)
+                         const std::vector<uint64>& read_lens_)
         : read_lens(read_lens_),
           sampler(read_probs_),
           distr(),
@@ -92,11 +92,11 @@ public:
         return *this;
     }
 
-    uint32 sample(pcg64& eng);
+    uint64 sample(pcg64& eng);
 
 private:
 
-    std::vector<uint32> read_lens;      // optional vector of possible read lengths
+    std::vector<uint64> read_lens;      // optional vector of possible read lengths
     AliasSampler sampler;               // optional sampler that chooses from `read_lens`
     std::lognormal_distribution<double> distr; // optional if using a distribution
     bool use_distr;                     // Whether to sample using `distr` field
@@ -118,14 +118,14 @@ class PacBioPassSampler {
 
 public:
 
-    uint32 max_passes;
+    uint64 max_passes;
     std::vector<double> chi2_params_n;
     std::vector<double> chi2_params_s;
 
 
     /* Initializers */
     PacBioPassSampler() {};
-    PacBioPassSampler(const uint32& max_passes_,
+    PacBioPassSampler(const uint64& max_passes_,
                       const std::vector<double>& chi2_params_n_,
                       const std::vector<double>& chi2_params_s_)
         : max_passes(max_passes_),
@@ -145,7 +145,7 @@ public:
     }
 
 
-    void sample(uint32& split_pos,
+    void sample(uint64& split_pos,
                 double& passes_left,
                 double& passes_right,
                 pcg64& eng,
@@ -187,7 +187,7 @@ public:
         fraction = std::modf(passes, &wholes);
 
 
-        if (static_cast<uint32>(wholes) % 2U == 0U) {
+        if (static_cast<uint64>(wholes) % 2U == 0U) {
             prop_left = fraction;
             split_pos = std::round(static_cast<double>(read_length) * prop_left);
             passes_left = std::ceil(passes);
@@ -265,12 +265,12 @@ public:
     void sample(pcg64& eng,
                 char& qual_left,
                 char& qual_right,
-                std::deque<uint32>& insertions,
-                std::deque<uint32>& deletions,
-                std::deque<uint32>& substitutions,
-                const uint32& seq_len,
-                const uint32& read_length,
-                const uint32& split_pos,
+                std::deque<uint64>& insertions,
+                std::deque<uint64>& deletions,
+                std::deque<uint64>& substitutions,
+                const uint64& seq_len,
+                const uint64& read_length,
+                const uint64& split_pos,
                 const double& passes_left,
                 const double& passes_right) {
         insertions.clear();
@@ -281,10 +281,10 @@ public:
         // Update qualities
         fill_quals(qual_left, qual_right);
         // Now iterate through and update insertions, deletions, and substitutions:
-        uint32 current_length = 0;
-        uint32 seq_pos = 0; // position on the read where events occur
+        uint64 current_length = 0;
+        uint64 seq_pos = 0; // position on the read where events occur
         // Amount of extra (i.e., non-read) sequence remaining:
-        uint32 extra_space = seq_len - read_length;
+        uint64 extra_space = seq_len - read_length;
         double u;
         std::vector<double>* cum_probs = &cum_probs_left;
         while (current_length < read_length) {
@@ -323,8 +323,8 @@ private:
     std::vector<double> cum_probs_left = std::vector<double>(3);
     std::vector<double> cum_probs_right = std::vector<double>(3);
     // Values that do not change:
-    const uint32 max_qual = 93;
-    const uint32 qual_start = static_cast<uint32>('!'); // quality of zero
+    const uint64 max_qual = 93;
+    const uint64 qual_start = static_cast<uint64>('!'); // quality of zero
 
 
     double calc_min_exp();
@@ -387,8 +387,8 @@ private:
 
 
     void fill_quals(char& qual_left, char& qual_right) {
-        uint32 tmp_l = std::round(-10.0 * std::log10(cum_probs_left.back()));
-        uint32 tmp_r = std::round(-10.0 * std::log10(cum_probs_right.back()));
+        uint64 tmp_l = std::round(-10.0 * std::log10(cum_probs_left.back()));
+        uint64 tmp_r = std::round(-10.0 * std::log10(cum_probs_right.back()));
         if (tmp_l > max_qual) tmp_l = max_qual;
         if (tmp_r > max_qual) tmp_r = max_qual;
         qual_left = static_cast<char>(tmp_l + qual_start);
@@ -432,7 +432,7 @@ public:
 
 
     /* __ Info __ */
-    std::vector<uint32> seq_lengths;    // genome-sequence lengths
+    std::vector<uint64> seq_lengths;    // genome-sequence lengths
     const T* sequences;                 // pointer to `const T`
     std::string name;
 
@@ -444,7 +444,7 @@ public:
                     const double& sigma_,
                     const double& loc_,
                     const double& min_read_len_,
-                    const uint32& max_passes_,
+                    const uint64& max_passes_,
                     const std::vector<double>& chi2_params_n_,
                     const std::vector<double>& chi2_params_s_,
                     const std::vector<double>& sqrt_params_,
@@ -466,8 +466,8 @@ public:
     // Using vectors of read lengths and sampling weight for read lengths:
     PacBioOneGenome(const T& seq_object,
                     const std::vector<double>& read_probs_,
-                    const std::vector<uint32>& read_lens_,
-                    const uint32& max_passes_,
+                    const std::vector<uint64>& read_lens_,
+                    const uint64& max_passes_,
                     const std::vector<double>& chi2_params_n_,
                     const std::vector<double>& chi2_params_s_,
                     const std::vector<double>& sqrt_params_,
@@ -524,12 +524,12 @@ public:
 
 private:
 
-    uint32 split_pos = 0;
+    uint64 split_pos = 0;
     double passes_left = 0;
     double passes_right = 0;
     char qual_left = '!';
     char qual_right = '!';
-    uint32 read_seq_space = 1;
+    uint64 read_seq_space = 1;
     std::string read = std::string(1000, 'N');
     // Maps nucleotide char to integer from 0 to 3
     std::vector<uint8> nt_map = sequencer::nt_map;
@@ -539,18 +539,18 @@ private:
     */
     std::vector<std::string> mm_nucleos = sequencer::mm_nucleos;
     // To store indel locations, where each vector will be of length 2 if paired==true
-    std::deque<uint32> insertions = std::deque<uint32>(0);
-    std::deque<uint32> deletions = std::deque<uint32>(0);
-    std::deque<uint32> substitutions = std::deque<uint32>(0);
-    uint32 seq_ind = 0;
-    uint32 read_length = 0;
-    uint32 read_start = 0;
+    std::deque<uint64> insertions = std::deque<uint64>(0);
+    std::deque<uint64> deletions = std::deque<uint64>(0);
+    std::deque<uint64> substitutions = std::deque<uint64>(0);
+    uint64 seq_ind = 0;
+    uint64 read_length = 0;
+    uint64 read_start = 0;
 
     // Construct sequence-sampling probabilities:
     void construct_seqs() {
         std::vector<double> probs_;
         probs_.reserve(seq_lengths.size());
-        for (uint32 i = 0; i < seq_lengths.size(); i++) {
+        for (uint64 i = 0; i < seq_lengths.size(); i++) {
             probs_.push_back(static_cast<double>(seq_lengths[i]));
         }
         seq_sampler = AliasSampler(probs_);
@@ -591,7 +591,7 @@ public:
                    const double& sigma_,
                    const double& loc_,
                    const double& min_read_len_,
-                   const uint32& max_passes_,
+                   const uint64& max_passes_,
                    const std::vector<double>& chi2_params_n_,
                    const std::vector<double>& chi2_params_s_,
                    const std::vector<double>& sqrt_params_,
@@ -613,8 +613,8 @@ public:
     PacBioVariants(const VarSet& var_set,
                    const std::vector<double>& variant_probs,
                    const std::vector<double>& read_probs_,
-                   const std::vector<uint32>& read_lens_,
-                   const uint32& max_passes_,
+                   const std::vector<uint64>& read_lens_,
+                   const uint64& max_passes_,
                    const std::vector<double>& chi2_params_n_,
                    const std::vector<double>& chi2_params_s_,
                    const std::vector<double>& sqrt_params_,
@@ -667,13 +667,13 @@ public:
 private:
 
     // Variant to sample from. It's saved in this class in case of duplicates.
-    uint32 var;
+    uint64 var;
 
     // Construct read_makers field if the first item in that vector has been filled out
     void construct_makers() {
-        uint32 n_vars = variants->size();
+        uint64 n_vars = variants->size();
         read_makers.reserve(n_vars);
-        for (uint32 i = 1; i < n_vars; i++) {
+        for (uint64 i = 1; i < n_vars; i++) {
             // Add read maker for the first variant:
             read_makers.push_back(read_makers[0]);
             // Now update it for the correct VarGenome info:

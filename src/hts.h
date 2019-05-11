@@ -17,7 +17,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "jackalope_types.h"  // uint32
+#include "jackalope_types.h"  // uint64
 #include "pcg.h"  // ruinf_01
 #include "util.h"  // str_stop, thread_check, split_int
 #include "io.h"  // File* types
@@ -109,20 +109,20 @@ class ReadWriterOneThread {
 public:
 
     T read_filler;
-    const uint32 n_reads;           // # reads to create
-    const uint32 read_pool_size;    // reads per pool
-    uint32 reads_made;              // Number of reads already made
-    uint32 reads_in_pool;           // Number of reads in current pool
+    const uint64 n_reads;           // # reads to create
+    const uint64 read_pool_size;    // reads per pool
+    uint64 reads_made;              // Number of reads already made
+    uint64 reads_in_pool;           // Number of reads in current pool
     bool do_write;                  // Whether to write to file
     const double prob_dup;          // probability of duplicate
-    const uint32 n_read_ends;       // (1 for SE Illumina or PacBio, 2 for PE Illumina)
+    const uint64 n_read_ends;       // (1 for SE Illumina or PacBio, 2 for PE Illumina)
     std::vector<std::vector<char>> fastq_pools;
 
     ReadWriterOneThread(const T& read_filler_base,
-                        const uint32& n_reads_,
-                        const uint32& read_pool_size_,
+                        const uint64& n_reads_,
+                        const uint64& read_pool_size_,
                         const double& prob_dup_,
-                        const uint32& n_read_ends_)
+                        const uint64& n_read_ends_)
         : read_filler(read_filler_base),
           n_reads(n_reads_),
           read_pool_size(read_pool_size_),
@@ -136,7 +136,7 @@ public:
 
     // Write contents in `fastq_pools` to UNcompressed file(s).
     void write(std::vector<F>& files) {
-        for (uint32 i = 0; i < fastq_pools.size(); i++) {
+        for (uint64 i = 0; i < fastq_pools.size(); i++) {
             files[i].write(fastq_pools[i]);
             fastq_pools[i].clear();
         }
@@ -216,15 +216,15 @@ public:
 template <typename T, typename F>
 inline void write_reads_one_filetype_(const T& read_filler_base,
                                       const std::string& out_prefix,
-                                      const uint32& n_reads,
+                                      const uint64& n_reads,
                                       const double& prob_dup,
-                                      const uint32& read_pool_size,
-                                      const uint32& n_read_ends,
-                                      const uint32& n_threads,
+                                      const uint64& read_pool_size,
+                                      const uint64& n_read_ends,
+                                      const uint64& n_threads,
                                       const bool& show_progress,
                                       const int& compress) {
 
-    const std::vector<uint32> reads_per_thread = split_int(n_reads, n_threads);
+    const std::vector<uint64> reads_per_thread = split_int(n_reads, n_threads);
 
     // Generate seeds for random number generators (1 RNG per thread)
     const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
@@ -234,7 +234,7 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
 
     // Create and open files:
     std::vector<F> files(n_read_ends);
-    for (uint32 i = 0; i < n_read_ends; i++) {
+    for (uint64 i = 0; i < n_read_ends; i++) {
         std::string file_name = out_prefix + "_R" + std::to_string(i+1)+ ".fq";
         files[i].set(file_name, compress);
     }
@@ -249,21 +249,21 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
 
     // Write the active seed per thread or just write one of the seeds.
 #ifdef _OPENMP
-    uint32 active_thread = omp_get_thread_num();
+    uint64 active_thread = omp_get_thread_num();
 #else
-    uint32 active_thread = 0;
+    uint64 active_thread = 0;
 #endif
     active_seeds = seeds[active_thread];
 
     pcg64 eng = seeded_pcg(active_seeds);
 
-    uint32 reads_this_thread = reads_per_thread[active_thread];
+    uint64 reads_this_thread = reads_per_thread[active_thread];
 
     ReadWriterOneThread<T,F> writer(read_filler_base, reads_this_thread,
                                     read_pool_size, prob_dup, n_read_ends);
 
-    uint32 reads_written;
-    uint32 n_chars = 0;
+    uint64 reads_written;
+    uint64 n_chars = 0;
 
     while (writer.reads_made < reads_this_thread) {
 
@@ -304,7 +304,7 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
 #endif
 
     // Close files
-    for (uint32 i = 0; i < files.size(); i++) {
+    for (uint64 i = 0; i < files.size(); i++) {
         files[i].close();
     }
 
@@ -324,11 +324,11 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
 template <typename T>
 inline void write_reads_cpp_(const T& read_filler_base,
                              std::string out_prefix,
-                             const uint32& n_reads,
+                             const uint64& n_reads,
                              const double& prob_dup,
-                             const uint32& read_pool_size,
-                             const uint32& n_read_ends,
-                             uint32 n_threads,
+                             const uint64& read_pool_size,
+                             const uint64& n_read_ends,
+                             uint64 n_threads,
                              const bool& show_progress,
                              const int& compress,
                              const std::string& comp_method) {
@@ -369,7 +369,7 @@ inline void write_reads_cpp_(const T& read_filler_base,
                 read_pool_size, n_read_ends, n_threads, show_progress, compress);
         // Then compress using multiple threads:
         if (show_progress) Rcout << std::endl << "Now compressing reads..." << std::endl;
-        for (uint32 i = 0; i < n_read_ends; i++) {
+        for (uint64 i = 0; i < n_read_ends; i++) {
             std::string file_name = out_prefix + "_R" + std::to_string(i+1)+ ".fq";
             bgzip_file(file_name, static_cast<int>(n_threads),
                        static_cast<int>(compress));

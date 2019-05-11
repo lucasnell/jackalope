@@ -61,14 +61,14 @@ int PhyloOneSeq::one_tree(PhyloTree& tree,
     /*
      Now iterate through the phylogeny:
      */
-    for (uint32 i = 0; i < tree.n_edges; i++) {
+    for (uint64 i = 0; i < tree.n_edges; i++) {
 
         // Checking for abort every edge:
         if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
 
         // Indices for nodes/tips that the branch length in `branch_lens` refers to
-        uint32 b1 = tree.edges(i,0);
-        uint32 b2 = tree.edges(i,1);
+        uint64 b1 = tree.edges(i,0);
+        uint64 b2 = tree.edges(i,1);
 
         /*
          Update `samplers`, `seq_rates`, and `distr` for this edge:
@@ -138,17 +138,17 @@ int PhyloOneSeq::one_tree(PhyloTree& tree,
 
 void PhyloOneSeq::update_var_seq(const PhyloTree& tree) {
 
-    std::vector<uint32> spp_order = match_(ordered_tip_labels,
+    std::vector<uint64> spp_order = match_(ordered_tip_labels,
                                            tree.tip_labels);
 
     if (recombination) {
-        for (uint32 i = 0; i < tree.n_tips; i++) {
-            uint32 j = spp_order[i];
+        for (uint64 i = 0; i < tree.n_tips; i++) {
+            uint64 j = spp_order[i];
             (*var_seq_ptrs[i]) += var_seqs[j];
         }
     } else {
-        for (uint32 i = 0; i < tree.n_tips; i++) {
-            uint32 j = spp_order[i];
+        for (uint64 i = 0; i < tree.n_tips; i++) {
+            uint64 j = spp_order[i];
             (*var_seq_ptrs[i]).replace(var_seqs[j]);
         }
     }
@@ -165,7 +165,7 @@ XPtr<VarSet> PhyloInfo::evolve_seqs(
         SEXP& ref_genome_ptr,
         SEXP& sampler_base_ptr,
         const std::vector<arma::mat>& gamma_mats,
-        uint32 n_threads,
+        uint64 n_threads,
         const bool& show_progress) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
@@ -176,7 +176,7 @@ XPtr<VarSet> PhyloInfo::evolve_seqs(
 
     XPtr<VarSet> var_set(new VarSet(*ref_genome, var_names), true);
 
-    uint32 n_seqs = ref_genome->size();
+    uint64 n_seqs = ref_genome->size();
     uint64 total_seq = ref_genome->total_size;
 
     Progress prog_bar(total_seq, show_progress);
@@ -195,7 +195,7 @@ XPtr<VarSet> PhyloInfo::evolve_seqs(
         throw(Rcpp::exception(err_msg.c_str(), false));
     }
 
-    for (uint32 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_seqs; i++) {
         if (gamma_mats[i](gamma_mats[i].n_rows-1,0) != (*var_set)[0][i].size()) {
             std::string err_msg = "\nGamma matrices must have max values equal to ";
             err_msg += "the respective sequence's length.\n";
@@ -218,9 +218,9 @@ XPtr<VarSet> PhyloInfo::evolve_seqs(
 
     // Write the active seed per thread or just write one of the seeds.
 #ifdef _OPENMP
-    uint32 active_thread = omp_get_thread_num();
+    uint64 active_thread = omp_get_thread_num();
 #else
-    uint32 active_thread = 0;
+    uint64 active_thread = 0;
 #endif
     int& status_code(status_codes[active_thread]);
     active_seeds = seeds[active_thread];
@@ -231,7 +231,7 @@ XPtr<VarSet> PhyloInfo::evolve_seqs(
 #ifdef _OPENMP
 #pragma omp for schedule(static)
 #endif
-    for (uint32 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_seqs; i++) {
 
         if (status_code != 0) continue;
 
@@ -278,7 +278,7 @@ XPtr<VarSet> PhyloInfo::evolve_seqs(
 //[[Rcpp::export]]
 SEXP phylo_info_to_trees(const List& genome_phylo_info) {
 
-    uint32 n_seqs = genome_phylo_info.size();
+    uint64 n_seqs = genome_phylo_info.size();
 
     if (n_seqs == 0) {
         throw(Rcpp::exception("\nEmpty list provided for phylogenetic information.",
@@ -304,7 +304,7 @@ SEXP evolve_seqs(
         SEXP& sampler_base_ptr,
         SEXP& phylo_info_ptr,
         const std::vector<arma::mat>& gamma_mats,
-        uint32 n_threads,
+        uint64 n_threads,
         const bool& show_progress) {
 
     XPtr<PhyloInfo> phylo_info(phylo_info_ptr);

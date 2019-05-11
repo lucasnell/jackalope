@@ -43,12 +43,12 @@ using namespace Rcpp;
  of the tip names in the order you always want them:
  `spp_order <- match(ordered_tip_labels, phy$tip.label)`
  */
-inline std::vector<uint32> match_(const std::vector<std::string>& ordered_tip_labels,
+inline std::vector<uint64> match_(const std::vector<std::string>& ordered_tip_labels,
                                   const std::vector<std::string>& tip_labels) {
 
-    std::vector<uint32> spp_order(ordered_tip_labels.size());
+    std::vector<uint64> spp_order(ordered_tip_labels.size());
 
-    for (uint32 i = 0; i < spp_order.size(); i++) {
+    for (uint64 i = 0; i < spp_order.size(); i++) {
         auto iter = std::find(tip_labels.begin(), tip_labels.end(),
                               ordered_tip_labels[i]);
         if (iter == tip_labels.end()) {
@@ -75,21 +75,21 @@ inline std::vector<uint32> match_(const std::vector<std::string>& ordered_tip_la
 struct PhyloTree {
 
     std::vector<double> branch_lens;
-    arma::Mat<uint32> edges;
+    arma::Mat<uint64> edges;
     std::vector<std::string> tip_labels;
-    uint32 start;
+    uint64 start;
     sint64 end;
     std::vector<sint64> ends;  // `end` values for each tree node and tip
-    uint32 n_tips;             // # tips = # variants
-    uint32 tree_size;          // tree size is # tips plus # nodes
-    uint32 n_edges;            // # edges = # connections between nodes/tips
+    uint64 n_tips;             // # tips = # variants
+    uint64 tree_size;          // tree size is # tips plus # nodes
+    uint64 n_edges;            // # edges = # connections between nodes/tips
 
     PhyloTree() {}
     PhyloTree(
         const std::vector<double>& branch_lens_,
-        const arma::Mat<uint32>& edges_,
+        const arma::Mat<uint64>& edges_,
         const std::vector<std::string>& tip_labels_,
-        const uint32& start_,
+        const uint64& start_,
         const sint64& end_
     )
         : branch_lens(branch_lens_), edges(edges_), tip_labels(tip_labels_),
@@ -142,17 +142,17 @@ public:
     std::vector<VarSequence> var_seqs;  // blank VarSequence objects to evolve across tree
     std::vector<MutationSampler> samplers; // to do the mutation additions across tree
     std::vector<double> seq_rates;   // sequence rates
-    uint32 n_tips;                  // number of tips (i.e., variants)
+    uint64 n_tips;                  // number of tips (i.e., variants)
 
     PhyloOneSeq() {}
     PhyloOneSeq(
         VarSet& var_set,
         const MutationSampler& sampler_base,
-        const uint32& seq_ind,
+        const uint64& seq_ind,
         const arma::mat& gamma_mat_,
-        const std::vector<uint32>& n_bases_,
+        const std::vector<uint64>& n_bases_,
         const std::vector<std::vector<double>>& branch_lens_,
-        const std::vector<arma::Mat<uint32>>& edges_,
+        const std::vector<arma::Mat<uint64>>& edges_,
         const std::vector<std::vector<std::string>>& tip_labels_
     )
         : trees(edges_.size()),
@@ -166,9 +166,9 @@ public:
           recombination(branch_lens_.size() > 1)
     {
 
-        uint32 tree_size = edges_[0].max();
-        uint32 n_vars = var_set.size();
-        uint32 n_trees = edges_.size();
+        uint64 tree_size = edges_[0].max();
+        uint64 n_vars = var_set.size();
+        uint64 n_trees = edges_.size();
 
         if (branch_lens_.size() != n_trees ||
             n_bases_.size() != n_trees ||
@@ -179,12 +179,12 @@ public:
         }
 
         ordered_tip_labels = std::vector<std::string>(n_vars);
-        for (uint32 i = 0; i < n_vars; i++) ordered_tip_labels[i] = var_set[i].name;
+        for (uint64 i = 0; i < n_vars; i++) ordered_tip_labels[i] = var_set[i].name;
 
         // Fill `trees`:
-        uint32 start_ = 0;
+        uint64 start_ = 0;
         sint64 end_ = -1;
-        for (uint32 i = 0; i < n_trees; i++) {
+        for (uint64 i = 0; i < n_trees; i++) {
             end_ += n_bases_[i];
             if (i > 0) start_ += n_bases_[i-1];
             trees[i] = PhyloTree(branch_lens_[i], edges_[i], tip_labels_[i],
@@ -192,7 +192,7 @@ public:
         }
 
         // Filling in pointers:
-        for (uint32 i = 0; i < n_vars; i++) {
+        for (uint64 i = 0; i < n_vars; i++) {
             var_seq_ptrs[i] = &var_set[i][seq_ind];
         }
 
@@ -202,7 +202,7 @@ public:
 
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
-        for (uint32 i = 0; i < tree_size; i++) {
+        for (uint64 i = 0; i < tree_size; i++) {
             samplers[i].new_seq(var_seqs[i], gamma_mat);
         }
 
@@ -213,9 +213,9 @@ public:
      */
 
     PhyloOneSeq(
-        const std::vector<uint32>& n_bases_,
+        const std::vector<uint64>& n_bases_,
         const std::vector<std::vector<double>>& branch_lens_,
-        const std::vector<arma::Mat<uint32>>& edges_,
+        const std::vector<arma::Mat<uint64>>& edges_,
         const std::vector<std::vector<std::string>>& tip_labels_
     )
         : trees(edges_.size()),
@@ -229,7 +229,7 @@ public:
           recombination(branch_lens_.size() > 1)
     {
 
-        uint32 n_trees = edges_.size();
+        uint64 n_trees = edges_.size();
 
         if (n_bases_.size() != branch_lens_.size() ||
             n_bases_.size() != edges_.size() ||
@@ -240,9 +240,9 @@ public:
         }
 
         // Fill `trees`:
-        uint32 start_ = 0;
+        uint64 start_ = 0;
         sint64 end_ = -1;
-        for (uint32 i = 0; i < n_trees; i++) {
+        for (uint64 i = 0; i < n_trees; i++) {
             end_ += n_bases_[i];
             if (i > 0) start_ += n_bases_[i-1];
             trees[i] = PhyloTree(branch_lens_[i], edges_[i], tip_labels_[i],
@@ -256,20 +256,20 @@ public:
      */
     void set_samp_var_info(VarSet& var_set,
                            const MutationSampler& sampler_base,
-                           const uint32& seq_ind,
+                           const uint64& seq_ind,
                            const arma::mat& gamma_mat_) {
 
-        uint32 tree_size = trees[0].tree_size;
-        uint32 n_vars = var_set.size();
+        uint64 tree_size = trees[0].tree_size;
+        uint64 n_vars = var_set.size();
 
         gamma_mat = gamma_mat_;
 
         ordered_tip_labels.resize(n_vars);
-        for (uint32 i = 0; i < n_vars; i++) ordered_tip_labels[i] = var_set[i].name;
+        for (uint64 i = 0; i < n_vars; i++) ordered_tip_labels[i] = var_set[i].name;
 
         // Filling in pointers:
         var_seq_ptrs.resize(n_vars);
-        for (uint32 i = 0; i < n_vars; i++) {
+        for (uint64 i = 0; i < n_vars; i++) {
             var_seq_ptrs[i] = &var_set[i][seq_ind];
         }
 
@@ -279,7 +279,7 @@ public:
 
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
-        for (uint32 i = 0; i < tree_size; i++) {
+        for (uint64 i = 0; i < tree_size; i++) {
             samplers[i].new_seq(var_seqs[i], gamma_mat);
         }
 
@@ -305,29 +305,29 @@ public:
     /*
      Fill a PhyloOneSeq object from an input list
     */
-    void fill_from_list(const List& genome_phylo_info, const uint32& i) {
+    void fill_from_list(const List& genome_phylo_info, const uint64& i) {
 
         std::string err_msg;
 
         const List& seq_phylo_info(genome_phylo_info[i]);
 
-        uint32 n_trees = seq_phylo_info.size();
+        uint64 n_trees = seq_phylo_info.size();
         if (n_trees == 0) {
             err_msg = "\nNo trees supplied on sequence " + std::to_string(i+1);
             throw(Rcpp::exception(err_msg.c_str(), false));
         }
 
-        std::vector<uint32> n_bases_(n_trees);
+        std::vector<uint64> n_bases_(n_trees);
         std::vector<std::vector<double>> branch_lens_(n_trees);
-        std::vector<arma::Mat<uint32>> edges_(n_trees);
+        std::vector<arma::Mat<uint64>> edges_(n_trees);
         std::vector<std::vector<std::string>> tip_labels_(n_trees);
 
-        for (uint32 j = 0; j < n_trees; j++) {
+        for (uint64 j = 0; j < n_trees; j++) {
 
             const List& phylo_info(seq_phylo_info[j]);
             std::vector<double> branch_lens = as<std::vector<double>>(
                 phylo_info["branch_lens"]);
-            arma::Mat<uint32> edges = as<arma::Mat<uint32>>(phylo_info["edges"]);
+            arma::Mat<uint64> edges = as<arma::Mat<uint64>>(phylo_info["edges"]);
             std::vector<std::string> tip_labels = as<std::vector<std::string>>(
                 phylo_info["labels"]);
             if (branch_lens.size() != edges.n_rows) {
@@ -341,7 +341,7 @@ public:
                 err_msg += " and tree " + std::to_string(j+1);
                 throw(Rcpp::exception(err_msg.c_str(), false));
             }
-            uint32 start = as<uint32>(phylo_info["start"]);
+            uint64 start = as<uint64>(phylo_info["start"]);
             sint64 end = as<sint64>(phylo_info["end"]);
             if (end < start) {
                 err_msg = "\nEnd position < start position on sequence ";
@@ -382,9 +382,9 @@ private:
      */
     void reset(const PhyloTree& tree) {
 
-        const uint32& tree_size(tree.tree_size);
-        const uint32& start(tree.start);
-        const uint32& end(tree.end);
+        const uint64& tree_size(tree.tree_size);
+        const uint64& start(tree.start);
+        const uint64& end(tree.end);
 
         if (tree_size == 0) {
             throw(Rcpp::exception("\ntree size of zero is non-sensical.", false));
@@ -402,7 +402,7 @@ private:
             samplers.resize(tree_size, samplers[0]);
         }
         // Fill in sampler pointers and original gamma matrix:
-        for (uint32 i = 0; i < tree_size; i++) {
+        for (uint64 i = 0; i < tree_size; i++) {
             samplers[i].new_seq(var_seqs[i], gamma_mat);
         }
         /*
@@ -429,8 +429,8 @@ private:
      Update for a new edge:
      */
     void update(std::exponential_distribution<double>& distr,
-                const uint32& b1,
-                const uint32& b2) {
+                const uint64& b1,
+                const uint64& b2) {
 
         /*
          Replace existing mutation information in VarSequence at `b1` with info in the
@@ -459,8 +459,8 @@ private:
      (If it's the last branch length, `b1` will always be a node and thus no longer
      needed.)
      */
-    void clear_branches(const uint32& b1,
-                        const uint32& i,
+    void clear_branches(const uint64& b1,
+                        const uint64& i,
                         const PhyloTree& tree) {
         bool clear_b1;
         if (i < (tree.edges.n_rows - 1)) {
@@ -496,7 +496,7 @@ public:
 
     PhyloInfo(const List& genome_phylo_info) {
 
-        uint32 n_seqs = genome_phylo_info.size();
+        uint64 n_seqs = genome_phylo_info.size();
 
         if (n_seqs == 0) {
             throw(Rcpp::exception("\nEmpty list provided for phylogenetic information.",
@@ -505,7 +505,7 @@ public:
 
         phylo_one_seqs = std::vector<PhyloOneSeq>(n_seqs);
 
-        for (uint32 i = 0; i < n_seqs; i++) {
+        for (uint64 i = 0; i < n_seqs; i++) {
             phylo_one_seqs[i].fill_from_list(genome_phylo_info, i);
         }
     }
@@ -514,7 +514,7 @@ public:
             SEXP& ref_genome_ptr,
             SEXP& sampler_base_ptr,
             const std::vector<arma::mat>& gamma_mats,
-            uint32 n_threads,
+            uint64 n_threads,
             const bool& show_progress);
 
 

@@ -33,11 +33,11 @@ namespace pcg {
 
 
 // To sample for seeds before multi-thread operations
-inline std::vector<std::vector<uint64>> mt_seeds(const uint32& n_threads) {
+inline std::vector<std::vector<uint64>> mt_seeds(const uint64& n_threads) {
 
     std::vector<std::vector<uint64>> sub_seeds(n_threads, std::vector<uint64>(8));
 
-    for (uint32 i = 0; i < n_threads; i++) {
+    for (uint64 i = 0; i < n_threads; i++) {
         sub_seeds[i] = as<std::vector<uint64>>(Rcpp::runif(8,0,4294967296));
     }
 

@@ -45,26 +45,26 @@ using namespace Rcpp;
 SEXP read_vcfr(SEXP reference_ptr,
                const std::vector<std::string>& var_names,
                const std::vector<std::vector<std::string>>& haps_list,
-               const std::vector<uint32>& seq_inds,
-               const std::vector<uint32>& pos,
+               const std::vector<uint64>& seq_inds,
+               const std::vector<uint64>& pos,
                const std::vector<std::string>& ref_seq) {
 
     XPtr<RefGenome> reference(reference_ptr);
-    uint32 n_muts = haps_list.size();
-    uint32 n_vars = var_names.size();
-    uint32 n_seqs = reference->size();
+    uint64 n_muts = haps_list.size();
+    uint64 n_vars = var_names.size();
+    uint64 n_seqs = reference->size();
 
     Mutation new_mut;
 
     XPtr<VarSet> var_set(new VarSet(*reference, var_names));
 
-    for (uint32 mut_i = 0; mut_i < n_muts; mut_i++) {
+    for (uint64 mut_i = 0; mut_i < n_muts; mut_i++) {
 
         const std::string& ref(ref_seq[mut_i]);
         const std::vector<std::string>& haps(haps_list[mut_i]);
-        const uint32& seq_i(seq_inds[mut_i]);
+        const uint64& seq_i(seq_inds[mut_i]);
 
-        for (uint32 var_i = 0; var_i < n_vars; var_i++) {
+        for (uint64 var_i = 0; var_i < n_vars; var_i++) {
 
             const std::string& alt(haps[var_i]);
 
@@ -80,7 +80,7 @@ SEXP read_vcfr(SEXP reference_ptr,
                  substitution(s)
                  ------------
                  */
-                for (uint32 i = 0; i < ref.size(); i++) {
+                for (uint64 i = 0; i < ref.size(); i++) {
                     if (alt[i] != ref[i]) {
                         new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt[i]);
                         var_seq.mutations.push_back(new_mut);
@@ -99,7 +99,7 @@ SEXP read_vcfr(SEXP reference_ptr,
                  For all sequences but the last in the REF string, just make
                  them substitutions if they differ from ALT.
                  */
-                uint32 i = 0;
+                uint64 i = 0;
                 for (; i < (ref.size()-1); i++) {
                     if (alt[i] != ref[i]) {
                         new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt_copy[i]);
@@ -126,7 +126,7 @@ SEXP read_vcfr(SEXP reference_ptr,
                  (Note that this goes to the end of ALT, not REF, as it does for
                  insertions.)
                  */
-                uint32 i = 0;
+                uint64 i = 0;
                 for (; i < alt.size(); i++) {
                     if (alt[i] != ref[i]) {
                         new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt[i]);
@@ -135,8 +135,8 @@ SEXP read_vcfr(SEXP reference_ptr,
                 }
 
                 // size modifier:
-                sint32 sm = static_cast<sint32>(alt.size()) -
-                    static_cast<sint32>(ref.size());
+                sint64 sm = static_cast<sint64>(alt.size()) -
+                    static_cast<sint64>(ref.size());
 
                 new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, sm);
                 var_seq.mutations.push_back(new_mut);
@@ -151,8 +151,8 @@ SEXP read_vcfr(SEXP reference_ptr,
     /*
      Go back and re-calculate positions and variant sequence sizes
      */
-    for (uint32 seq_i = 0; seq_i < n_seqs; seq_i++) {
-        for (uint32 var_i = 0; var_i < n_vars; var_i++) {
+    for (uint64 seq_i = 0; seq_i < n_seqs; seq_i++) {
+        for (uint64 var_i = 0; var_i < n_vars; var_i++) {
             VarSequence& var_seq((*var_set)[var_i][seq_i]);
             var_seq.calc_positions();
         }

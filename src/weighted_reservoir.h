@@ -69,9 +69,9 @@
  */
 
 template <typename R>
-inline uint32 weighted_reservoir_(R& obj, pcg64& eng,
-                                const uint32& start = 0,
-                                uint32 end = 0) {
+inline uint64 weighted_reservoir_(R& obj, pcg64& eng,
+                                const uint64& start = 0,
+                                uint64 end = 0) {
 
     double r, key, X, w, t;
 
@@ -81,13 +81,13 @@ inline uint32 weighted_reservoir_(R& obj, pcg64& eng,
     r = -1 * obj.rexp_(eng);        // ~ log(U(0,1))
     key = r / obj.res_rates[start];     // log(key)
     double largest_key = key;   // largest key (the one we're going to keep)
-    uint32 largest_pos = start;   // position where largest key was found
+    uint64 largest_pos = start;   // position where largest key was found
 
-    uint32 c = start;
+    uint64 c = start;
     while (c < end) {
         r = -1 * obj.rexp_(eng);    // ~ log(U(0,1))
         X = r / largest_key;        // log(key)
-        uint32 i = c + 1;
+        uint64 i = c + 1;
         X -= obj.res_rates[c];
         w = obj.res_rates[i];
         while (X > w && i < end) {
@@ -148,14 +148,14 @@ public:
     T all_rates;
     // The vector of sub-sampled indices
     // (possible values from 0 to min(chunk_size, all_rates.size() - 1))
-    std::vector<uint32> inds;
+    std::vector<uint64> inds;
 
     // To store the initial chunk size argument to the constructor.
-    uint32 chunk_size;
+    uint64 chunk_size;
 
 
     ChunkRateGetter() : all_rates(), inds(), chunk_size(0), use_vitter(true) {};
-    ChunkRateGetter(const T& r, const uint32& chunk_size_)
+    ChunkRateGetter(const T& r, const uint64& chunk_size_)
         : all_rates(r), inds(chunk_size_), chunk_size(chunk_size_), use_vitter(true) {
         // If `r` is empty, dont' go to the next step
         if (!r.empty()) {
@@ -167,7 +167,7 @@ public:
              */
             if (chunk_size >= all_rates.size()) {
                 inds.resize(all_rates.size());
-                for (uint32 i = 0; i < all_rates.size(); i++) inds[i] = i;
+                for (uint64 i = 0; i < all_rates.size(); i++) inds[i] = i;
                 use_vitter = false;
             }
         }
@@ -184,10 +184,10 @@ public:
         return *this;
     }
 
-    inline double operator[](const uint32& idx) const {
+    inline double operator[](const uint64& idx) const {
         return all_rates[inds[idx]];
     }
-    inline uint32 size() const noexcept {
+    inline uint64 size() const noexcept {
         return inds.size();
     }
     // Reset without any RNG (Just a way to make sure size is okay)
@@ -200,17 +200,17 @@ public:
         // Skip vitter_d if `inds` is a vector from 0 to `all_rates.size() - 1`:
         if (!use_vitter) return;
         // Otherwise, sample uniformly:
-        vitter_d<std::vector<uint32>>(inds, all_rates.size(), eng);
+        vitter_d<std::vector<uint64>>(inds, all_rates.size(), eng);
         return;
     }
-    void reset(pcg64& eng, const uint32& start, const uint32& end) {
+    void reset(pcg64& eng, const uint64& start, const uint64& end) {
 
         if (start >= all_rates.size() || start > end) {
             stop("start too high in ChunkRateGetter::reset");
         }
         if (end >= all_rates.size()) stop("end too high in ChunkRateGetter::reset");
 
-        uint32 range_size = end - start + 1;
+        uint64 range_size = end - start + 1;
 
         if (range_size <= chunk_size) {
             adjust_range_small_(start, end, range_size);
@@ -221,7 +221,7 @@ public:
         // Skip vitter_d if `inds` is a vector from `start` to `end`:
         if (!use_vitter) return;
         // Otherwise, sample uniformly:
-        vitter_d<std::vector<uint32>>(inds, range_size, eng, start);
+        vitter_d<std::vector<uint64>>(inds, range_size, eng, start);
         return;
     }
 
@@ -251,11 +251,11 @@ private:
         if (all_rates.size() <= chunk_size) {
             if (use_vitter) {
                 inds.resize(all_rates.size());
-                for (uint32 i = 0; i < all_rates.size(); i++) inds[i] = i;
+                for (uint64 i = 0; i < all_rates.size(); i++) inds[i] = i;
                 use_vitter = false;
             } else if (all_rates.size() != inds.size()) {
                 inds.resize(all_rates.size());
-                for (uint32 i = 0; i < all_rates.size(); i++) inds[i] = i;
+                for (uint64 i = 0; i < all_rates.size(); i++) inds[i] = i;
             }
             return;
         }
@@ -279,8 +279,8 @@ private:
      */
 
     // For when range_size <= chunk_size
-    inline void adjust_range_small_(const uint32& start, const uint32& end,
-                                    const uint32& range_size) {
+    inline void adjust_range_small_(const uint64& start, const uint64& end,
+                                    const uint64& range_size) {
 
         /*
          Note #1:
@@ -301,7 +301,7 @@ private:
          The rest of this function is to try to efficiently manipulate `inds` properly.
          */
 
-        uint32 inds_size = inds.size();
+        uint64 inds_size = inds.size();
 
         /*
          If `use_vitter` was false, then `inds` should currently be a vector from `x` to
@@ -314,17 +314,17 @@ private:
             if (inds_size < range_size) {
                 inds.reserve(range_size);
                 if (inds_size == 0) {
-                    for (uint32 i = start; i <= end; i++) inds.push_back(i);
+                    for (uint64 i = start; i <= end; i++) inds.push_back(i);
                     return;
                 }
                 if (inds.front() != start) {
-                    for (uint32 i = 0; i < inds_size; i++) inds[i] = start + i;
+                    for (uint64 i = 0; i < inds_size; i++) inds[i] = start + i;
                 }
-                for (uint32 i = inds_size + start; i <= end; i++) inds.push_back(i);
+                for (uint64 i = inds_size + start; i <= end; i++) inds.push_back(i);
             } else {
                 if (inds_size > range_size) inds.resize(range_size);
                 if (inds.front() != start) {
-                    for (uint32 i = 0; i < range_size; i++) inds[i] = start + i;
+                    for (uint64 i = 0; i < range_size; i++) inds[i] = start + i;
                 }
             }
             /*
@@ -336,11 +336,11 @@ private:
             if (inds_size < range_size) {
                 inds.reserve(range_size);
                 // (The check for `inds_size == 0` is not needed here.)
-                for (uint32 i = 0; i < inds_size; i++) inds[i] = start + i;
-                for (uint32 i = inds_size + start; i <= end; i++) inds.push_back(i);
+                for (uint64 i = 0; i < inds_size; i++) inds[i] = start + i;
+                for (uint64 i = inds_size + start; i <= end; i++) inds.push_back(i);
             } else {
                 if (inds_size > range_size) inds.resize(range_size);
-                for (uint32 i = 0; i < range_size; i++) inds[i] = start + i;
+                for (uint64 i = 0; i < range_size; i++) inds[i] = start + i;
             }
         }
 
@@ -349,8 +349,8 @@ private:
 
 
     // For when range_size > chunk_size
-    inline void adjust_range_big_(const uint32& start, const uint32& end,
-                                  const uint32& range_size) {
+    inline void adjust_range_big_(const uint64& start, const uint64& end,
+                                  const uint64& range_size) {
 
         /*
          Note #1:
@@ -382,7 +382,7 @@ public:
     ChunkRateGetter<T> res_rates;
 
     ReservoirRates() : res_rates(), distr(1.0) {};
-    ReservoirRates(const T& r, const uint32& chunk)
+    ReservoirRates(const T& r, const uint64& chunk)
         : res_rates(r, chunk), distr(1.0) {};
     ReservoirRates(const ReservoirRates<T>& other)
         : res_rates(other.res_rates), distr(1.0) {}
@@ -397,12 +397,12 @@ public:
     }
 
     // Sample for one location across the whole object or inside a range
-    inline uint32 sample(pcg64& eng, const uint32& start, const uint32& end,
+    inline uint64 sample(pcg64& eng, const uint64& start, const uint64& end,
                          const bool& ranged) {
         if (ranged) {
             res_rates.reset(eng, start, end);
         } else res_rates.reset(eng);
-        uint32 i = weighted_reservoir_<ReservoirRates<T>>(*this, eng);
+        uint64 i = weighted_reservoir_<ReservoirRates<T>>(*this, eng);
         return res_rates.inds[i];
     }
 

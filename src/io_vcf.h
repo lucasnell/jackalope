@@ -20,7 +20,7 @@
 using namespace Rcpp;
 
 
-// Maximum uint32 value:
+// Maximum uint64 value:
 #define MAX_INT 4294967295UL
 
 
@@ -56,11 +56,11 @@ public:
      be included. The `dump` method assigns the actual index to the alternate string
      to use.
      */
-    uint32 gt_index = 0;
+    uint64 gt_index = 0;
     // Starting/ending indices on mutations vector:
-    std::pair<uint32, uint32> ind = std::make_pair(0, 0);
+    std::pair<uint64, uint64> ind = std::make_pair(0, 0);
     // Starting/ending position on ref. sequence:
-    std::pair<uint32, uint32> pos;
+    std::pair<uint64, uint64> pos;
 
     OneVarSeqVCF() {};
 
@@ -71,8 +71,8 @@ public:
      If this variant has a deletion at the input position, this method updates that
      and the boolean for whether the line is still expanding (changes it to true).
      */
-    void check(const uint32& pos_start,
-               uint32& pos_end,
+    void check(const uint64& pos_start,
+               uint64& pos_end,
                bool& still_growing) {
 
         if (pos_end >= pos.first) {
@@ -132,9 +132,9 @@ public:
      then iterates to the next mutation information
      */
     void dump(std::vector<std::string>& unq_alts,
-              uint32& gt_tmp,
-              const uint32& pos_start,
-              const uint32& pos_end,
+              uint64& gt_tmp,
+              const uint64& pos_start,
+              const uint64& pos_end,
               const std::string& ref_str) {
 
         if (gt_index > 0) {
@@ -147,9 +147,9 @@ public:
 
             // Add mutations from back:
             const Mutation* mut;
-            uint32 pos;
-            uint32 n_muts = ind.second - ind.first + 1;
-            for (uint32 i = 0; i < n_muts; i++) {
+            uint64 pos;
+            uint64 n_muts = ind.second - ind.first + 1;
+            for (uint64 i = 0; i < n_muts; i++) {
                 mut = &(var_seq->mutations[ind.second - i]);
                 pos = mut->old_pos - pos_start;
                 if (pos >= alt_str.size()) {
@@ -218,8 +218,8 @@ public:
         return;
     }
 
-    void compare_pos(uint32& pos_start,
-                     uint32& pos_end) const {
+    void compare_pos(uint64& pos_start,
+                     uint64& pos_end) const {
 
         // If this is the new nearest mutation, override both positions:
         if (pos.first < pos_start) {
@@ -248,7 +248,7 @@ private:
     // Set positions when indices are the same (when initializing, iterating, new variant)
     void reset_pos() {
         if (ind.first >= var_seq->mutations.size()) {
-            pos = std::make_pair(MAX_INT, MAX_INT); // max uint32 values
+            pos = std::make_pair(MAX_INT, MAX_INT); // max uint64 values
         } else {
             const Mutation* mut(&(var_seq->mutations[ind.first]));
             set_first_pos(*mut);
@@ -280,8 +280,8 @@ private:
         return;
     }
     // Same as above, but returns the integer rather than setting it
-    inline uint32 get_first_pos(const Mutation& mut) {
-        uint32 pos_first = mut.old_pos;
+    inline uint64 get_first_pos(const Mutation& mut) {
+        uint64 pos_first = mut.old_pos;
         if (mut.size_modifier < 0 && mut.old_pos > 0) pos_first--;
         return pos_first;
     }
@@ -301,8 +301,8 @@ private:
         return;
     }
     // Same as above, but returns the integer rather than setting it
-    inline uint32 get_second_pos(const Mutation& mut) {
-        uint32 pos_second = mut.old_pos;
+    inline uint64 get_second_pos(const Mutation& mut) {
+        uint64 pos_second = mut.old_pos;
         if (mut.size_modifier < 0) {
             if (mut.old_pos > 0) {
                 pos_second -= (1 + mut.size_modifier);
@@ -324,12 +324,12 @@ class WriterVCF {
 public:
 
     const VarSet* var_set;
-    uint32 seq_ind;
+    uint64 seq_ind;
     const std::string* ref_nts;
 
     std::vector<OneVarSeqVCF> var_infos;
     // Starting/ending positions on reference sequence for overall nearest mutation:
-    std::pair<uint32,uint32> mut_pos = std::make_pair(MAX_INT, MAX_INT);
+    std::pair<uint64,uint64> mut_pos = std::make_pair(MAX_INT, MAX_INT);
     // Strings for all unique alt. strings among  variants. Grouping is not relevant here.
     std::vector<std::string> unq_alts;
     // Indices for how to group each variant's genotype information:
@@ -338,7 +338,7 @@ public:
     std::vector<std::string> sample_names;
 
     WriterVCF(const VarSet& var_set_,
-              const uint32& seq_ind_,
+              const uint64& seq_ind_,
               const IntegerMatrix& sample_groups_)
         : var_set(&var_set_),
           seq_ind(seq_ind_),
@@ -387,7 +387,7 @@ public:
          */
         while (still_growing) {
             still_growing = false;
-            for (uint32 i = 0; i < var_infos.size(); i++) {
+            for (uint64 i = 0; i < var_infos.size(); i++) {
                 var_infos[i].check(mut_pos.first, mut_pos.second, still_growing);
             }
         }
@@ -400,7 +400,7 @@ public:
                 std::string("ref. string length of ") +
                 std::to_string(ref_nts->size()));
         }
-        for (uint32 i = mut_pos.first; i <= mut_pos.second; i++) {
+        for (uint64 i = mut_pos.first; i <= mut_pos.second; i++) {
             ref_str.push_back(ref_nts->at(i));
         }
 
@@ -410,14 +410,14 @@ public:
          */
         pos_str = std::to_string(mut_pos.first + 1);  //bc it's 1-based indexing
         unq_alts.clear();
-        for (uint32 i = 0; i < var_infos.size(); i++) {
+        for (uint64 i = 0; i < var_infos.size(); i++) {
             var_infos[i].dump(unq_alts, gt_indexes[i], mut_pos.first, mut_pos.second,
                               ref_str);
         }
         if (unq_alts.empty()) stop("unq_alts.empty()");
         // Fill alt. string:
         alt_str += unq_alts[0];
-        for (uint32 i = 1; i < unq_alts.size(); i++) alt_str += ',' + unq_alts[i];
+        for (uint64 i = 1; i < unq_alts.size(); i++) alt_str += ',' + unq_alts[i];
 
 
         /*
@@ -427,12 +427,12 @@ public:
             str_stop({"\nInput vector for GT field info isn't the same size ",
                      "as the number of rows in the `sample_matrix` argument."});
         }
-        uint32 gt_i;
-        for (uint32 i = 0; i < sample_groups.n_rows; i++) {
+        uint64 gt_i;
+        for (uint64 i = 0; i < sample_groups.n_rows; i++) {
             std::string& gt(gt_strs[i]);
             gt_i = gt_indexes[sample_groups(i,0)];
             gt = std::to_string(gt_i);
-            for (uint32 j = 1; j < sample_groups.n_cols; j++) {
+            for (uint64 j = 1; j < sample_groups.n_cols; j++) {
                 gt_i = gt_indexes[sample_groups(i,j)];
                 gt += '|';
                 gt += std::to_string(gt_i);
@@ -442,7 +442,7 @@ public:
 
         // Check for the new nearest mutation position:
         mut_pos = std::make_pair(MAX_INT, MAX_INT);
-        for (uint32 i = 0; i < var_infos.size(); i++) {
+        for (uint64 i = 0; i < var_infos.size(); i++) {
             var_infos[i].compare_pos(mut_pos.first, mut_pos.second);
         }
 
@@ -451,7 +451,7 @@ public:
 
 
     // Change the sequence this object refers to
-    void new_seq(const uint32& seq_ind_) {
+    void new_seq(const uint64& seq_ind_) {
         seq_ind = seq_ind_;
         construct();
         return;
@@ -464,7 +464,7 @@ public:
         pool += vcf_date();
         pool += '\n';
         pool += "##source=jackalope\n";
-        for (uint32 i = 0; i < var_set->reference->size(); i++) {
+        for (uint64 i = 0; i < var_set->reference->size(); i++) {
             const RefSequence& rs(var_set->reference->operator[](i));
             pool += "##contig=<ID=" + rs.name + ',';
             pool += "length=" + std::to_string(rs.size()) + ">\n";
@@ -476,7 +476,7 @@ public:
         pool += "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype";
         pool +=    "Quality\">\n";
         pool += "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT";
-        for (uint32 i = 0; i < sample_names.size(); i++) {
+        for (uint64 i = 0; i < sample_names.size(); i++) {
             pool += '\t' + sample_names[i];
         }
         pool += '\n';
@@ -486,7 +486,7 @@ public:
 
 private:
 
-    std::vector<uint32> gt_indexes;  // temporarily stores gt info
+    std::vector<uint64> gt_indexes;  // temporarily stores gt info
 
     void construct() {
 
@@ -496,7 +496,7 @@ private:
          Set pointer for the focal sequence in each variant
          and set positions in `mut_pos` field
          */
-        for (uint32 i = 0; i < var_infos.size(); i++) {
+        for (uint64 i = 0; i < var_infos.size(); i++) {
             var_infos[i].set_var((*var_set)[i][seq_ind]);
             var_infos[i].compare_pos(mut_pos.first, mut_pos.second);
         }
@@ -506,12 +506,12 @@ private:
 
     // Creating vector of names for each sample:
     void make_names() {
-        uint32 n_samples = sample_groups.n_rows;
+        uint64 n_samples = sample_groups.n_rows;
         sample_names = std::vector<std::string>(n_samples, "");
-        for (uint32 i = 0; i < n_samples; i++) {
+        for (uint64 i = 0; i < n_samples; i++) {
             std::string& sn(sample_names[i]);
             sn = var_set->operator[](sample_groups(i,0)).name;
-            for (uint32 j = 1; j < sample_groups.n_cols; j++) {
+            for (uint64 j = 1; j < sample_groups.n_cols; j++) {
                 sn += "__";
                 sn += var_set->operator[](sample_groups(i,j)).name;
             }
@@ -542,8 +542,8 @@ inline void write_vcf_(XPtr<VarSet> var_set,
     // (only needed as string):
     std::string max_qual = "441453";
 
-    uint32 n_seqs = var_set->reference->size();
-    uint32 n_samples = writer.sample_groups.n_rows;
+    uint64 n_seqs = var_set->reference->size();
+    uint64 n_samples = writer.sample_groups.n_rows;
 
     // String of text to append to, then to insert into output:
     std::string pool;
@@ -564,7 +564,7 @@ inline void write_vcf_(XPtr<VarSet> var_set,
     std::string alt_str = "";
     std::vector<std::string> gt_strs(n_samples, "");
 
-    for (uint32 seq = 0; seq < n_seqs; seq++) {
+    for (uint64 seq = 0; seq < n_seqs; seq++) {
         writer.new_seq(seq);
         while (writer.mut_pos.first < MAX_INT) {
             Rcpp::checkUserInterrupt();
@@ -589,7 +589,7 @@ inline void write_vcf_(XPtr<VarSet> var_set,
             // FORMAT
             pool += "\tGT:GQ";
             // Sample info (setting GQ to super high value)
-            for (uint32 i = 0; i < n_samples; i++) {
+            for (uint64 i = 0; i < n_samples; i++) {
                 pool += '\t' + gt_strs[i];
                 pool += ':' + max_qual;
             }

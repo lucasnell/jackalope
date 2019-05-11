@@ -47,25 +47,25 @@ using namespace Rcpp;
 //'
 void fill_gamma_mat_(arma::mat& gamma_mat,
                      double& gammas_x_sizes,
-                     const uint32& seq_size_,
-                     const uint32& region_size_,
+                     const uint64& seq_size_,
+                     const uint64& region_size_,
                      const double& shape,
                      const double& invariant,
                      pcg64& eng) {
 
     // Number of gamma values needed:
-    uint32 n_gammas = static_cast<uint32>(std::ceil(
+    uint64 n_gammas = static_cast<uint64>(std::ceil(
         static_cast<double>(seq_size_) / static_cast<double>(region_size_)));
 
     // Initialize output matrix
     gamma_mat.set_size(n_gammas, 2);
 
     // Number of regions that are invariant
-    uint32 n_inv = std::round(n_gammas * invariant);
+    uint64 n_inv = std::round(n_gammas * invariant);
     // Sample indices for which ones are invariant:
-    std::deque<uint32> iv_inds;
+    std::deque<uint64> iv_inds;
     if (n_inv > 0) {
-        iv_inds = as<std::deque<uint32>>(
+        iv_inds = as<std::deque<uint64>>(
             Rcpp::sample(n_gammas, n_inv, false, R_NilValue, false));
         std::sort(iv_inds.begin(), iv_inds.end());
     }
@@ -84,8 +84,8 @@ void fill_gamma_mat_(arma::mat& gamma_mat,
         their own matrix directly from R (since R obviously uses 1-based).
         */
         double gamma_, size_;
-        uint32 end_;
-        for (uint32 i = 0, start_ = 1; i < n_gammas; i++, start_ += region_size_) {
+        uint64 end_;
+        for (uint64 i = 0, start_ = 1; i < n_gammas; i++, start_ += region_size_) {
 
             if (!iv_inds.empty() && (i == iv_inds.front())) {
                 gamma_ = 0;
@@ -106,8 +106,8 @@ void fill_gamma_mat_(arma::mat& gamma_mat,
     } else {
 
         double gamma_, size_;
-        uint32 end_;
-        for (uint32 i = 0, start_ = 1; i < n_gammas; i++, start_ += region_size_) {
+        uint64 end_;
+        for (uint64 i = 0, start_ = 1; i < n_gammas; i++, start_ += region_size_) {
 
             if (!iv_inds.empty() && (i == iv_inds.front())) {
                 gamma_ = 0;
@@ -144,8 +144,8 @@ void fill_gamma_mat_(arma::mat& gamma_mat,
 //' @noRd
 //'
 //[[Rcpp::export]]
-arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
-                                       const uint32& region_size_,
+arma::field<arma::mat> make_gamma_mats(const std::vector<uint64>& seq_sizes,
+                                       const uint64& region_size_,
                                        const double& shape,
                                        const double& invariant) {
 
@@ -155,7 +155,7 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
 
     pcg64 eng = seeded_pcg();
 
-    uint32 n_seqs = seq_sizes.size();
+    uint64 n_seqs = seq_sizes.size();
 
     /*
      These are used later to make sure the average gamma value across the whole
@@ -168,7 +168,7 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
     double gammas_x_sizes = 0;
 
     arma::field<arma::mat> gamma_mats(n_seqs);
-    for (uint32 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_seqs; i++) {
         fill_gamma_mat_(gamma_mats(i), gammas_x_sizes, seq_sizes[i],
                         region_size_, shape, invariant, eng);
     }
@@ -179,7 +179,7 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
      */
     if (shape > 0) {
         double mean_gamma = gammas_x_sizes / total_size;
-        for (uint32 i = 0; i < n_seqs; i++) gamma_mats(i).col(1) /= mean_gamma;
+        for (uint64 i = 0; i < n_seqs; i++) gamma_mats(i).col(1) /= mean_gamma;
     }
 
     return gamma_mats;
@@ -198,7 +198,7 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint32>& seq_sizes,
 //'
 //[[Rcpp::export]]
 void check_gamma_mats(const std::vector<arma::mat>& mats,
-                      const std::vector<uint32>& seq_sizes) {
+                      const std::vector<uint64>& seq_sizes) {
 
     std::string err_msg = "\nIf providing custom matrices for the ";
     err_msg += "`mats` argument to the `site_var` function, ";
@@ -206,7 +206,7 @@ void check_gamma_mats(const std::vector<arma::mat>& mats,
 
     bool error = false;
 
-    for (uint32 i = 0; i < mats.size(); i++) {
+    for (uint64 i = 0; i < mats.size(); i++) {
 
         const arma::mat& gamma_mat(mats[i]);
 
@@ -247,7 +247,7 @@ void check_gamma_mats(const std::vector<arma::mat>& mats,
             break;
         }
         // The last end point should be the end of the sequence:
-        uint32 last_end = static_cast<uint32>(gamma_mat.col(0).max());
+        uint64 last_end = static_cast<uint64>(gamma_mat.col(0).max());
         if (last_end != seq_sizes[i]) {
             err_msg += "need to have a maximum end point (in the first column) ";
             err_msg += "equal to the size of the associated sequence.";

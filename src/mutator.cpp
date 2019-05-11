@@ -12,7 +12,7 @@
 using namespace Rcpp;
 
 // Does most of the work of mutating for the below methods (all but location sampling)
-inline double MutationSampler::mutate__(pcg64& eng, const uint32& pos, sint64& end) {
+inline double MutationSampler::mutate__(pcg64& eng, const uint64& pos, sint64& end) {
 
     char c = var_seq->get_nt(pos);
     MutationInfo m = type.sample(c, eng);
@@ -28,8 +28,8 @@ inline double MutationSampler::mutate__(pcg64& eng, const uint32& pos, sint64& e
         } else {
             sint64 pos_ = static_cast<sint64>(pos);
             sint64 size_ = end + 1;
-            if (pos_ - m.length > size_) m.length = static_cast<sint32>(pos_-size_);
-            uint32 del_size = std::abs(m.length);
+            if (pos_ - m.length > size_) m.length = static_cast<sint64>(pos_-size_);
+            uint64 del_size = std::abs(m.length);
             rate_change = location.deletion_rate_change(del_size, pos);
             var_seq->add_deletion(del_size, pos);
         }
@@ -47,7 +47,7 @@ inline double MutationSampler::mutate__(pcg64& eng, const uint32& pos, sint64& e
 // Add mutation and return the change in the sequence rate that results
 double MutationSampler::mutate(pcg64& eng) {
 
-    uint32 pos = location.sample(eng);
+    uint64 pos = location.sample(eng);
 
     if (pos >= var_seq->size()) {
         Rcout << pos << ' ' << var_seq->size() << std::endl;
@@ -68,10 +68,10 @@ double MutationSampler::mutate(pcg64& eng) {
  Make sure to keep checking for situation where `end < start` (i.e., sequence section
  is empty).
  */
-double MutationSampler::mutate(pcg64& eng, const uint32& start, sint64& end) {
+double MutationSampler::mutate(pcg64& eng, const uint64& start, sint64& end) {
 
     if (end < 0) stop("end is negative in MutationSampler.mutate");
-    uint32 pos = location.sample(eng, start, static_cast<uint32>(end));
+    uint64 pos = location.sample(eng, start, static_cast<uint64>(end));
 
     double rate_change = mutate__(eng, pos, end);
 
@@ -87,10 +87,10 @@ SEXP make_mutation_sampler_base(const arma::mat& Q,
                                 const std::vector<double>& pi_tcag,
                                 const std::vector<double>& insertion_rates,
                                 const std::vector<double>& deletion_rates,
-                                const uint32& region_size) {
+                                const uint64& region_size) {
 
     std::vector<std::vector<double>> probs;
-    std::vector<sint32> mut_lengths;
+    std::vector<sint64> mut_lengths;
     std::vector<double> q_tcag;
     /*
      (1) Combine substitution, insertion, and deletion rates into a single vector

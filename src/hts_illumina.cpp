@@ -84,7 +84,7 @@ template <typename T>
 void IlluminaOneGenome<T>::construct_seqs() {
     std::vector<double> probs_;
     probs_.reserve(seq_lengths.size());
-    for (uint32 i = 0; i < seq_lengths.size(); i++) {
+    for (uint64 i = 0; i < seq_lengths.size(); i++) {
         probs_.push_back(static_cast<double>(seq_lengths[i]));
     }
     seq_sampler = AliasSampler(probs_);
@@ -96,14 +96,14 @@ void IlluminaOneGenome<T>::construct_seqs() {
 template <typename T>
 void IlluminaOneGenome<T>::sample_indels(pcg64& eng) {
 
-    const uint32& frag_len(constr_info.frag_len);
+    const uint64& frag_len(constr_info.frag_len);
 
-    for (uint32 r = 0; r < insertions.size(); r++) {
-        uint32 frag_pos = 0;
-        uint32 length_now = 0;
+    for (uint64 r = 0; r < insertions.size(); r++) {
+        uint64 frag_pos = 0;
+        uint64 length_now = 0;
         double u;
-        std::deque<uint32>& ins(insertions[r]);
-        std::deque<uint32>& del(deletions[r]);
+        std::deque<uint64>& ins(insertions[r]);
+        std::deque<uint64>& del(deletions[r]);
         const double& ins_prob(ins_probs[r]);
         const double& del_prob(del_probs[r]);
         ins.clear();
@@ -133,17 +133,17 @@ void IlluminaOneGenome<T>::sample_indels(pcg64& eng) {
 template <typename T>
 void IlluminaOneGenome<T>::adjust_seq_spaces() {
 
-    std::vector<uint32>& read_seq_spaces(constr_info.read_seq_spaces);
+    std::vector<uint64>& read_seq_spaces(constr_info.read_seq_spaces);
     std::vector<std::string>& reads(constr_info.reads);
-    const uint32& frag_len(constr_info.frag_len);
+    const uint64& frag_len(constr_info.frag_len);
 
-    for (uint32 r = 0; r < insertions.size(); r++) {
+    for (uint64 r = 0; r < insertions.size(); r++) {
         /*
          I'm adding deletions because more deletions mean that I need
          more sequence bases to achieve the same read length.
          Insertions means I need fewer.
          */
-        sint32 indel_effect = deletions[r].size() - insertions[r].size();
+        sint64 indel_effect = deletions[r].size() - insertions[r].size();
         /*
          In addition to indels, below corrects for situation where a small
          fragment size was sampled.
@@ -170,16 +170,16 @@ void IlluminaOneGenome<T>::adjust_seq_spaces() {
 template <typename T>
 void IlluminaOneGenome<T>::seq_indels_frag(pcg64& eng) {
 
-    uint32& seq_ind(constr_info.seq_ind);
-    uint32& frag_len(constr_info.frag_len);
-    uint32& frag_start(constr_info.frag_start);
+    uint64& seq_ind(constr_info.seq_ind);
+    uint64& frag_len(constr_info.frag_len);
+    uint64& frag_start(constr_info.frag_start);
 
     // Sample sequence:
     seq_ind = seq_sampler.sample(eng);
-    uint32 seq_len = (*sequences)[seq_ind].size();
+    uint64 seq_len = (*sequences)[seq_ind].size();
 
     // Sample fragment length:
-    frag_len = static_cast<uint32>(frag_lengths(eng));
+    frag_len = static_cast<uint64>(frag_lengths(eng));
     if (frag_len < frag_len_min) frag_len = frag_len_min;
     if (frag_len > frag_len_max) frag_len = frag_len_max;
 
@@ -189,7 +189,7 @@ void IlluminaOneGenome<T>::seq_indels_frag(pcg64& eng) {
         frag_start = 0;
     } else {
         double u = runif_01(eng);
-        frag_start = static_cast<uint32>(u * (seq_len - frag_len + 1));
+        frag_start = static_cast<uint64>(u * (seq_len - frag_len + 1));
     }
 
     // Sample indels:
@@ -231,23 +231,23 @@ template <typename U>
 void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
                                          pcg64& eng) {
 
-    uint32 n_read_ends = ins_probs.size();
+    uint64 n_read_ends = ins_probs.size();
     if (fastq_pools.size() != n_read_ends) fastq_pools.resize(n_read_ends);
 
     const std::string& barcode(constr_info.barcode);
-    const std::vector<uint32>& read_seq_spaces(constr_info.read_seq_spaces);
+    const std::vector<uint64>& read_seq_spaces(constr_info.read_seq_spaces);
 
     // Just making this reference to keep lines from getting very long.
-    const uint32& seq_ind(constr_info.seq_ind);
+    const uint64& seq_ind(constr_info.seq_ind);
 
     // Boolean for whether we take the reverse side first:
     bool reverse = runif_01(eng) < 0.5;
-    for (uint32 i = 0; i < n_read_ends; i++) {
+    for (uint64 i = 0; i < n_read_ends; i++) {
         std::string& read(constr_info.reads[i]);
         std::string& qual(constr_info.quals[i]);
 
         // Read starting location depends on if mate-pair and if reverse strand:
-        uint32 start;
+        uint64 start;
         if ((!matepair && !reverse) || (matepair && reverse)) {
             start = constr_info.frag_start;
         } else {
@@ -280,7 +280,7 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
         }
 
         // Now fill barcode:
-        for (uint32 i = 0; i < barcode.size(); i++) read[i] = barcode[i];
+        for (uint64 i = 0; i < barcode.size(); i++) read[i] = barcode[i];
 
         // Sample mapping quality and add errors to read:
         qual_errors[i].fill_read_qual(read, qual, insertions[i], deletions[i], eng);
@@ -349,15 +349,15 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                       const std::string& out_prefix,
                       const int& compress,
                       const std::string& comp_method,
-                      const uint32& n_reads,
+                      const uint64& n_reads,
                       const double& prob_dup,
-                      const uint32& n_threads,
+                      const uint64& n_threads,
                       const bool& show_progress,
-                      const uint32& read_pool_size,
+                      const uint64& read_pool_size,
                       const double& frag_len_shape,
                       const double& frag_len_scale,
-                      const uint32& frag_len_min,
-                      const uint32& frag_len_max,
+                      const uint64& frag_len_min,
+                      const uint64& frag_len_max,
                       const std::vector<std::vector<std::vector<double>>>& qual_probs1,
                       const std::vector<std::vector<std::vector<uint8>>>& quals1,
                       const double& ins_prob1,
@@ -371,7 +371,7 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     IlluminaReference read_filler_base;
 
-    uint32 n_read_ends;
+    uint64 n_read_ends;
     if (paired) {
         n_read_ends = 2;
         read_filler_base =
@@ -416,16 +416,16 @@ void illumina_var_cpp(SEXP var_set_ptr,
                       const std::string& out_prefix,
                       const int& compress,
                       const std::string& comp_method,
-                      const uint32& n_reads,
+                      const uint64& n_reads,
                       const double& prob_dup,
-                      const uint32& n_threads,
+                      const uint64& n_threads,
                       const bool& show_progress,
-                      const uint32& read_pool_size,
+                      const uint64& read_pool_size,
                       const std::vector<double>& variant_probs,
                       const double& frag_len_shape,
                       const double& frag_len_scale,
-                      const uint32& frag_len_min,
-                      const uint32& frag_len_max,
+                      const uint64& frag_len_min,
+                      const uint64& frag_len_max,
                       const std::vector<std::vector<std::vector<double>>>& qual_probs1,
                       const std::vector<std::vector<std::vector<uint8>>>& quals1,
                       const double& ins_prob1,
@@ -439,7 +439,7 @@ void illumina_var_cpp(SEXP var_set_ptr,
     XPtr<VarSet> var_set(var_set_ptr);
     IlluminaVariants read_filler_base;
 
-    uint32 n_read_ends;
+    uint64 n_read_ends;
     if (paired) {
         n_read_ends = 2;
         read_filler_base = IlluminaVariants(*var_set, variant_probs,

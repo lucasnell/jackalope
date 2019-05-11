@@ -59,12 +59,12 @@ const std::string bases = "TCAG";
 struct Region {
 
     double gamma;
-    uint32 start;
-    uint32 end;
+    uint64 start;
+    uint64 end;
     double rate;  // overall rate (including gamma) for the sequence in this region
     bool deleted;
 
-    Region(const double& gamma_, const uint32& start_, const uint32& end_,
+    Region(const double& gamma_, const uint64& start_, const uint64& end_,
                 const double& rate_)
         : gamma(gamma_), start(start_), end(end_), rate(rate_), deleted(rate_ <= 0) {}
     Region(const Region& other)
@@ -74,8 +74,8 @@ struct Region {
     /*
      Adjust for a deletion.
      */
-    void del_adjust_bounds(const uint32& del_start,
-                           const uint32& del_end);
+    void del_adjust_bounds(const uint64& del_start,
+                           const uint64& del_end);
 
 };
 
@@ -104,7 +104,7 @@ public:
 
     RegionTree() {};
     RegionTree(const arma::mat& gamma_mat,
-               const uint32& region_size,
+               const uint64& region_size,
                const VarSequence* var_seq,
                const std::vector<double>& nt_rates)
         : total_rate(0) {
@@ -136,7 +136,7 @@ public:
     }
 
     // Get index to mutated tip (but don't allow outside classes to modify it)
-    const uint32& mut_tip() const { return mut_tip_; }
+    const uint64& mut_tip() const { return mut_tip_; }
 
     // This adjusts all node, tip, and rate fields for a substitution:
     void sub_update(const double& d_rate) {
@@ -149,7 +149,7 @@ public:
         return;
     }
     // This adjusts all node, tip, and rate fields for an insertion:
-    void ins_update(const double& d_rate, const uint32& size) {
+    void ins_update(const double& d_rate, const uint64& size) {
         total_rate += d_rate;
         tips[mut_tip_].rate += d_rate;
         // Update nodes:
@@ -157,7 +157,7 @@ public:
         // Only update end for the region containing the insertion:
         tips[mut_tip_].end += size;
         // This method is used for all subsequent regions; updates start and end:
-        for (uint32 i = (mut_tip_ + 1); i < tips.size(); i++) {
+        for (uint64 i = (mut_tip_ + 1); i < tips.size(); i++) {
             tips[i].start += size;
             tips[i].end += size;
         }
@@ -165,8 +165,8 @@ public:
     }
     // This adjusts all node, tip, and rate fields for a deletion:
     void del_update(const double& d_rate,
-                    const uint32& start,
-                    const uint32& end,
+                    const uint64& start,
+                    const uint64& end,
                     std::deque<double>& del_rate_changes) {
         total_rate += d_rate;
         /*
@@ -179,7 +179,7 @@ public:
         // Update nodes:
         // Update region bounds for the one containing the deletion and all
         // subsequent ones:
-        for (uint32 i = mut_tip_; i < tips.size(); i++) {
+        for (uint64 i = mut_tip_; i < tips.size(); i++) {
             tips[i].del_adjust_bounds(start, end);
             // If `del_rate_changes` isn't empty, then this region was affected:
             if (!del_rate_changes.empty()) {
@@ -194,28 +194,28 @@ public:
 
 private:
 
-    mutable uint32 mut_tip_ = 0; // Keeps index to the most recently mutated tip
+    mutable uint64 mut_tip_ = 0; // Keeps index to the most recently mutated tip
 
     inline void construct_tips_one_row(const arma::mat& gamma_mat,
-                                       const uint32& region_size,
+                                       const uint64& region_size,
                                        const VarSequence* var_seq,
                                        const std::vector<double>& nt_rates,
-                                       const uint32& i,
-                                       uint32& mut_i,
-                                       std::vector<uint32>& sizes);
+                                       const uint64& i,
+                                       uint64& mut_i,
+                                       std::vector<uint64>& sizes);
     void construct_tips(arma::mat gamma_mat,
-                        const uint32& region_size,
+                        const uint64& region_size,
                         const VarSequence* var_seq,
                         const std::vector<double>& nt_rates);
     void construct_nodes();
 
     // Given a change in a tip, update all nodes above that for the change
     // It does NOT update the tip itself, NOR does it update the `total_rate` field!
-    void update_nodes(const uint32& tip_i, const double& d_rate) {
+    void update_nodes(const uint64& tip_i, const double& d_rate) {
         if (nodes.size() == 0 || d_rate == 0) return;
-        uint32 lvl_i = nodes.size() - 1;
+        uint64 lvl_i = nodes.size() - 1;
         bool on_left = (tip_i&1) == 0; // using bitwise modulus to see if `tip_i` is even
-        uint32 node_i = tip_i>>1; // going up tree means bit-shifting this direction
+        uint64 node_i = tip_i>>1; // going up tree means bit-shifting this direction
         // Go up tree and update all necessary nodes:
         while (true) {
             if (on_left) nodes[lvl_i][node_i] += d_rate;
@@ -247,8 +247,8 @@ private:
 
 struct LocationBounds {
 
-    uint32 start_pos;
-    uint32 end_pos;
+    uint64 start_pos;
+    uint64 end_pos;
     double start_rate;
     double end_rate;
     bool start_end_set; // whether pos and rates have been set
@@ -312,10 +312,10 @@ public:
 
     LocationSampler() : var_seq(), regions(), bounds(), region_size(0) {};
     LocationSampler(const std::vector<double>& q_tcag,
-                    const uint32& region_size_)
+                    const uint64& region_size_)
         : var_seq(), regions(), bounds(), region_size(region_size_) {
-        for (uint32 i = 0; i < 4; i++) {
-            uint32 bi = mut_loc::bases[i];
+        for (uint64 i = 0; i < 4; i++) {
+            uint64 bi = mut_loc::bases[i];
             nt_rates[bi] = q_tcag[i];
         }
     }
@@ -332,8 +332,8 @@ public:
     }
 
 
-    uint32 sample(pcg64& eng, const uint32& start, const uint32& end);
-    uint32 sample(pcg64& eng) const;
+    uint64 sample(pcg64& eng, const uint64& start, const uint64& end);
+    uint64 sample(pcg64& eng) const;
 
 
     // Fill pointer for a new VarSequence
@@ -354,7 +354,7 @@ public:
      NOT change anything.
      */
 
-    double substitution_rate_change(const char& c, const uint32& pos) const {
+    double substitution_rate_change(const char& c, const uint64& pos) const {
         // Pointer to region where mutation occurred (saved by `regions` object)
         const Region* reg = regions.current();
         char c0 = var_seq->get_nt(pos);
@@ -363,7 +363,7 @@ public:
         return d_rate;
     }
 
-    double insertion_rate_change(const std::string& seq, const uint32& pos) const {
+    double insertion_rate_change(const std::string& seq, const uint64& pos) const {
         const Region* reg = regions.current();
         double d_rate = 0;
         for (const char& c : seq) d_rate += nt_rates[c];
@@ -371,33 +371,33 @@ public:
         return d_rate;
     }
 
-    double deletion_rate_change(const uint32& del_size, const uint32& start) const;
+    double deletion_rate_change(const uint64& del_size, const uint64& start) const;
 
 
 
     /*
      These DO update and change things:
      */
-    void update(const double& d_rate, const sint32& size_change, const uint32& pos);
+    void update(const double& d_rate, const sint64& size_change, const uint64& pos);
 
-    void new_bounds(const uint32& start, const uint32& end);
+    void new_bounds(const uint64& start, const uint64& end);
 
 
 
 private:
 
-    uint32 region_size;
+    uint64 region_size;
     // to store info on deletion rate changes since they affect multiple regions:
     mutable std::deque<double> del_rate_changes;
 
 
     // Sample within a region using CDF method:
-    inline void cdf_region_sample(uint32& pos, double& u, const Region* reg) const;
+    inline void cdf_region_sample(uint64& pos, double& u, const Region* reg) const;
 
-    inline void safe_get_mut(const uint32& pos, uint32& mut_i) const;
+    inline void safe_get_mut(const uint64& pos, uint64& mut_i) const;
 
 
-    inline double partial_gamma_rate___(const uint32& end,
+    inline double partial_gamma_rate___(const uint64& end,
                                         const Region& reg) const;
 
 };

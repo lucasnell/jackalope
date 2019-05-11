@@ -9,7 +9,7 @@
 
 
 
-#include "jackalope_types.h"  // uint32
+#include "jackalope_types.h"  // uint64
 #include "seq_classes_ref.h"  // Ref* classes
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // runif_01
@@ -23,11 +23,11 @@
 
 
 
-uint32 PacBioReadLenSampler::sample(pcg64& eng) {
-    uint32 len_;
+uint64 PacBioReadLenSampler::sample(pcg64& eng) {
+    uint64 len_;
     if (use_distr) {
         double rnd = distr(eng) + loc;
-        uint32 iters = 0; // to make sure it doesn't run many times
+        uint64 iters = 0; // to make sure it doesn't run many times
         // Rejection sampling to keep it above minimum and not NaN:
         while (rnd < min_read_len && iters < 10) {
             rnd = distr(eng) + loc;
@@ -35,7 +35,7 @@ uint32 PacBioReadLenSampler::sample(pcg64& eng) {
         }
         // Give up if it keeps returning craziness:
         if (rnd < min_read_len) rnd = min_read_len;
-        len_ = static_cast<uint32>(rnd);
+        len_ = static_cast<uint64>(rnd);
     } else {
         uint64 ind = sampler.sample(eng);
         len_ = read_lens[ind];
@@ -71,7 +71,7 @@ double PacBioQualityError::calc_min_exp() {
         left = min_exp_ / 2;
         right = min_exp_;
     }
-    for (uint32 i = 0; i < 15; i++) {
+    for (uint64 i = 0; i < 15; i++) {
         double m = (left + right) / 2;
         total = std::pow(prob_ins, m) + std::pow(prob_del, m) + std::pow(prob_subst, m);
         if (total == prob_thresh){
@@ -142,7 +142,7 @@ void PacBioOneGenome<T>::one_read(std::vector<U>& fastq_pools,
     */
     // Sample sequence:
     seq_ind = seq_sampler.sample(eng);
-    uint32 seq_len = (*sequences)[seq_ind].size();
+    uint64 seq_len = (*sequences)[seq_ind].size();
 
     // Sample read length:
     read_length = len_sampler.sample(eng);
@@ -166,7 +166,7 @@ void PacBioOneGenome<T>::one_read(std::vector<U>& fastq_pools,
     // Sample read starting position:
     if (read_seq_space < seq_len) {
         double u = runif_01(eng);
-        read_start = static_cast<uint32>(u * (seq_len - read_seq_space + 1));
+        read_start = static_cast<uint64>(u * (seq_len - read_seq_space + 1));
     } else if (read_seq_space == seq_len) {
         read_start = 0;
     } else {
@@ -191,7 +191,7 @@ void PacBioOneGenome<T>::re_read(std::vector<U>& fastq_pools,
     /*
      Use the same read info as before.
     */
-    uint32 seq_len = (*sequences)[seq_ind].size();
+    uint64 seq_len = (*sequences)[seq_ind].size();
 
     // Sample for # passes over read:
     pass_sampler.sample(split_pos, passes_left, passes_right, eng, read_length);
@@ -258,12 +258,12 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
     /*
      Adding read with errors:
      */
-    uint32 read_pos = 0;
-    uint32 current_length = 0;
-    uint32 rndi;
+    uint64 read_pos = 0;
+    uint64 current_length = 0;
+    uint64 rndi;
     while (current_length < read_length) {
         if (!insertions.empty() && read_pos == insertions.front()) {
-            rndi = static_cast<uint32>(runif_01(eng) * 4);
+            rndi = static_cast<uint64>(runif_01(eng) * 4);
             fastq_pool.push_back(read[read_pos]);
             fastq_pool.push_back(alias_sampler::bases[rndi]);
             insertions.pop_front();
@@ -271,7 +271,7 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
         } else if (!deletions.empty() && read_pos == deletions.front()) {
             deletions.pop_front();
         } else if (!substitutions.empty() && read_pos == substitutions.front()) {
-            rndi = static_cast<uint32>(runif_01(eng) * 3);
+            rndi = static_cast<uint64>(runif_01(eng) * 3);
             fastq_pool.push_back(mm_nucleos[nt_map[read[read_pos]]][rndi]);
             substitutions.pop_front();
             current_length++;
@@ -287,8 +287,8 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
     fastq_pool.push_back('\n');
 
     // Adding qualities:
-    for (uint32 i = 0; i < split_pos; i++) fastq_pool.push_back(qual_left);
-    for (uint32 i = split_pos; i < read_length; i++) fastq_pool.push_back(qual_right);
+    for (uint64 i = 0; i < split_pos; i++) fastq_pool.push_back(qual_left);
+    for (uint64 i = split_pos; i < read_length; i++) fastq_pool.push_back(qual_right);
     fastq_pool.push_back('\n');
 
     return;
@@ -322,18 +322,18 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
                       const std::string& out_prefix,
                       const int& compress,
                       const std::string& comp_method,
-                      const uint32& n_reads,
-                      const uint32& n_threads,
+                      const uint64& n_reads,
+                      const uint64& n_threads,
                       const bool& show_progress,
-                      const uint32& read_pool_size,
+                      const uint64& read_pool_size,
                       const double& prob_dup,
                       const double& scale,
                       const double& sigma,
                       const double& loc,
                       const double& min_read_len,
                       const std::vector<double>& read_probs,
-                      const std::vector<uint32>& read_lens,
-                      const uint32& max_passes,
+                      const std::vector<uint64>& read_lens,
+                      const uint64& max_passes,
                       const std::vector<double>& chi2_params_n,
                       const std::vector<double>& chi2_params_s,
                       const std::vector<double>& sqrt_params,
@@ -383,10 +383,10 @@ void pacbio_var_cpp(SEXP var_set_ptr,
                     const std::string& out_prefix,
                     const int& compress,
                     const std::string& comp_method,
-                    const uint32& n_reads,
-                    const uint32& n_threads,
+                    const uint64& n_reads,
+                    const uint64& n_threads,
                     const bool& show_progress,
-                    const uint32& read_pool_size,
+                    const uint64& read_pool_size,
                     const std::vector<double>& variant_probs,
                     const double& prob_dup,
                     const double& scale,
@@ -394,8 +394,8 @@ void pacbio_var_cpp(SEXP var_set_ptr,
                     const double& loc,
                     const double& min_read_len,
                     const std::vector<double>& read_probs,
-                    const std::vector<uint32>& read_lens,
-                    const uint32& max_passes,
+                    const std::vector<uint64>& read_lens,
+                    const uint64& max_passes,
                     const std::vector<double>& chi2_params_n,
                     const std::vector<double>& chi2_params_s,
                     const std::vector<double>& sqrt_params,
