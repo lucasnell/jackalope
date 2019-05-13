@@ -187,7 +187,7 @@ public:
         fraction = std::modf(passes, &wholes);
 
 
-        if (static_cast<uint64>(wholes) % 2U == 0U) {
+        if ((static_cast<uint64>(wholes) & 1) == 0) {
             prop_left = fraction;
             split_pos = std::round(static_cast<double>(read_length) * prop_left);
             passes_left = std::ceil(passes);
