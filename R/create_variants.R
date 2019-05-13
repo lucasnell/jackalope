@@ -38,7 +38,7 @@
 #'     Doing this splitting is useful because sampling within a region is more
 #'     computationally costly than sampling among regions.
 #'     Higher numbers will result in lower memory usage but slower speed.
-#'     Defaults to `10`.
+#'     Defaults to `100`.
 #' @param n_threads Number of threads to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
 #'     Threads are spread across sequences, so it
@@ -62,7 +62,7 @@ create_variants <- function(reference,
                             ins = NULL,
                             del = NULL,
                             gamma_mats = NULL,
-                            region_size = 10,
+                            region_size = 100,
                             n_threads = 1,
                             show_progress = FALSE) {
 

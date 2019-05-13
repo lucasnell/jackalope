@@ -5,7 +5,7 @@
 \title{Create variants from a reference genome.}
 \usage{
 create_variants(reference, vars_info, sub, ins = NULL, del = NULL,
-  gamma_mats = NULL, region_size = 10, n_threads = 1,
+  gamma_mats = NULL, region_size = 100, n_threads = 1,
   show_progress = FALSE)
 }
 \arguments{
@@ -46,7 +46,7 @@ Gamma values themselves are not changed).
 Doing this splitting is useful because sampling within a region is more
 computationally costly than sampling among regions.
 Higher numbers will result in lower memory usage but slower speed.
-Defaults to \code{10}.}
+Defaults to \code{100}.}
 
 \item{n_threads}{Number of threads to use for parallel processing.
 This argument is ignored if OpenMP is not enabled.
