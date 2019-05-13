@@ -342,7 +342,7 @@ public:
         // Reset search tree for regions:
         regions = RegionTree(gamma_mat, region_size, var_seq, nt_rates);
         // Reset bounds:
-        bounds = LocationBounds();
+        bounds = LocationBounds(vs_);
         return;
     }
 
