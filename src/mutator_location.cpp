@@ -177,7 +177,10 @@ void RegionTree::construct_nodes() {
     uint64 n_tips = tips.size();
     if (n_tips == 0) stop("no tips present");
     // If just one tip, then we can keep this at size 0:
-    if (n_tips == 1) return;
+    if (n_tips == 1) {
+        nodes.clear();
+        return;
+    }
 
     // Else, let's figure out how many levels we need first:
     uint64 n_lvls = std::ceil(std::log2(static_cast<double>(n_tips)));
@@ -205,7 +208,7 @@ void RegionTree::construct_nodes() {
 
 const Region* RegionTree::search(double& u) const {
 
-    if (nodes.size() == 0) return 0;
+    if (nodes.size() == 0) return &tips[0];
 
     // Traverse down tree to see which tip to return:
     uint64 node_i = 0;
