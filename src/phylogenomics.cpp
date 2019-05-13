@@ -87,6 +87,7 @@ int PhyloOneSeq::one_tree(PhyloTree& tree,
             sint64& end_(tree.ends[b2]);
             end_ = tree.ends[b1];
             const sint64 start_ = static_cast<sint64>(tree.start);
+            uint64 n_jumps = 0;
             while (time_jumped <= amt_time && end_ >= start_) {
                 /*
                  Add mutation here, outputting how much the overall sequence rate should
@@ -102,14 +103,25 @@ int PhyloOneSeq::one_tree(PhyloTree& tree,
                 distr.param(std::exponential_distribution<double>::param_type(rate));
                 // Jump again:
                 time_jumped += distr(eng);
+                // Check for a user interrupt every 1,024 (2^10) jumps:
+                if ((n_jumps & 9) == 0) {
+                    if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
+                }
+                n_jumps++;
             }
         } else {
+            uint64 n_jumps = 0;
             // Same thing but without recombination
             while (time_jumped <= amt_time && var_seqs[b2].size() > 0) {
                 rate_change = m_samp.mutate(eng);
                 rate += rate_change;
                 distr.param(std::exponential_distribution<double>::param_type(rate));
                 time_jumped += distr(eng);
+                // Check for a user interrupt every 1,024 (2^10) jumps:
+                if ((n_jumps & 9) == 0) {
+                    if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
+                }
+                n_jumps++;
             }
         }
 
