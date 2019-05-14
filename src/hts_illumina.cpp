@@ -143,7 +143,8 @@ void IlluminaOneGenome<T>::adjust_seq_spaces() {
          more sequence bases to achieve the same read length.
          Insertions means I need fewer.
          */
-        sint64 indel_effect = deletions[r].size() - insertions[r].size();
+        sint64 indel_effect = static_cast<sint64>(deletions[r].size()) -
+            static_cast<sint64>(insertions[r].size());
         /*
          In addition to indels, below corrects for situation where a small
          fragment size was sampled.

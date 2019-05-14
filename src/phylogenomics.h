@@ -343,7 +343,7 @@ public:
             }
             uint64 start = as<uint64>(phylo_info["start"]);
             sint64 end = as<sint64>(phylo_info["end"]);
-            if (end < start) {
+            if (end < static_cast<sint64>(start)) {
                 err_msg = "\nEnd position < start position on sequence ";
                 err_msg += std::to_string(i+1) + " and tree " + std::to_string(j+1);
                 throw(Rcpp::exception(err_msg.c_str(), false));

@@ -217,7 +217,7 @@ const Region* RegionTree::search(double& u) const {
     for (uint64 lvl_i = 0; lvl_i < nodes.size(); lvl_i++) {
         const double& threshold(nodes[lvl_i][node_i]);
         go_right = u > threshold;
-        node_i <<= 1; // traversing down means using this type of bit-shift
+        node_i <<= 1ULL; // traversing down means using this type of bit-shift
         if (go_right) {
             u -= threshold;
             node_i++;
@@ -229,7 +229,6 @@ const Region* RegionTree::search(double& u) const {
     return &tips[node_i];
 
 }
-
 
 
 

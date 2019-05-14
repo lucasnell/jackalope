@@ -190,7 +190,7 @@ inline void rev_comp(std::string& seq) {
         seq[(n-j-1)] = tmp;
     }
 
-    if ((n & 1) == 1) seq[half_n] = str_manip::cmp_map[seq[half_n]];
+    if ((n & 1ULL) == 1ULL) seq[half_n] = str_manip::cmp_map[seq[half_n]];
 
     return;
 }
@@ -209,7 +209,7 @@ inline void rev_comp(std::string& seq, const uint64& n) {
         seq[(n-j-1)] = tmp;
     }
 
-    if ((n & 1) == 1) seq[half_n] = str_manip::cmp_map[seq[half_n]];
+    if ((n & 1ULL) == 1ULL) seq[half_n] = str_manip::cmp_map[seq[half_n]];
 
     return;
 }

@@ -104,8 +104,9 @@ int PhyloOneSeq::one_tree(PhyloTree& tree,
                 // Jump again:
                 time_jumped += distr(eng);
                 // Check for a user interrupt every 128 (2^7) jumps:
-                if ((n_jumps & 127) == 0) {
+                if (n_jumps == 128) {
                     if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
+                    n_jumps = 0;
                 }
                 n_jumps++;
             }
@@ -118,8 +119,9 @@ int PhyloOneSeq::one_tree(PhyloTree& tree,
                 distr.param(std::exponential_distribution<double>::param_type(rate));
                 time_jumped += distr(eng);
                 // Check for a user interrupt every 128 (2^7) jumps:
-                if ((n_jumps & 127) == 0) {
+                if (n_jumps == 128) {
                     if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
+                    n_jumps = 0;
                 }
                 n_jumps++;
             }

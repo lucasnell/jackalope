@@ -180,7 +180,7 @@ public:
 
         qual_prob_map.reserve(max_qual+1);  // `+1` bc we're using qualities as indices
         qual_prob_map.push_back(1);
-        for (uint64 q = 1; q < (static_cast<uint64>(max_qual)+1U); q++) {
+        for (uint64 q = 1; q < (static_cast<uint64>(max_qual)+1ULL); q++) {
             double prob = std::pow(10, static_cast<double>(q) / -10.0);
             qual_prob_map.push_back(prob);
         }
@@ -209,10 +209,10 @@ public:
         /*
          Add indels:
          */
-        uint64 seq_pos = read.size() - 1;
+        uint64 seq_pos = read.size() - 1ULL;
         while (!insertions.empty() || !deletions.empty()) {
             if (!insertions.empty() && seq_pos == insertions.back()) {
-                char c = alias_sampler::bases[static_cast<uint64>(runif_01(eng) * 4UL)];
+                char c = alias_sampler::bases[static_cast<uint64>(runif_01(eng) * 4.0)];
                 read.insert(seq_pos + 1, 1, c);
                 insertions.pop_back();
             } else if (!deletions.empty() && seq_pos == deletions.back()) {
@@ -250,7 +250,7 @@ public:
             u = runif_01(eng);
             if (u < mis_prob) {
                 const std::string& mm_str(mm_nucleos[nt_ind]);
-                nt = mm_str[static_cast<uint64>(runif_01(eng) * 3)];
+                nt = mm_str[static_cast<uint64>(runif_01(eng) * 3.0)];
             }
         }
 

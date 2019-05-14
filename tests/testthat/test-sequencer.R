@@ -34,7 +34,7 @@ test_that("no weirdness with Illumina single-end reads on ref. genome", {
 
     illumina(ref, out_prefix = sprintf("%s/%s", dir, "test"),
              n_reads = 100, read_length = 100, paired = FALSE,
-             frag_mean = 400, frag_sd = 100)
+             frag_mean = 400, frag_sd = 100, overwrite = TRUE)
 
     expect_true(sprintf("%s_R1.fq", "test") %in% list.files(dir))
 
@@ -49,13 +49,16 @@ test_that("no weirdness with Illumina single-end reads on ref. genome", {
 })
 
 
+
+
+
 # paired ----
 
 test_that("no weirdness with Illumina paired-end reads on ref. genome", {
 
     illumina(ref, out_prefix = sprintf("%s/%s", dir, "test"),
              n_reads = 100, read_length = 100, paired = TRUE,
-             frag_mean = 400, frag_sd = 100)
+             frag_mean = 400, frag_sd = 100, overwrite = TRUE)
 
     expect_true(sprintf("%s_R1.fq", "test") %in% list.files(dir))
     expect_true(sprintf("%s_R2.fq", "test") %in% list.files(dir))
