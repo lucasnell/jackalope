@@ -79,10 +79,90 @@ test_that("no weirdness with Illumina paired-end reads on ref. genome", {
 })
 
 
-illumina(vars, out_prefix = sprintf("%s/%s", dir, "test"),
-         n_reads = 100, read_length = 100, paired = FALSE,
-         frag_mean = 400, frag_sd = 100)
 
+# Profile with no msimatches
+profile_df <- expand.grid(nucleo = c("T", "C", "A", "G"),
+                          pos = 0:99,
+                          qual = c(255L, 1000L), stringsAsFactors = FALSE)
+profile_df <- profile_df[order(profile_df$nucleo, profile_df$pos, profile_df$qual),]
+write.table(profile_df, file = sprintf("%s/%s", dir, "test_prof.txt"), sep = "\t",
+            row.names = FALSE, col.names = FALSE, quote = FALSE)
+
+
+
+test_that("proper pairs created with Illumina paired-end reads on ref. genome", {
+
+    # 1 sequence of length 200
+    seq <- paste(c(rep('C', 25), rep('N', 150), rep('T', 25)), collapse = "")
+
+    poss_pairs <- c(paste(c(rep('C', 25), rep('N', 75)), collapse = ""),
+                    paste(c(rep('A', 25), rep('N', 75)), collapse = ""))
+
+    # Make ref_genome object from a pointer to a RefGenome object based on `seq`
+    rg <- ref_genome$new(jackalope:::make_ref_genome(seq))
+
+    illumina(rg, out_prefix = paste0(dir, "/test"),
+             n_reads = 10e3, read_length = 100,
+             # Paired-end reads:
+             paired = TRUE, matepair = FALSE,
+             # Fragments will always be of length 200:
+             frag_mean = 400, frag_sd = 100,
+             frag_len_min = 200, frag_len_max = 200,
+             # No sequencing errors:
+             ins_prob1 = 0, del_prob1 = 0,
+             ins_prob2 = 0, del_prob2 = 0,
+             profile1 = paste0(dir, "/test_prof.txt"),
+             profile2 = paste0(dir, "/test_prof.txt"),
+             overwrite = TRUE)
+
+    fq1 <- readLines(paste0(dir, "/test_R1.fq"))
+    fq2 <- readLines(paste0(dir, "/test_R2.fq"))
+    reads1 <- fq1[seq(2, length(fq1), 4)]
+    reads2 <- fq2[seq(2, length(fq2), 4)]
+
+    # Should both be true:
+    expect_identical(sort(unique(reads1)), sort(poss_pairs))
+    expect_identical(sort(unique(reads2)), sort(poss_pairs))
+
+})
+
+
+
+test_that("proper pairs created with Illumina mate-pair reads on ref. genome", {
+
+    # 1 sequence of length 200
+    seq <- paste(c(rep('C', 25), rep('N', 150), rep('T', 25)), collapse = "")
+
+    poss_pairs <- c(paste(c(rep('N', 75), rep('T', 25)), collapse = ""),
+                    paste(c(rep('N', 75), rep('G', 25)), collapse = ""))
+
+    # Make ref_genome object from a pointer to a RefGenome object based on `seq`
+    rg <- ref_genome$new(jackalope:::make_ref_genome(seq))
+
+    illumina(rg, out_prefix = paste0(dir, "/test"),
+             n_reads = 10, read_length = 100,
+             # Mate-pair reads:
+             paired = TRUE, matepair = TRUE,
+             # Fragments will always be of length 200:
+             frag_mean = 400, frag_sd = 100,
+             frag_len_min = 200, frag_len_max = 200,
+             # No sequencing errors:
+             ins_prob1 = 0, del_prob1 = 0,
+             ins_prob2 = 0, del_prob2 = 0,
+             profile1 = paste0(dir, "/test_prof.txt"),
+             profile2 = paste0(dir, "/test_prof.txt"),
+             overwrite = TRUE)
+
+    fq1 <- readLines(paste0(dir, "/test_R1.fq"))
+    fq2 <- readLines(paste0(dir, "/test_R2.fq"))
+    reads1 <- fq1[seq(2, length(fq1), 4)]
+    reads2 <- fq2[seq(2, length(fq2), 4)]
+
+    # Should both be true:
+    expect_identical(sort(unique(reads1)), sort(poss_pairs))
+    expect_identical(sort(unique(reads2)), sort(poss_pairs))
+
+})
 
 
 # ------*

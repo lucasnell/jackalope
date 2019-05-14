@@ -155,19 +155,20 @@ Sequencing system options are the following, where, for each system,
 and
 "paired" indicates whether paired-end sequencing is allowed.
 
-| name                 | abbrev  | max_len | paired |
-|:---------------------|:--------|:--------|:-------|
-| Genome Analyzer I    | GA1     | 44      | Yes    |
-| Genome Analyzer II   | GA2     | 75      | Yes    |
-| HiSeq 1000           | HS10    | 100     | Yes    |
-| HiSeq 2000           | HS20    | 100     | Yes    |
-| HiSeq 2500           | HS25    | 150     | Yes    |
-| HiSeqX v2.5 PCR free | HSXn    | 150     | Yes    |
-| HiSeqX v2.5 TruSeq   | HSXt    | 150     | Yes    |
-| MiniSeq TruSeq       | MinS    | 50      | No     |
-| MiSeq v1             | MSv1    | 250     | Yes    |
-| MiSeq v3             | MSv3    | 250     | Yes    |
-| NextSeq 500 v2       | NS50    | 75      | Yes    |
+\tabular{llll}{
+name                 \tab abbrev   \tab max_len \tab paired \cr
+Genome Analyzer I    \tab GA1      \tab 44      \tab Yes   \cr
+Genome Analyzer II   \tab GA2      \tab 75      \tab Yes   \cr
+HiSeq 1000           \tab HS10     \tab 100     \tab Yes   \cr
+HiSeq 2000           \tab HS20     \tab 100     \tab Yes   \cr
+HiSeq 2500           \tab HS25     \tab 150     \tab Yes   \cr
+HiSeqX v2.5 PCR free \tab HSXn     \tab 150     \tab Yes   \cr
+HiSeqX v2.5 TruSeq   \tab HSXt     \tab 150     \tab Yes   \cr
+MiniSeq TruSeq       \tab MinS     \tab 50      \tab No    \cr
+MiSeq v1             \tab MSv1     \tab 250     \tab Yes   \cr
+MiSeq v3             \tab MSv3     \tab 250     \tab Yes   \cr
+NextSeq 500 v2       \tab NS50     \tab 75      \tab Yes   \cr
+}
 }
 
 \section{ID lines}{
