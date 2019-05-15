@@ -27,7 +27,8 @@ for the file extension.}
 
 \item{read_length}{Length of reads.}
 
-\item{paired}{Logical for whether to use paired-end reads.}
+\item{paired}{Logical for whether to use paired-end reads.
+This argument is changed to \code{TRUE} if \code{matepair} is \code{TRUE}.}
 
 \item{frag_mean}{Mean of the Gamma distribution that generates fragment sizes.}
 
@@ -35,7 +36,6 @@ for the file extension.}
 fragment sizes.}
 
 \item{matepair}{Logical for whether to simulate mate-pair reads.
-This argument is ignored if \code{paired} is \code{FALSE}.
 Defaults to \code{FALSE}.}
 
 \item{seq_sys}{Full or abbreviated name of sequencing system to use.

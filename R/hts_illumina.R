@@ -469,11 +469,11 @@ check_illumina_args <- function(seq_object, n_reads,
 #' @param n_reads Number of reads you want to create.
 #' @param read_length Length of reads.
 #' @param paired Logical for whether to use paired-end reads.
+#'     This argument is changed to `TRUE` if `matepair` is `TRUE`.
 #' @param frag_mean Mean of the Gamma distribution that generates fragment sizes.
 #' @param frag_sd Standard deviation of the Gamma distribution that generates
 #'     fragment sizes.
 #' @param matepair Logical for whether to simulate mate-pair reads.
-#'     This argument is ignored if `paired` is `FALSE`.
 #'     Defaults to `FALSE`.
 #' @param seq_sys Full or abbreviated name of sequencing system to use.
 #'     See "Sequencing systems" section for options.
@@ -578,6 +578,10 @@ illumina <- function(seq_object,
                      show_progress = FALSE,
                      overwrite = FALSE) {
 
+
+    # We want `paired` to be coerced to TRUE if we want mate-pair sequencing
+    # I'm doing this here to make `paired` not required.
+    if (matepair) paired <- TRUE
 
     out_prefix <- path.expand(out_prefix)
     check_file_existence(paste0(out_prefix, "_R", 1:ifelse(paired, 2, 1), ".fq"),
