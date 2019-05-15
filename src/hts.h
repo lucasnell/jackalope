@@ -154,6 +154,12 @@ public:
     }
 
 
+    inline uint64 pool_size() {
+        if (fastq_pools.size() == 0) return 0ULL;
+        return fastq_pools[0].size() * fastq_pools.size();
+    }
+
+
     /*
      Add new read(s) to `fastq_pools`, and update bool for whether you should
      write to file
@@ -263,22 +269,27 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
                                     read_pool_size, prob_dup, n_read_ends);
 
     uint64 reads_written;
-    uint64 n_chars = 0;
+    uint64 old_reads = 0;
+    uint64 new_reads = 0;
 
     while (writer.reads_made < reads_this_thread) {
 
+        old_reads = writer.pool_size();
+
+        writer.create_reads(eng);
+
+        new_reads += (writer.pool_size() - old_reads);
+
         /*
-         Every 10,000 characters written, check that the user hasn't
+         Every 10,000 characters created, check that the user hasn't
          interrupted the process.
          (Doing it this way makes the check approximately the same between
           illumina and pacbio.)
          */
-        if (n_chars > 10000) {
+        if (new_reads > 10000) {
             if (prog_bar.check_abort()) break;
-            n_chars = 0;
+            new_reads = 0;
         }
-
-        writer.create_reads(eng);
 
         if (writer.do_write) {
             // Save info for progress bar:
@@ -294,8 +305,7 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
 #endif
             // Increment progress bar
             prog_bar.increment(reads_written);
-            // Increment # chars written
-            n_chars += (writer.fastq_pools[0].size() * writer.fastq_pools.size());
+
         }
     }
 
