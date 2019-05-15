@@ -136,7 +136,7 @@ check_pacbio_args <- function(seq_object,
 #' @section ID lines:
 #' The ID lines for FASTQ files are formatted as such:
 #'
-#' `@<genome name>-<sequence name>-<starting position>`
+#' `@<genome name>-<sequence name>-<starting position>-<strand>`
 #'
 #' where `genome name` is always `REF` for reference genomes (as opposed to variants).
 #'

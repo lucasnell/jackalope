@@ -286,9 +286,6 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
         // Sample mapping quality and add errors to read:
         qual_errors[i].fill_read_qual(read, qual, insertions[i], deletions[i], eng);
 
-        // If doing paired reads, the second one should be the reverse of the first
-        reverse = !reverse;
-
         // Combine into 4 lines of output per read:
         // ID line:
         fastq_pools[i].push_back('@');
@@ -297,18 +294,26 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
         for (const char& c : (*sequences)[seq_ind].name) fastq_pools[i].push_back(c);
         fastq_pools[i].push_back('-');
         for (const char& c : std::to_string(start)) fastq_pools[i].push_back(c);
+        fastq_pools[i].push_back('-');
+        if (reverse) {
+            fastq_pools[i].push_back('R');
+        } else fastq_pools[i].push_back('F');
         if (paired) {
             fastq_pools[i].push_back('/');
             for (const char& c : std::to_string(i+1)) fastq_pools[i].push_back(c);
         }
-        // The rest:
         fastq_pools[i].push_back('\n');
+        // The rest:
         for (const char& c : read) fastq_pools[i].push_back(c);
         fastq_pools[i].push_back('\n');
         fastq_pools[i].push_back('+');
         fastq_pools[i].push_back('\n');
         for (const char& c : qual) fastq_pools[i].push_back(c);
         fastq_pools[i].push_back('\n');
+
+        // If doing paired reads, the second one should be the reverse of the first
+        reverse = !reverse;
+
     }
 
     return;

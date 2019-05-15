@@ -237,6 +237,9 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
     // Make sure it has enough memory reserved:
     fastq_pool.reserve(fastq_pool.size() + read_length * 3 + 10);
 
+    // Boolean for whether we take the reverse side:
+    bool reverse = runif_01(eng) < 0.5;
+
     // ID line:
     fastq_pool.push_back('@');
     for (const char& c : this->name) fastq_pool.push_back(c);
@@ -244,10 +247,11 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
     for (const char& c : (*sequences)[seq_ind].name) fastq_pool.push_back(c);
     fastq_pool.push_back('-');
     for (const char& c : std::to_string(read_start)) fastq_pool.push_back(c);
+    fastq_pool.push_back('-');
+    if (reverse) {
+        fastq_pool.push_back('R');
+    } else fastq_pool.push_back('F');
     fastq_pool.push_back('\n');
-
-    // Boolean for whether we take the reverse side:
-    bool reverse = runif_01(eng) < 0.5;
 
     // Fill in read:
     (*sequences)[seq_ind].fill_read(read, 0, read_start, read_seq_space);

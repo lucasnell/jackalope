@@ -456,7 +456,7 @@ check_illumina_args <- function(seq_object, n_reads,
 #' @section ID lines:
 #' The ID lines for FASTQ files are formatted as such:
 #'
-#' `@<genome name>-<sequence name>-<starting position>[/<read#>]`
+#' `@<genome name>-<sequence name>-<starting position>-<strand>[/<read#>]`
 #'
 #' where the part in `[]` is only for paired-end Illumina reads, and where `genome name`
 #' is always `REF` for reference genomes (as opposed to variants).

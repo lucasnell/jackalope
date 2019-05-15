@@ -125,7 +125,7 @@ this function.
 
 The ID lines for FASTQ files are formatted as such:
 
-\code{@<genome name>-<sequence name>-<starting position>}
+\code{@<genome name>-<sequence name>-<starting position>-<strand>}
 
 where \code{genome name} is always \code{REF} for reference genomes (as opposed to variants).
 }

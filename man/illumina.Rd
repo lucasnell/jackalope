@@ -175,7 +175,7 @@ NextSeq 500 v2       \tab NS50     \tab 75      \tab Yes   \cr
 
 The ID lines for FASTQ files are formatted as such:
 
-\code{@<genome name>-<sequence name>-<starting position>[/<read#>]}
+\code{@<genome name>-<sequence name>-<starting position>-<strand>[/<read#>]}
 
 where the part in \code{[]} is only for paired-end Illumina reads, and where \code{genome name}
 is always \code{REF} for reference genomes (as opposed to variants).
