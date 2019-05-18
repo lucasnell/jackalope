@@ -8,14 +8,14 @@ Huang, W., L. Li, J. R. Myers, and G. T. Marth. 2012. ART: a next-generation
 sequencing read simulator. \emph{Bioinformatics} \strong{28}:593–594.
 }
 \usage{
-illumina(seq_object, out_prefix, n_reads, read_length, paired, frag_mean,
-  frag_sd, matepair = FALSE, seq_sys = NULL, profile1 = NULL,
-  profile2 = NULL, ins_prob1 = 9e-05, del_prob1 = 0.00011,
-  ins_prob2 = 0.00015, del_prob2 = 0.00023, frag_len_min = NULL,
-  frag_len_max = NULL, variant_probs = NULL, barcodes = NULL,
-  prob_dup = 0.02, compress = FALSE, comp_method = "bgzip",
-  n_threads = 1L, read_pool_size = 1000L, show_progress = FALSE,
-  overwrite = FALSE)
+illumina(seq_object, out_prefix, n_reads, read_length, paired,
+  frag_mean = 400, frag_sd = 100, matepair = FALSE, seq_sys = NULL,
+  profile1 = NULL, profile2 = NULL, ins_prob1 = 9e-05,
+  del_prob1 = 0.00011, ins_prob2 = 0.00015, del_prob2 = 0.00023,
+  frag_len_min = NULL, frag_len_max = NULL, variant_probs = NULL,
+  barcodes = NULL, prob_dup = 0.02, compress = FALSE,
+  comp_method = "bgzip", n_threads = 1L, read_pool_size = 1000L,
+  show_progress = FALSE, overwrite = FALSE)
 }
 \arguments{
 \item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
@@ -30,10 +30,12 @@ for the file extension.}
 \item{paired}{Logical for whether to use paired-end reads.
 This argument is changed to \code{TRUE} if \code{matepair} is \code{TRUE}.}
 
-\item{frag_mean}{Mean of the Gamma distribution that generates fragment sizes.}
+\item{frag_mean}{Mean of the Gamma distribution that generates fragment sizes.
+Defaults to \code{400}.}
 
 \item{frag_sd}{Standard deviation of the Gamma distribution that generates
-fragment sizes.}
+fragment sizes.
+Defaults to \code{100}.}
 
 \item{matepair}{Logical for whether to simulate mate-pair reads.
 Defaults to \code{FALSE}.}
@@ -185,8 +187,7 @@ is always \code{REF} for reference genomes (as opposed to variants).
 \dontrun{
 rg <- create_genome(10, 100e3, 100)
 illumina(rg, "illumina_reads", n_reads = 100,
-         read_length = 100, paired = FALSE,
-         frag_mean = 400, frag_sd = 100)
+         read_length = 100, paired = FALSE)
 }
 
 }

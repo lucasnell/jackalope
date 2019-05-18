@@ -471,8 +471,10 @@ check_illumina_args <- function(seq_object, n_reads,
 #' @param paired Logical for whether to use paired-end reads.
 #'     This argument is changed to `TRUE` if `matepair` is `TRUE`.
 #' @param frag_mean Mean of the Gamma distribution that generates fragment sizes.
+#'     Defaults to `400`.
 #' @param frag_sd Standard deviation of the Gamma distribution that generates
 #'     fragment sizes.
+#'     Defaults to `100`.
 #' @param matepair Logical for whether to simulate mate-pair reads.
 #'     Defaults to `FALSE`.
 #' @param seq_sys Full or abbreviated name of sequencing system to use.
@@ -547,8 +549,7 @@ check_illumina_args <- function(seq_object, n_reads,
 #' \dontrun{
 #' rg <- create_genome(10, 100e3, 100)
 #' illumina(rg, "illumina_reads", n_reads = 100,
-#'          read_length = 100, paired = FALSE,
-#'          frag_mean = 400, frag_sd = 100)
+#'          read_length = 100, paired = FALSE)
 #' }
 #'
 illumina <- function(seq_object,
@@ -556,8 +557,8 @@ illumina <- function(seq_object,
                      n_reads,
                      read_length,
                      paired,
-                     frag_mean,
-                     frag_sd,
+                     frag_mean = 400,
+                     frag_sd = 100,
                      matepair = FALSE,
                      seq_sys = NULL,
                      profile1 = NULL,
