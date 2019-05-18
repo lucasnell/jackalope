@@ -220,7 +220,7 @@ void replace_Ns_cpp(SEXP ref_genome_ptr,
     const uint64 n_seqs = ref_genome->size();
 
     // Progress bar
-    Progress prog_bar(n_seqs, show_progress);
+    Progress prog_bar(ref_genome->total_size, show_progress);
 
 #ifdef _OPENMP
 #pragma omp parallel num_threads(n_threads) if (n_threads > 1)
@@ -251,7 +251,7 @@ void replace_Ns_cpp(SEXP ref_genome_ptr,
         for (char& c : seq.nucleos) {
             if (c == 'N') c = sampler.sample(eng);
         }
-        prog_bar.increment(1U);
+        prog_bar.increment(seq.size());
     }
 
 #ifdef _OPENMP
