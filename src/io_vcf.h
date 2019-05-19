@@ -21,7 +21,7 @@ using namespace Rcpp;
 
 
 // Maximum uint64 value:
-#define MAX_INT 4294967295UL
+#define MAX_INT 18446744073709551615ULL
 
 
 
@@ -243,8 +243,11 @@ public:
      Set the strings for the sequence position (`POS`), reference sequence (`REF`),
      alternative alleles (`ALT`), and genotype information (`GT` format field)
      to add to a new line in the VCF file.
+     Returns false if you shouldn't write to file for this iteration (if all mutations
+     by chance have been cancelled out result in the reference sequence).
+     Returns true otherwise.
      */
-    void iterate(std::string& pos_str,
+    bool iterate(std::string& pos_str,
                  std::string& ref_str,
                  std::string& alt_str,
                  std::vector<std::string>& gt_strs);
@@ -368,33 +371,38 @@ inline void write_vcf_(XPtr<VarSet> var_set,
         writer.new_seq(seq);
         while (writer.mut_pos.first < MAX_INT) {
             Rcpp::checkUserInterrupt();
-            // Set information for this line:
-            writer.iterate(pos_str, ref_str, alt_str, gt_strs);
-            // CHROM
-            pool = var_set->reference->operator[](writer.seq_ind).name;
-            // POS
-            pool += '\t' + pos_str;
-            // ID
-            pool += "\t.";
-            // REF
-            pool += '\t' + ref_str;
-            // ALT
-            pool += '\t' + alt_str;
-            // QUAL (setting to super high value)
-            pool += '\t' + max_qual;
-            // FILTER
-            pool += "\tPASS";
-            // INFO
-            pool += "\tNS=" + std::to_string(n_samples);
-            // FORMAT
-            pool += "\tGT:GQ";
-            // Sample info (setting GQ to super high value)
-            for (uint64 i = 0; i < n_samples; i++) {
-                pool += '\t' + gt_strs[i];
-                pool += ':' + max_qual;
+            /*
+             Set information for this line, unless by chance multiple mutations
+             cause it to revert back to the reference. This would result in
+             `writer.iterate` to return false. It should occur very rarely.
+             */
+            if (writer.iterate(pos_str, ref_str, alt_str, gt_strs)) {
+                // CHROM
+                pool = var_set->reference->operator[](writer.seq_ind).name;
+                // POS
+                pool += '\t' + pos_str;
+                // ID
+                pool += "\t.";
+                // REF
+                pool += '\t' + ref_str;
+                // ALT
+                pool += '\t' + alt_str;
+                // QUAL (setting to super high value)
+                pool += '\t' + max_qual;
+                // FILTER
+                pool += "\tPASS";
+                // INFO
+                pool += "\tNS=" + std::to_string(n_samples);
+                // FORMAT
+                pool += "\tGT:GQ";
+                // Sample info (setting GQ to super high value)
+                for (uint64 i = 0; i < n_samples; i++) {
+                    pool += '\t' + gt_strs[i];
+                    pool += ':' + max_qual;
+                }
+                pool += '\n';
+                out_file.write(pool);
             }
-            pool += '\n';
-            out_file.write(pool);
         }
     }
 

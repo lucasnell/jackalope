@@ -187,7 +187,7 @@ void OneVarSeqVCF::dump(std::vector<std::string>& unq_alts,
  alternative alleles (`ALT`), and genotype information (`GT` format field)
  to add to a new line in the VCF file.
  */
-void WriterVCF::iterate(std::string& pos_str,
+bool WriterVCF::iterate(std::string& pos_str,
                         std::string& ref_str,
                         std::string& alt_str,
                         std::vector<std::string>& gt_strs) {
@@ -235,39 +235,52 @@ void WriterVCF::iterate(std::string& pos_str,
         var_infos[i].dump(unq_alts, gt_indexes[i], mut_pos.first, mut_pos.second,
                           ref_str);
     }
-    if (unq_alts.empty()) stop("unq_alts.empty()");
-    // Fill alt. string:
-    alt_str += unq_alts[0];
-    for (uint64 i = 1; i < unq_alts.size(); i++) alt_str += ',' + unq_alts[i];
+    /*
+     `do_write` will be false if overlapping mutations result in the reference
+     sequence again.
+     It being false should be a very rare occurrence.
+     */
+    bool do_write = !unq_alts.empty();
 
+    if (do_write) {
+
+        // Fill alt. string:
+        alt_str += unq_alts[0];
+        for (uint64 i = 1; i < unq_alts.size(); i++) alt_str += ',' + unq_alts[i];
+
+
+        /*
+         Now fill genotype (`GT`) info, using `sample_groups` to group them
+         */
+        if (gt_strs.size() != sample_groups.n_rows) {
+            str_stop({"\nInput vector for GT field info isn't the same size ",
+                     "as the number of rows in the `sample_matrix` argument."});
+        }
+        uint64 gt_i;
+        for (uint64 i = 0; i < sample_groups.n_rows; i++) {
+            std::string& gt(gt_strs[i]);
+            gt_i = gt_indexes[sample_groups(i,0)];
+            gt = std::to_string(gt_i);
+            for (uint64 j = 1; j < sample_groups.n_cols; j++) {
+                gt_i = gt_indexes[sample_groups(i,j)];
+                gt += '|';
+                gt += std::to_string(gt_i);
+            }
+        }
+
+    }
 
     /*
-     Now fill genotype (`GT`) info, using `sample_groups` to group them
+     Regardless of whether or not to write these mutations, we need to
+     check for the new nearest mutation position.
+     Otherwise, we'll be stuck in an infinite loop.
      */
-    if (gt_strs.size() != sample_groups.n_rows) {
-        str_stop({"\nInput vector for GT field info isn't the same size ",
-                 "as the number of rows in the `sample_matrix` argument."});
-    }
-    uint64 gt_i;
-    for (uint64 i = 0; i < sample_groups.n_rows; i++) {
-        std::string& gt(gt_strs[i]);
-        gt_i = gt_indexes[sample_groups(i,0)];
-        gt = std::to_string(gt_i);
-        for (uint64 j = 1; j < sample_groups.n_cols; j++) {
-            gt_i = gt_indexes[sample_groups(i,j)];
-            gt += '|';
-            gt += std::to_string(gt_i);
-        }
-    }
-
-
-    // Check for the new nearest mutation position:
     mut_pos = std::make_pair(MAX_INT, MAX_INT);
     for (uint64 i = 0; i < var_infos.size(); i++) {
         var_infos[i].compare_pos(mut_pos.first, mut_pos.second);
     }
 
-    return;
+    return do_write;
 }
 
 
