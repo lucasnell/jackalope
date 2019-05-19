@@ -12,6 +12,11 @@
 #' @param vars_info Output from one of the \code{\link{vars_functions}}.
 #'     These functions organize higher-level information for use here.
 #'     See \code{\link{vars_functions}} for brief descriptions and links to each method.
+#'     If this argument is `NULL`, all arguments other than `reference` are ignored,
+#'     and an empty `variants` object with no variants is returned.
+#'     This is designed for use when you'd like to add mutations manually.
+#'     If you create a blank `variants` object, you can= use its `add_vars` method
+#'     to add variants manually.
 #' @param sub Output from one of the \code{\link{sub_models}} functions that organizes
 #'     information for the substitution models.
 #'     See \code{\link{sub_models}} for more information on these models and
@@ -78,6 +83,15 @@ create_variants <- function(reference,
     if (!inherits(reference, "ref_genome")) {
         err_msg("create_variants", "reference", "a \"ref_genome\" object")
     }
+
+    # Make empty `variants` object, ignoring everything other than `reference` argument:
+    if (is.null(vars_info)) {
+        variants_ptr <- make_var_set(reference$genome, 0)
+        var_obj <- variants$new(variants_ptr, reference$genome)
+        return(var_obj)
+    }
+
+
     if (!inherits(reference$genome, "externalptr")) {
         err_msg("create_variants", "mevo_obj", "a \"mevo\" object with a `genome`",
                 "field of class \"externalptr\".",
@@ -85,7 +99,7 @@ create_variants <- function(reference,
                 "and do NOT change the `genome` field manually")
     }
     if (!inherits(vars_info, do.call(c, vic))) {
-        err_msg("create_variants", "vars_info", "one of the following classes:",
+        err_msg("create_variants", "vars_info", "NULL or one of the following classes:",
                 paste(sprintf("\"%s\"", do.call(c, vic)), collapse = ", "))
     }
     # If you're using a VCF, change `sub` to `NULL` bc it's not used:
