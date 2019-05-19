@@ -656,6 +656,41 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// add_ref_genome_seqs
+void add_ref_genome_seqs(SEXP ref_genome_ptr, const std::vector<std::string>& new_seqs, const std::vector<std::string>& new_names);
+RcppExport SEXP _jackalope_add_ref_genome_seqs(SEXP ref_genome_ptrSEXP, SEXP new_seqsSEXP, SEXP new_namesSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type new_seqs(new_seqsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type new_names(new_namesSEXP);
+    add_ref_genome_seqs(ref_genome_ptr, new_seqs, new_names);
+    return R_NilValue;
+END_RCPP
+}
+// add_var_set_vars
+void add_var_set_vars(SEXP var_set_ptr, const std::vector<std::string>& new_names);
+RcppExport SEXP _jackalope_add_var_set_vars(SEXP var_set_ptrSEXP, SEXP new_namesSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type new_names(new_namesSEXP);
+    add_var_set_vars(var_set_ptr, new_names);
+    return R_NilValue;
+END_RCPP
+}
+// dup_var_set_vars
+void dup_var_set_vars(SEXP var_set_ptr, const std::vector<uint64>& var_inds, const std::vector<std::string>& new_names);
+RcppExport SEXP _jackalope_dup_var_set_vars(SEXP var_set_ptrSEXP, SEXP var_indsSEXP, SEXP new_namesSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
+    Rcpp::traits::input_parameter< const std::vector<uint64>& >::type var_inds(var_indsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type new_names(new_namesSEXP);
+    dup_var_set_vars(var_set_ptr, var_inds, new_names);
+    return R_NilValue;
+END_RCPP
+}
 // view_mutations
 DataFrame view_mutations(SEXP var_set_ptr, const uint64& var_ind);
 RcppExport SEXP _jackalope_view_mutations(SEXP var_set_ptrSEXP, SEXP var_indSEXP) {
@@ -949,6 +984,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_set_var_set_var_names", (DL_FUNC) &_jackalope_set_var_set_var_names, 3},
     {"_jackalope_remove_ref_genome_seqs", (DL_FUNC) &_jackalope_remove_ref_genome_seqs, 2},
     {"_jackalope_remove_var_set_vars", (DL_FUNC) &_jackalope_remove_var_set_vars, 2},
+    {"_jackalope_add_ref_genome_seqs", (DL_FUNC) &_jackalope_add_ref_genome_seqs, 3},
+    {"_jackalope_add_var_set_vars", (DL_FUNC) &_jackalope_add_var_set_vars, 2},
+    {"_jackalope_dup_var_set_vars", (DL_FUNC) &_jackalope_dup_var_set_vars, 3},
     {"_jackalope_view_mutations", (DL_FUNC) &_jackalope_view_mutations, 2},
     {"_jackalope_examine_mutations", (DL_FUNC) &_jackalope_examine_mutations, 3},
     {"_jackalope_table_gammas", (DL_FUNC) &_jackalope_table_gammas, 2},

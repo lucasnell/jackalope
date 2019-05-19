@@ -438,6 +438,18 @@ remove_var_set_vars <- function(var_set_ptr, var_inds) {
     invisible(.Call(`_jackalope_remove_var_set_vars`, var_set_ptr, var_inds))
 }
 
+add_ref_genome_seqs <- function(ref_genome_ptr, new_seqs, new_names) {
+    invisible(.Call(`_jackalope_add_ref_genome_seqs`, ref_genome_ptr, new_seqs, new_names))
+}
+
+add_var_set_vars <- function(var_set_ptr, new_names) {
+    invisible(.Call(`_jackalope_add_var_set_vars`, var_set_ptr, new_names))
+}
+
+dup_var_set_vars <- function(var_set_ptr, var_inds, new_names) {
+    invisible(.Call(`_jackalope_dup_var_set_vars`, var_set_ptr, var_inds, new_names))
+}
+
 #' Turns a VarGenome's mutations into a list of data frames.
 #'
 #' Internal function for testing.

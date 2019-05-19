@@ -150,6 +150,38 @@ ref_genome <- R6::R6Class(
             invisible(self)
         },
 
+        # Add one or more sequences
+        add_seqs = function(new_seqs, new_names = NULL) {
+            private$check_ptr()
+            self_names <- self$names()
+            if (!is_type(new_seqs, "character")) {
+                err_msg("rm_seqs","new_seqs", "a character vector")
+            }
+            if (!is.null(new_names) && !is_type(new_names, "character")) {
+                err_msg("rm_seqs","new_names", "NULL or a character vector")
+            }
+            if (is.null(new_names)) {
+                N <- suppressWarnings(as.integer(gsub("seq", "", self$names())))
+                N <- if (any(!is.na(N))) 1 + max(N, na.rm = TRUE) else self$n_seqs()
+                N <- N:(N+length(new_seqs)-1)
+                new_names <- sprintf("seq%i", N)
+            }
+
+            if (length(new_names) != length(new_seqs)) {
+                err_msg("rm_seqs","new_names", "the same length as `new_seqs`")
+            }
+            if (anyDuplicated(new_names) != 0) {
+                err_msg("rm_seqs","new_names", "a vector with no duplicates")
+            }
+            if (any(new_names %in% self$names())) {
+                err_msg("rm_seqs", "new_names", "a vector containing no elements",
+                        "already present as a sequence name in the reference genome")
+            }
+
+            add_ref_genome_seqs(self$genome, new_seqs, new_names)
+            invisible(self)
+        },
+
         # Remove one or more sequences by name
         rm_seqs = function(seq_names) {
             private$check_ptr()
@@ -470,6 +502,67 @@ variants <- R6::R6Class(
             }
             var_inds <- match(var_names, self_names) - 1
             remove_var_set_vars(self$genomes, var_inds)
+            invisible(self)
+        },
+
+        # Duplicate one or more variants by name
+        dup_vars = function(var_names, new_names = NULL) {
+            private$check_ptr()
+            self_names <- self$var_names()
+            if (!is_type(var_names, "character")) {
+                err_msg("dup_vars", "var_names", "a character vector")
+            }
+            if (!all(var_names %in% self_names)) {
+                err_msg("dup_vars", "var_names", "a character vector containing only",
+                        "variant names present in the `variants` object.")
+            }
+            var_inds <- match(var_names, self_names) - 1
+
+            if (!is.null(new_names) && !is_type(new_names, "character")) {
+                err_msg("dup_vars", "new_names", "NULL or a character vector")
+            }
+            if (is.null(new_names)) {
+                dup_n <- numeric(length(unique(var_names))) + 1
+                names(dup_n) <- unique(var_names)
+                new_names <- var_names
+                for (i in 1:length(new_names)) {
+                    new_names[i] <- paste0(var_names[i], "_dup", dup_n[[var_names[i]]])
+                    dup_n[var_names[i]] <- dup_n[[var_names[i]]] + 1
+                }
+            }
+
+            if (length(new_names) != length(var_names)) {
+                err_msg("dup_vars", "new_names", "the same length as `var_names`")
+            }
+            if (any(new_names %in% self_names)) {
+                err_msg("dup_seqs", "new_names", "a vector containing no elements",
+                        "already present as a variant name in the variants object")
+            }
+
+            dup_var_set_vars(self$genomes, var_inds, new_names)
+
+            invisible(self)
+        },
+
+
+        # Add one or more blank, named variants
+        add_vars = function(var_names) {
+
+            private$check_ptr()
+
+            if (!is_type(var_names, "character")) {
+                err_msg("add_vars", "var_names", "a character vector")
+            }
+            if (anyDuplicated(var_names) != 0) {
+                err_msg("add_vars", "var_names", "a vector with no duplicates")
+            }
+            if (any(var_names %in% self$var_names())) {
+                err_msg("add_vars", "var_names", "a vector containing no names",
+                        "already present as variants names in the object being added to")
+            }
+
+            add_var_set_vars(self$genomes, var_names)
+
             invisible(self)
         },
 

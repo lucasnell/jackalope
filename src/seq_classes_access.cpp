@@ -550,6 +550,93 @@ void remove_var_set_vars(
 
 
 
+/*
+ ========================================================================================
+ ========================================================================================
+
+ Add elements
+
+ ========================================================================================
+ ========================================================================================
+ */
+
+
+//[[Rcpp::export]]
+void add_ref_genome_seqs(
+        SEXP ref_genome_ptr,
+        const std::vector<std::string>& new_seqs,
+        const std::vector<std::string>& new_names) {
+
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
+    std::deque<RefSequence>& sequences(ref_genome->sequences);
+
+    if (new_seqs.size() != new_names.size()) {
+        stop("In `add_ref_genome_seqs`, `new_seqs` must be the same size as `new_names`");
+    }
+
+    for (uint64 i = 0; i < new_seqs.size(); i++) {
+        sequences.push_back(RefSequence(new_names[i], new_seqs[i]));
+        // Update total size:
+        ref_genome->total_size += new_seqs[i].size();
+    }
+
+
+    return;
+}
+
+
+// Add blank, named variants
+//[[Rcpp::export]]
+void add_var_set_vars(
+        SEXP var_set_ptr,
+        const std::vector<std::string>& new_names) {
+
+    XPtr<VarSet> var_set(var_set_ptr);
+    std::deque<VarGenome>& variants(var_set->variants);
+    const RefGenome& ref(*(var_set->reference));
+
+    for (uint64 i = 0; i < new_names.size(); i++) {
+        variants.push_back(VarGenome(new_names[i], ref));
+    }
+
+    return;
+}
+// Duplicate existing variant(s):
+//[[Rcpp::export]]
+void dup_var_set_vars(
+        SEXP var_set_ptr,
+        const std::vector<uint64>& var_inds,
+        const std::vector<std::string>& new_names) {
+
+    XPtr<VarSet> var_set(var_set_ptr);
+    std::deque<VarGenome>& variants(var_set->variants);
+    const RefGenome& ref(*(var_set->reference));
+
+    if (var_inds.size() != new_names.size()) {
+        stop("In `dup_var_set_vars`, `var_inds` must be the same size as `new_names`");
+    }
+    if (*std::max_element(var_inds.begin(), var_inds.end()) >= variants.size()) {
+        stop("In `dup_var_set_vars`, one or more `var_inds` is too large");
+    }
+
+    for (uint64 i = 0; i < new_names.size(); i++) {
+        // Add blank variant:
+        variants.push_back(VarGenome(new_names[i], ref));
+        // Add mutation information:
+        VarGenome& new_vg(variants.back());
+        const VarGenome& old_vg(variants[var_inds[i]]);
+        for (uint64 j = 0; j < new_vg.var_genome.size(); j++) {
+            VarSequence& new_vs(new_vg.var_genome[j]);
+            const VarSequence& old_vs(old_vg.var_genome[j]);
+            // This does the work of actually adding mutations:
+            new_vs += old_vs;
+        }
+    }
+
+    return;
+}
+
+
 
 
 /*
