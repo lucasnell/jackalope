@@ -232,7 +232,7 @@ test_that("VCF file data lines are accurate for haploid samples", {
 
 
 
-sample_mat <- t(combn(vars$n_vars(), 2))
+sample_mat <- matrix(1:vars$n_vars(), ncol = 2, byrow = TRUE)
 
 write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat, overwrite = TRUE)
 vcf <- readLines(paste0(dir, "/test.vcf"))
@@ -241,7 +241,7 @@ vcf <- readLines(paste0(dir, "/test.vcf"))
 
 test_that("VCF writing produces error with nonsense sample matrix", {
 
-    expect_error(write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat * 0,
+    expect_error(write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat * -1,
                            overwrite = TRUE),
                  "there are values < 1.")
 
@@ -251,6 +251,13 @@ test_that("VCF writing produces error with nonsense sample matrix", {
     expect_error(write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat2,
                            overwrite = TRUE),
                  "there are values > the number of variants")
+
+    sample_mat2 <- sample_mat
+    sample_mat2[nrow(sample_mat2),ncol(sample_mat2)] <- 1
+
+    expect_error(write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat2,
+                           overwrite = TRUE),
+                 "contained duplicates")
 
 })
 
@@ -375,3 +382,4 @@ test_that("reading diploid variant info from VCF produces proper output", {
     }
 
 })
+
