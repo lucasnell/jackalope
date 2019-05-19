@@ -21,6 +21,10 @@
 #'     \item{`names()`}{View vector of sequence names.}
 #'     \item{`sequence(seq_ind)`}{View a sequence string based on an index,
 #'         `seq_ind`.}
+#'     \item{`gc_prop(seq_ind, start, end)`}{View the GC proportion for a range within a
+#'         reference sequence.}
+#'     \item{`nt_prop(nt, seq_ind, start, end)`}{View the proportion of a range within a
+#'         reference sequence that is of nucleotide `nt`.}
 #' }
 #' \strong{Editing information:}
 #' \describe{
@@ -29,6 +33,9 @@
 #'         be the same length as the # sequences.}
 #'     \item{`clean_names()`}{Clean sequence names, converting `" :;=%,\\|/\"\'"`
 #'         to `"_"`.}
+#'     \item{`add_seqs(new_seqs, new_names = NULL)`}{Add one or more sequences
+#'         directly. They can optionally be named (using `new_names`).
+#'         Otherwise, their names are auto-generated.}
 #'     \item{`rm_seqs(seq_names)`}{Remove one or more sequences based on names in
 #'         the `seq_names` vector.}
 #'     \item{`merge_seqs()`}{Merge all sequences into one after first shuffling
@@ -262,6 +269,7 @@ ref_genome <- R6::R6Class(
 
     ),
 
+    # __private__ -----
     private = list(
 
         check_ptr = function() {
@@ -344,12 +352,24 @@ ref_genome$lock()
 #'     \item{`var_names()`}{View vector of variant names.}
 #'     \item{`sequence(var_ind, seq_ind)`}{View a sequence string based on
 #'         indices for the sequence (`seq_ind`) and variant (`var_ind`).}
+#'     \item{`gc_prop(var_ind, seq_ind, start, end)`}{View the GC proportion for a range
+#'         within a variant sequence.}
+#'     \item{`nt_prop(nt, var_ind, seq_ind, start, end)`}{View the proportion of a range
+#'         within a variant sequence that is of nucleotide `nt`.}
 #' }
 #' \strong{Editing information:}
 #' \describe{
 #'     \item{`set_names(new_names)`}{Set names for all variants.
 #'         `new_names` is a character vector of what to change names to, and it must
 #'         be the same length as the # variants.}
+#'     \item{`add_vars(new_names)`}{Add new, named variant(s) to the object.
+#'         These variants will have no mutations. If you want to add new variants with
+#'         mutations, either re-run `create_variants` or use the `dup_vars` method to
+#'         duplicate existing variants.}
+#'     \item{`dup_vars(var_names, new_names = NULL)`}{Duplicate existing variant(s) based
+#'         on their name(s). You can optionally specify the names of the duplicates
+#'         (using `new_names`).
+#'         Otherwise, their names are auto-generated.}
 #'     \item{`rm_vars(var_names)`}{Remove one or more variants based on names in
 #'         the `var_names` vector.}
 #'     \item{`add_sub(var_ind, seq_ind, pos, nt)`}{Manually add a substitution
@@ -487,22 +507,22 @@ variants <- R6::R6Class(
         },
 
         # Add one or more blank, named variants
-        add_vars = function(var_names) {
+        add_vars = function(new_names) {
 
             private$check_ptr()
 
-            if (!is_type(var_names, "character")) {
-                err_msg("add_vars", "var_names", "a character vector")
+            if (!is_type(new_names, "character")) {
+                err_msg("add_vars", "new_names", "a character vector")
             }
-            if (anyDuplicated(var_names) != 0) {
-                err_msg("add_vars", "var_names", "a vector with no duplicates")
+            if (anyDuplicated(new_names) != 0) {
+                err_msg("add_vars", "new_names", "a vector with no duplicates")
             }
-            if (any(var_names %in% self$var_names())) {
-                err_msg("add_vars", "var_names", "a vector containing no names",
+            if (any(new_names %in% self$var_names())) {
+                err_msg("add_vars", "new_names", "a vector containing no names",
                         "already present as variants names in the object being added to")
             }
 
-            add_var_set_vars(self$genomes, var_names)
+            add_var_set_vars(self$genomes, new_names)
 
             invisible(self)
         },
