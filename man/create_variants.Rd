@@ -14,7 +14,12 @@ This argument is required.}
 
 \item{vars_info}{Output from one of the \code{\link{vars_functions}}.
 These functions organize higher-level information for use here.
-See \code{\link{vars_functions}} for brief descriptions and links to each method.}
+See \code{\link{vars_functions}} for brief descriptions and links to each method.
+If this argument is \code{NULL}, all arguments other than \code{reference} are ignored,
+and an empty \code{variants} object with no variants is returned.
+This is designed for use when you'd like to add mutations manually.
+If you create a blank \code{variants} object, you can= use its \code{add_vars} method
+to add variants manually.}
 
 \item{sub}{Output from one of the \code{\link{sub_models}} functions that organizes
 information for the substitution models.

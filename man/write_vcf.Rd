@@ -20,7 +20,9 @@ Defaults to \code{FALSE}.}
 \item{sample_matrix}{Matrix to specify how haploid variants are grouped into samples
 if samples are not haploid. There should be one row for each sample, and
 each row should contain indices or names for the variants present in that sample.
-Indices/names for variants can be repeated across and within rows.
+Indices/names for variants cannot be repeated.
+Instead of repeating indices here, you should use the \code{dup_vars}
+method of the \code{variants} class to duplicate the necessary variant(s).
 The number of columns indicates the ploidy level: 2 columns for diploid,
 3 for triploid, 4 for tetraploid, and so on;
 there is no limit to the ploidy level.
