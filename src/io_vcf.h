@@ -73,58 +73,7 @@ public:
      */
     void check(const uint64& pos_start,
                uint64& pos_end,
-               bool& still_growing) {
-
-        if (pos_end >= pos.first) {
-
-            gt_index = 1;
-            const Mutation* mut(&(var_seq->mutations[ind.second]));
-
-            while (ind.second < var_seq->mutations.size() &&
-                   get_first_pos(var_seq->mutations[ind.second]) < pos_end) {
-
-                ind.second++;
-
-            }
-
-            if (ind.second >= var_seq->mutations.size() ||
-                (ind.second < var_seq->mutations.size() &&
-                get_first_pos(var_seq->mutations[ind.second]) > pos_end)) {
-
-                ind.second--;
-
-            }
-
-            /*
-             Checking for a deletion right after the current mutation:
-             (the second part of this statement is added because contiguous deletions
-             are prevented)
-             */
-            if (ind.second < var_seq->mutations.size() &&
-                var_seq->mutations[ind.second].size_modifier >= 0) {
-                const Mutation& next_mut(var_seq->mutations[ind.second + 1]);
-                if (next_mut.size_modifier < 0 &&
-                    next_mut.old_pos == (var_seq->mutations[ind.second].old_pos + 1)) {
-                    ind.second++;
-                }
-            }
-
-            mut = &(var_seq->mutations[ind.second]);
-            set_second_pos(*mut);
-
-            if (pos.second > pos_end) {
-                pos_end = pos.second;
-                still_growing = true;
-            }
-
-        } else {
-
-            gt_index = 0;
-
-        }
-
-        return;
-    }
+               bool& still_growing);
 
 
     /*
@@ -135,78 +84,7 @@ public:
               uint64& gt_tmp,
               const uint64& pos_start,
               const uint64& pos_end,
-              const std::string& ref_str) {
-
-        if (gt_index > 0) {
-
-            /*
-             First create alternate string:
-             */
-            // Fill with reference sequence:
-            std::string alt_str = ref_str;
-
-            // Add mutations from back:
-            const Mutation* mut;
-            uint64 pos;
-            uint64 n_muts = ind.second - ind.first + 1;
-            for (uint64 i = 0; i < n_muts; i++) {
-                mut = &(var_seq->mutations[ind.second - i]);
-                pos = mut->old_pos - pos_start;
-                if (pos >= alt_str.size()) {
-                    stop(std::string("\nPosition ") + std::to_string(pos) +
-                        std::string(" on alt. string is too high for total ") +
-                        std::string("alt. string length of ") +
-                        std::to_string(alt_str.size()));
-                }
-                if (mut->size_modifier == 0) { // substitution
-                    alt_str[pos] = mut->nucleos[0];
-                } else if (mut->size_modifier > 0) { // insertion
-                    // Copy so we can remove last nucleotide before inserting:
-                    std::string nts = mut->nucleos;
-                    alt_str[pos] = nts.back();
-                    nts.pop_back();
-                    alt_str.insert(pos, nts);  // inserts before `pos`
-                } else {  // deletion
-                    alt_str.erase(pos, static_cast<size_t>(std::abs(mut->size_modifier)));
-                }
-            }
-
-            /*
-             Double-check that two mutations didn't combine to turn it back into the
-             reference string:
-             */
-            if (alt_str != ref_str) {
-                /*
-                 Now see if that string exists already, and assign `gt_index` accordingly
-                 */
-                auto iter = std::find(unq_alts.begin(), unq_alts.end(), alt_str);
-                // If it doesn't already exist, we add it:
-                if (iter == unq_alts.end()) {
-                    gt_index = unq_alts.size();
-                    unq_alts.push_back(alt_str);
-                } else {
-                    gt_index = iter - unq_alts.begin();
-                }
-                gt_index++;  // <-- because alt. indices start at 1
-                gt_tmp = gt_index;  // this stores `gt_index` before resetting below
-            } else {
-                gt_tmp = 0;
-            }
-
-            // Now iterate:
-            ind.second++;
-            ind.first = ind.second;
-            reset_pos();
-            gt_index = 0;
-
-        } else {
-
-            gt_tmp = 0;
-
-        }
-
-        return;
-    }
+              const std::string& ref_str);
 
 
     // Reset to new variant sequence
@@ -369,85 +247,7 @@ public:
     void iterate(std::string& pos_str,
                  std::string& ref_str,
                  std::string& alt_str,
-                 std::vector<std::string>& gt_strs) {
-
-        // Reset all strings
-        if (ref_str.size() > 0) ref_str.clear();
-        if (alt_str.size() > 0) alt_str.clear();
-        for (std::string& gt : gt_strs) if (gt.size() > 0) gt.clear();
-
-        /*
-         Boolean for whether we're still merging mutations.
-         Only deletions can change this from false to true.
-         */
-        bool still_growing = true;
-        /*
-         Now going through sequences until it's no longer merging, updating the starting
-         and ending positions each time:
-         */
-        while (still_growing) {
-            still_growing = false;
-            for (uint64 i = 0; i < var_infos.size(); i++) {
-                var_infos[i].check(mut_pos.first, mut_pos.second, still_growing);
-            }
-        }
-
-        // Create reference sequence:
-        ref_str.reserve(mut_pos.second - mut_pos.first + 1);
-        if (mut_pos.second >= ref_nts->size()) {
-            stop(std::string("\nPosition ") + std::to_string(mut_pos.second) +
-                std::string(" on ref. string is too high for total ") +
-                std::string("ref. string length of ") +
-                std::to_string(ref_nts->size()));
-        }
-        for (uint64 i = mut_pos.first; i <= mut_pos.second; i++) {
-            ref_str.push_back(ref_nts->at(i));
-        }
-
-        /*
-         Go back through and collect information for each variant that's
-         getting included:
-         */
-        pos_str = std::to_string(mut_pos.first + 1);  //bc it's 1-based indexing
-        unq_alts.clear();
-        for (uint64 i = 0; i < var_infos.size(); i++) {
-            var_infos[i].dump(unq_alts, gt_indexes[i], mut_pos.first, mut_pos.second,
-                              ref_str);
-        }
-        if (unq_alts.empty()) stop("unq_alts.empty()");
-        // Fill alt. string:
-        alt_str += unq_alts[0];
-        for (uint64 i = 1; i < unq_alts.size(); i++) alt_str += ',' + unq_alts[i];
-
-
-        /*
-         Now fill genotype (`GT`) info, using `sample_groups` to group them
-         */
-        if (gt_strs.size() != sample_groups.n_rows) {
-            str_stop({"\nInput vector for GT field info isn't the same size ",
-                     "as the number of rows in the `sample_matrix` argument."});
-        }
-        uint64 gt_i;
-        for (uint64 i = 0; i < sample_groups.n_rows; i++) {
-            std::string& gt(gt_strs[i]);
-            gt_i = gt_indexes[sample_groups(i,0)];
-            gt = std::to_string(gt_i);
-            for (uint64 j = 1; j < sample_groups.n_cols; j++) {
-                gt_i = gt_indexes[sample_groups(i,j)];
-                gt += '|';
-                gt += std::to_string(gt_i);
-            }
-        }
-
-
-        // Check for the new nearest mutation position:
-        mut_pos = std::make_pair(MAX_INT, MAX_INT);
-        for (uint64 i = 0; i < var_infos.size(); i++) {
-            var_infos[i].compare_pos(mut_pos.first, mut_pos.second);
-        }
-
-        return;
-    }
+                 std::vector<std::string>& gt_strs);
 
 
     // Change the sequence this object refers to
