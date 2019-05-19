@@ -486,22 +486,24 @@ variants <- R6::R6Class(
             invisible(self)
         },
 
-        # Remove one or more variants by name
-        rm_vars = function(var_names) {
+        # Add one or more blank, named variants
+        add_vars = function(var_names) {
+
             private$check_ptr()
-            self_names <- self$var_names()
+
             if (!is_type(var_names, "character")) {
-                err_msg("rm_vars", "var_names", "a character vector")
-            }
-            if (!all(var_names %in% self_names)) {
-                err_msg("rm_vars", "var_names", "a vector of only names that are",
-                        "present in the variants object")
+                err_msg("add_vars", "var_names", "a character vector")
             }
             if (anyDuplicated(var_names) != 0) {
-                err_msg("rm_vars", "var_names", "a vector of non-duplicate names")
+                err_msg("add_vars", "var_names", "a vector with no duplicates")
             }
-            var_inds <- match(var_names, self_names) - 1
-            remove_var_set_vars(self$genomes, var_inds)
+            if (any(var_names %in% self$var_names())) {
+                err_msg("add_vars", "var_names", "a vector containing no names",
+                        "already present as variants names in the object being added to")
+            }
+
+            add_var_set_vars(self$genomes, var_names)
+
             invisible(self)
         },
 
@@ -544,25 +546,22 @@ variants <- R6::R6Class(
             invisible(self)
         },
 
-
-        # Add one or more blank, named variants
-        add_vars = function(var_names) {
-
+        # Remove one or more variants by name
+        rm_vars = function(var_names) {
             private$check_ptr()
-
+            self_names <- self$var_names()
             if (!is_type(var_names, "character")) {
-                err_msg("add_vars", "var_names", "a character vector")
+                err_msg("rm_vars", "var_names", "a character vector")
+            }
+            if (!all(var_names %in% self_names)) {
+                err_msg("rm_vars", "var_names", "a vector of only names that are",
+                        "present in the variants object")
             }
             if (anyDuplicated(var_names) != 0) {
-                err_msg("add_vars", "var_names", "a vector with no duplicates")
+                err_msg("rm_vars", "var_names", "a vector of non-duplicate names")
             }
-            if (any(var_names %in% self$var_names())) {
-                err_msg("add_vars", "var_names", "a vector containing no names",
-                        "already present as variants names in the object being added to")
-            }
-
-            add_var_set_vars(self$genomes, var_names)
-
+            var_inds <- match(var_names, self_names) - 1
+            remove_var_set_vars(self$genomes, var_inds)
             invisible(self)
         },
 
