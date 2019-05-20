@@ -106,14 +106,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // illumina_var_cpp
-void illumina_var_cpp(SEXP var_set_ptr, const bool& paired, const bool& matepair, const std::string& out_prefix, const int& compress, const std::string& comp_method, const uint64& n_reads, const double& prob_dup, const uint64& n_threads, const bool& show_progress, const uint64& read_pool_size, const std::vector<double>& variant_probs, const double& frag_len_shape, const double& frag_len_scale, const uint64& frag_len_min, const uint64& frag_len_max, const std::vector<std::vector<std::vector<double>>>& qual_probs1, const std::vector<std::vector<std::vector<uint8>>>& quals1, const double& ins_prob1, const double& del_prob1, const std::vector<std::vector<std::vector<double>>>& qual_probs2, const std::vector<std::vector<std::vector<uint8>>>& quals2, const double& ins_prob2, const double& del_prob2, const std::vector<std::string>& barcodes);
-RcppExport SEXP _jackalope_illumina_var_cpp(SEXP var_set_ptrSEXP, SEXP pairedSEXP, SEXP matepairSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP comp_methodSEXP, SEXP n_readsSEXP, SEXP prob_dupSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP, SEXP read_pool_sizeSEXP, SEXP variant_probsSEXP, SEXP frag_len_shapeSEXP, SEXP frag_len_scaleSEXP, SEXP frag_len_minSEXP, SEXP frag_len_maxSEXP, SEXP qual_probs1SEXP, SEXP quals1SEXP, SEXP ins_prob1SEXP, SEXP del_prob1SEXP, SEXP qual_probs2SEXP, SEXP quals2SEXP, SEXP ins_prob2SEXP, SEXP del_prob2SEXP, SEXP barcodesSEXP) {
+void illumina_var_cpp(SEXP var_set_ptr, const bool& paired, const bool& matepair, const std::string& out_prefix, const bool& sep_files, const int& compress, const std::string& comp_method, const uint64& n_reads, const double& prob_dup, const uint64& n_threads, const bool& show_progress, const uint64& read_pool_size, const std::vector<double>& variant_probs, const double& frag_len_shape, const double& frag_len_scale, const uint64& frag_len_min, const uint64& frag_len_max, const std::vector<std::vector<std::vector<double>>>& qual_probs1, const std::vector<std::vector<std::vector<uint8>>>& quals1, const double& ins_prob1, const double& del_prob1, const std::vector<std::vector<std::vector<double>>>& qual_probs2, const std::vector<std::vector<std::vector<uint8>>>& quals2, const double& ins_prob2, const double& del_prob2, const std::vector<std::string>& barcodes);
+RcppExport SEXP _jackalope_illumina_var_cpp(SEXP var_set_ptrSEXP, SEXP pairedSEXP, SEXP matepairSEXP, SEXP out_prefixSEXP, SEXP sep_filesSEXP, SEXP compressSEXP, SEXP comp_methodSEXP, SEXP n_readsSEXP, SEXP prob_dupSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP, SEXP read_pool_sizeSEXP, SEXP variant_probsSEXP, SEXP frag_len_shapeSEXP, SEXP frag_len_scaleSEXP, SEXP frag_len_minSEXP, SEXP frag_len_maxSEXP, SEXP qual_probs1SEXP, SEXP quals1SEXP, SEXP ins_prob1SEXP, SEXP del_prob1SEXP, SEXP qual_probs2SEXP, SEXP quals2SEXP, SEXP ins_prob2SEXP, SEXP del_prob2SEXP, SEXP barcodesSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
     Rcpp::traits::input_parameter< const bool& >::type paired(pairedSEXP);
     Rcpp::traits::input_parameter< const bool& >::type matepair(matepairSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type sep_files(sep_filesSEXP);
     Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
     Rcpp::traits::input_parameter< const uint64& >::type n_reads(n_readsSEXP);
@@ -135,7 +136,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double& >::type ins_prob2(ins_prob2SEXP);
     Rcpp::traits::input_parameter< const double& >::type del_prob2(del_prob2SEXP);
     Rcpp::traits::input_parameter< const std::vector<std::string>& >::type barcodes(barcodesSEXP);
-    illumina_var_cpp(var_set_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes);
+    illumina_var_cpp(var_set_ptr, paired, matepair, out_prefix, sep_files, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes);
     return R_NilValue;
 END_RCPP
 }
@@ -173,12 +174,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // pacbio_var_cpp
-void pacbio_var_cpp(SEXP var_set_ptr, const std::string& out_prefix, const int& compress, const std::string& comp_method, const uint64& n_reads, const uint64& n_threads, const bool& show_progress, const uint64& read_pool_size, const std::vector<double>& variant_probs, const double& prob_dup, const double& scale, const double& sigma, const double& loc, const double& min_read_len, const std::vector<double>& read_probs, const std::vector<uint64>& read_lens, const uint64& max_passes, const std::vector<double>& chi2_params_n, const std::vector<double>& chi2_params_s, const std::vector<double>& sqrt_params, const std::vector<double>& norm_params, const double& prob_thresh, const double& prob_ins, const double& prob_del, const double& prob_subst);
-RcppExport SEXP _jackalope_pacbio_var_cpp(SEXP var_set_ptrSEXP, SEXP out_prefixSEXP, SEXP compressSEXP, SEXP comp_methodSEXP, SEXP n_readsSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP, SEXP read_pool_sizeSEXP, SEXP variant_probsSEXP, SEXP prob_dupSEXP, SEXP scaleSEXP, SEXP sigmaSEXP, SEXP locSEXP, SEXP min_read_lenSEXP, SEXP read_probsSEXP, SEXP read_lensSEXP, SEXP max_passesSEXP, SEXP chi2_params_nSEXP, SEXP chi2_params_sSEXP, SEXP sqrt_paramsSEXP, SEXP norm_paramsSEXP, SEXP prob_threshSEXP, SEXP prob_insSEXP, SEXP prob_delSEXP, SEXP prob_substSEXP) {
+void pacbio_var_cpp(SEXP var_set_ptr, const std::string& out_prefix, const bool& sep_files, const int& compress, const std::string& comp_method, const uint64& n_reads, const uint64& n_threads, const bool& show_progress, const uint64& read_pool_size, const std::vector<double>& variant_probs, const double& prob_dup, const double& scale, const double& sigma, const double& loc, const double& min_read_len, const std::vector<double>& read_probs, const std::vector<uint64>& read_lens, const uint64& max_passes, const std::vector<double>& chi2_params_n, const std::vector<double>& chi2_params_s, const std::vector<double>& sqrt_params, const std::vector<double>& norm_params, const double& prob_thresh, const double& prob_ins, const double& prob_del, const double& prob_subst);
+RcppExport SEXP _jackalope_pacbio_var_cpp(SEXP var_set_ptrSEXP, SEXP out_prefixSEXP, SEXP sep_filesSEXP, SEXP compressSEXP, SEXP comp_methodSEXP, SEXP n_readsSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP, SEXP read_pool_sizeSEXP, SEXP variant_probsSEXP, SEXP prob_dupSEXP, SEXP scaleSEXP, SEXP sigmaSEXP, SEXP locSEXP, SEXP min_read_lenSEXP, SEXP read_probsSEXP, SEXP read_lensSEXP, SEXP max_passesSEXP, SEXP chi2_params_nSEXP, SEXP chi2_params_sSEXP, SEXP sqrt_paramsSEXP, SEXP norm_paramsSEXP, SEXP prob_threshSEXP, SEXP prob_insSEXP, SEXP prob_delSEXP, SEXP prob_substSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type out_prefix(out_prefixSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type sep_files(sep_filesSEXP);
     Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
     Rcpp::traits::input_parameter< const uint64& >::type n_reads(n_readsSEXP);
@@ -202,7 +204,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double& >::type prob_ins(prob_insSEXP);
     Rcpp::traits::input_parameter< const double& >::type prob_del(prob_delSEXP);
     Rcpp::traits::input_parameter< const double& >::type prob_subst(prob_substSEXP);
-    pacbio_var_cpp(var_set_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst);
+    pacbio_var_cpp(var_set_ptr, out_prefix, sep_files, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst);
     return R_NilValue;
 END_RCPP
 }
@@ -945,9 +947,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_create_genome_cpp", (DL_FUNC) &_jackalope_create_genome_cpp, 5},
     {"_jackalope_rando_seqs", (DL_FUNC) &_jackalope_rando_seqs, 5},
     {"_jackalope_illumina_ref_cpp", (DL_FUNC) &_jackalope_illumina_ref_cpp, 24},
-    {"_jackalope_illumina_var_cpp", (DL_FUNC) &_jackalope_illumina_var_cpp, 25},
+    {"_jackalope_illumina_var_cpp", (DL_FUNC) &_jackalope_illumina_var_cpp, 26},
     {"_jackalope_pacbio_ref_cpp", (DL_FUNC) &_jackalope_pacbio_ref_cpp, 24},
-    {"_jackalope_pacbio_var_cpp", (DL_FUNC) &_jackalope_pacbio_var_cpp, 25},
+    {"_jackalope_pacbio_var_cpp", (DL_FUNC) &_jackalope_pacbio_var_cpp, 26},
     {"_jackalope_write_bed", (DL_FUNC) &_jackalope_write_bed, 5},
     {"_jackalope_read_fasta_noind", (DL_FUNC) &_jackalope_read_fasta_noind, 3},
     {"_jackalope_read_fasta_ind", (DL_FUNC) &_jackalope_read_fasta_ind, 3},

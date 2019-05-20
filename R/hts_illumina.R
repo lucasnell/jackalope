@@ -283,6 +283,7 @@ check_illumina_args <- function(seq_object, n_reads,
                                 ins_prob2, del_prob2,
                                 frag_len_min, frag_len_max,
                                 variant_probs, barcodes, prob_dup,
+                                sep_files,
                                 compress, comp_method, n_threads, read_pool_size,
                                 show_progress) {
 
@@ -304,7 +305,7 @@ check_illumina_args <- function(seq_object, n_reads,
     if (!is_type(comp_method, "character", 1) || !comp_method %in% c("gzip", "bgzip")) {
         err_msg("illumina", "comp_method", "\"gzip\" or \"bgzip\"")
     }
-    for (x in c("paired", "matepair", "compress", "show_progress")) {
+    for (x in c("paired", "matepair", "sep_files", "compress", "show_progress")) {
         z <- eval(parse(text = x))
         if (!is_type(z, "logical", 1)) err_msg("illumina", x, "a single logical.")
     }
@@ -386,8 +387,8 @@ check_illumina_args <- function(seq_object, n_reads,
         n_weirdo_chars <- sapply(strsplit(barcodes, ""),
                                  function(x) sum(!x %in% c("T", "C", "A", "G")))
         if (any(n_weirdo_chars > 0)) {
-            err_msg("illumina", "barcodes", "NULL or a character vector with only the characters",
-                    "\"T\", \"C\", \"A\", and \"G\" present")
+            err_msg("illumina", "barcodes", "NULL or a character vector with only the",
+                    "characters \"T\", \"C\", \"A\", and \"G\" present")
         }
     }
 
@@ -508,6 +509,10 @@ check_illumina_args <- function(seq_object, n_reads,
 #'     Defaults to `NULL`.
 #' @param prob_dup A single number indicating the probability of duplicates.
 #'     Defaults to `0.02`.
+#' @param sep_files Logical indicating whether to make separate files for each variant.
+#'     This argument is coerced to `FALSE` if the `seq_object` argument is not
+#'     a `variants` object.
+#'     Defaults to `FALSE`.
 #' @param compress Logical specifying whether or not to compress output file, or
 #'     an integer specifying the level of compression, from 1 to 9.
 #'     If `TRUE`, a compression level of `6` is used.
@@ -572,6 +577,7 @@ illumina <- function(seq_object,
                      variant_probs = NULL,
                      barcodes = NULL,
                      prob_dup = 0.02,
+                     sep_files = FALSE,
                      compress = FALSE,
                      comp_method = "bgzip",
                      n_threads = 1L,
@@ -584,16 +590,27 @@ illumina <- function(seq_object,
     # I'm doing this here to make `paired` not required.
     if (matepair) paired <- TRUE
 
-    out_prefix <- path.expand(out_prefix)
-    check_file_existence(paste0(out_prefix, "_R", 1:ifelse(paired, 2, 1), ".fq"),
-                         compress, overwrite)
-
     # Check for improper argument types:
     check_illumina_args(seq_object, n_reads, read_length, paired,
                         frag_mean, frag_sd, matepair, seq_sys, profile1, profile2,
                         ins_prob1, del_prob1, ins_prob2, del_prob2,
                         frag_len_min, frag_len_max, variant_probs, barcodes, prob_dup,
+                        sep_files,
                         compress, comp_method, n_threads, read_pool_size, show_progress)
+
+    out_prefix <- path.expand(out_prefix)
+    fns <- NULL
+    # Doesn't make sense to have separate files for reference genome:
+    if (inherits(seq_object, "ref_genome")) sep_files <- FALSE
+    if (!sep_files) {
+        fns <- paste0(out_prefix, "_R", 1:ifelse(paired, 2, 1), ".fq")
+    } else {
+        fns <- lapply(seq_object$var_names(),
+                      function(x) sprintf("%s_%s_R%i.fq", out_prefix, x,
+                                          1:ifelse(paired, 2, 1)))
+        fns <- c(fns, recursive = TRUE)
+    }
+    check_file_existence(fns, compress, overwrite)
 
     # Set compression level:
     if (is_type(compress, "logical", 1) && compress) compress <- 6 # default compression
@@ -642,6 +659,7 @@ illumina <- function(seq_object,
 
     # Assembling list of arguments for inner cpp function:
     args <- list(out_prefix = out_prefix,
+                 sep_files = sep_files,
                  compress = compress,
                  comp_method = comp_method,
                  n_reads = n_reads,
@@ -667,6 +685,7 @@ illumina <- function(seq_object,
 
     if (inherits(seq_object, "ref_genome")) {
         args <- c(args, list(ref_genome_ptr = seq_object$genome))
+        args$sep_files <- NULL
         do.call(illumina_ref_cpp, args)
     } else if (inherits(seq_object, "variants")) {
         args <- c(args, list(var_set_ptr = seq_object$genomes,

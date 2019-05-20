@@ -366,9 +366,15 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
                             prob_ins, prob_del, prob_subst);
     }
 
+    // For doing multithreaded compression after initial uncompressed run:
+    uint64 prog_n = n_reads;
+    if (compress > 0 && n_threads > 1) prog_n += (n_reads / 2);
+    // Progress bar:
+    Progress prog_bar(prog_n, show_progress);
+
     write_reads_cpp_<PacBioReference>(
         read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size, 1,
-        n_threads, show_progress, compress, comp_method);
+        n_threads, compress, comp_method, prog_bar);
 
 
     return;
@@ -385,6 +391,7 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
 //[[Rcpp::export]]
 void pacbio_var_cpp(SEXP var_set_ptr,
                     const std::string& out_prefix,
+                    const bool& sep_files,
                     const int& compress,
                     const std::string& comp_method,
                     const uint64& n_reads,
@@ -428,9 +435,30 @@ void pacbio_var_cpp(SEXP var_set_ptr,
                            prob_ins, prob_del, prob_subst);
     }
 
-    write_reads_cpp_<PacBioVariants>(
-        read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size, 1,
-        n_threads, show_progress, compress, comp_method);
+    // For doing multithreaded compression after initial uncompressed run:
+    uint64 prog_n = n_reads;
+    if (compress > 0 && n_threads > 1) prog_n += (n_reads / 2);
+    // Progress bar:
+    Progress prog_bar(prog_n, show_progress);
+
+    if (sep_files) {
+
+        write_reads_cpp_sep_files_<PacBioVariants>(
+            *var_set, variant_probs,
+            read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size, 1,
+            n_threads, compress, comp_method, prog_bar);
+
+    } else {
+
+        write_reads_cpp_<PacBioVariants>(
+            read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size, 1,
+            n_threads, compress, comp_method, prog_bar);
+
+    }
+
 
     return;
 }
+
+
+

@@ -34,7 +34,7 @@ test_that("no weirdness with Illumina single-end reads on ref. genome", {
 
     illumina(ref, out_prefix = sprintf("%s/%s", dir, "test"),
              n_reads = 100, read_length = 100, paired = FALSE,
-             frag_mean = 400, frag_sd = 100, overwrite = TRUE)
+             overwrite = TRUE)
 
     expect_true(sprintf("%s_R1.fq", "test") %in% list.files(dir))
 
@@ -58,7 +58,7 @@ test_that("no weirdness with Illumina paired-end reads on ref. genome", {
 
     illumina(ref, out_prefix = sprintf("%s/%s", dir, "test"),
              n_reads = 100, read_length = 100, paired = TRUE,
-             frag_mean = 400, frag_sd = 100, overwrite = TRUE)
+             overwrite = TRUE)
 
     expect_true(sprintf("%s_R1.fq", "test") %in% list.files(dir))
     expect_true(sprintf("%s_R2.fq", "test") %in% list.files(dir))
@@ -106,7 +106,6 @@ test_that("proper pairs created with Illumina paired-end reads on ref. genome", 
              # Paired-end reads:
              paired = TRUE, matepair = FALSE,
              # Fragments will always be of length 200:
-             frag_mean = 400, frag_sd = 100,
              frag_len_min = 200, frag_len_max = 200,
              # No sequencing errors:
              ins_prob1 = 0, del_prob1 = 0,
@@ -144,7 +143,6 @@ test_that("proper pairs created with Illumina mate-pair reads on ref. genome", {
              # Mate-pair reads:
              paired = TRUE, matepair = TRUE,
              # Fragments will always be of length 200:
-             frag_mean = 400, frag_sd = 100,
              frag_len_min = 200, frag_len_max = 200,
              # No sequencing errors:
              ins_prob1 = 0, del_prob1 = 0,
@@ -177,7 +175,7 @@ test_that("no weirdness with Illumina single-end reads on variants", {
 
     illumina(vars, out_prefix = sprintf("%s/%s", dir, "test"),
              n_reads = 100, read_length = 100, paired = FALSE,
-             frag_mean = 400, frag_sd = 100, overwrite = TRUE)
+             overwrite = TRUE)
 
     expect_true(sprintf("%s_R1.fq", "test") %in% list.files(dir))
 
@@ -192,13 +190,38 @@ test_that("no weirdness with Illumina single-end reads on variants", {
 })
 
 
+test_that("no weirdness with Illumina single-end reads on variants w/ sep. files", {
+
+    illumina(vars, out_prefix = sprintf("%s/%s", dir, "test"),
+             n_reads = 100, read_length = 100, paired = FALSE,
+             overwrite = TRUE, sep_files = TRUE)
+
+    fns <- sprintf("%s_%s_R1.fq", "test", vars$var_names())
+
+    expect_true(all(fns %in% list.files(dir)))
+
+    fns <- paste0(dir, "/", fns)
+
+    fastas <- lapply(fns, readLines)
+
+    expect_identical(sum(sapply(fastas, length)), 400L)
+    expect_true(all(sapply(fastas,
+                           function(fa) all(grepl("^@", fa[seq(1, length(fa), 4)])))))
+    expect_identical(do.call(c, lapply(fastas, function(fa) fa[seq(3, length(fa), 4)])),
+                     rep("+", 100))
+
+    file.remove(fns)
+
+})
+
+
 # paired ----
 
 test_that("no weirdness with Illumina paired-end reads on variants", {
 
     illumina(vars, out_prefix = sprintf("%s/%s", dir, "test"),
              n_reads = 100, read_length = 100, paired = TRUE,
-             frag_mean = 400, frag_sd = 100, overwrite = TRUE)
+             overwrite = TRUE)
 
     expect_true(sprintf("%s_R1.fq", "test") %in% list.files(dir))
     expect_true(sprintf("%s_R2.fq", "test") %in% list.files(dir))
@@ -219,6 +242,36 @@ test_that("no weirdness with Illumina paired-end reads on variants", {
 })
 
 
+
+
+test_that("no weirdness with Illumina paired-end reads on variants w/ sep. files", {
+
+    illumina(vars, out_prefix = sprintf("%s/%s", dir, "test"),
+             n_reads = 100, read_length = 100, paired = TRUE,
+             overwrite = TRUE, sep_files = TRUE)
+
+    fns <- lapply(vars$var_names(),
+                  function(x) sprintf("%s_%s_R%i.fq", "test", x, 1:2))
+
+    expect_true(all(unlist(fns) %in% list.files(dir)))
+
+    fns <- lapply(fns, function(x) paste0(dir, "/", x))
+
+    fastas <- lapply(fns, function(x) lapply(x, readLines))
+
+    expect_true(all(sapply(fastas, function(x) length(x[[1]]) == length(x[[2]]))))
+
+    fastas <- unlist(fastas, recursive = FALSE)
+
+    expect_length(unlist(fastas), 400L)
+    expect_true(all(sapply(fastas,
+                           function(fa) all(grepl("^@", fa[seq(1, length(fa), 4)])))))
+    expect_identical(do.call(c, lapply(fastas, function(fa) fa[seq(3, length(fa), 4)])),
+                     rep("+", 100))
+
+    file.remove(unlist(fns))
+
+})
 
 
 # ================================================================================`

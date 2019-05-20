@@ -21,6 +21,7 @@
 #include "pcg.h"  // ruinf_01
 #include "util.h"  // str_stop, thread_check, split_int
 #include "io.h"  // File* types
+#include "alias_sampler.h"  // Alias sampler
 
 
 using namespace Rcpp;
@@ -227,16 +228,13 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
                                       const uint64& read_pool_size,
                                       const uint64& n_read_ends,
                                       const uint64& n_threads,
-                                      const bool& show_progress,
-                                      const int& compress) {
+                                      const int& compress,
+                                      Progress& prog_bar) {
 
     const std::vector<uint64> reads_per_thread = split_int(n_reads, n_threads);
 
     // Generate seeds for random number generators (1 RNG per thread)
     const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
-
-    // Progress bar
-    Progress prog_bar(n_reads, show_progress);
 
     // Create and open files:
     std::vector<F> files(n_read_ends);
@@ -339,9 +337,9 @@ inline void write_reads_cpp_(const T& read_filler_base,
                              const uint64& read_pool_size,
                              const uint64& n_read_ends,
                              uint64 n_threads,
-                             const bool& show_progress,
                              const int& compress,
-                             const std::string& comp_method) {
+                             const std::string& comp_method,
+                             Progress& prog_bar) {
 
     expand_path(out_prefix);
 
@@ -355,11 +353,11 @@ inline void write_reads_cpp_(const T& read_filler_base,
         if (comp_method == "gzip") {
             write_reads_one_filetype_<T, FileGZ>(
                     read_filler_base, out_prefix, n_reads, prob_dup,
-                    read_pool_size, n_read_ends, n_threads, show_progress, compress);
+                    read_pool_size, n_read_ends, n_threads, compress, prog_bar);
         } else if (comp_method == "bgzip") {
             write_reads_one_filetype_<T, FileBGZF>(
                     read_filler_base, out_prefix, n_reads, prob_dup,
-                    read_pool_size, n_read_ends, n_threads, show_progress, compress);
+                    read_pool_size, n_read_ends, n_threads, compress, prog_bar);
         } else stop("\nUnrecognized compression method.");
 
     /*
@@ -370,26 +368,22 @@ inline void write_reads_cpp_(const T& read_filler_base,
      */
     } else if (compress > 0 && n_threads > 1) {
 
-        if (show_progress) {
-            Rcout << "Progress for writing uncompressed reads..." << std::endl;
-        }
         // First do it uncompressed:
         write_reads_one_filetype_<T, FileUncomp>(
                 read_filler_base, out_prefix, n_reads, prob_dup,
-                read_pool_size, n_read_ends, n_threads, show_progress, compress);
-        // Then compress using multiple threads:
-        if (show_progress) Rcout << std::endl << "Now compressing reads..." << std::endl;
+                read_pool_size, n_read_ends, n_threads, compress, prog_bar);
         for (uint64 i = 0; i < n_read_ends; i++) {
             std::string file_name = out_prefix + "_R" + std::to_string(i+1)+ ".fq";
             bgzip_file(file_name, static_cast<int>(n_threads),
                        static_cast<int>(compress));
-            if (show_progress) Rcout << "finished compressing " << file_name << std::endl;
+            // For progress bar, I assume compression takes half as long:
+            prog_bar.increment(n_reads / (n_read_ends * 2));
         }
     // Uncompressed output run in serial or parallel
     } else {
         write_reads_one_filetype_<T, FileUncomp>(
                 read_filler_base, out_prefix, n_reads, prob_dup,
-                read_pool_size, n_read_ends, n_threads, show_progress, compress);
+                read_pool_size, n_read_ends, n_threads, compress, prog_bar);
     }
 
 
@@ -397,6 +391,101 @@ inline void write_reads_cpp_(const T& read_filler_base,
 
 
 
+/*
+ Samples for # reads per variant.
+ It uses binomial distribution for a `n_reads` that decreases each iteration and a
+ `variant_probs` vector whose values go up.
+ This is ~600x faster than doing separate samples (via AliasSampler) for every read.
+ */
+inline std::vector<uint64> read_per_var(uint64 n_reads,
+                                        std::vector<double> variant_probs) {
+
+    pcg64 eng = seeded_pcg();
+
+    double sum_probs = std::accumulate(variant_probs.begin(), variant_probs.end(), 0.0);
+    for (double& p : variant_probs) p /= sum_probs;
+
+    std::vector<uint64> out;
+    out.reserve(variant_probs.size());
+
+    std::binomial_distribution<uint64> distr(n_reads, 0.5);
+
+    for (uint64 i = 0; i < variant_probs.size(); i++) {
+
+        // Update distribution:
+        distr.param(std::binomial_distribution<uint64>::param_type(
+                n_reads, variant_probs[i]));
+
+        // Sample from binomial distribution:
+        out.push_back(distr(eng));
+
+        // Decrease `n_reads` based on # sampled:
+        n_reads -= out.back();
+        // If `n_reads` is zero, we can resize `out` and stop now:
+        if (n_reads == 0) {
+            out.resize(variant_probs.size(), 0ULL);
+            break;
+        }
+
+        // Increase probabilities:
+        sum_probs = 1 - variant_probs[i];
+        for (uint64 j = (i+1); j < variant_probs.size(); j++) {
+            variant_probs[j] /= sum_probs;
+        }
+    }
+
+    return out;
+
+}
+
+
+
+
+/*
+ Same as above, but for when you want a separate file per variant
+ */
+
+template <typename T>
+inline void write_reads_cpp_sep_files_(const VarSet& var_set,
+                                       const std::vector<double>& variant_probs,
+                                       T& read_filler_base,
+                                       const std::string& out_prefix,
+                                       const uint64& n_reads,
+                                       const double& prob_dup,
+                                       const uint64& read_pool_size,
+                                       const uint64& n_read_ends,
+                                       const uint64& n_threads,
+                                       const int& compress,
+                                       const std::string& comp_method,
+                                       Progress& prog_bar) {
+
+    // Sample for reads per file:
+    std::vector<uint64> reads_per_file = read_per_var(n_reads / n_read_ends,
+                                                      variant_probs);
+    if (n_read_ends > 1) for (uint64& rpf : reads_per_file) rpf *= n_read_ends;
+
+    // Now do each variant as separate file:
+    std::vector<double> var_probs_(var_set.size(), 0.0);
+
+    for (uint64 i = 0; i < var_set.size(); i++) {
+
+        if (prog_bar.check_abort()) break;
+
+        var_probs_[i] = 1;
+        read_filler_base.variant_sampler = AliasSampler(var_probs_);
+
+        std::string out_prefix_ = out_prefix + '_' + var_set[i].name;
+
+        write_reads_cpp_<T>(
+            read_filler_base, out_prefix_, reads_per_file[i], prob_dup,
+            read_pool_size, n_read_ends, n_threads, compress, comp_method,
+            prog_bar);
+
+        var_probs_[i] = 0;
+    }
+
+    return;
+}
 
 
 

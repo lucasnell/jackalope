@@ -108,8 +108,8 @@ illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compr
 #'
 #' @noRd
 #'
-illumina_var_cpp <- function(var_set_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
-    invisible(.Call(`_jackalope_illumina_var_cpp`, var_set_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
+illumina_var_cpp <- function(var_set_ptr, paired, matepair, out_prefix, sep_files, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
+    invisible(.Call(`_jackalope_illumina_var_cpp`, var_set_ptr, paired, matepair, out_prefix, sep_files, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
 }
 
 #' PacBio sequence for reference object.
@@ -126,8 +126,8 @@ pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, comp_method, n_
 #'
 #' @noRd
 #'
-pacbio_var_cpp <- function(var_set_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
-    invisible(.Call(`_jackalope_pacbio_var_cpp`, var_set_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
+pacbio_var_cpp <- function(var_set_ptr, out_prefix, sep_files, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
+    invisible(.Call(`_jackalope_pacbio_var_cpp`, var_set_ptr, out_prefix, sep_files, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
 }
 
 #' Write Gamma matrix info to a tab-delimited BED file.

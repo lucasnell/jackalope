@@ -397,10 +397,15 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                               barcodes[0]);
     }
 
+    // For doing multithreaded compression after initial uncompressed run:
+    uint64 prog_n = n_reads;
+    if (compress > 0 && n_threads > 1) prog_n += (n_reads / 2);
+    // Progress bar:
+    Progress prog_bar(prog_n, show_progress);
+
     write_reads_cpp_<IlluminaReference>(
-        read_filler_base, out_prefix, n_reads, prob_dup,
-        read_pool_size, n_read_ends, n_threads, show_progress,
-        compress, comp_method);
+        read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size,
+        n_read_ends, n_threads, compress, comp_method, prog_bar);
 
     return;
 }
@@ -420,6 +425,7 @@ void illumina_var_cpp(SEXP var_set_ptr,
                       const bool& paired,
                       const bool& matepair,
                       const std::string& out_prefix,
+                      const bool& sep_files,
                       const int& compress,
                       const std::string& comp_method,
                       const uint64& n_reads,
@@ -464,10 +470,33 @@ void illumina_var_cpp(SEXP var_set_ptr,
                                             barcodes);
     }
 
-    write_reads_cpp_<IlluminaVariants>(
-        read_filler_base, out_prefix, n_reads, prob_dup,
-        read_pool_size, n_read_ends, n_threads, show_progress,
-        compress, comp_method);
+    // For doing multithreaded compression after initial uncompressed run:
+    uint64 prog_n = n_reads;
+    if (compress > 0 && n_threads > 1) prog_n += (n_reads / 2);
+    // Progress bar:
+    Progress prog_bar(prog_n, show_progress);
+
+    if (sep_files) {
+
+        write_reads_cpp_sep_files_<IlluminaVariants>(
+            *var_set, variant_probs,
+            read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size,
+            n_read_ends, n_threads, compress, comp_method, prog_bar);
+
+
+    } else {
+
+        write_reads_cpp_<IlluminaVariants>(
+            read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size,
+            n_read_ends, n_threads, compress, comp_method, prog_bar);
+
+    }
 
     return;
 }
+
+
+
+
+
+
