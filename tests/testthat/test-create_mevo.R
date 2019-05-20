@@ -267,7 +267,7 @@ test_that("proper output for JC69 model when indels are included", {
 # __site var.__ ----
 # ==============================*
 
-dir <- tempdir()
+dir <- tempdir(check = TRUE)
 
 M <- site_var(ref, shape = pars$shape, region_size = pars$region_size,
               out_prefix = paste0(dir, "/mevo"))

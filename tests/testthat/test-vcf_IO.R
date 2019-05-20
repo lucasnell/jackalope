@@ -10,7 +10,7 @@ context("Testing VCF file input/output")
 
 options(stringsAsFactors = FALSE)
 
-dir <- tempdir()
+dir <- tempdir(check = TRUE)
 
 seqs <- rep("TCAGTCAGTC", 2)
 ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))

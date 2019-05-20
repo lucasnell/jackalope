@@ -5,7 +5,7 @@ context("Testing FASTA file input/output")
 # library(testthat)
 
 
-dir <- tempdir()
+dir <- tempdir(check = TRUE)
 
 
 

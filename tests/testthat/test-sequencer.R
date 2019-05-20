@@ -9,7 +9,7 @@ context("Very basic tests of sequencing output")
 # For more in-depth tests, see the diagnostics folder
 
 
-dir <- tempdir()
+dir <- tempdir(check = TRUE)
 
 ref <- create_genome(5, 100)
 tr <- ape::rcoal(4)

@@ -79,7 +79,7 @@ test_that("basics of vars_phylo with file work", {
 
     tr <- ape::rcoal(4)
 
-    tr_file <- paste0(tempdir(), "/test.tree")
+    tr_file <- paste0(tempdir(check = TRUE), "/test.tree")
 
     ape::write.tree(tr, tr_file)
 
