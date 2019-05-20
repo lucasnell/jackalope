@@ -6,8 +6,6 @@
 
 context("Very basic tests of sequencing output")
 
-# For more in-depth tests, see the diagnostics folder
-
 
 dir <- tempdir(check = TRUE)
 
@@ -139,7 +137,7 @@ test_that("proper pairs created with Illumina mate-pair reads on ref. genome", {
     rg <- ref_genome$new(jackalope:::make_ref_genome(seq))
 
     illumina(rg, out_prefix = paste0(dir, "/test"),
-             n_reads = 10, read_length = 100,
+             n_reads = 10e3, read_length = 100,
              # Mate-pair reads:
              paired = TRUE, matepair = TRUE,
              # Fragments will always be of length 200:
