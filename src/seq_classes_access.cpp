@@ -23,7 +23,6 @@
 #include "seq_classes_var.h"  // Var* classes
 #include "mutator.h"    // MutationSampler in test_rate fxn
 #include "pcg.h"  // pcg seeding
-#include "weighted_reservoir.h"  // weighted reservoir sampling
 #include "phylogenomics.h"  // match_ and template functions
 
 

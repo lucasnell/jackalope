@@ -18,7 +18,6 @@
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling
-#include "weighted_reservoir.h"  // weighted_reservoir_* functions
 #include "util.h"  // str_stop
 
 
