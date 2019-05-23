@@ -18,5 +18,9 @@ branches:
   only:
   - master
 
+# For MacOSX systems
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then HOMEBREW_NO_AUTO_UPDATE=1 brew install xz || ( brew update && brew install xz ); fi
+
 after_success:
   - Rscript -e 'library(covr); codecov()'

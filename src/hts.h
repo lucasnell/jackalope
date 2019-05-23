@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "htslib/bgzf.h"
 
 #include "jackalope_types.h"  // uint64
 #include "pcg.h"  // ruinf_01
