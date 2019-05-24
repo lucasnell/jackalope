@@ -35,6 +35,10 @@ representing the genome.}
 \item{\code{names()}}{View vector of sequence names.}
 \item{\code{sequence(seq_ind)}}{View a sequence string based on an index,
 \code{seq_ind}.}
+\item{\code{gc_prop(seq_ind, start, end)}}{View the GC proportion for a range within a
+reference sequence.}
+\item{\code{nt_prop(nt, seq_ind, start, end)}}{View the proportion of a range within a
+reference sequence that is of nucleotide \code{nt}.}
 }
 \strong{Editing information:}
 \describe{
@@ -43,6 +47,9 @@ representing the genome.}
 be the same length as the # sequences.}
 \item{\code{clean_names()}}{Clean sequence names, converting \code{" :;=\%,\\|/\"\'"}
 to \code{"_"}.}
+\item{\code{add_seqs(new_seqs, new_names = NULL)}}{Add one or more sequences
+directly. They can optionally be named (using \code{new_names}).
+Otherwise, their names are auto-generated.}
 \item{\code{rm_seqs(seq_names)}}{Remove one or more sequences based on names in
 the \code{seq_names} vector.}
 \item{\code{merge_seqs()}}{Merge all sequences into one after first shuffling

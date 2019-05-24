@@ -36,8 +36,8 @@ VarSequence& VarSequence::operator+=(const VarSequence& other) {
     }
 
     // Combine sequence sizes:
-    sint32 diff = static_cast<sint32>(other.seq_size) -
-        static_cast<sint32>(ref_seq->size());
+    sint64 diff = static_cast<sint64>(other.seq_size) -
+        static_cast<sint64>(ref_seq->size());
     seq_size += diff;
 
     /*
@@ -64,7 +64,7 @@ VarSequence& VarSequence::operator+=(const VarSequence& other) {
         }
     } else if (other_is_after) {
         // The amount to adjust the new mutation's `new_pos` fields:
-        diff = static_cast<sint32>(seq_size) - static_cast<sint32>(ref_seq->size());
+        diff = static_cast<sint64>(seq_size) - static_cast<sint64>(ref_seq->size());
         auto mut = other.mutations.begin();
         for (; mut != other.mutations.end(); ++mut) {
             // Add the new mutation to the back of `(*this).mutations`:
@@ -88,13 +88,13 @@ VarSequence& VarSequence::operator+=(const VarSequence& other) {
  based on the position in the new, variant sequence
  ------------------
  */
-char VarSequence::get_nt(const uint32& new_pos) const {
+char VarSequence::get_nt(const uint64& new_pos) const {
     char out;
     /*
      Index to the Mutation object nearest to (without being past)
      an input position (see below for the `get_mut_` fxn):
      */
-    uint32 mut_i = get_mut_(new_pos);
+    uint64 mut_i = get_mut_(new_pos);
     /*
      If the new_pos is less than the position for the first mutation
      or if mutations is empty
@@ -128,10 +128,10 @@ std::string VarSequence::get_seq_full() const {
     if (mutations.empty()) return ref_seq->nucleos;
 
     // Index to the first Mutation object
-    uint32 mut_i = 0;
+    uint64 mut_i = 0;
 
     std::string out(seq_size, 'x');
-    uint32 pos = 0;
+    uint64 pos = 0;
 
     // Picking up any nucleotides before the first mutation
     while (pos < mutations[mut_i].new_pos) {
@@ -141,7 +141,7 @@ std::string VarSequence::get_seq_full() const {
 
     // Now, for each subsequent mutation except the last, add all nucleotides
     // at or after its position but before the next one
-    uint32 next_mut_i = mut_i + 1;
+    uint64 next_mut_i = mut_i + 1;
     while (next_mut_i < mutations.size()) {
         while (pos < mutations[next_mut_i].new_pos) {
             out[pos] = get_char_(pos, mut_i);
@@ -177,11 +177,11 @@ std::string VarSequence::get_seq_full() const {
  ------------------
  */
 void VarSequence::set_seq_chunk(std::string& chunk_str,
-                                const uint32& start,
-                                const uint32& chunk_size,
-                                uint32& mut_i) const {
+                                const uint64& start,
+                                const uint64& chunk_size,
+                                uint64& mut_i) const {
 
-    uint32 end = start + chunk_size - 1;
+    uint64 end = start + chunk_size - 1;
 
     if (start >= seq_size) {
         mut_i = mutations.size();
@@ -191,7 +191,7 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
     // Making sure end doesn't go beyond the sequence bounds
     if (end >= seq_size) end = seq_size - 1;
 
-    uint32 out_length = end - start + 1;
+    uint64 out_length = end - start + 1;
 
     // No need to mess around with mutations if there aren't any
     if (mutations.empty()) {
@@ -207,8 +207,8 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
     // Clearing string if necessary (reserving memory should happen outside this method)
     if (chunk_str.size() > 0) chunk_str.clear();
 
-    uint32 pos = start;
-    uint32 next_mut_i = mut_i + 1;
+    uint64 pos = start;
+    uint64 next_mut_i = mut_i + 1;
 
     /*
      Picking up any nucleotides before the focal mutation (this should only happen when
@@ -257,13 +257,13 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
  */
 
 void VarSequence::fill_read(std::string& read,
-                            const uint32& read_start,
-                            const uint32& seq_start,
-                            uint32 n_to_add) const {
+                            const uint64& read_start,
+                            const uint64& seq_start,
+                            uint64 n_to_add) const {
 
-    uint32 mut_i = 0;
+    uint64 mut_i = 0;
 
-    uint32 seq_end = seq_start + n_to_add - 1;
+    uint64 seq_end = seq_start + n_to_add - 1;
     // Making sure seq_end doesn't go beyond the sequence bounds
     if (seq_end >= seq_size) {
         seq_end = seq_size - 1;
@@ -275,7 +275,7 @@ void VarSequence::fill_read(std::string& read,
 
     // No need to mess around with mutations if there aren't any
     if (mutations.empty()) {
-        for (uint32 i = 0; i < n_to_add; i++) {
+        for (uint64 i = 0; i < n_to_add; i++) {
             read[(read_start + i)] = ref_seq->nucleos[(seq_start + i)];
         }
         return;
@@ -287,9 +287,9 @@ void VarSequence::fill_read(std::string& read,
     }
     if (mut_i != 0) --mut_i;
 
-    uint32 seq_pos = seq_start;
-    uint32 read_pos = read_start;
-    uint32 next_mut_i = mut_i + 1;
+    uint64 seq_pos = seq_start;
+    uint64 read_pos = read_start;
+    uint64 next_mut_i = mut_i + 1;
 
     /*
      Picking up any nucleotides before the focal mutation (this should only happen when
@@ -342,12 +342,12 @@ void VarSequence::fill_read(std::string& read,
  that is directly previous to the index position.
  ------------------
  */
-char VarSequence::get_char_(const uint32& new_pos,
-                            const uint32& mut_i) const {
+char VarSequence::get_char_(const uint64& new_pos,
+                            const uint64& mut_i) const {
     const Mutation& m(mutations[mut_i]);
     char out;
-    uint32 ind = new_pos - m.new_pos;
-    if (static_cast<sint32>(ind) > m.size_modifier) {
+    uint64 ind = new_pos - m.new_pos;
+    if (static_cast<sint64>(ind) > m.size_modifier) {
         ind += (m.old_pos - m.size_modifier);
         out = (*ref_seq)[ind];
     } else {
@@ -373,9 +373,9 @@ void VarSequence::calc_positions() {
 
     if (mutations.size() == 0) return;
 
-    uint32 mut_i = 0;
+    uint64 mut_i = 0;
 
-    sint32 modifier = mutations[mut_i].size_modifier;
+    sint64 modifier = mutations[mut_i].size_modifier;
     ++mut_i;
 
     // Updating individual Mutation objects
@@ -393,9 +393,9 @@ void VarSequence::calc_positions() {
  (this is for after you insert a NEW Mutation, where `mut_i` below points to
  that Mutation)
  */
-void VarSequence::calc_positions(uint32 mut_i) {
+void VarSequence::calc_positions(uint64 mut_i) {
 
-    sint32 modifier = mutations[mut_i].size_modifier;
+    sint64 modifier = mutations[mut_i].size_modifier;
     ++mut_i;
 
     // Updating individual Mutation objects
@@ -413,7 +413,7 @@ void VarSequence::calc_positions(uint32 mut_i) {
  that merged Mutation and `modifier` refers to the net change in sequence size
  after the merge)
  */
-void VarSequence::calc_positions(uint32 mut_i, const sint32& modifier) {
+void VarSequence::calc_positions(uint64 mut_i, const sint64& modifier) {
     // Updating individual Mutation objects
     for (; mut_i < mutations.size(); ++mut_i) {
         mutations[mut_i].new_pos += modifier;
@@ -440,32 +440,32 @@ void VarSequence::calc_positions(uint32 mut_i, const sint32& modifier) {
  Add a deletion somewhere in the deque
  ------------------
  */
-void VarSequence::add_deletion(const uint32& size_, const uint32& new_pos_) {
+void VarSequence::add_deletion(const uint64& size_, const uint64& new_pos_) {
 
     if (size_ == 0 || new_pos_ >= seq_size) return;
 
-    uint32 mut_i;
+    uint64 mut_i;
 
     // Renaming this for a more descriptive name and to allow it to change
-    uint32 deletion_start = new_pos_;
+    uint64 deletion_start = new_pos_;
 
     /*
      Last position this deletion refers to
      (`std::min` is to coerce this deletion to one that's possible):
      */
-    uint32 deletion_end = std::min(deletion_start + size_ - 1, seq_size - 1);
+    uint64 deletion_end = std::min(deletion_start + size_ - 1, seq_size - 1);
 
     /*
      Position on the old reference sequence for this deletion.
      This will change if there are insertions or deletions before `new_pos_`.
      */
-    uint32 old_pos_ = new_pos_;
+    uint64 old_pos_ = new_pos_;
 
     /*
      Size modifier of this deletion. This can change when deletion merges with an
      insertion or another deletion.
      */
-    sint32 size_mod = deletion_start - deletion_end - 1;
+    sint64 size_mod = deletion_start - deletion_end - 1;
 
     /*
      If `mutations` is empty, just add to the beginning and adjust sequence size
@@ -486,7 +486,7 @@ void VarSequence::add_deletion(const uint32& size_, const uint32& new_pos_) {
          Sequence-size modifier to be used to edit subsequent mutations.
          This number does not change.
          */
-        const sint32 subseq_modifier(size_mod);
+        const sint64 subseq_modifier(size_mod);
 
         mut_i = get_mut_(deletion_start);
 
@@ -537,9 +537,9 @@ void VarSequence::add_deletion(const uint32& size_, const uint32& new_pos_) {
  Add an insertion somewhere in the deque
  ------------------
  */
-void VarSequence::add_insertion(const std::string& nucleos_, const uint32& new_pos_) {
+void VarSequence::add_insertion(const std::string& nucleos_, const uint64& new_pos_) {
 
-    uint32 mut_i = get_mut_(new_pos_);
+    uint64 mut_i = get_mut_(new_pos_);
     // `mutations.size()` is returned above if `new_pos_` is before the
     // first Mutation object or if `mutations` is empty
     if (mut_i == mutations.size()) {
@@ -548,22 +548,22 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint32& new_p
         Mutation new_mut(new_pos_, new_pos_, nt);
         mutations.push_front(new_mut);
         // Adjust new positions and total sequence size:
-        calc_positions(static_cast<uint32>(0));
+        calc_positions(static_cast<uint64>(0));
         return;
     }
 
-    uint32 ind = new_pos_ - mutations[mut_i].new_pos;
+    uint64 ind = new_pos_ - mutations[mut_i].new_pos;
     /*
      If `new_pos_` is within the Mutation sequence (which is never the case for
      deletions), then we adjust it as such:
      */
-    if (static_cast<sint32>(ind) <= mutations[mut_i].size_modifier) {
-        sint32 size_ = nucleos_.size();
+    if (static_cast<sint64>(ind) <= mutations[mut_i].size_modifier) {
+        sint64 size_ = nucleos_.size();
         // string to store combined nucleotides
         std::string nt = "";
-        for (uint32 j = 0; j <= ind; j++) nt += mutations[mut_i][j];
+        for (uint64 j = 0; j <= ind; j++) nt += mutations[mut_i][j];
         nt += nucleos_;
-        for (uint32 j = ind + 1; j < mutations[mut_i].nucleos.size(); j++) {
+        for (uint64 j = ind + 1; j < mutations[mut_i].nucleos.size(); j++) {
             nt += mutations[mut_i][j];
         }
         // Update nucleos and size_modifier fields:
@@ -576,7 +576,7 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint32& new_p
          a new Mutation object:
          */
     } else {
-        uint32 old_pos_ = ind + (mutations[mut_i].old_pos -
+        uint64 old_pos_ = ind + (mutations[mut_i].old_pos -
             mutations[mut_i].size_modifier);
         std::string nt = (*ref_seq)[old_pos_] + nucleos_;
         Mutation new_mut(old_pos_, new_pos_, nt);
@@ -597,9 +597,9 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint32& new_p
  Add a substitution somewhere in the deque
  ------------------
  */
-void VarSequence::add_substitution(const char& nucleo, const uint32& new_pos_) {
+void VarSequence::add_substitution(const char& nucleo, const uint64& new_pos_) {
 
-    uint32 mut_i = get_mut_(new_pos_);
+    uint64 mut_i = get_mut_(new_pos_);
 
     // `mutations.size()` is returned above if `new_pos_` is before the
     // first Mutation object or if `mutations` is empty
@@ -609,13 +609,13 @@ void VarSequence::add_substitution(const char& nucleo, const uint32& new_pos_) {
         Mutation new_mut(new_pos_, new_pos_, nucleos_);
         mutations.push_front(new_mut);
     } else {
-        uint32 ind = new_pos_ - mutations[mut_i].new_pos;
+        uint64 ind = new_pos_ - mutations[mut_i].new_pos;
         // If `new_pos_` is within the mutation sequence:
-        if (static_cast<sint32>(ind) <= mutations[mut_i].size_modifier) {
+        if (static_cast<sint64>(ind) <= mutations[mut_i].size_modifier) {
             mutations[mut_i].nucleos[ind] = nucleo;
             // If `new_pos_` is in the reference sequence following the mutation:
         } else {
-            uint32 old_pos_ = ind + (mutations[mut_i].old_pos -
+            uint64 old_pos_ = ind + (mutations[mut_i].old_pos -
                 mutations[mut_i].size_modifier);
             std::string nucleos_(1, nucleo);
             Mutation new_mut(old_pos_, new_pos_, nucleos_);
@@ -643,8 +643,8 @@ void VarSequence::add_substitution(const char& nucleo, const uint32& new_pos_) {
  Note that there's a check to ensure that this is never run when `mutations`
  is empty.
  */
-void VarSequence::deletion_blowup_(uint32& mut_i, uint32& deletion_start,
-                                   uint32& deletion_end, sint32& size_mod) {
+void VarSequence::deletion_blowup_(uint64& mut_i, uint64& deletion_start,
+                                   uint64& deletion_end, sint64& size_mod) {
 
     /*
      ---------
@@ -718,7 +718,7 @@ void VarSequence::deletion_blowup_(uint32& mut_i, uint32& deletion_start,
      `mut_i` will point to the object after the last to be erased.
      `range_begin` will point to the first object to be erased.
      */
-    uint32 range_begin = mut_i;
+    uint64 range_begin = mut_i;
     while (mut_i < mutations.size()) {
         if (mutations[mut_i].new_pos > deletion_end) break;
         // For substitutions, do nothing before iterating
@@ -767,13 +767,13 @@ void VarSequence::deletion_blowup_(uint32& mut_i, uint32& deletion_start,
  `n_iters` is how many positions were moved during this function.
  It also moves the index to the next Mutation object.
  */
-void VarSequence::merge_del_ins_(uint32& insert_i,
-                                 uint32& deletion_start, uint32& deletion_end,
-                                 sint32& size_mod) {
+void VarSequence::merge_del_ins_(uint64& insert_i,
+                                 uint64& deletion_start, uint64& deletion_end,
+                                 sint64& size_mod) {
 
     // The starting and ending positions of the focal insertion
-    uint32& insertion_start(mutations[insert_i].new_pos);
-    uint32 insertion_end = insertion_start + mutations[insert_i].size_modifier;
+    uint64& insertion_start(mutations[insert_i].new_pos);
+    uint64 insertion_end = insertion_start + mutations[insert_i].size_modifier;
 
     /*
      If the deletion doesn't overlap, move to the next Mutation
@@ -798,14 +798,14 @@ void VarSequence::merge_del_ins_(uint32& insert_i,
     } else {
 
         // index for first char to erase from `nucleos`
-        sint32 tmp = deletion_start - insertion_start;
+        sint64 tmp = deletion_start - insertion_start;
         if (tmp < 0L) tmp = 0L;
-        uint32 erase_ind0 = static_cast<uint32>(tmp);
+        uint64 erase_ind0 = static_cast<uint64>(tmp);
         // index for last char NOT to erase from `nucleos`
-        uint32 erase_ind1 = deletion_end - insertion_start + 1;
+        uint64 erase_ind1 = deletion_end - insertion_start + 1;
         erase_ind1 = std::min(
             erase_ind1,
-            static_cast<uint32>(mutations[insert_i].nucleos.size())
+            static_cast<uint64>(mutations[insert_i].nucleos.size())
         );
 
         // Adjust the size modifier for the eventual Mutation object
@@ -854,7 +854,7 @@ void VarSequence::merge_del_ins_(uint32& insert_i,
  If the removal occurs at the beginning of the mutations deque, then
  `mut_i == 0 && mut_i2 == 0` after this function is run.
  */
-void VarSequence::remove_mutation_(uint32& mut_i) {
+void VarSequence::remove_mutation_(uint64& mut_i) {
     if (mut_i == mutations.size()) return;
     // erase:
     mutations.erase(mutations.begin() + mut_i);
@@ -862,7 +862,7 @@ void VarSequence::remove_mutation_(uint32& mut_i) {
     clear_memory<std::deque<Mutation>>(mutations);
     return;
 }
-void VarSequence::remove_mutation_(uint32& mut_i1, uint32& mut_i2) {
+void VarSequence::remove_mutation_(uint64& mut_i1, uint64& mut_i2) {
 
     // erase range:
     mutations.erase(mutations.begin() + mut_i1, mutations.begin() + mut_i2);
@@ -894,9 +894,9 @@ void VarSequence::remove_mutation_(uint32& mut_i1, uint32& mut_i2) {
  ------------------
  */
 
-uint32 VarSequence::get_mut_(const uint32& new_pos) const {
+uint64 VarSequence::get_mut_(const uint64& new_pos) const {
 
-    uint32 mut_i = 0;
+    uint64 mut_i = 0;
 
     if (mutations.empty()) return mutations.size();
 
@@ -948,7 +948,7 @@ uint32 VarSequence::get_mut_(const uint32& new_pos) const {
 
 void VarSet::print() const noexcept {
 
-    uint32 total_muts = 0;
+    uint64 total_muts = 0;
     for (const VarGenome& vg : variants) {
         for (const VarSequence& vs : vg.var_genome) {
             total_muts += vs.mutations.size();
@@ -964,8 +964,8 @@ void VarSet::print() const noexcept {
     for (int i = 0; i < n_spaces; i++) Rcout << ' ';
     Rcout << "<< Variants object >>" << std::endl;
 
-    Rcout << "# Variants: " << big_int_format<uint32>(size()) << std::endl;
-    Rcout << "# Mutations: " << big_int_format<uint32>(total_muts) << std::endl;
+    Rcout << "# Variants: " << big_int_format<uint64>(size()) << std::endl;
+    Rcout << "# Mutations: " << big_int_format<uint64>(total_muts) << std::endl;
     Rcout << std::endl;
 
     n_spaces = static_cast<int>(

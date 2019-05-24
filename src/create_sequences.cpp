@@ -56,11 +56,11 @@ using namespace Rcpp;
  */
 
 template <typename OuterClass, typename InnerClass>
-OuterClass create_sequences_(const uint32& n_seqs,
+OuterClass create_sequences_(const uint64& n_seqs,
                              const double& len_mean,
                              const double& len_sd,
                              const std::vector<double>& pi_tcag,
-                             uint32 n_threads) {
+                             uint64 n_threads) {
 
     // Check that # threads isn't too high and change to 1 if not using OpenMP:
     thread_check(n_threads);
@@ -90,7 +90,7 @@ OuterClass create_sequences_(const uint32& n_seqs,
 
     // Write the active seed per thread or just write one of the seeds.
     #ifdef _OPENMP
-    uint32 active_thread = omp_get_thread_num();
+    uint64 active_thread = omp_get_thread_num();
     active_seeds = seeds[active_thread];
     #else
     active_seeds = seeds[0];
@@ -109,22 +109,22 @@ OuterClass create_sequences_(const uint32& n_seqs,
     #ifdef _OPENMP
     #pragma omp for schedule(static)
     #endif
-    for (uint32 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_seqs; i++) {
 
         if (prog_bar.is_aborted() || prog_bar.check_abort()) continue;
 
         InnerClass& seq(seqs_out[i]);
 
         // Get length of output sequence:
-        uint32 len;
+        uint64 len;
         if (len_sd > 0) {
-            len = static_cast<uint32>(distr(engine));
+            len = static_cast<uint64>(distr(engine));
             if (len < 1) len = 1;
         } else len = len_mean;
         // Sample sequence:
         seq.reserve(len);
-        for (uint32 j = 0; j < len; j++) {
-            uint32 k = sampler.sample(engine);
+        for (uint64 j = 0; j < len; j++) {
+            uint64 k = sampler.sample(engine);
             seq.push_back(bases_[k]);
         }
     }
@@ -163,11 +163,11 @@ OuterClass create_sequences_(const uint32& n_seqs,
 //'
 //'
 //[[Rcpp::export]]
-SEXP create_genome_cpp(const uint32& n_seqs,
+SEXP create_genome_cpp(const uint64& n_seqs,
                        const double& len_mean,
                        const double& len_sd,
                        std::vector<double> pi_tcag,
-                       const uint32& n_threads) {
+                       const uint64& n_threads) {
 
     XPtr<RefGenome> ref_xptr(new RefGenome(), true);
     RefGenome& ref(*ref_xptr);
@@ -175,7 +175,7 @@ SEXP create_genome_cpp(const uint32& n_seqs,
     ref = create_sequences_<RefGenome, RefSequence>(
         n_seqs, len_mean, len_sd, pi_tcag, n_threads);
 
-    for (uint32 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_seqs; i++) {
         ref.total_size += ref[i].size();
         ref[i].name = "seq" + std::to_string(i);
     }
@@ -199,11 +199,11 @@ SEXP create_genome_cpp(const uint32& n_seqs,
 //' @noRd
 //'
 //[[Rcpp::export]]
-std::vector<std::string> rando_seqs(const uint32& n_seqs,
+std::vector<std::string> rando_seqs(const uint64& n_seqs,
                                     const double& len_mean,
                                     const double& len_sd = 0,
                                     NumericVector pi_tcag = NumericVector(0),
-                                    const uint32& n_threads = 1) {
+                                    const uint64& n_threads = 1) {
 
     std::vector<double> pi_tcag_ = as<std::vector<double>>(pi_tcag);
     if (pi_tcag_.size() == 0) pi_tcag_ = std::vector<double>(4, 0.25);

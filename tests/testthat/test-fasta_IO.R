@@ -5,7 +5,7 @@ context("Testing FASTA file input/output")
 # library(testthat)
 
 
-dir <- tempdir()
+dir <- tempdir(check = TRUE)
 
 
 
@@ -78,7 +78,7 @@ test_that("Read/writing single non-indexed FASTA files works with uncompressed o
 
     fa_fn <- sprintf("%s/%s", dir, "test")
 
-    write_fasta(ref, fa_fn, compress = FALSE)
+    write_fasta(ref, fa_fn, compress = FALSE, overwrite = TRUE)
 
     fa_fn <- sprintf("%s/%s.fa", dir, "test")
     new_ref <- read_fasta(fa_fn)
@@ -96,7 +96,7 @@ test_that("Read/writing single non-indexed FASTA files works with gzipped output
 
     fa_fn <- sprintf("%s/%s", dir, "test")
 
-    write_fasta(ref, fa_fn, compress = TRUE, comp_method = "gzip")
+    write_fasta(ref, fa_fn, compress = TRUE, comp_method = "gzip", overwrite = TRUE)
 
     fa_fn <- sprintf("%s/%s.fa.gz", dir, "test")
     new_ref <- read_fasta(fa_fn)
@@ -143,8 +143,8 @@ test_that("Read/writing multiple non-indexed FASTA files works with uncompressed
 
     fa_fns <- sprintf("%s/%s%i", dir, "test", 1:2)
 
-    write_fasta(ref1, fa_fns[1], compress = FALSE)
-    write_fasta(ref2, fa_fns[2], compress = FALSE)
+    write_fasta(ref1, fa_fns[1], compress = FALSE, overwrite = TRUE)
+    write_fasta(ref2, fa_fns[2], compress = FALSE, overwrite = TRUE)
 
     fa_fns <- sprintf("%s/%s%i.fa", dir, "test", 1:2)
     new_ref <- read_fasta(fa_fns)
@@ -162,8 +162,8 @@ test_that("Read/writing multiple non-indexed FASTA files works with gzipped outp
 
     fa_fns <- sprintf("%s/%s%i", dir, "test", 1:2)
 
-    write_fasta(ref1, fa_fns[1], compress = TRUE, comp_method = "gzip")
-    write_fasta(ref2, fa_fns[2], compress = TRUE, comp_method = "gzip")
+    write_fasta(ref1, fa_fns[1], compress = TRUE, comp_method = "gzip", overwrite = TRUE)
+    write_fasta(ref2, fa_fns[2], compress = TRUE, comp_method = "gzip", overwrite = TRUE)
 
     fa_fns <- sprintf("%s/%s%i.fa.gz", dir, "test", 1:2)
     new_ref <- read_fasta(fa_fns)

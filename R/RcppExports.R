@@ -108,8 +108,8 @@ illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compr
 #'
 #' @noRd
 #'
-illumina_var_cpp <- function(var_set_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
-    invisible(.Call(`_jackalope_illumina_var_cpp`, var_set_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
+illumina_var_cpp <- function(var_set_ptr, paired, matepair, out_prefix, sep_files, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
+    invisible(.Call(`_jackalope_illumina_var_cpp`, var_set_ptr, paired, matepair, out_prefix, sep_files, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, variant_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
 }
 
 #' PacBio sequence for reference object.
@@ -126,8 +126,8 @@ pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, comp_method, n_
 #'
 #' @noRd
 #'
-pacbio_var_cpp <- function(var_set_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
-    invisible(.Call(`_jackalope_pacbio_var_cpp`, var_set_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
+pacbio_var_cpp <- function(var_set_ptr, out_prefix, sep_files, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
+    invisible(.Call(`_jackalope_pacbio_var_cpp`, var_set_ptr, out_prefix, sep_files, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
 }
 
 #' Write Gamma matrix info to a tab-delimited BED file.
@@ -249,78 +249,8 @@ write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, show
     invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix, show_progress))
 }
 
-#' Used below to directly make a MutationTypeSampler
-#'
-#' @noRd
-#'
-NULL
-
-#' Add mutations at segregating sites for one sequence from coalescent simulation output.
-#'
-#' @noRd
-#'
-NULL
-
-make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates) {
-    .Call(`_jackalope_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates)
-}
-
-make_mutation_sampler_chunk_base <- function(Q, pi_tcag, insertion_rates, deletion_rates, chunk_size) {
-    .Call(`_jackalope_make_mutation_sampler_chunk_base`, Q, pi_tcag, insertion_rates, deletion_rates, chunk_size)
-}
-
-#' Add mutations at segregating sites from coalescent simulation output.
-#'
-#' @noRd
-#'
-add_coal_sites_cpp <- function(ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress) {
-    .Call(`_jackalope_add_coal_sites_cpp`, ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress)
-}
-
-#' Fill matrix of Gamma-region end points and Gamma values.
-#'
-#' @param gamma_mat The gamma matrix to fill.
-#' @param gammas_x_sizes The value of `sum(gamma[i] * region_size[i])` to fill in.
-#'     This value is used to later determine (in fxn `make_gamma_mats`) the
-#'     mean gamma value across the whole genome, which is then used to make sure that
-#'     the overall mean is 1.
-#' @param seq_size_ Length of the focal sequence.
-#' @param gamma_size_ Size of each Gamma region.
-#' @param shape The shape parameter for the Gamma distribution from which
-#'     Gamma values will be derived.
-#' @param eng A random number generator.
-#'
-#'
-#' @noRd
-#'
-NULL
-
-#' Make matrices of Gamma-region end points and Gamma values for multiple sequences.
-#'
-#' @param seq_sizes Lengths of the sequences in the genome.
-#' @param gamma_size_ Size of each Gamma region.
-#' @param shape The shape parameter for the Gamma distribution from which
-#'     Gamma values will be derived.
-#'
-#'
-#' @noRd
-#'
-make_gamma_mats <- function(seq_sizes, gamma_size_, shape) {
-    .Call(`_jackalope_make_gamma_mats`, seq_sizes, gamma_size_, shape)
-}
-
-#' Check input Gamma matrices for proper # columns and end points.
-#'
-#' @param mats List of matrices to check.
-#' @param seq_sizes Vector of sequences sizes for all sequences.
-#'
-#' @return A length-2 vector of potential error codes and the index (1-based indexing)
-#'     to which matrix was a problem.
-#'
-#' @noRd
-#'
-check_gamma_mats <- function(mats, seq_sizes) {
-    invisible(.Call(`_jackalope_check_gamma_mats`, mats, seq_sizes))
+make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates, region_size) {
+    .Call(`_jackalope_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates, region_size)
 }
 
 #' Create XPtr to nested vector of PhyloTree objects from phylogeny information.
@@ -331,30 +261,12 @@ phylo_info_to_trees <- function(genome_phylo_info) {
     .Call(`_jackalope_phylo_info_to_trees`, genome_phylo_info)
 }
 
-#' Create XPtr to nested vector of PhyloTree objects from phylogeny information.
-#'
-#' Same as above, but chunked.
-#'
-#' @noRd
-#'
-phylo_info_to_trees_chunk <- function(genome_phylo_info) {
-    .Call(`_jackalope_phylo_info_to_trees_chunk`, genome_phylo_info)
-}
-
 #' Evolve all sequences in a reference genome.
 #'
 #' @noRd
 #'
 evolve_seqs <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress) {
     .Call(`_jackalope_evolve_seqs`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress)
-}
-
-#' Same as above, but using chunks.
-#'
-#' @noRd
-#'
-evolve_seqs_chunk <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress) {
-    .Call(`_jackalope_evolve_seqs_chunk`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress)
 }
 
 #' Add mutations manually from R.
@@ -526,6 +438,18 @@ remove_var_set_vars <- function(var_set_ptr, var_inds) {
     invisible(.Call(`_jackalope_remove_var_set_vars`, var_set_ptr, var_inds))
 }
 
+add_ref_genome_seqs <- function(ref_genome_ptr, new_seqs, new_names) {
+    invisible(.Call(`_jackalope_add_ref_genome_seqs`, ref_genome_ptr, new_seqs, new_names))
+}
+
+add_var_set_vars <- function(var_set_ptr, new_names) {
+    invisible(.Call(`_jackalope_add_var_set_vars`, var_set_ptr, new_names))
+}
+
+dup_var_set_vars <- function(var_set_ptr, var_inds, new_names) {
+    invisible(.Call(`_jackalope_dup_var_set_vars`, var_set_ptr, var_inds, new_names))
+}
+
 #' Turns a VarGenome's mutations into a list of data frames.
 #'
 #' Internal function for testing.
@@ -600,6 +524,53 @@ add_deletion <- function(var_set_ptr, var_ind, seq_ind, size_, new_pos_) {
 #'
 test_rate <- function(start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_) {
     .Call(`_jackalope_test_rate`, start, end, var_ind, seq_ind, var_set_ptr, sampler_base_ptr, gamma_mat_)
+}
+
+#' Fill matrix of Gamma-region end points and Gamma values.
+#'
+#' @param gamma_mat The gamma matrix to fill.
+#' @param gammas_x_sizes The value of `sum(gamma[i] * region_size[i])` to fill in.
+#'     This value is used to later determine (in fxn `make_gamma_mats`) the
+#'     mean gamma value across the whole genome, which is then used to make sure that
+#'     the overall mean is 1.
+#' @param seq_size_ Length of the focal sequence.
+#' @param region_size_ Size of each Gamma region.
+#' @param shape The shape parameter for the Gamma distribution from which
+#'     Gamma values will be derived.
+#' @param invariant Proportion of invariant regions.
+#' @param eng A random number generator.
+#'
+#'
+#' @noRd
+#'
+NULL
+
+#' Make matrices of Gamma-region end points and Gamma values for multiple sequences.
+#'
+#' @param seq_sizes Lengths of the sequences in the genome.
+#' @param region_size_ Size of each Gamma region.
+#' @param shape The shape parameter for the Gamma distribution from which
+#'     Gamma values will be derived.
+#'
+#'
+#' @noRd
+#'
+make_gamma_mats <- function(seq_sizes, region_size_, shape, invariant) {
+    .Call(`_jackalope_make_gamma_mats`, seq_sizes, region_size_, shape, invariant)
+}
+
+#' Check input Gamma matrices for proper # columns and end points.
+#'
+#' @param mats List of matrices to check.
+#' @param seq_sizes Vector of sequences sizes for all sequences.
+#'
+#' @return A length-2 vector of potential error codes and the index (1-based indexing)
+#'     to which matrix was a problem.
+#'
+#' @noRd
+#'
+check_gamma_mats <- function(mats, seq_sizes) {
+    invisible(.Call(`_jackalope_check_gamma_mats`, mats, seq_sizes))
 }
 
 #' Construct necessary information for substitution models.
@@ -732,5 +703,25 @@ sub_UNREST <- function(Q) {
 
 using_openmp <- function() {
     .Call(`_jackalope_using_openmp`)
+}
+
+#' Used below to directly make a MutationTypeSampler
+#'
+#' @noRd
+#'
+NULL
+
+#' Add mutations at segregating sites for one sequence from coalescent simulation output.
+#'
+#' @noRd
+#'
+NULL
+
+#' Add mutations at segregating sites from coalescent simulation output.
+#'
+#' @noRd
+#'
+add_ssites_cpp <- function(ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress) {
+    .Call(`_jackalope_add_ssites_cpp`, ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress)
 }
 

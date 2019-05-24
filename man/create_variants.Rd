@@ -5,7 +5,7 @@
 \title{Create variants from a reference genome.}
 \usage{
 create_variants(reference, vars_info, sub, ins = NULL, del = NULL,
-  gamma_mats = NULL, chunk_size = 100, n_threads = 1,
+  gamma_mats = NULL, region_size = 100, n_threads = 1,
   show_progress = FALSE)
 }
 \arguments{
@@ -14,7 +14,12 @@ This argument is required.}
 
 \item{vars_info}{Output from one of the \code{\link{vars_functions}}.
 These functions organize higher-level information for use here.
-See \code{\link{vars_functions}} for brief descriptions and links to each method.}
+See \code{\link{vars_functions}} for brief descriptions and links to each method.
+If this argument is \code{NULL}, all arguments other than \code{reference} are ignored,
+and an empty \code{variants} object with no variants is returned.
+This is designed for use when you'd like to add mutations manually.
+If you create a blank \code{variants} object, you can= use its \code{add_vars} method
+to add variants manually.}
 
 \item{sub}{Output from one of the \code{\link{sub_models}} functions that organizes
 information for the substitution models.
@@ -39,17 +44,13 @@ variability in mutation rates among sites (for both substitutions and indels).
 Passing \code{NULL} to this argument results in no variability among sites.
 Defaults to \code{NULL}.}
 
-\item{chunk_size}{The size of "chunks" of sequences to first sample uniformly
-before doing weighted sampling by rates for each sequence location.
-Uniformly sampling before doing weighted sampling dramatically speeds up
-the mutation process (especially for very long sequences) and has little
-effect on the sampling probabilities.
-Higher values will more closely resemble sampling without the uniform-sampling
-step, but will be slower.
-Set this to \code{0} to not uniformly sample first.
-From testing on a chromosome of length \code{1e6}, a \code{chunk_size} value of \code{100}
-offers a ~10x speed increase and doesn't differ significantly from sampling
-without the uniform-sampling step.
+\item{region_size}{Size of regions to break genome into for sampling mutation
+locations.
+This causes Gamma regions to be split into smaller sections (obviously the
+Gamma values themselves are not changed).
+Doing this splitting is useful because sampling within a region is more
+computationally costly than sampling among regions.
+Higher numbers will result in lower memory usage but slower speed.
 Defaults to \code{100}.}
 
 \item{n_threads}{Number of threads to use for parallel processing.

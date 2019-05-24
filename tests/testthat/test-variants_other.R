@@ -7,9 +7,11 @@ context("Testing basics of creating variants")
 
 
 arg_list <- list(reference = create_genome(3, 100),
-                 sub = sub_JC69(0.1),
-                 ins = indels(rate = 0.1, max_length = 10),
-                 del = indels(rate = 0.1, max_length = 10))
+                 sub = sub_JC69(0.1))
+arg_list$ins <- indels(rate = 0.1, max_length = 10)
+arg_list$del <- indels(rate = 0.1, max_length = 10)
+arg_list$gamma_mats <- site_var(arg_list$reference, shape = 2, region_size = 10)
+
 
 cv <- function(vars_info, al = arg_list) {
     arg_list_ <- c(list(vars_info = vars_info), al)
@@ -29,7 +31,7 @@ test_that("missing `sub` arg throws error", {
 # vars_theta -----
 test_that("basics of vars_theta work", {
 
-    vars <- cv(vars_theta(0.1, n_vars = 4), c(list(chunk_size = 0), arg_list))
+    vars <- cv(vars_theta(0.1, n_vars = 4))
 
     expect_identical(vars$n_seqs(), arg_list$reference$n_seqs())
     expect_identical(vars$n_vars(), 4L)
@@ -77,7 +79,7 @@ test_that("basics of vars_phylo with file work", {
 
     tr <- ape::rcoal(4)
 
-    tr_file <- paste0(tempdir(), "/test.tree")
+    tr_file <- paste0(tempdir(check = TRUE), "/test.tree")
 
     ape::write.tree(tr, tr_file)
 

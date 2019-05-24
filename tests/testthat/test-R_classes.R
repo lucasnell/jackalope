@@ -16,6 +16,9 @@ seqs <- jackalope:::rando_seqs(n_seqs, len, len_sd, pi_tcag = c(8, 4, 2, 1))
 
 
 
+
+# reference basics -----
+
 test_that("Sequences from `create_genome` aren't very different from expectation.", {
     all_seqs <- paste(seqs, collapse = "")
     freq_obs <- sapply(c("T", "C", "A", "G"),
@@ -87,8 +90,12 @@ test_that("ref_genome class methods produce correct output", {
     ref$rm_seqs(nn[3])
     expect_identical(ref$names(), nn[-3])
 
+    ref$add_seqs(seqs[3], nn[3])
+    expect_identical(ref$names(), c(nn[-3], nn[3]))
+
     ref$merge_seqs()
-    expect_identical(nchar(ref$sequence(1)), nchar(paste(seqs[-3], collapse = "")))
+    expect_identical(nchar(ref$sequence(1)), nchar(paste(c(seqs[-3], seqs[3]),
+                                                         collapse = "")))
 
     nchars <- nchar(seqs)
     # Making sure of no removal when it shouldn't:
@@ -107,6 +114,20 @@ test_that("ref_genome class methods produce correct output", {
 })
 # Restart object:
 ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
+
+
+
+
+
+
+
+# ============================================================`
+# ============================================================`
+
+# variants basics -----
+
+# ============================================================`
+# ============================================================`
 
 
 
@@ -157,6 +178,17 @@ test_that("variants class methods", {
     expect_identical(vars$var_names(), nv[-1:-2])
 })
 
+
+
+
+
+# ============================================================`
+# ============================================================`
+
+# manual mutations -----
+
+# ============================================================`
+# ============================================================`
 
 
 # Make empty var_set to compare mutations
@@ -211,6 +243,16 @@ test_that("Mutations produced are accurate", {
     expect_identical(vars_R, vars_cpp)
 })
 
+
+
+
+# ============================================================`
+# ============================================================`
+
+# replace_Ns, gc/nt_prop -----
+
+# ============================================================`
+# ============================================================`
 
 
 # Testing that replace_Ns works
@@ -298,4 +340,41 @@ test_that("gc_prop and nt_prob work for variants as predicted", {
     expect_equal(vars$nt_prop('T', 2, 1, 101, 200), 100 / 100)
 
 })
+
+
+
+
+
+
+
+# ============================================================`
+# ============================================================`
+
+# +/- variants -----
+
+# ============================================================`
+# ============================================================`
+
+ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
+
+test_that("adding/removing/duplicating variants works as predicted", {
+
+    vars0 <- create_variants(ref, NULL)
+    expect_identical(vars0$n_vars(), 0L)
+
+    vars0$add_vars("var0")
+    expect_identical(vars0$n_vars(), 1L)
+    expect_identical(sapply(1:ref$n_seqs(), function(i) vars0$sequence(1, i)),
+                     sapply(1:ref$n_seqs(), function(i) ref$sequence(i)))
+
+    vars1 <- create_variants(ref, vars_theta(0.1, 4), sub_JC69(0.001))
+    vars1$dup_vars(vars1$var_names()[1:2])
+    expect_identical(vars1$n_vars(), 6L)
+    expect_identical(sapply(1:ref$n_seqs(), function(i) vars1$sequence(1, i)),
+                     sapply(1:ref$n_seqs(), function(i) vars1$sequence(5, i)))
+    expect_identical(sapply(1:ref$n_seqs(), function(i) vars1$sequence(2, i)),
+                     sapply(1:ref$n_seqs(), function(i) vars1$sequence(6, i)))
+
+})
+
 

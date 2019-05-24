@@ -283,6 +283,7 @@ check_illumina_args <- function(seq_object, n_reads,
                                 ins_prob2, del_prob2,
                                 frag_len_min, frag_len_max,
                                 variant_probs, barcodes, prob_dup,
+                                sep_files,
                                 compress, comp_method, n_threads, read_pool_size,
                                 show_progress) {
 
@@ -304,7 +305,7 @@ check_illumina_args <- function(seq_object, n_reads,
     if (!is_type(comp_method, "character", 1) || !comp_method %in% c("gzip", "bgzip")) {
         err_msg("illumina", "comp_method", "\"gzip\" or \"bgzip\"")
     }
-    for (x in c("paired", "matepair", "compress", "show_progress")) {
+    for (x in c("paired", "matepair", "sep_files", "compress", "show_progress")) {
         z <- eval(parse(text = x))
         if (!is_type(z, "logical", 1)) err_msg("illumina", x, "a single logical.")
     }
@@ -386,8 +387,8 @@ check_illumina_args <- function(seq_object, n_reads,
         n_weirdo_chars <- sapply(strsplit(barcodes, ""),
                                  function(x) sum(!x %in% c("T", "C", "A", "G")))
         if (any(n_weirdo_chars > 0)) {
-            err_msg("illumina", "barcodes", "NULL or a character vector with only the characters",
-                    "\"T\", \"C\", \"A\", and \"G\" present")
+            err_msg("illumina", "barcodes", "NULL or a character vector with only the",
+                    "characters \"T\", \"C\", \"A\", and \"G\" present")
         }
     }
 
@@ -437,25 +438,26 @@ check_illumina_args <- function(seq_object, n_reads,
 #' and
 #' "paired" indicates whether paired-end sequencing is allowed.
 #'
-#' | name                 | abbrev  | max_len | paired |
-#' |:---------------------|:--------|:--------|:-------|
-#' | Genome Analyzer I    | GA1     | 44      | Yes    |
-#' | Genome Analyzer II   | GA2     | 75      | Yes    |
-#' | HiSeq 1000           | HS10    | 100     | Yes    |
-#' | HiSeq 2000           | HS20    | 100     | Yes    |
-#' | HiSeq 2500           | HS25    | 150     | Yes    |
-#' | HiSeqX v2.5 PCR free | HSXn    | 150     | Yes    |
-#' | HiSeqX v2.5 TruSeq   | HSXt    | 150     | Yes    |
-#' | MiniSeq TruSeq       | MinS    | 50      | No     |
-#' | MiSeq v1             | MSv1    | 250     | Yes    |
-#' | MiSeq v3             | MSv3    | 250     | Yes    |
-#' | NextSeq 500 v2       | NS50    | 75      | Yes    |
+#' \tabular{llll}{
+#' name                 \tab abbrev   \tab max_len \tab paired \cr
+#' Genome Analyzer I    \tab GA1      \tab 44      \tab Yes   \cr
+#' Genome Analyzer II   \tab GA2      \tab 75      \tab Yes   \cr
+#' HiSeq 1000           \tab HS10     \tab 100     \tab Yes   \cr
+#' HiSeq 2000           \tab HS20     \tab 100     \tab Yes   \cr
+#' HiSeq 2500           \tab HS25     \tab 150     \tab Yes   \cr
+#' HiSeqX v2.5 PCR free \tab HSXn     \tab 150     \tab Yes   \cr
+#' HiSeqX v2.5 TruSeq   \tab HSXt     \tab 150     \tab Yes   \cr
+#' MiniSeq TruSeq       \tab MinS     \tab 50      \tab No    \cr
+#' MiSeq v1             \tab MSv1     \tab 250     \tab Yes   \cr
+#' MiSeq v3             \tab MSv3     \tab 250     \tab Yes   \cr
+#' NextSeq 500 v2       \tab NS50     \tab 75      \tab Yes   \cr
+#' }
 #'
 #'
 #' @section ID lines:
 #' The ID lines for FASTQ files are formatted as such:
 #'
-#' `@<genome name>-<sequence name>-<starting position>[/<read#>]`
+#' `@<genome name>-<sequence name>-<starting position>-<strand>[/<read#>]`
 #'
 #' where the part in `[]` is only for paired-end Illumina reads, and where `genome name`
 #' is always `REF` for reference genomes (as opposed to variants).
@@ -468,11 +470,13 @@ check_illumina_args <- function(seq_object, n_reads,
 #' @param n_reads Number of reads you want to create.
 #' @param read_length Length of reads.
 #' @param paired Logical for whether to use paired-end reads.
+#'     This argument is changed to `TRUE` if `matepair` is `TRUE`.
 #' @param frag_mean Mean of the Gamma distribution that generates fragment sizes.
+#'     Defaults to `400`.
 #' @param frag_sd Standard deviation of the Gamma distribution that generates
 #'     fragment sizes.
+#'     Defaults to `100`.
 #' @param matepair Logical for whether to simulate mate-pair reads.
-#'     This argument is ignored if `paired` is `FALSE`.
 #'     Defaults to `FALSE`.
 #' @param seq_sys Full or abbreviated name of sequencing system to use.
 #'     See "Sequencing systems" section for options.
@@ -505,6 +509,10 @@ check_illumina_args <- function(seq_object, n_reads,
 #'     Defaults to `NULL`.
 #' @param prob_dup A single number indicating the probability of duplicates.
 #'     Defaults to `0.02`.
+#' @param sep_files Logical indicating whether to make separate files for each variant.
+#'     This argument is coerced to `FALSE` if the `seq_object` argument is not
+#'     a `variants` object.
+#'     Defaults to `FALSE`.
 #' @param compress Logical specifying whether or not to compress output file, or
 #'     an integer specifying the level of compression, from 1 to 9.
 #'     If `TRUE`, a compression level of `6` is used.
@@ -546,8 +554,7 @@ check_illumina_args <- function(seq_object, n_reads,
 #' \dontrun{
 #' rg <- create_genome(10, 100e3, 100)
 #' illumina(rg, "illumina_reads", n_reads = 100,
-#'          read_length = 100, paired = FALSE,
-#'          frag_mean = 400, frag_sd = 100)
+#'          read_length = 100, paired = FALSE)
 #' }
 #'
 illumina <- function(seq_object,
@@ -555,8 +562,8 @@ illumina <- function(seq_object,
                      n_reads,
                      read_length,
                      paired,
-                     frag_mean,
-                     frag_sd,
+                     frag_mean = 400,
+                     frag_sd = 100,
                      matepair = FALSE,
                      seq_sys = NULL,
                      profile1 = NULL,
@@ -570,6 +577,7 @@ illumina <- function(seq_object,
                      variant_probs = NULL,
                      barcodes = NULL,
                      prob_dup = 0.02,
+                     sep_files = FALSE,
                      compress = FALSE,
                      comp_method = "bgzip",
                      n_threads = 1L,
@@ -578,16 +586,31 @@ illumina <- function(seq_object,
                      overwrite = FALSE) {
 
 
-    out_prefix <- path.expand(out_prefix)
-    check_file_existence(paste0(out_prefix, "_R", 1:ifelse(paired, 2, 1), ".fq"),
-                         compress, overwrite)
+    # We want `paired` to be coerced to TRUE if we want mate-pair sequencing
+    # I'm doing this here to make `paired` not required.
+    if (matepair) paired <- TRUE
 
     # Check for improper argument types:
     check_illumina_args(seq_object, n_reads, read_length, paired,
                         frag_mean, frag_sd, matepair, seq_sys, profile1, profile2,
                         ins_prob1, del_prob1, ins_prob2, del_prob2,
                         frag_len_min, frag_len_max, variant_probs, barcodes, prob_dup,
+                        sep_files,
                         compress, comp_method, n_threads, read_pool_size, show_progress)
+
+    out_prefix <- path.expand(out_prefix)
+    fns <- NULL
+    # Doesn't make sense to have separate files for reference genome:
+    if (inherits(seq_object, "ref_genome")) sep_files <- FALSE
+    if (!sep_files) {
+        fns <- paste0(out_prefix, "_R", 1:ifelse(paired, 2, 1), ".fq")
+    } else {
+        fns <- lapply(seq_object$var_names(),
+                      function(x) sprintf("%s_%s_R%i.fq", out_prefix, x,
+                                          1:ifelse(paired, 2, 1)))
+        fns <- c(fns, recursive = TRUE)
+    }
+    check_file_existence(fns, compress, overwrite)
 
     # Set compression level:
     if (is_type(compress, "logical", 1) && compress) compress <- 6 # default compression
@@ -636,6 +659,7 @@ illumina <- function(seq_object,
 
     # Assembling list of arguments for inner cpp function:
     args <- list(out_prefix = out_prefix,
+                 sep_files = sep_files,
                  compress = compress,
                  comp_method = comp_method,
                  n_reads = n_reads,
@@ -661,6 +685,7 @@ illumina <- function(seq_object,
 
     if (inherits(seq_object, "ref_genome")) {
         args <- c(args, list(ref_genome_ptr = seq_object$genome))
+        args$sep_files <- NULL
         do.call(illumina_ref_cpp, args)
     } else if (inherits(seq_object, "variants")) {
         args <- c(args, list(var_set_ptr = seq_object$genomes,

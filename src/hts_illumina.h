@@ -42,19 +42,19 @@ using namespace Rcpp;
 
 // Basic information to construct reads
 struct IlluminaReadConstrInfo {
-    uint32 read_length;
-    uint32 seq_ind;
-    uint32 frag_len;
-    uint32 frag_start;
+    uint64 read_length;
+    uint64 seq_ind;
+    uint64 frag_len;
+    uint64 frag_start;
     std::vector<std::string> reads;
     std::vector<std::string> quals;
-    std::vector<uint32> read_seq_spaces;
+    std::vector<uint64> read_seq_spaces;
     std::string barcode;
 
 
     IlluminaReadConstrInfo() {}
     IlluminaReadConstrInfo(const bool& paired,
-                           const uint32& read_length_,
+                           const uint64& read_length_,
                            const std::string barcode_)
         : read_length(read_length_),
           seq_ind(0),
@@ -68,11 +68,11 @@ struct IlluminaReadConstrInfo {
         if (paired) {
             reads = std::vector<std::string>(2, std::string(read_length, 'N'));
             quals = std::vector<std::string>(2);
-            read_seq_spaces = std::vector<uint32>(2);
+            read_seq_spaces = std::vector<uint64>(2);
         } else {
             reads = std::vector<std::string>(1, std::string(read_length, 'N'));
             quals = std::vector<std::string>(1);
-            read_seq_spaces = std::vector<uint32>(1);
+            read_seq_spaces = std::vector<uint64>(1);
         }
     }
     IlluminaReadConstrInfo(const IlluminaReadConstrInfo& other)
@@ -95,7 +95,7 @@ public:
 
     std::vector<AliasSampler> samplers;
     std::vector<std::vector<uint8>> quals;
-    uint32 read_length;
+    uint64 read_length;
 
     IllQualPos() {};
     IllQualPos(const std::vector<std::vector<double>>& probs_,
@@ -108,7 +108,7 @@ public:
 
         samplers.reserve(read_length);
         quals.reserve(read_length);
-        for (uint32 i = 0; i < read_length; i++) {
+        for (uint64 i = 0; i < read_length; i++) {
             samplers.push_back(AliasSampler(probs_[i]));
         }
 
@@ -124,9 +124,9 @@ public:
     }
 
     // Sample for a quality
-    uint8 sample(const uint32& pos,
+    uint8 sample(const uint64& pos,
                  pcg64& eng) const {
-        uint32 k = samplers[pos].sample(eng);
+        uint64 k = samplers[pos].sample(eng);
         return quals[pos][k];
     }
 
@@ -155,7 +155,7 @@ public:
         : by_nt(),
           qual_prob_map() {
 
-        uint32 read_length(probs_[0].size());
+        uint64 read_length(probs_[0].size());
 
         if (probs_.size() != 4 || quals_.size() != 4) {
             stop("All probs and quals for IlluminaQualityError must be of length 4");
@@ -164,7 +164,7 @@ public:
         by_nt.reserve(4);
         // For making the vector to map qualities to probabilities of mismatches:
         uint8 max_qual = 0;
-        for (uint32 i = 0; i < 4; i++) {
+        for (uint64 i = 0; i < 4; i++) {
             if (probs_[i].size() != read_length) {
                 stop("In IlluminaQualityError construct, all probs' lengths not equal");
             }
@@ -180,7 +180,7 @@ public:
 
         qual_prob_map.reserve(max_qual+1);  // `+1` bc we're using qualities as indices
         qual_prob_map.push_back(1);
-        for (uint32 q = 1; q < (static_cast<uint32>(max_qual)+1U); q++) {
+        for (uint64 q = 1; q < (static_cast<uint64>(max_qual)+1ULL); q++) {
             double prob = std::pow(10, static_cast<double>(q) / -10.0);
             qual_prob_map.push_back(prob);
         }
@@ -200,8 +200,8 @@ public:
      */
     void fill_read_qual(std::string& read,
                         std::string& qual,
-                        std::deque<uint32>& insertions,
-                        std::deque<uint32>& deletions,
+                        std::deque<uint64>& insertions,
+                        std::deque<uint64>& deletions,
                         pcg64& eng) const {
 
         double mis_prob, u;
@@ -209,10 +209,10 @@ public:
         /*
          Add indels:
          */
-        uint32 seq_pos = read.size() - 1;
+        uint64 seq_pos = read.size() - 1ULL;
         while (!insertions.empty() || !deletions.empty()) {
             if (!insertions.empty() && seq_pos == insertions.back()) {
-                char c = alias_sampler::bases[static_cast<uint32>(runif_01(eng) * 4UL)];
+                char c = alias_sampler::bases[static_cast<uint64>(runif_01(eng) * 4.0)];
                 read.insert(seq_pos + 1, 1, c);
                 insertions.pop_back();
             } else if (!deletions.empty() && seq_pos == deletions.back()) {
@@ -226,7 +226,7 @@ public:
         /*
          Add mismatches:
          */
-        for (uint32 pos = 0; pos < read.size(); pos++) {
+        for (uint64 pos = 0; pos < read.size(); pos++) {
             char& nt(read[pos]);
             nt_ind = nt_map[nt];
             /*
@@ -250,7 +250,7 @@ public:
             u = runif_01(eng);
             if (u < mis_prob) {
                 const std::string& mm_str(mm_nucleos[nt_ind]);
-                nt = mm_str[static_cast<uint32>(runif_01(eng) * 3)];
+                nt = mm_str[static_cast<uint64>(runif_01(eng) * 3.0)];
             }
         }
 
@@ -303,9 +303,9 @@ public:
 
 
     /* __ Info __ */
-    std::vector<uint32> seq_lengths;    // genome-sequence lengths
+    std::vector<uint64> seq_lengths;    // genome-sequence lengths
     const T* sequences;                 // pointer to `const T`
-    uint32 read_length;                 // Length of reads
+    uint64 read_length;                 // Length of reads
     bool paired;                        // Boolean for whether to do paired-end reads
     bool matepair;                      // Boolean for whether to do mate-pair reads
     std::vector<double> ins_probs;      // Per-base prob. of an insertion, reads 1 and 2
@@ -318,8 +318,8 @@ public:
                       const bool& matepair_,
                       const double& frag_len_shape,
                       const double& frag_len_scale,
-                      const uint32& frag_len_min_,
-                      const uint32& frag_len_max_,
+                      const uint64& frag_len_min_,
+                      const uint64& frag_len_max_,
                       const std::vector<std::vector<std::vector<double>>>& qual_probs1,
                       const std::vector<std::vector<std::vector<uint8>>>& quals1,
                       const double& ins_prob1,
@@ -362,8 +362,8 @@ public:
     IlluminaOneGenome(const T& seq_object,
                       const double& frag_len_shape,
                       const double& frag_len_scale,
-                      const uint32& frag_len_min_,
-                      const uint32& frag_len_max_,
+                      const uint64& frag_len_min_,
+                      const uint64& frag_len_max_,
                       const std::vector<std::vector<std::vector<double>>>& qual_probs,
                       const std::vector<std::vector<std::vector<uint8>>>& quals,
                       const double& ins_prob,
@@ -435,11 +435,11 @@ public:
 protected:
 
     // To store indel locations, where each vector will be of length 2 if paired==true
-    std::vector<std::deque<uint32>> insertions;
-    std::vector<std::deque<uint32>> deletions;
+    std::vector<std::deque<uint64>> insertions;
+    std::vector<std::deque<uint64>> deletions;
     // Bounds for fragment sizes:
-    uint32 frag_len_min;
-    uint32 frag_len_max;
+    uint64 frag_len_min;
+    uint64 frag_len_max;
     // Info to construct reads:
     IlluminaReadConstrInfo constr_info;
 
@@ -511,8 +511,8 @@ public:
                      const bool& matepair_,
                      const double& frag_len_shape,
                      const double& frag_len_scale,
-                     const uint32& frag_len_min_,
-                     const uint32& frag_len_max_,
+                     const uint64& frag_len_min_,
+                     const uint64& frag_len_max_,
                      const std::vector<std::vector<std::vector<double>>>& qual_probs1,
                      const std::vector<std::vector<std::vector<uint8>>>& quals1,
                      const double& ins_prob1,
@@ -533,7 +533,7 @@ public:
         /*
          Fill `read_makers` field:
          */
-        uint32 n_vars = var_set.size();
+        uint64 n_vars = var_set.size();
         // Read maker for the first variant:
         IlluminaOneVariant read_maker1(var_set[0], matepair_,
                                        frag_len_shape, frag_len_scale,
@@ -543,7 +543,7 @@ public:
                                        barcodes[0]);
         read_makers.reserve(n_vars);
         read_makers.push_back(read_maker1);
-        for (uint32 i = 1; i < n_vars; i++) {
+        for (uint64 i = 1; i < n_vars; i++) {
             read_makers.push_back(read_maker1);
             read_makers[i].add_seq_info(var_set[i], barcodes[i]);
         }
@@ -555,8 +555,8 @@ public:
                      const std::vector<double>& variant_probs,
                      const double& frag_len_shape,
                      const double& frag_len_scale,
-                     const uint32& frag_len_min_,
-                     const uint32& frag_len_max_,
+                     const uint64& frag_len_min_,
+                     const uint64& frag_len_max_,
                      const std::vector<std::vector<std::vector<double>>>& qual_probs,
                      const std::vector<std::vector<std::vector<uint8>>>& quals,
                      const double& ins_prob,
@@ -573,7 +573,7 @@ public:
         /*
          Fill `read_makers` field:
          */
-        uint32 n_vars = var_set.size();
+        uint64 n_vars = var_set.size();
         // Read maker for the first variant:
         IlluminaOneVariant read_maker1(var_set[0],
                                        frag_len_shape, frag_len_scale,
@@ -582,7 +582,7 @@ public:
                                        barcodes[0]);
         read_makers.reserve(n_vars);
         read_makers.push_back(read_maker1);
-        for (uint32 i = 1; i < n_vars; i++) {
+        for (uint64 i = 1; i < n_vars; i++) {
             read_makers.push_back(read_maker1);
             read_makers[i].add_seq_info(var_set[i], barcodes[i]);
         }
@@ -622,7 +622,7 @@ public:
 private:
 
     // Variant to sample from. It's saved in this class in case of duplicates.
-    uint32 var;
+    uint64 var;
 
 };
 

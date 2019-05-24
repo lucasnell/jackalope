@@ -1,32 +1,4 @@
 
-#' Convert to a XPtr<[Chunk]MutationSampler> object
-#'
-#' @noRd
-#'
-mevo_obj_to_ptr <- function(mevo_obj) {
-
-    if (!single_integer(mevo_obj$chunk_size, 0)) {
-        stop("\nIn internal jackalope function `mevo_obj_to_ptr`, ",
-             "a `chunk_size` of < 0 was specified, which makes no sense.")
-    }
-
-    if (mevo_obj$chunk_size <= 0) {
-        sampler_ptr <- make_mutation_sampler_base(mevo_obj$Q,
-                                                  mevo_obj$pi_tcag,
-                                                  mevo_obj$insertion_rates,
-                                                  mevo_obj$deletion_rates)
-    } else {
-        sampler_ptr <- make_mutation_sampler_chunk_base(mevo_obj$Q,
-                                                        mevo_obj$pi_tcag,
-                                                        mevo_obj$insertion_rates,
-                                                        mevo_obj$deletion_rates,
-                                                        mevo_obj$chunk_size)
-    }
-
-    return(sampler_ptr)
-}
-
-
 
 # doc start ----
 #' Create variants from a reference genome.
@@ -40,6 +12,11 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #' @param vars_info Output from one of the \code{\link{vars_functions}}.
 #'     These functions organize higher-level information for use here.
 #'     See \code{\link{vars_functions}} for brief descriptions and links to each method.
+#'     If this argument is `NULL`, all arguments other than `reference` are ignored,
+#'     and an empty `variants` object with no variants is returned.
+#'     This is designed for use when you'd like to add mutations manually.
+#'     If you create a blank `variants` object, you can= use its `add_vars` method
+#'     to add variants manually.
 #' @param sub Output from one of the \code{\link{sub_models}} functions that organizes
 #'     information for the substitution models.
 #'     See \code{\link{sub_models}} for more information on these models and
@@ -59,17 +36,13 @@ mevo_obj_to_ptr <- function(mevo_obj) {
 #'     variability in mutation rates among sites (for both substitutions and indels).
 #'     Passing `NULL` to this argument results in no variability among sites.
 #'     Defaults to `NULL`.
-#' @param chunk_size The size of "chunks" of sequences to first sample uniformly
-#'     before doing weighted sampling by rates for each sequence location.
-#'     Uniformly sampling before doing weighted sampling dramatically speeds up
-#'     the mutation process (especially for very long sequences) and has little
-#'     effect on the sampling probabilities.
-#'     Higher values will more closely resemble sampling without the uniform-sampling
-#'     step, but will be slower.
-#'     Set this to `0` to not uniformly sample first.
-#'     From testing on a chromosome of length `1e6`, a `chunk_size` value of `100`
-#'     offers a ~10x speed increase and doesn't differ significantly from sampling
-#'     without the uniform-sampling step.
+#' @param region_size Size of regions to break genome into for sampling mutation
+#'     locations.
+#'     This causes Gamma regions to be split into smaller sections (obviously the
+#'     Gamma values themselves are not changed).
+#'     Doing this splitting is useful because sampling within a region is more
+#'     computationally costly than sampling among regions.
+#'     Higher numbers will result in lower memory usage but slower speed.
 #'     Defaults to `100`.
 #' @param n_threads Number of threads to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
@@ -94,7 +67,7 @@ create_variants <- function(reference,
                             ins = NULL,
                             del = NULL,
                             gamma_mats = NULL,
-                            chunk_size = 100,
+                            region_size = 100,
                             n_threads = 1,
                             show_progress = FALSE) {
 
@@ -110,6 +83,15 @@ create_variants <- function(reference,
     if (!inherits(reference, "ref_genome")) {
         err_msg("create_variants", "reference", "a \"ref_genome\" object")
     }
+
+    # Make empty `variants` object, ignoring everything other than `reference` argument:
+    if (is.null(vars_info)) {
+        variants_ptr <- make_var_set(reference$genome, 0)
+        var_obj <- variants$new(variants_ptr, reference$genome)
+        return(var_obj)
+    }
+
+
     if (!inherits(reference$genome, "externalptr")) {
         err_msg("create_variants", "mevo_obj", "a \"mevo\" object with a `genome`",
                 "field of class \"externalptr\".",
@@ -117,7 +99,7 @@ create_variants <- function(reference,
                 "and do NOT change the `genome` field manually")
     }
     if (!inherits(vars_info, do.call(c, vic))) {
-        err_msg("create_variants", "vars_info", "one of the following classes:",
+        err_msg("create_variants", "vars_info", "NULL or one of the following classes:",
                 paste(sprintf("\"%s\"", do.call(c, vic)), collapse = ", "))
     }
     # If you're using a VCF, change `sub` to `NULL` bc it's not used:
@@ -132,7 +114,7 @@ create_variants <- function(reference,
 
     # Do checks and organize molecular-evolution info into `mevo` object
     # (or `NULL` if `sub` was not provided):
-    mevo_obj <- create_mevo(reference, sub, ins, del, gamma_mats, chunk_size)
+    mevo_obj <- create_mevo(reference, sub, ins, del, gamma_mats, region_size)
 
     if (!single_integer(n_threads, .min = 1)) {
         err_msg("create_variants", "n_threads", "a single integer >= 1")

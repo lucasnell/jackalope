@@ -11,53 +11,14 @@
 
 
 #include "jackalope_types.h"
-#include "mevo.h"
+#include "mutator_type.h"
+#include "mutator.h"
 #include "seq_classes_var.h"  // Var* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling
-#include "weighted_reservoir.h"  // weighted reservoir sampling
-#include "mevo_gammas.h"  // SequenceGammas class
 #include "util.h"  // thread_check
 
 using namespace Rcpp;
-
-
-
-
-
-// Wrapper to make non-chunked version available from R
-
-//[[Rcpp::export]]
-SEXP make_mutation_sampler_base(const arma::mat& Q,
-                                const std::vector<double>& pi_tcag,
-                                const std::vector<double>& insertion_rates,
-                                const std::vector<double>& deletion_rates) {
-
-    XPtr<MutationSampler> out =
-        make_mutation_sampler_base_<MutationSampler,LocationSampler>(
-                Q, pi_tcag, insertion_rates, deletion_rates);
-
-    return out;
-}
-
-// Same thing, but with chunks
-
-//[[Rcpp::export]]
-SEXP make_mutation_sampler_chunk_base(const arma::mat& Q,
-                                      const std::vector<double>& pi_tcag,
-                                      const std::vector<double>& insertion_rates,
-                                      const std::vector<double>& deletion_rates,
-                                      const uint32& chunk_size) {
-
-    XPtr<ChunkMutationSampler> out =
-        make_mutation_sampler_base_<ChunkMutationSampler,ChunkLocationSampler>(
-                Q, pi_tcag, insertion_rates, deletion_rates);
-
-    out->location.change_chunk(chunk_size);
-
-    return out;
-}
-
 
 
 
@@ -72,13 +33,13 @@ MutationTypeSampler make_type_sampler(const arma::mat& Q,
                                       const std::vector<double>& deletion_rates) {
 
     std::vector<std::vector<double>> probs;
-    std::vector<sint32> mut_lengths;
+    std::vector<sint64> mut_lengths;
     std::vector<double> q_tcag;
 
     /*
-    (1) Combine substitution, insertion, and deletion rates into a single vector
-    (2) Fill the `q_tcag` vector with mutation rates for each nucleotide
-    */
+     (1) Combine substitution, insertion, and deletion rates into a single vector
+     (2) Fill the `q_tcag` vector with mutation rates for each nucleotide
+     */
     fill_probs_q_tcag(probs, q_tcag, Q, pi_tcag, insertion_rates, deletion_rates);
 
     // Now filling in mut_lengths vector
@@ -93,30 +54,31 @@ MutationTypeSampler make_type_sampler(const arma::mat& Q,
 
 
 
+
 //' Add mutations at segregating sites for one sequence from coalescent simulation output.
 //'
 //' @noRd
 //'
-void add_one_seq_sites(VarSet& var_set,
-                       const RefGenome& ref_genome,
-                       const uint32& seq_i,
-                       const arma::mat& ss_i,
-                       MutationTypeSampler& type_sampler,
-                       AliasStringSampler<std::string>& insert_sampler,
-                       pcg64& eng) {
+void add_one_seq_ssites(VarSet& var_set,
+                        const RefGenome& ref_genome,
+                        const uint64& seq_i,
+                        const arma::mat& ss_i,
+                        MutationTypeSampler& type_sampler,
+                        AliasStringSampler<std::string>& insert_sampler,
+                        pcg64& eng) {
 
-    uint32 pos;
+    uint64 pos;
     std::string nts; // <-- for insertions
     /*
      Going from back so we don't have to update positions constantly, and so we can
      use the char from the reference genome directly.
      */
-    for (uint32 k = 0; k < ss_i.n_rows; k++) {
-        uint32 i = ss_i.n_rows - 1 - k;
+    for (uint64 k = 0; k < ss_i.n_rows; k++) {
+        uint64 i = ss_i.n_rows - 1 - k;
         pos = ss_i(i, 0);
         MutationInfo mut = type_sampler.sample(ref_genome[seq_i][pos], eng);
         if (mut.length == 0) {
-            for (uint32 j = 1; j < ss_i.n_cols; j++) {
+            for (uint64 j = 1; j < ss_i.n_cols; j++) {
                 if (ss_i(i,j) == 1) {
                     var_set[j-1][seq_i].add_substitution(mut.nucleo, pos);
                 }
@@ -124,7 +86,7 @@ void add_one_seq_sites(VarSet& var_set,
         } else if (mut.length > 0) {
             nts.resize(mut.length);  // resize nts on insertion len
             insert_sampler.sample(nts, eng);  // fill w/ random nucleotides
-            for (uint32 j = 1; j < ss_i.n_cols; j++) {
+            for (uint64 j = 1; j < ss_i.n_cols; j++) {
                 if (ss_i(i,j) == 1) {
                     var_set[j-1][seq_i].add_insertion(nts, pos);
                 }
@@ -133,10 +95,10 @@ void add_one_seq_sites(VarSet& var_set,
             sint64 pos_ = static_cast<sint64>(pos);
             sint64 size_ = static_cast<sint64>(var_set.min_size(seq_i));
             if (pos_ - mut.length > size_) {
-                mut.length = static_cast<sint32>(pos_-size_);
+                mut.length = static_cast<sint64>(pos_-size_);
             }
-            uint32 del_size = std::abs(mut.length);
-            for (uint32 j = 1; j < ss_i.n_cols; j++) {
+            uint64 del_size = std::abs(mut.length);
+            for (uint64 j = 1; j < ss_i.n_cols; j++) {
                 if (ss_i(i,j) == 1) {
                     var_set[j-1][seq_i].add_deletion(del_size, pos);
                 }
@@ -156,18 +118,18 @@ void add_one_seq_sites(VarSet& var_set,
 //' @noRd
 //'
 //[[Rcpp::export]]
-SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
-                        const std::vector<arma::mat>& seg_sites,
-                        const arma::mat& Q,
-                        const std::vector<double>& pi_tcag,
-                        const std::vector<double>& insertion_rates,
-                        const std::vector<double>& deletion_rates,
-                        uint32 n_threads,
-                        const bool& show_progress) {
+SEXP add_ssites_cpp(SEXP& ref_genome_ptr,
+                    const std::vector<arma::mat>& seg_sites,
+                    const arma::mat& Q,
+                    const std::vector<double>& pi_tcag,
+                    const std::vector<double>& insertion_rates,
+                    const std::vector<double>& deletion_rates,
+                    uint64 n_threads,
+                    const bool& show_progress) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
 
-    const uint32 n_vars = seg_sites[0].n_cols - 1;
+    const uint64 n_vars = seg_sites[0].n_cols - 1;
 
     // Initialize new VarSet object
     XPtr<VarSet> var_set(new VarSet(*ref_genome, n_vars), true);
@@ -175,7 +137,7 @@ SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
     // Check that # threads isn't too high and change to 1 if not using OpenMP:
     thread_check(n_threads);
 
-    const uint32 n_seqs = ref_genome->size();
+    const uint64 n_seqs = ref_genome->size();
     const uint64 total_seq = ref_genome->total_size;
 
     Progress prog_bar(total_seq, show_progress);
@@ -192,15 +154,15 @@ SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
     // Type and insertion samplers:
     MutationTypeSampler type = make_type_sampler(Q, pi_tcag, insertion_rates,
                                                  deletion_rates);
-    AliasStringSampler<std::string> insert(mevo::bases, pi_tcag);
+    AliasStringSampler<std::string> insert("TCAG", pi_tcag);
 
     std::vector<uint64> active_seeds;
 
     // Write the active seed per thread or just write one of the seeds.
 #ifdef _OPENMP
-    uint32 active_thread = omp_get_thread_num();
+    uint64 active_thread = omp_get_thread_num();
 #else
-    uint32 active_thread = 0;
+    uint64 active_thread = 0;
 #endif
     int& status_code(status_codes[active_thread]);
     active_seeds = seeds[active_thread];
@@ -211,12 +173,12 @@ SEXP add_coal_sites_cpp(SEXP& ref_genome_ptr,
 #ifdef _OPENMP
 #pragma omp for schedule(static)
 #endif
-    for (uint32 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_seqs; i++) {
 
         if (prog_bar.is_aborted() || prog_bar.check_abort()) status_code = -1;
         if (status_code != 0) continue;
 
-        add_one_seq_sites(*var_set, *ref_genome, i, seg_sites[i], type, insert, eng);
+        add_one_seq_ssites(*var_set, *ref_genome, i, seg_sites[i], type, insert, eng);
 
         prog_bar.increment((*ref_genome)[i].size());
 

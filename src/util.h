@@ -51,7 +51,7 @@ template <typename T>
 inline std::string big_int_format(const T& x) {
     std::string y = std::to_string(x);
     if (y.size() > 3) {
-        uint32 i = 3;
+        uint64 i = 3;
         while (i < y.size()) {
             y.insert(y.end()-i, ',');
             i += 3 + 1;
@@ -87,7 +87,7 @@ void clear_memory(U& x) {
 inline double gc_prop(const std::string& sequence) {
     double total_seq = sequence.size();
     double total_gc = 0;
-    for (uint32 i = 0; i < total_seq; i++) {
+    for (uint64 i = 0; i < total_seq; i++) {
         if (sequence[i] == 'G' || sequence[i] == 'C') {
             total_gc += 1;
         }
@@ -96,11 +96,11 @@ inline double gc_prop(const std::string& sequence) {
     return gc_prop;
 }
 inline double gc_prop(const std::string& sequence,
-                      const uint32& start,
-                      const uint32& stop) {
+                      const uint64& start,
+                      const uint64& stop) {
     double total_seq = stop - start + 1;
     double total_gc = 0;
-    for (uint32 i = start; i <= stop; i++) {
+    for (uint64 i = start; i <= stop; i++) {
         if (sequence[i] == 'G' || sequence[i] == 'C') {
             total_gc += 1;
         }
@@ -124,7 +124,7 @@ inline double nt_prop(const std::string& sequence,
                       const char& nt) {
     double total_seq = sequence.size();
     double total_nt = 0;
-    for (uint32 i = 0; i < total_seq; i++) {
+    for (uint64 i = 0; i < total_seq; i++) {
         if (sequence[i] == nt) total_nt += 1;
     }
     double nt_prop = total_nt / total_seq;
@@ -133,11 +133,11 @@ inline double nt_prop(const std::string& sequence,
 // Overloaded for part of a sequence
 inline double nt_prop(const std::string& sequence,
                       const char& nt,
-                      const uint32& start,
-                      const uint32& stop) {
+                      const uint64& start,
+                      const uint64& stop) {
     double total_seq = stop - start + 1;
     double total_nt = 0;
-    for (uint32 i = start; i <= stop; i++) {
+    for (uint64 i = start; i <= stop; i++) {
         if (sequence[i] == nt) total_nt += 1;
     }
     double nt_prop = total_nt / total_seq;
@@ -176,7 +176,7 @@ inline void str_warn(const std::vector<std::string>& warn_msg_vec) {
 //'
 //' @noRd
 //'
-inline void thread_check(uint32& n_threads) {
+inline void thread_check(uint64& n_threads) {
 
 #ifdef _OPENMP
     if (n_threads == 0) n_threads = 1;
@@ -191,6 +191,32 @@ inline void thread_check(uint32& n_threads) {
 
     return;
 }
+
+
+
+
+
+//' Split integer `x` into `n` chunks that are as even as possible.
+//'
+//' @noRd
+//'
+inline std::vector<uint64> split_int(const uint64& x,
+                                     const uint64& n) {
+
+    std::vector<uint64> out(n, x / n);
+    uint64 sum_reads = n * static_cast<uint64>(x / n);
+    uint64 i = 0;
+    while (sum_reads < x) {
+        out[i]++;
+        i++;
+        sum_reads++;
+    }
+    return out;
+
+}
+
+
+
 
 
 # endif

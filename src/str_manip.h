@@ -19,7 +19,7 @@ namespace str_manip {
  lowercase versions). Anything else is a zero, which will help make sure
  nothing weird gets read.
  */
-const std::vector<uint32> upper_filter_table = {
+const std::vector<uint64> upper_filter_table = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -36,7 +36,7 @@ const std::vector<uint32> upper_filter_table = {
 };
 
 // Same thing, but just filtering, no converting to uppercase
-const std::vector<uint32> filter_table = {
+const std::vector<uint64> filter_table = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -53,7 +53,7 @@ const std::vector<uint32> filter_table = {
 };
 
 // For complements (Ns stay as Ns)
-const std::vector<uint32> cmp_map = {
+const std::vector<uint64> cmp_map = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -111,9 +111,9 @@ inline std::vector<std::string> cpp_str_split_delim(const std::string& in_string
     std::string::size_type i = in_string.find(split);
     if (i != std::string::npos) {
         // Index for the output vector
-        uint32 j = 0;
+        uint64 j = 0;
         // Index for the previous i:
-        uint32 i0 = 0;
+        uint64 i0 = 0;
         while (i != std::string::npos) {
             for (std::string::size_type k = i0; k < i; k++) {
                 out[j] += in_string[k];
@@ -147,9 +147,9 @@ inline std::vector<std::string> cpp_str_split_newline(const std::string& in_stri
     std::string::size_type i = in_string.find(split);
     if (i != std::string::npos) {
         // Index for the output vector
-        uint32 j = 0;
+        uint64 j = 0;
         // Index for the previous i:
-        uint32 i0 = 0;
+        uint64 i0 = 0;
         while (i != std::string::npos) {
             for (std::string::size_type k = i0; k < i; k++) {
                 out[j] += in_string[k];
@@ -180,17 +180,17 @@ inline std::vector<std::string> cpp_str_split_newline(const std::string& in_stri
  */
 inline void rev_comp(std::string& seq) {
 
-    uint32 n = seq.size();
-    uint32 half_n = n / 2;
+    uint64 n = seq.size();
+    uint64 half_n = n / 2;
     char tmp;
 
-    for (uint32 j = 0; j < half_n; j++) {
+    for (uint64 j = 0; j < half_n; j++) {
         tmp = str_manip::cmp_map[seq[j]]; // goes to `n-j-1`
         seq[j] = str_manip::cmp_map[seq[(n-j-1)]];
         seq[(n-j-1)] = tmp;
     }
 
-    if (n % 2 == 1) seq[half_n] = str_manip::cmp_map[seq[half_n]];
+    if ((n & 1ULL) == 1ULL) seq[half_n] = str_manip::cmp_map[seq[half_n]];
 
     return;
 }
@@ -198,18 +198,18 @@ inline void rev_comp(std::string& seq) {
 /*
  Same thing, except that it only does it for the first `n` characters in `seq`
  */
-inline void rev_comp(std::string& seq, const uint32& n) {
+inline void rev_comp(std::string& seq, const uint64& n) {
 
-    uint32 half_n = n / 2;
+    uint64 half_n = n / 2;
     char tmp;
 
-    for (uint32 j = 0; j < half_n; j++) {
+    for (uint64 j = 0; j < half_n; j++) {
         tmp = str_manip::cmp_map[seq[j]]; // goes to `n-j-1`
         seq[j] = str_manip::cmp_map[seq[(n-j-1)]];
         seq[(n-j-1)] = tmp;
     }
 
-    if (n % 2 == 1) seq[half_n] = str_manip::cmp_map[seq[half_n]];
+    if ((n & 1ULL) == 1ULL) seq[half_n] = str_manip::cmp_map[seq[half_n]];
 
     return;
 }

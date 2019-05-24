@@ -8,14 +8,14 @@ Huang, W., L. Li, J. R. Myers, and G. T. Marth. 2012. ART: a next-generation
 sequencing read simulator. \emph{Bioinformatics} \strong{28}:593–594.
 }
 \usage{
-illumina(seq_object, out_prefix, n_reads, read_length, paired, frag_mean,
-  frag_sd, matepair = FALSE, seq_sys = NULL, profile1 = NULL,
-  profile2 = NULL, ins_prob1 = 9e-05, del_prob1 = 0.00011,
-  ins_prob2 = 0.00015, del_prob2 = 0.00023, frag_len_min = NULL,
-  frag_len_max = NULL, variant_probs = NULL, barcodes = NULL,
-  prob_dup = 0.02, compress = FALSE, comp_method = "bgzip",
-  n_threads = 1L, read_pool_size = 1000L, show_progress = FALSE,
-  overwrite = FALSE)
+illumina(seq_object, out_prefix, n_reads, read_length, paired,
+  frag_mean = 400, frag_sd = 100, matepair = FALSE, seq_sys = NULL,
+  profile1 = NULL, profile2 = NULL, ins_prob1 = 9e-05,
+  del_prob1 = 0.00011, ins_prob2 = 0.00015, del_prob2 = 0.00023,
+  frag_len_min = NULL, frag_len_max = NULL, variant_probs = NULL,
+  barcodes = NULL, prob_dup = 0.02, sep_files = FALSE,
+  compress = FALSE, comp_method = "bgzip", n_threads = 1L,
+  read_pool_size = 1000L, show_progress = FALSE, overwrite = FALSE)
 }
 \arguments{
 \item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
@@ -27,15 +27,17 @@ for the file extension.}
 
 \item{read_length}{Length of reads.}
 
-\item{paired}{Logical for whether to use paired-end reads.}
+\item{paired}{Logical for whether to use paired-end reads.
+This argument is changed to \code{TRUE} if \code{matepair} is \code{TRUE}.}
 
-\item{frag_mean}{Mean of the Gamma distribution that generates fragment sizes.}
+\item{frag_mean}{Mean of the Gamma distribution that generates fragment sizes.
+Defaults to \code{400}.}
 
 \item{frag_sd}{Standard deviation of the Gamma distribution that generates
-fragment sizes.}
+fragment sizes.
+Defaults to \code{100}.}
 
 \item{matepair}{Logical for whether to simulate mate-pair reads.
-This argument is ignored if \code{paired} is \code{FALSE}.
 Defaults to \code{FALSE}.}
 
 \item{seq_sys}{Full or abbreviated name of sequencing system to use.
@@ -80,6 +82,11 @@ Defaults to \code{NULL}.}
 
 \item{prob_dup}{A single number indicating the probability of duplicates.
 Defaults to \code{0.02}.}
+
+\item{sep_files}{Logical indicating whether to make separate files for each variant.
+This argument is coerced to \code{FALSE} if the \code{seq_object} argument is not
+a \code{variants} object.
+Defaults to \code{FALSE}.}
 
 \item{compress}{Logical specifying whether or not to compress output file, or
 an integer specifying the level of compression, from 1 to 9.
@@ -155,26 +162,27 @@ Sequencing system options are the following, where, for each system,
 and
 "paired" indicates whether paired-end sequencing is allowed.
 
-| name                 | abbrev  | max_len | paired |
-|:---------------------|:--------|:--------|:-------|
-| Genome Analyzer I    | GA1     | 44      | Yes    |
-| Genome Analyzer II   | GA2     | 75      | Yes    |
-| HiSeq 1000           | HS10    | 100     | Yes    |
-| HiSeq 2000           | HS20    | 100     | Yes    |
-| HiSeq 2500           | HS25    | 150     | Yes    |
-| HiSeqX v2.5 PCR free | HSXn    | 150     | Yes    |
-| HiSeqX v2.5 TruSeq   | HSXt    | 150     | Yes    |
-| MiniSeq TruSeq       | MinS    | 50      | No     |
-| MiSeq v1             | MSv1    | 250     | Yes    |
-| MiSeq v3             | MSv3    | 250     | Yes    |
-| NextSeq 500 v2       | NS50    | 75      | Yes    |
+\tabular{llll}{
+name                 \tab abbrev   \tab max_len \tab paired \cr
+Genome Analyzer I    \tab GA1      \tab 44      \tab Yes   \cr
+Genome Analyzer II   \tab GA2      \tab 75      \tab Yes   \cr
+HiSeq 1000           \tab HS10     \tab 100     \tab Yes   \cr
+HiSeq 2000           \tab HS20     \tab 100     \tab Yes   \cr
+HiSeq 2500           \tab HS25     \tab 150     \tab Yes   \cr
+HiSeqX v2.5 PCR free \tab HSXn     \tab 150     \tab Yes   \cr
+HiSeqX v2.5 TruSeq   \tab HSXt     \tab 150     \tab Yes   \cr
+MiniSeq TruSeq       \tab MinS     \tab 50      \tab No    \cr
+MiSeq v1             \tab MSv1     \tab 250     \tab Yes   \cr
+MiSeq v3             \tab MSv3     \tab 250     \tab Yes   \cr
+NextSeq 500 v2       \tab NS50     \tab 75      \tab Yes   \cr
+}
 }
 
 \section{ID lines}{
 
 The ID lines for FASTQ files are formatted as such:
 
-\code{@<genome name>-<sequence name>-<starting position>[/<read#>]}
+\code{@<genome name>-<sequence name>-<starting position>-<strand>[/<read#>]}
 
 where the part in \code{[]} is only for paired-end Illumina reads, and where \code{genome name}
 is always \code{REF} for reference genomes (as opposed to variants).
@@ -184,8 +192,7 @@ is always \code{REF} for reference genomes (as opposed to variants).
 \dontrun{
 rg <- create_genome(10, 100e3, 100)
 illumina(rg, "illumina_reads", n_reads = 100,
-         read_length = 100, paired = FALSE,
-         frag_mean = 400, frag_sd = 100)
+         read_length = 100, paired = FALSE)
 }
 
 }

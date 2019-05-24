@@ -16,14 +16,17 @@ status](https://ci.appveyor.com/api/projects/status/github/lucasnell/jackalope?b
 
 ## Overview
 
-`jackalope` efficiently (i) reads and simulates reference genomes; (ii)
-generates variants using summary statistics, phylogenies, Variant Call
-Format (VCF) files, and coalescent simulations—the latter of which can
-include selection, recombination, and demographic fluctuations; (iii)
-simulates sequencing error, mapping qualities, and optical/PCR
-duplicates; and (iv) writes outputs to standard file formats.
-`jackalope` can simulate single, paired-end, or mate-pair Illumina
-reads, as well as reads from Pacific BioSciences.
+`jackalope` simply and efficiently simulates (i) variants from reference
+genomes and (ii) reads from both Illumina and Pacific Biosciences
+(PacBio) platforms. It can either read reference genomes from FASTA
+files or simulate new ones. Genomic variants can be simulated using
+summary statistics, phylogenies, Variant Call Format (VCF) files, and
+coalescent simulations—the latter of which can include selection,
+recombination, and demographic fluctuations. `jackalope` can simulate
+single, paired-end, or mate-pair Illumina reads, as well as reads from
+Pacific BioSciences. These simulations include sequencing errors,
+mapping qualities, multiplexing, and optical/PCR duplicates. All outputs
+can be written to standard file formats.
 
 ## Installation
 
@@ -43,7 +46,7 @@ ref_variants <- create_variants(reference, vars_phylo(tr), sub_JC69(0.1))
 ref_variants
 #>                            << Variants object >>
 #> # Variants: 5
-#> # Mutations: 17,684
+#> # Mutations: 17,679
 #> 
 #>                         << Reference genome info: >>
 #> < Set of 10 sequences >

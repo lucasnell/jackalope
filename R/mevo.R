@@ -128,8 +128,8 @@ indels <- function(rate,
     if (!single_number(rate) || rate <= 0) {
         err_msg("indels", "rate", "a single number > 0")
     }
-    if (!single_integer(max_length, 1)) {
-        err_msg("indels", "max_length", "a single integer >= 1")
+    if (!single_integer(max_length, 1, 1e6)) {
+        err_msg("indels", "max_length", "a single integer in range [1, 1e6]")
     }
     if (!is.null(a) && !single_number(a, 0)) {
         err_msg("indels", "a", "NULL or a single number >= 0")
@@ -207,10 +207,14 @@ print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) 
 #'     generate variants.
 #' @param shape Shape parameter for the Gamma distribution that generates gamma distances,
 #'     The variance of the distribution is `1 / shape`, and its mean is fixed to 1.
+#'     Values `<= 0` are not allowed.
 #'     Defaults to `NULL`.
 #' @param region_size Size of regions to break the genome into,
 #'     where all sites within a region have the same gamma distance.
 #'     Defaults to `NULL`.
+#' @param invariant Proportion of regions that are invariant.
+#'     Must be in range `[0,1)`.
+#'     Defaults to `0`.
 #' @param mats List of matrices, one for each sequence in the genome.
 #'     Each matrix should have two columns.
 #'     The first should contain the end points for each region.
@@ -251,6 +255,7 @@ print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) 
 site_var <- function(reference,
                      shape = NULL,
                      region_size = NULL,
+                     invariant = 0,
                      mats = NULL,
                      out_prefix = NULL,
                      compress = FALSE,
@@ -267,6 +272,9 @@ site_var <- function(reference,
     }
     if (!is.null(region_size) && !single_integer(region_size, 1)) {
         err_msg("site_var", "region_size", "NULL or a single integer >= 1")
+    }
+    if (!is.null(invariant) && (!single_number(invariant, 0) || invariant >= 1)) {
+        err_msg("site_var", "invariant", "NULL or a single number in range [0,1)")
     }
     if (!is.null(mats) && (!is_type(mats, "list") ||
                            !all(sapply(mats, inherits, what = "matrix")))) {
@@ -307,7 +315,10 @@ site_var <- function(reference,
                  "you need to provide both the `shape` and `region_size` arguments.",
                  call. = FALSE)
         }
-        mats <- make_gamma_mats(seq_sizes, gamma_size_ = region_size, shape = shape)
+        mats <- make_gamma_mats(seq_sizes,
+                                region_size_ = region_size,
+                                shape = shape,
+                                invariant = invariant)
         dim(mats) <- NULL # so it's just a list now
     }
 
@@ -370,18 +381,6 @@ print.site_var_mats <- function(x, digits = max(3, getOption("digits") - 3), ...
 #'     variability in mutation rates among sites (for both substitutions and indels).
 #'     Passing `NULL` to this argument results in no variability among sites.
 #'     Defaults to `NULL`.
-#' @param chunk_size The size of "chunks" of sequences to first sample uniformly
-#'     before doing weighted sampling by rates for each sequence location.
-#'     Uniformly sampling before doing weighted sampling dramatically speeds up
-#'     the mutation process (especially for very long sequences) and has little
-#'     effect on the sampling probabilities.
-#'     Higher values will more closely resemble sampling without the uniform-sampling
-#'     step, but will be slower.
-#'     Set this to `0` to not uniformly sample first.
-#'     From testing on a chromosome of length `1e6`, a `chunk_size` value of `100`
-#'     offers a ~10x speed increase and doesn't differ significantly from sampling
-#'     without the uniform-sampling step.
-#'     Defaults to `100`.
 #'
 #' @return An object of class \code{\link{mevo}}.
 #'
@@ -392,7 +391,7 @@ create_mevo <- function(reference,
                         ins,
                         del,
                         gamma_mats,
-                        chunk_size) {
+                        region_size) {
 
     if (!inherits(reference, "ref_genome")) {
         err_msg("create_variants", "reference", "a \"ref_genome\" object")
@@ -409,8 +408,8 @@ create_mevo <- function(reference,
     if (!is.null(gamma_mats) && !is_type(gamma_mats, "site_var_mats")) {
         err_msg("create_variants", "gamma_mats", "NULL or a \"site_var_mats\" object")
     }
-    if (!single_integer(chunk_size, 0)) {
-        err_msg("create_variants", "chunk_size", "an integer >= 0")
+    if (!single_integer(region_size, 1)) {
+        err_msg("create_variants", "region_size", "a single integer >= 1")
     }
 
     # `sub` must be provided if others are:
@@ -422,7 +421,7 @@ create_mevo <- function(reference,
              "via one of the `sub_models` functions.", call. = FALSE)
     }
 
-    # If no molecular evolution is provided, return NULL
+    # If no molecular evolution is provided, return NULL (only happens for VCF method)
     if (is.null(sub)) return(NULL)
 
     # Below will turn `NULL` into `numeric(0)` and
@@ -431,13 +430,12 @@ create_mevo <- function(reference,
     del <- as.numeric(del)
 
 
-    # -------+
-    # Process info for mutation-rate variability among sites and write to BED
-    # file if desired
-    # -------+
+    # This results in no variability among sites and 1 Gamma region per sequence
+    # (they'll get split later if desired):
     if (is.null(gamma_mats)) {
-        # This results in no variability among sites:
-        gamma_mats <- make_gamma_mats(reference$sizes(), gamma_size_ = 0, shape = 1)
+        seq_sizes <- reference$sizes()
+        gamma_mats <- make_gamma_mats(seq_sizes, region_size_ = max(seq_sizes),
+                                      shape = 0, invariant = 0)
         dim(gamma_mats) <- NULL # so it's just a list now
     }
 
@@ -448,11 +446,29 @@ create_mevo <- function(reference,
                     ins,
                     del,
                     gamma_mats,
-                    chunk_size)
+                    region_size)
 
     return(out)
 }
 
+
+
+
+
+#' Convert to a XPtr<MutationSampler> object
+#'
+#' @noRd
+#'
+mevo_obj_to_ptr <- function(mevo_obj) {
+
+    sampler_ptr <- make_mutation_sampler_base(mevo_obj$Q,
+                                              mevo_obj$pi_tcag,
+                                              mevo_obj$insertion_rates,
+                                              mevo_obj$deletion_rates,
+                                              mevo_obj$region_size)
+
+    return(sampler_ptr)
+}
 
 
 

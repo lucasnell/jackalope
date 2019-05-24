@@ -1,0 +1,265 @@
+---
+title: "Intro to jackalope"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Intro to jackalope}
+  %\usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, echo = FALSE, message = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+options(tibble.print_min = 4L, tibble.print_max = 4L)
+library(jackalope)
+library(scrm)
+library(ape)
+set.seed(65456156)
+```
+
+
+
+This document provides brief examples of how `jackalope` can be used
+to generate sequencing data that can inform some common sampling decisions for HTS
+studies.
+
+For an example reference assembly, I simply simulated one of size 10 Mb
+using the following code:
+
+```{r examples-create-assembly}
+ref <- create_genome(10, 1e6)
+```
+
+
+This resulted in the following `ref_genome` object:
+
+```{r examples-print-assembly, echo = FALSE}
+print(ref)
+```
+
+
+For molecular-evolution information, I used the TN93 model,
+an insertion rate of `2e-5` for lengths from 1 to 10,
+and
+a deletion rate of `1e-5` for lengths from 1 to 40.
+
+```{r examples-mevo-objects}
+sub <- sub_TN93(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
+                alpha_1 = 0.0001, alpha_2 = 0.0002,
+                beta = 0.00015)
+ins <- indels(rate = 2e-5, max_length = 10)
+del <- indels(rate = 1e-5, max_length = 40)
+```
+
+
+## Assembling a genome
+
+The example here produces FASTQ files from the known reference assembly that could
+test strategies for how to assemble a similar genome using HTS data.
+
+The first strategy is to use only PacBio sequencing.
+The PacBio Sequel system produces up to 500,000 reads per
+Single Molecule, Real-Time (SMRT) cell, so you could
+run the following for two cells:
+
+```{r examples-reads-for-assembly-pacbio, eval = FALSE}
+pacbio(ref, out_prefix = "pacbio", n_reads = 2 * 500e3)
+```
+
+An alternative, hybrid strategy uses
+1 SMRT cell of PacBio sequencing and
+1 lane ($\sim 500$ million reads) of $2 \times 100$bp Illumina
+sequencing on the HiSeq 2500 system (the default Illumina system in `jackalope`):
+
+```{r examples-reads-for-assembly-hybrid, eval = FALSE}
+pacbio(ref, out_prefix = "pacbio", n_reads = 500e3)
+illumina(ref, out_prefix = "illumina", n_reads = 500e6, paired = TRUE,
+         read_length = 100)
+```
+
+
+The last strategy combines 1 lane of $2 \times 100$bp Illumina HiSeq 2500 sequencing
+with 1 flow cell of $2 \times 250$bp mate-pair sequencing on an Illumina MiSeq v3.
+The mate-pair sequencing uses longer fragments (defaults are mean of 400 and
+standard deviation of 100) to better cover highly
+repetitive regions.
+
+```{r examples-reads-for-assembly-illumina, eval = FALSE}
+illumina(ref, out_prefix = "ill_pe", n_reads = 500e6, paired = TRUE,
+         read_length = 100)
+illumina(ref, out_prefix = "ill_mp", seq_sys = "MSv3",
+         read_length = 250, n_reads = 50e6, matepair = TRUE, 
+         frag_mean = 3000, frag_sd = 500)
+```
+
+
+
+
+## Estimating divergence between populations
+
+Here, I will demonstrate how to generate population-genomic data of a type that might
+be used to estimate the divergence between two populations.
+I first use the `scrm` package to conduct 
+coalescent simulations that will generate segregating sites for 40 haploid variants
+from the reference genome.
+Twenty of the variants are from one population, twenty from another.
+The symmetrical migration rate is 100 individuals per generation.
+To generate many mutations, I set the population-scaled mutation rate
+($\theta = 4 N_0 \mu$) to `100` for this example.
+
+```{r examples-divergence-scrm}
+ssites <- scrm(paste("40", ref$n_seqs(), "-t 100 -I 2 20 20 100"))
+```
+
+Using the previously created objects for molecular evolution information (`sub`,
+`ins`, and `del`), I create variants from the reference genome:
+
+```{r examples-divergence-create}
+vars <- create_variants(ref, vars_ssites(ssites), sub, ins, del)
+```
+
+This results in the following set of variants:
+
+```{r examples-divergence-create-print, echo = FALSE}
+print(vars)
+```
+
+
+For a file of true divergences from the reference genome, the `write_vcf` function
+writes the `variants` object to a VCF file:
+
+```{r examples-divergence-write-vcf, eval = FALSE}
+write_vcf(vars, "variants")
+```
+
+
+Lastly, I simulate 1 lane of $2 \times 100$bp Illumina HiSeq 2500 sequencing.
+In this case, individuals within a population are pooled, and the population
+sequences are derived from are identified by barcodes.
+
+```{r examples-divergence-illumina-pool, eval = FALSE}
+illumina(vars, out_prefix = "vars_illumina", n_reads = 500e6, paired = TRUE,
+         read_length = 100, barcodes = c(rep("AACCGCGG", 20), 
+                                         rep("GGTTATAA", 20)))
+```
+
+
+The below example instead has each individual variant's reads output to separate
+FASTQ files:
+
+```{r examples-divergence-illumina-individual, eval = FALSE}
+illumina(vars, out_prefix = "vars_illumina", n_reads = 500e6, paired = TRUE,
+         read_length = 100, sep_files = TRUE)
+```
+
+
+
+## Constructing a phylogeny
+
+## From one phylogenetic tree
+
+This section shows how `jackalope` can generate variants from a phylogeny, then
+simulate sequencing data from those variants to test phylogeny reconstruction methods.
+First, I generated a random coalescent tree of 10 species using the  `ape` package.
+
+```{r examples-phylogeny-tree}
+tree <- rcoal(10)
+```
+
+Then I input that to the `create_variants` function alongside the molecular evolution
+information.
+
+```{r examples-phylogeny-tree-create-for-show}
+vars <- create_variants(ref, vars_phylo(tree), sub, ins, del)
+```
+
+
+This results in the following `variants` object:
+
+```{r examples-phylogeny-tree-variants-print, echo = FALSE}
+print(vars)
+```
+
+
+Now I can generate data for 1 flow cell of $2 \times 250$bp sequencing
+on an Illumina MiSeq v3.
+
+```{r examples-phylogeny-tree-illumina, eval = FALSE}
+illumina(vars, out_prefix = "phylo_tree", seq_sys = "MSv3",
+         read_length = 250, n_reads = 50e6)
+```
+
+
+
+## From gene trees
+
+Similar to the section above, the ultimate goal here is to test phylogeny
+reconstruction methods.
+The difference in this section is that instead of using a single, straightforward
+phylogeny, I use multiple gene trees per sequence.
+In the species used in these simulations, species 3 diverged from 1 and 2 at $t = 0.5$,
+where $t$ indicates time into the past and is in units of $4 N_0$ generations.
+Species 1 and 2 diverged at $t = 0.25$.
+I assume a recombination rate of $1 / (4 N_0)$ recombination events per sequence
+per generation.
+Because each sequence is a different length and the length is required for including
+a recombination rate, I had to run `scrm` separately for each sequence.
+There are 4 diploid individuals sampled per species.
+
+
+```{r examples-phylogeny-gtrees-scrm}
+# Run scrm for one sequence size:
+one_seq <- function(size) {
+    sims <- scrm(
+        paste("24 1",
+              # Output gene trees:
+              "-T",
+              # Recombination:
+              "-r 1", size,
+              # 3 species with no ongoing migration:
+              "-I 3", paste(rep("8", 3), collapse = " "), "0",
+              # Species 2 derived from 1 at time 1.0:
+              "-ej 0.5 2 1",  
+              # Species 3 derived from 2 at time 0.5:
+              "-ej 0.25 3 2"
+        ))
+    return(sims$trees[[1]])
+}
+# For all sequences:
+gtrees <- list(trees = lapply(ref$sizes(), one_seq))
+```
+
+```{r examples-phylogeny-gtrees-create-variants,}
+vars <- create_variants(ref, vars_gtrees(gtrees),
+                        sub, ins, del)
+```
+
+
+This results in the following `variants` object:
+
+```{r examples-phylogeny-gtrees-variants-print, echo = FALSE}
+print(vars)
+```
+
+
+To store mutation information by diploid sample, the `write_vcf` function writes
+the `variants` object to a VCF file.
+It assigns haplotypes to diploid samples using a matrix for the
+`sample_matrix` argument:
+
+```{r examples-phylogeny-write-vcf, eval = FALSE}
+write_vcf(vars, out_prefix = "var_gtrees",
+          sample_matrix = matrix(1:vars$n_vars(), ncol = 2, byrow = TRUE))
+```
+
+
+Now I can generate data for 1 flow cell of $2 \times 250$bp sequencing
+on an Illumina MiSeq v3.
+
+```{r examples-phylogeny-gtrees-illumina, eval = FALSE}
+illumina(ref, out_prefix = "phylo_gtrees",
+         seq_sys = "MSv3",
+         read_length = 250,
+         n_reads = 50e6)
+```

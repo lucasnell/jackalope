@@ -8,6 +8,7 @@
 check_pacbio_args <- function(seq_object,
                               n_reads,
                               variant_probs,
+                              sep_files,
                               compress,
                               comp_method,
                               n_threads,
@@ -94,6 +95,9 @@ check_pacbio_args <- function(seq_object,
     if (!is_type(show_progress, "logical", 1)) {
         err_msg("pacbio", "show_progress", "a single logical")
     }
+    if (!is_type(sep_files, "logical", 1)) {
+        err_msg("pacbio", "sep_files", "a single logical")
+    }
     # Checking proper variant_probs
     if (!is.null(variant_probs) && !inherits(seq_object, "variants")) {
         stop("\nFor PacBio sequencing, it makes no sense to provide ",
@@ -136,7 +140,7 @@ check_pacbio_args <- function(seq_object,
 #' @section ID lines:
 #' The ID lines for FASTQ files are formatted as such:
 #'
-#' `@<genome name>-<sequence name>-<starting position>`
+#' `@<genome name>-<sequence name>-<starting position>-<strand>`
 #'
 #' where `genome name` is always `REF` for reference genomes (as opposed to variants).
 #'
@@ -213,6 +217,7 @@ pacbio <- function(seq_object,
                    custom_read_lengths = NULL,
                    prob_dup = 0.0,
                    variant_probs = NULL,
+                   sep_files = FALSE,
                    compress = FALSE,
                    comp_method = "bgzip",
                    n_threads = 1L,
@@ -221,17 +226,27 @@ pacbio <- function(seq_object,
                    overwrite = FALSE) {
 
 
-    out_prefix <- path.expand(out_prefix)
-    check_file_existence(paste0(out_prefix, "_R1.fq"), compress, overwrite)
-
     # Check for improper argument types:
-    check_pacbio_args(seq_object, n_reads, variant_probs,
+    check_pacbio_args(seq_object, n_reads, variant_probs, sep_files,
                       compress, comp_method, n_threads, read_pool_size,
                       chi2_params_s, chi2_params_n, max_passes,
                       sqrt_params, norm_params,
                       prob_thresh, ins_prob, del_prob, sub_prob,
                       min_read_length, lognorm_read_length, custom_read_lengths,
                       prob_dup, show_progress)
+
+    out_prefix <- path.expand(out_prefix)
+    fns <- NULL
+    # Doesn't make sense to have separate files for reference genome:
+    if (inherits(seq_object, "ref_genome")) sep_files <- FALSE
+    if (!sep_files) {
+        fns <- paste0(out_prefix, "_R1.fq")
+    } else {
+        fns <- lapply(seq_object$var_names(),
+                      function(x) sprintf("%s_%s_R1.fq", out_prefix, x))
+        fns <- c(fns, recursive = TRUE)
+    }
+    check_file_existence(fns, compress, overwrite)
 
     # Set compression level:
     if (is_type(compress, "logical", 1) && compress) compress <- 6 # default compression
@@ -261,6 +276,7 @@ pacbio <- function(seq_object,
 
     # Assembling list of arguments for inner cpp function:
     args <- list(out_prefix = out_prefix,
+                 sep_files = sep_files,
                  compress = compress,
                  comp_method = comp_method,
                  n_reads = n_reads,
@@ -287,6 +303,7 @@ pacbio <- function(seq_object,
 
     if (inherits(seq_object, "ref_genome")) {
         args <- c(args, list(ref_genome_ptr = seq_object$genome))
+        args$sep_files <- NULL
         do.call(pacbio_ref_cpp, args)
     } else if (inherits(seq_object, "variants")) {
         args <- c(args, list(var_set_ptr = seq_object$genomes,

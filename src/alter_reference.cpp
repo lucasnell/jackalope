@@ -71,7 +71,7 @@ void merge_sequences_cpp(SEXP ref_genome_ptr) {
     std::string& nts(seqs.front().nucleos);
     ref_genome->old_names.push_back(seqs.front().name);
     seqs.front().name = "MERGE";
-    uint32 i = seqs.size() - 1;
+    uint64 i = seqs.size() - 1;
     while (seqs.size() > 1) {
         nts += seqs[i].nucleos;
         ref_genome->old_names.push_back(seqs[i].name);
@@ -122,7 +122,7 @@ void merge_sequences_cpp(SEXP ref_genome_ptr) {
 //'
 //[[Rcpp::export]]
 void filter_sequences_cpp(SEXP ref_genome_ptr,
-                          const uint32& min_seq_size = 0,
+                          const uint64& min_seq_size = 0,
                           const double& out_seq_prop = 0) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
@@ -141,7 +141,7 @@ void filter_sequences_cpp(SEXP ref_genome_ptr,
     std::sort(seqs.begin(), seqs.end(), std::greater<RefSequence>());
 
     // Index that will point to the first sequence to be deleted
-    uint32 i = 0;
+    uint64 i = 0;
     // Keeping track of total genome size after filtering
     double out_seq = 0;
 
@@ -206,7 +206,7 @@ void filter_sequences_cpp(SEXP ref_genome_ptr,
 //[[Rcpp::export]]
 void replace_Ns_cpp(SEXP ref_genome_ptr,
                     const std::vector<double>& pi_tcag,
-                    uint32 n_threads,
+                    uint64 n_threads,
                     const bool& show_progress) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
@@ -217,10 +217,10 @@ void replace_Ns_cpp(SEXP ref_genome_ptr,
     // Generate seeds for random number generators (1 RNG per thread)
     const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
 
-    const uint32 n_seqs = ref_genome->size();
+    const uint64 n_seqs = ref_genome->size();
 
     // Progress bar
-    Progress prog_bar(n_seqs, show_progress);
+    Progress prog_bar(ref_genome->total_size, show_progress);
 
 #ifdef _OPENMP
 #pragma omp parallel num_threads(n_threads) if (n_threads > 1)
@@ -231,9 +231,9 @@ void replace_Ns_cpp(SEXP ref_genome_ptr,
 
     // Write the active seed per thread or just write one of the seeds.
 #ifdef _OPENMP
-    uint32 active_thread = omp_get_thread_num();
+    uint64 active_thread = omp_get_thread_num();
 #else
-    uint32 active_thread = 0;
+    uint64 active_thread = 0;
 #endif
     active_seeds = seeds[active_thread];
 
@@ -245,13 +245,13 @@ void replace_Ns_cpp(SEXP ref_genome_ptr,
 #ifdef _OPENMP
 #pragma omp for schedule(static)
 #endif
-    for (uint32 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_seqs; i++) {
         if (prog_bar.is_aborted() || prog_bar.check_abort()) continue;
         RefSequence& seq(ref_genome->sequences[i]);
         for (char& c : seq.nucleos) {
             if (c == 'N') c = sampler.sample(eng);
         }
-        prog_bar.increment(1U);
+        prog_bar.increment(seq.size());
     }
 
 #ifdef _OPENMP

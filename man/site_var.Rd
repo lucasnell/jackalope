@@ -4,8 +4,9 @@
 \alias{site_var}
 \title{Specify variation in mutation rates among sites}
 \usage{
-site_var(reference, shape = NULL, region_size = NULL, mats = NULL,
-  out_prefix = NULL, compress = FALSE, comp_method = "bgzip")
+site_var(reference, shape = NULL, region_size = NULL, invariant = 0,
+  mats = NULL, out_prefix = NULL, compress = FALSE,
+  comp_method = "bgzip")
 }
 \arguments{
 \item{reference}{A \code{ref_genome} object from which you will eventually
@@ -13,11 +14,16 @@ generate variants.}
 
 \item{shape}{Shape parameter for the Gamma distribution that generates gamma distances,
 The variance of the distribution is \code{1 / shape}, and its mean is fixed to 1.
+Values \code{<= 0} are not allowed.
 Defaults to \code{NULL}.}
 
 \item{region_size}{Size of regions to break the genome into,
 where all sites within a region have the same gamma distance.
 Defaults to \code{NULL}.}
+
+\item{invariant}{Proportion of regions that are invariant.
+Must be in range \code{[0,1)}.
+Defaults to \code{0}.}
 
 \item{mats}{List of matrices, one for each sequence in the genome.
 Each matrix should have two columns.

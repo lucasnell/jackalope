@@ -61,12 +61,24 @@ editing the reference genome.
 \item{\code{var_names()}}{View vector of variant names.}
 \item{\code{sequence(var_ind, seq_ind)}}{View a sequence string based on
 indices for the sequence (\code{seq_ind}) and variant (\code{var_ind}).}
+\item{\code{gc_prop(var_ind, seq_ind, start, end)}}{View the GC proportion for a range
+within a variant sequence.}
+\item{\code{nt_prop(nt, var_ind, seq_ind, start, end)}}{View the proportion of a range
+within a variant sequence that is of nucleotide \code{nt}.}
 }
 \strong{Editing information:}
 \describe{
 \item{\code{set_names(new_names)}}{Set names for all variants.
 \code{new_names} is a character vector of what to change names to, and it must
 be the same length as the # variants.}
+\item{\code{add_vars(new_names)}}{Add new, named variant(s) to the object.
+These variants will have no mutations. If you want to add new variants with
+mutations, either re-run \code{create_variants} or use the \code{dup_vars} method to
+duplicate existing variants.}
+\item{\code{dup_vars(var_names, new_names = NULL)}}{Duplicate existing variant(s) based
+on their name(s). You can optionally specify the names of the duplicates
+(using \code{new_names}).
+Otherwise, their names are auto-generated.}
 \item{\code{rm_vars(var_names)}}{Remove one or more variants based on names in
 the \code{var_names} vector.}
 \item{\code{add_sub(var_ind, seq_ind, pos, nt)}}{Manually add a substitution

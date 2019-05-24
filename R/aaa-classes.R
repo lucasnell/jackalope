@@ -21,6 +21,10 @@
 #'     \item{`names()`}{View vector of sequence names.}
 #'     \item{`sequence(seq_ind)`}{View a sequence string based on an index,
 #'         `seq_ind`.}
+#'     \item{`gc_prop(seq_ind, start, end)`}{View the GC proportion for a range within a
+#'         reference sequence.}
+#'     \item{`nt_prop(nt, seq_ind, start, end)`}{View the proportion of a range within a
+#'         reference sequence that is of nucleotide `nt`.}
 #' }
 #' \strong{Editing information:}
 #' \describe{
@@ -29,6 +33,9 @@
 #'         be the same length as the # sequences.}
 #'     \item{`clean_names()`}{Clean sequence names, converting `" :;=%,\\|/\"\'"`
 #'         to `"_"`.}
+#'     \item{`add_seqs(new_seqs, new_names = NULL)`}{Add one or more sequences
+#'         directly. They can optionally be named (using `new_names`).
+#'         Otherwise, their names are auto-generated.}
 #'     \item{`rm_seqs(seq_names)`}{Remove one or more sequences based on names in
 #'         the `seq_names` vector.}
 #'     \item{`merge_seqs()`}{Merge all sequences into one after first shuffling
@@ -103,26 +110,26 @@ ref_genome <- R6::R6Class(
         sequence = function(seq_ind) {
             private$check_ptr()
             if (!single_integer(seq_ind, 1, self$n_seqs())) {
-                stop("seq_ind arg must be in range [1, <# sequences>]", call. = FALSE)
+                err_msg("sequence", "seq_ind", "integer in range [1, <# sequences>]")
             }
             return(view_ref_genome_seq(self$genome, seq_ind - 1))
         },
         # GC proportion for part of one reference sequence
         gc_prop = function(seq_ind, start, end) {
-            private$check_pos(seq_ind, start)
-            private$check_pos(seq_ind, end)
-            if (end < start) stop("end arg must be >= start arg", call. = FALSE)
+            private$check_pos(seq_ind, start, "nt_prop", "start")
+            private$check_pos(seq_ind, end, "nt_prop", "end")
+            if (end < start) err_msg("gc_prop", "end", ">= `start` arg")
             gcp <- view_ref_genome_gc_content(self$genome, seq_ind - 1,
                                               start - 1, end - 1)
             return(gcp)
         },
         # Nucleotide content for part of one reference sequence
         nt_prop = function(nt, seq_ind, start, end) {
-            private$check_pos(seq_ind, start)
-            private$check_pos(seq_ind, end)
-            if (end < start) stop("end arg must be >= start arg", call. = FALSE)
+            private$check_pos(seq_ind, start, "nt_prop", "start")
+            private$check_pos(seq_ind, end, "nt_prop", "end")
+            if (end < start)err_msg("nt_prop", "end", ">= `start` arg")
             if (!is_type(nt, "character", 1) || nchar(nt) != 1) {
-                stop("arg nt must be a single character", call. = FALSE)
+                err_msg("nt_prop", "nt", "a single character")
             }
             ntp <- view_ref_genome_nt_content(self$genome, nt, seq_ind - 1,
                                               start - 1, end - 1)
@@ -136,7 +143,7 @@ ref_genome <- R6::R6Class(
         set_names = function(new_names) {
             private$check_ptr()
             if (!is_type(new_names, "character", self$n_seqs())) {
-                stop("names arg must be the same length as # sequences", call. = FALSE)
+                err_msg("set_names", "new_names", "the same length as # sequences")
             }
             seq_inds <- 0:(length(new_names) - 1)
             set_ref_genome_seq_names(self$genome, seq_inds, new_names)
@@ -150,18 +157,52 @@ ref_genome <- R6::R6Class(
             invisible(self)
         },
 
+        # Add one or more sequences
+        add_seqs = function(new_seqs, new_names = NULL) {
+            private$check_ptr()
+            self_names <- self$names()
+            if (!is_type(new_seqs, "character")) {
+                err_msg("rm_seqs","new_seqs", "a character vector")
+            }
+            if (!is.null(new_names) && !is_type(new_names, "character")) {
+                err_msg("rm_seqs","new_names", "NULL or a character vector")
+            }
+            if (is.null(new_names)) {
+                N <- suppressWarnings(as.integer(gsub("seq", "", self$names())))
+                N <- if (any(!is.na(N))) 1 + max(N, na.rm = TRUE) else self$n_seqs()
+                N <- N:(N+length(new_seqs)-1)
+                new_names <- sprintf("seq%i", N)
+            }
+
+            if (length(new_names) != length(new_seqs)) {
+                err_msg("rm_seqs","new_names", "the same length as `new_seqs`")
+            }
+            if (anyDuplicated(new_names) != 0) {
+                err_msg("rm_seqs","new_names", "a vector with no duplicates")
+            }
+            if (any(new_names %in% self$names())) {
+                err_msg("rm_seqs", "new_names", "a vector containing no elements",
+                        "already present as a sequence name in the reference genome")
+            }
+
+            add_ref_genome_seqs(self$genome, new_seqs, new_names)
+            invisible(self)
+        },
+
         # Remove one or more sequences by name
         rm_seqs = function(seq_names) {
             private$check_ptr()
             self_names <- self$names()
             if (!is_type(seq_names, "character")) {
-                stop("sequence names must be a character vector", call. = FALSE)
+                err_msg("rm_seqs", "seq_names", "a character vector")
             }
             if (!all(seq_names %in% self_names)) {
-                stop("not all provided seq_names are in this genome.", call. = FALSE)
+                err_msg("rm_seqs", "seq_names", "a character vector of sequence names",
+                        "present in the `ref_genome` object. One or more of the names",
+                        "provided weren't found")
             }
             if (anyDuplicated(seq_names) != 0) {
-                stop("one or more seq_names are duplicate.", call. = FALSE)
+                err_msg("rm_seqs", "seq_names", "a vector of *non-duplicated* names")
             }
             seq_inds <- match(seq_names, self_names) - 1
             remove_ref_genome_seqs(self$genome, seq_inds)
@@ -183,21 +224,18 @@ ref_genome <- R6::R6Class(
             out_seq_prop <- 0
             # Filling in the necessary parameter and checking for sensible inputs
             if (!single_number(threshold)) {
-                stop("\nWhen filtering ref_genome genome, the threshold must be a ",
-                     "single number", call. = FALSE)
+                err_msg("filter_seqs", "threshold", "a single number")
             }
             if (method == "size") {
                 if (!single_integer(threshold, 1)) {
-                    stop("\nWhen filtering ref_genome genome based on sequence ",
-                         "sizes, the threshold must be a single integer >= 1.",
-                         call. = FALSE)
+                    err_msg("filter_seqs", "threshold", "a single integer >= 1 if",
+                            "filtering based on sequence sizes")
                 }
                 min_seq_size <- threshold
             } else {
                 if (!single_number(threshold) || threshold >= 1 || threshold <= 0) {
-                    stop("\nWhen filtering ref_genome genome based on a proportion of ",
-                         "total bases, the threshold must be > 0 and < 1",
-                         call. = FALSE)
+                    err_msg("filter_seqs", "threshold", "a single number > 0 and < 1 if",
+                            "filtering based on a proportion of total bases")
                 }
                 out_seq_prop <- threshold
             }
@@ -212,17 +250,14 @@ ref_genome <- R6::R6Class(
             private$check_ptr()
             if (!is_type(pi_tcag, "numeric", 4) || any(pi_tcag < 0) ||
                 all(pi_tcag == 0)) {
-                stop("\nIn `replace_Ns` method, the `pi_tcag` argument ",
-                     "must be a numeric vector of length 4, where no values can ",
-                     "be < 0 and at least one value must be > 0.", call. = FALSE)
+                err_msg("replace_Ns", "pi_tcag", "a numeric vector of length 4, where",
+                        "no values can be < 0 and at least one value must be > 0")
             }
             if (!single_integer(n_threads, 1)) {
-                stop("\nIn `replace_Ns` method, the `n_threads` argument ",
-                     "must be a single integer >= 1.", call. = FALSE)
+                err_msg("replace_Ns", "n_threads", "a single integer >= 1")
             }
             if (!is_type(show_progress, "logical", 1)) {
-                stop("\nIn `replace_Ns` method, the `show_progress` argument ",
-                     "must be a single logical.", call. = FALSE)
+                err_msg("replace_Ns", "show_progress", "a single logical")
             }
 
             replace_Ns_cpp(self$genome, pi_tcag, n_threads, show_progress)
@@ -234,21 +269,25 @@ ref_genome <- R6::R6Class(
 
     ),
 
+    # __private__ -----
     private = list(
 
         check_ptr = function() {
-            stopifnot(inherits(self$genome, "externalptr"))
+            if (!inherits(self$genome, "externalptr")) {
+                stop("\nSomehow the `genome` field of this `ref_genome` object ",
+                     "has been converted to something other than an `externalptr` ",
+                     "object. Re-make this `ref_genome` object, don't edit the ",
+                     "`genome` field directly, and try again.", call. = FALSE)
+            }
         },
 
-        check_pos = function(seq_ind, pos) {
+        check_pos = function(seq_ind, pos, .fun, .pos_name) {
             private$check_ptr()
             if (!single_integer(seq_ind, 1, self$n_seqs())) {
-                stop("seq_ind arg must be integer in range [1, <# sequences>]",
-                     call. = FALSE)
+                err_msg(.fun, "seq_ind", "integer in range [1, <# sequences>]")
             }
             if (!single_integer(pos, 1, self$sizes()[seq_ind])) {
-                stop("pos arg must be integer in range [1, <sequence size>]",
-                     call. = FALSE)
+                err_msg(.fun, .pos_name, "integer in range [1, <sequence size>]")
             }
         }
 
@@ -313,12 +352,24 @@ ref_genome$lock()
 #'     \item{`var_names()`}{View vector of variant names.}
 #'     \item{`sequence(var_ind, seq_ind)`}{View a sequence string based on
 #'         indices for the sequence (`seq_ind`) and variant (`var_ind`).}
+#'     \item{`gc_prop(var_ind, seq_ind, start, end)`}{View the GC proportion for a range
+#'         within a variant sequence.}
+#'     \item{`nt_prop(nt, var_ind, seq_ind, start, end)`}{View the proportion of a range
+#'         within a variant sequence that is of nucleotide `nt`.}
 #' }
 #' \strong{Editing information:}
 #' \describe{
 #'     \item{`set_names(new_names)`}{Set names for all variants.
 #'         `new_names` is a character vector of what to change names to, and it must
 #'         be the same length as the # variants.}
+#'     \item{`add_vars(new_names)`}{Add new, named variant(s) to the object.
+#'         These variants will have no mutations. If you want to add new variants with
+#'         mutations, either re-run `create_variants` or use the `dup_vars` method to
+#'         duplicate existing variants.}
+#'     \item{`dup_vars(var_names, new_names = NULL)`}{Duplicate existing variant(s) based
+#'         on their name(s). You can optionally specify the names of the duplicates
+#'         (using `new_names`).
+#'         Otherwise, their names are auto-generated.}
 #'     \item{`rm_vars(var_names)`}{Remove one or more variants based on names in
 #'         the `var_names` vector.}
 #'     \item{`add_sub(var_ind, seq_ind, pos, nt)`}{Manually add a substitution
@@ -392,7 +443,7 @@ variants <- R6::R6Class(
         # Get vector of sequence sizes for one variant
         sizes = function(var_ind) {
             private$check_ptr()
-            private$check_var_ind(var_ind)
+            private$check_var_ind(var_ind, "sizes")
             return(view_var_genome_seq_sizes(self$genomes, var_ind - 1))
         },
 
@@ -411,16 +462,16 @@ variants <- R6::R6Class(
         # Extract one variant sequence
         sequence = function(var_ind, seq_ind) {
             private$check_ptr()
-            private$check_var_ind(var_ind)
-            private$check_seq_ind(seq_ind)
+            private$check_var_ind(var_ind, "sequence")
+            private$check_seq_ind(seq_ind, "sequence")
             return(view_var_genome_seq(self$genomes, var_ind - 1, seq_ind - 1))
         },
 
         # GC proportion for part of one variant sequence
         gc_prop = function(var_ind, seq_ind, start, end) {
-            private$check_pos(var_ind, seq_ind, start)
-            private$check_pos(var_ind, seq_ind, end)
-            if (end < start) stop("end arg must be >= start arg", call. = FALSE)
+            private$check_pos(var_ind, seq_ind, start, "gc_prop", "start")
+            private$check_pos(var_ind, seq_ind, end, "gc_prop", "end")
+            if (end < start) err_msg("gc_prop", "end", ">= `start` arg")
             gcp <- view_var_set_gc_content(self$genomes, seq_ind - 1, var_ind - 1,
                                            start - 1, end - 1)
             return(gcp)
@@ -428,11 +479,11 @@ variants <- R6::R6Class(
 
         # Nucleotide content for part of one reference sequence
         nt_prop = function(nt, var_ind, seq_ind, start, end) {
-            private$check_pos(var_ind, seq_ind, start)
-            private$check_pos(var_ind, seq_ind, end)
-            if (end < start) stop("end arg must be >= start arg", call. = FALSE)
+            private$check_pos(var_ind, seq_ind, start, "nt_prop", "start")
+            private$check_pos(var_ind, seq_ind, end, "nt_prop", "end")
+            if (end < start) err_msg("nt_prop", "end", ">= `start` arg")
             if (!is_type(nt, "character", 1) || nchar(nt) != 1) {
-                stop("arg nt must be a single character", call. = FALSE)
+                err_msg("nt_prop", "nt", "a single character")
             }
             ntp <- view_var_set_nt_content(self$genomes, nt, seq_ind - 1, var_ind - 1,
                                            start - 1, end - 1)
@@ -448,10 +499,70 @@ variants <- R6::R6Class(
         set_names = function(new_names) {
             private$check_ptr()
             if (!is_type(new_names, "character", self$n_vars())) {
-                stop("names arg must be the same length as # variants", call. = FALSE)
+                err_msg("set_names", "new_names", "the same length as # variants")
             }
             var_inds <- 0:(length(new_names) - 1)
             set_var_set_var_names(self$genomes, var_inds, new_names)
+            invisible(self)
+        },
+
+        # Add one or more blank, named variants
+        add_vars = function(new_names) {
+
+            private$check_ptr()
+
+            if (!is_type(new_names, "character")) {
+                err_msg("add_vars", "new_names", "a character vector")
+            }
+            if (anyDuplicated(new_names) != 0) {
+                err_msg("add_vars", "new_names", "a vector with no duplicates")
+            }
+            if (any(new_names %in% self$var_names())) {
+                err_msg("add_vars", "new_names", "a vector containing no names",
+                        "already present as variants names in the object being added to")
+            }
+
+            add_var_set_vars(self$genomes, new_names)
+
+            invisible(self)
+        },
+
+        # Duplicate one or more variants by name
+        dup_vars = function(var_names, new_names = NULL) {
+            private$check_ptr()
+            self_names <- self$var_names()
+            if (!is_type(var_names, "character")) {
+                err_msg("dup_vars", "var_names", "a character vector")
+            }
+            if (!all(var_names %in% self_names)) {
+                err_msg("dup_vars", "var_names", "a character vector containing only",
+                        "variant names present in the `variants` object.")
+            }
+            var_inds <- match(var_names, self_names) - 1
+
+            if (!is.null(new_names) && !is_type(new_names, "character")) {
+                err_msg("dup_vars", "new_names", "NULL or a character vector")
+            }
+            if (is.null(new_names)) {
+                dup_n <- numeric(length(unique(var_names))) + 1
+                names(dup_n) <- unique(var_names)
+                new_names <- var_names
+                for (i in 1:length(new_names)) {
+                    new_names[i] <- paste0(var_names[i], "_dup", dup_n[[var_names[i]]])
+                    dup_n[var_names[i]] <- dup_n[[var_names[i]]] + 1
+                }
+            }
+
+            if (length(new_names) != length(var_names)) {
+                err_msg("dup_vars", "new_names", "the same length as `var_names`")
+            }
+            if (any(new_names %in% self_names)) {
+                err_msg("dup_seqs", "new_names", "a vector containing no elements",
+                        "already present as a variant name in the variants object")
+            }
+
+            dup_var_set_vars(self$genomes, var_inds, new_names)
+
             invisible(self)
         },
 
@@ -460,13 +571,14 @@ variants <- R6::R6Class(
             private$check_ptr()
             self_names <- self$var_names()
             if (!is_type(var_names, "character")) {
-                stop("variant names must be a character vector", call. = FALSE)
+                err_msg("rm_vars", "var_names", "a character vector")
             }
             if (!all(var_names %in% self_names)) {
-                stop("not all provided var_names are in this genome.", call. = FALSE)
+                err_msg("rm_vars", "var_names", "a vector of only names that are",
+                        "present in the variants object")
             }
             if (anyDuplicated(var_names) != 0) {
-                stop("one or more var_names are duplicate.", call. = FALSE)
+                err_msg("rm_vars", "var_names", "a vector of non-duplicate names")
             }
             var_inds <- match(var_names, self_names) - 1
             remove_var_set_vars(self$genomes, var_inds)
@@ -476,35 +588,34 @@ variants <- R6::R6Class(
 
         # Mutations:
         add_sub = function(var_ind, seq_ind, pos, nt) {
-            private$check_pos(var_ind, seq_ind, pos)
+            private$check_pos(var_ind, seq_ind, pos, "add_sub", "pos")
             if (!is_type(nt, "character", 1) || nchar(nt) != 1) {
-                stop("nt arg must be a single character", call. = FALSE)
+                err_msg("add_sub", "nt", "a single character")
             }
             if (! nt %in% c("T", "C", "A", "G", "N")) {
-                stop("nt arg must be one of \"T\", \"C\", \"A\", \"G\", or \"N\"",
-                     call. = FALSE)
+                err_msg("add_sub", "nt", "one of \"T\", \"C\", \"A\", \"G\", or \"N\"")
             }
             add_substitution(self$genomes, var_ind - 1, seq_ind - 1, nt, pos - 1)
             invisible(self)
         },
 
         add_ins = function(var_ind, seq_ind, pos, nts) {
-            private$check_pos(var_ind, seq_ind, pos)
+            private$check_pos(var_ind, seq_ind, pos, "add_ins", "pos")
             if (!is_type(nts, "character", 1)) {
-                stop("nts arg must be a single string", call. = FALSE)
+                err_msg("add_ins", "nts", "a single string")
             }
             if (! all(strsplit(nts, "")[[1]] %in% c("T", "C", "A", "G", "N"))) {
-                stop("nts arg must only contain \"T\", \"C\", \"A\", \"G\", or \"N\"",
-                     call. = FALSE)
+                err_msg("add_ins", "nts", "string containing only \"T\", \"C\", \"A\",",
+                        "\"G\", or \"N\"")
             }
             add_insertion(self$genomes, var_ind - 1, seq_ind - 1, nts, pos - 1)
             invisible(self)
         },
 
         add_del = function(var_ind, seq_ind, pos, n_nts) {
-            private$check_pos(var_ind, seq_ind, pos)
+            private$check_pos(var_ind, seq_ind, pos, "add_del", "pos")
             if (!single_integer(n_nts, 1)) {
-                stop("n_nts arg must be a single integer >= 1", call. = FALSE)
+                err_msg("add_del", "n_nts", "a single integer >= 1")
             }
             add_deletion(self$genomes, var_ind - 1, seq_ind - 1, n_nts, pos - 1)
             invisible(self)
@@ -520,30 +631,32 @@ variants <- R6::R6Class(
         reference = NULL,
 
         check_ptr = function() {
-            stopifnot(inherits(self$genomes, "externalptr"))
+            if (!inherits(self$genomes, "externalptr")) {
+                stop("\nSomehow the `genomes` field of this `variants` object ",
+                     "has been converted to something other than an `externalptr` ",
+                     "object. Re-make this `variants` object, don't edit the ",
+                     "`genomes` field directly, and try again.", call. = FALSE)
+            }
         },
 
-        check_seq_ind = function(seq_ind) {
+        check_seq_ind = function(seq_ind, .fun_name) {
             private$check_ptr()
             if (!single_integer(seq_ind, 1, self$n_seqs())) {
-                stop("seq_ind arg must be integer in range [1, <# sequences>]",
-                     call. = FALSE)
+                err_msg(.fun_name, "seq_ind", "integer in range [1, <# sequences>]")
             }
         },
-        check_var_ind = function(var_ind) {
+        check_var_ind = function(var_ind, .fun_name) {
             private$check_ptr()
             if (!single_integer(var_ind, 1, self$n_vars())) {
-                stop("var_ind arg must be integer in range [1, <# variants>]",
-                     call. = FALSE)
+                err_msg(.fun_name, "var_ind", "integer in range [1, <# variants>]")
             }
         },
-        check_pos = function(var_ind, seq_ind, pos) {
+        check_pos = function(var_ind, seq_ind, pos, .fun_name, .pos_name) {
             private$check_ptr()
-            private$check_seq_ind(seq_ind)
-            private$check_var_ind(var_ind)
+            private$check_seq_ind(seq_ind, .fun_name)
+            private$check_var_ind(var_ind, .fun_name)
             if (!single_integer(pos, 1, self$sizes(var_ind)[seq_ind])) {
-                stop("pos arg must be integer in range [1, <sequence size>]",
-                     call. = FALSE)
+                err_msg(.fun_name, .pos_name, "integer in range [1, <sequence size>]")
             }
         }
     )
@@ -569,9 +682,6 @@ variants$lock()
 #' @field deletion_rates Vector of deletion rates by length.
 #' @field gamma_mats List of matrices specifying "gamma distances" (see definition in
 #'     `?create_mevo`) for each sequence.
-#' @field chunk_size The size of "chunks" of sequences to first sample uniformly
-#'     before doing weighted sampling by rates for each sequence location.
-#'     See `?create_mevo` for more information.
 #'
 #' @section Methods:
 #' \describe{
@@ -600,20 +710,20 @@ mevo <- R6::R6Class(
         insertion_rates = NULL,
         deletion_rates = NULL,
         gamma_mats = NULL,
-        chunk_size = NULL,
+        region_size = NULL,
 
         initialize = function(sub_info,
                               insertion_rates,
                               deletion_rates,
                               gamma_mats,
-                              chunk_size) {
+                              region_size) {
 
             self$Q <- sub_info$Q
             self$pi_tcag <- sub_info$pi_tcag
             self$insertion_rates <- insertion_rates
             self$deletion_rates <- deletion_rates
             self$gamma_mats <- gamma_mats
-            self$chunk_size <- chunk_size
+            self$region_size <- region_size
 
         },
 
@@ -624,8 +734,6 @@ mevo <- R6::R6Class(
 
             cat("# Equilibrium densities:\n")
             cat("  ", sprintf(fmt, self$pi_tcag), "\n")
-
-            cat("# Chunk size: ", self$chunk_size, "\n", sep = "")
 
             cat("# Among-site variability: ")
             using_gammas <- !all(sapply(self$gamma_mats,

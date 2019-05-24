@@ -5,25 +5,6 @@ context("Testing making of mevo (molecular evolution info) object")
 # library(testthat)
 
 
-# From mevo class:
-# # Average mutation rate
-# mu = function() {
-#     # Indel rates (same for each nucleotide):
-#     indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
-#     # Average mutation rate among all nucleotides:
-#     mu <- sum({rowSums(self$Q) + indel} * self$pi_tcag)
-#     return(mu)
-# },
-#
-# # Overall mutation rate by nucleotide
-# q = function() {
-#     # Indel rates (same for each nucleotide):
-#     indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
-#     # Mutation rates by nucleotides:
-#     q <- rowSums(self$Q) + indel
-#     return(q)
-# }
-
 
 set.seed(4616515)
 
@@ -72,9 +53,8 @@ with(pars, {
 create_mevo <- function(reference, sub,
                         ins = NULL,
                         del = NULL,
-                        gamma_mats = NULL,
-                        chunk_size = 100) {
-    jackalope:::create_mevo(reference, sub, ins, del, gamma_mats, chunk_size)
+                        gamma_mats = NULL) {
+    jackalope:::create_mevo(reference, sub, ins, del, gamma_mats, 10)
 }
 
 # Create reference genome
@@ -92,11 +72,17 @@ M <- create_mevo(ref, sub = sub_JC69(pars$lambda))
 
 # These only need to be checked once:
 test_that("proper output common to all models with no site variability or indels", {
-    X <- rep(list(cbind(1000, 1)), length(M$gamma_mats))
-    expect_equal(M$gamma_mats, X)
+
+    X <- lapply(ref$sizes(),
+                function(x) {
+                    z <- cbind(x, 1)
+                    colnames(z) <- NULL
+                    return(z)
+                })
+
+    expect_equal(M$gamma_mats, X, check.attributes = FALSE)
     expect_equal(M$insertion_rates, numeric(0))
     expect_equal(M$deletion_rates, numeric(0))
-    expect_equal(M$chunk_size, 100)
 })
 
 test_that("proper output for JC69 model", {
@@ -281,7 +267,7 @@ test_that("proper output for JC69 model when indels are included", {
 # __site var.__ ----
 # ==============================*
 
-dir <- tempdir()
+dir <- tempdir(check = TRUE)
 
 M <- site_var(ref, shape = pars$shape, region_size = pars$region_size,
               out_prefix = paste0(dir, "/mevo"))
@@ -347,3 +333,14 @@ test_that("throws proper errors when inputting an incorrect `site_var$mats` inpu
                  regexp = "all matrices should contain no duplicate end points")
 })
 
+
+
+# *  invariants ----
+test_that("invariant sites are produced appropriately", {
+    # Because `ref` is evenly sized we should get exact output:
+    M <- site_var(ref, shape = pars$shape, region_size = pars$region_size,
+                  invariant = 0.50)
+    expect_identical(sapply(M, function(x) mean(x[,2] == 0)),
+                     rep(0.5, length(M)))
+    expect_equal(mean(sapply(M, function(x) mean(x[,2]))), 1.0)
+})

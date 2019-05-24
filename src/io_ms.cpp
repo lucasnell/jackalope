@@ -91,7 +91,7 @@ std::vector<std::vector<std::string>> read_ms_trees_(std::string ms_file) {
         std::vector<std::string> svec = cpp_str_split_newline(mystring);
 
         // Scroll through lines derived from the buffer.
-        for (uint32 i = 0; i < svec.size() - 1; i++){
+        for (uint64 i = 0; i < svec.size() - 1; i++){
             ms_parse_tree_line(svec[i], newick_strings);
         }
         // Manage the last line.
@@ -125,11 +125,11 @@ std::vector<std::vector<std::string>> read_ms_trees_(std::string ms_file) {
 
 // For organizing info from each sequence
 struct MS_SitesInfo {
-    uint32 n_sites;
+    uint64 n_sites;
     std::vector<double> positions;
     std::vector<std::vector<bool>> segr_bools;
 
-    arma::mat to_mat(const uint32& seq) {
+    arma::mat to_mat(const uint64& seq) {
 
         // Now create and fill the output matrix
         arma::mat M(n_sites, segr_bools.size() + 1);
@@ -141,7 +141,7 @@ struct MS_SitesInfo {
                      "as the # sites as given by the line starting with 'segsites:'."});
         }
         M.col(0) = arma::conv_to<arma::vec>::from(positions);
-        for (uint32 i = 0; i < segr_bools.size(); i++) {
+        for (uint64 i = 0; i < segr_bools.size(); i++) {
             if (segr_bools[i].size() != n_sites) {
                 str_stop({"\nIn creation of segregation-sites info ",
                          "for sequence number ", std::to_string(seq + 1),
@@ -150,7 +150,7 @@ struct MS_SitesInfo {
                          "items in the ", std::to_string(i + 1), "th line ",
                          "of segregating sites info (ones filled with 0s and 1s)."});
             }
-            for (uint32 j = 0; j < segr_bools[i].size(); j++) {
+            for (uint64 j = 0; j < segr_bools[i].size(); j++) {
                 M(j, i+1) = static_cast<double>(segr_bools[i][j]);
             }
         }
@@ -235,7 +235,7 @@ arma::field<arma::mat> coal_file_sites(std::string ms_file) {
         std::vector<std::string> svec = cpp_str_split_newline(mystring);
 
         // Scroll through lines derived from the buffer.
-        for (uint32 i = 0; i < svec.size() - 1; i++){
+        for (uint64 i = 0; i < svec.size() - 1; i++){
             ms_parse_sites_line(svec[i], sites_infos);
         }
         // Manage the last line.
@@ -258,7 +258,7 @@ arma::field<arma::mat> coal_file_sites(std::string ms_file) {
     gzclose (file);
 
     arma::field<arma::mat> sites_mats(sites_infos.size());
-    for (uint32 i = 0; i < sites_infos.size(); i++) {
+    for (uint64 i = 0; i < sites_infos.size(); i++) {
         sites_mats[i] = sites_infos[i].to_mat(i);
     }
 

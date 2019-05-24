@@ -15,8 +15,9 @@ pacbio(seq_object, out_prefix, n_reads, chi2_params_s = c(0.01214, -5.12,
   del_prob = 0.04, sub_prob = 0.01, min_read_length = 50,
   lognorm_read_length = c(0.200110276521, -10075.4363813, 17922.611306),
   custom_read_lengths = NULL, prob_dup = 0, variant_probs = NULL,
-  compress = FALSE, comp_method = "bgzip", n_threads = 1L,
-  read_pool_size = 100L, show_progress = FALSE, overwrite = FALSE)
+  sep_files = FALSE, compress = FALSE, comp_method = "bgzip",
+  n_threads = 1L, read_pool_size = 100L, show_progress = FALSE,
+  overwrite = FALSE)
 }
 \arguments{
 \item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
@@ -78,6 +79,11 @@ This is ignored if sequencing a reference genome.
 \code{NULL} results in all having the same probability.
 Defaults to \code{NULL}.}
 
+\item{sep_files}{Logical indicating whether to make separate files for each variant.
+This argument is coerced to \code{FALSE} if the \code{seq_object} argument is not
+a \code{variants} object.
+Defaults to \code{FALSE}.}
+
 \item{compress}{Logical specifying whether or not to compress output file, or
 an integer specifying the level of compression, from 1 to 9.
 If \code{TRUE}, a compression level of \code{6} is used.
@@ -125,7 +131,7 @@ this function.
 
 The ID lines for FASTQ files are formatted as such:
 
-\code{@<genome name>-<sequence name>-<starting position>}
+\code{@<genome name>-<sequence name>-<starting position>-<strand>}
 
 where \code{genome name} is always \code{REF} for reference genomes (as opposed to variants).
 }

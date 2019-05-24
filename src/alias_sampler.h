@@ -47,15 +47,15 @@ public:
         p /= arma::accu(p);  // make sure they sum to 1
         p *= n;
 
-        std::deque<uint32_t> Small;
-        std::deque<uint32_t> Large;
-        for (uint32_t i = 0; i < n; i++) {
+        std::deque<uint64> Small;
+        std::deque<uint64> Large;
+        for (uint64 i = 0; i < n; i++) {
             if (p(i) < 1) {
                 Small.push_back(i);
             } else Large.push_back(i);
         }
 
-        uint32_t l, g;
+        uint64 l, g;
         while (!Small.empty() && !Large.empty()) {
             l = Small.front();
             Small.pop_front();
@@ -85,9 +85,9 @@ public:
         : Prob(other.Prob), Alias(other.Alias), n(other.n) {}
 
     // Actual alias sampling
-    inline uint32_t sample(pcg64& eng) const {
+    inline uint64 sample(pcg64& eng) const {
         // Fair dice roll from n-sided die
-        uint32_t i = runif_01(eng) * n;
+        uint64 i = runif_01(eng) * n;
         // uniform in range (0,1)
         double u = runif_01(eng);
         if (u < Prob[i]) return(i);
@@ -96,8 +96,8 @@ public:
 
 private:
     std::vector<double> Prob;
-    std::vector<uint32_t> Alias;
-    uint32_t n;
+    std::vector<uint64> Alias;
+    uint64 n;
 };
 
 
@@ -129,20 +129,20 @@ public:
           n(other.n) {}
 
     void sample(std::string& str, pcg64& eng) const {
-        for (uint32 i = 0; i < str.size(); i++) {
-            uint32 k = uint_sampler.sample(eng);
+        for (uint64 i = 0; i < str.size(); i++) {
+            uint64 k = uint_sampler.sample(eng);
             str[i] = characters[k];
         }
         return;
     }
     char sample(pcg64& eng) const {
-        uint32 k = uint_sampler.sample(eng);
+        uint64 k = uint_sampler.sample(eng);
         return characters[k];
     }
 
 private:
     AliasSampler uint_sampler;
-    uint32 n;
+    uint64 n;
 };
 
 
