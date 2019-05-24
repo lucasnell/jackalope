@@ -11,3 +11,4 @@
 ^methods
 ^data-raw
 ^diagnostics
+^cran-comments\.md$
