@@ -11,9 +11,9 @@ os:
   - linux
   - osx
 
-install:
-  - ./travis-tool.sh install_deps
-  - ./travis-tool.sh install_bioc_deps
+bioc_packages:
+  - zlibbioc
+  - Rhtslib
 
 r_packages:
   - covr
