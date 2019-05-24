@@ -2,14 +2,18 @@
 
 language: r
 r:
-  - bioc-release
-  - bioc-devel
+  - release
+  - devel
 sudo: false
 cache: packages
 
 os:
   - linux
   - osx
+
+install:
+  - ./travis-tool.sh install_deps
+  - ./travis-tool.sh install_bioc_deps
 
 r_packages:
   - covr
