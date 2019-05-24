@@ -23,18 +23,20 @@ environment:
     USE_RTOOLS: true
 
   matrix:
-  - R_VERSION: patched
+  - R_VERSION: release
     R_ARCH: x64
     GCC_PATH: mingw_64
+    BIOC_USE_DEVEL: false
 
   - R_VERSION: devel
     R_ARCH: x64
     GCC_PATH: mingw_64
+    BIOC_USE_DEVEL: true
 
 
 build_script:
-  - travis-tool.sh install_deps
   - travis-tool.sh install_bioc_deps
+  - travis-tool.sh install_deps
 
 test_script:
   - travis-tool.sh run_tests
