@@ -21,12 +21,12 @@ environment:
   global:
     WARNINGS_ARE_ERRORS: 1
     USE_RTOOLS: true
+    BIOC_USE_DEVEL: "FALSE"
 
   matrix:
   - R_VERSION: release
     R_ARCH: x64
     GCC_PATH: mingw_64
-    BIOC_USE_DEVEL: "FALSE"
 
   - R_VERSION: devel
     R_ARCH: x64
