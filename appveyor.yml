@@ -26,12 +26,12 @@ environment:
   - R_VERSION: release
     R_ARCH: x64
     GCC_PATH: mingw_64
-    BIOC_USE_DEVEL: false
+    BIOC_USE_DEVEL: "FALSE"
 
   - R_VERSION: devel
     R_ARCH: x64
     GCC_PATH: mingw_64
-    BIOC_USE_DEVEL: true
+    BIOC_USE_DEVEL: "TRUE"
 
 
 build_script:
