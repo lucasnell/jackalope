@@ -16,6 +16,15 @@ status](https://ci.appveyor.com/api/projects/status/github/lucasnell/jackalope?b
 
 ## Overview
 
+For studies using high-throughput sequencing (HTS) data, simulations can
+be vital for planning sampling design and testing bioinformatic tools.
+However, most HTS sequencing tools provide only very simple ways of
+adding deviations from a reference genome. For HTS studies that focus on
+patterns of genomic variation among individuals, populations, or
+species, having a tool that can simulate realistic patterns of molecular
+evolution and generate HTS data from those simulations would be quite
+useful.
+
 `jackalope` simply and efficiently simulates (i) variants from reference
 genomes and (ii) reads from both Illumina and Pacific Biosciences
 (PacBio) platforms. It can either read reference genomes from FASTA
@@ -24,9 +33,9 @@ summary statistics, phylogenies, Variant Call Format (VCF) files, and
 coalescent simulations—the latter of which can include selection,
 recombination, and demographic fluctuations. `jackalope` can simulate
 single, paired-end, or mate-pair Illumina reads, as well as reads from
-Pacific BioSciences. These simulations include sequencing errors,
-mapping qualities, multiplexing, and optical/PCR duplicates. All outputs
-can be written to standard file formats.
+Pacific Biosciences These simulations include sequencing errors, mapping
+qualities, multiplexing, and optical/PCR duplicates. All outputs can be
+written to standard file formats.
 
 ## Installation
 
@@ -37,6 +46,9 @@ devtools::install_github("lucasnell/jackalope")
 ```
 
 ## Usage
+
+Below shows how to simulate a 10kb genome, then create variants from
+that genome using a phylogenetic tree:
 
 ``` r
 library(jackalope)

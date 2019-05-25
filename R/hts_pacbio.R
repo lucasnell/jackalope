@@ -155,7 +155,7 @@ check_pacbio_args <- function(seq_object,
 #'     Defaults to `c(0.00189237136, 2.53944970, 5500)`.
 #' @param max_passes  Maximal number of passes for one molecule.
 #'     Defaults to `40`.
-#' @param sqrt_params  Vector containing the 2 parameters for the sqare root
+#' @param sqrt_params  Vector containing the 2 parameters for the square root
 #'     function for the quality increase.
 #'     Defaults to `c(0.5, 0.2247)`.
 #' @param norm_params  Vector containing the 2 parameters for normal distributed

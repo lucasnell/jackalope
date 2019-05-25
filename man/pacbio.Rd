@@ -38,7 +38,7 @@ Defaults to \code{c(0.00189237136, 2.53944970, 5500)}.}
 \item{max_passes}{Maximal number of passes for one molecule.
 Defaults to \code{40}.}
 
-\item{sqrt_params}{Vector containing the 2 parameters for the sqare root
+\item{sqrt_params}{Vector containing the 2 parameters for the square root
 function for the quality increase.
 Defaults to \code{c(0.5, 0.2247)}.}
 

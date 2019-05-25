@@ -8,7 +8,7 @@
 #' Variant Call Format (VCF) files, and coalescent simulations—the latter of which
 #' can include selection, recombination, and demographic fluctuations.
 #' `jackalope` can simulate single, paired-end, or mate-pair Illumina reads,
-#' as well as reads from Pacific BioSciences.
+#' as well as reads from Pacific Biosciences
 #' These simulations include sequencing errors, mapping qualities, multiplexing,
 #' and optical/PCR duplicates. All outputs can be written to standard file formats.
 #'

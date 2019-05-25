@@ -119,7 +119,7 @@ __Parameters\:__
 
 ## HKY85
 
-The HKY85 model (Hasegawa et al. 1984, 1985) combines different equilibrum frequency
+The HKY85 model (Hasegawa et al. 1984, 1985) combines different equilibrium frequency
 distributions with unequal transition and transversion rates.
 
 $$
