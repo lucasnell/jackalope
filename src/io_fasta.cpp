@@ -86,17 +86,17 @@ void append_ref_noind(RefGenome& ref,
 
     // Scroll through buffers
     std::string lastline = "";
+    char *buffer = new char[LENGTH];
 
     while (1) {
         Rcpp::checkUserInterrupt();
         int err;
         int bytes_read;
-        char buffer[LENGTH];
         bytes_read = gzread(file, buffer, LENGTH - 1);
         buffer[bytes_read] = '\0';
 
         // Recast buffer as a std::string:
-        std::string mystring(reinterpret_cast<char*>(buffer));
+        std::string mystring(buffer);
         mystring = lastline + mystring;
 
         // std::vector of strings for parsed buffer:
@@ -122,7 +122,9 @@ void append_ref_noind(RefGenome& ref,
                 }
             }
         }
+
     }
+    delete[] buffer;
     gzclose (file);
 
     // Remove weird characters and remove soft masking if desired:
@@ -219,16 +221,17 @@ void read_fai(const std::string& fai_file,
     // Scroll through buffers
     std::string lastline = "";
 
+    char *buffer = new char[LENGTH];
+
     while (1) {
         Rcpp::checkUserInterrupt();
         int err;
         int bytes_read;
-        char buffer[LENGTH];
         bytes_read = gzread(file, buffer, LENGTH - 1);
         buffer[bytes_read] = '\0';
 
         // Recast buffer as a std::string:
-        std::string mystring(reinterpret_cast<char*>(buffer));
+        std::string mystring(buffer);
         mystring = lastline + mystring;
 
         // std::vector of strings for parsed buffer:
@@ -255,6 +258,8 @@ void read_fai(const std::string& fai_file,
             }
         }
     }
+
+    delete[] buffer;
     gzclose (file);
 
     return;
@@ -319,12 +324,12 @@ void append_ref_ind(RefGenome& ref,
             gzseek(file, offsets[i] + j, SEEK_SET);
             uint64 partial_len = LIMIT;
             if (len - j < LIMIT) partial_len = len - j;
-            char buffer[partial_len];
+            char *buffer = new char[partial_len];
             bytes_read = gzread(file, buffer, partial_len - 1);
             buffer[bytes_read] = '\0';
 
             // Recast buffer as a std::string:
-            std::string seq_str(static_cast<char*>(buffer));
+            std::string seq_str(buffer);
 
             // Remove newlines
             seq_str.erase(remove(seq_str.begin(), seq_str.end(), '\n'),
@@ -351,6 +356,10 @@ void append_ref_ind(RefGenome& ref,
                     }
                 }
             }
+
+            delete[] buffer;
+
+
         }
 
     }

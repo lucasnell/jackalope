@@ -1,3 +1,11 @@
+## Resubmission
+This is a resubmission. In this version I have done the following:
+
+* Replaced variable length arrays in the files io_fasta.cpp and io_ms.cpp with
+  char pointers.
+
+
+
 ## Test environments
 * macOS 10.14.4 (local), R 3.6.0
 * ubuntu 14.04 (on travis-ci), R-devel, R 3.6.0

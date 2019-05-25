@@ -74,17 +74,17 @@ std::vector<std::vector<std::string>> read_ms_trees_(std::string ms_file) {
 
     // Scroll through buffers
     std::string lastline = "";
+    char *buffer = new char[LENGTH];
 
     while (1) {
         Rcpp::checkUserInterrupt();
         int err;
         int bytes_read;
-        char buffer[LENGTH];
         bytes_read = gzread(file, buffer, LENGTH - 1);
         buffer[bytes_read] = '\0';
 
         // Recast buffer as a std::string:
-        std::string mystring(reinterpret_cast<char*>(buffer));
+        std::string mystring(buffer);
         mystring = lastline + mystring;
 
         // std::vector of strings for parsed buffer:
@@ -111,6 +111,7 @@ std::vector<std::vector<std::string>> read_ms_trees_(std::string ms_file) {
             }
         }
     }
+    delete[] buffer;
     gzclose (file);
 
     return newick_strings;
@@ -219,16 +220,17 @@ arma::field<arma::mat> coal_file_sites(std::string ms_file) {
     // Scroll through buffers
     std::string lastline = "";
 
+    char *buffer = new char[LENGTH];
+
     while (1) {
         Rcpp::checkUserInterrupt();
         int err;
         int bytes_read;
-        char buffer[LENGTH];
         bytes_read = gzread(file, buffer, LENGTH - 1);
         buffer[bytes_read] = '\0';
 
         // Recast buffer as a std::string:
-        std::string mystring(reinterpret_cast<char*>(buffer));
+        std::string mystring(buffer);
         mystring = lastline + mystring;
 
         // std::vector of strings for parsed buffer:
@@ -255,6 +257,7 @@ arma::field<arma::mat> coal_file_sites(std::string ms_file) {
             }
         }
     }
+    delete[] buffer;
     gzclose (file);
 
     arma::field<arma::mat> sites_mats(sites_infos.size());
