@@ -10,9 +10,7 @@ Status](https://travis-ci.com/lucasnell/jackalope.svg?branch=master)](https://tr
 [![AppVeyor build
 status](https://ci.appveyor.com/api/projects/status/github/lucasnell/jackalope?branch=master&svg=true)](https://ci.appveyor.com/project/lucasnell/jackalope)
 
-# jackalope
-
-**An efficient, versatile molecular evolution and sequencing simulator**
+# jackalope <img src="man/figures/logo.png" align="right" alt="" width="120" />
 
 ## Overview
 

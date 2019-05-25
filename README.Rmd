@@ -23,9 +23,7 @@ set.seed(1) # for keeping the printing of `reference` below the same
 [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/lucasnell/jackalope?branch=master&svg=true)](https://ci.appveyor.com/project/lucasnell/jackalope)
 
 
-# jackalope
-
-__An efficient, versatile molecular evolution and sequencing simulator__
+# jackalope  <img src="man/figures/logo.png" align="right" alt="" width="120" />
 
 ## Overview
 
