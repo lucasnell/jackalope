@@ -96,7 +96,7 @@ find_profile_file <- function(seq_sys, read_length, read) {
     }
     criteria2 <- criteria1 & profile_df$read_length >= read_length
     if (sum(criteria2) == 0) {
-        cat(paste(unique(profile_df$read_length[criteria1]), collapse = " "), "\n")
+        message(paste(unique(profile_df$read_length[criteria1]), collapse = " "))
         stop("\nFor the desired Illumina platform, this package doesn't have ",
              "a read length that's as long as you want. ",
              "See printed values above for lengths that are available.",
@@ -546,12 +546,12 @@ check_illumina_args <- function(seq_object, n_reads,
 #'
 #' @export
 #'
-#' @source
+#' @references
 #' Huang, W., L. Li, J. R. Myers, and G. T. Marth. 2012. ART: a next-generation
 #' sequencing read simulator. \emph{Bioinformatics} \strong{28}:593–594.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' rg <- create_genome(10, 100e3, 100)
 #' illumina(rg, "illumina_reads", n_reads = 100,
 #'          read_length = 100, paired = FALSE)

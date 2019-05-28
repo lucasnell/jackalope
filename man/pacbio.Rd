@@ -3,10 +3,6 @@
 \name{pacbio}
 \alias{pacbio}
 \title{Create and write PacBio reads to FASTQ file(s).}
-\source{
-Stöcker, B. K., J. Köster, and S. Rahmann. 2016. SimLoRD: simulation of long
-read data. \emph{Bioinformatics} \strong{32}:2704–2706.
-}
 \usage{
 pacbio(seq_object, out_prefix, n_reads, chi2_params_s = c(0.01214, -5.12,
   675, 48303.0732881, 1.46910512123303), chi2_params_n = c(0.00189237136,
@@ -137,9 +133,13 @@ where \code{genome name} is always \code{REF} for reference genomes (as opposed 
 }
 
 \examples{
-\dontrun{
+\donttest{
 rg <- create_genome(10, 100e3, 100)
 pacbio(rg, "pacbio_reads", n_reads = 100)
 }
 
+}
+\references{
+Stöcker, B. K., J. Köster, and S. Rahmann. 2016. SimLoRD: simulation of long
+read data. \emph{Bioinformatics} \strong{32}:2704–2706.
 }

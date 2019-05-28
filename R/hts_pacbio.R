@@ -189,12 +189,12 @@ check_pacbio_args <- function(seq_object,
 #'
 #' @export
 #'
-#' @source
+#' @references
 #' Stöcker, B. K., J. Köster, and S. Rahmann. 2016. SimLoRD: simulation of long
 #' read data. \emph{Bioinformatics} \strong{32}:2704–2706.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' rg <- create_genome(10, 100e3, 100)
 #' pacbio(rg, "pacbio_reads", n_reads = 100)
 #' }

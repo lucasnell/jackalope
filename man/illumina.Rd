@@ -3,10 +3,6 @@
 \name{illumina}
 \alias{illumina}
 \title{Create and write Illumina reads to FASTQ file(s).}
-\source{
-Huang, W., L. Li, J. R. Myers, and G. T. Marth. 2012. ART: a next-generation
-sequencing read simulator. \emph{Bioinformatics} \strong{28}:593–594.
-}
 \usage{
 illumina(seq_object, out_prefix, n_reads, read_length, paired,
   frag_mean = 400, frag_sd = 100, matepair = FALSE, seq_sys = NULL,
@@ -189,10 +185,14 @@ is always \code{REF} for reference genomes (as opposed to variants).
 }
 
 \examples{
-\dontrun{
+\donttest{
 rg <- create_genome(10, 100e3, 100)
 illumina(rg, "illumina_reads", n_reads = 100,
          read_length = 100, paired = FALSE)
 }
 
+}
+\references{
+Huang, W., L. Li, J. R. Myers, and G. T. Marth. 2012. ART: a next-generation
+sequencing read simulator. \emph{Bioinformatics} \strong{28}:593–594.
 }

@@ -37,9 +37,12 @@ written to standard file formats.
 
 ## Installation
 
-The package is not yet on CRAN, so to install…
-
 ``` r
+# To install the latest stable version from CRAN:
+install.packages("jackalope")
+
+# Or the the development version from GitHub:
+# install.packages("devtools")
 devtools::install_github("lucasnell/jackalope")
 ```
 
