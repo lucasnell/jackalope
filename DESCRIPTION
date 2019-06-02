@@ -17,9 +17,10 @@ Description: Simply and efficiently
     as well as PacBio reads.
     These simulations include sequencing errors, mapping qualities, multiplexing,
     and optical/polymerase chain reaction (PCR) duplicates.
-    Simulating Illumina sequencing is based on ART <doi:10.1093/bioinformatics/btr708>,
-    and PacBio sequencing simulation is based on 
-    SimLoRD <doi:10.1093/bioinformatics/btw286>.
+    Simulating Illumina sequencing is based on ART
+    by Huang et al. (2012) <doi:10.1093/bioinformatics/btr708>.
+    PacBio sequencing simulation is based on 
+    SimLoRD  by Stöcker et al. (2016) <doi:10.1093/bioinformatics/btw286>.
     All outputs can be written to standard file formats.
 License: MIT + file LICENSE
 Encoding: UTF-8
