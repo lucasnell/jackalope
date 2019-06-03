@@ -2,29 +2,7 @@
 
 This is a resubmission. In this version I have done the following:
 
-* Removed directed quotation marks in the description text
-
-* Added links to Illumina and Pacific Biosciences to the description field of the
-  `DESCRIPTION` file
-
-* Added explanation for the abbreviation "PCR" in `DESCRIPTION`. (Note that "FASTA"
-  is not an abbreviation: <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC280013/>.)
-
-* Added references for sequence simulation methods to the description field in the 
-  `DESCRIPTION` file.
-
-* The install section of the `README` file is now based on that from the `ggplot2`
-  package so that it conforms to CRAN's policies.
-
-* Remove call to `cat()` in `hts_illumina.R`. All calls to `cat()` are only in print
-  methods now.
-
-* Changed `\dontrun{}` to `\donttest{}` in `pacbio.Rd` and `illumina.Rd`.
-
-* In `pacbio.Rd` and `illumina.Rd`, I replaced `\source{}` with `\references{}`.
-
-* Changed title to "A Swift, Versatile Phylogenomic and High-Throughput Sequencing 
-  Simulator"
+* In the `DESCRIPTION` file, I wrote references in the form "authors (year) <doi:...>".
 
 
 
