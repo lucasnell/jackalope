@@ -302,11 +302,6 @@ same name, if they exist.</p></td>
     </tr>
     </table>
     
-    <h2 class="hasAnchor" id="source"><a class="anchor" href="#source"></a>Source</h2>
-
-    <p>Stöcker, B. K., J. Köster, and S. Rahmann. 2016. SimLoRD: simulation of long
-read data. <em>Bioinformatics</em> <strong>32</strong>:2704–2706.</p>
-    
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>Nothing is returned.</p>
@@ -318,12 +313,15 @@ read data. <em>Bioinformatics</em> <strong>32</strong>:2704–2706.</p>
 <p><code>@&lt;genome name&gt;-&lt;sequence name&gt;-&lt;starting position&gt;-&lt;strand&gt;</code></p>
 <p>where <code>genome name</code> is always <code>REF</code> for reference genomes (as opposed to variants).</p>
     
+    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
+
+    <p>Stöcker, B. K., J. Köster, and S. Rahmann. 2016. SimLoRD: simulation of long
+read data. <em>Bioinformatics</em> <strong>32</strong>:2704–2706.</p>
+    
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><span class='co'># NOT RUN {</span>
-<span class='no'>rg</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span>(<span class='fl'>10</span>, <span class='fl'>100e3</span>, <span class='fl'>100</span>)
-<span class='fu'>pacbio</span>(<span class='no'>rg</span>, <span class='st'>"pacbio_reads"</span>, <span class='kw'>n_reads</span> <span class='kw'>=</span> <span class='fl'>100</span>)
-<span class='co'># }</span><div class='input'>
+    <pre class="examples"><div class='input'><span class='no'>rg</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span>(<span class='fl'>10</span>, <span class='fl'>100e3</span>, <span class='fl'>100</span>)
+<span class='fu'>pacbio</span>(<span class='no'>rg</span>, <span class='st'>"pacbio_reads"</span>, <span class='kw'>n_reads</span> <span class='kw'>=</span> <span class='fl'>100</span>)</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -331,11 +329,11 @@ read data. <em>Bioinformatics</em> <strong>32</strong>:2704–2706.</p>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
       
-      <li><a href="#source">Source</a></li>
-
       <li><a href="#value">Value</a></li>
 
       <li><a href="#id-lines">ID lines</a></li>
+
+      <li><a href="#references">References</a></li>
       
       <li><a href="#examples">Examples</a></li>
     </ul>

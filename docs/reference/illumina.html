@@ -312,11 +312,6 @@ same name, if they exist.</p></td>
     </tr>
     </table>
     
-    <h2 class="hasAnchor" id="source"><a class="anchor" href="#source"></a>Source</h2>
-
-    <p>Huang, W., L. Li, J. R. Myers, and G. T. Marth. 2012. ART: a next-generation
-sequencing read simulator. <em>Bioinformatics</em> <strong>28</strong>:593–594.</p>
-    
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>Nothing is returned.</p>
@@ -375,13 +370,16 @@ and
 <p>where the part in <code>[]</code> is only for paired-end Illumina reads, and where <code>genome name</code>
 is always <code>REF</code> for reference genomes (as opposed to variants).</p>
     
+    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
+
+    <p>Huang, W., L. Li, J. R. Myers, and G. T. Marth. 2012. ART: a next-generation
+sequencing read simulator. <em>Bioinformatics</em> <strong>28</strong>:593–594.</p>
+    
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><span class='co'># NOT RUN {</span>
-<span class='no'>rg</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span>(<span class='fl'>10</span>, <span class='fl'>100e3</span>, <span class='fl'>100</span>)
+    <pre class="examples"><div class='input'><span class='no'>rg</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span>(<span class='fl'>10</span>, <span class='fl'>100e3</span>, <span class='fl'>100</span>)
 <span class='fu'>illumina</span>(<span class='no'>rg</span>, <span class='st'>"illumina_reads"</span>, <span class='kw'>n_reads</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-         <span class='kw'>read_length</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>paired</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
-<span class='co'># }</span><div class='input'>
+         <span class='kw'>read_length</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>paired</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -389,8 +387,6 @@ is always <code>REF</code> for reference genomes (as opposed to variants).</p>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
       
-      <li><a href="#source">Source</a></li>
-
       <li><a href="#value">Value</a></li>
 
       <li><a href="#sequencing-profiles">Sequencing profiles</a></li>
@@ -398,6 +394,8 @@ is always <code>REF</code> for reference genomes (as opposed to variants).</p>
       <li><a href="#sequencing-systems">Sequencing systems</a></li>
 
       <li><a href="#id-lines">ID lines</a></li>
+
+      <li><a href="#references">References</a></li>
       
       <li><a href="#examples">Examples</a></li>
     </ul>
