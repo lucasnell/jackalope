@@ -57,7 +57,7 @@ struct FileBGZF {
 
     BGZF *file;
 
-    FileBGZF() {};
+    FileBGZF() : file(nullptr) {};
 
     FileBGZF(const std::string& out_prefix,
              const int& n_threads,

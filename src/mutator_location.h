@@ -309,7 +309,7 @@ public:
     // For sampling with a starting and ending location:
     LocationBounds bounds;
 
-    LocationSampler() : var_seq(), regions(), bounds(), region_size(0) {};
+    LocationSampler() : var_seq(nullptr), regions(), bounds(), region_size(0) {};
     LocationSampler(const std::vector<double>& q_tcag,
                     const uint64& region_size_)
         : var_seq(), regions(), bounds(), region_size(region_size_) {

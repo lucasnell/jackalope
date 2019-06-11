@@ -437,7 +437,7 @@ public:
     std::string name;
 
 
-    PacBioOneGenome() {};
+    PacBioOneGenome() : sequences(nullptr) {};
     // Using lognormal distribution for read sizes:
     PacBioOneGenome(const T& seq_object,
                     const double& scale_,
@@ -583,7 +583,7 @@ public:
     std::vector<PacBioOneVariant> read_makers;      // makes PacBio reads
 
     /* Initializers */
-    PacBioVariants() {};
+    PacBioVariants() : variants(nullptr) {};
     // Using lognormal distribution for read sizes:
     PacBioVariants(const VarSet& var_set,
                    const std::vector<double>& variant_probs,

@@ -48,7 +48,6 @@ struct Mutation {
     std::string nucleos;
 
     // Constructors
-    Mutation() {};
     Mutation(uint64 old_pos_, uint64 new_pos_, std::string nucleos_)
         : size_modifier(nucleos_.size() - 1), old_pos(old_pos_),
           new_pos(new_pos_), nucleos(nucleos_) {};
@@ -133,7 +132,7 @@ public:
     std::string name;
 
     // Constructors
-    VarSequence() {};
+    VarSequence() : ref_seq(nullptr) {};
     VarSequence(const RefSequence& ref)
         : ref_seq(&ref),
           mutations(),

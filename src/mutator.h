@@ -60,7 +60,7 @@ public:
     // For new insertion sequences:
     AliasStringSampler<std::string> insert;
 
-    MutationSampler() {}
+    MutationSampler() : var_seq(nullptr) {}
 
     MutationSampler(const MutationSampler& other)
         : var_seq(other.var_seq), location(other.location), type(other.type),

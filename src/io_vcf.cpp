@@ -313,8 +313,6 @@ SEXP read_vcfr(SEXP reference_ptr,
     uint64 n_vars = var_names.size();
     uint64 n_seqs = reference->size();
 
-    Mutation new_mut;
-
     XPtr<VarSet> var_set(new VarSet(*reference, var_names));
 
     for (uint64 mut_i = 0; mut_i < n_muts; mut_i++) {
@@ -341,7 +339,7 @@ SEXP read_vcfr(SEXP reference_ptr,
                  */
                 for (uint64 i = 0; i < ref.size(); i++) {
                     if (alt[i] != ref[i]) {
-                        new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt[i]);
+                        Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt[i]);
                         var_seq.mutations.push_back(new_mut);
                     }
                 }
@@ -361,7 +359,8 @@ SEXP read_vcfr(SEXP reference_ptr,
                 uint64 i = 0;
                 for (; i < (ref.size()-1); i++) {
                     if (alt[i] != ref[i]) {
-                        new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt_copy[i]);
+                        Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i,
+                                                    alt_copy[i]);
                         var_seq.mutations.push_back(new_mut);
                     }
                 }
@@ -370,7 +369,7 @@ SEXP read_vcfr(SEXP reference_ptr,
                 /*
                  Make the last one an insertion proper
                  */
-                new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt_copy);
+                Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt_copy);
                 var_seq.mutations.push_back(new_mut);
 
             } else {
@@ -388,7 +387,8 @@ SEXP read_vcfr(SEXP reference_ptr,
                 uint64 i = 0;
                 for (; i < alt.size(); i++) {
                     if (alt[i] != ref[i]) {
-                        new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt[i]);
+                        Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i,
+                                                    alt[i]);
                         var_seq.mutations.push_back(new_mut);
                     }
                 }
@@ -397,7 +397,7 @@ SEXP read_vcfr(SEXP reference_ptr,
                 sint64 sm = static_cast<sint64>(alt.size()) -
                     static_cast<sint64>(ref.size());
 
-                new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, sm);
+                Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, sm);
                 var_seq.mutations.push_back(new_mut);
 
             }

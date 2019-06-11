@@ -62,7 +62,7 @@ public:
     // Starting/ending position on ref. sequence:
     std::pair<uint64, uint64> pos;
 
-    OneVarSeqVCF() {};
+    OneVarSeqVCF() : var_seq(nullptr) {};
 
 
     /*

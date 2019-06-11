@@ -312,7 +312,7 @@ public:
     std::vector<double> del_probs;      // Per-base prob. of a deletion, reads 1 and 2
     std::string name;
 
-    IlluminaOneGenome() {};
+    IlluminaOneGenome() : sequences(nullptr) {};
     // For paired-end reads:
     IlluminaOneGenome(const T& seq_object,
                       const bool& matepair_,
@@ -501,7 +501,7 @@ public:
     std::vector<IlluminaOneVariant> read_makers;    // makes Illumina reads
     bool paired;                                    // Boolean for paired-end reads
 
-    IlluminaVariants() {}
+    IlluminaVariants() : variants(nullptr) {}
 
     /* Initializers */
 
