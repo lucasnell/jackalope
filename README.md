@@ -9,6 +9,7 @@ Status](https://travis-ci.com/lucasnell/jackalope.svg?branch=master)](https://tr
 [![codecov](https://codecov.io/gh/lucasnell/jackalope/branch/master/graph/badge.svg)](https://codecov.io/gh/lucasnell/jackalope)
 [![AppVeyor build
 status](https://ci.appveyor.com/api/projects/status/github/lucasnell/jackalope?branch=master&svg=true)](https://ci.appveyor.com/project/lucasnell/jackalope)
+[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/jackalope)](https://cran.r-project.org/package=jackalope)
 
 # jackalope <img src="man/figures/logo.png" align="right" alt="" width="120" />
 

@@ -2,14 +2,21 @@
 
 This is a resubmission. In this version I have done the following:
 
-* In the `DESCRIPTION` file, I wrote references in the form "authors (year) <doi:...>".
 
+* Added `::pcg_detail::` prefix to `extended<...>` in `inst/include/pcg/pcg_random.hpp`
+  to avoid Solaris compile error
+* Fixed error in `src/io_fasta.cpp` that caused heap buffer overflow as detected in ASAN
+* More explicitly created object on stack in `make_ref_genome` function (file
+  `seq_classes_access.cpp`) to avoid heap buffer overflow as detected in ASAN
+* Initialize C++ pointers to `nullptr`
+* Added citation information to `inst/CITATION`
 
 
 ## Test environments
-* macOS 10.14.4 (local), R 3.6.0
+
+* macOS 10.14.5 (local), R 3.6.0
 * ubuntu 14.04 (on travis-ci), R-devel, R 3.6.0
-* macOS 10.3.3 (on travis-ci), R-devel, R 3.6.0
+* macOS 10.3.3 (on travis-ci), R 3.6.0
 * Windows Server 2012 R2 x64 (on appveyor), R 3.6.0
 * Windows (win-builder), R-devel, R 3.6.0
 
@@ -18,7 +25,7 @@ This is a resubmission. In this version I have done the following:
 
 There were no ERRORs or WARNINGs.
 
-There were 2 NOTEs:
+There was 1 NOTE:
 
 ```
 installed size is 21.0Mb
@@ -28,25 +35,6 @@ installed size is 21.0Mb
 ```
 
 The package makes extensive use of compiled code to improve performance.
-
-
-
-```
-Maintainer: 'Lucas A. Nell <lucas@lucasnell.com>'
-
-New submission
-
-Possibly mis-spelled words in DESCRIPTION:
-  Biosciences (11:17, 17:35)
-  FASTA (12:47)
-  Illumina (10:76, 16:63)
-  PacBio (11:30)
-  VCF (14:26)
-  jackalope (16:6)
-  phylogenies (13:65)
-```
-
-This is a new R package, but those words are not spelled wrong.
 
 
 ## Downstream dependencies

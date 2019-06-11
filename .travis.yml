@@ -34,3 +34,9 @@ branches:
 
 after_success:
   - Rscript -e 'library(covr); codecov()'
+
+# Because CRAN doesn’t publish OSX binary packages for r-devel:
+matrix:
+  exclude:
+  - r: devel
+    os: osx

@@ -21,6 +21,7 @@ set.seed(1) # for keeping the printing of `reference` below the same
 [![Build Status](https://travis-ci.com/lucasnell/jackalope.svg?branch=master)](https://travis-ci.com/lucasnell/jackalope)
 [![codecov](https://codecov.io/gh/lucasnell/jackalope/branch/master/graph/badge.svg)](https://codecov.io/gh/lucasnell/jackalope)
 [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/lucasnell/jackalope?branch=master&svg=true)](https://ci.appveyor.com/project/lucasnell/jackalope)
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/jackalope)](https://cran.r-project.org/package=jackalope)
 
 
 # jackalope  <img src="man/figures/logo.png" align="right" alt="" width="120" />
