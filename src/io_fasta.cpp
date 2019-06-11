@@ -588,7 +588,7 @@ void write_vars_fasta__(const std::string& out_prefix,
                 n_chars += text_width;
             }
 
-            prog_bar.increment(var_set.reference[s].size());
+            prog_bar.increment(var_set.reference->operator[](s).size());
 
         }
 
