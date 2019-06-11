@@ -127,7 +127,7 @@ struct RefGenome {
     std::deque<RefSequence> sequences;
     bool merged = false;
     // For storing original names if merged:
-    std::deque<std::string> old_names;
+    std::deque<std::string> old_names = std::deque<std::string>(0);
     // Only added for compatibility with templates in sequencing code:
     std::string name = "REF";
 

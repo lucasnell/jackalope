@@ -394,12 +394,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // make_ref_genome
-SEXP make_ref_genome(const std::deque<std::string>& seqs);
+SEXP make_ref_genome(const std::vector<std::string>& seqs);
 RcppExport SEXP _jackalope_make_ref_genome(SEXP seqsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::deque<std::string>& >::type seqs(seqsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type seqs(seqsSEXP);
     rcpp_result_gen = Rcpp::wrap(make_ref_genome(seqs));
     return rcpp_result_gen;
 END_RCPP

@@ -93,8 +93,24 @@ void print_var_set(SEXP var_set_ptr) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-SEXP make_ref_genome(const std::deque<std::string>& seqs) {
-    XPtr<RefGenome> ref_genome(new RefGenome(seqs), true);
+SEXP make_ref_genome(const std::vector<std::string>& seqs) {
+
+    // Make pointer:
+    XPtr<RefGenome> ref_genome(new RefGenome(), true);
+
+    // Reference RefGenome fields:
+    uint64 n_seqs = seqs.size();
+    std::deque<RefSequence>& sequences(ref_genome->sequences);
+    uint64& total_size(ref_genome->total_size);
+
+    // Add to fields:
+    sequences = std::deque<RefSequence>(n_seqs, RefSequence());
+    for (uint64 i = 0; i < n_seqs; i++) {
+        sequences[i].nucleos = seqs[i];
+        sequences[i].name = "seq" + std::to_string(i);
+        total_size += seqs[i].size();
+    }
+
     return ref_genome;
 }
 
