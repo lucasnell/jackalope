@@ -2,7 +2,7 @@
 
 This is a resubmission. In this version I have done the following:
 
-
+* Explicitly tested for memory-access issues using ASAN, and found none.
 * Added `::pcg_detail::` prefix to `extended<...>` in `inst/include/pcg/pcg_random.hpp`
   to avoid Solaris compile error
 * Fixed error in `src/io_fasta.cpp` that caused heap buffer overflow as detected in ASAN
