@@ -32,6 +32,15 @@ branches:
   only:
   - master
 
+## To deal with some packages trying to use OpenMP on macOS:
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]];
+    then
+    mkdir -p ~/.R;
+    echo "SHLIB_OPENMP_CXXFLAGS = " >>~/.R/Makevars;
+    echo "SHLIB_OPENMP_CFLAGS = " >>~/.R/Makevars;
+    fi
+
 after_success:
   - Rscript -e 'library(covr); codecov()'
 
