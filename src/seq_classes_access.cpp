@@ -125,14 +125,8 @@ SEXP make_ref_genome(const std::vector<std::string>& seqs) {
 //[[Rcpp::export]]
 SEXP make_var_set(SEXP ref_genome_ptr, const uint64& n_vars) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    // Below is done this way so that `n_vars` can be zero:
-    XPtr<VarSet> var_set(new VarSet(*ref_genome), true);
-    if (n_vars > 0) {
-        var_set->variants = std::deque<VarGenome>(n_vars, VarGenome(*ref_genome));
-        for (uint64 i = 0; i < n_vars; i++) {
-            var_set->variants[i].name = "var" + std::to_string(i);
-        }
-    }
+    // FYI, `n_vars` can be zero:
+    XPtr<VarSet> var_set(new VarSet(*ref_genome, n_vars), true);
     return var_set;
 }
 
