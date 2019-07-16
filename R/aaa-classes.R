@@ -63,7 +63,9 @@
 #'
 #' @format An \code{\link[R6]{R6Class}} generator object
 #'
-ref_genome <- R6::R6Class(
+#' @importFrom R6 R6Class
+#'
+ref_genome <- R6Class(
 
     "ref_genome",
 
@@ -397,7 +399,9 @@ ref_genome$lock()
 #'
 #' @format An \code{\link[R6]{R6Class}} generator object
 #'
-variants <- R6::R6Class(
+#' @importFrom R6 R6Class
+#'
+variants <- R6Class(
 
     "variants",
 
@@ -699,7 +703,9 @@ variants$lock()
 #'
 #' @format An \code{\link[R6]{R6Class}} generator object
 #'
-mevo <- R6::R6Class(
+#' @importFrom R6 R6Class
+#'
+mevo <- R6Class(
 
     "mevo",
 
