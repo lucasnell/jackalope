@@ -41,4 +41,6 @@ For what the \code{seg_sites} field should look like in a list, see output from 
 \code{scrm} or \code{coala} package.
 (These packages are not required to be installed when installing
 \code{jackalope}.)
+If using either of these packages, I encourage you to cite them. For citation
+information, see output from \code{citation("scrm")} or \code{citation("coala")}.
 }

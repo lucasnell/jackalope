@@ -63,6 +63,9 @@ NULL
 #' `scrm` or `coala` package.
 #' (These packages are not required to be installed when installing
 #' `jackalope`.)
+#' If using either of these packages, I encourage you to cite them. For citation
+#' information, see output from `citation("scrm")` or `citation("coala")`.
+#'
 #'
 #' @param obj Object containing segregating sites information.
 #'     This can be one of the following:
@@ -157,6 +160,8 @@ vars_ssites <- function(obj = NULL,
 #' Variant Call Format (VCF) files.
 #'
 #' This function won't work if the package `vcfR` isn't installed.
+#' If using this function, I encourage you to cite `vcfR`. For citation
+#' information, see output from `citation("vcfR")`.
 #'
 #' @param fn A single string specifying the name of the VCF file
 #' @param print_names Logical for whether to print all unique sequence names from
@@ -278,6 +283,9 @@ vars_vcf <- function(fn, print_names = FALSE, ...) {
 #' This function organizes higher-level information for creating variants from
 #' phylogenetic tree(s) output as `phylo` or `multiPhylo` objects
 #' (both from the `ape` package) or NEWICK files.
+#' If using this function, I encourage you to cite `ape`. For citation
+#' information, see output from `citation("ape")`.
+#'
 #'
 #' @param obj Object containing phylogenetic tree(s).
 #'     This can be (1) a single `phylo` object
@@ -404,6 +412,8 @@ vars_theta <- function(theta, n_vars) {
 #' To get gene trees, make sure to add `+ sumstat_trees()`
 #' to the `coalmodel` for `coala`, or
 #' make sure that `"-T"` is present in `args` for `scrm`.
+#' If using either of these packages, I encourage you to cite them. For citation
+#' information, see output from `citation("scrm")` or `citation("coala")`.
 #'
 #' If using an output file from a command-line program like `ms`/`msms`,
 #' add the `-T` option.

@@ -157,7 +157,7 @@ illumina(vars, out_prefix = "vars_illumina", n_reads = 500e6, paired = TRUE,
 
 ## Constructing a phylogeny
 
-## From one phylogenetic tree
+### From one phylogenetic tree
 
 This section shows how `jackalope` can generate variants from a phylogeny, then
 simulate sequencing data from those variants to test phylogeny reconstruction methods.
@@ -192,7 +192,7 @@ illumina(vars, out_prefix = "phylo_tree", seq_sys = "MSv3",
 
 
 
-## From gene trees
+### From gene trees
 
 Similar to the section above, the ultimate goal here is to test phylogeny
 reconstruction methods.

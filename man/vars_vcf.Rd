@@ -31,4 +31,6 @@ Variant Call Format (VCF) files.
 }
 \details{
 This function won't work if the package \code{vcfR} isn't installed.
+If using this function, I encourage you to cite \code{vcfR}. For citation
+information, see output from \code{citation("vcfR")}.
 }

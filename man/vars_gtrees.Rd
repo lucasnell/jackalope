@@ -37,6 +37,8 @@ the \code{scrm} and \code{coala} packages.
 To get gene trees, make sure to add \code{+ sumstat_trees()}
 to the \code{coalmodel} for \code{coala}, or
 make sure that \code{"-T"} is present in \code{args} for \code{scrm}.
+If using either of these packages, I encourage you to cite them. For citation
+information, see output from \code{citation("scrm")} or \code{citation("coala")}.
 
 If using an output file from a command-line program like \code{ms}/\code{msms},
 add the \code{-T} option.
