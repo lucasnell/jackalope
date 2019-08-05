@@ -117,25 +117,25 @@ write_fasta <- function(seq_obj, out_prefix,
         err_msg("write_fasta", "overwrite", "a single logical")
     }
     if (inherits(seq_obj, "ref_genome")) {
-        if (!inherits(seq_obj$genome, "externalptr")) {
-            stop("\nThe `genome` field in the `seq_obj` argument supplied to ",
-                 "`write_fasta` should be an external pointer when the `seq_obj` ",
+        if (!inherits(seq_obj$ptr(), "externalptr")) {
+            stop("\nThe `ptr` method in the `seq_obj` argument supplied to ",
+                 "`write_fasta` should return an external pointer when the `seq_obj` ",
                  "argument is of class \"ref_genome\".",
                  call. = TRUE)
         }
         check_file_existence(paste0(out_prefix, ".fa"), compress, overwrite)
-        invisible(write_ref_fasta(out_prefix, seq_obj$genome, text_width,
+        invisible(write_ref_fasta(out_prefix, seq_obj$ptr(), text_width,
                                   compress, comp_method, show_progress))
     } else {
-        if (!inherits(seq_obj$genomes, "externalptr")) {
-            stop("\nThe `genomes` field in the `seq_obj` argument supplied to ",
-                 "`write_fasta` should be an external pointer when the `seq_obj` ",
+        if (!inherits(seq_obj$ptr(), "externalptr")) {
+            stop("\nThe `ptr` method in the `seq_obj` argument supplied to ",
+                 "`write_fasta` should return an external pointer when the `seq_obj` ",
                  "argument is of class \"variants\".",
                  call. = TRUE)
         }
         check_file_existence(paste0(out_prefix, "__", seq_obj$var_names(), ".fa"),
                              compress, overwrite)
-        invisible(write_vars_fasta(out_prefix, seq_obj$genomes, text_width,
+        invisible(write_vars_fasta(out_prefix, seq_obj$ptr(), text_width,
                                    compress, comp_method, n_threads, show_progress))
     }
     return(invisible(NULL))
@@ -193,9 +193,9 @@ write_vcf <- function(vars,
     }
     if (is_type(compress, "logical", 1) && compress) compress <- 6 # default compression
     if (is_type(compress, "logical", 1) && !compress) compress <- 0 # no compression
-    if (!inherits(vars$genomes, "externalptr")) {
-        stop("\nThe `genomes` field in the `vars` argument supplied to ",
-             "`write_vcf` should be an external pointer.",
+    if (!inherits(vars$ptr(), "externalptr")) {
+        stop("\nThe `ptr` method in the `vars` argument supplied to ",
+             "`write_vcf` should return an external pointer.",
              call. = TRUE)
     }
     if (!is.null(sample_matrix) && !inherits(sample_matrix, "matrix")) {
@@ -234,7 +234,7 @@ write_vcf <- function(vars,
 
     check_file_existence(paste0(out_prefix, ".vcf"), compress, overwrite)
 
-    write_vcf_cpp(out_prefix, compress, vars$genomes, sample_matrix, show_progress)
+    write_vcf_cpp(out_prefix, compress, vars$ptr(), sample_matrix, show_progress)
 
     return(invisible(NULL))
 }

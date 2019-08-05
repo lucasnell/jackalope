@@ -302,11 +302,11 @@ pacbio <- function(seq_object,
 
 
     if (inherits(seq_object, "ref_genome")) {
-        args <- c(args, list(ref_genome_ptr = seq_object$genome))
+        args <- c(args, list(ref_genome_ptr = seq_object$ptr()))
         args$sep_files <- NULL
         do.call(pacbio_ref_cpp, args)
     } else if (inherits(seq_object, "variants")) {
-        args <- c(args, list(var_set_ptr = seq_object$genomes,
+        args <- c(args, list(var_set_ptr = seq_object$ptr(),
                              variant_probs = variant_probs))
         do.call(pacbio_var_cpp, args)
     } else {

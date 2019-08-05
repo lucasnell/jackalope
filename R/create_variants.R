@@ -7,6 +7,8 @@
 #' See \code{\link{vars_functions}} for the methods available.
 #'
 #'
+#'
+#'
 #' @param reference A \code{ref_genome} object from which to generate variants.
 #'     This argument is required.
 #' @param vars_info Output from one of the \code{\link{vars_functions}}.
@@ -55,6 +57,7 @@
 #'
 #' @export
 #'
+#'
 #' @examples
 #' r <- create_genome(10, 1000)
 #' v_phylo <- create_variants(r, vars_phylo(ape::rcoal(5)), sub_JC69(0.1))
@@ -86,17 +89,16 @@ create_variants <- function(reference,
 
     # Make empty `variants` object, ignoring everything other than `reference` argument:
     if (is.null(vars_info)) {
-        variants_ptr <- make_var_set(reference$genome, 0)
-        var_obj <- variants$new(variants_ptr, reference$genome)
+        variants_ptr <- make_var_set(reference$ptr(), 0)
+        var_obj <- variants$new(variants_ptr, reference$ptr())
         return(var_obj)
     }
 
 
-    if (!inherits(reference$genome, "externalptr")) {
-        err_msg("create_variants", "mevo_obj", "a \"mevo\" object with a `genome`",
-                "field of class \"externalptr\".",
-                "Restart by reading a FASTA file or by simulating a genome,",
-                "and do NOT change the `genome` field manually")
+    if (!inherits(reference$ptr(), "externalptr")) {
+        err_msg("create_variants", "reference", "a \"ref_genome\" object with a `ptr`",
+                "method that returns an object of class \"externalptr\".",
+                "Restart by reading a FASTA file or by simulating a genome.")
     }
     if (!inherits(vars_info, do.call(c, vic))) {
         err_msg("create_variants", "vars_info", "NULL or one of the following classes:",
@@ -128,7 +130,7 @@ create_variants <- function(reference,
                                mevo_obj = mevo_obj, n_threads = n_threads,
                                show_progress = show_progress)
 
-    var_obj <- variants$new(variants_ptr, reference$genome)
+    var_obj <- variants$new(variants_ptr, reference$ptr())
 
     return(var_obj)
 

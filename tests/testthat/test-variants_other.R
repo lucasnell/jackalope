@@ -38,8 +38,8 @@ test_that("basics of vars_theta work", {
 
     vars2 <- cv(vars_theta(4, n_vars = 4))
 
-    expect_gt(nrow(jackalope:::view_mutations(vars2$genomes, 0)),
-              nrow(jackalope:::view_mutations(vars$genomes, 0)))
+    expect_gt(nrow(jackalope:::view_mutations(vars2$ptr(), 0)),
+              nrow(jackalope:::view_mutations(vars$ptr(), 0)))
 
     expect_error(vars_theta("0.1", n_vars = 4),
                  regexp = "argument `theta` must be a single number >= 0.")
@@ -64,8 +64,8 @@ test_that("basics of vars_phylo with object work", {
 
     vars2 <- cv(vars_phylo(tr))
 
-    expect_gt(nrow(jackalope:::view_mutations(vars2$genomes, 0)),
-              nrow(jackalope:::view_mutations(vars$genomes, 0)))
+    expect_gt(nrow(jackalope:::view_mutations(vars2$ptr(), 0)),
+              nrow(jackalope:::view_mutations(vars$ptr(), 0)))
 
     expect_error(vars_phylo("tr"),
                  regexp = paste("argument `obj` must be NULL or of class \"phylo\",",
@@ -101,7 +101,7 @@ test_that("basic diagnostic functions work for variants", {
 
     vars <- cv(vars_theta(theta = 0.1, n_vars = 4))
 
-    Z <- jackalope:::examine_mutations(var_set_ptr = vars$genomes,
+    Z <- jackalope:::examine_mutations(var_set_ptr = vars$ptr(),
                                        var_ind = 0, seq_ind = 0)
 
     expect_identical(length(Z$pos), as.integer(sum(sapply(c("sub", "ins", "del"),

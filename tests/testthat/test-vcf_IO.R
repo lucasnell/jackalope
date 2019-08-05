@@ -14,7 +14,7 @@ dir <- tempdir(check = TRUE)
 
 seqs <- rep("TCAGTCAGTC", 2)
 ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
-vars <- variants$new(jackalope:::make_var_set(ref$genome, 4), ref$genome)
+vars <- variants$new(jackalope:::make_var_set(ref$ptr(), 4), ref$ptr())
 
 # First sequence combines deletions and substitutions
 {

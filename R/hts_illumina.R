@@ -684,11 +684,11 @@ illumina <- function(seq_object,
                  show_progress = show_progress)
 
     if (inherits(seq_object, "ref_genome")) {
-        args <- c(args, list(ref_genome_ptr = seq_object$genome))
+        args <- c(args, list(ref_genome_ptr = seq_object$ptr()))
         args$sep_files <- NULL
         do.call(illumina_ref_cpp, args)
     } else if (inherits(seq_object, "variants")) {
-        args <- c(args, list(var_set_ptr = seq_object$genomes,
+        args <- c(args, list(var_set_ptr = seq_object$ptr(),
                              variant_probs = variant_probs))
         do.call(illumina_var_cpp, args)
     } else {

@@ -12,28 +12,24 @@ variants
 An object of class \code{variants}.
 }
 \description{
-\emph{Note:} This class wraps a pointer to a C++ object, so
-do NOT change fields in this class directly.
-It will cause your R session to do bad things.
-(Ever seen the bomb popup on RStudio? Manually mess with these fields and you
-surely will.)
-For safe ways of manipulating the variants' information, see the "Methods" section.
+This class should NEVER be created using \code{variants$new}.
+Only use \code{create_variants}.
+This class wraps a pointer to a C++ object, which is why
+there are no fields to manipulate directly.
+All manipulations are done through this class's methods.
 }
-\section{Fields}{
+\section{Connections to \code{ref_genome} objects}{
 
-\describe{
-\item{\code{genome}}{An \code{externalptr} to a C++ object storing the sequences
-representing the genome.}
+Regarding the \code{ref_genome} object you use to create a \code{variants} object, you should
+note the following:
 
-\item{\code{reference}}{An \code{externalptr} to a C++ object storing the sequences
-representing the genome.
-This field is private, so you can't view it, but I'm listing it here
-so that I can provide a few extra notes about it:
 \itemize{
 \item \strong{This point is the most important.}
-Since it's a pointer, if you make any changes to the reference genome
-that it points to, those changes will also show up in the \code{variants}
-object. For example, if you make a \code{variants} object named \code{V}
+Both the \code{ref_genome} and \code{variants} objects use the same underlying
+C++ object to store reference genome information.
+Thus, if you make any changes to the \code{ref_genome} object, those changes will
+also show up in the \code{variants} object.
+For example, if you make a \code{variants} object named \code{V}
 based on an existing \code{ref_genome} object named \code{R},
 then you merge sequences in \code{R},
 \code{V} will now have merged sequences.
@@ -41,19 +37,22 @@ If you've already started adding mutations to \code{V},
 then all the indexes used to store those mutations will be inaccurate.
 So when you do anything with \code{V} later, your R session will crash
 or have errors.
+\strong{The lesson here is that you shouldn't edit the reference
+genome after using it to create variants.}
 \item If a \code{ref_genome} object is used to create a \code{variants}
 object, deleting the \code{ref_genome} object won't cause issues with
 the \code{variants} object.
 However, the \code{variants} class doesn't provide methods to edit
 sequences, so only remove the \code{ref_genome} object when you're done
 editing the reference genome.
-}}
-}}
+}
+}
 
 \section{Methods}{
 
 \strong{Viewing information:}
 \describe{
+\item{\code{ptr()}}{View the pointer to the variant information.}
 \item{\code{n_seqs()}}{View the number of sequences.}
 \item{\code{n_vars()}}{View the number of variants.}
 \item{\code{sizes(var_ind)}}{View vector of sequence sizes for a given variant.}

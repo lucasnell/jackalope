@@ -2,20 +2,18 @@
 #' An R6 class representing a reference genome.
 #'
 #'
-#' \emph{Note:} This class wraps a pointer to a C++ object, so
-#' do NOT change fields in this class directly.
-#' It will cause your R session to do bad things.
-#' (Ever seen the bomb popup on RStudio? Manually mess with these fields and you
-#' surely will.)
-#' For safe ways of manipulating the reference genome, see the "Methods" section.
+#' This class should NEVER be created using `ref_genome$new`.
+#' Only use `read_fasta` or `create_genome`.
+#' This class wraps a pointer to a C++ object, which is why
+#' there are no fields to manipulate directly.
+#' All manipulations are done through this class's methods.
 #'
 #'
-#' @field genome An \code{externalptr} to a C++ object storing the sequences
-#'     representing the genome.
 #'
 #' @section Methods:
 #' \strong{Viewing information:}
 #' \describe{
+#'     \item{`ptr()`}{View the pointer to the reference sequence information.}
 #'     \item{`n_seqs()`}{View the number of sequences.}
 #'     \item{`sizes()`}{View vector of sequence sizes.}
 #'     \item{`names()`}{View vector of sequence names.}
@@ -71,41 +69,45 @@ ref_genome <- R6Class(
 
     public = list(
 
-        genome = NULL,
-
         initialize = function(genome_ptr) {
             if (!inherits(genome_ptr, "externalptr")) {
                 stop("\nWhen initializing a ref_genome object, you need to use ",
                      "an externalptr object.", call. = FALSE)
             }
-            self$genome <- genome_ptr
+            private$genome <- genome_ptr
         },
 
         print = function(...) {
             private$check_ptr()
-            print_ref_genome(self$genome)
+            print_ref_genome(private$genome)
             invisible(self)
         },
 
         # ----------*
         # __view__ ----
         # ----------*
+        # Pointer to underlying C++ object
+        ptr = function() {
+            private$check_ptr()
+            return(private$genome)
+        },
+
         # Get # sequences
         n_seqs = function() {
             private$check_ptr()
-            return(view_ref_genome_nseqs(self$genome))
+            return(view_ref_genome_nseqs(private$genome))
         },
 
         # Get vector of sequence sizes
         sizes = function() {
             private$check_ptr()
-            return(view_ref_genome_seq_sizes(self$genome))
+            return(view_ref_genome_seq_sizes(private$genome))
         },
 
         # Get vector of sequence names
         names = function() {
             private$check_ptr()
-            return(view_ref_genome_seq_names(self$genome))
+            return(view_ref_genome_seq_names(private$genome))
         },
 
         # Extract one reference sequence
@@ -114,14 +116,14 @@ ref_genome <- R6Class(
             if (!single_integer(seq_ind, 1, self$n_seqs())) {
                 err_msg("sequence", "seq_ind", "integer in range [1, <# sequences>]")
             }
-            return(view_ref_genome_seq(self$genome, seq_ind - 1))
+            return(view_ref_genome_seq(private$genome, seq_ind - 1))
         },
         # GC proportion for part of one reference sequence
         gc_prop = function(seq_ind, start, end) {
             private$check_pos(seq_ind, start, "nt_prop", "start")
             private$check_pos(seq_ind, end, "nt_prop", "end")
             if (end < start) err_msg("gc_prop", "end", ">= `start` arg")
-            gcp <- view_ref_genome_gc_content(self$genome, seq_ind - 1,
+            gcp <- view_ref_genome_gc_content(private$genome, seq_ind - 1,
                                               start - 1, end - 1)
             return(gcp)
         },
@@ -133,7 +135,7 @@ ref_genome <- R6Class(
             if (!is_type(nt, "character", 1) || nchar(nt) != 1) {
                 err_msg("nt_prop", "nt", "a single character")
             }
-            ntp <- view_ref_genome_nt_content(self$genome, nt, seq_ind - 1,
+            ntp <- view_ref_genome_nt_content(private$genome, nt, seq_ind - 1,
                                               start - 1, end - 1)
             return(ntp)
         },
@@ -148,14 +150,14 @@ ref_genome <- R6Class(
                 err_msg("set_names", "new_names", "the same length as # sequences")
             }
             seq_inds <- 0:(length(new_names) - 1)
-            set_ref_genome_seq_names(self$genome, seq_inds, new_names)
+            set_ref_genome_seq_names(private$genome, seq_inds, new_names)
             invisible(self)
         },
 
         # Clean sequence names, converting " :;=%,\\|/\"\'" to "_"
         clean_names = function() {
             private$check_ptr()
-            clean_ref_genome_seq_names(self$genome)
+            clean_ref_genome_seq_names(private$genome)
             invisible(self)
         },
 
@@ -187,7 +189,7 @@ ref_genome <- R6Class(
                         "already present as a sequence name in the reference genome")
             }
 
-            add_ref_genome_seqs(self$genome, new_seqs, new_names)
+            add_ref_genome_seqs(private$genome, new_seqs, new_names)
             invisible(self)
         },
 
@@ -207,14 +209,14 @@ ref_genome <- R6Class(
                 err_msg("rm_seqs", "seq_names", "a vector of *non-duplicated* names")
             }
             seq_inds <- match(seq_names, self_names) - 1
-            remove_ref_genome_seqs(self$genome, seq_inds)
+            remove_ref_genome_seqs(private$genome, seq_inds)
             invisible(self)
         },
 
         # Merge all ref_genome genome sequences into one
         merge_seqs = function() {
             private$check_ptr()
-            merge_sequences_cpp(self$genome)
+            merge_sequences_cpp(private$genome)
             invisible(self)
         },
 
@@ -241,7 +243,7 @@ ref_genome <- R6Class(
                 }
                 out_seq_prop <- threshold
             }
-            filter_sequences_cpp(self$genome, min_seq_size, out_seq_prop)
+            filter_sequences_cpp(private$genome, min_seq_size, out_seq_prop)
             invisible(self)
         },
 
@@ -262,7 +264,7 @@ ref_genome <- R6Class(
                 err_msg("replace_Ns", "show_progress", "a single logical")
             }
 
-            replace_Ns_cpp(self$genome, pi_tcag, n_threads, show_progress)
+            replace_Ns_cpp(private$genome, pi_tcag, n_threads, show_progress)
 
             invisible(self)
 
@@ -274,12 +276,15 @@ ref_genome <- R6Class(
     # __private__ -----
     private = list(
 
+        genome = NULL,
+
         check_ptr = function() {
-            if (!inherits(self$genome, "externalptr")) {
-                stop("\nSomehow the `genome` field of this `ref_genome` object ",
-                     "has been converted to something other than an `externalptr` ",
-                     "object. Re-make this `ref_genome` object, don't edit the ",
-                     "`genome` field directly, and try again.", call. = FALSE)
+            if (!inherits(private$genome, "externalptr")) {
+                stop("\nSomehow the pointer to the underlying C++ object for this",
+                     "`ref_genome` object has been converted to something other than ",
+                     "an `externalptr` object---or was never set as one. ",
+                     "You should re-make this `ref_genome` object using `read_fasta` ",
+                     "or `create_genome`.", call. = FALSE)
             }
         },
 
@@ -293,13 +298,13 @@ ref_genome <- R6Class(
             }
         }
 
-    )
+    ),
+
+    lock_class = TRUE
 
 )
 
 
-
-ref_genome$lock()
 
 
 
@@ -310,43 +315,44 @@ ref_genome$lock()
 # >> CLASS variants----
 #' An R6 class representing haploid variants from a reference genome.
 #'
-#' \emph{Note:} This class wraps a pointer to a C++ object, so
-#' do NOT change fields in this class directly.
-#' It will cause your R session to do bad things.
-#' (Ever seen the bomb popup on RStudio? Manually mess with these fields and you
-#' surely will.)
-#' For safe ways of manipulating the variants' information, see the "Methods" section.
+#' This class should NEVER be created using `variants$new`.
+#' Only use `create_variants`.
+#' This class wraps a pointer to a C++ object, which is why
+#' there are no fields to manipulate directly.
+#' All manipulations are done through this class's methods.
 #'
-#' @field genome An \code{externalptr} to a C++ object storing the sequences
-#'     representing the genome.
-#' @field reference An \code{externalptr} to a C++ object storing the sequences
-#'     representing the genome.
-#'     This field is private, so you can't view it, but I'm listing it here
-#'     so that I can provide a few extra notes about it:
-#'     \itemize{
-#'         \item \strong{This point is the most important.}
-#'             Since it's a pointer, if you make any changes to the reference genome
-#'             that it points to, those changes will also show up in the \code{variants}
-#'             object. For example, if you make a \code{variants} object named \code{V}
-#'             based on an existing \code{ref_genome} object named \code{R},
-#'             then you merge sequences in \code{R},
-#'             \code{V} will now have merged sequences.
-#'             If you've already started adding mutations to \code{V},
-#'             then all the indexes used to store those mutations will be inaccurate.
-#'             So when you do anything with \code{V} later, your R session will crash
-#'             or have errors.
-#'         \item If a \code{ref_genome} object is used to create a \code{variants}
-#'             object, deleting the \code{ref_genome} object won't cause issues with
-#'             the \code{variants} object.
-#'             However, the \code{variants} class doesn't provide methods to edit
-#'             sequences, so only remove the \code{ref_genome} object when you're done
-#'             editing the reference genome.
-#'     }
+#' @section Connections to `ref_genome` objects:
+#' Regarding the `ref_genome` object you use to create a `variants` object, you should
+#' note the following:
 #'
+#' \itemize{
+#'     \item \strong{This point is the most important.}
+#'         Both the `ref_genome` and `variants` objects use the same underlying
+#'         C++ object to store reference genome information.
+#'         Thus, if you make any changes to the `ref_genome` object, those changes will
+#'         also show up in the `variants` object.
+#'         For example, if you make a `variants` object named `V`
+#'         based on an existing `ref_genome` object named `R`,
+#'         then you merge sequences in `R`,
+#'         `V` will now have merged sequences.
+#'         If you've already started adding mutations to `V`,
+#'         then all the indexes used to store those mutations will be inaccurate.
+#'         So when you do anything with `V` later, your R session will crash
+#'         or have errors.
+#'         \strong{The lesson here is that you shouldn't edit the reference
+#'         genome after using it to create variants.}
+#'     \item If a `ref_genome` object is used to create a `variants`
+#'         object, deleting the `ref_genome` object won't cause issues with
+#'         the `variants` object.
+#'         However, the `variants` class doesn't provide methods to edit
+#'         sequences, so only remove the `ref_genome` object when you're done
+#'         editing the reference genome.
+#' }
 #'
 #' @section Methods:
 #' \strong{Viewing information:}
 #' \describe{
+#'     \item{`ptr()`}{View the pointer to the variant information.}
 #'     \item{`n_seqs()`}{View the number of sequences.}
 #'     \item{`n_vars()`}{View the number of variants.}
 #'     \item{`sizes(var_ind)`}{View vector of sequence sizes for a given variant.}
@@ -407,8 +413,6 @@ variants <- R6Class(
 
     public = list(
 
-        genomes = NULL,
-
         initialize = function(genomes_ptr, reference_ptr) {
             if (!inherits(genomes_ptr, "externalptr")) {
                 stop("\nWhen initializing a variants object, you need to use ",
@@ -418,13 +422,13 @@ variants <- R6Class(
                 stop("\nWhen initializing a variants object, you need to use ",
                      "an externalptr object.", call. = FALSE)
             }
-            self$genomes <- genomes_ptr
+            private$genomes <- genomes_ptr
             private$reference <- reference_ptr
         },
 
         print = function() {
             private$check_ptr()
-            print_var_set(self$genomes)
+            print_var_set(private$genomes)
             invisible(self)
         },
 
@@ -432,23 +436,29 @@ variants <- R6Class(
         # ----------*
         # __view__ ----
         # ----------*
+        # Pointer to underlying C++ object
+        ptr = function() {
+            private$check_ptr()
+            return(private$genomes)
+        },
+
         # Get # sequences
         n_seqs = function() {
             private$check_ptr()
-            return(view_var_set_nseqs(self$genomes))
+            return(view_var_set_nseqs(private$genomes))
         },
 
         # Get # variants
         n_vars = function() {
             private$check_ptr()
-            return(view_var_set_nvars(self$genomes))
+            return(view_var_set_nvars(private$genomes))
         },
 
         # Get vector of sequence sizes for one variant
         sizes = function(var_ind) {
             private$check_ptr()
             private$check_var_ind(var_ind, "sizes")
-            return(view_var_genome_seq_sizes(self$genomes, var_ind - 1))
+            return(view_var_genome_seq_sizes(private$genomes, var_ind - 1))
         },
 
         # Get vector of sequence names
@@ -460,7 +470,7 @@ variants <- R6Class(
         # Get vector of variant names
         var_names = function() {
             private$check_ptr()
-            return(view_var_set_var_names(self$genomes))
+            return(view_var_set_var_names(private$genomes))
         },
 
         # Extract one variant sequence
@@ -468,7 +478,7 @@ variants <- R6Class(
             private$check_ptr()
             private$check_var_ind(var_ind, "sequence")
             private$check_seq_ind(seq_ind, "sequence")
-            return(view_var_genome_seq(self$genomes, var_ind - 1, seq_ind - 1))
+            return(view_var_genome_seq(private$genomes, var_ind - 1, seq_ind - 1))
         },
 
         # GC proportion for part of one variant sequence
@@ -476,7 +486,7 @@ variants <- R6Class(
             private$check_pos(var_ind, seq_ind, start, "gc_prop", "start")
             private$check_pos(var_ind, seq_ind, end, "gc_prop", "end")
             if (end < start) err_msg("gc_prop", "end", ">= `start` arg")
-            gcp <- view_var_set_gc_content(self$genomes, seq_ind - 1, var_ind - 1,
+            gcp <- view_var_set_gc_content(private$genomes, seq_ind - 1, var_ind - 1,
                                            start - 1, end - 1)
             return(gcp)
         },
@@ -489,7 +499,7 @@ variants <- R6Class(
             if (!is_type(nt, "character", 1) || nchar(nt) != 1) {
                 err_msg("nt_prop", "nt", "a single character")
             }
-            ntp <- view_var_set_nt_content(self$genomes, nt, seq_ind - 1, var_ind - 1,
+            ntp <- view_var_set_nt_content(private$genomes, nt, seq_ind - 1, var_ind - 1,
                                            start - 1, end - 1)
             return(ntp)
         },
@@ -506,7 +516,7 @@ variants <- R6Class(
                 err_msg("set_names", "new_names", "the same length as # variants")
             }
             var_inds <- 0:(length(new_names) - 1)
-            set_var_set_var_names(self$genomes, var_inds, new_names)
+            set_var_set_var_names(private$genomes, var_inds, new_names)
             invisible(self)
         },
 
@@ -526,7 +536,7 @@ variants <- R6Class(
                         "already present as variants names in the object being added to")
             }
 
-            add_var_set_vars(self$genomes, new_names)
+            add_var_set_vars(private$genomes, new_names)
 
             invisible(self)
         },
@@ -565,7 +575,7 @@ variants <- R6Class(
                         "already present as a variant name in the variants object")
             }
 
-            dup_var_set_vars(self$genomes, var_inds, new_names)
+            dup_var_set_vars(private$genomes, var_inds, new_names)
 
             invisible(self)
         },
@@ -585,7 +595,7 @@ variants <- R6Class(
                 err_msg("rm_vars", "var_names", "a vector of non-duplicate names")
             }
             var_inds <- match(var_names, self_names) - 1
-            remove_var_set_vars(self$genomes, var_inds)
+            remove_var_set_vars(private$genomes, var_inds)
             invisible(self)
         },
 
@@ -599,7 +609,7 @@ variants <- R6Class(
             if (! nt %in% c("T", "C", "A", "G", "N")) {
                 err_msg("add_sub", "nt", "one of \"T\", \"C\", \"A\", \"G\", or \"N\"")
             }
-            add_substitution(self$genomes, var_ind - 1, seq_ind - 1, nt, pos - 1)
+            add_substitution(private$genomes, var_ind - 1, seq_ind - 1, nt, pos - 1)
             invisible(self)
         },
 
@@ -612,7 +622,7 @@ variants <- R6Class(
                 err_msg("add_ins", "nts", "string containing only \"T\", \"C\", \"A\",",
                         "\"G\", or \"N\"")
             }
-            add_insertion(self$genomes, var_ind - 1, seq_ind - 1, nts, pos - 1)
+            add_insertion(private$genomes, var_ind - 1, seq_ind - 1, nts, pos - 1)
             invisible(self)
         },
 
@@ -621,7 +631,7 @@ variants <- R6Class(
             if (!single_integer(n_nts, 1)) {
                 err_msg("add_del", "n_nts", "a single integer >= 1")
             }
-            add_deletion(self$genomes, var_ind - 1, seq_ind - 1, n_nts, pos - 1)
+            add_deletion(private$genomes, var_ind - 1, seq_ind - 1, n_nts, pos - 1)
             invisible(self)
         }
 
@@ -630,16 +640,20 @@ variants <- R6Class(
 
     # __private__ ------
     private = list(
+
+        genomes = NULL,
+
         # This should store a `XPtr<RefGenome>` to make sure it doesn't
         # go out of scope:
         reference = NULL,
 
         check_ptr = function() {
-            if (!inherits(self$genomes, "externalptr")) {
-                stop("\nSomehow the `genomes` field of this `variants` object ",
-                     "has been converted to something other than an `externalptr` ",
-                     "object. Re-make this `variants` object, don't edit the ",
-                     "`genomes` field directly, and try again.", call. = FALSE)
+            if (!inherits(private$genomes, "externalptr")) {
+                stop("\nSomehow the pointer to the underlying C++ object for this ",
+                     "`variants` object has been converted to something other than ",
+                     "an `externalptr` object---or was never set as one. ",
+                     "You should re-make this `variants` object using ",
+                     "`create_variants`.", call. = FALSE)
             }
         },
 
@@ -663,11 +677,12 @@ variants <- R6Class(
                 err_msg(.fun_name, .pos_name, "integer in range [1, <sequence size>]")
             }
         }
-    )
+    ),
+
+    lock_class = TRUE
 
 )
 
-variants$lock()
 
 
 
@@ -795,11 +810,11 @@ mevo <- R6Class(
     ),
 
 
-    private = list()
+    private = list(),
+
+    lock_class = TRUE
 
 )
-
-mevo$lock()
 
 
 

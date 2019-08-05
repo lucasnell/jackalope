@@ -12,24 +12,17 @@ ref_genome
 An object of class \code{ref_genome}.
 }
 \description{
-\emph{Note:} This class wraps a pointer to a C++ object, so
-do NOT change fields in this class directly.
-It will cause your R session to do bad things.
-(Ever seen the bomb popup on RStudio? Manually mess with these fields and you
-surely will.)
-For safe ways of manipulating the reference genome, see the "Methods" section.
+This class should NEVER be created using \code{ref_genome$new}.
+Only use \code{read_fasta} or \code{create_genome}.
+This class wraps a pointer to a C++ object, which is why
+there are no fields to manipulate directly.
+All manipulations are done through this class's methods.
 }
-\section{Fields}{
-
-\describe{
-\item{\code{genome}}{An \code{externalptr} to a C++ object storing the sequences
-representing the genome.}
-}}
-
 \section{Methods}{
 
 \strong{Viewing information:}
 \describe{
+\item{\code{ptr()}}{View the pointer to the reference sequence information.}
 \item{\code{n_seqs()}}{View the number of sequences.}
 \item{\code{sizes()}}{View vector of sequence sizes.}
 \item{\code{names()}}{View vector of sequence names.}

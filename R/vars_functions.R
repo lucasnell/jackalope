@@ -625,7 +625,7 @@ trees_to_var_set <- function(phylo_info_ptr, reference, mevo_obj, n_threads,
     sampler_base_ptr <- mevo_obj_to_ptr(mevo_obj)
 
     # Make variants pointer:
-    variants_ptr <- evolve_seqs(reference$genome,
+    variants_ptr <- evolve_seqs(reference$ptr(),
                                 sampler_base_ptr,
                                 phylo_info_ptr,
                                 mevo_obj$gamma_mats,
@@ -947,7 +947,7 @@ to_var_set.vars_ssites_info <- function(x, reference, mevo_obj,
     # Fill and check the position column in `x$mats`
     x$mats <- fill_coal_mat_pos(x$mats, seq_sizes)
 
-    variants_ptr <- add_ssites_cpp(reference$genome,
+    variants_ptr <- add_ssites_cpp(reference$ptr(),
                                    x$mats,
                                    mevo_obj$Q,
                                    mevo_obj$pi_tcag,
@@ -968,7 +968,7 @@ to_var_set.vars_ssites_info <- function(x, reference, mevo_obj,
 #'
 to_var_set.vars_vcf_info <- function(x, reference, mevo_obj, n_threads, show_progress) {
 
-    seq_names <- view_ref_genome_seq_names(reference$genome)
+    seq_names <- view_ref_genome_seq_names(reference$ptr())
     unq_chrom <- unique(x$chrom)
 
     if (!all(unq_chrom %in% seq_names)) {
@@ -985,7 +985,7 @@ to_var_set.vars_vcf_info <- function(x, reference, mevo_obj, n_threads, show_pro
     chrom_inds <- match(x$chrom, seq_names) - 1
 
 
-    variants_ptr <- read_vcfr(reference$genome, x$var_names,
+    variants_ptr <- read_vcfr(reference$ptr(), x$var_names,
                               x$haps, chrom_inds, x$pos, x$ref_seq)
 
     return(variants_ptr)

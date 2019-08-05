@@ -42,7 +42,7 @@ test_that("initialization of ref_genome class with nonsense produces error", {
 # Reference genome
 ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
 test_that("ref_genome class starts with the correct fields", {
-    expect_is(ref$genome, "externalptr")
+    expect_is(ref$ptr(), "externalptr")
 })
 
 
@@ -81,7 +81,7 @@ test_that("ref_genome class methods produce correct output", {
 
     expect_identical(ref$names(), paste0("seq", 1:length(seqs) - 1))
 
-    expect_identical(jackalope:::view_ref_genome(ref$genome), seqs)
+    expect_identical(jackalope:::view_ref_genome(ref$ptr()), seqs)
 
     nn <- paste0("__SEQ_",1:length(seqs))
     ref$set_names(nn)
@@ -135,7 +135,7 @@ ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
 phy <- ape::rcoal(n_vars)
 vars <- create_variants(ref, vars_phylo(phy), sub = sub_JC69(0.01))
 test_that("variants class starts with the correct fields", {
-    expect_is(vars$genomes, "externalptr")
+    expect_is(vars$ptr(), "externalptr")
 })
 
 
@@ -164,7 +164,7 @@ test_that("variants class methods", {
     # Variant sequences:
     var_seqs <- lapply(1:n_vars,
                        function(v) {
-                           jackalope:::view_var_genome(vars$genomes, v-1)
+                           jackalope:::view_var_genome(vars$ptr(), v-1)
                        })
     vs0 <- lapply(1:n_vars, function(v) sapply(1:length(seqs),
                                                function(s) vars$sequence(v, s)))
@@ -192,7 +192,7 @@ test_that("variants class methods", {
 
 
 # Make empty var_set to compare mutations
-vars <- variants$new(jackalope:::make_var_set(ref$genome, n_vars), ref$genome)
+vars <- variants$new(jackalope:::make_var_set(ref$ptr(), n_vars), ref$ptr())
 vars_R <- replicate(n_vars, seqs, simplify = FALSE)
 
 
@@ -303,7 +303,7 @@ test_that("gc_prop and nt_prob work for ref_genome as predicted", {
 
 
 
-vars <- variants$new(jackalope:::make_var_set(ref$genome, 2), ref$genome)
+vars <- variants$new(jackalope:::make_var_set(ref$ptr(), 2), ref$ptr())
 
 test_that("gc_prop and nt_prob work for variants as predicted", {
 

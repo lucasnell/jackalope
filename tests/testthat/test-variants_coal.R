@@ -305,7 +305,7 @@ test_that("seg. sites produces the correct number of mutations", {
     msf <- msf[grepl("^0|^1", msf)]
     msf <- do.call(c, strsplit(msf, ""))
     n_muts_by_var <-
-        sapply(0:4, function(i) nrow(jackalope:::view_mutations(vars$genomes, i)))
+        sapply(0:4, function(i) nrow(jackalope:::view_mutations(vars$ptr(), i)))
     expect_equal(sum(as.integer(msf)), sum(n_muts_by_var))
 })
 
