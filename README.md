@@ -38,14 +38,83 @@ written to standard file formats.
 
 ## Installation
 
+### Dependencies
+
+Before installing `jackalope`, you should update the packages `Rhtslib`
+and `zlibbioc`. Since both of these are on Bioconductor, you should
+update `BiocManager`, too.
+
+``` r
+if (!requireNamespace("BiocManager", quietly = TRUE) ||
+    "BiocManager" %in% row.names(old.packages())) {
+  install.packages("BiocManager")
+}
+BiocManager::install(c("Rhtslib", "zlibbioc"))
+```
+
+### Stable version
+
 ``` r
 # To install the latest stable version from CRAN:
 install.packages("jackalope")
+```
 
-# Or the the development version from GitHub:
+### Development version
+
+``` r
 # install.packages("devtools")
 devtools::install_github("lucasnell/jackalope")
 ```
+
+### Enabling OpenMP
+
+To use multithreading in `jackalope`, you’ll need to compile it from
+source using the proper flags. Regardless of operating system, you
+should add the following to the `.R/Makevars` (`.R/Makevars.win` on
+Windows) file inside the home directory:
+
+``` bash
+PKG_CXXFLAGS += $(SHLIB_OPENMP_CXXFLAGS)
+PKG_CFLAGS += $(SHLIB_OPENMP_CFLAGS)
+PKG_LIBS += $(SHLIB_OPENMP_CFLAGS)
+```
+
+On Linux and Windows, you should be able to get away with simply adding
+those lines and installing `jackalope` by running the following in R:
+
+``` r
+install.packages("jackalope", type = "source")
+## Or, for development version:
+# devtools::install_github("lucasnell/jackalope")
+```
+
+If you’ve enabled OpenMP properly, running `jackalope:::using_openmp()`
+in R should return `TRUE`.
+
+On macOS, it’s a bit more work to get things working. First, make sure
+the content above is in your `~/.R/Makevars` file. Next, go to
+<https://cran.r-project.org/bin/macosx/tools> and download (1) the
+newest version of the `clang` compiler (`clang8` at the time of this
+writing) and (2) the `gfortran-6.1.pkg` file. After this, add the
+following to your `~/.R/Makevars` file:
+
+``` bash
+CLANG8=/usr/local/clang8/bin/clang
+CC=$(CLANG8)
+CXX=$(CLANG8)++
+CXX11=$(CLANG8)++
+CXX14=$(CLANG8)++
+CXX17=$(CLANG8)++
+CXX1X=$(CLANG8)++
+LDFLAGS=-L/usr/local/clang8/lib
+```
+
+Next, install `gfortran` 6.1 by opening the `gfortran-6.1.pkg` file. Now
+you should be able to install `jackalope` using the `install.packages`
+command above.
+
+For more information, please see
+<https://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x>.
 
 ## Usage
 
