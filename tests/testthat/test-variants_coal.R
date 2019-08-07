@@ -44,7 +44,7 @@ arg_list <- list(reference = create_genome(3, 100), sub = sub_JC69(0.1),
 #' Check for proper output and errors when creating variants from coalescent objects
 #'
 #' coal_obj must be a coalescent object from scrm or coala.
-
+#'
 
 coal_obj_run_trees <- function(coal_obj, pkg) {
 
@@ -347,5 +347,41 @@ test_that("errors occur when nonsense is input to vars_ssites", {
                                 "`seg_sites` field present"))
     expect_error(vars_ssites(NULL, 1),
                  regexp = "argument `fn` must be NULL or a single string")
+
+})
+
+
+
+
+
+
+# ==============================================================================`
+# ==============================================================================`
+
+# Writing gene trees -----
+
+# ==============================================================================`
+# ==============================================================================`
+
+
+test_that("gene trees written properly by write_gtrees", {
+
+    out_prefix <- paste0(tempdir(TRUE), "/trees")
+
+    # Write gene trees to file based on known ms-style file:
+    write_gtrees(vars_gtrees(fn = test_path("files/ms_out.txt")), out_prefix)
+
+    # Newly written gene tree strings:
+    wr_str <- strsplit(paste(readLines(paste0(out_prefix, ".trees")),
+                             collapse = ""), "//")[[1]]
+    wr_str <- wr_str[grepl("^\\[", wr_str)]
+
+    # original file, split by sequence:
+    og_str <- strsplit(strsplit(paste(readLines(test_path("files/ms_out.txt"))[-1:-2],
+                                      collapse = "\n"), "//\n")[[1]], "\n")[-1]
+    # Now get just the gene trees:
+    og_str <- sapply(og_str, function(x) paste(x[grepl("^\\[", x)], collapse = ""))
+
+    expect_identical(wr_str, og_str)
 
 })

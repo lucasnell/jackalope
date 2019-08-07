@@ -505,6 +505,38 @@ vars_gtrees <- function(obj = NULL,
 
 
 
+#' @describeIn vars_gtrees Write gene trees to ms-style output file.
+#'
+#' @param gtrees A `vars_gtrees_info` object output from `vars_gtrees`.
+#' @param out_prefix Prefix for the output file of gene trees.
+#'     The extension will be `.trees`.
+#'
+#' @export
+#'
+write_gtrees <- function(gtrees, out_prefix) {
+
+    if (!inherits(gtrees, "vars_gtrees_info")) {
+        err_msg("write_gtrees", "gtrees", "a `vars_gtrees_info` object")
+    }
+    if (!is_type(out_prefix, "character", 1L)) {
+        err_msg("write_gtrees", "out_prefix", "a single string")
+    }
+
+    out_fn <- paste0(path.expand(out_prefix), ".trees")
+
+    # Trees separated by empty line, then one with just "//"
+    # This is to emulate ms-style output
+    out_str <- paste0("//\n", paste(lapply(gtrees$trees, paste, collapse = "\n"),
+                                    collapse = "\n\n//\n"))
+
+    write(out_str, out_fn)
+
+    invisible(NULL)
+
+}
+
+
+
 # ====================================================================================`
 # ====================================================================================`
 

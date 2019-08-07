@@ -2,9 +2,12 @@
 % Please edit documentation in R/vars_functions.R
 \name{vars_gtrees}
 \alias{vars_gtrees}
+\alias{write_gtrees}
 \title{Create necessary information to create variants using gene trees}
 \usage{
 vars_gtrees(obj = NULL, fn = NULL)
+
+write_gtrees(gtrees, out_prefix)
 }
 \arguments{
 \item{obj}{Object containing gene trees.
@@ -19,6 +22,11 @@ Defaults to \code{NULL}.}
 \item{fn}{A single string specifying the name of the file containing
 the \code{ms}-style coalescent output with gene trees.
 Defaults to \code{NULL}.}
+
+\item{gtrees}{A \code{vars_gtrees_info} object output from \code{vars_gtrees}.}
+
+\item{out_prefix}{Prefix for the output file of gene trees.
+The extension will be \code{.trees}.}
 }
 \value{
 A \code{vars_gtrees_info} object containing information used in \code{create_variants}
@@ -43,3 +51,8 @@ information, see output from \code{citation("scrm")} or \code{citation("coala")}
 If using an output file from a command-line program like \code{ms}/\code{msms},
 add the \code{-T} option.
 }
+\section{Functions}{
+\itemize{
+\item \code{write_gtrees}: Write gene trees to ms-style output file.
+}}
+
