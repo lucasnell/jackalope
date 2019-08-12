@@ -104,11 +104,11 @@ public:
     RegionTree() {};
     RegionTree(const arma::mat& gamma_mat,
                const uint64& region_size,
-               const VarChrom* var_seq,
+               const VarChrom* var_chrom,
                const std::vector<double>& nt_rates)
         : total_rate(0) {
         // below also calculates `total_rate`
-        construct_tips(gamma_mat, region_size, var_seq, nt_rates);
+        construct_tips(gamma_mat, region_size, var_chrom, nt_rates);
         construct_nodes();
     }
     RegionTree(const RegionTree& other)
@@ -197,14 +197,14 @@ private:
 
     inline void construct_tips_one_row(const arma::mat& gamma_mat,
                                        const uint64& region_size,
-                                       const VarChrom* var_seq,
+                                       const VarChrom* var_chrom,
                                        const std::vector<double>& nt_rates,
                                        const uint64& i,
                                        uint64& mut_i,
                                        std::vector<uint64>& sizes);
     void construct_tips(arma::mat gamma_mat,
                         const uint64& region_size,
-                        const VarChrom* var_seq,
+                        const VarChrom* var_chrom,
                         const std::vector<double>& nt_rates);
     void construct_nodes();
 
@@ -302,27 +302,27 @@ class LocationSampler {
 
 public:
 
-    const VarChrom * var_seq;  // pointer to const VarChrom
+    const VarChrom * var_chrom;  // pointer to const VarChrom
     std::vector<double> nt_rates = std::vector<double>(256, 0.0);
     // Binary search tree for sampling regions:
     RegionTree regions;
     // For sampling with a starting and ending location:
     LocationBounds bounds;
 
-    LocationSampler() : var_seq(nullptr), regions(), bounds(), region_size(0) {};
+    LocationSampler() : var_chrom(nullptr), regions(), bounds(), region_size(0) {};
     LocationSampler(const std::vector<double>& q_tcag,
                     const uint64& region_size_)
-        : var_seq(), regions(), bounds(), region_size(region_size_) {
+        : var_chrom(), regions(), bounds(), region_size(region_size_) {
         for (uint64 i = 0; i < 4; i++) {
             uint64 bi = mut_loc::bases[i];
             nt_rates[bi] = q_tcag[i];
         }
     }
     LocationSampler(const LocationSampler& other)
-        : var_seq(other.var_seq), nt_rates(other.nt_rates), regions(other.regions),
+        : var_chrom(other.var_chrom), nt_rates(other.nt_rates), regions(other.regions),
           bounds(other.bounds), region_size(other.region_size) {}
     LocationSampler& operator=(const LocationSampler& other) {
-        var_seq = other.var_seq;
+        var_chrom = other.var_chrom;
         nt_rates = other.nt_rates;
         regions = other.regions;
         bounds = other.bounds;
@@ -336,10 +336,10 @@ public:
 
 
     // Fill pointer for a new VarChrom
-    void new_seq(const VarChrom& vs_, const arma::mat& gamma_mat) {
-        var_seq = &vs_;
+    void new_chrom(const VarChrom& vs_, const arma::mat& gamma_mat) {
+        var_chrom = &vs_;
         // Reset search tree for regions:
-        regions = RegionTree(gamma_mat, region_size, var_seq, nt_rates);
+        regions = RegionTree(gamma_mat, region_size, var_chrom, nt_rates);
         // Reset bounds:
         bounds = LocationBounds(vs_);
         return;
@@ -356,7 +356,7 @@ public:
     double substitution_rate_change(const char& c, const uint64& pos) const {
         // Pointer to region where mutation occurred (saved by `regions` object)
         const Region* reg = regions.current();
-        char c0 = var_seq->get_nt(pos);
+        char c0 = var_chrom->get_nt(pos);
         double d_rate = nt_rates[c] - nt_rates[c0];
         d_rate *= reg->gamma;
         return d_rate;

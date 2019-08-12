@@ -48,7 +48,7 @@ struct IlluminaReadConstrInfo {
     uint64 frag_start;
     std::vector<std::string> reads;
     std::vector<std::string> quals;
-    std::vector<uint64> read_seq_spaces;
+    std::vector<uint64> read_chrom_spaces;
     std::string barcode;
 
 
@@ -62,24 +62,24 @@ struct IlluminaReadConstrInfo {
           frag_start(0),
           reads(),
           quals(),
-          read_seq_spaces(),
+          read_chrom_spaces(),
           barcode(barcode_) {
 
         if (paired) {
             reads = std::vector<std::string>(2, std::string(read_length, 'N'));
             quals = std::vector<std::string>(2);
-            read_seq_spaces = std::vector<uint64>(2);
+            read_chrom_spaces = std::vector<uint64>(2);
         } else {
             reads = std::vector<std::string>(1, std::string(read_length, 'N'));
             quals = std::vector<std::string>(1);
-            read_seq_spaces = std::vector<uint64>(1);
+            read_chrom_spaces = std::vector<uint64>(1);
         }
     }
     IlluminaReadConstrInfo(const IlluminaReadConstrInfo& other)
         : read_length(other.read_length), seq_ind(other.seq_ind),
           frag_len(other.frag_len), frag_start(other.frag_start),
           reads(other.reads), quals(other.quals),
-          read_seq_spaces(other.read_seq_spaces), barcode(other.barcode) {};
+          read_chrom_spaces(other.read_chrom_spaces), barcode(other.barcode) {};
 };
 
 
@@ -352,7 +352,7 @@ public:
               }
               qual_errors = {IlluminaQualityError(qual_probs1, quals1),
                                    IlluminaQualityError(qual_probs2, quals2)};
-              construct_seqs();
+              construct_chroms();
               ins_probs[0] = ins_prob1;
               ins_probs[1] = ins_prob2;
               del_probs[0] = del_prob1;
@@ -385,7 +385,7 @@ public:
           frag_len_min(frag_len_min_),
           frag_len_max(frag_len_max_),
           constr_info(paired, read_length, barcode) {
-              construct_seqs();
+              construct_chroms();
               ins_probs[0] = ins_prob;
               del_probs[0] = del_prob;
           };
@@ -427,7 +427,7 @@ public:
      This is used when making multiple samplers that share most info except for
      that related to the sequence object.
      */
-    void add_seq_info(const T& seq_object, const std::string& barcode);
+    void add_chrom_info(const T& seq_object, const std::string& barcode);
 
 
 
@@ -445,14 +445,14 @@ protected:
 
 
     // Construct sequence-sampling probabilities:
-    void construct_seqs();
+    void construct_chroms();
 
 
     // Sample for insertion and deletion positions
     void sample_indels(pcg64& eng);
 
     // Adjust sequence spaces
-    void adjust_seq_spaces();
+    void adjust_chrom_spaces();
 
 
     /*
@@ -545,7 +545,7 @@ public:
         read_makers.push_back(read_maker1);
         for (uint64 i = 1; i < n_vars; i++) {
             read_makers.push_back(read_maker1);
-            read_makers[i].add_seq_info(var_set[i], barcodes[i]);
+            read_makers[i].add_chrom_info(var_set[i], barcodes[i]);
         }
 
     };
@@ -584,7 +584,7 @@ public:
         read_makers.push_back(read_maker1);
         for (uint64 i = 1; i < n_vars; i++) {
             read_makers.push_back(read_maker1);
-            read_makers[i].add_seq_info(var_set[i], barcodes[i]);
+            read_makers[i].add_chrom_info(var_set[i], barcodes[i]);
         }
 
     };

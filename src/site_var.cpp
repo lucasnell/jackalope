@@ -155,7 +155,7 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint64>& seq_sizes,
 
     pcg64 eng = seeded_pcg();
 
-    uint64 n_seqs = seq_sizes.size();
+    uint64 n_chroms = seq_sizes.size();
 
     /*
      These are used later to make sure the average gamma value across the whole
@@ -167,8 +167,8 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint64>& seq_sizes,
     // Sum of each gamma value times the region size it represents:
     double gammas_x_sizes = 0;
 
-    arma::field<arma::mat> gamma_mats(n_seqs);
-    for (uint64 i = 0; i < n_seqs; i++) {
+    arma::field<arma::mat> gamma_mats(n_chroms);
+    for (uint64 i = 0; i < n_chroms; i++) {
         fill_gamma_mat_(gamma_mats(i), gammas_x_sizes, seq_sizes[i],
                         region_size_, shape, invariant, eng);
     }
@@ -179,7 +179,7 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint64>& seq_sizes,
      */
     if (shape > 0) {
         double mean_gamma = gammas_x_sizes / total_size;
-        for (uint64 i = 0; i < n_seqs; i++) gamma_mats(i).col(1) /= mean_gamma;
+        for (uint64 i = 0; i < n_chroms; i++) gamma_mats(i).col(1) /= mean_gamma;
     }
 
     return gamma_mats;

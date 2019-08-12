@@ -37,7 +37,7 @@ VarChrom& VarChrom::operator+=(const VarChrom& other) {
 
     // Combine sequence sizes:
     sint64 diff = static_cast<sint64>(other.seq_size) -
-        static_cast<sint64>(ref_seq->size());
+        static_cast<sint64>(ref_chrom->size());
     seq_size += diff;
 
     /*
@@ -64,7 +64,7 @@ VarChrom& VarChrom::operator+=(const VarChrom& other) {
         }
     } else if (other_is_after) {
         // The amount to adjust the new mutation's `new_pos` fields:
-        diff = static_cast<sint64>(seq_size) - static_cast<sint64>(ref_seq->size());
+        diff = static_cast<sint64>(seq_size) - static_cast<sint64>(ref_chrom->size());
         auto mut = other.mutations.begin();
         for (; mut != other.mutations.end(); ++mut) {
             // Add the new mutation to the back of `(*this).mutations`:
@@ -102,7 +102,7 @@ char VarChrom::get_nt(const uint64& new_pos) const {
      we just extract the character from the beginning of the reference string:
      */
     if (mut_i == mutations.size()) {
-        out = (*ref_seq)[new_pos];
+        out = (*ref_chrom)[new_pos];
         /*
          If not, then extract the character from the Mutation object that
          `mut` points to (see below for `get_char_` fxn):
@@ -123,9 +123,9 @@ char VarChrom::get_nt(const uint64& new_pos) const {
  ------------------
  */
 
-std::string VarChrom::get_seq_full() const {
+std::string VarChrom::get_chrom_full() const {
 
-    if (mutations.empty()) return ref_seq->nucleos;
+    if (mutations.empty()) return ref_chrom->nucleos;
 
     // Index to the first Mutation object
     uint64 mut_i = 0;
@@ -135,7 +135,7 @@ std::string VarChrom::get_seq_full() const {
 
     // Picking up any nucleotides before the first mutation
     while (pos < mutations[mut_i].new_pos) {
-        out[pos] = (*ref_seq)[pos];
+        out[pos] = (*ref_chrom)[pos];
         ++pos;
     }
 
@@ -176,7 +176,7 @@ std::string VarChrom::get_seq_full() const {
  and clears `chunk_str`.
  ------------------
  */
-void VarChrom::set_seq_chunk(std::string& chunk_str,
+void VarChrom::set_chrom_chunk(std::string& chunk_str,
                                 const uint64& start,
                                 const uint64& chunk_size,
                                 uint64& mut_i) const {
@@ -195,7 +195,7 @@ void VarChrom::set_seq_chunk(std::string& chunk_str,
 
     // No need to mess around with mutations if there aren't any
     if (mutations.empty()) {
-        chunk_str = ref_seq->nucleos.substr(start, out_length);
+        chunk_str = ref_chrom->nucleos.substr(start, out_length);
         return;
     }
     // Move mutation to the proper spot
@@ -215,7 +215,7 @@ void VarChrom::set_seq_chunk(std::string& chunk_str,
      `mut == mutations.begin()` and `start` is before the first mutation)
      */
     while (pos < mutations[mut_i].new_pos && pos <= end) {
-        chunk_str += (*ref_seq)[pos];
+        chunk_str += (*ref_chrom)[pos];
         ++pos;
     }
     if (pos > end) return;
@@ -276,7 +276,7 @@ void VarChrom::fill_read(std::string& read,
     // No need to mess around with mutations if there aren't any
     if (mutations.empty()) {
         for (uint64 i = 0; i < n_to_add; i++) {
-            read[(read_start + i)] = ref_seq->nucleos[(seq_start + i)];
+            read[(read_start + i)] = ref_chrom->nucleos[(seq_start + i)];
         }
         return;
     }
@@ -296,7 +296,7 @@ void VarChrom::fill_read(std::string& read,
      `mut == mutations.begin()` and `seq_start` is before the first mutation)
      */
     while (seq_pos < mutations[mut_i].new_pos && seq_pos <= seq_end) {
-        read[read_pos] = (*ref_seq)[seq_pos];
+        read[read_pos] = (*ref_chrom)[seq_pos];
         ++seq_pos;
         ++read_pos;
     }
@@ -349,7 +349,7 @@ char VarChrom::get_char_(const uint64& new_pos,
     uint64 ind = new_pos - m.new_pos;
     if (static_cast<sint64>(ind) > m.size_modifier) {
         ind += (m.old_pos - m.size_modifier);
-        out = (*ref_seq)[ind];
+        out = (*ref_chrom)[ind];
     } else {
         out = m[ind];
     }
@@ -543,7 +543,7 @@ void VarChrom::add_insertion(const std::string& nucleos_, const uint64& new_pos_
     // `mutations.size()` is returned above if `new_pos_` is before the
     // first Mutation object or if `mutations` is empty
     if (mut_i == mutations.size()) {
-        std::string nt = (*ref_seq)[new_pos_] + nucleos_;
+        std::string nt = (*ref_chrom)[new_pos_] + nucleos_;
         // (below, notice that new position and old position are the same)
         Mutation new_mut(new_pos_, new_pos_, nt);
         mutations.push_front(new_mut);
@@ -578,7 +578,7 @@ void VarChrom::add_insertion(const std::string& nucleos_, const uint64& new_pos_
     } else {
         uint64 old_pos_ = ind + (mutations[mut_i].old_pos -
             mutations[mut_i].size_modifier);
-        std::string nt = (*ref_seq)[old_pos_] + nucleos_;
+        std::string nt = (*ref_chrom)[old_pos_] + nucleos_;
         Mutation new_mut(old_pos_, new_pos_, nt);
         ++mut_i;
         mutations.insert(mutations.begin() + mut_i, new_mut);

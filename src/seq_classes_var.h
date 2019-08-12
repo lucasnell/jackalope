@@ -126,15 +126,15 @@ class VarChrom {
 
 public:
 
-    const RefChrom* ref_seq;  // pointer to const RefChrom
+    const RefChrom* ref_chrom;  // pointer to const RefChrom
     std::deque<Mutation> mutations;
     uint64 seq_size;
     std::string name;
 
     // Constructors
-    VarChrom() : ref_seq(nullptr) {};
+    VarChrom() : ref_chrom(nullptr) {};
     VarChrom(const RefChrom& ref)
-        : ref_seq(&ref),
+        : ref_chrom(&ref),
           mutations(),
           seq_size(ref.size()),
           name(ref.name) {};
@@ -150,13 +150,13 @@ public:
     void clear() {
         mutations.clear();
         clear_memory<std::deque<Mutation>>(mutations);
-        seq_size = ref_seq->size();
+        seq_size = ref_chrom->size();
         return;
     }
 
     // Replace existing mutation information in this VarChrom with another
     void replace(const VarChrom& other) {
-        ref_seq = other.ref_seq;
+        ref_chrom = other.ref_chrom;
         mutations = other.mutations;
         seq_size = other.seq_size;
         name = other.name;
@@ -192,7 +192,7 @@ public:
      the variant sequence
      ------------------
      */
-    std::string get_seq_full() const;
+    std::string get_chrom_full() const;
 
 
 
@@ -201,7 +201,7 @@ public:
      Set a string object to a chunk of a sequence from the variant sequence.
      ------------------
      */
-    void set_seq_chunk(std::string& chunk_str,
+    void set_chrom_chunk(std::string& chunk_str,
                        const uint64& start,
                        const uint64& chunk_size,
                        uint64& mut_i) const;
@@ -306,27 +306,27 @@ public:
     VarGenome(const RefGenome& ref) {
         name = "";
         for (uint64 i = 0; i < ref.size(); i++) {
-            VarChrom var_seq(ref[i]);
-            var_genome.push_back(var_seq);
+            VarChrom var_chrom(ref[i]);
+            var_genome.push_back(var_chrom);
         }
     };
     VarGenome(const std::string& name_, const RefGenome& ref) {
         name = name_;
         for (uint64 i = 0; i < ref.size(); i++) {
-            VarChrom var_seq(ref[i]);
-            var_genome.push_back(var_seq);
+            VarChrom var_chrom(ref[i]);
+            var_genome.push_back(var_chrom);
         }
     };
 
     // For easily outputting a reference to a VarChrom
     VarChrom& operator[](const uint64& idx) {
-        VarChrom& var_seq(var_genome[idx]);
-        return var_seq;
+        VarChrom& var_chrom(var_genome[idx]);
+        return var_chrom;
     }
     // const version
     const VarChrom& operator[](const uint64& idx) const {
-        const VarChrom& var_seq(var_genome[idx]);
-        return var_seq;
+        const VarChrom& var_chrom(var_genome[idx]);
+        return var_chrom;
     }
     // To return the number of sequences
     uint64 size() const noexcept {

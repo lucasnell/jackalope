@@ -461,7 +461,7 @@ public:
           seq_lengths(seq_object.seq_sizes()),
           sequences(&seq_object),
           name(seq_object.name) {
-        construct_seqs();
+        construct_chroms();
     };
     // Using vectors of read lengths and sampling weight for read lengths:
     PacBioOneGenome(const T& seq_object,
@@ -484,7 +484,7 @@ public:
           seq_lengths(seq_object.seq_sizes()),
           sequences(&seq_object),
           name(seq_object.name) {
-        construct_seqs();
+        construct_chroms();
     };
 
     PacBioOneGenome(const PacBioOneGenome& other)
@@ -514,11 +514,11 @@ public:
      This is used when making multiple samplers that share most info except for
      that related to the sequence object.
      */
-    void add_seq_info(const T& seq_object) {
+    void add_chrom_info(const T& seq_object) {
         seq_lengths = seq_object.seq_sizes();
         sequences = &seq_object;
         name = seq_object.name;
-        construct_seqs();
+        construct_chroms();
     }
 
 
@@ -529,7 +529,7 @@ private:
     double passes_right = 0;
     char qual_left = '!';
     char qual_right = '!';
-    uint64 read_seq_space = 1;
+    uint64 read_chrom_space = 1;
     std::string read = std::string(1000, 'N');
     // Maps nucleotide char to integer from 0 to 3
     std::vector<uint8> nt_map = sequencer::nt_map;
@@ -547,7 +547,7 @@ private:
     uint64 read_start = 0;
 
     // Construct sequence-sampling probabilities:
-    void construct_seqs() {
+    void construct_chroms() {
         std::vector<double> probs_;
         probs_.reserve(seq_lengths.size());
         for (uint64 i = 0; i < seq_lengths.size(); i++) {
@@ -677,7 +677,7 @@ private:
             // Add read maker for the first variant:
             read_makers.push_back(read_makers[0]);
             // Now update it for the correct VarGenome info:
-            read_makers[i].add_seq_info((*variants)[i]);
+            read_makers[i].add_chrom_info((*variants)[i]);
         }
     }
 

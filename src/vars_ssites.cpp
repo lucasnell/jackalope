@@ -59,7 +59,7 @@ MutationTypeSampler make_type_sampler(const arma::mat& Q,
 //'
 //' @noRd
 //'
-void add_one_seq_ssites(VarSet& var_set,
+void add_one_chrom_ssites(VarSet& var_set,
                         const RefGenome& ref_genome,
                         const uint64& seq_i,
                         const arma::mat& ss_i,
@@ -137,10 +137,10 @@ SEXP add_ssites_cpp(SEXP& ref_genome_ptr,
     // Check that # threads isn't too high and change to 1 if not using OpenMP:
     thread_check(n_threads);
 
-    const uint64 n_seqs = ref_genome->size();
-    const uint64 total_seq = ref_genome->total_size;
+    const uint64 n_chroms = ref_genome->size();
+    const uint64 total_chrom = ref_genome->total_size;
 
-    Progress prog_bar(total_seq, show_progress);
+    Progress prog_bar(total_chrom, show_progress);
     std::vector<int> status_codes(n_threads, 0);
 
     // Generate seeds for random number generators (1 RNG per thread)
@@ -173,12 +173,12 @@ SEXP add_ssites_cpp(SEXP& ref_genome_ptr,
 #ifdef _OPENMP
 #pragma omp for schedule(static)
 #endif
-    for (uint64 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_chroms; i++) {
 
         if (prog_bar.is_aborted() || prog_bar.check_abort()) status_code = -1;
         if (status_code != 0) continue;
 
-        add_one_seq_ssites(*var_set, *ref_genome, i, seg_sites[i], type, insert, eng);
+        add_one_chrom_ssites(*var_set, *ref_genome, i, seg_sites[i], type, insert, eng);
 
         prog_bar.increment((*ref_genome)[i].size());
 

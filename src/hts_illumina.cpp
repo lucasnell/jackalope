@@ -66,14 +66,14 @@ void IlluminaOneGenome<T>::re_read(std::vector<U>& fastq_pools,
  that related to the sequence object.
  */
 template <typename T>
-void IlluminaOneGenome<T>::add_seq_info(const T& seq_object, const std::string& barcode) {
+void IlluminaOneGenome<T>::add_chrom_info(const T& seq_object, const std::string& barcode) {
 
     seq_lengths = seq_object.seq_sizes();
     sequences = &seq_object;
     name = seq_object.name;
     constr_info.barcode = barcode;
 
-    construct_seqs();
+    construct_chroms();
 
     return;
 }
@@ -81,7 +81,7 @@ void IlluminaOneGenome<T>::add_seq_info(const T& seq_object, const std::string& 
 
 // Construct sequence-sampling probabilities:
 template <typename T>
-void IlluminaOneGenome<T>::construct_seqs() {
+void IlluminaOneGenome<T>::construct_chroms() {
     std::vector<double> probs_;
     probs_.reserve(seq_lengths.size());
     for (uint64 i = 0; i < seq_lengths.size(); i++) {
@@ -131,9 +131,9 @@ void IlluminaOneGenome<T>::sample_indels(pcg64& eng) {
 
 // Adjust sequence spaces
 template <typename T>
-void IlluminaOneGenome<T>::adjust_seq_spaces() {
+void IlluminaOneGenome<T>::adjust_chrom_spaces() {
 
-    std::vector<uint64>& read_seq_spaces(constr_info.read_seq_spaces);
+    std::vector<uint64>& read_chrom_spaces(constr_info.read_chrom_spaces);
     std::vector<std::string>& reads(constr_info.reads);
     const uint64& frag_len(constr_info.frag_len);
 
@@ -151,13 +151,13 @@ void IlluminaOneGenome<T>::adjust_seq_spaces() {
          (Because the indel sampler stops when it reaches the fragment end,
          we don't need to account for that.)
          */
-        read_seq_spaces[r] = std::min(read_length + indel_effect, frag_len);
+        read_chrom_spaces[r] = std::min(read_length + indel_effect, frag_len);
         // Adjust `reads` so it can hold the necessary sequence space:
-        if (reads[r].size() != read_seq_spaces[r]) {
-            reads[r].resize(read_seq_spaces[r], 'N');
+        if (reads[r].size() != read_chrom_spaces[r]) {
+            reads[r].resize(read_chrom_spaces[r], 'N');
         }
         // Now including effect of barcode:
-        read_seq_spaces[r] -= constr_info.barcode.size();
+        read_chrom_spaces[r] -= constr_info.barcode.size();
     }
 
     return;
@@ -197,7 +197,7 @@ void IlluminaOneGenome<T>::seq_indels_frag(pcg64& eng) {
     sample_indels(eng);
 
     // Adjust sequence spaces:
-    adjust_seq_spaces();
+    adjust_chrom_spaces();
 
     return;
 }
@@ -214,7 +214,7 @@ void IlluminaOneGenome<T>::just_indels(pcg64& eng) {
     sample_indels(eng);
 
     // Adjust sequence spaces:
-    adjust_seq_spaces();
+    adjust_chrom_spaces();
 
     return;
 }
@@ -236,7 +236,7 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
     if (fastq_pools.size() != n_read_ends) fastq_pools.resize(n_read_ends);
 
     const std::string& barcode(constr_info.barcode);
-    const std::vector<uint64>& read_seq_spaces(constr_info.read_seq_spaces);
+    const std::vector<uint64>& read_chrom_spaces(constr_info.read_chrom_spaces);
 
     // Just making this reference to keep lines from getting very long.
     const uint64& seq_ind(constr_info.seq_ind);
@@ -253,7 +253,7 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
             start = constr_info.frag_start;
         } else {
             start = constr_info.frag_start + constr_info.frag_len -
-                read_seq_spaces[i];
+                read_chrom_spaces[i];
         }
 
         /*
@@ -263,7 +263,7 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
             // Fill in read starting with position after barcode:
             (*(sequences))[seq_ind].fill_read(
                     read, barcode.size(),
-                    start, read_seq_spaces[i]);
+                    start, read_chrom_spaces[i]);
         } else {
             /*
              If doing reverse, we can add the actual sequence to the front of the
@@ -275,7 +275,7 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
              */
             (*(sequences))[seq_ind].fill_read(
                     read, 0,
-                    start, read_seq_spaces[i]);
+                    start, read_chrom_spaces[i]);
             // Now do reverse complement:
             rev_comp(read);
         }

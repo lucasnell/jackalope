@@ -14,24 +14,24 @@ using namespace Rcpp;
 // Does most of the work of mutating for the below methods (all but location sampling)
 inline double MutationSampler::mutate__(pcg64& eng, const uint64& pos, sint64& end) {
 
-    char c = var_seq->get_nt(pos);
+    char c = var_chrom->get_nt(pos);
     MutationInfo m = type.sample(c, eng);
     double rate_change;
     if (m.length == 0) {
         rate_change = location.substitution_rate_change(m.nucleo, pos);
-        var_seq->add_substitution(m.nucleo, pos);
+        var_chrom->add_substitution(m.nucleo, pos);
     } else {
         if (m.length > 0) {
             std::string nts = new_nucleos(m.length, eng);
             rate_change = location.insertion_rate_change(nts, pos);
-            var_seq->add_insertion(nts, pos);
+            var_chrom->add_insertion(nts, pos);
         } else {
             sint64 pos_ = static_cast<sint64>(pos);
             sint64 size_ = end + 1;
             if (pos_ - m.length > size_) m.length = static_cast<sint64>(pos_-size_);
             uint64 del_size = std::abs(m.length);
             rate_change = location.deletion_rate_change(del_size, pos);
-            var_seq->add_deletion(del_size, pos);
+            var_chrom->add_deletion(del_size, pos);
         }
         // Update end point:
         end += static_cast<sint64>(m.length);
@@ -49,13 +49,13 @@ double MutationSampler::mutate(pcg64& eng) {
 
     uint64 pos = location.sample(eng);
 
-    if (pos >= var_seq->size()) {
-        Rcout << pos << ' ' << var_seq->size() << std::endl;
+    if (pos >= var_chrom->size()) {
+        Rcout << pos << ' ' << var_chrom->size() << std::endl;
         stop("pos returning too large a pos");
     }
 
     // Dummy end point for use in mutate__
-    sint64 end = var_seq->size() - 1;
+    sint64 end = var_chrom->size() - 1;
 
     double rate_change = mutate__(eng, pos, end);
 

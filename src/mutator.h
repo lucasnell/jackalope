@@ -52,7 +52,7 @@ class MutationSampler {
 public:
 
     // VarChrom object pointer to be manipulated
-    VarChrom* var_seq;
+    VarChrom* var_chrom;
     // For sampling the mutation location:
     LocationSampler location;
     // For sampling the type of mutation:
@@ -60,23 +60,23 @@ public:
     // For new insertion sequences:
     AliasStringSampler<std::string> insert;
 
-    MutationSampler() : var_seq(nullptr) {}
+    MutationSampler() : var_chrom(nullptr) {}
 
     MutationSampler(const MutationSampler& other)
-        : var_seq(other.var_seq), location(other.location), type(other.type),
+        : var_chrom(other.var_chrom), location(other.location), type(other.type),
           insert(other.insert) {}
 
     MutationSampler& operator=(const MutationSampler& other) {
-        if (other.var_seq) var_seq = other.var_seq;
+        if (other.var_chrom) var_chrom = other.var_chrom;
         location = other.location;
         type = other.type;
         insert = other.insert;
         return *this;
     }
 
-    void new_seq(VarChrom& vs_, const arma::mat& gamma_mat) {
-        var_seq = &vs_;
-        location.new_seq(vs_, gamma_mat);
+    void new_chrom(VarChrom& vs_, const arma::mat& gamma_mat) {
+        var_chrom = &vs_;
+        location.new_chrom(vs_, gamma_mat);
         return;
     }
 

@@ -249,7 +249,7 @@ std::string view_var_genome_chrom(SEXP var_set_ptr,
 
     XPtr<VarSet> var_set(var_set_ptr);
     const VarChrom& var_chrom((*var_set)[var_ind][chrom_ind]);
-    std::string out = var_chrom.get_seq_full();
+    std::string out = var_chrom.get_chrom_full();
     return out;
 }
 
@@ -292,7 +292,7 @@ std::vector<std::string> view_var_genome(SEXP var_set_ptr,
     std::vector<std::string> out(var_genome.size(), "");
     for (uint64 i = 0; i < var_genome.size(); i++) {
         const VarChrom& var_chrom(var_genome[i]);
-        out[i] = var_chrom.get_seq_full();
+        out[i] = var_chrom.get_chrom_full();
     }
     return out;
 }
@@ -376,7 +376,7 @@ double view_var_set_gc_content(SEXP var_set_ptr,
     const VarChrom& var_chrom((*var_set)[var_ind][chrom_ind]);
     std::string chrom;
     uint64 mut_i = 0;
-    var_chrom.set_seq_chunk(chrom, start, end - start + 1, mut_i);
+    var_chrom.set_chrom_chunk(chrom, start, end - start + 1, mut_i);
     double gc = gc_prop(chrom);
     return gc;
 }
@@ -413,7 +413,7 @@ double view_var_set_nt_content(SEXP var_set_ptr,
     const VarChrom& var_chrom((*var_set)[var_ind][chrom_ind]);
     std::string chrom;
     uint64 mut_i = 0;
-    var_chrom.set_seq_chunk(chrom, start, end - start + 1, mut_i);
+    var_chrom.set_chrom_chunk(chrom, start, end - start + 1, mut_i);
     double ntp = nt_prop(chrom, nt);
     return ntp;
 }
@@ -766,7 +766,7 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& ch
 
         const Mutation& m(var_chrom.mutations[mut_i]);
 
-        char c = (*(var_chrom.ref_seq))[m.old_pos];
+        char c = (*(var_chrom.ref_chrom))[m.old_pos];
         uint64 i = base_inds[static_cast<uint64>(c)];
         sint64 smod = m.size_modifier;
         if (smod == 0) {
@@ -909,7 +909,7 @@ double test_rate(const uint64& start, const uint64& end,
     XPtr<MutationSampler> sampler_base(sampler_base_ptr);
 
     MutationSampler sampler(*sampler_base);
-    sampler.new_seq(var_chrom, gamma_mat_);
+    sampler.new_chrom(var_chrom, gamma_mat_);
 
     double out = 0;
 

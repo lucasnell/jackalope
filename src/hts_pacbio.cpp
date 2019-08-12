@@ -161,16 +161,16 @@ void PacBioOneGenome<T>::one_read(std::vector<U>& fastq_pools,
      more sequence bases to achieve the same read length.
      Insertions means I need fewer.
      */
-    read_seq_space = read_length + deletions.size() - insertions.size();
+    read_chrom_space = read_length + deletions.size() - insertions.size();
 
     // Sample read starting position:
-    if (read_seq_space < seq_len) {
+    if (read_chrom_space < seq_len) {
         double u = runif_01(eng);
-        read_start = static_cast<uint64>(u * (seq_len - read_seq_space + 1));
-    } else if (read_seq_space == seq_len) {
+        read_start = static_cast<uint64>(u * (seq_len - read_chrom_space + 1));
+    } else if (read_chrom_space == seq_len) {
         read_start = 0;
     } else {
-        stop("read_seq_space should never exceed the sequence length.");
+        stop("read_chrom_space should never exceed the sequence length.");
     }
 
     // Fill the reads and qualities
@@ -206,20 +206,20 @@ void PacBioOneGenome<T>::re_read(std::vector<U>& fastq_pools,
      more sequence bases to achieve the same read length.
      Insertions means I need fewer.
      */
-    read_seq_space = read_length + deletions.size() - insertions.size();
+    read_chrom_space = read_length + deletions.size() - insertions.size();
 
     /*
      In the very rare situation where a duplication occurs, then enough deletions
      happen where the required sequence space exceeds what's available, I'm going
      to remove deletions until we have enough room.
      */
-    while ((read_seq_space + read_start) > seq_len) {
+    while ((read_chrom_space + read_start) > seq_len) {
         if (deletions.empty()) break;
         deletions.pop_back();
-        read_seq_space--;
+        read_chrom_space--;
     }
     // If that still doesn't work, I give up on the duplicate.
-    if ((read_seq_space + read_start) > seq_len) return;
+    if ((read_chrom_space + read_start) > seq_len) return;
 
     // Fill the reads and qualities
     append_pool<U>(fastq_pool, eng);
@@ -254,10 +254,10 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
     fastq_pool.push_back('\n');
 
     // Fill in read:
-    (*sequences)[seq_ind].fill_read(read, 0, read_start, read_seq_space);
+    (*sequences)[seq_ind].fill_read(read, 0, read_start, read_chrom_space);
 
     // Reverse complement if necessary:
-    if (reverse) rev_comp(read, read_seq_space);
+    if (reverse) rev_comp(read, read_chrom_space);
 
     /*
      Adding read with errors:

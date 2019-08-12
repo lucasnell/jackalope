@@ -85,27 +85,27 @@ void clear_memory(U& x) {
 //' @noRd
 //'
 inline double gc_prop(const std::string& sequence) {
-    double total_seq = sequence.size();
+    double total_chrom = sequence.size();
     double total_gc = 0;
-    for (uint64 i = 0; i < total_seq; i++) {
+    for (uint64 i = 0; i < total_chrom; i++) {
         if (sequence[i] == 'G' || sequence[i] == 'C') {
             total_gc += 1;
         }
     }
-    double gc_prop = total_gc / total_seq;
+    double gc_prop = total_gc / total_chrom;
     return gc_prop;
 }
 inline double gc_prop(const std::string& sequence,
                       const uint64& start,
                       const uint64& stop) {
-    double total_seq = stop - start + 1;
+    double total_chrom = stop - start + 1;
     double total_gc = 0;
     for (uint64 i = start; i <= stop; i++) {
         if (sequence[i] == 'G' || sequence[i] == 'C') {
             total_gc += 1;
         }
     }
-    double gc_prop = total_gc / total_seq;
+    double gc_prop = total_gc / total_chrom;
     return gc_prop;
 }
 
@@ -122,12 +122,12 @@ inline double gc_prop(const std::string& sequence,
 //'
 inline double nt_prop(const std::string& sequence,
                       const char& nt) {
-    double total_seq = sequence.size();
+    double total_chrom = sequence.size();
     double total_nt = 0;
-    for (uint64 i = 0; i < total_seq; i++) {
+    for (uint64 i = 0; i < total_chrom; i++) {
         if (sequence[i] == nt) total_nt += 1;
     }
-    double nt_prop = total_nt / total_seq;
+    double nt_prop = total_nt / total_chrom;
     return nt_prop;
 }
 // Overloaded for part of a sequence
@@ -135,12 +135,12 @@ inline double nt_prop(const std::string& sequence,
                       const char& nt,
                       const uint64& start,
                       const uint64& stop) {
-    double total_seq = stop - start + 1;
+    double total_chrom = stop - start + 1;
     double total_nt = 0;
     for (uint64 i = start; i <= stop; i++) {
         if (sequence[i] == nt) total_nt += 1;
     }
-    double nt_prop = total_nt / total_seq;
+    double nt_prop = total_nt / total_chrom;
     return nt_prop;
 }
 

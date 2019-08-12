@@ -138,8 +138,8 @@ class PhyloOneChrom {
 
 public:
     std::vector<PhyloTree> trees;
-    std::vector<VarChrom*> var_seq_ptrs;    // pointers to original VarChrom objects
-    std::vector<VarChrom> var_seqs;  // blank VarChrom objects to evolve across tree
+    std::vector<VarChrom*> var_chrom_ptrs;    // pointers to original VarChrom objects
+    std::vector<VarChrom> var_chroms;  // blank VarChrom objects to evolve across tree
     std::vector<MutationSampler> samplers; // to do the mutation additions across tree
     std::vector<double> seq_rates;   // sequence rates
     uint64 n_tips;                  // number of tips (i.e., variants)
@@ -156,8 +156,8 @@ public:
         const std::vector<std::vector<std::string>>& tip_labels_
     )
         : trees(edges_.size()),
-          var_seq_ptrs(var_set.size()),
-          var_seqs(),
+          var_chrom_ptrs(var_set.size()),
+          var_chroms(),
           samplers(),
           seq_rates(edges_[0].max()),
           n_tips(tip_labels_[0].size()),
@@ -193,17 +193,17 @@ public:
 
         // Filling in pointers:
         for (uint64 i = 0; i < n_vars; i++) {
-            var_seq_ptrs[i] = &var_set[i][seq_ind];
+            var_chrom_ptrs[i] = &var_set[i][seq_ind];
         }
 
         // Fill in blank VarChrom objects:
-        var_seqs = std::vector<VarChrom>(tree_size,
+        var_chroms = std::vector<VarChrom>(tree_size,
                                             VarChrom((*var_set.reference)[seq_ind]));
 
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
         for (uint64 i = 0; i < tree_size; i++) {
-            samplers[i].new_seq(var_seqs[i], gamma_mat);
+            samplers[i].new_chrom(var_chroms[i], gamma_mat);
         }
 
     }
@@ -219,8 +219,8 @@ public:
         const std::vector<std::vector<std::string>>& tip_labels_
     )
         : trees(edges_.size()),
-          var_seq_ptrs(),
-          var_seqs(),
+          var_chrom_ptrs(),
+          var_chroms(),
           samplers(),
           seq_rates(edges_[0].max()),
           n_tips(tip_labels_[0].size()),
@@ -268,19 +268,19 @@ public:
         for (uint64 i = 0; i < n_vars; i++) ordered_tip_labels[i] = var_set[i].name;
 
         // Filling in pointers:
-        var_seq_ptrs.resize(n_vars);
+        var_chrom_ptrs.resize(n_vars);
         for (uint64 i = 0; i < n_vars; i++) {
-            var_seq_ptrs[i] = &var_set[i][seq_ind];
+            var_chrom_ptrs[i] = &var_set[i][seq_ind];
         }
 
         // Fill in blank VarChrom objects:
-        var_seqs = std::vector<VarChrom>(tree_size,
+        var_chroms = std::vector<VarChrom>(tree_size,
                                             VarChrom((*var_set.reference)[seq_ind]));
 
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
         for (uint64 i = 0; i < tree_size; i++) {
-            samplers[i].new_seq(var_seqs[i], gamma_mat);
+            samplers[i].new_chrom(var_chroms[i], gamma_mat);
         }
 
         return;
@@ -390,12 +390,12 @@ private:
             throw(Rcpp::exception("\ntree size of zero is non-sensical.", false));
         }
         // Resize blank VarChrom objects if necessary:
-        if (tree_size != var_seqs.size()) {
-            VarChrom var_seq_(*(var_seq_ptrs[0]->ref_seq));
-            var_seqs.resize(tree_size, var_seq_);
+        if (tree_size != var_chroms.size()) {
+            VarChrom var_chrom_(*(var_chrom_ptrs[0]->ref_chrom));
+            var_chroms.resize(tree_size, var_chrom_);
         }
         // Empty mutations from tree of VarChrom objects:
-        for (VarChrom& var_seq : var_seqs) var_seq.clear();
+        for (VarChrom& var_chrom : var_chroms) var_chrom.clear();
 
         // Re-size samplers if necessary
         if (tree_size != samplers.size()) {
@@ -403,7 +403,7 @@ private:
         }
         // Fill in sampler pointers and original gamma matrix:
         for (uint64 i = 0; i < tree_size; i++) {
-            samplers[i].new_seq(var_seqs[i], gamma_mat);
+            samplers[i].new_chrom(var_chroms[i], gamma_mat);
         }
         /*
          Set up vector of overall sequence rates.
@@ -436,7 +436,7 @@ private:
          Replace existing mutation information in VarChrom at `b1` with info in the
          one at `b2`
          */
-        samplers[b2].var_seq->replace(*samplers[b1].var_seq);
+        samplers[b2].var_chrom->replace(*samplers[b1].var_chrom);
         /*
          Do the same for the ChromGammas in the sampler:
          */
@@ -468,14 +468,14 @@ private:
             clear_b1 = ! arma::any(tree.edges(arma::span(i+1, tree.edges.n_rows - 1),
                                               0) == b1);
         } else clear_b1 = true;
-        if (clear_b1) samplers[b1].var_seq->clear();
+        if (clear_b1) samplers[b1].var_chrom->clear();
         return;
     }
 
     /*
      Update final `VarChrom` objects in the same order as `ordered_tip_labels`:
      */
-    void update_var_seq(const PhyloTree& tree);
+    void update_var_chrom(const PhyloTree& tree);
 
 };
 
@@ -492,25 +492,25 @@ private:
 class PhyloInfo {
 public:
 
-    std::vector<PhyloOneChrom> phylo_one_seqs;
+    std::vector<PhyloOneChrom> phylo_one_chroms;
 
     PhyloInfo(const List& genome_phylo_info) {
 
-        uint64 n_seqs = genome_phylo_info.size();
+        uint64 n_chroms = genome_phylo_info.size();
 
-        if (n_seqs == 0) {
+        if (n_chroms == 0) {
             throw(Rcpp::exception("\nEmpty list provided for phylogenetic information.",
                                   false));
         }
 
-        phylo_one_seqs = std::vector<PhyloOneChrom>(n_seqs);
+        phylo_one_chroms = std::vector<PhyloOneChrom>(n_chroms);
 
-        for (uint64 i = 0; i < n_seqs; i++) {
-            phylo_one_seqs[i].fill_from_list(genome_phylo_info, i);
+        for (uint64 i = 0; i < n_chroms; i++) {
+            phylo_one_chroms[i].fill_from_list(genome_phylo_info, i);
         }
     }
 
-    XPtr<VarSet> evolve_seqs(
+    XPtr<VarSet> evolve_chroms(
             SEXP& ref_genome_ptr,
             SEXP& sampler_base_ptr,
             const std::vector<arma::mat>& gamma_mats,

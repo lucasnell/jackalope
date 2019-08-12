@@ -78,7 +78,7 @@ void Region::del_adjust_bounds(const uint64& del_start,
 
 inline void RegionTree::construct_tips_one_row(const arma::mat& gamma_mat,
                                                const uint64& region_size,
-                                               const VarChrom* var_seq,
+                                               const VarChrom* var_chrom,
                                                const std::vector<double>& nt_rates,
                                                const uint64& i,
                                                uint64& mut_i,
@@ -121,8 +121,8 @@ inline void RegionTree::construct_tips_one_row(const arma::mat& gamma_mat,
 
         // Calculate rate:
         rate = 0;
-        // (in `set_seq_chunk` below, `seq` gets cleared before it's filled)
-        var_seq->set_seq_chunk(seq, start, sizes[j], mut_i);
+        // (in `set_chrom_chunk` below, `seq` gets cleared before it's filled)
+        var_chrom->set_chrom_chunk(seq, start, sizes[j], mut_i);
         for (const char& c : seq) rate += nt_rates[c];
         rate *= gamma;
 
@@ -145,13 +145,13 @@ inline void RegionTree::construct_tips_one_row(const arma::mat& gamma_mat,
 
 void RegionTree::construct_tips(arma::mat gamma_mat,
                                 const uint64& region_size,
-                                const VarChrom* var_seq,
+                                const VarChrom* var_chrom,
                                 const std::vector<double>& nt_rates) {
 
     total_rate = 0;
 
     tips.clear();
-    tips.reserve((var_seq->size() / region_size) * 1.5);
+    tips.reserve((var_chrom->size() / region_size) * 1.5);
 
     // Sort from first to last region
     arma::uvec sort_inds = arma::sort_index(gamma_mat.col(0));
@@ -162,7 +162,7 @@ void RegionTree::construct_tips(arma::mat gamma_mat,
     sizes.reserve(1000); // arbitrarily chosen
 
     for (uint64 i = 0; i < gamma_mat.n_rows; i++) {
-        construct_tips_one_row(gamma_mat, region_size, var_seq, nt_rates, i, mut_i, sizes);
+        construct_tips_one_row(gamma_mat, region_size, var_chrom, nt_rates, i, mut_i, sizes);
     }
 
     clear_memory<std::vector<Region>>(tips);  // in case I reserved too much memory
@@ -274,7 +274,7 @@ double LocationSampler::deletion_rate_change(const uint64& del_size,
                                              const uint64& start) const {
 
     uint64 end = start + del_size - 1;
-    if (end >= var_seq->size()) end = var_seq->size() - 1;
+    if (end >= var_chrom->size()) end = var_chrom->size() - 1;
 
     // Prep `del_rate_changes` to store rate changes for deletions spanning >1 regions:
     del_rate_changes.clear();
@@ -284,7 +284,7 @@ double LocationSampler::deletion_rate_change(const uint64& del_size,
     uint64 mut_i;
     safe_get_mut(start, mut_i);
 
-    var_seq->set_seq_chunk(seq, start, end - start + 1, mut_i);
+    var_chrom->set_chrom_chunk(seq, start, end - start + 1, mut_i);
 
     double r, out = 0;
     uint64 seq_i = 0;
@@ -323,7 +323,7 @@ inline void LocationSampler::safe_get_mut(const uint64& pos, uint64& mut_i) cons
 
     mut_i = 0;
 
-    const std::deque<Mutation>& mutations(var_seq->mutations);
+    const std::deque<Mutation>& mutations(var_chrom->mutations);
 
     /*
      If new_pos is less than the position for the first mutation, we return
@@ -345,7 +345,7 @@ inline void LocationSampler::safe_get_mut(const uint64& pos, uint64& mut_i) cons
      position to minimize how many iterations we have to perform.
      */
     mut_i = static_cast<double>(mutations.size() * pos) /
-        static_cast<double>(var_seq->size());
+        static_cast<double>(var_chrom->size());
     /*
      If the current mutation is not past `pos`, iterate until it is.
      I'm intentionally going past the mutation to make sure we're not getting a deletion
@@ -385,10 +385,10 @@ inline double LocationSampler::partial_gamma_rate___(
      If there are no mutations or if `end` is before the first mutation,
      then we don't need to use the `mutations` field at all.
      */
-    if (var_seq->mutations.empty() || (end < var_seq->mutations.front().new_pos)) {
+    if (var_chrom->mutations.empty() || (end < var_chrom->mutations.front().new_pos)) {
 
         for (uint64 i = reg.start; i <= end; i++) {
-            out += nt_rates[var_seq->ref_seq->nucleos[i]];
+            out += nt_rates[var_chrom->ref_chrom->nucleos[i]];
         }
         out *= reg.gamma;
         return out;
@@ -398,17 +398,17 @@ inline double LocationSampler::partial_gamma_rate___(
     // Current position
     uint64 pos = reg.start;
     // Index to the first Mutation object not past `pos`:
-    uint64 mut_i = var_seq->get_mut_(pos);
+    uint64 mut_i = var_chrom->get_mut_(pos);
 
     /*
      If `pos` is before the first mutation (resulting in
-     `mut_i == var_seq->mutations.size()`),
+     `mut_i == var_chrom->mutations.size()`),
      we must pick up any nucleotides before the first mutation.
      */
-    if (mut_i == var_seq->mutations.size()) {
+    if (mut_i == var_chrom->mutations.size()) {
         mut_i = 0;
-        for (; pos < var_seq->mutations[mut_i].new_pos; pos++) {
-            out += nt_rates[var_seq->ref_seq->nucleos[pos]];
+        for (; pos < var_chrom->mutations[mut_i].new_pos; pos++) {
+            out += nt_rates[var_chrom->ref_chrom->nucleos[pos]];
         }
     }
 
@@ -419,9 +419,9 @@ inline double LocationSampler::partial_gamma_rate___(
      it doesn't keep going after we've reached `end`.
      */
     uint64 next_mut_i = mut_i + 1;
-    while (pos <= end && next_mut_i < var_seq->mutations.size()) {
-        while (pos <= end && pos < var_seq->mutations[next_mut_i].new_pos) {
-            char c = var_seq->get_char_(pos, mut_i);
+    while (pos <= end && next_mut_i < var_chrom->mutations.size()) {
+        while (pos <= end && pos < var_chrom->mutations[next_mut_i].new_pos) {
+            char c = var_chrom->get_char_(pos, mut_i);
             out += nt_rates[c];
             ++pos;
         }
@@ -430,8 +430,8 @@ inline double LocationSampler::partial_gamma_rate___(
     }
 
     // Now taking care of nucleotides after the last Mutation
-    while (pos <= end && pos < var_seq->seq_size) {
-        char c = var_seq->get_char_(pos, mut_i);
+    while (pos <= end && pos < var_chrom->seq_size) {
+        char c = var_chrom->get_char_(pos, mut_i);
         out += nt_rates[c];
         ++pos;
     }
@@ -459,7 +459,7 @@ void LocationSampler::new_bounds(const uint64& start,
     // If they don't need updated, then don't do it:
     if (start_end_set && (start == start_pos) && (end == end_pos)) return;
 
-    if ((start >= var_seq->size()) || (end >= var_seq->size())) {
+    if ((start >= var_chrom->size()) || (end >= var_chrom->size())) {
         stop("start or end in update_start_end is >= variant sequence size");
     }
     if (start > end) stop("start > end in update_start_end");
@@ -468,7 +468,7 @@ void LocationSampler::new_bounds(const uint64& start,
     end_pos = end;
 
     // If they point to full sequence starts and ends, then this is easy:
-    if ((start == 0) && (end == var_seq->size())) {
+    if ((start == 0) && (end == var_chrom->size())) {
         start_rate = 0;
         end_rate = regions.total_rate;
         return;
@@ -590,10 +590,10 @@ inline void LocationSampler::cdf_region_sample(uint64& pos,
      If there are no mutations or if `end` is before the first mutation,
      then we don't need to use the `mutations` field at all.
      */
-    if (var_seq->mutations.empty() || (end < var_seq->mutations.front().new_pos)) {
+    if (var_chrom->mutations.empty() || (end < var_chrom->mutations.front().new_pos)) {
 
         for (; pos <= end; pos++) {
-            cum_wt += nt_rates[var_seq->ref_seq->nucleos[pos]];
+            cum_wt += nt_rates[var_chrom->ref_chrom->nucleos[pos]];
             if (cum_wt > u) break;
         }
         return;
@@ -601,19 +601,19 @@ inline void LocationSampler::cdf_region_sample(uint64& pos,
     }
 
     // Index to the first Mutation object not past `start` position:
-    uint64 mut_i = var_seq->get_mut_(start);
+    uint64 mut_i = var_chrom->get_mut_(start);
     // Current position
     pos = start;
 
     /*
      If `start` is before the first mutation (resulting in
-     `mut_i == var_seq->mutations.size()`),
+     `mut_i == var_chrom->mutations.size()`),
      we must pick up any nucleotides before the first mutation.
      */
-    if (mut_i == var_seq->mutations.size()) {
+    if (mut_i == var_chrom->mutations.size()) {
         mut_i = 0;
-        for (; pos < var_seq->mutations[mut_i].new_pos; pos++) {
-            cum_wt += nt_rates[var_seq->ref_seq->nucleos[pos]];
+        for (; pos < var_chrom->mutations[mut_i].new_pos; pos++) {
+            cum_wt += nt_rates[var_chrom->ref_chrom->nucleos[pos]];
             if (cum_wt > u) return;
         }
     }
@@ -625,9 +625,9 @@ inline void LocationSampler::cdf_region_sample(uint64& pos,
      it doesn't keep going after we've reached `end`.
      */
     uint64 next_mut_i = mut_i + 1;
-    while (pos <= end && next_mut_i < var_seq->mutations.size()) {
-        while (pos <= end && pos < var_seq->mutations[next_mut_i].new_pos) {
-            char c = var_seq->get_char_(pos, mut_i);
+    while (pos <= end && next_mut_i < var_chrom->mutations.size()) {
+        while (pos <= end && pos < var_chrom->mutations[next_mut_i].new_pos) {
+            char c = var_chrom->get_char_(pos, mut_i);
             cum_wt += nt_rates[c];
             if (cum_wt > u) return;
             ++pos;
@@ -637,8 +637,8 @@ inline void LocationSampler::cdf_region_sample(uint64& pos,
     }
 
     // Now taking care of nucleotides after the last Mutation
-    while (pos <= end && pos < var_seq->seq_size) {
-        char c = var_seq->get_char_(pos, mut_i);
+    while (pos <= end && pos < var_chrom->seq_size) {
+        char c = var_chrom->get_char_(pos, mut_i);
         cum_wt += nt_rates[c];
         if (cum_wt > u) return;
         ++pos;

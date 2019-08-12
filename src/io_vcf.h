@@ -62,7 +62,7 @@ public:
     // Starting/ending position on ref. sequence:
     std::pair<uint64, uint64> pos;
 
-    OneVarChromVCF() : var_seq(nullptr) {};
+    OneVarChromVCF() : var_chrom(nullptr) {};
 
 
     /*
@@ -88,8 +88,8 @@ public:
 
 
     // Reset to new variant sequence
-    void set_var(const VarChrom& var_seq_) {
-        var_seq = &var_seq_;
+    void set_var(const VarChrom& var_chrom_) {
+        var_chrom = &var_chrom_;
         gt_index = 0;
         ind = std::make_pair(0, 0);
         reset_pos();
@@ -121,26 +121,26 @@ public:
 
 private:
 
-    const VarChrom* var_seq;
+    const VarChrom* var_chrom;
 
     // Set positions when indices are the same (when initializing, iterating, new variant)
     void reset_pos() {
-        if (ind.first >= var_seq->mutations.size()) {
+        if (ind.first >= var_chrom->mutations.size()) {
             pos = std::make_pair(MAX_INT, MAX_INT); // max uint64 values
         } else {
-            const Mutation* mut(&(var_seq->mutations[ind.first]));
+            const Mutation* mut(&(var_chrom->mutations[ind.first]));
             set_first_pos(*mut);
             /*
              Checking for a deletion right after the current mutation:
              (the second part of this statement is added because contiguous deletions
              are prevented elsewhere)
              */
-            if (ind.second < var_seq->mutations.size() && mut->size_modifier >= 0) {
-                const Mutation& next_mut(var_seq->mutations[ind.second + 1]);
+            if (ind.second < var_chrom->mutations.size() && mut->size_modifier >= 0) {
+                const Mutation& next_mut(var_chrom->mutations[ind.second + 1]);
                 if (next_mut.size_modifier < 0 &&
                     next_mut.old_pos == (mut->old_pos + 1)) {
                     ind.second++;
-                    mut = &(var_seq->mutations[ind.second]);
+                    mut = &(var_chrom->mutations[ind.second]);
                 }
             }
             set_second_pos(*mut);
@@ -254,7 +254,7 @@ public:
 
 
     // Change the sequence this object refers to
-    void new_seq(const uint64& seq_ind_) {
+    void new_chrom(const uint64& seq_ind_) {
         seq_ind = seq_ind_;
         construct();
         return;
@@ -345,7 +345,7 @@ inline void write_vcf_(XPtr<VarSet> var_set,
     // (only needed as string):
     std::string max_qual = "441453";
 
-    uint64 n_seqs = var_set->reference->size();
+    uint64 n_chroms = var_set->reference->size();
     uint64 n_samples = writer.sample_groups.n_rows;
 
     // String of text to append to, then to insert into output:
@@ -367,8 +367,8 @@ inline void write_vcf_(XPtr<VarSet> var_set,
     std::string alt_str = "";
     std::vector<std::string> gt_strs(n_samples, "");
 
-    for (uint64 seq = 0; seq < n_seqs; seq++) {
-        writer.new_seq(seq);
+    for (uint64 seq = 0; seq < n_chroms; seq++) {
+        writer.new_chrom(seq);
         while (writer.mut_pos.first < MAX_INT) {
             Rcpp::checkUserInterrupt();
             /*

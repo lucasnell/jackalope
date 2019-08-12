@@ -56,7 +56,7 @@ using namespace Rcpp;
  */
 
 template <typename OuterClass, typename InnerClass>
-OuterClass create_chromosomes_(const uint64& n_seqs,
+OuterClass create_chromosomes_(const uint64& n_chroms,
                              const double& len_mean,
                              const double& len_sd,
                              const std::vector<double>& pi_tcag,
@@ -68,13 +68,13 @@ OuterClass create_chromosomes_(const uint64& n_seqs,
     // Generate seeds for random number generators (1 RNG per thread)
     const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
 
-    Progress prog_bar(n_seqs, false); // just use as way to check for abort
+    Progress prog_bar(n_chroms, false); // just use as way to check for abort
 
     // Alias-sampling object
     const AliasSampler sampler(pi_tcag);
 
     // Creating output object
-    OuterClass seqs_out(n_seqs);
+    OuterClass seqs_out(n_chroms);
 
     // parameters for creating the gamma distribution
     const double gamma_shape = (len_mean * len_mean) / (len_sd * len_sd);
@@ -109,7 +109,7 @@ OuterClass create_chromosomes_(const uint64& n_seqs,
     #ifdef _OPENMP
     #pragma omp for schedule(static)
     #endif
-    for (uint64 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_chroms; i++) {
 
         if (prog_bar.is_aborted() || prog_bar.check_abort()) continue;
 
@@ -146,7 +146,7 @@ OuterClass create_chromosomes_(const uint64& n_seqs,
 //'
 //' Note that this function will never return empty sequences.
 //'
-//' @param n_seqs Number of sequences.
+//' @param n_chroms Number of sequences.
 //' @param len_mean Mean for the gamma distribution for sequence sizes.
 //' @param len_sd Standard deviation for the gamma distribution for sequence sizes.
 //'     If set to `<= 0`, all sequences will be the same length.
@@ -163,7 +163,7 @@ OuterClass create_chromosomes_(const uint64& n_seqs,
 //'
 //'
 //[[Rcpp::export]]
-SEXP create_genome_cpp(const uint64& n_seqs,
+SEXP create_genome_cpp(const uint64& n_chroms,
                        const double& len_mean,
                        const double& len_sd,
                        std::vector<double> pi_tcag,
@@ -173,9 +173,9 @@ SEXP create_genome_cpp(const uint64& n_seqs,
     RefGenome& ref(*ref_xptr);
 
     ref = create_chromosomes_<RefGenome, RefChrom>(
-        n_seqs, len_mean, len_sd, pi_tcag, n_threads);
+        n_chroms, len_mean, len_sd, pi_tcag, n_threads);
 
-    for (uint64 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_chroms; i++) {
         ref.total_size += ref[i].size();
         ref[i].name = "seq" + std::to_string(i);
     }
@@ -199,7 +199,7 @@ SEXP create_genome_cpp(const uint64& n_seqs,
 //' @noRd
 //'
 //[[Rcpp::export]]
-std::vector<std::string> rando_seqs(const uint64& n_seqs,
+std::vector<std::string> rando_chroms(const uint64& n_chroms,
                                     const double& len_mean,
                                     const double& len_sd = 0,
                                     NumericVector pi_tcag = NumericVector(0),
@@ -209,7 +209,7 @@ std::vector<std::string> rando_seqs(const uint64& n_seqs,
     if (pi_tcag_.size() == 0) pi_tcag_ = std::vector<double>(4, 0.25);
 
     std::vector<std::string> ref = create_chromosomes_<std::vector<std::string>,
-                std::string>(n_seqs, len_mean, len_sd, pi_tcag_, n_threads);
+                std::string>(n_chroms, len_mean, len_sd, pi_tcag_, n_threads);
 
     return ref;
 }

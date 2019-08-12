@@ -140,9 +140,9 @@ struct RefGenome {
     RefGenome(const uint64& N)
         : sequences(std::deque<RefChrom>(N, RefChrom())) {};
     RefGenome(const std::deque<std::string>& seqs) {
-        uint64 n_seqs = seqs.size();
-        sequences = std::deque<RefChrom>(n_seqs, RefChrom());
-        for (uint64 i = 0; i < n_seqs; i++) {
+        uint64 n_chroms = seqs.size();
+        sequences = std::deque<RefChrom>(n_chroms, RefChrom());
+        for (uint64 i = 0; i < n_chroms; i++) {
             sequences[i].nucleos = seqs[i];
             sequences[i].name = "seq" + std::to_string(i);
             total_size += seqs[i].size();
@@ -181,17 +181,17 @@ struct RefGenome {
         // (I'd start getting negative lengths and other problems otherwise)
         console_width = std::max(console_width, 32);
 
-        int num_seqs = size();
+        int num_chroms = size();
         std::vector<int> inds;
-        if (num_seqs <= 10) {
-            for (int i = 0; i < num_seqs; i++) inds.push_back(i);
+        if (num_chroms <= 10) {
+            for (int i = 0; i < num_chroms; i++) inds.push_back(i);
         } else {
             for (int i = 0; i < 5; i++) inds.push_back(i);
             inds.push_back(-1);
-            for (int i = (num_seqs - 5 + 1); i < num_seqs; i++) inds.push_back(i);
+            for (int i = (num_chroms - 5 + 1); i < num_chroms; i++) inds.push_back(i);
         }
 
-        Rcout << "< Set of " << big_int_format<int>(num_seqs) << " sequences >";
+        Rcout << "< Set of " << big_int_format<int>(num_chroms) << " sequences >";
         Rcout << std::endl;
         Rcout << "# Total size: " << big_int_format<uint64>(total_size) << " bp";
         Rcout << std::endl;

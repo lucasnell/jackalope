@@ -303,16 +303,16 @@ void append_ref_ind(RefGenome& ref,
         Rcpp::stop(e);
     }
 
-    const uint64 n_seqs0 = ref.size(); // starting # sequences
-    uint64 n_new_seqs = offsets.size();
+    const uint64 n_chroms0 = ref.size(); // starting # sequences
+    uint64 n_new_chroms = offsets.size();
     uint64 LIMIT = 4194304;
-    ref.sequences.resize(n_seqs0 + n_new_seqs, RefChrom());
+    ref.sequences.resize(n_chroms0 + n_new_chroms, RefChrom());
 
-    for (uint64 i = 0; i < n_new_seqs; i++) {
+    for (uint64 i = 0; i < n_new_chroms; i++) {
 
         Rcpp::checkUserInterrupt();
 
-        RefChrom& rs(ref.sequences[i+n_seqs0]);
+        RefChrom& rs(ref.sequences[i+n_chroms0]);
         rs.name = names[i];
 
         // Length of the whole sequence including newlines
@@ -569,18 +569,18 @@ void write_vars_fasta__(const std::string& out_prefix,
             name += '\n';
             out_file.write(name);
 
-            const VarChrom& var_seq(var_set[v][s]);
+            const VarChrom& var_chrom(var_set[v][s]);
             uint64 mut_i = 0;
             uint64 line_start = 0;
             uint64 n_chars = 0;
 
-            while (line_start < var_seq.seq_size) {
+            while (line_start < var_chrom.seq_size) {
                 // Check every 10,000 characters for user interrupt:
                 if (n_chars > 10000) {
                     if (prog_bar.check_abort()) break;
                     n_chars = 0;
                 }
-                var_seq.set_seq_chunk(line, line_start,
+                var_chrom.set_chrom_chunk(line, line_start,
                                       text_width, mut_i);
                 line += '\n';
                 out_file.write(line);

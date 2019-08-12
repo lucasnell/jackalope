@@ -108,9 +108,9 @@ void merge_chromosomes_cpp(SEXP ref_genome_ptr) {
 //'
 //'
 //' @inheritParams ref_genome_ptr merge_chromosomes
-//' @param min_seq_size Integer minimum sequence size to keep.
+//' @param min_chrom_size Integer minimum sequence size to keep.
 //'     Defaults to \code{0}, which results in this argument being ignored.
-//' @param out_seq_prop Numeric proportion of total sequence to keep.
+//' @param out_chrom_prop Numeric proportion of total sequence to keep.
 //'     Defaults to \code{0}, which results in this argument being ignored.
 //'
 //' @return Nothing. Changes are made in place.
@@ -122,20 +122,20 @@ void merge_chromosomes_cpp(SEXP ref_genome_ptr) {
 //'
 //[[Rcpp::export]]
 void filter_chromosomes_cpp(SEXP ref_genome_ptr,
-                          const uint64& min_seq_size = 0,
-                          const double& out_seq_prop = 0) {
+                          const uint64& min_chrom_size = 0,
+                          const double& out_chrom_prop = 0) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::deque<RefChrom>& seqs(ref_genome->sequences);
 
     // Checking for sensible inputs
-    if (out_seq_prop <= 0 && min_seq_size == 0) {
-        stop("Specify > 0 for min_seq_size or out_seq_prop");
+    if (out_chrom_prop <= 0 && min_chrom_size == 0) {
+        stop("Specify > 0 for min_chrom_size or out_chrom_prop");
     }
-    if (out_seq_prop > 0 && min_seq_size > 0) {
-        stop("Specify > 0 for min_seq_size OR out_seq_prop");
+    if (out_chrom_prop > 0 && min_chrom_size > 0) {
+        stop("Specify > 0 for min_chrom_size OR out_chrom_prop");
     }
-    if (out_seq_prop > 1) stop("out_seq_prop must be between 0 and 1");
+    if (out_chrom_prop > 1) stop("out_chrom_prop must be between 0 and 1");
 
     // Sorting sequence set by size (largest first)
     std::sort(seqs.begin(), seqs.end(), std::greater<RefChrom>());
@@ -143,27 +143,27 @@ void filter_chromosomes_cpp(SEXP ref_genome_ptr,
     // Index that will point to the first sequence to be deleted
     uint64 i = 0;
     // Keeping track of total genome size after filtering
-    double out_seq = 0;
+    double out_chrom = 0;
 
-    if (min_seq_size > 0) {
-        if (seqs.back().size() >= min_seq_size) return;
-        if (seqs[i].size() < min_seq_size) {
+    if (min_chrom_size > 0) {
+        if (seqs.back().size() >= min_chrom_size) return;
+        if (seqs[i].size() < min_chrom_size) {
             str_stop({"Desired minimum scaffold size is too large. None found. ",
                      "The minimum size is ", std::to_string(seqs[i].size())});
         }
         // after below, `iter` points to the first sequence smaller than the minimum
-        while (seqs[i].size() >= min_seq_size) {
-            out_seq += static_cast<double>(seqs[i].size());
+        while (seqs[i].size() >= min_chrom_size) {
+            out_chrom += static_cast<double>(seqs[i].size());
             ++i;
         }
     } else {
         // Changing total_size to double so I don't have to worry about integer division
         // being a problem
-        double total_seq = static_cast<double>(ref_genome->total_size);
-        out_seq = static_cast<double>(seqs[i].size());
-        while (out_seq / total_seq < out_seq_prop) {
+        double total_chrom = static_cast<double>(ref_genome->total_size);
+        out_chrom = static_cast<double>(seqs[i].size());
+        while (out_chrom / total_chrom < out_chrom_prop) {
             ++i;
-            out_seq += static_cast<double>(seqs[i].size());
+            out_chrom += static_cast<double>(seqs[i].size());
         }
         // Getting `i` to point to the first item to be deleted:
         ++i;
@@ -176,7 +176,7 @@ void filter_chromosomes_cpp(SEXP ref_genome_ptr,
         clear_memory<std::deque<RefChrom>>(seqs);
     }
 
-    ref_genome->total_size = static_cast<uint64>(out_seq);
+    ref_genome->total_size = static_cast<uint64>(out_chrom);
 
     return;
 }
@@ -217,7 +217,7 @@ void replace_Ns_cpp(SEXP ref_genome_ptr,
     // Generate seeds for random number generators (1 RNG per thread)
     const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
 
-    const uint64 n_seqs = ref_genome->size();
+    const uint64 n_chroms = ref_genome->size();
 
     // Progress bar
     Progress prog_bar(ref_genome->total_size, show_progress);
@@ -245,7 +245,7 @@ void replace_Ns_cpp(SEXP ref_genome_ptr,
 #ifdef _OPENMP
 #pragma omp for schedule(static)
 #endif
-    for (uint64 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_chroms; i++) {
         if (prog_bar.is_aborted() || prog_bar.check_abort()) continue;
         RefChrom& seq(ref_genome->sequences[i]);
         for (char& c : seq.nucleos) {

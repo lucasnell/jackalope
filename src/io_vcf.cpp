@@ -43,18 +43,18 @@ void OneVarChromVCF::check(const uint64& pos_start,
     if (pos_end >= pos.first) {
 
         gt_index = 1;
-        const Mutation* mut(&(var_seq->mutations[ind.second]));
+        const Mutation* mut(&(var_chrom->mutations[ind.second]));
 
-        while (ind.second < var_seq->mutations.size() &&
-               get_first_pos(var_seq->mutations[ind.second]) < pos_end) {
+        while (ind.second < var_chrom->mutations.size() &&
+               get_first_pos(var_chrom->mutations[ind.second]) < pos_end) {
 
             ind.second++;
 
         }
 
-        if (ind.second >= var_seq->mutations.size() ||
-            (ind.second < var_seq->mutations.size() &&
-            get_first_pos(var_seq->mutations[ind.second]) > pos_end)) {
+        if (ind.second >= var_chrom->mutations.size() ||
+            (ind.second < var_chrom->mutations.size() &&
+            get_first_pos(var_chrom->mutations[ind.second]) > pos_end)) {
 
             ind.second--;
 
@@ -65,16 +65,16 @@ void OneVarChromVCF::check(const uint64& pos_start,
          (the second part of this statement is added because contiguous deletions
          are prevented)
          */
-        if (ind.second < (var_seq->mutations.size() - 1) &&
-            var_seq->mutations[ind.second].size_modifier >= 0) {
-            const Mutation& next_mut(var_seq->mutations[ind.second + 1]);
+        if (ind.second < (var_chrom->mutations.size() - 1) &&
+            var_chrom->mutations[ind.second].size_modifier >= 0) {
+            const Mutation& next_mut(var_chrom->mutations[ind.second + 1]);
             if (next_mut.size_modifier < 0 &&
-                next_mut.old_pos == (var_seq->mutations[ind.second].old_pos + 1)) {
+                next_mut.old_pos == (var_chrom->mutations[ind.second].old_pos + 1)) {
                 ind.second++;
             }
         }
 
-        mut = &(var_seq->mutations[ind.second]);
+        mut = &(var_chrom->mutations[ind.second]);
         set_second_pos(*mut);
 
         if (pos.second > pos_end) {
@@ -115,7 +115,7 @@ void OneVarChromVCF::dump(std::vector<std::string>& unq_alts,
         uint64 pos;
         uint64 n_muts = ind.second - ind.first + 1;
         for (uint64 i = 0; i < n_muts; i++) {
-            mut = &(var_seq->mutations[ind.second - i]);
+            mut = &(var_chrom->mutations[ind.second - i]);
             pos = mut->old_pos - pos_start;
             if (pos >= alt_str.size()) {
                 stop(std::string("\nPosition ") + std::to_string(pos) +
@@ -306,18 +306,18 @@ SEXP read_vcfr(SEXP reference_ptr,
                const std::vector<std::vector<std::string>>& haps_list,
                const std::vector<uint64>& seq_inds,
                const std::vector<uint64>& pos,
-               const std::vector<std::string>& ref_seq) {
+               const std::vector<std::string>& ref_chrom) {
 
     XPtr<RefGenome> reference(reference_ptr);
     uint64 n_muts = haps_list.size();
     uint64 n_vars = var_names.size();
-    uint64 n_seqs = reference->size();
+    uint64 n_chroms = reference->size();
 
     XPtr<VarSet> var_set(new VarSet(*reference, var_names));
 
     for (uint64 mut_i = 0; mut_i < n_muts; mut_i++) {
 
-        const std::string& ref(ref_seq[mut_i]);
+        const std::string& ref(ref_chrom[mut_i]);
         const std::vector<std::string>& haps(haps_list[mut_i]);
         const uint64& seq_i(seq_inds[mut_i]);
 
@@ -329,7 +329,7 @@ SEXP read_vcfr(SEXP reference_ptr,
             if (alt.size() == 0 || alt == ref) continue;
 
             // Else, mutate accordingly:
-            VarChrom& var_seq((*var_set)[var_i][seq_i]);
+            VarChrom& var_chrom((*var_set)[var_i][seq_i]);
 
             if (alt.size() == ref.size()) {
                 /*
@@ -340,7 +340,7 @@ SEXP read_vcfr(SEXP reference_ptr,
                 for (uint64 i = 0; i < ref.size(); i++) {
                     if (alt[i] != ref[i]) {
                         Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt[i]);
-                        var_seq.mutations.push_back(new_mut);
+                        var_chrom.mutations.push_back(new_mut);
                     }
                 }
             } else if (alt.size() > ref.size()) {
@@ -361,7 +361,7 @@ SEXP read_vcfr(SEXP reference_ptr,
                     if (alt[i] != ref[i]) {
                         Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i,
                                                     alt_copy[i]);
-                        var_seq.mutations.push_back(new_mut);
+                        var_chrom.mutations.push_back(new_mut);
                     }
                 }
                 // Erase all the nucleotides that have already been added (if any):
@@ -370,7 +370,7 @@ SEXP read_vcfr(SEXP reference_ptr,
                  Make the last one an insertion proper
                  */
                 Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt_copy);
-                var_seq.mutations.push_back(new_mut);
+                var_chrom.mutations.push_back(new_mut);
 
             } else {
                 /*
@@ -389,7 +389,7 @@ SEXP read_vcfr(SEXP reference_ptr,
                     if (alt[i] != ref[i]) {
                         Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i,
                                                     alt[i]);
-                        var_seq.mutations.push_back(new_mut);
+                        var_chrom.mutations.push_back(new_mut);
                     }
                 }
 
@@ -398,7 +398,7 @@ SEXP read_vcfr(SEXP reference_ptr,
                     static_cast<sint64>(ref.size());
 
                 Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, sm);
-                var_seq.mutations.push_back(new_mut);
+                var_chrom.mutations.push_back(new_mut);
 
             }
 
@@ -410,10 +410,10 @@ SEXP read_vcfr(SEXP reference_ptr,
     /*
      Go back and re-calculate positions and variant sequence sizes
      */
-    for (uint64 seq_i = 0; seq_i < n_seqs; seq_i++) {
+    for (uint64 seq_i = 0; seq_i < n_chroms; seq_i++) {
         for (uint64 var_i = 0; var_i < n_vars; var_i++) {
-            VarChrom& var_seq((*var_set)[var_i][seq_i]);
-            var_seq.calc_positions();
+            VarChrom& var_chrom((*var_set)[var_i][seq_i]);
+            var_chrom.calc_positions();
         }
     }
 

@@ -113,7 +113,7 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
         } else {
             uint64 n_jumps = 0;
             // Same thing but without recombination
-            while (time_jumped <= amt_time && var_seqs[b2].size() > 0) {
+            while (time_jumped <= amt_time && var_chroms[b2].size() > 0) {
                 rate_change = m_samp.mutate(eng);
                 rate += rate_change;
                 distr.param(std::exponential_distribution<double>::param_type(rate));
@@ -138,19 +138,19 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
     /*
      Update final `VarChrom` objects:
      */
-    update_var_seq(tree);
+    update_var_chrom(tree);
 
     // Update progress bar:
     if (recombination) {
         prog_bar.increment(tree.end - tree.start + 1);
-    } else prog_bar.increment(var_seq_ptrs[0]->ref_seq->size());
+    } else prog_bar.increment(var_chrom_ptrs[0]->ref_chrom->size());
 
     return 0;
 
 }
 
 
-void PhyloOneChrom::update_var_seq(const PhyloTree& tree) {
+void PhyloOneChrom::update_var_chrom(const PhyloTree& tree) {
 
     std::vector<uint64> spp_order = match_(ordered_tip_labels,
                                            tree.tip_labels);
@@ -158,12 +158,12 @@ void PhyloOneChrom::update_var_seq(const PhyloTree& tree) {
     if (recombination) {
         for (uint64 i = 0; i < tree.n_tips; i++) {
             uint64 j = spp_order[i];
-            (*var_seq_ptrs[i]) += var_seqs[j];
+            (*var_chrom_ptrs[i]) += var_chroms[j];
         }
     } else {
         for (uint64 i = 0; i < tree.n_tips; i++) {
             uint64 j = spp_order[i];
-            (*var_seq_ptrs[i]).replace(var_seqs[j]);
+            (*var_chrom_ptrs[i]).replace(var_chroms[j]);
         }
     }
     return;
@@ -175,7 +175,7 @@ void PhyloOneChrom::update_var_seq(const PhyloTree& tree) {
 /*
  Evolve all sequences along trees.
 */
-XPtr<VarSet> PhyloInfo::evolve_seqs(
+XPtr<VarSet> PhyloInfo::evolve_chroms(
         SEXP& ref_genome_ptr,
         SEXP& sampler_base_ptr,
         const std::vector<arma::mat>& gamma_mats,
@@ -186,30 +186,30 @@ XPtr<VarSet> PhyloInfo::evolve_seqs(
     XPtr<MutationSampler> sampler_base(sampler_base_ptr);
 
     // Extract tip labels from the first tree:
-    std::vector<std::string> var_names = phylo_one_seqs[0].trees[0].tip_labels;
+    std::vector<std::string> var_names = phylo_one_chroms[0].trees[0].tip_labels;
 
     XPtr<VarSet> var_set(new VarSet(*ref_genome, var_names), true);
 
-    uint64 n_seqs = ref_genome->size();
-    uint64 total_seq = ref_genome->total_size;
+    uint64 n_chroms = ref_genome->size();
+    uint64 total_chrom = ref_genome->total_size;
 
-    Progress prog_bar(total_seq, show_progress);
+    Progress prog_bar(total_chrom, show_progress);
     std::vector<int> status_codes(n_threads, 0);
 
-    if (n_seqs != gamma_mats.size()) {
+    if (n_chroms != gamma_mats.size()) {
         std::string err_msg = "\ngamma_mats must be of same length as # sequences in ";
         err_msg += "reference";
         throw(Rcpp::exception(err_msg.c_str(), false));
     }
 
 
-    if (n_seqs != phylo_one_seqs.size()) {
+    if (n_chroms != phylo_one_chroms.size()) {
         std::string err_msg = "\n# tips in phylo. info must be of same length as ";
         err_msg += "# sequences in reference genome";
         throw(Rcpp::exception(err_msg.c_str(), false));
     }
 
-    for (uint64 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_chroms; i++) {
         if (gamma_mats[i](gamma_mats[i].n_rows-1,0) != (*var_set)[0][i].size()) {
             std::string err_msg = "\nGamma matrices must have max values equal to ";
             err_msg += "the respective sequence's length.\n";
@@ -245,11 +245,11 @@ XPtr<VarSet> PhyloInfo::evolve_seqs(
 #ifdef _OPENMP
 #pragma omp for schedule(static)
 #endif
-    for (uint64 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_chroms; i++) {
 
         if (status_code != 0) continue;
 
-        PhyloOneChrom& seq_phylo(phylo_one_seqs[i]);
+        PhyloOneChrom& seq_phylo(phylo_one_chroms[i]);
 
         const arma::mat& gamma_mat(gamma_mats[i]);
 
@@ -292,16 +292,16 @@ XPtr<VarSet> PhyloInfo::evolve_seqs(
 //[[Rcpp::export]]
 SEXP phylo_info_to_trees(const List& genome_phylo_info) {
 
-    uint64 n_seqs = genome_phylo_info.size();
+    uint64 n_chroms = genome_phylo_info.size();
 
-    if (n_seqs == 0) {
+    if (n_chroms == 0) {
         throw(Rcpp::exception("\nEmpty list provided for phylogenetic information.",
                               false));
     }
 
-    XPtr<PhyloInfo> all_seqs_xptr(new PhyloInfo(genome_phylo_info));
+    XPtr<PhyloInfo> all_chroms_xptr(new PhyloInfo(genome_phylo_info));
 
-    return all_seqs_xptr;
+    return all_chroms_xptr;
 }
 
 
@@ -313,7 +313,7 @@ SEXP phylo_info_to_trees(const List& genome_phylo_info) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-SEXP evolve_seqs(
+SEXP evolve_chroms(
         SEXP& ref_genome_ptr,
         SEXP& sampler_base_ptr,
         SEXP& phylo_info_ptr,
@@ -326,7 +326,7 @@ SEXP evolve_seqs(
     // Check that # threads isn't too high and change to 1 if not using OpenMP:
     thread_check(n_threads);
 
-    XPtr<VarSet> var_set = phylo_info->evolve_seqs(
+    XPtr<VarSet> var_set = phylo_info->evolve_chroms(
         ref_genome_ptr, sampler_base_ptr,
         gamma_mats, n_threads, show_progress);
 
