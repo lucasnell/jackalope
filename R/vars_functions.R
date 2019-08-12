@@ -286,6 +286,8 @@ vars_vcf <- function(fn, print_names = FALSE, ...) {
 #' If using this function, I encourage you to cite `ape`. For citation
 #' information, see output from `citation("ape")`.
 #'
+#' See `?ape::write.tree` for writing phylogenies to an output file.
+#'
 #'
 #' @param obj Object containing phylogenetic tree(s).
 #'     This can be (1) a single `phylo` object
@@ -308,6 +310,7 @@ vars_vcf <- function(fn, print_names = FALSE, ...) {
 #'     to create haploid variants.
 #'     This class is just a wrapper around a list containing phylogenetic tree
 #'     information for each reference sequence.
+#'
 #'
 #' @export
 #'

@@ -37,3 +37,6 @@ phylogenetic tree(s) output as \code{phylo} or \code{multiPhylo} objects
 If using this function, I encourage you to cite \code{ape}. For citation
 information, see output from \code{citation("ape")}.
 }
+\details{
+See \code{?ape::write.tree} for writing phylogenies to an output file.
+}
