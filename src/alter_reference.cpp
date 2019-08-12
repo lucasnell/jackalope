@@ -54,12 +54,12 @@ namespace alter_scaffs {
 //'
 //' @return Nothing. Changes are made in place.
 //'
-//' @name merge_sequences
+//' @name merge_chromosomes
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
-void merge_sequences_cpp(SEXP ref_genome_ptr) {
+void merge_chromosomes_cpp(SEXP ref_genome_ptr) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::deque<RefChrom>& seqs(ref_genome->sequences);
@@ -107,7 +107,7 @@ void merge_sequences_cpp(SEXP ref_genome_ptr) {
 //' Filter reference genome sequences by size or for a proportion of total nucleotides.
 //'
 //'
-//' @inheritParams ref_genome_ptr merge_sequences
+//' @inheritParams ref_genome_ptr merge_chromosomes
 //' @param min_seq_size Integer minimum sequence size to keep.
 //'     Defaults to \code{0}, which results in this argument being ignored.
 //' @param out_seq_prop Numeric proportion of total sequence to keep.
@@ -115,13 +115,13 @@ void merge_sequences_cpp(SEXP ref_genome_ptr) {
 //'
 //' @return Nothing. Changes are made in place.
 //'
-//' @name filter_sequences
+//' @name filter_chromosomes
 //'
 //' @noRd
 //'
 //'
 //[[Rcpp::export]]
-void filter_sequences_cpp(SEXP ref_genome_ptr,
+void filter_chromosomes_cpp(SEXP ref_genome_ptr,
                           const uint64& min_seq_size = 0,
                           const double& out_seq_prop = 0) {
 

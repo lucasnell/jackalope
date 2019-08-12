@@ -483,7 +483,7 @@ void VarChrom::add_deletion(const uint64& size_, const uint64& new_pos_) {
     } else {
 
         /*
-         Sequence-size modifier to be used to edit subsequent mutations.
+         Chromosome-size modifier to be used to edit subsequent mutations.
          This number does not change.
          */
         const sint64 subseq_modifier(size_mod);

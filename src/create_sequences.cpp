@@ -56,7 +56,7 @@ using namespace Rcpp;
  */
 
 template <typename OuterClass, typename InnerClass>
-OuterClass create_sequences_(const uint64& n_seqs,
+OuterClass create_chromosomes_(const uint64& n_seqs,
                              const double& len_mean,
                              const double& len_sd,
                              const std::vector<double>& pi_tcag,
@@ -172,7 +172,7 @@ SEXP create_genome_cpp(const uint64& n_seqs,
     XPtr<RefGenome> ref_xptr(new RefGenome(), true);
     RefGenome& ref(*ref_xptr);
 
-    ref = create_sequences_<RefGenome, RefChrom>(
+    ref = create_chromosomes_<RefGenome, RefChrom>(
         n_seqs, len_mean, len_sd, pi_tcag, n_threads);
 
     for (uint64 i = 0; i < n_seqs; i++) {
@@ -208,7 +208,7 @@ std::vector<std::string> rando_seqs(const uint64& n_seqs,
     std::vector<double> pi_tcag_ = as<std::vector<double>>(pi_tcag);
     if (pi_tcag_.size() == 0) pi_tcag_ = std::vector<double>(4, 0.25);
 
-    std::vector<std::string> ref = create_sequences_<std::vector<std::string>,
+    std::vector<std::string> ref = create_chromosomes_<std::vector<std::string>,
                 std::string>(n_seqs, len_mean, len_sd, pi_tcag_, n_threads);
 
     return ref;
