@@ -215,12 +215,12 @@ print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) 
 #' @param invariant Proportion of regions that are invariant.
 #'     Must be in range `[0,1)`.
 #'     Defaults to `0`.
-#' @param mats List of matrices, one for each sequence in the genome.
+#' @param mats List of matrices, one for each chromosome in the genome.
 #'     Each matrix should have two columns.
 #'     The first should contain the end points for each region.
 #'     The second should contain the gamma distances for each region.
 #'     Note that if gamma distances don't have a mean (weighted by
-#'     sequence length for each gamma-distance value) equal to 1,
+#'     chromosome length for each gamma-distance value) equal to 1,
 #'     you're essentially changing the overall mutation rate.
 #'     If this argument is provided, `shape` and `region_size` are ignored.
 #'     Defaults to `NULL`.
@@ -235,7 +235,7 @@ print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) 
 #' @export
 #'
 #' @return A `site_var_mats` object, which is a wrapper around a list of matrices,
-#' one for each sequence in the reference genome.
+#' one for each chromosome in the reference genome.
 #' Although the print method is different, you can otherwise treat these objects
 #' the same as you would a list (e.g., `x[[1]]`, `x[1:2]`, `length(x)`).
 #'
@@ -303,11 +303,11 @@ site_var <- function(reference,
     # ---------*
     # Making the matrices:
     # ---------*
-    seq_sizes <- reference$sizes()
+    chrom_sizes <- reference$sizes()
     if (!is.null(mats)) {
-        if (length(mats) != length(seq_sizes)) {
+        if (length(mats) != length(chrom_sizes)) {
             err_msg("site_var", "mats", "NULL or a list of matrices the same length",
-                    "as the number of sequences in the reference genome.")
+                    "as the number of chromosomes in the reference genome.")
         }
     } else {
         if (is.null(shape) || is.null(region_size)) {
@@ -315,7 +315,7 @@ site_var <- function(reference,
                  "you need to provide both the `shape` and `region_size` arguments.",
                  call. = FALSE)
         }
-        mats <- make_gamma_mats(seq_sizes,
+        mats <- make_gamma_mats(chrom_sizes,
                                 region_size_ = region_size,
                                 shape = shape,
                                 invariant = invariant)
@@ -323,14 +323,14 @@ site_var <- function(reference,
     }
 
     # Check matrices for proper end points and # columns:
-    check_gamma_mats(mats, seq_sizes)
+    check_gamma_mats(mats, chrom_sizes)
 
     # ---------*
     # Writing to BED file if desired:
     # ---------*
     if (!is.null(out_prefix)) {
-        seq_names <- reference$names()
-        write_bed(out_prefix, mats, seq_names, compress, comp_method)
+        chrom_names <- reference$chrom_names()
+        write_bed(out_prefix, mats, chrom_names, compress, comp_method)
     }
 
     class(mats) <- "site_var_mats"
@@ -348,7 +348,7 @@ site_var <- function(reference,
 #'
 print.site_var_mats <- function(x, digits = max(3, getOption("digits") - 3), ...) {
     cat("< Site variability matrices >\n")
-    cat(sprintf("  * Number of sequences = %i\n", length(x)))
+    cat(sprintf("  * Number of chromosomes = %i\n", length(x)))
     cat(sprintf("  * Number of regions = %i\n", sum(sapply(x, nrow))))
     cat("(View raw data the same as you would a list)\n")
     invisible(NULL)
@@ -430,11 +430,11 @@ create_mevo <- function(reference,
     del <- as.numeric(del)
 
 
-    # This results in no variability among sites and 1 Gamma region per sequence
+    # This results in no variability among sites and 1 Gamma region per chromosome
     # (they'll get split later if desired):
     if (is.null(gamma_mats)) {
-        seq_sizes <- reference$sizes()
-        gamma_mats <- make_gamma_mats(seq_sizes, region_size_ = max(seq_sizes),
+        chrom_sizes <- reference$sizes()
+        gamma_mats <- make_gamma_mats(chrom_sizes, region_size_ = max(chrom_sizes),
                                       shape = 0, invariant = 0)
         dim(gamma_mats) <- NULL # so it's just a list now
     }

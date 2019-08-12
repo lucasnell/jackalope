@@ -13,39 +13,39 @@
 #' @section Methods:
 #' \strong{Viewing information:}
 #' \describe{
-#'     \item{`ptr()`}{View the pointer to the reference sequence information.}
-#'     \item{`n_seqs()`}{View the number of sequences.}
-#'     \item{`sizes()`}{View vector of sequence sizes.}
-#'     \item{`names()`}{View vector of sequence names.}
-#'     \item{`sequence(seq_ind)`}{View a sequence string based on an index,
-#'         `seq_ind`.}
-#'     \item{`gc_prop(seq_ind, start, end)`}{View the GC proportion for a range within a
-#'         reference sequence.}
-#'     \item{`nt_prop(nt, seq_ind, start, end)`}{View the proportion of a range within a
-#'         reference sequence that is of nucleotide `nt`.}
+#'     \item{`ptr()`}{View the pointer to the reference chromosome information.}
+#'     \item{`n_chroms()`}{View the number of chromosomes.}
+#'     \item{`sizes()`}{View vector of chromosome sizes.}
+#'     \item{`chrom_names()`}{View vector of chromosome names.}
+#'     \item{`chrom(chrom_ind)`}{View a chromosome sequence string based on an index,
+#'         `chrom_ind`.}
+#'     \item{`gc_prop(chrom_ind, start, end)`}{View the GC proportion for a range within a
+#'         reference chromosome.}
+#'     \item{`nt_prop(nt, chrom_ind, start, end)`}{View the proportion of a range within a
+#'         reference chromosome that is of nucleotide `nt`.}
 #' }
 #' \strong{Editing information:}
 #' \describe{
-#'     \item{`set_names(new_names)`}{Set names for all sequences.
+#'     \item{`set_names(new_names)`}{Set names for all chromosomes.
 #'         `new_names` is a character vector of what to change names to, and it must
-#'         be the same length as the # sequences.}
-#'     \item{`clean_names()`}{Clean sequence names, converting `" :;=%,\\|/\"\'"`
+#'         be the same length as the # chromosomes.}
+#'     \item{`clean_names()`}{Clean chromosome names, converting `" :;=%,\\|/\"\'"`
 #'         to `"_"`.}
-#'     \item{`add_seqs(new_seqs, new_names = NULL)`}{Add one or more sequences
+#'     \item{`add_chroms(new_chroms, new_names = NULL)`}{Add one or more chromosomes
 #'         directly. They can optionally be named (using `new_names`).
 #'         Otherwise, their names are auto-generated.}
-#'     \item{`rm_seqs(seq_names)`}{Remove one or more sequences based on names in
-#'         the `seq_names` vector.}
-#'     \item{`merge_seqs()`}{Merge all sequences into one after first shuffling
+#'     \item{`rm_chroms(chrom_names)`}{Remove one or more chromosomes based on names in
+#'         the `chrom_names` vector.}
+#'     \item{`merge_chroms()`}{Merge all chromosomes into one after first shuffling
 #'         their order.}
-#'     \item{`filter_seqs(threshold, method)`}{Filter sequences by size
+#'     \item{`filter_chroms(threshold, method)`}{Filter chromosomes by size
 #'         (`method = "size"`) or for a proportion of total bases (`method = "prop"`).
-#'         For the latter, sequences are first size-sorted, then the largest `N`
-#'         sequences are retained that allow at least
-#'         `threshold * sum(<all sequence sizes>)` base pairs remaining after
+#'         For the latter, chromosomes are first size-sorted, then the largest `N`
+#'         chromosomes are retained that allow at least
+#'         `threshold * sum(<all chromosome sizes>)` base pairs remaining after
 #'         filtering.}
 #'     \item{`replace_Ns(pi_tcag, n_threads = 1, show_progress = FALSE)`}{Replace
-#'         `N`s in reference sequence with nucleotides sampled with probabilities
+#'         `N`s in reference chromosome with nucleotides sampled with probabilities
 #'         given in `pi_tcag`.
 #'         You can optionally use multiple threads (`n_threads` argument) and/or
 #'         show a progress bar (`show_progress`).}
@@ -92,50 +92,50 @@ ref_genome <- R6Class(
             return(private$genome)
         },
 
-        # Get # sequences
-        n_seqs = function() {
+        # Get # chromosomes
+        n_chroms = function() {
             private$check_ptr()
-            return(view_ref_genome_nseqs(private$genome))
+            return(view_ref_genome_nchroms(private$genome))
         },
 
-        # Get vector of sequence sizes
+        # Get vector of chromosome sizes
         sizes = function() {
             private$check_ptr()
-            return(view_ref_genome_seq_sizes(private$genome))
+            return(view_ref_genome_chrom_sizes(private$genome))
         },
 
-        # Get vector of sequence names
-        names = function() {
+        # Get vector of chromosome names
+        chrom_names = function() {
             private$check_ptr()
-            return(view_ref_genome_seq_names(private$genome))
+            return(view_ref_genome_chrom_names(private$genome))
         },
 
-        # Extract one reference sequence
-        sequence = function(seq_ind) {
+        # Extract one reference chromosome
+        chrom = function(chrom_ind) {
             private$check_ptr()
-            if (!single_integer(seq_ind, 1, self$n_seqs())) {
-                err_msg("sequence", "seq_ind", "integer in range [1, <# sequences>]")
+            if (!single_integer(chrom_ind, 1, self$n_chroms())) {
+                err_msg("chrom", "chrom_ind", "integer in range [1, <# chromosomes>]")
             }
-            return(view_ref_genome_seq(private$genome, seq_ind - 1))
+            return(view_ref_genome_chrom(private$genome, chrom_ind - 1))
         },
-        # GC proportion for part of one reference sequence
-        gc_prop = function(seq_ind, start, end) {
-            private$check_pos(seq_ind, start, "nt_prop", "start")
-            private$check_pos(seq_ind, end, "nt_prop", "end")
+        # GC proportion for part of one reference chromosome
+        gc_prop = function(chrom_ind, start, end) {
+            private$check_pos(chrom_ind, start, "nt_prop", "start")
+            private$check_pos(chrom_ind, end, "nt_prop", "end")
             if (end < start) err_msg("gc_prop", "end", ">= `start` arg")
-            gcp <- view_ref_genome_gc_content(private$genome, seq_ind - 1,
+            gcp <- view_ref_genome_gc_content(private$genome, chrom_ind - 1,
                                               start - 1, end - 1)
             return(gcp)
         },
-        # Nucleotide content for part of one reference sequence
-        nt_prop = function(nt, seq_ind, start, end) {
-            private$check_pos(seq_ind, start, "nt_prop", "start")
-            private$check_pos(seq_ind, end, "nt_prop", "end")
+        # Nucleotide content for part of one reference chromosome
+        nt_prop = function(nt, chrom_ind, start, end) {
+            private$check_pos(chrom_ind, start, "nt_prop", "start")
+            private$check_pos(chrom_ind, end, "nt_prop", "end")
             if (end < start)err_msg("nt_prop", "end", ">= `start` arg")
             if (!is_type(nt, "character", 1) || nchar(nt) != 1) {
                 err_msg("nt_prop", "nt", "a single character")
             }
-            ntp <- view_ref_genome_nt_content(private$genome, nt, seq_ind - 1,
+            ntp <- view_ref_genome_nt_content(private$genome, nt, chrom_ind - 1,
                                               start - 1, end - 1)
             return(ntp)
         },
@@ -143,107 +143,107 @@ ref_genome <- R6Class(
         # ----------*
         # __edit__ ----
         # ----------*
-        # Change sequence names
+        # Change chromosome names
         set_names = function(new_names) {
             private$check_ptr()
-            if (!is_type(new_names, "character", self$n_seqs())) {
-                err_msg("set_names", "new_names", "the same length as # sequences")
+            if (!is_type(new_names, "character", self$n_chroms())) {
+                err_msg("set_names", "new_names", "the same length as # chromosomes")
             }
-            seq_inds <- 0:(length(new_names) - 1)
-            set_ref_genome_seq_names(private$genome, seq_inds, new_names)
+            chrom_inds <- 0:(length(new_names) - 1)
+            set_ref_genome_chrom_names(private$genome, chrom_inds, new_names)
             invisible(self)
         },
 
-        # Clean sequence names, converting " :;=%,\\|/\"\'" to "_"
+        # Clean chromosome names, converting " :;=%,\\|/\"\'" to "_"
         clean_names = function() {
             private$check_ptr()
-            clean_ref_genome_seq_names(private$genome)
+            clean_ref_genome_chrom_names(private$genome)
             invisible(self)
         },
 
-        # Add one or more sequences
-        add_seqs = function(new_seqs, new_names = NULL) {
+        # Add one or more chromosomes
+        add_chroms = function(new_chroms, new_names = NULL) {
             private$check_ptr()
-            self_names <- self$names()
-            if (!is_type(new_seqs, "character")) {
-                err_msg("rm_seqs","new_seqs", "a character vector")
+            self_names <- self$chrom_names()
+            if (!is_type(new_chroms, "character")) {
+                err_msg("add_chroms", "new_chroms", "a character vector")
             }
             if (!is.null(new_names) && !is_type(new_names, "character")) {
-                err_msg("rm_seqs","new_names", "NULL or a character vector")
+                err_msg("add_chroms", "new_names", "NULL or a character vector")
             }
             if (is.null(new_names)) {
-                N <- suppressWarnings(as.integer(gsub("seq", "", self$names())))
-                N <- if (any(!is.na(N))) 1 + max(N, na.rm = TRUE) else self$n_seqs()
-                N <- N:(N+length(new_seqs)-1)
-                new_names <- sprintf("seq%i", N)
+                N <- suppressWarnings(as.integer(gsub("chrom", "", self$chrom_names())))
+                N <- if (any(!is.na(N))) 1 + max(N, na.rm = TRUE) else self$n_chroms()
+                N <- N:(N+length(new_chroms)-1)
+                new_names <- sprintf("chrom%i", N)
             }
 
-            if (length(new_names) != length(new_seqs)) {
-                err_msg("rm_seqs","new_names", "the same length as `new_seqs`")
+            if (length(new_names) != length(new_chroms)) {
+                err_msg("add_chroms","new_names", "the same length as `new_chroms`")
             }
             if (anyDuplicated(new_names) != 0) {
-                err_msg("rm_seqs","new_names", "a vector with no duplicates")
+                err_msg("add_chroms","new_names", "a vector with no duplicates")
             }
-            if (any(new_names %in% self$names())) {
-                err_msg("rm_seqs", "new_names", "a vector containing no elements",
-                        "already present as a sequence name in the reference genome")
+            if (any(new_names %in% self$chrom_names())) {
+                err_msg("add_chroms", "new_names", "a vector containing no elements",
+                        "already present as a chromosome name in the reference genome")
             }
 
-            add_ref_genome_seqs(private$genome, new_seqs, new_names)
+            add_ref_genome_chroms(private$genome, new_chroms, new_names)
             invisible(self)
         },
 
-        # Remove one or more sequences by name
-        rm_seqs = function(seq_names) {
+        # Remove one or more chromosomes by name
+        rm_chroms = function(chrom_names) {
             private$check_ptr()
-            self_names <- self$names()
-            if (!is_type(seq_names, "character")) {
-                err_msg("rm_seqs", "seq_names", "a character vector")
+            self_names <- self$chrom_names()
+            if (!is_type(chrom_names, "character")) {
+                err_msg("rm_chroms", "chrom_names", "a character vector")
             }
-            if (!all(seq_names %in% self_names)) {
-                err_msg("rm_seqs", "seq_names", "a character vector of sequence names",
+            if (!all(chrom_names %in% self_names)) {
+                err_msg("rm_chroms", "chrom_names", "a character vector of chromosome names",
                         "present in the `ref_genome` object. One or more of the names",
                         "provided weren't found")
             }
-            if (anyDuplicated(seq_names) != 0) {
-                err_msg("rm_seqs", "seq_names", "a vector of *non-duplicated* names")
+            if (anyDuplicated(chrom_names) != 0) {
+                err_msg("rm_chroms", "chrom_names", "a vector of *non-duplicated* names")
             }
-            seq_inds <- match(seq_names, self_names) - 1
-            remove_ref_genome_seqs(private$genome, seq_inds)
+            chrom_inds <- match(chrom_names, self_names) - 1
+            remove_ref_genome_chroms(private$genome, chrom_inds)
             invisible(self)
         },
 
-        # Merge all ref_genome genome sequences into one
-        merge_seqs = function() {
+        # Merge all ref_genome genome chromosomes into one
+        merge_chroms = function() {
             private$check_ptr()
-            merge_sequences_cpp(private$genome)
+            merge_chromosomes_cpp(private$genome)
             invisible(self)
         },
 
-        # Filter ref_genome sequences by size or for a proportion of total bases
-        filter_seqs = function(threshold, method) {
+        # Filter ref_genome chromosomes by size or for a proportion of total bases
+        filter_chroms = function(threshold, method) {
             private$check_ptr()
             method <- match.arg(method, c("size", "prop"))
-            min_seq_size <- 0
-            out_seq_prop <- 0
+            min_chrom_size <- 0
+            out_chrom_prop <- 0
             # Filling in the necessary parameter and checking for sensible inputs
             if (!single_number(threshold)) {
-                err_msg("filter_seqs", "threshold", "a single number")
+                err_msg("filter_chroms", "threshold", "a single number")
             }
             if (method == "size") {
                 if (!single_integer(threshold, 1)) {
-                    err_msg("filter_seqs", "threshold", "a single integer >= 1 if",
-                            "filtering based on sequence sizes")
+                    err_msg("filter_chroms", "threshold", "a single integer >= 1 if",
+                            "filtering based on chromosome sizes")
                 }
-                min_seq_size <- threshold
+                min_chrom_size <- threshold
             } else {
                 if (!single_number(threshold) || threshold >= 1 || threshold <= 0) {
-                    err_msg("filter_seqs", "threshold", "a single number > 0 and < 1 if",
+                    err_msg("filter_chroms", "threshold", "a single number > 0 and < 1 if",
                             "filtering based on a proportion of total bases")
                 }
-                out_seq_prop <- threshold
+                out_chrom_prop <- threshold
             }
-            filter_sequences_cpp(private$genome, min_seq_size, out_seq_prop)
+            filter_chromosomes_cpp(private$genome, min_chrom_size, out_chrom_prop)
             invisible(self)
         },
 
@@ -288,13 +288,13 @@ ref_genome <- R6Class(
             }
         },
 
-        check_pos = function(seq_ind, pos, .fun, .pos_name) {
+        check_pos = function(chrom_ind, pos, .fun, .pos_name) {
             private$check_ptr()
-            if (!single_integer(seq_ind, 1, self$n_seqs())) {
-                err_msg(.fun, "seq_ind", "integer in range [1, <# sequences>]")
+            if (!single_integer(chrom_ind, 1, self$n_chroms())) {
+                err_msg(.fun, "chrom_ind", "integer in range [1, <# chromosomes>]")
             }
-            if (!single_integer(pos, 1, self$sizes()[seq_ind])) {
-                err_msg(.fun, .pos_name, "integer in range [1, <sequence size>]")
+            if (!single_integer(pos, 1, self$sizes()[chrom_ind])) {
+                err_msg(.fun, .pos_name, "integer in range [1, <chromosome size>]")
             }
         }
 
@@ -333,8 +333,8 @@ ref_genome <- R6Class(
 #'         also show up in the `variants` object.
 #'         For example, if you make a `variants` object named `V`
 #'         based on an existing `ref_genome` object named `R`,
-#'         then you merge sequences in `R`,
-#'         `V` will now have merged sequences.
+#'         then you merge chromosomes in `R`,
+#'         `V` will now have merged chromosomes.
 #'         If you've already started adding mutations to `V`,
 #'         then all the indexes used to store those mutations will be inaccurate.
 #'         So when you do anything with `V` later, your R session will crash
@@ -345,7 +345,7 @@ ref_genome <- R6Class(
 #'         object, deleting the `ref_genome` object won't cause issues with
 #'         the `variants` object.
 #'         However, the `variants` class doesn't provide methods to edit
-#'         sequences, so only remove the `ref_genome` object when you're done
+#'         chromosomes, so only remove the `ref_genome` object when you're done
 #'         editing the reference genome.
 #' }
 #'
@@ -353,17 +353,17 @@ ref_genome <- R6Class(
 #' \strong{Viewing information:}
 #' \describe{
 #'     \item{`ptr()`}{View the pointer to the variant information.}
-#'     \item{`n_seqs()`}{View the number of sequences.}
+#'     \item{`n_chroms()`}{View the number of chromosomes.}
 #'     \item{`n_vars()`}{View the number of variants.}
-#'     \item{`sizes(var_ind)`}{View vector of sequence sizes for a given variant.}
-#'     \item{`seq_names()`}{View vector of sequence names.}
+#'     \item{`sizes(var_ind)`}{View vector of chromosome sizes for a given variant.}
+#'     \item{`chrom_names()`}{View vector of chromosome names.}
 #'     \item{`var_names()`}{View vector of variant names.}
-#'     \item{`sequence(var_ind, seq_ind)`}{View a sequence string based on
-#'         indices for the sequence (`seq_ind`) and variant (`var_ind`).}
-#'     \item{`gc_prop(var_ind, seq_ind, start, end)`}{View the GC proportion for a range
-#'         within a variant sequence.}
-#'     \item{`nt_prop(nt, var_ind, seq_ind, start, end)`}{View the proportion of a range
-#'         within a variant sequence that is of nucleotide `nt`.}
+#'     \item{`chrom(var_ind, chrom_ind)`}{View a chromosome sequence string based on
+#'         indices for the chromosome (`chrom_ind`) and variant (`var_ind`).}
+#'     \item{`gc_prop(var_ind, chrom_ind, start, end)`}{View the GC proportion for a range
+#'         within a variant chromosome.}
+#'     \item{`nt_prop(nt, var_ind, chrom_ind, start, end)`}{View the proportion of a range
+#'         within a variant chromosome that is of nucleotide `nt`.}
 #' }
 #' \strong{Editing information:}
 #' \describe{
@@ -380,18 +380,18 @@ ref_genome <- R6Class(
 #'         Otherwise, their names are auto-generated.}
 #'     \item{`rm_vars(var_names)`}{Remove one or more variants based on names in
 #'         the `var_names` vector.}
-#'     \item{`add_sub(var_ind, seq_ind, pos, nt)`}{Manually add a substitution
-#'         for a given variant (`var_ind`), sequence (`seq_ind`), and position (`pos`).
+#'     \item{`add_sub(var_ind, chrom_ind, pos, nt)`}{Manually add a substitution
+#'         for a given variant (`var_ind`), chromosome (`chrom_ind`), and position (`pos`).
 #'         The reference nucleotide will be changed to `nt`, which should be a single
 #'         character.}
-#'     \item{`add_ins(var_ind, seq_ind, pos, nts)`}{Manually add an insertion
-#'         for a given variant (`var_ind`), sequence (`seq_ind`), and position (`pos`).
+#'     \item{`add_ins(var_ind, chrom_ind, pos, nts)`}{Manually add an insertion
+#'         for a given variant (`var_ind`), chromosome (`chrom_ind`), and position (`pos`).
 #'         The nucleotide(s) `nts` will be inserted after the designated position.}
-#'     \item{`add_del(var_ind, seq_ind, pos, n_nts)`}{Manually add a deletion
-#'         for a given variant (`var_ind`), sequence (`seq_ind`), and position (`pos`).
+#'     \item{`add_del(var_ind, chrom_ind, pos, n_nts)`}{Manually add a deletion
+#'         for a given variant (`var_ind`), chromosome (`chrom_ind`), and position (`pos`).
 #'         The designated number of nucleotides to delete (`n_nts`) will be deleted
-#'         starting at `pos`, unless `pos` is near the sequence end and doesn't have
-#'         `n_nts` nucleotides to remove; it simply stops at the sequence end in
+#'         starting at `pos`, unless `pos` is near the chromosome end and doesn't have
+#'         `n_nts` nucleotides to remove; it simply stops at the chromosome end in
 #'         this case.}
 #' }
 #'
@@ -442,10 +442,10 @@ variants <- R6Class(
             return(private$genomes)
         },
 
-        # Get # sequences
-        n_seqs = function() {
+        # Get # chromosomes
+        n_chroms = function() {
             private$check_ptr()
-            return(view_var_set_nseqs(private$genomes))
+            return(view_var_set_nchroms(private$genomes))
         },
 
         # Get # variants
@@ -454,17 +454,17 @@ variants <- R6Class(
             return(view_var_set_nvars(private$genomes))
         },
 
-        # Get vector of sequence sizes for one variant
+        # Get vector of chromosome sizes for one variant
         sizes = function(var_ind) {
             private$check_ptr()
             private$check_var_ind(var_ind, "sizes")
-            return(view_var_genome_seq_sizes(private$genomes, var_ind - 1))
+            return(view_var_genome_chrom_sizes(private$genomes, var_ind - 1))
         },
 
-        # Get vector of sequence names
-        seq_names = function() {
+        # Get vector of chromosome names
+        chrom_names = function() {
             stopifnot(inherits(private$reference, "externalptr"))
-            return(view_ref_genome_seq_names(private$reference))
+            return(view_ref_genome_chrom_names(private$reference))
         },
 
         # Get vector of variant names
@@ -473,33 +473,33 @@ variants <- R6Class(
             return(view_var_set_var_names(private$genomes))
         },
 
-        # Extract one variant sequence
-        sequence = function(var_ind, seq_ind) {
+        # Extract one variant chromosome
+        chrom = function(var_ind, chrom_ind) {
             private$check_ptr()
-            private$check_var_ind(var_ind, "sequence")
-            private$check_seq_ind(seq_ind, "sequence")
-            return(view_var_genome_seq(private$genomes, var_ind - 1, seq_ind - 1))
+            private$check_var_ind(var_ind, "chrom")
+            private$check_chrom_ind(chrom_ind, "chrom")
+            return(view_var_genome_chrom(private$genomes, var_ind - 1, chrom_ind - 1))
         },
 
-        # GC proportion for part of one variant sequence
-        gc_prop = function(var_ind, seq_ind, start, end) {
-            private$check_pos(var_ind, seq_ind, start, "gc_prop", "start")
-            private$check_pos(var_ind, seq_ind, end, "gc_prop", "end")
+        # GC proportion for part of one variant chromosome
+        gc_prop = function(var_ind, chrom_ind, start, end) {
+            private$check_pos(var_ind, chrom_ind, start, "gc_prop", "start")
+            private$check_pos(var_ind, chrom_ind, end, "gc_prop", "end")
             if (end < start) err_msg("gc_prop", "end", ">= `start` arg")
-            gcp <- view_var_set_gc_content(private$genomes, seq_ind - 1, var_ind - 1,
+            gcp <- view_var_set_gc_content(private$genomes, chrom_ind - 1, var_ind - 1,
                                            start - 1, end - 1)
             return(gcp)
         },
 
-        # Nucleotide content for part of one reference sequence
-        nt_prop = function(nt, var_ind, seq_ind, start, end) {
-            private$check_pos(var_ind, seq_ind, start, "nt_prop", "start")
-            private$check_pos(var_ind, seq_ind, end, "nt_prop", "end")
+        # Nucleotide content for part of one reference chromosome
+        nt_prop = function(nt, var_ind, chrom_ind, start, end) {
+            private$check_pos(var_ind, chrom_ind, start, "nt_prop", "start")
+            private$check_pos(var_ind, chrom_ind, end, "nt_prop", "end")
             if (end < start) err_msg("nt_prop", "end", ">= `start` arg")
             if (!is_type(nt, "character", 1) || nchar(nt) != 1) {
                 err_msg("nt_prop", "nt", "a single character")
             }
-            ntp <- view_var_set_nt_content(private$genomes, nt, seq_ind - 1, var_ind - 1,
+            ntp <- view_var_set_nt_content(private$genomes, nt, chrom_ind - 1, var_ind - 1,
                                            start - 1, end - 1)
             return(ntp)
         },
@@ -571,7 +571,7 @@ variants <- R6Class(
                 err_msg("dup_vars", "new_names", "the same length as `var_names`")
             }
             if (any(new_names %in% self_names)) {
-                err_msg("dup_seqs", "new_names", "a vector containing no elements",
+                err_msg("dup_vars", "new_names", "a vector containing no elements",
                         "already present as a variant name in the variants object")
             }
 
@@ -601,20 +601,20 @@ variants <- R6Class(
 
 
         # Mutations:
-        add_sub = function(var_ind, seq_ind, pos, nt) {
-            private$check_pos(var_ind, seq_ind, pos, "add_sub", "pos")
+        add_sub = function(var_ind, chrom_ind, pos, nt) {
+            private$check_pos(var_ind, chrom_ind, pos, "add_sub", "pos")
             if (!is_type(nt, "character", 1) || nchar(nt) != 1) {
                 err_msg("add_sub", "nt", "a single character")
             }
             if (! nt %in% c("T", "C", "A", "G", "N")) {
                 err_msg("add_sub", "nt", "one of \"T\", \"C\", \"A\", \"G\", or \"N\"")
             }
-            add_substitution(private$genomes, var_ind - 1, seq_ind - 1, nt, pos - 1)
+            add_substitution(private$genomes, var_ind - 1, chrom_ind - 1, nt, pos - 1)
             invisible(self)
         },
 
-        add_ins = function(var_ind, seq_ind, pos, nts) {
-            private$check_pos(var_ind, seq_ind, pos, "add_ins", "pos")
+        add_ins = function(var_ind, chrom_ind, pos, nts) {
+            private$check_pos(var_ind, chrom_ind, pos, "add_ins", "pos")
             if (!is_type(nts, "character", 1)) {
                 err_msg("add_ins", "nts", "a single string")
             }
@@ -622,16 +622,16 @@ variants <- R6Class(
                 err_msg("add_ins", "nts", "string containing only \"T\", \"C\", \"A\",",
                         "\"G\", or \"N\"")
             }
-            add_insertion(private$genomes, var_ind - 1, seq_ind - 1, nts, pos - 1)
+            add_insertion(private$genomes, var_ind - 1, chrom_ind - 1, nts, pos - 1)
             invisible(self)
         },
 
-        add_del = function(var_ind, seq_ind, pos, n_nts) {
-            private$check_pos(var_ind, seq_ind, pos, "add_del", "pos")
+        add_del = function(var_ind, chrom_ind, pos, n_nts) {
+            private$check_pos(var_ind, chrom_ind, pos, "add_del", "pos")
             if (!single_integer(n_nts, 1)) {
                 err_msg("add_del", "n_nts", "a single integer >= 1")
             }
-            add_deletion(private$genomes, var_ind - 1, seq_ind - 1, n_nts, pos - 1)
+            add_deletion(private$genomes, var_ind - 1, chrom_ind - 1, n_nts, pos - 1)
             invisible(self)
         }
 
@@ -657,10 +657,10 @@ variants <- R6Class(
             }
         },
 
-        check_seq_ind = function(seq_ind, .fun_name) {
+        check_chrom_ind = function(chrom_ind, .fun_name) {
             private$check_ptr()
-            if (!single_integer(seq_ind, 1, self$n_seqs())) {
-                err_msg(.fun_name, "seq_ind", "integer in range [1, <# sequences>]")
+            if (!single_integer(chrom_ind, 1, self$n_chroms())) {
+                err_msg(.fun_name, "chrom_ind", "integer in range [1, <# chromosomes>]")
             }
         },
         check_var_ind = function(var_ind, .fun_name) {
@@ -669,12 +669,12 @@ variants <- R6Class(
                 err_msg(.fun_name, "var_ind", "integer in range [1, <# variants>]")
             }
         },
-        check_pos = function(var_ind, seq_ind, pos, .fun_name, .pos_name) {
+        check_pos = function(var_ind, chrom_ind, pos, .fun_name, .pos_name) {
             private$check_ptr()
-            private$check_seq_ind(seq_ind, .fun_name)
+            private$check_chrom_ind(chrom_ind, .fun_name)
             private$check_var_ind(var_ind, .fun_name)
-            if (!single_integer(pos, 1, self$sizes(var_ind)[seq_ind])) {
-                err_msg(.fun_name, .pos_name, "integer in range [1, <sequence size>]")
+            if (!single_integer(pos, 1, self$sizes(var_ind)[chrom_ind])) {
+                err_msg(.fun_name, .pos_name, "integer in range [1, <chromosome size>]")
             }
         }
     ),
@@ -700,7 +700,7 @@ variants <- R6Class(
 #' @field insertion_rates Vector of insertion rates by length.
 #' @field deletion_rates Vector of deletion rates by length.
 #' @field gamma_mats List of matrices specifying "gamma distances" (see definition in
-#'     `?create_mevo`) for each sequence.
+#'     `?create_mevo`) for each chromosome.
 #'
 #' @section Methods:
 #' \describe{
