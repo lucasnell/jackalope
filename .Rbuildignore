@@ -10,7 +10,6 @@
 ^_crash_test\.R$
 ^methods
 ^data-raw
-^diagnostics
 ^cran-comments\.md$
 ^_pkgdown\.yml$
 ^docs$
