@@ -141,19 +141,19 @@ void PacBioOneGenome<T>::one_read(std::vector<U>& fastq_pools,
     Sample read info, and set the sequence space(s) required for these read(s).
     */
     // Sample sequence:
-    seq_ind = seq_sampler.sample(eng);
-    uint64 seq_len = (*sequences)[seq_ind].size();
+    chrom_ind = chrom_sampler.sample(eng);
+    uint64 chrom_len = (*sequences)[chrom_ind].size();
 
     // Sample read length:
     read_length = len_sampler.sample(eng);
-    if (read_length >= seq_len) read_length = seq_len;
+    if (read_length >= chrom_len) read_length = chrom_len;
 
     // Sample for # passes over read:
     pass_sampler.sample(split_pos, passes_left, passes_right, eng, read_length);
 
     // Sample for errors and qualities:
     qe_sampler.sample(eng, qual_left, qual_right, insertions, deletions, substitutions,
-                      seq_len, read_length, split_pos, passes_left, passes_right);
+                      chrom_len, read_length, split_pos, passes_left, passes_right);
 
     /*
      The amount of space on the reference/variant sequence needed to create this read.
@@ -164,10 +164,10 @@ void PacBioOneGenome<T>::one_read(std::vector<U>& fastq_pools,
     read_chrom_space = read_length + deletions.size() - insertions.size();
 
     // Sample read starting position:
-    if (read_chrom_space < seq_len) {
+    if (read_chrom_space < chrom_len) {
         double u = runif_01(eng);
-        read_start = static_cast<uint64>(u * (seq_len - read_chrom_space + 1));
-    } else if (read_chrom_space == seq_len) {
+        read_start = static_cast<uint64>(u * (chrom_len - read_chrom_space + 1));
+    } else if (read_chrom_space == chrom_len) {
         read_start = 0;
     } else {
         stop("read_chrom_space should never exceed the sequence length.");
@@ -191,14 +191,14 @@ void PacBioOneGenome<T>::re_read(std::vector<U>& fastq_pools,
     /*
      Use the same read info as before.
     */
-    uint64 seq_len = (*sequences)[seq_ind].size();
+    uint64 chrom_len = (*sequences)[chrom_ind].size();
 
     // Sample for # passes over read:
     pass_sampler.sample(split_pos, passes_left, passes_right, eng, read_length);
 
     // Sample for errors and qualities:
     qe_sampler.sample(eng, qual_left, qual_right, insertions, deletions, substitutions,
-                      seq_len, read_length, split_pos, passes_left, passes_right);
+                      chrom_len, read_length, split_pos, passes_left, passes_right);
 
     /*
      The amount of space on the reference/variant sequence needed to create this read.
@@ -213,13 +213,13 @@ void PacBioOneGenome<T>::re_read(std::vector<U>& fastq_pools,
      happen where the required sequence space exceeds what's available, I'm going
      to remove deletions until we have enough room.
      */
-    while ((read_chrom_space + read_start) > seq_len) {
+    while ((read_chrom_space + read_start) > chrom_len) {
         if (deletions.empty()) break;
         deletions.pop_back();
         read_chrom_space--;
     }
     // If that still doesn't work, I give up on the duplicate.
-    if ((read_chrom_space + read_start) > seq_len) return;
+    if ((read_chrom_space + read_start) > chrom_len) return;
 
     // Fill the reads and qualities
     append_pool<U>(fastq_pool, eng);
@@ -244,7 +244,7 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
     fastq_pool.push_back('@');
     for (const char& c : this->name) fastq_pool.push_back(c);
     fastq_pool.push_back('-');
-    for (const char& c : (*sequences)[seq_ind].name) fastq_pool.push_back(c);
+    for (const char& c : (*sequences)[chrom_ind].name) fastq_pool.push_back(c);
     fastq_pool.push_back('-');
     for (const char& c : std::to_string(read_start)) fastq_pool.push_back(c);
     fastq_pool.push_back('-');
@@ -254,7 +254,7 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
     fastq_pool.push_back('\n');
 
     // Fill in read:
-    (*sequences)[seq_ind].fill_read(read, 0, read_start, read_chrom_space);
+    (*sequences)[chrom_ind].fill_read(read, 0, read_start, read_chrom_space);
 
     // Reverse complement if necessary:
     if (reverse) rev_comp(read, read_chrom_space);

@@ -128,7 +128,7 @@ public:
 
     const RefChrom* ref_chrom;  // pointer to const RefChrom
     std::deque<Mutation> mutations;
-    uint64 seq_size;
+    uint64 chrom_size;
     std::string name;
 
     // Constructors
@@ -136,21 +136,21 @@ public:
     VarChrom(const RefChrom& ref)
         : ref_chrom(&ref),
           mutations(),
-          seq_size(ref.size()),
+          chrom_size(ref.size()),
           name(ref.name) {};
 
     /*
      Since all other classes have a size() method, I'm including this here:
      */
     uint64 size() const noexcept {
-        return seq_size;
+        return chrom_size;
     }
 
     // Clear mutation info and restore RAM
     void clear() {
         mutations.clear();
         clear_memory<std::deque<Mutation>>(mutations);
-        seq_size = ref_chrom->size();
+        chrom_size = ref_chrom->size();
         return;
     }
 
@@ -158,7 +158,7 @@ public:
     void replace(const VarChrom& other) {
         ref_chrom = other.ref_chrom;
         mutations = other.mutations;
-        seq_size = other.seq_size;
+        chrom_size = other.chrom_size;
         name = other.name;
         return;
     }
@@ -225,7 +225,7 @@ public:
      */
     void fill_read(std::string& read,
                    const uint64& read_start,
-                   const uint64& seq_start,
+                   const uint64& chrom_start,
                    uint64 n_to_add) const;
 
 
@@ -333,7 +333,7 @@ public:
         return var_genome.size();
     }
     // To return all the sequence sizes
-    std::vector<uint64> seq_sizes() const noexcept {
+    std::vector<uint64> chrom_sizes() const noexcept {
         std::vector<uint64> out(size());
         for (uint64 i = 0; i < out.size(); i++) out[i] = var_genome[i].size();
         return out;

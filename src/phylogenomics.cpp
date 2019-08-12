@@ -71,7 +71,7 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
         uint64 b2 = tree.edges(i,1);
 
         /*
-         Update `samplers`, `seq_rates`, and `distr` for this edge:
+         Update `samplers`, `chrom_rates`, and `distr` for this edge:
          */
         update(distr, b1, b2);
         MutationSampler& m_samp(samplers[b2]);
@@ -79,7 +79,7 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
         /*
          Now do exponential jumps and mutate until you exceed the branch length.
          */
-        double& rate(seq_rates[b2]);
+        double& rate(chrom_rates[b2]);
         double amt_time = tree.branch_lens[i];
         double time_jumped = distr(eng);
         double rate_change = 0;
@@ -249,15 +249,15 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
 
         if (status_code != 0) continue;
 
-        PhyloOneChrom& seq_phylo(phylo_one_chroms[i]);
+        PhyloOneChrom& chrom_phylo(phylo_one_chroms[i]);
 
         const arma::mat& gamma_mat(gamma_mats[i]);
 
         // Set values for variant info and sampler:
-        seq_phylo.set_samp_var_info(*var_set, *sampler_base, i, gamma_mat);
+        chrom_phylo.set_samp_var_info(*var_set, *sampler_base, i, gamma_mat);
 
-        // Evolve the sequence using the seq_phylo object:
-        status_code = seq_phylo.evolve(eng, prog_bar);
+        // Evolve the sequence using the chrom_phylo object:
+        status_code = chrom_phylo.evolve(eng, prog_bar);
 
     }
 

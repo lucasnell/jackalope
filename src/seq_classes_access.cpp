@@ -186,7 +186,7 @@ IntegerVector view_var_set_nvars(SEXP var_set_ptr) {
 //[[Rcpp::export]]
 IntegerVector view_ref_genome_chrom_sizes(SEXP ref_genome_ptr) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    std::vector<uint64> tmp = ref_genome->seq_sizes();
+    std::vector<uint64> tmp = ref_genome->chrom_sizes();
     IntegerVector out(tmp.size());
     for (uint64 i = 0; i < tmp.size(); i++) out[i] = tmp[i];
     return out;
@@ -207,7 +207,7 @@ IntegerVector view_var_genome_chrom_sizes(SEXP var_set_ptr,
     IntegerVector out(var_genome.size());
     for (uint64 i = 0; i < var_genome.size(); i++) {
         const VarChrom& var_chrom(var_genome.var_genome[i]);
-        out[i] = var_chrom.seq_size;
+        out[i] = var_chrom.chrom_size;
     }
     return out;
 }

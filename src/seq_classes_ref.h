@@ -95,16 +95,16 @@ struct RefChrom {
      */
     void fill_read(std::string& read,
                    const uint64& read_start,
-                   const uint64& seq_start,
+                   const uint64& chrom_start,
                    uint64 n_to_add) const {
         // Making sure end doesn't go beyond the sequence bounds
-        if ((seq_start + n_to_add - 1) >= nucleos.size()) {
-            n_to_add = nucleos.size() - seq_start;
+        if ((chrom_start + n_to_add - 1) >= nucleos.size()) {
+            n_to_add = nucleos.size() - chrom_start;
         }
         // Make sure the read is long enough (this fxn should never shorten it):
         if (read.size() < n_to_add + read_start) read.resize(n_to_add + read_start, 'N');
         for (uint64 i = 0; i < n_to_add; i++) {
-            read[(read_start + i)] = this->nucleos[(seq_start + i)];
+            read[(read_start + i)] = this->nucleos[(chrom_start + i)];
         }
         return;
     }
@@ -167,7 +167,7 @@ struct RefGenome {
         return sequences.size();
     }
     // To return the sequence sizes
-    std::vector<uint64> seq_sizes() const {
+    std::vector<uint64> chrom_sizes() const {
         std::vector<uint64> out(size());
         for (uint64 i = 0; i < out.size(); i++) out[i] = sequences[i].size();
         return out;
@@ -198,37 +198,37 @@ struct RefGenome {
 
         int ind_i, name_width = 10, length_width = 9;
         // Console width minus name width AND length width AND spaces between
-        int seq_print_len = console_width - name_width - length_width - 2;
+        int chrom_print_len = console_width - name_width - length_width - 2;
         // Number of chars print before and after elipses for a long string
-        int before_elips = std::ceil((seq_print_len - 3) / 2);
-        int after_elips = seq_print_len - 3 - before_elips;
+        int before_elips = std::ceil((chrom_print_len - 3) / 2);
+        int after_elips = chrom_print_len - 3 - before_elips;
 
         Rprintf("%-*s %s%-*s %*s\n", name_width, "  name",
                 std::string(before_elips - 4, ' ').c_str(),
-                seq_print_len - (before_elips - 4), "sequence",
+                chrom_print_len - (before_elips - 4), "sequence",
                 length_width, "length");
 
         for (int i = 0; i < static_cast<int>(inds.size()); i++) {
             ind_i = inds[i];
             if (ind_i == -1) {
-                Rprintf("%-10s %-*s %9s\n", "...", seq_print_len, "...", "...");
+                Rprintf("%-10s %-*s %9s\n", "...", chrom_print_len, "...", "...");
                 continue;
             }
             const RefChrom& rs(sequences[ind_i]);
             const std::string& name_i(rs.name);
-            const std::string& seq_i(rs.nucleos);
+            const std::string& chrom_i(rs.nucleos);
             // Print name
             Rprintf("%-10.10s ", name_i.c_str());
             // Print sequence
-            int seq_i_size = static_cast<int>(seq_i.size());
-            if (seq_i_size > seq_print_len){
-                for (int j = 0; j < before_elips; j++) Rcout << seq_i[j];
+            int chrom_i_size = static_cast<int>(chrom_i.size());
+            if (chrom_i_size > chrom_print_len){
+                for (int j = 0; j < before_elips; j++) Rcout << chrom_i[j];
                 Rcout << "...";
-                for (int j = (seq_i_size - after_elips); j < seq_i_size; j++) {
-                    Rcout << seq_i[j];
+                for (int j = (chrom_i_size - after_elips); j < chrom_i_size; j++) {
+                    Rcout << chrom_i[j];
                 }
             } else {
-                Rprintf("%-*s", seq_print_len, seq_i.c_str());
+                Rprintf("%-*s", chrom_print_len, chrom_i.c_str());
             }
             // Print width
             if (rs.size() > 999999999) {

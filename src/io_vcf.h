@@ -202,7 +202,7 @@ class WriterVCF {
 public:
 
     const VarSet* var_set;
-    uint64 seq_ind;
+    uint64 chrom_ind;
     const std::string* ref_nts;
 
     std::vector<OneVarChromVCF> var_infos;
@@ -216,10 +216,10 @@ public:
     std::vector<std::string> sample_names;
 
     WriterVCF(const VarSet& var_set_,
-              const uint64& seq_ind_,
+              const uint64& chrom_ind_,
               const IntegerMatrix& sample_groups_)
         : var_set(&var_set_),
-          seq_ind(seq_ind_),
+          chrom_ind(chrom_ind_),
           ref_nts(),
           var_infos(var_set_.size()),
           unq_alts(),
@@ -227,7 +227,7 @@ public:
           gt_indexes(var_set_.size()) {
 
         // Now checking sequence index:
-        if (seq_ind >= var_set->reference->size()) {
+        if (chrom_ind >= var_set->reference->size()) {
             str_stop({"\nWhen specifying a sequence index for VCF output, ",
                      "you must provide an integer < the number of sequences."});
         }
@@ -254,8 +254,8 @@ public:
 
 
     // Change the sequence this object refers to
-    void new_chrom(const uint64& seq_ind_) {
-        seq_ind = seq_ind_;
+    void new_chrom(const uint64& chrom_ind_) {
+        chrom_ind = chrom_ind_;
         construct();
         return;
     }
@@ -293,14 +293,14 @@ private:
 
     void construct() {
 
-        ref_nts = &(var_set->reference->sequences[seq_ind].nucleos);
+        ref_nts = &(var_set->reference->sequences[chrom_ind].nucleos);
 
         /*
          Set pointer for the focal sequence in each variant
          and set positions in `mut_pos` field
          */
         for (uint64 i = 0; i < var_infos.size(); i++) {
-            var_infos[i].set_var((*var_set)[i][seq_ind]);
+            var_infos[i].set_var((*var_set)[i][chrom_ind]);
             var_infos[i].compare_pos(mut_pos.first, mut_pos.second);
         }
 
@@ -378,7 +378,7 @@ inline void write_vcf_(XPtr<VarSet> var_set,
              */
             if (writer.iterate(pos_str, ref_str, alt_str, gt_strs)) {
                 // CHROM
-                pool = var_set->reference->operator[](writer.seq_ind).name;
+                pool = var_set->reference->operator[](writer.chrom_ind).name;
                 // POS
                 pool += '\t' + pos_str;
                 // ID

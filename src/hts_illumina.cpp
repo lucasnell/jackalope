@@ -34,7 +34,7 @@ void IlluminaOneGenome<T>::one_read(std::vector<U>& fastq_pools,
     /*
      Sample fragment info, and set the sequence space(s) required for these read(s).
      */
-    seq_indels_frag(eng);
+    chrom_indels_frag(eng);
 
     // Fill the reads and qualities
     append_pools<U>(fastq_pools, eng);
@@ -66,11 +66,11 @@ void IlluminaOneGenome<T>::re_read(std::vector<U>& fastq_pools,
  that related to the sequence object.
  */
 template <typename T>
-void IlluminaOneGenome<T>::add_chrom_info(const T& seq_object, const std::string& barcode) {
+void IlluminaOneGenome<T>::add_chrom_info(const T& chrom_object, const std::string& barcode) {
 
-    seq_lengths = seq_object.seq_sizes();
-    sequences = &seq_object;
-    name = seq_object.name;
+    chrom_lengths = chrom_object.chrom_sizes();
+    sequences = &chrom_object;
+    name = chrom_object.name;
     constr_info.barcode = barcode;
 
     construct_chroms();
@@ -83,11 +83,11 @@ void IlluminaOneGenome<T>::add_chrom_info(const T& seq_object, const std::string
 template <typename T>
 void IlluminaOneGenome<T>::construct_chroms() {
     std::vector<double> probs_;
-    probs_.reserve(seq_lengths.size());
-    for (uint64 i = 0; i < seq_lengths.size(); i++) {
-        probs_.push_back(static_cast<double>(seq_lengths[i]));
+    probs_.reserve(chrom_lengths.size());
+    for (uint64 i = 0; i < chrom_lengths.size(); i++) {
+        probs_.push_back(static_cast<double>(chrom_lengths[i]));
     }
-    seq_sampler = AliasSampler(probs_);
+    chrom_sampler = AliasSampler(probs_);
     return;
 }
 
@@ -169,15 +169,15 @@ void IlluminaOneGenome<T>::adjust_chrom_spaces() {
  Lastly, it sets the sequence spaces required for these reads.
  */
 template <typename T>
-void IlluminaOneGenome<T>::seq_indels_frag(pcg64& eng) {
+void IlluminaOneGenome<T>::chrom_indels_frag(pcg64& eng) {
 
-    uint64& seq_ind(constr_info.seq_ind);
+    uint64& chrom_ind(constr_info.chrom_ind);
     uint64& frag_len(constr_info.frag_len);
     uint64& frag_start(constr_info.frag_start);
 
     // Sample sequence:
-    seq_ind = seq_sampler.sample(eng);
-    uint64 seq_len = (*sequences)[seq_ind].size();
+    chrom_ind = chrom_sampler.sample(eng);
+    uint64 chrom_len = (*sequences)[chrom_ind].size();
 
     // Sample fragment length:
     frag_len = static_cast<uint64>(frag_lengths(eng));
@@ -185,12 +185,12 @@ void IlluminaOneGenome<T>::seq_indels_frag(pcg64& eng) {
     if (frag_len > frag_len_max) frag_len = frag_len_max;
 
     // Sample fragment starting position:
-    if (frag_len >= seq_len) {
-        frag_len = seq_len;
+    if (frag_len >= chrom_len) {
+        frag_len = chrom_len;
         frag_start = 0;
     } else {
         double u = runif_01(eng);
-        frag_start = static_cast<uint64>(u * (seq_len - frag_len + 1));
+        frag_start = static_cast<uint64>(u * (chrom_len - frag_len + 1));
     }
 
     // Sample indels:
@@ -239,7 +239,7 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
     const std::vector<uint64>& read_chrom_spaces(constr_info.read_chrom_spaces);
 
     // Just making this reference to keep lines from getting very long.
-    const uint64& seq_ind(constr_info.seq_ind);
+    const uint64& chrom_ind(constr_info.chrom_ind);
 
     // Boolean for whether we take the reverse side first:
     bool reverse = runif_01(eng) < 0.5;
@@ -261,7 +261,7 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
         */
         if (!reverse) {
             // Fill in read starting with position after barcode:
-            (*(sequences))[seq_ind].fill_read(
+            (*(sequences))[chrom_ind].fill_read(
                     read, barcode.size(),
                     start, read_chrom_spaces[i]);
         } else {
@@ -273,7 +273,7 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
              `read` should already have filler 'N' chars present at initialization
              of the `constr_info` field, so no need to add any now.)
              */
-            (*(sequences))[seq_ind].fill_read(
+            (*(sequences))[chrom_ind].fill_read(
                     read, 0,
                     start, read_chrom_spaces[i]);
             // Now do reverse complement:
@@ -291,7 +291,7 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
         fastq_pools[i].push_back('@');
         for (const char& c : this->name) fastq_pools[i].push_back(c);
         fastq_pools[i].push_back('-');
-        for (const char& c : (*sequences)[seq_ind].name) fastq_pools[i].push_back(c);
+        for (const char& c : (*sequences)[chrom_ind].name) fastq_pools[i].push_back(c);
         fastq_pools[i].push_back('-');
         for (const char& c : std::to_string(start)) fastq_pools[i].push_back(c);
         fastq_pools[i].push_back('-');

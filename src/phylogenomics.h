@@ -141,14 +141,14 @@ public:
     std::vector<VarChrom*> var_chrom_ptrs;    // pointers to original VarChrom objects
     std::vector<VarChrom> var_chroms;  // blank VarChrom objects to evolve across tree
     std::vector<MutationSampler> samplers; // to do the mutation additions across tree
-    std::vector<double> seq_rates;   // sequence rates
+    std::vector<double> chrom_rates;   // sequence rates
     uint64 n_tips;                  // number of tips (i.e., variants)
 
     PhyloOneChrom() {}
     PhyloOneChrom(
         VarSet& var_set,
         const MutationSampler& sampler_base,
-        const uint64& seq_ind,
+        const uint64& chrom_ind,
         const arma::mat& gamma_mat_,
         const std::vector<uint64>& n_bases_,
         const std::vector<std::vector<double>>& branch_lens_,
@@ -159,7 +159,7 @@ public:
           var_chrom_ptrs(var_set.size()),
           var_chroms(),
           samplers(),
-          seq_rates(edges_[0].max()),
+          chrom_rates(edges_[0].max()),
           n_tips(tip_labels_[0].size()),
           gamma_mat(gamma_mat_),
           ordered_tip_labels(),
@@ -193,12 +193,12 @@ public:
 
         // Filling in pointers:
         for (uint64 i = 0; i < n_vars; i++) {
-            var_chrom_ptrs[i] = &var_set[i][seq_ind];
+            var_chrom_ptrs[i] = &var_set[i][chrom_ind];
         }
 
         // Fill in blank VarChrom objects:
         var_chroms = std::vector<VarChrom>(tree_size,
-                                            VarChrom((*var_set.reference)[seq_ind]));
+                                            VarChrom((*var_set.reference)[chrom_ind]));
 
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
@@ -222,7 +222,7 @@ public:
           var_chrom_ptrs(),
           var_chroms(),
           samplers(),
-          seq_rates(edges_[0].max()),
+          chrom_rates(edges_[0].max()),
           n_tips(tip_labels_[0].size()),
           gamma_mat(),
           ordered_tip_labels(),
@@ -256,7 +256,7 @@ public:
      */
     void set_samp_var_info(VarSet& var_set,
                            const MutationSampler& sampler_base,
-                           const uint64& seq_ind,
+                           const uint64& chrom_ind,
                            const arma::mat& gamma_mat_) {
 
         uint64 tree_size = trees[0].tree_size;
@@ -270,12 +270,12 @@ public:
         // Filling in pointers:
         var_chrom_ptrs.resize(n_vars);
         for (uint64 i = 0; i < n_vars; i++) {
-            var_chrom_ptrs[i] = &var_set[i][seq_ind];
+            var_chrom_ptrs[i] = &var_set[i][chrom_ind];
         }
 
         // Fill in blank VarChrom objects:
         var_chroms = std::vector<VarChrom>(tree_size,
-                                            VarChrom((*var_set.reference)[seq_ind]));
+                                            VarChrom((*var_set.reference)[chrom_ind]));
 
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
@@ -309,9 +309,9 @@ public:
 
         std::string err_msg;
 
-        const List& seq_phylo_info(genome_phylo_info[i]);
+        const List& chrom_phylo_info(genome_phylo_info[i]);
 
-        uint64 n_trees = seq_phylo_info.size();
+        uint64 n_trees = chrom_phylo_info.size();
         if (n_trees == 0) {
             err_msg = "\nNo trees supplied on sequence " + std::to_string(i+1);
             throw(Rcpp::exception(err_msg.c_str(), false));
@@ -324,7 +324,7 @@ public:
 
         for (uint64 j = 0; j < n_trees; j++) {
 
-            const List& phylo_info(seq_phylo_info[j]);
+            const List& phylo_info(chrom_phylo_info[j]);
             std::vector<double> branch_lens = as<std::vector<double>>(
                 phylo_info["branch_lens"]);
             arma::Mat<uint64> edges = as<arma::Mat<uint64>>(phylo_info["edges"]);
@@ -419,7 +419,7 @@ private:
             rate_ = samplers[0].location.bounds.end_rate -
                 samplers[0].location.bounds.start_rate;
         }
-        seq_rates = std::vector<double>(tree_size, rate_);
+        chrom_rates = std::vector<double>(tree_size, rate_);
 
         return;
     }
@@ -445,10 +445,10 @@ private:
         /*
          Update overall sequence rate:
          */
-        seq_rates[b2] = seq_rates[b1];
+        chrom_rates[b2] = chrom_rates[b1];
 
         // Set exponential distribution to use this sequence's rate:
-        distr.param(std::exponential_distribution<double>::param_type(seq_rates[b2]));
+        distr.param(std::exponential_distribution<double>::param_type(chrom_rates[b2]));
 
         return;
     }

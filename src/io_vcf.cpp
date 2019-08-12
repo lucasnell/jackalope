@@ -304,7 +304,7 @@ bool WriterVCF::iterate(std::string& pos_str,
 SEXP read_vcfr(SEXP reference_ptr,
                const std::vector<std::string>& var_names,
                const std::vector<std::vector<std::string>>& haps_list,
-               const std::vector<uint64>& seq_inds,
+               const std::vector<uint64>& chrom_inds,
                const std::vector<uint64>& pos,
                const std::vector<std::string>& ref_chrom) {
 
@@ -319,7 +319,7 @@ SEXP read_vcfr(SEXP reference_ptr,
 
         const std::string& ref(ref_chrom[mut_i]);
         const std::vector<std::string>& haps(haps_list[mut_i]);
-        const uint64& seq_i(seq_inds[mut_i]);
+        const uint64& chrom_i(chrom_inds[mut_i]);
 
         for (uint64 var_i = 0; var_i < n_vars; var_i++) {
 
@@ -329,7 +329,7 @@ SEXP read_vcfr(SEXP reference_ptr,
             if (alt.size() == 0 || alt == ref) continue;
 
             // Else, mutate accordingly:
-            VarChrom& var_chrom((*var_set)[var_i][seq_i]);
+            VarChrom& var_chrom((*var_set)[var_i][chrom_i]);
 
             if (alt.size() == ref.size()) {
                 /*
@@ -410,9 +410,9 @@ SEXP read_vcfr(SEXP reference_ptr,
     /*
      Go back and re-calculate positions and variant sequence sizes
      */
-    for (uint64 seq_i = 0; seq_i < n_chroms; seq_i++) {
+    for (uint64 chrom_i = 0; chrom_i < n_chroms; chrom_i++) {
         for (uint64 var_i = 0; var_i < n_vars; var_i++) {
-            VarChrom& var_chrom((*var_set)[var_i][seq_i]);
+            VarChrom& var_chrom((*var_set)[var_i][chrom_i]);
             var_chrom.calc_positions();
         }
     }

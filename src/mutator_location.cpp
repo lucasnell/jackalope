@@ -287,16 +287,16 @@ double LocationSampler::deletion_rate_change(const uint64& del_size,
     var_chrom->set_chrom_chunk(seq, start, end - start + 1, mut_i);
 
     double r, out = 0;
-    uint64 seq_i = 0;
+    uint64 chrom_i = 0;
     uint64 idx = regions.mut_tip();
 
-    while (seq_i < seq.size()) {
+    while (chrom_i < seq.size()) {
         const Region& reg(regions.tips[idx]);
         if (!reg.deleted) {
             r = 0;
-            while (((seq_i + start) <= reg.end) && (seq_i < seq.size())) {
-                r -= reg.gamma * nt_rates[seq[seq_i]];
-                seq_i++;
+            while (((chrom_i + start) <= reg.end) && (chrom_i < seq.size())) {
+                r -= reg.gamma * nt_rates[seq[chrom_i]];
+                chrom_i++;
             }
             out += r;
             del_rate_changes.push_back(r);
@@ -430,7 +430,7 @@ inline double LocationSampler::partial_gamma_rate___(
     }
 
     // Now taking care of nucleotides after the last Mutation
-    while (pos <= end && pos < var_chrom->seq_size) {
+    while (pos <= end && pos < var_chrom->chrom_size) {
         char c = var_chrom->get_char_(pos, mut_i);
         out += nt_rates[c];
         ++pos;
@@ -637,7 +637,7 @@ inline void LocationSampler::cdf_region_sample(uint64& pos,
     }
 
     // Now taking care of nucleotides after the last Mutation
-    while (pos <= end && pos < var_chrom->seq_size) {
+    while (pos <= end && pos < var_chrom->chrom_size) {
         char c = var_chrom->get_char_(pos, mut_i);
         cum_wt += nt_rates[c];
         if (cum_wt > u) return;

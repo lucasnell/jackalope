@@ -43,7 +43,7 @@ using namespace Rcpp;
 // Basic information to construct reads
 struct IlluminaReadConstrInfo {
     uint64 read_length;
-    uint64 seq_ind;
+    uint64 chrom_ind;
     uint64 frag_len;
     uint64 frag_start;
     std::vector<std::string> reads;
@@ -57,7 +57,7 @@ struct IlluminaReadConstrInfo {
                            const uint64& read_length_,
                            const std::string barcode_)
         : read_length(read_length_),
-          seq_ind(0),
+          chrom_ind(0),
           frag_len(0),
           frag_start(0),
           reads(),
@@ -76,7 +76,7 @@ struct IlluminaReadConstrInfo {
         }
     }
     IlluminaReadConstrInfo(const IlluminaReadConstrInfo& other)
-        : read_length(other.read_length), seq_ind(other.seq_ind),
+        : read_length(other.read_length), chrom_ind(other.chrom_ind),
           frag_len(other.frag_len), frag_start(other.frag_start),
           reads(other.reads), quals(other.quals),
           read_chrom_spaces(other.read_chrom_spaces), barcode(other.barcode) {};
@@ -209,18 +209,18 @@ public:
         /*
          Add indels:
          */
-        uint64 seq_pos = read.size() - 1ULL;
+        uint64 chrom_pos = read.size() - 1ULL;
         while (!insertions.empty() || !deletions.empty()) {
-            if (!insertions.empty() && seq_pos == insertions.back()) {
+            if (!insertions.empty() && chrom_pos == insertions.back()) {
                 char c = alias_sampler::bases[static_cast<uint64>(runif_01(eng) * 4.0)];
-                read.insert(seq_pos + 1, 1, c);
+                read.insert(chrom_pos + 1, 1, c);
                 insertions.pop_back();
-            } else if (!deletions.empty() && seq_pos == deletions.back()) {
-                read.erase(seq_pos, 1);
+            } else if (!deletions.empty() && chrom_pos == deletions.back()) {
+                read.erase(chrom_pos, 1);
                 deletions.pop_back();
             }
-            if (seq_pos == 0) break;
-            seq_pos--;
+            if (chrom_pos == 0) break;
+            chrom_pos--;
         }
         if (qual.size() != read.size()) qual.resize(read.size());
         /*
@@ -295,7 +295,7 @@ public:
 
     /* __ Samplers __ */
     // Samples index for which genome-sequence to sequence
-    AliasSampler seq_sampler;
+    AliasSampler chrom_sampler;
     // Samples Illumina qualities and errors, one `IlluminaQualityError` for each read
     std::vector<IlluminaQualityError> qual_errors;
     // Samples fragment lengths:
@@ -303,7 +303,7 @@ public:
 
 
     /* __ Info __ */
-    std::vector<uint64> seq_lengths;    // genome-sequence lengths
+    std::vector<uint64> chrom_lengths;    // genome-sequence lengths
     const T* sequences;                 // pointer to `const T`
     uint64 read_length;                 // Length of reads
     bool paired;                        // Boolean for whether to do paired-end reads
@@ -314,7 +314,7 @@ public:
 
     IlluminaOneGenome() : sequences(nullptr) {};
     // For paired-end reads:
-    IlluminaOneGenome(const T& seq_object,
+    IlluminaOneGenome(const T& chrom_object,
                       const bool& matepair_,
                       const double& frag_len_shape,
                       const double& frag_len_scale,
@@ -329,17 +329,17 @@ public:
                       const double& ins_prob2,
                       const double& del_prob2,
                       const std::string& barcode)
-        : seq_sampler(),
+        : chrom_sampler(),
           qual_errors(),
           frag_lengths(frag_len_shape, frag_len_scale),
-          seq_lengths(seq_object.seq_sizes()),
-          sequences(&seq_object),
+          chrom_lengths(chrom_object.chrom_sizes()),
+          sequences(&chrom_object),
           read_length(qual_probs1[0].size()),
           paired(true),
           matepair(matepair_),
           ins_probs(2),
           del_probs(2),
-          name(seq_object.name),
+          name(chrom_object.name),
           insertions(2),
           deletions(2),
           frag_len_min(frag_len_min_),
@@ -359,7 +359,7 @@ public:
               del_probs[1] = del_prob2;
           };
     // Single-end reads
-    IlluminaOneGenome(const T& seq_object,
+    IlluminaOneGenome(const T& chrom_object,
                       const double& frag_len_shape,
                       const double& frag_len_scale,
                       const uint64& frag_len_min_,
@@ -369,17 +369,17 @@ public:
                       const double& ins_prob,
                       const double& del_prob,
                       const std::string& barcode)
-        : seq_sampler(),
+        : chrom_sampler(),
           qual_errors{IlluminaQualityError(qual_probs, quals)},
           frag_lengths(frag_len_shape, frag_len_scale),
-          seq_lengths(seq_object.seq_sizes()),
-          sequences(&seq_object),
+          chrom_lengths(chrom_object.chrom_sizes()),
+          sequences(&chrom_object),
           read_length(qual_probs[0].size()),
           paired(false),
           matepair(false),
           ins_probs(1),
           del_probs(1),
-          name(seq_object.name),
+          name(chrom_object.name),
           insertions(1),
           deletions(1),
           frag_len_min(frag_len_min_),
@@ -391,10 +391,10 @@ public:
           };
 
     IlluminaOneGenome(const IlluminaOneGenome& other)
-        : seq_sampler(other.seq_sampler),
+        : chrom_sampler(other.chrom_sampler),
           qual_errors(other.qual_errors),
           frag_lengths(other.frag_lengths),
-          seq_lengths(other.seq_lengths),
+          chrom_lengths(other.chrom_lengths),
           sequences(other.sequences),
           read_length(other.read_length),
           paired(other.paired),
@@ -427,7 +427,7 @@ public:
      This is used when making multiple samplers that share most info except for
      that related to the sequence object.
      */
-    void add_chrom_info(const T& seq_object, const std::string& barcode);
+    void add_chrom_info(const T& chrom_object, const std::string& barcode);
 
 
 
@@ -459,7 +459,7 @@ protected:
      Sample a sequence, indels, fragment length, and starting position for the fragment.
      Lastly, it sets the sequence spaces required for these reads.
      */
-    void seq_indels_frag(pcg64& eng);
+    void chrom_indels_frag(pcg64& eng);
 
 
     /*

@@ -329,17 +329,17 @@ void append_ref_ind(RefGenome& ref,
             buffer[bytes_read] = '\0';
 
             // Recast buffer as a std::string:
-            std::string seq_str(buffer);
+            std::string chrom_str(buffer);
 
             // Remove newlines
-            seq_str.erase(remove(seq_str.begin(), seq_str.end(), '\n'),
-                          seq_str.end());
+            chrom_str.erase(remove(chrom_str.begin(), chrom_str.end(), '\n'),
+                          chrom_str.end());
 
             // Filter out weird characters and remove soft masking if requested
-            filter_nucleos(seq_str, remove_soft_mask);
+            filter_nucleos(chrom_str, remove_soft_mask);
 
-            rs.nucleos += seq_str;
-            ref.total_size += seq_str.size();
+            rs.nucleos += chrom_str;
+            ref.total_size += chrom_str.size();
 
             // Check for errors.
             if (bytes_read < static_cast<sint64>(partial_len)) {
@@ -446,8 +446,8 @@ inline void write_ref_fasta__(const std::string& file_name,
         std::string name = '>' + ref[i].name + '\n';
         file.write(name);
 
-        const std::string& seq_str(ref[i].nucleos);
-        uint64 num_rows = seq_str.length() / text_width;
+        const std::string& chrom_str(ref[i].nucleos);
+        uint64 num_rows = chrom_str.length() / text_width;
         uint64 n_chars = 0;
 
         for (uint64 i = 0; i < num_rows; i++) {
@@ -456,7 +456,7 @@ inline void write_ref_fasta__(const std::string& file_name,
                 if (prog_bar.check_abort()) break;
                 n_chars = 0;
             }
-            one_line = seq_str.substr(i * text_width, text_width);
+            one_line = chrom_str.substr(i * text_width, text_width);
             one_line += '\n';
             file.write(one_line);
             n_chars += text_width;
@@ -465,13 +465,13 @@ inline void write_ref_fasta__(const std::string& file_name,
         if (prog_bar.is_aborted() || prog_bar.check_abort()) break;
 
         // If there are leftover characters, create a shorter item at the end.
-        if (seq_str.length() % text_width != 0) {
-            one_line = seq_str.substr(text_width * num_rows);
+        if (chrom_str.length() % text_width != 0) {
+            one_line = chrom_str.substr(text_width * num_rows);
             one_line += '\n';
             file.write(one_line);
         }
 
-        prog_bar.increment(seq_str.size());
+        prog_bar.increment(chrom_str.size());
 
     }
 
@@ -574,7 +574,7 @@ void write_vars_fasta__(const std::string& out_prefix,
             uint64 line_start = 0;
             uint64 n_chars = 0;
 
-            while (line_start < var_chrom.seq_size) {
+            while (line_start < var_chrom.chrom_size) {
                 // Check every 10,000 characters for user interrupt:
                 if (n_chars > 10000) {
                     if (prog_bar.check_abort()) break;

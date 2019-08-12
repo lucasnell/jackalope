@@ -61,7 +61,7 @@ MutationTypeSampler make_type_sampler(const arma::mat& Q,
 //'
 void add_one_chrom_ssites(VarSet& var_set,
                         const RefGenome& ref_genome,
-                        const uint64& seq_i,
+                        const uint64& chrom_i,
                         const arma::mat& ss_i,
                         MutationTypeSampler& type_sampler,
                         AliasStringSampler<std::string>& insert_sampler,
@@ -76,11 +76,11 @@ void add_one_chrom_ssites(VarSet& var_set,
     for (uint64 k = 0; k < ss_i.n_rows; k++) {
         uint64 i = ss_i.n_rows - 1 - k;
         pos = ss_i(i, 0);
-        MutationInfo mut = type_sampler.sample(ref_genome[seq_i][pos], eng);
+        MutationInfo mut = type_sampler.sample(ref_genome[chrom_i][pos], eng);
         if (mut.length == 0) {
             for (uint64 j = 1; j < ss_i.n_cols; j++) {
                 if (ss_i(i,j) == 1) {
-                    var_set[j-1][seq_i].add_substitution(mut.nucleo, pos);
+                    var_set[j-1][chrom_i].add_substitution(mut.nucleo, pos);
                 }
             }
         } else if (mut.length > 0) {
@@ -88,19 +88,19 @@ void add_one_chrom_ssites(VarSet& var_set,
             insert_sampler.sample(nts, eng);  // fill w/ random nucleotides
             for (uint64 j = 1; j < ss_i.n_cols; j++) {
                 if (ss_i(i,j) == 1) {
-                    var_set[j-1][seq_i].add_insertion(nts, pos);
+                    var_set[j-1][chrom_i].add_insertion(nts, pos);
                 }
             }
         } else {
             sint64 pos_ = static_cast<sint64>(pos);
-            sint64 size_ = static_cast<sint64>(var_set.min_size(seq_i));
+            sint64 size_ = static_cast<sint64>(var_set.min_size(chrom_i));
             if (pos_ - mut.length > size_) {
                 mut.length = static_cast<sint64>(pos_-size_);
             }
             uint64 del_size = std::abs(mut.length);
             for (uint64 j = 1; j < ss_i.n_cols; j++) {
                 if (ss_i(i,j) == 1) {
-                    var_set[j-1][seq_i].add_deletion(del_size, pos);
+                    var_set[j-1][chrom_i].add_deletion(del_size, pos);
                 }
             }
         }

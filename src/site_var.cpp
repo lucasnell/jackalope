@@ -35,7 +35,7 @@ using namespace Rcpp;
 //'     This value is used to later determine (in fxn `make_gamma_mats`) the
 //'     mean gamma value across the whole genome, which is then used to make sure that
 //'     the overall mean is 1.
-//' @param seq_size_ Length of the focal sequence.
+//' @param chrom_size_ Length of the focal sequence.
 //' @param region_size_ Size of each Gamma region.
 //' @param shape The shape parameter for the Gamma distribution from which
 //'     Gamma values will be derived.
@@ -47,7 +47,7 @@ using namespace Rcpp;
 //'
 void fill_gamma_mat_(arma::mat& gamma_mat,
                      double& gammas_x_sizes,
-                     const uint64& seq_size_,
+                     const uint64& chrom_size_,
                      const uint64& region_size_,
                      const double& shape,
                      const double& invariant,
@@ -55,7 +55,7 @@ void fill_gamma_mat_(arma::mat& gamma_mat,
 
     // Number of gamma values needed:
     uint64 n_gammas = static_cast<uint64>(std::ceil(
-        static_cast<double>(seq_size_) / static_cast<double>(region_size_)));
+        static_cast<double>(chrom_size_) / static_cast<double>(region_size_)));
 
     // Initialize output matrix
     gamma_mat.set_size(n_gammas, 2);
@@ -93,7 +93,7 @@ void fill_gamma_mat_(arma::mat& gamma_mat,
             } else gamma_ = distr(eng);
 
             end_ = start_ + region_size_ - 1;
-            if (i == n_gammas - 1) end_ = seq_size_;
+            if (i == n_gammas - 1) end_ = chrom_size_;
 
             gamma_mat(i,0) = end_;
             gamma_mat(i,1) = gamma_;
@@ -115,7 +115,7 @@ void fill_gamma_mat_(arma::mat& gamma_mat,
             } else gamma_ = 1;
 
             end_ = start_ + region_size_ - 1;
-            if (i == n_gammas - 1) end_ = seq_size_;
+            if (i == n_gammas - 1) end_ = chrom_size_;
 
             gamma_mat(i,0) = end_;
             gamma_mat(i,1) = gamma_;
@@ -135,7 +135,7 @@ void fill_gamma_mat_(arma::mat& gamma_mat,
 
 //' Make matrices of Gamma-region end points and Gamma values for multiple sequences.
 //'
-//' @param seq_sizes Lengths of the sequences in the genome.
+//' @param chrom_sizes Lengths of the sequences in the genome.
 //' @param region_size_ Size of each Gamma region.
 //' @param shape The shape parameter for the Gamma distribution from which
 //'     Gamma values will be derived.
@@ -144,7 +144,7 @@ void fill_gamma_mat_(arma::mat& gamma_mat,
 //' @noRd
 //'
 //[[Rcpp::export]]
-arma::field<arma::mat> make_gamma_mats(const std::vector<uint64>& seq_sizes,
+arma::field<arma::mat> make_gamma_mats(const std::vector<uint64>& chrom_sizes,
                                        const uint64& region_size_,
                                        const double& shape,
                                        const double& invariant) {
@@ -155,7 +155,7 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint64>& seq_sizes,
 
     pcg64 eng = seeded_pcg();
 
-    uint64 n_chroms = seq_sizes.size();
+    uint64 n_chroms = chrom_sizes.size();
 
     /*
      These are used later to make sure the average gamma value across the whole
@@ -163,13 +163,13 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint64>& seq_sizes,
      */
     // Total genome size:
     double total_size = static_cast<double>(
-        std::accumulate(seq_sizes.begin(), seq_sizes.end(), 0));
+        std::accumulate(chrom_sizes.begin(), chrom_sizes.end(), 0));
     // Sum of each gamma value times the region size it represents:
     double gammas_x_sizes = 0;
 
     arma::field<arma::mat> gamma_mats(n_chroms);
     for (uint64 i = 0; i < n_chroms; i++) {
-        fill_gamma_mat_(gamma_mats(i), gammas_x_sizes, seq_sizes[i],
+        fill_gamma_mat_(gamma_mats(i), gammas_x_sizes, chrom_sizes[i],
                         region_size_, shape, invariant, eng);
     }
 
@@ -189,7 +189,7 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint64>& seq_sizes,
 //' Check input Gamma matrices for proper # columns and end points.
 //'
 //' @param mats List of matrices to check.
-//' @param seq_sizes Vector of sequences sizes for all sequences.
+//' @param chrom_sizes Vector of sequences sizes for all sequences.
 //'
 //' @return A length-2 vector of potential error codes and the index (1-based indexing)
 //'     to which matrix was a problem.
@@ -198,7 +198,7 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint64>& seq_sizes,
 //'
 //[[Rcpp::export]]
 void check_gamma_mats(const std::vector<arma::mat>& mats,
-                      const std::vector<uint64>& seq_sizes) {
+                      const std::vector<uint64>& chrom_sizes) {
 
     std::string err_msg = "\nIf providing custom matrices for the ";
     err_msg += "`mats` argument to the `site_var` function, ";
@@ -248,7 +248,7 @@ void check_gamma_mats(const std::vector<arma::mat>& mats,
         }
         // The last end point should be the end of the sequence:
         uint64 last_end = static_cast<uint64>(gamma_mat.col(0).max());
-        if (last_end != seq_sizes[i]) {
+        if (last_end != chrom_sizes[i]) {
             err_msg += "need to have a maximum end point (in the first column) ";
             err_msg += "equal to the size of the associated sequence.";
             error = true;

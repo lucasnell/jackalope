@@ -268,7 +268,7 @@ public:
                 std::deque<uint64>& insertions,
                 std::deque<uint64>& deletions,
                 std::deque<uint64>& substitutions,
-                const uint64& seq_len,
+                const uint64& chrom_len,
                 const uint64& read_length,
                 const uint64& split_pos,
                 const double& passes_left,
@@ -282,9 +282,9 @@ public:
         fill_quals(qual_left, qual_right);
         // Now iterate through and update insertions, deletions, and substitutions:
         uint64 current_length = 0;
-        uint64 seq_pos = 0; // position on the read where events occur
+        uint64 chrom_pos = 0; // position on the read where events occur
         // Amount of extra (i.e., non-read) sequence remaining:
-        uint64 extra_space = seq_len - read_length;
+        uint64 extra_space = chrom_len - read_length;
         double u;
         std::vector<double>* cum_probs = &cum_probs_left;
         while (current_length < read_length) {
@@ -295,7 +295,7 @@ public:
             } else if (u < cum_probs->at(0)) { // ----- insertion
                 // Don't add insertion if it would change read length
                 if (current_length < (read_length - 1)) {
-                    insertions.push_back(seq_pos);
+                    insertions.push_back(chrom_pos);
                     current_length++;
                     extra_space++;
                     if (current_length == split_pos) cum_probs = &cum_probs_right;
@@ -303,14 +303,14 @@ public:
                 current_length++;
             } else if (u < cum_probs->at(1)) { // ----- deletion
                 if (extra_space > 0) {
-                    deletions.push_back(seq_pos);
+                    deletions.push_back(chrom_pos);
                     extra_space--;
                 }
             } else { // ------------------------------- substitution
-                substitutions.push_back(seq_pos);
+                substitutions.push_back(chrom_pos);
                 current_length++;
             }
-            seq_pos++;
+            chrom_pos++;
         }
         return;
     }
@@ -422,7 +422,7 @@ public:
 
     /* __ Samplers __ */
     // Samples index for which genome-sequence to sequence
-    AliasSampler seq_sampler;
+    AliasSampler chrom_sampler;
     // Samples read lengths:
     PacBioReadLenSampler len_sampler;
     // Samples numbers of passes over read:
@@ -432,14 +432,14 @@ public:
 
 
     /* __ Info __ */
-    std::vector<uint64> seq_lengths;    // genome-sequence lengths
+    std::vector<uint64> chrom_lengths;    // genome-sequence lengths
     const T* sequences;                 // pointer to `const T`
     std::string name;
 
 
     PacBioOneGenome() : sequences(nullptr) {};
     // Using lognormal distribution for read sizes:
-    PacBioOneGenome(const T& seq_object,
+    PacBioOneGenome(const T& chrom_object,
                     const double& scale_,
                     const double& sigma_,
                     const double& loc_,
@@ -453,18 +453,18 @@ public:
                     const double& prob_ins_,
                     const double& prob_del_,
                     const double& prob_subst_)
-        : seq_sampler(),
+        : chrom_sampler(),
           len_sampler(scale_, sigma_, loc_, min_read_len_),
           pass_sampler(max_passes_, chi2_params_n_, chi2_params_s_),
           qe_sampler(sqrt_params_, norm_params_, prob_thresh_, prob_ins_,
           prob_del_, prob_subst_),
-          seq_lengths(seq_object.seq_sizes()),
-          sequences(&seq_object),
-          name(seq_object.name) {
+          chrom_lengths(chrom_object.chrom_sizes()),
+          sequences(&chrom_object),
+          name(chrom_object.name) {
         construct_chroms();
     };
     // Using vectors of read lengths and sampling weight for read lengths:
-    PacBioOneGenome(const T& seq_object,
+    PacBioOneGenome(const T& chrom_object,
                     const std::vector<double>& read_probs_,
                     const std::vector<uint64>& read_lens_,
                     const uint64& max_passes_,
@@ -476,23 +476,23 @@ public:
                     const double& prob_ins_,
                     const double& prob_del_,
                     const double& prob_subst_)
-        : seq_sampler(),
+        : chrom_sampler(),
           len_sampler(read_probs_, read_lens_),
           pass_sampler(max_passes_, chi2_params_n_, chi2_params_s_),
           qe_sampler(sqrt_params_, norm_params_, prob_thresh_, prob_ins_,
           prob_del_, prob_subst_),
-          seq_lengths(seq_object.seq_sizes()),
-          sequences(&seq_object),
-          name(seq_object.name) {
+          chrom_lengths(chrom_object.chrom_sizes()),
+          sequences(&chrom_object),
+          name(chrom_object.name) {
         construct_chroms();
     };
 
     PacBioOneGenome(const PacBioOneGenome& other)
-        : seq_sampler(other.seq_sampler),
+        : chrom_sampler(other.chrom_sampler),
           len_sampler(other.len_sampler),
           pass_sampler(other.pass_sampler),
           qe_sampler(other.qe_sampler),
-          seq_lengths(other.seq_lengths),
+          chrom_lengths(other.chrom_lengths),
           sequences(other.sequences),
           name(other.name) {};
 
@@ -514,10 +514,10 @@ public:
      This is used when making multiple samplers that share most info except for
      that related to the sequence object.
      */
-    void add_chrom_info(const T& seq_object) {
-        seq_lengths = seq_object.seq_sizes();
-        sequences = &seq_object;
-        name = seq_object.name;
+    void add_chrom_info(const T& chrom_object) {
+        chrom_lengths = chrom_object.chrom_sizes();
+        sequences = &chrom_object;
+        name = chrom_object.name;
         construct_chroms();
     }
 
@@ -542,18 +542,18 @@ private:
     std::deque<uint64> insertions = std::deque<uint64>(0);
     std::deque<uint64> deletions = std::deque<uint64>(0);
     std::deque<uint64> substitutions = std::deque<uint64>(0);
-    uint64 seq_ind = 0;
+    uint64 chrom_ind = 0;
     uint64 read_length = 0;
     uint64 read_start = 0;
 
     // Construct sequence-sampling probabilities:
     void construct_chroms() {
         std::vector<double> probs_;
-        probs_.reserve(seq_lengths.size());
-        for (uint64 i = 0; i < seq_lengths.size(); i++) {
-            probs_.push_back(static_cast<double>(seq_lengths[i]));
+        probs_.reserve(chrom_lengths.size());
+        for (uint64 i = 0; i < chrom_lengths.size(); i++) {
+            probs_.push_back(static_cast<double>(chrom_lengths[i]));
         }
-        seq_sampler = AliasSampler(probs_);
+        chrom_sampler = AliasSampler(probs_);
     }
 
     // Append quality and read to fastq pool
