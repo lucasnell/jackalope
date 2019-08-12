@@ -64,7 +64,7 @@ struct MutationInfo {
 
 /*
  For constructors, this creates a vector of indices for each char in "TCAG" (0 to 3).
- Because char objects can be easily cast to uints, I can input a char from a sequence
+ Because char objects can be easily cast to uints, I can input a char from a chromosome
  and get out an index to which AliasSampler object to sample from.
  This way is much faster than using an unordered_map.
  Using 8-bit uints bc the char should never be >= 256.

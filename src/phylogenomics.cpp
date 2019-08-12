@@ -2,7 +2,7 @@
 /*
  ********************************************************
 
- Methods for evolving sequences along phylogenies / gene trees
+ Methods for evolving chromosomes along phylogenies / gene trees
 
  ********************************************************
  */
@@ -36,7 +36,7 @@ using namespace Rcpp;
 
 
 /*
- Process one phylogenetic tree for a single sequence with no recombination.
+ Process one phylogenetic tree for a single chromosome with no recombination.
 
  Note that this function should be changed if any of these VarChroms differ from
  each other (within the range specified if recombination = true).
@@ -90,13 +90,13 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
             uint64 n_jumps = 0;
             while (time_jumped <= amt_time && end_ >= start_) {
                 /*
-                 Add mutation here, outputting how much the overall sequence rate should
+                 Add mutation here, outputting how much the overall chromosome rate should
                  change:
                  (`end_` is automatically adjusted for indels)
                  */
                 rate_change = m_samp.mutate(eng, start_, end_);
                 /*
-                 Adjust the overall sequence rate, then update the exponential
+                 Adjust the overall chromosome rate, then update the exponential
                  distribution:
                  */
                 rate += rate_change;
@@ -173,7 +173,7 @@ void PhyloOneChrom::update_var_chrom(const PhyloTree& tree) {
 
 
 /*
- Evolve all sequences along trees.
+ Evolve all chromosomes along trees.
 */
 XPtr<VarSet> PhyloInfo::evolve_chroms(
         SEXP& ref_genome_ptr,
@@ -197,7 +197,7 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
     std::vector<int> status_codes(n_threads, 0);
 
     if (n_chroms != gamma_mats.size()) {
-        std::string err_msg = "\ngamma_mats must be of same length as # sequences in ";
+        std::string err_msg = "\ngamma_mats must be of same length as # chromosomes in ";
         err_msg += "reference";
         throw(Rcpp::exception(err_msg.c_str(), false));
     }
@@ -205,14 +205,14 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
 
     if (n_chroms != phylo_one_chroms.size()) {
         std::string err_msg = "\n# tips in phylo. info must be of same length as ";
-        err_msg += "# sequences in reference genome";
+        err_msg += "# chromosomes in reference genome";
         throw(Rcpp::exception(err_msg.c_str(), false));
     }
 
     for (uint64 i = 0; i < n_chroms; i++) {
         if (gamma_mats[i](gamma_mats[i].n_rows-1,0) != (*var_set)[0][i].size()) {
             std::string err_msg = "\nGamma matrices must have max values equal to ";
-            err_msg += "the respective sequence's length.\n";
+            err_msg += "the respective chromosome's length.\n";
             err_msg += "This error occurred on Gamma matrix number ";
             err_msg += std::to_string(i+1);
             throw(Rcpp::exception(err_msg.c_str(), false));
@@ -256,7 +256,7 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
         // Set values for variant info and sampler:
         chrom_phylo.set_samp_var_info(*var_set, *sampler_base, i, gamma_mat);
 
-        // Evolve the sequence using the chrom_phylo object:
+        // Evolve the chromosome using the chrom_phylo object:
         status_code = chrom_phylo.evolve(eng, prog_bar);
 
     }
@@ -308,7 +308,7 @@ SEXP phylo_info_to_trees(const List& genome_phylo_info) {
 
 
 
-//' Evolve all sequences in a reference genome.
+//' Evolve all chromosomes in a reference genome.
 //'
 //' @noRd
 //'

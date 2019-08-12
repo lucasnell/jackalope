@@ -2,7 +2,7 @@
 /*
  ********************************************************
 
- Functions to create new sequences.
+ Functions to create new chromosomes.
 
  ********************************************************
  */
@@ -39,7 +39,7 @@ using namespace Rcpp;
  ========================================================================================
  ========================================================================================
 
- Random sequences
+ Random chromosomes
 
  ========================================================================================
  ========================================================================================
@@ -48,7 +48,7 @@ using namespace Rcpp;
 
 
 /*
- Template that does most of the work for creating new sequences for the following two
+ Template that does most of the work for creating new chromosomes for the following two
  functions when `len_sd > 0`.
  Classes `OuterClass` and `InnerClass` can be `std::vector<std::string>` and
  `std::string` or `RefGenome` and `RefChrom`.
@@ -115,13 +115,13 @@ OuterClass create_chromosomes_(const uint64& n_chroms,
 
         InnerClass& seq(seqs_out[i]);
 
-        // Get length of output sequence:
+        // Get length of output chromosome:
         uint64 len;
         if (len_sd > 0) {
             len = static_cast<uint64>(distr(engine));
             if (len < 1) len = 1;
         } else len = len_mean;
-        // Sample sequence:
+        // Sample chromosome:
         seq.reserve(len);
         for (uint64 j = 0; j < len; j++) {
             uint64 k = sampler.sample(engine);
@@ -142,14 +142,14 @@ OuterClass create_chromosomes_(const uint64& n_chroms,
 
 //' Create `RefGenome` pointer based on nucleotide equilibrium frequencies.
 //'
-//' Function to create random sequences for a new reference genome object.
+//' Function to create random chromosomes for a new reference genome object.
 //'
-//' Note that this function will never return empty sequences.
+//' Note that this function will never return empty chromosomes.
 //'
-//' @param n_chroms Number of sequences.
-//' @param len_mean Mean for the gamma distribution for sequence sizes.
-//' @param len_sd Standard deviation for the gamma distribution for sequence sizes.
-//'     If set to `<= 0`, all sequences will be the same length.
+//' @param n_chroms Number of chromosomes.
+//' @param len_mean Mean for the gamma distribution for chromosome sizes.
+//' @param len_sd Standard deviation for the gamma distribution for chromosome sizes.
+//'     If set to `<= 0`, all chromosomes will be the same length.
 //' @param pi_tcag Vector of nucleotide equilibrium frequencies for
 //'     "T", "C", "A", and "G", respectively.
 //' @param n_threads Number of threads to use via OpenMP.
@@ -186,14 +186,14 @@ SEXP create_genome_cpp(const uint64& n_chroms,
 
 
 
-//' Create random sequences as a character vector.
+//' Create random chromosomes as a character vector.
 //'
 //' This function is used internally for testing.
 //'
 //'
 //' @inheritParams create_genome
 //'
-//' @return Character vector of sequence strings.
+//' @return Character vector of chromosome strings.
 //'
 //'
 //' @noRd

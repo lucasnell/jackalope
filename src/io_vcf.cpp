@@ -32,7 +32,7 @@ using namespace Rcpp;
 
 /*
  Determine whether this variant should be included in a VCF line for given
- sequence starting and ending positions.
+ chromosome starting and ending positions.
  If this variant has a deletion at the input position, this method updates that
  and the boolean for whether the line is still expanding (changes it to true).
  */
@@ -107,7 +107,7 @@ void OneVarChromVCF::dump(std::vector<std::string>& unq_alts,
         /*
          First create alternate string:
          */
-        // Fill with reference sequence:
+        // Fill with reference chromosome:
         std::string alt_str = ref_str;
 
         // Add mutations from back:
@@ -183,7 +183,7 @@ void OneVarChromVCF::dump(std::vector<std::string>& unq_alts,
 
 
 /*
- Set the strings for the sequence position (`POS`), reference sequence (`REF`),
+ Set the strings for the chromosome position (`POS`), reference chromosome (`REF`),
  alternative alleles (`ALT`), and genotype information (`GT` format field)
  to add to a new line in the VCF file.
  */
@@ -203,7 +203,7 @@ bool WriterVCF::iterate(std::string& pos_str,
      */
     bool still_growing = true;
     /*
-     Now going through sequences until it's no longer merging, updating the starting
+     Now going through chromosomes until it's no longer merging, updating the starting
      and ending positions each time:
      */
     while (still_growing) {
@@ -213,7 +213,7 @@ bool WriterVCF::iterate(std::string& pos_str,
         }
     }
 
-    // Create reference sequence:
+    // Create reference chromosome:
     ref_str.reserve(mut_pos.second - mut_pos.first + 1);
     if (mut_pos.second >= ref_nts->size()) {
         stop(std::string("\nPosition ") + std::to_string(mut_pos.second) +
@@ -237,7 +237,7 @@ bool WriterVCF::iterate(std::string& pos_str,
     }
     /*
      `do_write` will be false if overlapping mutations result in the reference
-     sequence again.
+     chromosome again.
      It being false should be a very rare occurrence.
      */
     bool do_write = !unq_alts.empty();
@@ -353,7 +353,7 @@ SEXP read_vcfr(SEXP reference_ptr,
                 std::string alt_copy = alt;
 
                 /*
-                 For all sequences but the last in the REF string, just make
+                 For all chromosomes but the last in the REF string, just make
                  them substitutions if they differ from ALT.
                  */
                 uint64 i = 0;
@@ -379,7 +379,7 @@ SEXP read_vcfr(SEXP reference_ptr,
                  ------------
                  */
                 /*
-                 For all sequences in the ALT string, just make them substitutions
+                 For all chromosomes in the ALT string, just make them substitutions
                  if they differ from REF.
                  (Note that this goes to the end of ALT, not REF, as it does for
                  insertions.)
@@ -408,7 +408,7 @@ SEXP read_vcfr(SEXP reference_ptr,
 
 
     /*
-     Go back and re-calculate positions and variant sequence sizes
+     Go back and re-calculate positions and variant chromosome sizes
      */
     for (uint64 chrom_i = 0; chrom_i < n_chroms; chrom_i++) {
         for (uint64 var_i = 0; var_i < n_vars; var_i++) {

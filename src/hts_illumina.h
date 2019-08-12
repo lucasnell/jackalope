@@ -283,7 +283,7 @@ private:
 
 /*
  Template class to combine everything for Illumina sequencing of a single genome.
- (We will need multiple of these objects to sequence a `VarSet` class.
+ (We will need multiple of these objects to chromosome a `VarSet` class.
   See `IlluminaVariants` class below.)
 
  `T` should be `VarGenome` or `RefGenome`
@@ -294,7 +294,7 @@ class IlluminaOneGenome {
 public:
 
     /* __ Samplers __ */
-    // Samples index for which genome-sequence to sequence
+    // Samples index for which genome-chromosome to chromosome
     AliasSampler chrom_sampler;
     // Samples Illumina qualities and errors, one `IlluminaQualityError` for each read
     std::vector<IlluminaQualityError> qual_errors;
@@ -303,8 +303,8 @@ public:
 
 
     /* __ Info __ */
-    std::vector<uint64> chrom_lengths;    // genome-sequence lengths
-    const T* sequences;                 // pointer to `const T`
+    std::vector<uint64> chrom_lengths;    // genome-chromosome lengths
+    const T* chromosomes;                 // pointer to `const T`
     uint64 read_length;                 // Length of reads
     bool paired;                        // Boolean for whether to do paired-end reads
     bool matepair;                      // Boolean for whether to do mate-pair reads
@@ -312,7 +312,7 @@ public:
     std::vector<double> del_probs;      // Per-base prob. of a deletion, reads 1 and 2
     std::string name;
 
-    IlluminaOneGenome() : sequences(nullptr) {};
+    IlluminaOneGenome() : chromosomes(nullptr) {};
     // For paired-end reads:
     IlluminaOneGenome(const T& chrom_object,
                       const bool& matepair_,
@@ -333,7 +333,7 @@ public:
           qual_errors(),
           frag_lengths(frag_len_shape, frag_len_scale),
           chrom_lengths(chrom_object.chrom_sizes()),
-          sequences(&chrom_object),
+          chromosomes(&chrom_object),
           read_length(qual_probs1[0].size()),
           paired(true),
           matepair(matepair_),
@@ -373,7 +373,7 @@ public:
           qual_errors{IlluminaQualityError(qual_probs, quals)},
           frag_lengths(frag_len_shape, frag_len_scale),
           chrom_lengths(chrom_object.chrom_sizes()),
-          sequences(&chrom_object),
+          chromosomes(&chrom_object),
           read_length(qual_probs[0].size()),
           paired(false),
           matepair(false),
@@ -395,7 +395,7 @@ public:
           qual_errors(other.qual_errors),
           frag_lengths(other.frag_lengths),
           chrom_lengths(other.chrom_lengths),
-          sequences(other.sequences),
+          chromosomes(other.chromosomes),
           read_length(other.read_length),
           paired(other.paired),
           matepair(other.matepair),
@@ -410,7 +410,7 @@ public:
 
 
 
-    // Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality)
+    // Sample one set of read strings (each with 4 lines: ID, chromosome, "+", quality)
     // `U` should be a std::string or std::vector<char>
     template <typename U>
     void one_read(std::vector<U>& fastq_pools, pcg64& eng);
@@ -425,7 +425,7 @@ public:
     /*
      Add information about a RefGenome or VarGenome object
      This is used when making multiple samplers that share most info except for
-     that related to the sequence object.
+     that related to the chromosome object.
      */
     void add_chrom_info(const T& chrom_object, const std::string& barcode);
 
@@ -444,34 +444,34 @@ protected:
     IlluminaReadConstrInfo constr_info;
 
 
-    // Construct sequence-sampling probabilities:
+    // Construct chromosome-sampling probabilities:
     void construct_chroms();
 
 
     // Sample for insertion and deletion positions
     void sample_indels(pcg64& eng);
 
-    // Adjust sequence spaces
+    // Adjust chromosome spaces
     void adjust_chrom_spaces();
 
 
     /*
-     Sample a sequence, indels, fragment length, and starting position for the fragment.
-     Lastly, it sets the sequence spaces required for these reads.
+     Sample a chromosome, indels, fragment length, and starting position for the fragment.
+     Lastly, it sets the chromosome spaces required for these reads.
      */
     void chrom_indels_frag(pcg64& eng);
 
 
     /*
      Same as above, but for duplicates.
-     This means skipping the sequence and fragment info parts.
+     This means skipping the chromosome and fragment info parts.
      */
     void just_indels(pcg64& eng);
 
 
 
     /*
-     Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality),
+     Sample one set of read strings (each with 4 lines: ID, chromosome, "+", quality),
      then append that to the `fastq_pools` vector.
      This function does NOT do anything with fragments.
      That should be done outside this function.

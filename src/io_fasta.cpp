@@ -55,9 +55,9 @@ void parse_fasta_line(const std::string& line, const bool& cut_names,
             name_i = line.substr(1, line.size());
         }
         RefChrom seq(name_i, "");
-        ref.sequences.push_back(seq);
+        ref.chromosomes.push_back(seq);
     } else {
-        ref.sequences.back().nucleos += line;
+        ref.chromosomes.back().nucleos += line;
         ref.total_size += line.size();
     }
     return;
@@ -129,7 +129,7 @@ void append_ref_noind(RefGenome& ref,
 
     // Remove weird characters and remove soft masking if desired:
     for (uint64 i = 0; i < ref.size(); i++) {
-        filter_nucleos(ref.sequences[i].nucleos, remove_soft_mask);
+        filter_nucleos(ref.chromosomes[i].nucleos, remove_soft_mask);
     }
 
     return;
@@ -141,10 +141,10 @@ void append_ref_noind(RefGenome& ref,
 //' Read a non-indexed fasta file to a \code{RefGenome} object.
 //'
 //' @param file_names File names of the fasta file(s).
-//' @param cut_names Boolean for whether to cut sequence names at the first space.
+//' @param cut_names Boolean for whether to cut chromosome names at the first space.
 //'     Defaults to \code{TRUE}.
 //' @param remove_soft_mask Boolean for whether to remove soft-masking by making
-//'    sequences all uppercase. Defaults to \code{TRUE}.
+//'    chromosomes all uppercase. Defaults to \code{TRUE}.
 //'
 //' @return Nothing.
 //'
@@ -303,19 +303,19 @@ void append_ref_ind(RefGenome& ref,
         Rcpp::stop(e);
     }
 
-    const uint64 n_chroms0 = ref.size(); // starting # sequences
+    const uint64 n_chroms0 = ref.size(); // starting # chromosomes
     uint64 n_new_chroms = offsets.size();
     uint64 LIMIT = 4194304;
-    ref.sequences.resize(n_chroms0 + n_new_chroms, RefChrom());
+    ref.chromosomes.resize(n_chroms0 + n_new_chroms, RefChrom());
 
     for (uint64 i = 0; i < n_new_chroms; i++) {
 
         Rcpp::checkUserInterrupt();
 
-        RefChrom& rs(ref.sequences[i+n_chroms0]);
+        RefChrom& rs(ref.chromosomes[i+n_chroms0]);
         rs.name = names[i];
 
-        // Length of the whole sequence including newlines
+        // Length of the whole chromosome including newlines
         uint64 len = lengths[i] + lengths[i] / line_lens[i] + 1;
 
         sint64 bytes_read;
@@ -373,11 +373,11 @@ void append_ref_ind(RefGenome& ref,
 //'
 //' @param file_name File name of the fasta file.
 //' @param remove_soft_mask Boolean for whether to remove soft-masking by making
-//'    sequences all uppercase. Defaults to \code{TRUE}.
-//' @param offsets Vector of sequence offsets from the fasta index file.
-//' @param names Vector of sequence names from the fasta index file.
-//' @param lengths Vector of sequence lengths from the fasta index file.
-//' @param line_lens Vector of sequence line lengths from the fasta index file.
+//'    chromosomes all uppercase. Defaults to \code{TRUE}.
+//' @param offsets Vector of chromosome offsets from the fasta index file.
+//' @param names Vector of chromosome names from the fasta index file.
+//' @param lengths Vector of chromosome lengths from the fasta index file.
+//' @param line_lens Vector of chromosome line lengths from the fasta index file.
 //'
 //' @return Nothing.
 //'

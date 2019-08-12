@@ -112,7 +112,7 @@ inline void RegionTree::construct_tips_one_row(const arma::mat& gamma_mat,
         sizes = std::vector<uint64>(1, size);
     }
 
-    // String to store sequence info:
+    // String to store chromosome info:
     std::string seq;
     seq.reserve(sizes[0] + 1);
     double rate;
@@ -460,14 +460,14 @@ void LocationSampler::new_bounds(const uint64& start,
     if (start_end_set && (start == start_pos) && (end == end_pos)) return;
 
     if ((start >= var_chrom->size()) || (end >= var_chrom->size())) {
-        stop("start or end in update_start_end is >= variant sequence size");
+        stop("start or end in update_start_end is >= variant chromosome size");
     }
     if (start > end) stop("start > end in update_start_end");
 
     start_pos = start;
     end_pos = end;
 
-    // If they point to full sequence starts and ends, then this is easy:
+    // If they point to full chromosome starts and ends, then this is easy:
     if ((start == 0) && (end == var_chrom->size())) {
         start_rate = 0;
         end_rate = regions.total_rate;

@@ -80,7 +80,7 @@ void write_bed(std::string out_prefix,
 
     if (chrom_names.size() != gamma_mats.size()) {
         str_stop({"\nIn internal function `write_bed`, the list of gamma matrices ",
-                 "is not the same length as the vector of sequence names. ",
+                 "is not the same length as the vector of chromosome names. ",
                  "Since the check for this is already done in `site_var`, ",
                  "I believe that something very fishy is going on..."});
     }

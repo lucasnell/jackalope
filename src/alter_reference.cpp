@@ -1,5 +1,5 @@
 //
-// Alter reference genome sequences
+// Alter reference genome chromosomes
 //
 
 
@@ -38,14 +38,14 @@ namespace alter_scaffs {
 // ======================================================================================
 // ======================================================================================
 
-//  Merge sequences
+//  Merge chromosomes
 
 // ======================================================================================
 // ======================================================================================
 
 
 
-//' Merge a reference genome into a single sequence.
+//' Merge a reference genome into a single chromosome.
 //'
 //'
 //' @param ref_genome_ptr An external pointer (R class \code{externalptr}) to a
@@ -62,12 +62,12 @@ namespace alter_scaffs {
 void merge_chromosomes_cpp(SEXP ref_genome_ptr) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    std::deque<RefChrom>& seqs(ref_genome->sequences);
+    std::deque<RefChrom>& seqs(ref_genome->chromosomes);
 
     // Shuffling ref_genome info.
     std::random_shuffle(seqs.begin(), seqs.end(), alter_scaffs::rand_wrapper);
 
-    // Merging the back sequences to the first one:
+    // Merging the back chromosomes to the first one:
     std::string& nts(seqs.front().nucleos);
     ref_genome->old_names.push_back(seqs.front().name);
     seqs.front().name = "MERGE";
@@ -99,18 +99,18 @@ void merge_chromosomes_cpp(SEXP ref_genome_ptr) {
 // ======================================================================================
 // ======================================================================================
 
-//  Filter sequences
+//  Filter chromosomes
 
 // ======================================================================================
 // ======================================================================================
 
-//' Filter reference genome sequences by size or for a proportion of total nucleotides.
+//' Filter reference genome chromosomes by size or for a proportion of total nucleotides.
 //'
 //'
 //' @inheritParams ref_genome_ptr merge_chromosomes
-//' @param min_chrom_size Integer minimum sequence size to keep.
+//' @param min_chrom_size Integer minimum chromosome size to keep.
 //'     Defaults to \code{0}, which results in this argument being ignored.
-//' @param out_chrom_prop Numeric proportion of total sequence to keep.
+//' @param out_chrom_prop Numeric proportion of total chromosome to keep.
 //'     Defaults to \code{0}, which results in this argument being ignored.
 //'
 //' @return Nothing. Changes are made in place.
@@ -126,7 +126,7 @@ void filter_chromosomes_cpp(SEXP ref_genome_ptr,
                           const double& out_chrom_prop = 0) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    std::deque<RefChrom>& seqs(ref_genome->sequences);
+    std::deque<RefChrom>& seqs(ref_genome->chromosomes);
 
     // Checking for sensible inputs
     if (out_chrom_prop <= 0 && min_chrom_size == 0) {
@@ -137,10 +137,10 @@ void filter_chromosomes_cpp(SEXP ref_genome_ptr,
     }
     if (out_chrom_prop > 1) stop("out_chrom_prop must be between 0 and 1");
 
-    // Sorting sequence set by size (largest first)
+    // Sorting chromosome set by size (largest first)
     std::sort(seqs.begin(), seqs.end(), std::greater<RefChrom>());
 
-    // Index that will point to the first sequence to be deleted
+    // Index that will point to the first chromosome to be deleted
     uint64 i = 0;
     // Keeping track of total genome size after filtering
     double out_chrom = 0;
@@ -151,7 +151,7 @@ void filter_chromosomes_cpp(SEXP ref_genome_ptr,
             str_stop({"Desired minimum scaffold size is too large. None found. ",
                      "The minimum size is ", std::to_string(seqs[i].size())});
         }
-        // after below, `iter` points to the first sequence smaller than the minimum
+        // after below, `iter` points to the first chromosome smaller than the minimum
         while (seqs[i].size() >= min_chrom_size) {
             out_chrom += static_cast<double>(seqs[i].size());
             ++i;
@@ -188,7 +188,7 @@ void filter_chromosomes_cpp(SEXP ref_genome_ptr,
 // ======================================================================================
 // ======================================================================================
 
-//  Replace Ns with random sequences
+//  Replace Ns with random chromosomes
 
 // ======================================================================================
 // ======================================================================================
@@ -247,7 +247,7 @@ void replace_Ns_cpp(SEXP ref_genome_ptr,
 #endif
     for (uint64 i = 0; i < n_chroms; i++) {
         if (prog_bar.is_aborted() || prog_bar.check_abort()) continue;
-        RefChrom& seq(ref_genome->sequences[i]);
+        RefChrom& seq(ref_genome->chromosomes[i]);
         for (char& c : seq.nucleos) {
             if (c == 'N') c = sampler.sample(eng);
         }

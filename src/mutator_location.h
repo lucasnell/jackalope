@@ -42,7 +42,7 @@ const std::string bases = "TCAG";
  =========================================================================================
 
  Choosing mutation locations based on overall mutation rates that vary by
- (i) nucleotide and (ii) sequence region
+ (i) nucleotide and (ii) chromosome region
 
  =========================================================================================
  =========================================================================================
@@ -60,7 +60,7 @@ struct Region {
     double gamma;
     uint64 start;
     uint64 end;
-    double rate;  // overall rate (including gamma) for the sequence in this region
+    double rate;  // overall rate (including gamma) for the chromosome in this region
     bool deleted;
 
     Region(const double& gamma_, const uint64& start_, const uint64& end_,

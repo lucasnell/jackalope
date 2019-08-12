@@ -35,7 +35,7 @@ using namespace Rcpp;
 //'     This value is used to later determine (in fxn `make_gamma_mats`) the
 //'     mean gamma value across the whole genome, which is then used to make sure that
 //'     the overall mean is 1.
-//' @param chrom_size_ Length of the focal sequence.
+//' @param chrom_size_ Length of the focal chromosome.
 //' @param region_size_ Size of each Gamma region.
 //' @param shape The shape parameter for the Gamma distribution from which
 //'     Gamma values will be derived.
@@ -133,9 +133,9 @@ void fill_gamma_mat_(arma::mat& gamma_mat,
 }
 
 
-//' Make matrices of Gamma-region end points and Gamma values for multiple sequences.
+//' Make matrices of Gamma-region end points and Gamma values for multiple chromosomes.
 //'
-//' @param chrom_sizes Lengths of the sequences in the genome.
+//' @param chrom_sizes Lengths of the chromosomes in the genome.
 //' @param region_size_ Size of each Gamma region.
 //' @param shape The shape parameter for the Gamma distribution from which
 //'     Gamma values will be derived.
@@ -189,7 +189,7 @@ arma::field<arma::mat> make_gamma_mats(const std::vector<uint64>& chrom_sizes,
 //' Check input Gamma matrices for proper # columns and end points.
 //'
 //' @param mats List of matrices to check.
-//' @param chrom_sizes Vector of sequences sizes for all sequences.
+//' @param chrom_sizes Vector of chromosomes sizes for all chromosomes.
 //'
 //' @return A length-2 vector of potential error codes and the index (1-based indexing)
 //'     to which matrix was a problem.
@@ -246,11 +246,11 @@ void check_gamma_mats(const std::vector<arma::mat>& mats,
             error = true;
             break;
         }
-        // The last end point should be the end of the sequence:
+        // The last end point should be the end of the chromosome:
         uint64 last_end = static_cast<uint64>(gamma_mat.col(0).max());
         if (last_end != chrom_sizes[i]) {
             err_msg += "need to have a maximum end point (in the first column) ";
-            err_msg += "equal to the size of the associated sequence.";
+            err_msg += "equal to the size of the associated chromosome.";
             error = true;
             break;
         }

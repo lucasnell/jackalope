@@ -138,11 +138,11 @@ void PacBioOneGenome<T>::one_read(std::vector<U>& fastq_pools,
     U& fastq_pool(fastq_pools[0]);
 
     /*
-    Sample read info, and set the sequence space(s) required for these read(s).
+    Sample read info, and set the chromosome space(s) required for these read(s).
     */
-    // Sample sequence:
+    // Sample chromosome:
     chrom_ind = chrom_sampler.sample(eng);
-    uint64 chrom_len = (*sequences)[chrom_ind].size();
+    uint64 chrom_len = (*chromosomes)[chrom_ind].size();
 
     // Sample read length:
     read_length = len_sampler.sample(eng);
@@ -156,9 +156,9 @@ void PacBioOneGenome<T>::one_read(std::vector<U>& fastq_pools,
                       chrom_len, read_length, split_pos, passes_left, passes_right);
 
     /*
-     The amount of space on the reference/variant sequence needed to create this read.
+     The amount of space on the reference/variant chromosome needed to create this read.
      I'm adding deletions because more deletions mean that I need
-     more sequence bases to achieve the same read length.
+     more chromosome bases to achieve the same read length.
      Insertions means I need fewer.
      */
     read_chrom_space = read_length + deletions.size() - insertions.size();
@@ -170,7 +170,7 @@ void PacBioOneGenome<T>::one_read(std::vector<U>& fastq_pools,
     } else if (read_chrom_space == chrom_len) {
         read_start = 0;
     } else {
-        stop("read_chrom_space should never exceed the sequence length.");
+        stop("read_chrom_space should never exceed the chromosome length.");
     }
 
     // Fill the reads and qualities
@@ -191,7 +191,7 @@ void PacBioOneGenome<T>::re_read(std::vector<U>& fastq_pools,
     /*
      Use the same read info as before.
     */
-    uint64 chrom_len = (*sequences)[chrom_ind].size();
+    uint64 chrom_len = (*chromosomes)[chrom_ind].size();
 
     // Sample for # passes over read:
     pass_sampler.sample(split_pos, passes_left, passes_right, eng, read_length);
@@ -201,16 +201,16 @@ void PacBioOneGenome<T>::re_read(std::vector<U>& fastq_pools,
                       chrom_len, read_length, split_pos, passes_left, passes_right);
 
     /*
-     The amount of space on the reference/variant sequence needed to create this read.
+     The amount of space on the reference/variant chromosome needed to create this read.
      I'm adding deletions because more deletions mean that I need
-     more sequence bases to achieve the same read length.
+     more chromosome bases to achieve the same read length.
      Insertions means I need fewer.
      */
     read_chrom_space = read_length + deletions.size() - insertions.size();
 
     /*
      In the very rare situation where a duplication occurs, then enough deletions
-     happen where the required sequence space exceeds what's available, I'm going
+     happen where the required chromosome space exceeds what's available, I'm going
      to remove deletions until we have enough room.
      */
     while ((read_chrom_space + read_start) > chrom_len) {
@@ -244,7 +244,7 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
     fastq_pool.push_back('@');
     for (const char& c : this->name) fastq_pool.push_back(c);
     fastq_pool.push_back('-');
-    for (const char& c : (*sequences)[chrom_ind].name) fastq_pool.push_back(c);
+    for (const char& c : (*chromosomes)[chrom_ind].name) fastq_pool.push_back(c);
     fastq_pool.push_back('-');
     for (const char& c : std::to_string(read_start)) fastq_pool.push_back(c);
     fastq_pool.push_back('-');
@@ -254,7 +254,7 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
     fastq_pool.push_back('\n');
 
     // Fill in read:
-    (*sequences)[chrom_ind].fill_read(read, 0, read_start, read_chrom_space);
+    (*chromosomes)[chrom_ind].fill_read(read, 0, read_start, read_chrom_space);
 
     // Reverse complement if necessary:
     if (reverse) rev_comp(read, read_chrom_space);
@@ -316,7 +316,7 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
 
 
 
-//' PacBio sequence for reference object.
+//' PacBio chromosome for reference object.
 //'
 //'
 //' @noRd
@@ -383,7 +383,7 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
 
 
 
-//' PacBio sequence for reference object.
+//' PacBio chromosome for reference object.
 //'
 //'
 //' @noRd

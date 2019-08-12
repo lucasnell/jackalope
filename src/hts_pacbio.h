@@ -283,7 +283,7 @@ public:
         // Now iterate through and update insertions, deletions, and substitutions:
         uint64 current_length = 0;
         uint64 chrom_pos = 0; // position on the read where events occur
-        // Amount of extra (i.e., non-read) sequence remaining:
+        // Amount of extra (i.e., non-read) chromosome remaining:
         uint64 extra_space = chrom_len - read_length;
         double u;
         std::vector<double>* cum_probs = &cum_probs_left;
@@ -410,7 +410,7 @@ private:
 
 /*
  Template class to combine everything for PacBio sequencing of a single genome.
- (We will need multiple of these objects to sequence a `VarSet` class.
+ (We will need multiple of these objects to chromosome a `VarSet` class.
  See `PacBioVariants` class below.)
 
  `T` should be `VarGenome` or `RefGenome`
@@ -421,7 +421,7 @@ class PacBioOneGenome {
 public:
 
     /* __ Samplers __ */
-    // Samples index for which genome-sequence to sequence
+    // Samples index for which genome-chromosome to chromosome
     AliasSampler chrom_sampler;
     // Samples read lengths:
     PacBioReadLenSampler len_sampler;
@@ -432,12 +432,12 @@ public:
 
 
     /* __ Info __ */
-    std::vector<uint64> chrom_lengths;    // genome-sequence lengths
-    const T* sequences;                 // pointer to `const T`
+    std::vector<uint64> chrom_lengths;    // genome-chromosome lengths
+    const T* chromosomes;                 // pointer to `const T`
     std::string name;
 
 
-    PacBioOneGenome() : sequences(nullptr) {};
+    PacBioOneGenome() : chromosomes(nullptr) {};
     // Using lognormal distribution for read sizes:
     PacBioOneGenome(const T& chrom_object,
                     const double& scale_,
@@ -459,7 +459,7 @@ public:
           qe_sampler(sqrt_params_, norm_params_, prob_thresh_, prob_ins_,
           prob_del_, prob_subst_),
           chrom_lengths(chrom_object.chrom_sizes()),
-          sequences(&chrom_object),
+          chromosomes(&chrom_object),
           name(chrom_object.name) {
         construct_chroms();
     };
@@ -482,7 +482,7 @@ public:
           qe_sampler(sqrt_params_, norm_params_, prob_thresh_, prob_ins_,
           prob_del_, prob_subst_),
           chrom_lengths(chrom_object.chrom_sizes()),
-          sequences(&chrom_object),
+          chromosomes(&chrom_object),
           name(chrom_object.name) {
         construct_chroms();
     };
@@ -493,11 +493,11 @@ public:
           pass_sampler(other.pass_sampler),
           qe_sampler(other.qe_sampler),
           chrom_lengths(other.chrom_lengths),
-          sequences(other.sequences),
+          chromosomes(other.chromosomes),
           name(other.name) {};
 
 
-    // Add one read string (with 4 lines: ID, sequence, "+", quality) to a FASTQ pool
+    // Add one read string (with 4 lines: ID, chromosome, "+", quality) to a FASTQ pool
     // `U` should be a std::string or std::vector<char>
     template <typename U>
     void one_read(std::vector<U>& fastq_pools, pcg64& eng);
@@ -512,11 +512,11 @@ public:
     /*
      Add information about a RefGenome or VarGenome object
      This is used when making multiple samplers that share most info except for
-     that related to the sequence object.
+     that related to the chromosome object.
      */
     void add_chrom_info(const T& chrom_object) {
         chrom_lengths = chrom_object.chrom_sizes();
-        sequences = &chrom_object;
+        chromosomes = &chrom_object;
         name = chrom_object.name;
         construct_chroms();
     }
@@ -546,7 +546,7 @@ private:
     uint64 read_length = 0;
     uint64 read_start = 0;
 
-    // Construct sequence-sampling probabilities:
+    // Construct chromosome-sampling probabilities:
     void construct_chroms() {
         std::vector<double> probs_;
         probs_.reserve(chrom_lengths.size());

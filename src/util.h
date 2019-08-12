@@ -76,32 +76,32 @@ void clear_memory(U& x) {
 //' GC proportion for a single string.
 //'
 //'
-//' @param sequence String for a single sequence.
-//' @param start Position in sequence at which to begin the calculation.
-//' @param stop Position in sequence at which to end the calculation.
+//' @param chromosome String for a single chromosome.
+//' @param start Position in chromosome at which to begin the calculation.
+//' @param stop Position in chromosome at which to end the calculation.
 //'
-//' @return Proportion of sequence that's a `'G'` or `'C'`.
+//' @return Proportion of chromosome that's a `'G'` or `'C'`.
 //'
 //' @noRd
 //'
-inline double gc_prop(const std::string& sequence) {
-    double total_chrom = sequence.size();
+inline double gc_prop(const std::string& chromosome) {
+    double total_chrom = chromosome.size();
     double total_gc = 0;
     for (uint64 i = 0; i < total_chrom; i++) {
-        if (sequence[i] == 'G' || sequence[i] == 'C') {
+        if (chromosome[i] == 'G' || chromosome[i] == 'C') {
             total_gc += 1;
         }
     }
     double gc_prop = total_gc / total_chrom;
     return gc_prop;
 }
-inline double gc_prop(const std::string& sequence,
+inline double gc_prop(const std::string& chromosome,
                       const uint64& start,
                       const uint64& stop) {
     double total_chrom = stop - start + 1;
     double total_gc = 0;
     for (uint64 i = start; i <= stop; i++) {
-        if (sequence[i] == 'G' || sequence[i] == 'C') {
+        if (chromosome[i] == 'G' || chromosome[i] == 'C') {
             total_gc += 1;
         }
     }
@@ -116,29 +116,29 @@ inline double gc_prop(const std::string& sequence,
 //' @inheritParams gc_prop
 //' @param nt Character to count for the proportion.
 //'
-//' @return Proportion of sequence that's a `nt`.
+//' @return Proportion of chromosome that's a `nt`.
 //'
 //' @noRd
 //'
-inline double nt_prop(const std::string& sequence,
+inline double nt_prop(const std::string& chromosome,
                       const char& nt) {
-    double total_chrom = sequence.size();
+    double total_chrom = chromosome.size();
     double total_nt = 0;
     for (uint64 i = 0; i < total_chrom; i++) {
-        if (sequence[i] == nt) total_nt += 1;
+        if (chromosome[i] == nt) total_nt += 1;
     }
     double nt_prop = total_nt / total_chrom;
     return nt_prop;
 }
-// Overloaded for part of a sequence
-inline double nt_prop(const std::string& sequence,
+// Overloaded for part of a chromosome
+inline double nt_prop(const std::string& chromosome,
                       const char& nt,
                       const uint64& start,
                       const uint64& stop) {
     double total_chrom = stop - start + 1;
     double total_nt = 0;
     for (uint64 i = start; i <= stop; i++) {
-        if (sequence[i] == nt) total_nt += 1;
+        if (chromosome[i] == nt) total_nt += 1;
     }
     double nt_prop = total_nt / total_chrom;
     return nt_prop;

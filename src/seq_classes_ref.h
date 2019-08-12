@@ -5,7 +5,7 @@
 /*
  ********************************************************
 
- Classes to store reference-genome sequence info
+ Classes to store reference-genome chromosome info
 
  ********************************************************
  */
@@ -27,7 +27,7 @@ using namespace Rcpp;
 
 /*
  =========================================
- One reference-genome sequence (e.g., chromosome, scaffold)
+ One reference-genome chromosome (e.g., chromosome, scaffold)
  =========================================
  */
 struct RefChrom {
@@ -56,39 +56,39 @@ struct RefChrom {
         }
         return nucleos[idx];
     }
-    // To resize this sequence
+    // To resize this chromosome
     void reserve(const uint64& n) {
         nucleos.reserve(n);
         return;
     }
-    // To resize this sequence
+    // To resize this chromosome
     void resize(const uint64& n, const char& x) {
         // nucleos.resize(n, x); // the below way should be faster based on testing
         nucleos = std::string(n, x);
         return;
     }
-    // To add character to sequence
+    // To add character to chromosome
     void push_back(const char& nt) {
         nucleos.push_back(nt);
         return;
     }
-    // To add character to sequence
+    // To add character to chromosome
     void operator+=(const char& nt) {
         nucleos += nt;
         return;
     }
-    // To return the size of this sequence
+    // To return the size of this chromosome
     uint64 size() const noexcept {
         return nucleos.size();
     }
-    // For sorting from largest to smallest sequence
+    // For sorting from largest to smallest chromosome
     bool operator > (const RefChrom& other) const noexcept {
         return size() > other.size();
     }
 
     /*
      ------------------
-     For filling a read at a given starting position from a sequence of a
+     For filling a read at a given starting position from a chromosome of a
      given starting position and size.
      Used only for sequencer.
      ------------------
@@ -97,7 +97,7 @@ struct RefChrom {
                    const uint64& read_start,
                    const uint64& chrom_start,
                    uint64 n_to_add) const {
-        // Making sure end doesn't go beyond the sequence bounds
+        // Making sure end doesn't go beyond the chromosome bounds
         if ((chrom_start + n_to_add - 1) >= nucleos.size()) {
             n_to_add = nucleos.size() - chrom_start;
         }
@@ -124,7 +124,7 @@ struct RefGenome {
 
     // Member variables
     uint64 total_size = 0;
-    std::deque<RefChrom> sequences;
+    std::deque<RefChrom> chromosomes;
     bool merged = false;
     // For storing original names if merged:
     std::deque<std::string> old_names = std::deque<std::string>(0);
@@ -133,43 +133,43 @@ struct RefGenome {
 
     // Constructors
     RefGenome()
-        : sequences(std::deque<RefChrom>(0)) {};
+        : chromosomes(std::deque<RefChrom>(0)) {};
     RefGenome(const RefGenome& ref_)
-        : total_size(ref_.total_size), sequences(ref_.sequences),
+        : total_size(ref_.total_size), chromosomes(ref_.chromosomes),
           merged(ref_.merged), old_names(ref_.old_names) {};
     RefGenome(const uint64& N)
-        : sequences(std::deque<RefChrom>(N, RefChrom())) {};
+        : chromosomes(std::deque<RefChrom>(N, RefChrom())) {};
     RefGenome(const std::deque<std::string>& seqs) {
         uint64 n_chroms = seqs.size();
-        sequences = std::deque<RefChrom>(n_chroms, RefChrom());
+        chromosomes = std::deque<RefChrom>(n_chroms, RefChrom());
         for (uint64 i = 0; i < n_chroms; i++) {
-            sequences[i].nucleos = seqs[i];
-            sequences[i].name = "seq" + std::to_string(i);
+            chromosomes[i].nucleos = seqs[i];
+            chromosomes[i].name = "seq" + std::to_string(i);
             total_size += seqs[i].size();
         }
     }
-    // Overloaded operator so sequences can be easily extracted
+    // Overloaded operator so chromosomes can be easily extracted
     // It returns a reference so no copying is done and so changes can be made
     RefChrom& operator[](const uint64& idx) {
-        if (idx >= sequences.size()) {
-            stop("Trying to extract sequence that doesn't exist");
+        if (idx >= chromosomes.size()) {
+            stop("Trying to extract chromosome that doesn't exist");
         }
-        return sequences[idx];
+        return chromosomes[idx];
     }
     const RefChrom& operator[](const uint64& idx) const {
-        if (idx >= sequences.size()) {
-            stop("Trying to extract sequence that doesn't exist");
+        if (idx >= chromosomes.size()) {
+            stop("Trying to extract chromosome that doesn't exist");
         }
-        return sequences[idx];
+        return chromosomes[idx];
     }
-    // To return the number of sequences
+    // To return the number of chromosomes
     uint64 size() const noexcept {
-        return sequences.size();
+        return chromosomes.size();
     }
-    // To return the sequence sizes
+    // To return the chromosome sizes
     std::vector<uint64> chrom_sizes() const {
         std::vector<uint64> out(size());
-        for (uint64 i = 0; i < out.size(); i++) out[i] = sequences[i].size();
+        for (uint64 i = 0; i < out.size(); i++) out[i] = chromosomes[i].size();
         return out;
     }
     // For printing reference genome info
@@ -191,7 +191,7 @@ struct RefGenome {
             for (int i = (num_chroms - 5 + 1); i < num_chroms; i++) inds.push_back(i);
         }
 
-        Rcout << "< Set of " << big_int_format<int>(num_chroms) << " sequences >";
+        Rcout << "< Set of " << big_int_format<int>(num_chroms) << " chromosomes >";
         Rcout << std::endl;
         Rcout << "# Total size: " << big_int_format<uint64>(total_size) << " bp";
         Rcout << std::endl;
@@ -205,7 +205,7 @@ struct RefGenome {
 
         Rprintf("%-*s %s%-*s %*s\n", name_width, "  name",
                 std::string(before_elips - 4, ' ').c_str(),
-                chrom_print_len - (before_elips - 4), "sequence",
+                chrom_print_len - (before_elips - 4), "chromosome",
                 length_width, "length");
 
         for (int i = 0; i < static_cast<int>(inds.size()); i++) {
@@ -214,12 +214,12 @@ struct RefGenome {
                 Rprintf("%-10s %-*s %9s\n", "...", chrom_print_len, "...", "...");
                 continue;
             }
-            const RefChrom& rs(sequences[ind_i]);
+            const RefChrom& rs(chromosomes[ind_i]);
             const std::string& name_i(rs.name);
             const std::string& chrom_i(rs.nucleos);
             // Print name
             Rprintf("%-10.10s ", name_i.c_str());
-            // Print sequence
+            // Print chromosome
             int chrom_i_size = static_cast<int>(chrom_i.size());
             if (chrom_i_size > chrom_print_len){
                 for (int j = 0; j < before_elips; j++) Rcout << chrom_i[j];

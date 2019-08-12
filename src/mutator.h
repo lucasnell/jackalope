@@ -4,7 +4,7 @@
 
 /*
  Combining samplers for location and for mutation type into a mutation sampler for
- a single sequence.
+ a single chromosome.
  */
 
 
@@ -57,7 +57,7 @@ public:
     LocationSampler location;
     // For sampling the type of mutation:
     MutationTypeSampler type;
-    // For new insertion sequences:
+    // For new insertion chromosomes:
     AliasStringSampler<std::string> insert;
 
     MutationSampler() : var_chrom(nullptr) {}
@@ -80,13 +80,13 @@ public:
         return;
     }
 
-    // Add mutation and return the change in the sequence rate that results
+    // Add mutation and return the change in the chromosome rate that results
     double mutate(pcg64& eng);
 
     /*
      Overloaded for only mutating within a range.
      It also updates `end` if an indel occurs in the range.
-     Make sure to keep checking for situation where `end < start` (i.e., sequence section
+     Make sure to keep checking for situation where `end < start` (i.e., chromosome section
      is empty).
      `// ***` mark difference between this and previous `mutate` versions
      */

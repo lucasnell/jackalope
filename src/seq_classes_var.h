@@ -5,7 +5,7 @@
 /*
  ********************************************************
 
- Classes to store variant sequence info.
+ Classes to store variant chromosome info.
 
  ********************************************************
  */
@@ -38,11 +38,11 @@ using namespace Rcpp;
 
 struct Mutation {
 
-    // How this mutation changes the overall sequence size:
+    // How this mutation changes the overall chromosome size:
     sint64 size_modifier;
-    // Position on the old (i.e., reference) sequence:
+    // Position on the old (i.e., reference) chromosome:
     uint64 old_pos;
-    // Position on the new, variant sequence:
+    // Position on the new, variant chromosome:
     uint64 new_pos;
     // Nucleotides associated with this mutation:
     std::string nucleos;
@@ -87,7 +87,7 @@ struct Mutation {
     }
 
 
-    // For easily outputting mutation sequence
+    // For easily outputting mutation chromosome
     const char& operator[](const uint64& idx) const {
         return nucleos[idx];
     }
@@ -116,7 +116,7 @@ class LocationSampler;
 
 /*
  =========================================
- One sequence from one variant haploid genome
+ One chromosome from one variant haploid genome
  =========================================
  */
 
@@ -169,7 +169,7 @@ public:
 
     /*
      ------------------
-     Re-calculate new positions (and total sequence size)
+     Re-calculate new positions (and total chromosome size)
      ------------------
      */
     void calc_positions();
@@ -180,16 +180,16 @@ public:
 
     /*
      ------------------
-     Retrieve a nucleotide (char type) from the variant sequence
-     based on the position in the new, variant sequence
+     Retrieve a nucleotide (char type) from the variant chromosome
+     based on the position in the new, variant chromosome
      ------------------
      */
     char get_nt(const uint64& new_pos) const;
 
     /*
      ------------------
-     Retrieve all nucleotides (i.e., the full sequence; std::string type) from
-     the variant sequence
+     Retrieve all nucleotides (i.e., the full chromosome; std::string type) from
+     the variant chromosome
      ------------------
      */
     std::string get_chrom_full() const;
@@ -198,7 +198,7 @@ public:
 
     /*
      ------------------
-     Set a string object to a chunk of a sequence from the variant sequence.
+     Set a string object to a chunk of a chromosome from the variant chromosome.
      ------------------
      */
     void set_chrom_chunk(std::string& chunk_str,
@@ -218,7 +218,7 @@ public:
 
     /*
      ------------------
-     For filling a read at a given starting position from a sequence of a
+     For filling a read at a given starting position from a chromosome of a
      given starting position and size.
      Used only for sequencer.
      ------------------
@@ -270,7 +270,7 @@ private:
     /*
      ------------------
      Internal function for finding character of either mutation or reference
-     given an index (in the "new", variant sequence) and an iterator pointing to
+     given an index (in the "new", variant chromosome) and an iterator pointing to
      a single Mutation object.
      ------------------
      */
@@ -279,7 +279,7 @@ private:
     /*
      ------------------
      Inner function to return an iterator to the Mutation object nearest to
-     (without being past) an input position on the "new", variant sequence.
+     (without being past) an input position on the "new", variant chromosome.
      ------------------
      */
     uint64 get_mut_(const uint64& new_pos) const;
@@ -328,11 +328,11 @@ public:
         const VarChrom& var_chrom(var_genome[idx]);
         return var_chrom;
     }
-    // To return the number of sequences
+    // To return the number of chromosomes
     uint64 size() const noexcept {
         return var_genome.size();
     }
-    // To return all the sequence sizes
+    // To return all the chromosome sizes
     std::vector<uint64> chrom_sizes() const noexcept {
         std::vector<uint64> out(size());
         for (uint64 i = 0; i < out.size(); i++) out[i] = var_genome[i].size();
@@ -394,7 +394,7 @@ public:
     uint64 size() const noexcept {
         return variants.size();
     }
-    // To return the minimum size of a given sequence
+    // To return the minimum size of a given chromosome
     uint64 min_size(const uint64& i) const {
         uint64 ms = variants[0][i].size();
         for (const VarGenome vg : variants) {

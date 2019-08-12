@@ -5,7 +5,7 @@
 /*
  ********************************************************
 
- Methods for evolving sequences along phylogenies / gene trees
+ Methods for evolving chromosomes along phylogenies / gene trees
 
  ********************************************************
  */
@@ -66,7 +66,7 @@ inline std::vector<uint64> match_(const std::vector<std::string>& ordered_tip_la
 
 
 /*
- Phylogenetic tree info for one sequence range.
+ Phylogenetic tree info for one chromosome range.
 
  * Do all input checks outside this object's creation!
  * `edges` is converted to C++ indices inside this object's constructor.
@@ -124,7 +124,7 @@ struct PhyloTree {
 
 
 /*
- Phylogenetic tree info for one entire sequence.
+ Phylogenetic tree info for one entire chromosome.
 
  The `trees` field contains the actual phylogeny information.
  It is a vector of `PhyloTree` objects, to allow for
@@ -141,7 +141,7 @@ public:
     std::vector<VarChrom*> var_chrom_ptrs;    // pointers to original VarChrom objects
     std::vector<VarChrom> var_chroms;  // blank VarChrom objects to evolve across tree
     std::vector<MutationSampler> samplers; // to do the mutation additions across tree
-    std::vector<double> chrom_rates;   // sequence rates
+    std::vector<double> chrom_rates;   // chromosome rates
     uint64 n_tips;                  // number of tips (i.e., variants)
 
     PhyloOneChrom() {}
@@ -313,7 +313,7 @@ public:
 
         uint64 n_trees = chrom_phylo_info.size();
         if (n_trees == 0) {
-            err_msg = "\nNo trees supplied on sequence " + std::to_string(i+1);
+            err_msg = "\nNo trees supplied on chromosome " + std::to_string(i+1);
             throw(Rcpp::exception(err_msg.c_str(), false));
         }
 
@@ -332,19 +332,19 @@ public:
                 phylo_info["labels"]);
             if (branch_lens.size() != edges.n_rows) {
                 err_msg = "\nBranch lengths and edges don't have the same ";
-                err_msg += "size on sequence " + std::to_string(i+1) + " and tree ";
+                err_msg += "size on chromosome " + std::to_string(i+1) + " and tree ";
                 err_msg += std::to_string(j+1);
                 throw(Rcpp::exception(err_msg.c_str(), false));
             }
             if (branch_lens.size() == 0) {
-                err_msg = "\nEmpty tree on sequence " + std::to_string(i+1);
+                err_msg = "\nEmpty tree on chromosome " + std::to_string(i+1);
                 err_msg += " and tree " + std::to_string(j+1);
                 throw(Rcpp::exception(err_msg.c_str(), false));
             }
             uint64 start = as<uint64>(phylo_info["start"]);
             sint64 end = as<sint64>(phylo_info["end"]);
             if (end < static_cast<sint64>(start)) {
-                err_msg = "\nEnd position < start position on sequence ";
+                err_msg = "\nEnd position < start position on chromosome ";
                 err_msg += std::to_string(i+1) + " and tree " + std::to_string(j+1);
                 throw(Rcpp::exception(err_msg.c_str(), false));
             }
@@ -406,7 +406,7 @@ private:
             samplers[i].new_chrom(var_chroms[i], gamma_mat);
         }
         /*
-         Set up vector of overall sequence rates.
+         Set up vector of overall chromosome rates.
          They should all be the same as the first one to start out.
          */
         double rate_;
@@ -443,11 +443,11 @@ private:
         samplers[b2].location.regions = samplers[b1].location.regions;
 
         /*
-         Update overall sequence rate:
+         Update overall chromosome rate:
          */
         chrom_rates[b2] = chrom_rates[b1];
 
-        // Set exponential distribution to use this sequence's rate:
+        // Set exponential distribution to use this chromosome's rate:
         distr.param(std::exponential_distribution<double>::param_type(chrom_rates[b2]));
 
         return;
@@ -486,7 +486,7 @@ private:
 
 
 /*
- Phylogenetic tree info for all sequences in a genome.
+ Phylogenetic tree info for all chromosomes in a genome.
 
  */
 class PhyloInfo {

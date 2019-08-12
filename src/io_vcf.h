@@ -43,7 +43,7 @@ inline std::string vcf_date() {
 
 
 
-// Info for one sequence on one variant
+// Info for one chromosome on one variant
 class OneVarChromVCF {
 
 public:
@@ -59,7 +59,7 @@ public:
     uint64 gt_index = 0;
     // Starting/ending indices on mutations vector:
     std::pair<uint64, uint64> ind = std::make_pair(0, 0);
-    // Starting/ending position on ref. sequence:
+    // Starting/ending position on ref. chromosome:
     std::pair<uint64, uint64> pos;
 
     OneVarChromVCF() : var_chrom(nullptr) {};
@@ -67,7 +67,7 @@ public:
 
     /*
      Determine whether this variant should be included in a VCF line for given
-     sequence starting and ending positions.
+     chromosome starting and ending positions.
      If this variant has a deletion at the input position, this method updates that
      and the boolean for whether the line is still expanding (changes it to true).
      */
@@ -87,7 +87,7 @@ public:
               const std::string& ref_str);
 
 
-    // Reset to new variant sequence
+    // Reset to new variant chromosome
     void set_var(const VarChrom& var_chrom_) {
         var_chrom = &var_chrom_;
         gt_index = 0;
@@ -149,7 +149,7 @@ private:
     }
 
     /*
-     Gets first ref. sequence position for a mutation, compensating for the fact
+     Gets first ref. chromosome position for a mutation, compensating for the fact
      that deletions have to be treated differently
      */
     inline void set_first_pos(const Mutation& mut) {
@@ -164,7 +164,7 @@ private:
         return pos_first;
     }
     /*
-     Gets last ref. sequence position for a mutation, compensating for the fact
+     Gets last ref. chromosome position for a mutation, compensating for the fact
      that deletions have to be treated differently
      */
     inline void set_second_pos(const Mutation& mut) {
@@ -196,7 +196,7 @@ private:
 
 
 
-// Map mutations among all variants for one sequence
+// Map mutations among all variants for one chromosome
 class WriterVCF {
 
 public:
@@ -206,7 +206,7 @@ public:
     const std::string* ref_nts;
 
     std::vector<OneVarChromVCF> var_infos;
-    // Starting/ending positions on reference sequence for overall nearest mutation:
+    // Starting/ending positions on reference chromosome for overall nearest mutation:
     std::pair<uint64,uint64> mut_pos = std::make_pair(MAX_INT, MAX_INT);
     // Strings for all unique alt. strings among  variants. Grouping is not relevant here.
     std::vector<std::string> unq_alts;
@@ -226,10 +226,10 @@ public:
           sample_groups(as<arma::umat>(sample_groups_) - 1),
           gt_indexes(var_set_.size()) {
 
-        // Now checking sequence index:
+        // Now checking chromosome index:
         if (chrom_ind >= var_set->reference->size()) {
-            str_stop({"\nWhen specifying a sequence index for VCF output, ",
-                     "you must provide an integer < the number of sequences."});
+            str_stop({"\nWhen specifying a chromosome index for VCF output, ",
+                     "you must provide an integer < the number of chromosomes."});
         }
 
         unq_alts.reserve(var_set_.size());
@@ -240,11 +240,11 @@ public:
 
 
     /*
-     Set the strings for the sequence position (`POS`), reference sequence (`REF`),
+     Set the strings for the chromosome position (`POS`), reference chromosome (`REF`),
      alternative alleles (`ALT`), and genotype information (`GT` format field)
      to add to a new line in the VCF file.
      Returns false if you shouldn't write to file for this iteration (if all mutations
-     by chance have been cancelled out result in the reference sequence).
+     by chance have been cancelled out result in the reference chromosome).
      Returns true otherwise.
      */
     bool iterate(std::string& pos_str,
@@ -253,7 +253,7 @@ public:
                  std::vector<std::string>& gt_strs);
 
 
-    // Change the sequence this object refers to
+    // Change the chromosome this object refers to
     void new_chrom(const uint64& chrom_ind_) {
         chrom_ind = chrom_ind_;
         construct();
@@ -293,10 +293,10 @@ private:
 
     void construct() {
 
-        ref_nts = &(var_set->reference->sequences[chrom_ind].nucleos);
+        ref_nts = &(var_set->reference->chromosomes[chrom_ind].nucleos);
 
         /*
-         Set pointer for the focal sequence in each variant
+         Set pointer for the focal chromosome in each variant
          and set positions in `mut_pos` field
          */
         for (uint64 i = 0; i < var_infos.size(); i++) {

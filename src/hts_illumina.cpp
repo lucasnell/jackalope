@@ -25,14 +25,14 @@ using namespace Rcpp;
 
 
 
-// Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality)
+// Sample one set of read strings (each with 4 lines: ID, chromosome, "+", quality)
 template <typename T>
 template <typename U>
 void IlluminaOneGenome<T>::one_read(std::vector<U>& fastq_pools,
                                     pcg64& eng) {
 
     /*
-     Sample fragment info, and set the sequence space(s) required for these read(s).
+     Sample fragment info, and set the chromosome space(s) required for these read(s).
      */
     chrom_indels_frag(eng);
 
@@ -63,13 +63,13 @@ void IlluminaOneGenome<T>::re_read(std::vector<U>& fastq_pools,
 /*
  Add information about a RefGenome or VarGenome object
  This is used when making multiple samplers that share most info except for
- that related to the sequence object.
+ that related to the chromosome object.
  */
 template <typename T>
 void IlluminaOneGenome<T>::add_chrom_info(const T& chrom_object, const std::string& barcode) {
 
     chrom_lengths = chrom_object.chrom_sizes();
-    sequences = &chrom_object;
+    chromosomes = &chrom_object;
     name = chrom_object.name;
     constr_info.barcode = barcode;
 
@@ -79,7 +79,7 @@ void IlluminaOneGenome<T>::add_chrom_info(const T& chrom_object, const std::stri
 }
 
 
-// Construct sequence-sampling probabilities:
+// Construct chromosome-sampling probabilities:
 template <typename T>
 void IlluminaOneGenome<T>::construct_chroms() {
     std::vector<double> probs_;
@@ -129,7 +129,7 @@ void IlluminaOneGenome<T>::sample_indels(pcg64& eng) {
     return;
 }
 
-// Adjust sequence spaces
+// Adjust chromosome spaces
 template <typename T>
 void IlluminaOneGenome<T>::adjust_chrom_spaces() {
 
@@ -140,7 +140,7 @@ void IlluminaOneGenome<T>::adjust_chrom_spaces() {
     for (uint64 r = 0; r < insertions.size(); r++) {
         /*
          I'm adding deletions because more deletions mean that I need
-         more sequence bases to achieve the same read length.
+         more chromosome bases to achieve the same read length.
          Insertions means I need fewer.
          */
         sint64 indel_effect = static_cast<sint64>(deletions[r].size()) -
@@ -152,7 +152,7 @@ void IlluminaOneGenome<T>::adjust_chrom_spaces() {
          we don't need to account for that.)
          */
         read_chrom_spaces[r] = std::min(read_length + indel_effect, frag_len);
-        // Adjust `reads` so it can hold the necessary sequence space:
+        // Adjust `reads` so it can hold the necessary chromosome space:
         if (reads[r].size() != read_chrom_spaces[r]) {
             reads[r].resize(read_chrom_spaces[r], 'N');
         }
@@ -165,8 +165,8 @@ void IlluminaOneGenome<T>::adjust_chrom_spaces() {
 
 
 /*
- Sample a sequence, indels, fragment length, and starting position for the fragment.
- Lastly, it sets the sequence spaces required for these reads.
+ Sample a chromosome, indels, fragment length, and starting position for the fragment.
+ Lastly, it sets the chromosome spaces required for these reads.
  */
 template <typename T>
 void IlluminaOneGenome<T>::chrom_indels_frag(pcg64& eng) {
@@ -175,9 +175,9 @@ void IlluminaOneGenome<T>::chrom_indels_frag(pcg64& eng) {
     uint64& frag_len(constr_info.frag_len);
     uint64& frag_start(constr_info.frag_start);
 
-    // Sample sequence:
+    // Sample chromosome:
     chrom_ind = chrom_sampler.sample(eng);
-    uint64 chrom_len = (*sequences)[chrom_ind].size();
+    uint64 chrom_len = (*chromosomes)[chrom_ind].size();
 
     // Sample fragment length:
     frag_len = static_cast<uint64>(frag_lengths(eng));
@@ -196,7 +196,7 @@ void IlluminaOneGenome<T>::chrom_indels_frag(pcg64& eng) {
     // Sample indels:
     sample_indels(eng);
 
-    // Adjust sequence spaces:
+    // Adjust chromosome spaces:
     adjust_chrom_spaces();
 
     return;
@@ -205,7 +205,7 @@ void IlluminaOneGenome<T>::chrom_indels_frag(pcg64& eng) {
 
 /*
  Same as above, but for duplicates.
- This means skipping the sequence and fragment info parts.
+ This means skipping the chromosome and fragment info parts.
  */
 template <typename T>
 void IlluminaOneGenome<T>::just_indels(pcg64& eng) {
@@ -213,7 +213,7 @@ void IlluminaOneGenome<T>::just_indels(pcg64& eng) {
     // Sample indels:
     sample_indels(eng);
 
-    // Adjust sequence spaces:
+    // Adjust chromosome spaces:
     adjust_chrom_spaces();
 
     return;
@@ -222,7 +222,7 @@ void IlluminaOneGenome<T>::just_indels(pcg64& eng) {
 
 
 /*
- Sample one set of read strings (each with 4 lines: ID, sequence, "+", quality),
+ Sample one set of read strings (each with 4 lines: ID, chromosome, "+", quality),
  then append that to the `fastq_pools` vector.
  This function does NOT do anything with fragments.
  That should be done outside this function.
@@ -261,19 +261,19 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
         */
         if (!reverse) {
             // Fill in read starting with position after barcode:
-            (*(sequences))[chrom_ind].fill_read(
+            (*(chromosomes))[chrom_ind].fill_read(
                     read, barcode.size(),
                     start, read_chrom_spaces[i]);
         } else {
             /*
-             If doing reverse, we can add the actual sequence to the front of the
+             If doing reverse, we can add the actual chromosome to the front of the
              read instead of starting at `barcode.size()`.
 
              (Even though `rev_comp` requires only T, C, A, G, or N characters,
              `read` should already have filler 'N' chars present at initialization
              of the `constr_info` field, so no need to add any now.)
              */
-            (*(sequences))[chrom_ind].fill_read(
+            (*(chromosomes))[chrom_ind].fill_read(
                     read, 0,
                     start, read_chrom_spaces[i]);
             // Now do reverse complement:
@@ -291,7 +291,7 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
         fastq_pools[i].push_back('@');
         for (const char& c : this->name) fastq_pools[i].push_back(c);
         fastq_pools[i].push_back('-');
-        for (const char& c : (*sequences)[chrom_ind].name) fastq_pools[i].push_back(c);
+        for (const char& c : (*chromosomes)[chrom_ind].name) fastq_pools[i].push_back(c);
         fastq_pools[i].push_back('-');
         for (const char& c : std::to_string(start)) fastq_pools[i].push_back(c);
         fastq_pools[i].push_back('-');
@@ -343,7 +343,7 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
 
 
 
-//' Illumina sequence for reference object.
+//' Illumina chromosome for reference object.
 //'
 //'
 //' @noRd
@@ -415,7 +415,7 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
 
 
 
-//' Illumina sequence for reference object.
+//' Illumina chromosome for reference object.
 //'
 //'
 //' @noRd

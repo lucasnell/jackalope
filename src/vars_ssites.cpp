@@ -55,7 +55,7 @@ MutationTypeSampler make_type_sampler(const arma::mat& Q,
 
 
 
-//' Add mutations at segregating sites for one sequence from coalescent simulation output.
+//' Add mutations at segregating sites for one chromosome from coalescent simulation output.
 //'
 //' @noRd
 //'

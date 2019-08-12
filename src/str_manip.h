@@ -174,7 +174,7 @@ inline std::vector<std::string> cpp_str_split_newline(const std::string& in_stri
 
 
 /*
- Reverse complement of a DNA sequence.
+ Reverse complement of a DNA chromosome.
 
  Make sure that `seq` contains only T, C, A, or G!
  */

@@ -44,7 +44,7 @@ inline double MutationSampler::mutate__(pcg64& eng, const uint64& pos, sint64& e
 }
 
 
-// Add mutation and return the change in the sequence rate that results
+// Add mutation and return the change in the chromosome rate that results
 double MutationSampler::mutate(pcg64& eng) {
 
     uint64 pos = location.sample(eng);
@@ -65,7 +65,7 @@ double MutationSampler::mutate(pcg64& eng) {
 /*
  Overloaded for only mutating within a range.
  It also updates `end` if an indel occurs in the range.
- Make sure to keep checking for situation where `end < start` (i.e., sequence section
+ Make sure to keep checking for situation where `end < start` (i.e., chromosome section
  is empty).
  */
 double MutationSampler::mutate(pcg64& eng, const uint64& start, sint64& end) {
