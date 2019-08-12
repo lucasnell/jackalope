@@ -54,8 +54,8 @@ void parse_fasta_line(const std::string& line, const bool& cut_names,
         } else {
             name_i = line.substr(1, line.size());
         }
-        RefChrom seq(name_i, "");
-        ref.chromosomes.push_back(seq);
+        RefChrom chrom(name_i, "");
+        ref.chromosomes.push_back(chrom);
     } else {
         ref.chromosomes.back().nucleos += line;
         ref.total_size += line.size();

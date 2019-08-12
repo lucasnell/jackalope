@@ -74,7 +74,7 @@ OuterClass create_chromosomes_(const uint64& n_chroms,
     const AliasSampler sampler(pi_tcag);
 
     // Creating output object
-    OuterClass seqs_out(n_chroms);
+    OuterClass chroms_out(n_chroms);
 
     // parameters for creating the gamma distribution
     const double gamma_shape = (len_mean * len_mean) / (len_sd * len_sd);
@@ -113,7 +113,7 @@ OuterClass create_chromosomes_(const uint64& n_chroms,
 
         if (prog_bar.is_aborted() || prog_bar.check_abort()) continue;
 
-        InnerClass& seq(seqs_out[i]);
+        InnerClass& chrom(chroms_out[i]);
 
         // Get length of output chromosome:
         uint64 len;
@@ -122,10 +122,10 @@ OuterClass create_chromosomes_(const uint64& n_chroms,
             if (len < 1) len = 1;
         } else len = len_mean;
         // Sample chromosome:
-        seq.reserve(len);
+        chrom.reserve(len);
         for (uint64 j = 0; j < len; j++) {
             uint64 k = sampler.sample(engine);
-            seq.push_back(bases_[k]);
+            chrom.push_back(bases_[k]);
         }
     }
 
@@ -133,7 +133,7 @@ OuterClass create_chromosomes_(const uint64& n_chroms,
     }
     #endif
 
-    return seqs_out;
+    return chroms_out;
 }
 
 
@@ -177,7 +177,7 @@ SEXP create_genome_cpp(const uint64& n_chroms,
 
     for (uint64 i = 0; i < n_chroms; i++) {
         ref.total_size += ref[i].size();
-        ref[i].name = "seq" + std::to_string(i);
+        ref[i].name = "chrom" + std::to_string(i);
     }
 
     return ref_xptr;

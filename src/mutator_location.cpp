@@ -113,17 +113,17 @@ inline void RegionTree::construct_tips_one_row(const arma::mat& gamma_mat,
     }
 
     // String to store chromosome info:
-    std::string seq;
-    seq.reserve(sizes[0] + 1);
+    std::string chrom;
+    chrom.reserve(sizes[0] + 1);
     double rate;
 
     for (uint64 j = 0; j < sizes.size(); j++) {
 
         // Calculate rate:
         rate = 0;
-        // (in `set_chrom_chunk` below, `seq` gets cleared before it's filled)
-        var_chrom->set_chrom_chunk(seq, start, sizes[j], mut_i);
-        for (const char& c : seq) rate += nt_rates[c];
+        // (in `set_chrom_chunk` below, `chrom` gets cleared before it's filled)
+        var_chrom->set_chrom_chunk(chrom, start, sizes[j], mut_i);
+        for (const char& c : chrom) rate += nt_rates[c];
         rate *= gamma;
 
         // Set RegionTree info:
@@ -279,23 +279,23 @@ double LocationSampler::deletion_rate_change(const uint64& del_size,
     // Prep `del_rate_changes` to store rate changes for deletions spanning >1 regions:
     del_rate_changes.clear();
 
-    std::string seq;
-    seq.reserve(del_size);
+    std::string chrom;
+    chrom.reserve(del_size);
     uint64 mut_i;
     safe_get_mut(start, mut_i);
 
-    var_chrom->set_chrom_chunk(seq, start, end - start + 1, mut_i);
+    var_chrom->set_chrom_chunk(chrom, start, end - start + 1, mut_i);
 
     double r, out = 0;
     uint64 chrom_i = 0;
     uint64 idx = regions.mut_tip();
 
-    while (chrom_i < seq.size()) {
+    while (chrom_i < chrom.size()) {
         const Region& reg(regions.tips[idx]);
         if (!reg.deleted) {
             r = 0;
-            while (((chrom_i + start) <= reg.end) && (chrom_i < seq.size())) {
-                r -= reg.gamma * nt_rates[seq[chrom_i]];
+            while (((chrom_i + start) <= reg.end) && (chrom_i < chrom.size())) {
+                r -= reg.gamma * nt_rates[chrom[chrom_i]];
                 chrom_i++;
             }
             out += r;

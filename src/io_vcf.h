@@ -367,8 +367,8 @@ inline void write_vcf_(XPtr<VarSet> var_set,
     std::string alt_str = "";
     std::vector<std::string> gt_strs(n_samples, "");
 
-    for (uint64 seq = 0; seq < n_chroms; seq++) {
-        writer.new_chrom(seq);
+    for (uint64 chrom = 0; chrom < n_chroms; chrom++) {
+        writer.new_chrom(chrom);
         while (writer.mut_pos.first < MAX_INT) {
             Rcpp::checkUserInterrupt();
             /*

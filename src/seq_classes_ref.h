@@ -139,13 +139,13 @@ struct RefGenome {
           merged(ref_.merged), old_names(ref_.old_names) {};
     RefGenome(const uint64& N)
         : chromosomes(std::deque<RefChrom>(N, RefChrom())) {};
-    RefGenome(const std::deque<std::string>& seqs) {
-        uint64 n_chroms = seqs.size();
+    RefGenome(const std::deque<std::string>& chroms) {
+        uint64 n_chroms = chroms.size();
         chromosomes = std::deque<RefChrom>(n_chroms, RefChrom());
         for (uint64 i = 0; i < n_chroms; i++) {
-            chromosomes[i].nucleos = seqs[i];
-            chromosomes[i].name = "seq" + std::to_string(i);
-            total_size += seqs[i].size();
+            chromosomes[i].nucleos = chroms[i];
+            chromosomes[i].name = "chrom" + std::to_string(i);
+            total_size += chroms[i].size();
         }
     }
     // Overloaded operator so chromosomes can be easily extracted

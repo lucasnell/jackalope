@@ -176,40 +176,40 @@ inline std::vector<std::string> cpp_str_split_newline(const std::string& in_stri
 /*
  Reverse complement of a DNA chromosome.
 
- Make sure that `seq` contains only T, C, A, or G!
+ Make sure that `chrom` contains only T, C, A, or G!
  */
-inline void rev_comp(std::string& seq) {
+inline void rev_comp(std::string& chrom) {
 
-    uint64 n = seq.size();
+    uint64 n = chrom.size();
     uint64 half_n = n / 2;
     char tmp;
 
     for (uint64 j = 0; j < half_n; j++) {
-        tmp = str_manip::cmp_map[seq[j]]; // goes to `n-j-1`
-        seq[j] = str_manip::cmp_map[seq[(n-j-1)]];
-        seq[(n-j-1)] = tmp;
+        tmp = str_manip::cmp_map[chrom[j]]; // goes to `n-j-1`
+        chrom[j] = str_manip::cmp_map[chrom[(n-j-1)]];
+        chrom[(n-j-1)] = tmp;
     }
 
-    if ((n & 1ULL) == 1ULL) seq[half_n] = str_manip::cmp_map[seq[half_n]];
+    if ((n & 1ULL) == 1ULL) chrom[half_n] = str_manip::cmp_map[chrom[half_n]];
 
     return;
 }
 
 /*
- Same thing, except that it only does it for the first `n` characters in `seq`
+ Same thing, except that it only does it for the first `n` characters in `chrom`
  */
-inline void rev_comp(std::string& seq, const uint64& n) {
+inline void rev_comp(std::string& chrom, const uint64& n) {
 
     uint64 half_n = n / 2;
     char tmp;
 
     for (uint64 j = 0; j < half_n; j++) {
-        tmp = str_manip::cmp_map[seq[j]]; // goes to `n-j-1`
-        seq[j] = str_manip::cmp_map[seq[(n-j-1)]];
-        seq[(n-j-1)] = tmp;
+        tmp = str_manip::cmp_map[chrom[j]]; // goes to `n-j-1`
+        chrom[j] = str_manip::cmp_map[chrom[(n-j-1)]];
+        chrom[(n-j-1)] = tmp;
     }
 
-    if ((n & 1ULL) == 1ULL) seq[half_n] = str_manip::cmp_map[seq[half_n]];
+    if ((n & 1ULL) == 1ULL) chrom[half_n] = str_manip::cmp_map[chrom[half_n]];
 
     return;
 }

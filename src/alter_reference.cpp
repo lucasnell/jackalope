@@ -62,26 +62,26 @@ namespace alter_scaffs {
 void merge_chromosomes_cpp(SEXP ref_genome_ptr) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    std::deque<RefChrom>& seqs(ref_genome->chromosomes);
+    std::deque<RefChrom>& chroms(ref_genome->chromosomes);
 
     // Shuffling ref_genome info.
-    std::random_shuffle(seqs.begin(), seqs.end(), alter_scaffs::rand_wrapper);
+    std::random_shuffle(chroms.begin(), chroms.end(), alter_scaffs::rand_wrapper);
 
     // Merging the back chromosomes to the first one:
-    std::string& nts(seqs.front().nucleos);
-    ref_genome->old_names.push_back(seqs.front().name);
-    seqs.front().name = "MERGE";
-    uint64 i = seqs.size() - 1;
-    while (seqs.size() > 1) {
-        nts += seqs[i].nucleos;
-        ref_genome->old_names.push_back(seqs[i].name);
+    std::string& nts(chroms.front().nucleos);
+    ref_genome->old_names.push_back(chroms.front().name);
+    chroms.front().name = "MERGE";
+    uint64 i = chroms.size() - 1;
+    while (chroms.size() > 1) {
+        nts += chroms[i].nucleos;
+        ref_genome->old_names.push_back(chroms[i].name);
         --i;
-        seqs.pop_back();
+        chroms.pop_back();
     }
     // clear memory in string
     clear_memory<std::string>(nts);
     // clear memory in deque
-    clear_memory<std::deque<RefChrom>>(seqs);
+    clear_memory<std::deque<RefChrom>>(chroms);
 
     ref_genome->merged = true;
 
@@ -126,7 +126,7 @@ void filter_chromosomes_cpp(SEXP ref_genome_ptr,
                           const double& out_chrom_prop = 0) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    std::deque<RefChrom>& seqs(ref_genome->chromosomes);
+    std::deque<RefChrom>& chroms(ref_genome->chromosomes);
 
     // Checking for sensible inputs
     if (out_chrom_prop <= 0 && min_chrom_size == 0) {
@@ -138,7 +138,7 @@ void filter_chromosomes_cpp(SEXP ref_genome_ptr,
     if (out_chrom_prop > 1) stop("out_chrom_prop must be between 0 and 1");
 
     // Sorting chromosome set by size (largest first)
-    std::sort(seqs.begin(), seqs.end(), std::greater<RefChrom>());
+    std::sort(chroms.begin(), chroms.end(), std::greater<RefChrom>());
 
     // Index that will point to the first chromosome to be deleted
     uint64 i = 0;
@@ -146,34 +146,34 @@ void filter_chromosomes_cpp(SEXP ref_genome_ptr,
     double out_chrom = 0;
 
     if (min_chrom_size > 0) {
-        if (seqs.back().size() >= min_chrom_size) return;
-        if (seqs[i].size() < min_chrom_size) {
+        if (chroms.back().size() >= min_chrom_size) return;
+        if (chroms[i].size() < min_chrom_size) {
             str_stop({"Desired minimum scaffold size is too large. None found. ",
-                     "The minimum size is ", std::to_string(seqs[i].size())});
+                     "The minimum size is ", std::to_string(chroms[i].size())});
         }
         // after below, `iter` points to the first chromosome smaller than the minimum
-        while (seqs[i].size() >= min_chrom_size) {
-            out_chrom += static_cast<double>(seqs[i].size());
+        while (chroms[i].size() >= min_chrom_size) {
+            out_chrom += static_cast<double>(chroms[i].size());
             ++i;
         }
     } else {
         // Changing total_size to double so I don't have to worry about integer division
         // being a problem
         double total_chrom = static_cast<double>(ref_genome->total_size);
-        out_chrom = static_cast<double>(seqs[i].size());
+        out_chrom = static_cast<double>(chroms[i].size());
         while (out_chrom / total_chrom < out_chrom_prop) {
             ++i;
-            out_chrom += static_cast<double>(seqs[i].size());
+            out_chrom += static_cast<double>(chroms[i].size());
         }
         // Getting `i` to point to the first item to be deleted:
         ++i;
     }
 
     // Erasing using `iter`
-    if (i < seqs.size()) {
-        seqs.erase(seqs.begin() + i, seqs.end());
+    if (i < chroms.size()) {
+        chroms.erase(chroms.begin() + i, chroms.end());
         // clear memory:
-        clear_memory<std::deque<RefChrom>>(seqs);
+        clear_memory<std::deque<RefChrom>>(chroms);
     }
 
     ref_genome->total_size = static_cast<uint64>(out_chrom);
@@ -247,11 +247,11 @@ void replace_Ns_cpp(SEXP ref_genome_ptr,
 #endif
     for (uint64 i = 0; i < n_chroms; i++) {
         if (prog_bar.is_aborted() || prog_bar.check_abort()) continue;
-        RefChrom& seq(ref_genome->chromosomes[i]);
-        for (char& c : seq.nucleos) {
+        RefChrom& chrom(ref_genome->chromosomes[i]);
+        for (char& c : chrom.nucleos) {
             if (c == 'N') c = sampler.sample(eng);
         }
-        prog_bar.increment(seq.size());
+        prog_bar.increment(chrom.size());
     }
 
 #ifdef _OPENMP

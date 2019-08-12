@@ -130,13 +130,13 @@ struct MS_SitesInfo {
     std::vector<double> positions;
     std::vector<std::vector<bool>> segr_bools;
 
-    arma::mat to_mat(const uint64& seq) {
+    arma::mat to_mat(const uint64& chrom_i) {
 
         // Now create and fill the output matrix
         arma::mat M(n_sites, segr_bools.size() + 1);
         if (positions.size() != n_sites) {
             str_stop({"\nIn creation of segregation-sites info ",
-                     "for chromosome number ", std::to_string(seq + 1),
+                     "for chromosome number ", std::to_string(chrom_i + 1),
                      ", the listed positions for each site (line starting with ",
                      "'positions:') does not have a length that's the same "
                      "as the # sites as given by the line starting with 'segsites:'."});
@@ -145,7 +145,7 @@ struct MS_SitesInfo {
         for (uint64 i = 0; i < segr_bools.size(); i++) {
             if (segr_bools[i].size() != n_sites) {
                 str_stop({"\nIn creation of segregation-sites info ",
-                         "for chromosome number ", std::to_string(seq + 1),
+                         "for chromosome number ", std::to_string(chrom_i + 1),
                          ", the listed number of sites (line starting with ",
                          "'segsites:') does not agree with the number of "
                          "items in the ", std::to_string(i + 1), "th line ",
