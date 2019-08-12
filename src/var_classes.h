@@ -1,5 +1,5 @@
-#ifndef __JACKAL_SEQ_CLASSES_VAR_H
-#define __JACKAL_SEQ_CLASSES_VAR_H
+#ifndef __JACKAL_VAR_CLASSES_H
+#define __JACKAL_VAR_CLASSES_H
 
 
 /*
