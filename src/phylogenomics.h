@@ -24,7 +24,7 @@
 #endif
 
 #include "jackalope_types.h"  // integer types
-#include "seq_classes_var.h"  // Var* classes
+#include "var_classes.h"  // Var* classes
 #include "mutator.h"  // samplers
 #include "alias_sampler.h" // alias sampling
 #include "pcg.h" // pcg sampler types

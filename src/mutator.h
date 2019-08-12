@@ -16,7 +16,7 @@
 
 
 #include "jackalope_types.h" // integer types
-#include "seq_classes_var.h"  // Var* classes
+#include "var_classes.h"  // Var* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling
 #include "mutator_location.h"  // mutator location sampling classes

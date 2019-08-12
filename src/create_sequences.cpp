@@ -20,7 +20,7 @@
 #endif
 
 #include "jackalope_types.h"  // integer types
-#include "seq_classes_ref.h"  // Ref* classes
+#include "ref_classes.h"  // Ref* classes
 #include "alias_sampler.h" // alias sampling
 #include "pcg.h" // pcg::max, mt_seeds, seeded_pcg
 #include "util.h" // thread_check

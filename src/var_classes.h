@@ -18,7 +18,7 @@
 #include <deque>  // deque class
 
 #include "jackalope_types.h"  // integer types
-#include "seq_classes_ref.h"  // Ref* classes
+#include "ref_classes.h"  // Ref* classes
 #include "util.h"  // clear_memory
 
 using namespace Rcpp;

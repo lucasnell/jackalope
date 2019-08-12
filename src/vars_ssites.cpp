@@ -13,7 +13,7 @@
 #include "jackalope_types.h"
 #include "mutator_type.h"
 #include "mutator.h"
-#include "seq_classes_var.h"  // Var* classes
+#include "var_classes.h"  // Var* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling
 #include "util.h"  // thread_check

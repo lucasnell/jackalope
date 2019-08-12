@@ -12,8 +12,8 @@
 #endif
 
 #include "jackalope_types.h"  // integer types
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
+#include "ref_classes.h"  // Ref* classes
+#include "var_classes.h"  // Var* classes
 #include "hts.h"  // generic sequencing classes
 #include "hts_illumina.h"  // Illumina-specific classes
 #include "str_manip.h"  // rev_comp

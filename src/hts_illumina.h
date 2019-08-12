@@ -15,8 +15,8 @@
 #endif
 
 #include "jackalope_types.h"  // integer types
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
+#include "ref_classes.h"  // Ref* classes
+#include "var_classes.h"  // Var* classes
 #include "pcg.h"  // runif_01
 #include "alias_sampler.h"  // AliasSampler
 #include "hts.h"  // generic sequencing class

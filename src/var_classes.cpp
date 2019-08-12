@@ -16,8 +16,8 @@
 
 
 #include "jackalope_types.h"  // integer types
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
+#include "ref_classes.h"  // Ref* classes
+#include "var_classes.h"  // Var* classes
 #include "util.h"  // get_width
 
 
