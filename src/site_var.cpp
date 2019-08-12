@@ -78,7 +78,7 @@ void fill_gamma_mat_(arma::mat& gamma_mat,
 
         /*
         Fill matrix.
-        Note that I'm setting `start_` to 1 bc the SequenceGammas constructor assumes
+        Note that I'm setting `start_` to 1 bc the RegionTree constructor assumes
         1-based indexing.
         I'm doing it this way to make it more straightforward if someone wants to pass
         their own matrix directly from R (since R obviously uses 1-based).

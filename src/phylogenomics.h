@@ -134,7 +134,7 @@ struct PhyloTree {
  */
 
 
-class PhyloOneSeq {
+class PhyloOneChrom {
 
 public:
     std::vector<PhyloTree> trees;
@@ -144,8 +144,8 @@ public:
     std::vector<double> seq_rates;   // sequence rates
     uint64 n_tips;                  // number of tips (i.e., variants)
 
-    PhyloOneSeq() {}
-    PhyloOneSeq(
+    PhyloOneChrom() {}
+    PhyloOneChrom(
         VarSet& var_set,
         const MutationSampler& sampler_base,
         const uint64& seq_ind,
@@ -212,7 +212,7 @@ public:
      Similar to above, but no VarSet or sampler info yet available
      */
 
-    PhyloOneSeq(
+    PhyloOneChrom(
         const std::vector<uint64>& n_bases_,
         const std::vector<std::vector<double>>& branch_lens_,
         const std::vector<arma::Mat<uint64>>& edges_,
@@ -303,7 +303,7 @@ public:
 
 
     /*
-     Fill a PhyloOneSeq object from an input list
+     Fill a PhyloOneChrom object from an input list
     */
     void fill_from_list(const List& genome_phylo_info, const uint64& i) {
 
@@ -356,7 +356,7 @@ public:
         }
 
 
-        *this = PhyloOneSeq(n_bases_, branch_lens_, edges_, tip_labels_);
+        *this = PhyloOneChrom(n_bases_, branch_lens_, edges_, tip_labels_);
 
         return;
 
@@ -438,7 +438,7 @@ private:
          */
         samplers[b2].var_seq->replace(*samplers[b1].var_seq);
         /*
-         Do the same for the SeqGammas in the sampler:
+         Do the same for the ChromGammas in the sampler:
          */
         samplers[b2].location.regions = samplers[b1].location.regions;
 
@@ -492,7 +492,7 @@ private:
 class PhyloInfo {
 public:
 
-    std::vector<PhyloOneSeq> phylo_one_seqs;
+    std::vector<PhyloOneChrom> phylo_one_seqs;
 
     PhyloInfo(const List& genome_phylo_info) {
 
@@ -503,7 +503,7 @@ public:
                                   false));
         }
 
-        phylo_one_seqs = std::vector<PhyloOneSeq>(n_seqs);
+        phylo_one_seqs = std::vector<PhyloOneChrom>(n_seqs);
 
         for (uint64 i = 0; i < n_seqs; i++) {
             phylo_one_seqs[i].fill_from_list(genome_phylo_info, i);

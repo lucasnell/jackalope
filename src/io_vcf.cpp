@@ -36,7 +36,7 @@ using namespace Rcpp;
  If this variant has a deletion at the input position, this method updates that
  and the boolean for whether the line is still expanding (changes it to true).
  */
-void OneVarSeqVCF::check(const uint64& pos_start,
+void OneVarChromVCF::check(const uint64& pos_start,
                          uint64& pos_end,
                          bool& still_growing) {
 
@@ -96,7 +96,7 @@ void OneVarSeqVCF::check(const uint64& pos_start,
  This "dumps" the necessary haploid information for the VCF's `ALT` string,
  then iterates to the next mutation information
  */
-void OneVarSeqVCF::dump(std::vector<std::string>& unq_alts,
+void OneVarChromVCF::dump(std::vector<std::string>& unq_alts,
                         uint64& gt_tmp,
                         const uint64& pos_start,
                         const uint64& pos_end,

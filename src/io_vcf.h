@@ -44,7 +44,7 @@ inline std::string vcf_date() {
 
 
 // Info for one sequence on one variant
-class OneVarSeqVCF {
+class OneVarChromVCF {
 
 public:
 
@@ -62,7 +62,7 @@ public:
     // Starting/ending position on ref. sequence:
     std::pair<uint64, uint64> pos;
 
-    OneVarSeqVCF() : var_seq(nullptr) {};
+    OneVarChromVCF() : var_seq(nullptr) {};
 
 
     /*
@@ -205,7 +205,7 @@ public:
     uint64 seq_ind;
     const std::string* ref_nts;
 
-    std::vector<OneVarSeqVCF> var_infos;
+    std::vector<OneVarChromVCF> var_infos;
     // Starting/ending positions on reference sequence for overall nearest mutation:
     std::pair<uint64,uint64> mut_pos = std::make_pair(MAX_INT, MAX_INT);
     // Strings for all unique alt. strings among  variants. Grouping is not relevant here.

@@ -42,7 +42,7 @@ using namespace Rcpp;
  each other (within the range specified if recombination = true).
  They can already have mutations, but to start out, they must all be the same.
  */
-int PhyloOneSeq::one_tree(PhyloTree& tree,
+int PhyloOneChrom::one_tree(PhyloTree& tree,
                              pcg64& eng,
                              Progress& prog_bar) {
 
@@ -150,7 +150,7 @@ int PhyloOneSeq::one_tree(PhyloTree& tree,
 }
 
 
-void PhyloOneSeq::update_var_seq(const PhyloTree& tree) {
+void PhyloOneChrom::update_var_seq(const PhyloTree& tree) {
 
     std::vector<uint64> spp_order = match_(ordered_tip_labels,
                                            tree.tip_labels);
@@ -249,7 +249,7 @@ XPtr<VarSet> PhyloInfo::evolve_seqs(
 
         if (status_code != 0) continue;
 
-        PhyloOneSeq& seq_phylo(phylo_one_seqs[i]);
+        PhyloOneChrom& seq_phylo(phylo_one_seqs[i]);
 
         const arma::mat& gamma_mat(gamma_mats[i]);
 
