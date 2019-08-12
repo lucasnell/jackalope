@@ -2,14 +2,14 @@
 % Please edit documentation in R/read_write.R
 \name{write_fasta}
 \alias{write_fasta}
-\title{Write a sequence object to a FASTA file.}
+\title{Write a \code{ref_genome} or \code{variants} object to a FASTA file.}
 \usage{
-write_fasta(seq_obj, out_prefix, compress = FALSE,
-  comp_method = "bgzip", text_width = 80, show_progress = FALSE,
-  n_threads = 1, overwrite = FALSE)
+write_fasta(obj, out_prefix, compress = FALSE, comp_method = "bgzip",
+  text_width = 80, show_progress = FALSE, n_threads = 1,
+  overwrite = FALSE)
 }
 \arguments{
-\item{seq_obj}{A \code{ref_genome} or \code{variants} object.}
+\item{obj}{A \code{ref_genome} or \code{variants} object.}
 
 \item{out_prefix}{Prefix for the output file.}
 
@@ -31,7 +31,7 @@ Defaults to \code{FALSE}.}
 \item{n_threads}{Number of threads to use if writing from a \code{variants} object.
 Threads are split among variants, so it's not useful to provide more threads
 than variants.
-This argument is ignored if \code{seq_obj} is a \code{ref_genome} object, or if
+This argument is ignored if \code{obj} is a \code{ref_genome} object, or if
 OpenMP is not enabled.
 Defaults to \code{1}.}
 

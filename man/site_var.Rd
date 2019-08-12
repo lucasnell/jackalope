@@ -25,12 +25,12 @@ Defaults to \code{NULL}.}
 Must be in range \code{[0,1)}.
 Defaults to \code{0}.}
 
-\item{mats}{List of matrices, one for each sequence in the genome.
+\item{mats}{List of matrices, one for each chromosome in the genome.
 Each matrix should have two columns.
 The first should contain the end points for each region.
 The second should contain the gamma distances for each region.
 Note that if gamma distances don't have a mean (weighted by
-sequence length for each gamma-distance value) equal to 1,
+chromosome length for each gamma-distance value) equal to 1,
 you're essentially changing the overall mutation rate.
 If this argument is provided, \code{shape} and \code{region_size} are ignored.
 Defaults to \code{NULL}.}
@@ -52,7 +52,7 @@ This is ignored if \code{compress} is \code{FALSE}. Defaults to \code{"bgzip"}.}
 }
 \value{
 A \code{site_var_mats} object, which is a wrapper around a list of matrices,
-one for each sequence in the reference genome.
+one for each chromosome in the reference genome.
 Although the print method is different, you can otherwise treat these objects
 the same as you would a list (e.g., \code{x[[1]]}, \code{x[1:2]}, \code{length(x)}).
 }

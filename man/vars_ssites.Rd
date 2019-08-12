@@ -10,7 +10,7 @@ vars_ssites(obj = NULL, fn = NULL)
 \item{obj}{Object containing segregating sites information.
 This can be one of the following:
 (1) A single \code{list} with a \code{seg_sites} field inside. This field must
-contain a matrix for segregating sites for each sequence.
+contain a matrix for segregating sites for each chromosome.
 The matrix itself should contain the haplotype information, coded
 using 0s and 1s: 0s indicate the ancestral state and 1s indicate
 mutant.
@@ -18,8 +18,8 @@ The matrix column names should indicate the positions of the polymorphisms on th
 chromosome.
 If positions are in the range \code{(0,1)}, they're assumed to come from an infinite-
 sites model and are relative positions.
-If positions are integers in the range \code{[0, sequence length - 1]}
-or \code{[1, sequence length]}, they're assumed to come from an finite-sites
+If positions are integers in the range \code{[0, chromosome length - 1]}
+or \code{[1, chromosome length]}, they're assumed to come from an finite-sites
 model and are absolute positions.
 Defaults to \code{NULL}.}
 

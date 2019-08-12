@@ -9,8 +9,8 @@ vars_vcf(fn, print_names = FALSE, ...)
 \arguments{
 \item{fn}{A single string specifying the name of the VCF file}
 
-\item{print_names}{Logical for whether to print all unique sequence names from
-the VCF file when VCF sequence names don't match those from the reference genome.
+\item{print_names}{Logical for whether to print all unique chromosome names from
+the VCF file when VCF chromosome names don't match those from the reference genome.
 This printing doesn't happen until this object is passed to \code{create_variants}.
 This can be useful for troubleshooting.
 Defaults to \code{FALSE}.}
@@ -23,7 +23,7 @@ A \code{vars_vcf_info} object containing information used in \code{create_varian
 to create haploid variants.
 This class is just a wrapper around a list containing relevant output from
 \code{vcfR::read.vcfR}:
-haplotypes, reference sequences, positions, sequence names, and variant names.
+haplotypes, reference chromosomes, positions, chromosome names, and variant names.
 }
 \description{
 This function organizes higher-level information for creating variants from

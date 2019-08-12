@@ -4,8 +4,8 @@
 \alias{pacbio}
 \title{Create and write PacBio reads to FASTQ file(s).}
 \usage{
-pacbio(seq_object, out_prefix, n_reads, chi2_params_s = c(0.01214, -5.12,
-  675, 48303.0732881, 1.46910512123303), chi2_params_n = c(0.00189237136,
+pacbio(obj, out_prefix, n_reads, chi2_params_s = c(0.01214, -5.12, 675,
+  48303.0732881, 1.46910512123303), chi2_params_n = c(0.00189237136,
   2.5394497, 5500), max_passes = 40, sqrt_params = c(0.5, 0.2247),
   norm_params = c(0, 0.2), prob_thresh = 0.2, ins_prob = 0.11,
   del_prob = 0.04, sub_prob = 0.01, min_read_length = 50,
@@ -16,7 +16,7 @@ pacbio(seq_object, out_prefix, n_reads, chi2_params_s = c(0.01214, -5.12,
   overwrite = FALSE)
 }
 \arguments{
-\item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
+\item{obj}{Sequencing object of class \code{ref_genome} or \code{variants}.}
 
 \item{out_prefix}{Prefix for the output file(s), including entire path except
 for the file extension.}
@@ -76,7 +76,7 @@ This is ignored if sequencing a reference genome.
 Defaults to \code{NULL}.}
 
 \item{sep_files}{Logical indicating whether to make separate files for each variant.
-This argument is coerced to \code{FALSE} if the \code{seq_object} argument is not
+This argument is coerced to \code{FALSE} if the \code{obj} argument is not
 a \code{variants} object.
 Defaults to \code{FALSE}.}
 
@@ -127,7 +127,7 @@ this function.
 
 The ID lines for FASTQ files are formatted as such:
 
-\code{@<genome name>-<sequence name>-<starting position>-<strand>}
+\code{@<genome name>-<chromosome name>-<starting position>-<strand>}
 
 where \code{genome name} is always \code{REF} for reference genomes (as opposed to variants).
 }

@@ -12,7 +12,7 @@ len <- 100L
 len_sd <- 10.0
 
 # Extract vector of chromosome strings:
-chroms <- jackalope:::rando_seqs(n_chroms, len, len_sd, pi_tcag = c(8, 4, 2, 1))
+chroms <- jackalope:::rando_chroms(n_chroms, len, len_sd, pi_tcag = c(8, 4, 2, 1))
 
 
 
@@ -205,14 +205,14 @@ for (v in 1:n_vars) {
             pos = as.integer(runif(1) * max_size) + 1
             rnd = runif(1);
             if (rnd < 0.5) {
-                str = jackalope:::rando_seqs(1, 1)
+                str = jackalope:::rando_chroms(1, 1)
                 if (nchar(str) != 1) stop("Improper size in sub")
                 vars$add_sub(v, s, pos, str)
                 substr(ts[s], pos, pos) <- str
             } else if (rnd < 0.75) {
                 size = as.integer(rexp(1, 2.0) + 1.0)
                 if (size > 10) size = 10
-                str = jackalope:::rando_seqs(1, size)
+                str = jackalope:::rando_chroms(1, size)
                 if (nchar(str) != size) stop("Improper size in insertion")
                 vars$add_ins(v, s, pos, str)
                 ts[s] <- paste0(substr(ts[s], 1, pos), str,

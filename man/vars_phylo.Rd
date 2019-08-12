@@ -9,18 +9,18 @@ vars_phylo(obj = NULL, fn = NULL)
 \arguments{
 \item{obj}{Object containing phylogenetic tree(s).
 This can be (1) a single \code{phylo} object
-that represents all sequences in the genome or
+that represents all chromosomes in the genome or
 (2) a \code{list} or \code{multiPhylo} object containing a \code{phylo} object for
-each reference sequence.
-In the latter case, phylogenies will be assigned to sequences in the
+each reference chromosome.
+In the latter case, phylogenies will be assigned to chromosomes in the
 order provided.
 Defaults to \code{NULL}.}
 
 \item{fn}{One or more string(s), each of which specifies the file name
 of a NEWICK file containing a phylogeny.
-If one name is provided, that phylogeny will be used for all sequences.
+If one name is provided, that phylogeny will be used for all chromosomes.
 If more than one is provided, there must be a phylogeny for each reference
-genome sequence, and phylogenies will be assigned to sequences
+genome chromosome, and phylogenies will be assigned to chromosomes
 in the order provided.
 Defaults to \code{NULL}.}
 }
@@ -28,7 +28,7 @@ Defaults to \code{NULL}.}
 A \code{vars_phylo_info} object containing information used in \code{create_variants}
 to create haploid variants.
 This class is just a wrapper around a list containing phylogenetic tree
-information for each reference sequence.
+information for each reference chromosome.
 }
 \description{
 This function organizes higher-level information for creating variants from

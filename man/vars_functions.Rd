@@ -15,7 +15,8 @@ will use molecular evolution information when passed to \code{create_variants}.
 \item{\code{\link{vars_theta}}}{Uses an estimate for theta, the population-scaled
 mutation rate, and a desired number of variants.}
 \item{\code{\link{vars_phylo}}}{Uses phylogenetic tree(s) from \code{phylo}
-object(s) or NEWICK file(s), one tree per sequence or one for all sequences.}
+object(s) or NEWICK file(s), one tree per chromosome or one for all
+chromosomes.}
 \item{\code{\link{vars_gtrees}}}{Uses gene trees, either in the form of
 an object from the \code{scrm} or \code{coala} package or
 a file containing output in the style of the \code{ms} program.}

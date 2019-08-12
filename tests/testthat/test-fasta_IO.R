@@ -9,7 +9,7 @@ dir <- tempdir(check = TRUE)
 
 
 
-chroms <- jackalope:::rando_seqs(10, 100)
+chroms <- jackalope:::rando_chroms(10, 100)
 
 ref <- ref_genome$new(jackalope:::make_ref_genome(chroms))
 

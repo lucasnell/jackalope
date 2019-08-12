@@ -55,8 +55,8 @@ Defaults to \code{100}.}
 
 \item{n_threads}{Number of threads to use for parallel processing.
 This argument is ignored if OpenMP is not enabled.
-Threads are spread across sequences, so it
-doesn't make sense to supply more threads than sequences in the reference genome.
+Threads are spread across chromosomes, so it
+doesn't make sense to supply more threads than chromosomes in the reference genome.
 Defaults to \code{1}.}
 
 \item{show_progress}{Boolean for whether to show a progress bar during processing.

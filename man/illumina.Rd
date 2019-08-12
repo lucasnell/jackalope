@@ -4,17 +4,17 @@
 \alias{illumina}
 \title{Create and write Illumina reads to FASTQ file(s).}
 \usage{
-illumina(seq_object, out_prefix, n_reads, read_length, paired,
-  frag_mean = 400, frag_sd = 100, matepair = FALSE, seq_sys = NULL,
-  profile1 = NULL, profile2 = NULL, ins_prob1 = 9e-05,
-  del_prob1 = 0.00011, ins_prob2 = 0.00015, del_prob2 = 0.00023,
-  frag_len_min = NULL, frag_len_max = NULL, variant_probs = NULL,
-  barcodes = NULL, prob_dup = 0.02, sep_files = FALSE,
-  compress = FALSE, comp_method = "bgzip", n_threads = 1L,
-  read_pool_size = 1000L, show_progress = FALSE, overwrite = FALSE)
+illumina(obj, out_prefix, n_reads, read_length, paired, frag_mean = 400,
+  frag_sd = 100, matepair = FALSE, seq_sys = NULL, profile1 = NULL,
+  profile2 = NULL, ins_prob1 = 9e-05, del_prob1 = 0.00011,
+  ins_prob2 = 0.00015, del_prob2 = 0.00023, frag_len_min = NULL,
+  frag_len_max = NULL, variant_probs = NULL, barcodes = NULL,
+  prob_dup = 0.02, sep_files = FALSE, compress = FALSE,
+  comp_method = "bgzip", n_threads = 1L, read_pool_size = 1000L,
+  show_progress = FALSE, overwrite = FALSE)
 }
 \arguments{
-\item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
+\item{obj}{Sequencing object of class \code{ref_genome} or \code{variants}.}
 
 \item{out_prefix}{Prefix for the output file(s), including entire path except
 for the file extension.}
@@ -80,7 +80,7 @@ Defaults to \code{NULL}.}
 Defaults to \code{0.02}.}
 
 \item{sep_files}{Logical indicating whether to make separate files for each variant.
-This argument is coerced to \code{FALSE} if the \code{seq_object} argument is not
+This argument is coerced to \code{FALSE} if the \code{obj} argument is not
 a \code{variants} object.
 Defaults to \code{FALSE}.}
 
@@ -178,7 +178,7 @@ NextSeq 500 v2       \tab NS50     \tab 75      \tab Yes   \cr
 
 The ID lines for FASTQ files are formatted as such:
 
-\code{@<genome name>-<sequence name>-<starting position>-<strand>[/<read#>]}
+\code{@<genome name>-<chromosome name>-<starting position>-<strand>[/<read#>]}
 
 where the part in \code{[]} is only for paired-end Illumina reads, and where \code{genome name}
 is always \code{REF} for reference genomes (as opposed to variants).

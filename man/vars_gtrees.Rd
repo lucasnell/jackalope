@@ -13,10 +13,10 @@ write_gtrees(gtrees, out_prefix)
 \item{obj}{Object containing gene trees.
 This can be one of the following:
 (1) A single \code{list} with a \code{trees} field inside. This field must
-contain a set of gene trees for each sequence.
+contain a set of gene trees for each chromosome.
 (2) A list of lists, each sub-list containing a \code{trees} field of
 length 1. The top-level list must be of the same length as the
-number of sequences.
+number of chromosomes.
 Defaults to \code{NULL}.}
 
 \item{fn}{A single string specifying the name of the file containing
