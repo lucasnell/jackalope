@@ -1,5 +1,5 @@
-#ifndef __JACKAL_REF_CLASSES_H
-#define __JACKAL_REF_CLASSES_H
+#ifndef __JACKALOPE_REF_CLASSES_H
+#define __JACKALOPE_REF_CLASSES_H
 
 
 /*

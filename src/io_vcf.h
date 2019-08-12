@@ -1,5 +1,5 @@
-#ifndef __JACKAL_VCF_IO_H
-#define __JACKAL_VCF_IO_H
+#ifndef __JACKALOPE_VCF_IO_H
+#define __JACKALOPE_VCF_IO_H
 
 #include <RcppArmadillo.h>
 #include <vector>               // vector class

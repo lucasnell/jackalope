@@ -1,5 +1,5 @@
-#ifndef __JACKAL_READ_WRITE_H
-#define __JACKAL_READ_WRITE_H
+#ifndef __JACKALOPE_INPUT_OUTPUT_H
+#define __JACKALOPE_INPUT_OUTPUT_H
 
 /*
  Functions common to reading/writing to multiple file types.

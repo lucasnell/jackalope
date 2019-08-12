@@ -1,5 +1,5 @@
-# ifndef __JACKAL_STR_MANIP_H
-# define __JACKAL_STR_MANIP_H
+# ifndef __JACKALOPE_STR_MANIP_H
+# define __JACKALOPE_STR_MANIP_H
 
 
 #include <RcppArmadillo.h>

@@ -1,5 +1,5 @@
-#ifndef __JACKAL_SEQUENCER_H
-#define __JACKAL_SEQUENCER_H
+#ifndef __JACKALOPE_SEQUENCER_H
+#define __JACKALOPE_SEQUENCER_H
 
 
 

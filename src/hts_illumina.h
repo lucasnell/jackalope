@@ -1,5 +1,5 @@
-#ifndef __JACKAL_ILLUMINA_H
-#define __JACKAL_ILLUMINA_H
+#ifndef __JACKALOPE_ILLUMINA_H
+#define __JACKALOPE_ILLUMINA_H
 
 
 

@@ -1,5 +1,5 @@
-#ifndef __JACKAL_VAR_CLASSES_H
-#define __JACKAL_VAR_CLASSES_H
+#ifndef __JACKALOPE_VAR_CLASSES_H
+#define __JACKALOPE_VAR_CLASSES_H
 
 
 /*

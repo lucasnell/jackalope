@@ -1,5 +1,5 @@
-#ifndef __JACKAL_MUTATOR_H
-#define __JACKAL_MUTATOR_H
+#ifndef __JACKALOPE_MUTATOR_H
+#define __JACKALOPE_MUTATOR_H
 
 
 /*

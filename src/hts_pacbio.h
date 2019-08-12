@@ -1,5 +1,5 @@
-#ifndef __JACKAL_PACBIO_H
-#define __JACKAL_PACBIO_H
+#ifndef __JACKALOPE_PACBIO_H
+#define __JACKALOPE_PACBIO_H
 
 
 

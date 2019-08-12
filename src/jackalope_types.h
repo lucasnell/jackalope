@@ -1,5 +1,5 @@
-# ifndef __JACKAL_TYPES_H
-# define __JACKAL_TYPES_H
+# ifndef __JACKALOPE_TYPES_H
+# define __JACKALOPE_TYPES_H
 
 
 /*
