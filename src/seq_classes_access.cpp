@@ -86,29 +86,29 @@ void print_var_set(SEXP var_set_ptr) {
 
 
 
-//' Make a RefGenome object from a set of sequences.
+//' Make a RefGenome object from a set of chromosomes.
 //'
 //' Used for testing.
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
-SEXP make_ref_genome(const std::vector<std::string>& seqs) {
+SEXP make_ref_genome(const std::vector<std::string>& chroms) {
 
     // Make pointer:
     XPtr<RefGenome> ref_genome(new RefGenome(), true);
 
     // Reference RefGenome fields:
-    uint64 n_seqs = seqs.size();
-    std::deque<RefSequence>& sequences(ref_genome->sequences);
+    uint64 n_chroms = chroms.size();
+    std::deque<RefChrom>& chromosomes(ref_genome->chromosomes);
     uint64& total_size(ref_genome->total_size);
 
     // Add to fields:
-    sequences = std::deque<RefSequence>(n_seqs, RefSequence());
-    for (uint64 i = 0; i < n_seqs; i++) {
-        sequences[i].nucleos = seqs[i];
-        sequences[i].name = "seq" + std::to_string(i);
-        total_size += seqs[i].size();
+    chromosomes = std::deque<RefChrom>(n_chroms, RefChrom());
+    for (uint64 i = 0; i < n_chroms; i++) {
+        chromosomes[i].nucleos = chroms[i];
+        chromosomes[i].name = "chrom" + std::to_string(i);
+        total_size += chroms[i].size();
     }
 
     return ref_genome;
@@ -137,7 +137,7 @@ SEXP make_var_set(SEXP ref_genome_ptr, const uint64& n_vars) {
  ========================================================================================
  ========================================================================================
 
- Viewing numbers of sequences/variants
+ Viewing numbers of chromosomes/variants
 
  ========================================================================================
  ========================================================================================
@@ -145,7 +145,7 @@ SEXP make_var_set(SEXP ref_genome_ptr, const uint64& n_vars) {
 
 
 //[[Rcpp::export]]
-IntegerVector view_ref_genome_nseqs(SEXP ref_genome_ptr) {
+IntegerVector view_ref_genome_nchroms(SEXP ref_genome_ptr) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     IntegerVector out(1);
     out[0] = ref_genome->size();
@@ -153,9 +153,9 @@ IntegerVector view_ref_genome_nseqs(SEXP ref_genome_ptr) {
 }
 
 
-// Number of sequences
+// Number of chromosomes
 //[[Rcpp::export]]
-IntegerVector view_var_set_nseqs(SEXP var_set_ptr) {
+IntegerVector view_var_set_nchroms(SEXP var_set_ptr) {
     XPtr<VarSet> var_set(var_set_ptr);
     IntegerVector out(1);
     out[0] = var_set->reference->size();
@@ -176,7 +176,7 @@ IntegerVector view_var_set_nvars(SEXP var_set_ptr) {
  ========================================================================================
  ========================================================================================
 
- Viewing sequence sizes
+ Viewing chromosome sizes
 
  ========================================================================================
  ========================================================================================
@@ -184,7 +184,7 @@ IntegerVector view_var_set_nvars(SEXP var_set_ptr) {
 
 
 //[[Rcpp::export]]
-IntegerVector view_ref_genome_seq_sizes(SEXP ref_genome_ptr) {
+IntegerVector view_ref_genome_chrom_sizes(SEXP ref_genome_ptr) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::vector<uint64> tmp = ref_genome->seq_sizes();
     IntegerVector out(tmp.size());
@@ -193,12 +193,12 @@ IntegerVector view_ref_genome_seq_sizes(SEXP ref_genome_ptr) {
 }
 
 
-//' See all sequence sizes in a VarGenome object within a VarSet.
+//' See all chromosome sizes in a VarGenome object within a VarSet.
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
-IntegerVector view_var_genome_seq_sizes(SEXP var_set_ptr,
+IntegerVector view_var_genome_chrom_sizes(SEXP var_set_ptr,
                                         const uint64& var_ind) {
 
     XPtr<VarSet> var_set(var_set_ptr);
@@ -206,8 +206,8 @@ IntegerVector view_var_genome_seq_sizes(SEXP var_set_ptr,
 
     IntegerVector out(var_genome.size());
     for (uint64 i = 0; i < var_genome.size(); i++) {
-        const VarSequence& var_seq(var_genome.var_genome[i]);
-        out[i] = var_seq.seq_size;
+        const VarSequence& var_chrom(var_genome.var_genome[i]);
+        out[i] = var_chrom.seq_size;
     }
     return out;
 }
@@ -222,7 +222,7 @@ IntegerVector view_var_genome_seq_sizes(SEXP var_set_ptr,
  ========================================================================================
  ========================================================================================
 
- Viewing one sequence from a genome
+ Viewing one chromosome from a genome
 
  ========================================================================================
  ========================================================================================
@@ -231,25 +231,25 @@ IntegerVector view_var_genome_seq_sizes(SEXP var_set_ptr,
 
 
 //[[Rcpp::export]]
-std::string view_ref_genome_seq(SEXP ref_genome_ptr, const uint64& seq_ind) {
+std::string view_ref_genome_chrom(SEXP ref_genome_ptr, const uint64& chrom_ind) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    std::string out = (*ref_genome)[seq_ind].nucleos;
+    std::string out = (*ref_genome)[chrom_ind].nucleos;
     return out;
 }
 
 
-//' Function to piece together the strings for one sequence in a VarGenome.
+//' Function to piece together the strings for one chromosome in a VarGenome.
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
-std::string view_var_genome_seq(SEXP var_set_ptr,
+std::string view_var_genome_chrom(SEXP var_set_ptr,
                                const uint64& var_ind,
-                               const uint64& seq_ind) {
+                               const uint64& chrom_ind) {
 
     XPtr<VarSet> var_set(var_set_ptr);
-    const VarSequence& var_seq((*var_set)[var_ind][seq_ind]);
-    std::string out = var_seq.get_seq_full();
+    const VarSequence& var_chrom((*var_set)[var_ind][chrom_ind]);
+    std::string out = var_chrom.get_seq_full();
     return out;
 }
 
@@ -272,13 +272,13 @@ std::vector<std::string> view_ref_genome(SEXP ref_genome_ptr) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::vector<std::string> out(ref_genome->size(), "");
     for (uint64 i = 0; i < ref_genome->size(); i++) {
-        const RefSequence& ref_seq((*ref_genome)[i]);
-        out[i] = ref_seq.nucleos;
+        const RefChrom& ref_chrom((*ref_genome)[i]);
+        out[i] = ref_chrom.nucleos;
     }
     return out;
 }
 
-//' Function to piece together the strings for all sequences in a VarGenome.
+//' Function to piece together the strings for all chromosomes in a VarGenome.
 //'
 //' @noRd
 //'
@@ -291,8 +291,8 @@ std::vector<std::string> view_var_genome(SEXP var_set_ptr,
 
     std::vector<std::string> out(var_genome.size(), "");
     for (uint64 i = 0; i < var_genome.size(); i++) {
-        const VarSequence& var_seq(var_genome[i]);
-        out[i] = var_seq.get_seq_full();
+        const VarSequence& var_chrom(var_genome[i]);
+        out[i] = var_chrom.get_seq_full();
     }
     return out;
 }
@@ -313,11 +313,11 @@ std::vector<std::string> view_var_genome(SEXP var_set_ptr,
 
 
 //[[Rcpp::export]]
-std::vector<std::string> view_ref_genome_seq_names(SEXP ref_genome_ptr) {
+std::vector<std::string> view_ref_genome_chrom_names(SEXP ref_genome_ptr) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::vector<std::string> out;
     out.reserve(ref_genome->size());
-    for (const RefSequence& seq : (*ref_genome).sequences) out.push_back(seq.name);
+    for (const RefChrom& chrom : (*ref_genome).chromosomes) out.push_back(chrom.name);
     return out;
 }
 
@@ -352,13 +352,13 @@ std::vector<std::string> view_var_set_var_names(SEXP var_set_ptr) {
 //'
 //[[Rcpp::export]]
 double view_ref_genome_gc_content(SEXP ref_genome_ptr,
-                                  const uint64& seq_ind,
+                                  const uint64& chrom_ind,
                                   const uint64& start,
                                   const uint64& end) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    const std::string& seq = (*ref_genome)[seq_ind].nucleos;
-    double gc = gc_prop(seq, start, end);
+    const std::string& chrom = (*ref_genome)[chrom_ind].nucleos;
+    double gc = gc_prop(chrom, start, end);
     return gc;
 }
 
@@ -368,16 +368,16 @@ double view_ref_genome_gc_content(SEXP ref_genome_ptr,
 //'
 //[[Rcpp::export]]
 double view_var_set_gc_content(SEXP var_set_ptr,
-                               const uint64& seq_ind,
+                               const uint64& chrom_ind,
                                const uint64& var_ind,
                                const uint64& start,
                                const uint64& end) {
     XPtr<VarSet> var_set(var_set_ptr);
-    const VarSequence& var_seq((*var_set)[var_ind][seq_ind]);
-    std::string seq;
+    const VarSequence& var_chrom((*var_set)[var_ind][chrom_ind]);
+    std::string chrom;
     uint64 mut_i = 0;
-    var_seq.set_seq_chunk(seq, start, end - start + 1, mut_i);
-    double gc = gc_prop(seq);
+    var_chrom.set_seq_chunk(chrom, start, end - start + 1, mut_i);
+    double gc = gc_prop(chrom);
     return gc;
 }
 
@@ -388,13 +388,13 @@ double view_var_set_gc_content(SEXP var_set_ptr,
 //[[Rcpp::export]]
 double view_ref_genome_nt_content(SEXP ref_genome_ptr,
                                   const char& nt,
-                                  const uint64& seq_ind,
+                                  const uint64& chrom_ind,
                                   const uint64& start,
                                   const uint64& end) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    const std::string& seq = (*ref_genome)[seq_ind].nucleos;
-    double ntp = nt_prop(seq, nt, start, end);
+    const std::string& chrom = (*ref_genome)[chrom_ind].nucleos;
+    double ntp = nt_prop(chrom, nt, start, end);
     return ntp;
 }
 
@@ -405,16 +405,16 @@ double view_ref_genome_nt_content(SEXP ref_genome_ptr,
 //[[Rcpp::export]]
 double view_var_set_nt_content(SEXP var_set_ptr,
                                const char& nt,
-                               const uint64& seq_ind,
+                               const uint64& chrom_ind,
                                const uint64& var_ind,
                                const uint64& start,
                                const uint64& end) {
     XPtr<VarSet> var_set(var_set_ptr);
-    const VarSequence& var_seq((*var_set)[var_ind][seq_ind]);
-    std::string seq;
+    const VarSequence& var_chrom((*var_set)[var_ind][chrom_ind]);
+    std::string chrom;
     uint64 mut_i = 0;
-    var_seq.set_seq_chunk(seq, start, end - start + 1, mut_i);
-    double ntp = nt_prop(seq, nt);
+    var_chrom.set_seq_chunk(chrom, start, end - start + 1, mut_i);
+    double ntp = nt_prop(chrom, nt);
     return ntp;
 }
 
@@ -433,17 +433,17 @@ double view_var_set_nt_content(SEXP var_set_ptr,
 
 
 //[[Rcpp::export]]
-void set_ref_genome_seq_names(
+void set_ref_genome_chrom_names(
         SEXP ref_genome_ptr,
-        const std::vector<uint64>& seq_inds,
+        const std::vector<uint64>& chrom_inds,
         const std::vector<std::string>& names) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    if (names.size() != seq_inds.size()) stop("names and seq_inds aren't the same size");
-    if (*std::max_element(seq_inds.begin(), seq_inds.end()) >= ref_genome->size()) {
-        stop("at least one value in seq_inds is too large");
+    if (names.size() != chrom_inds.size()) stop("names and chrom_inds aren't the same size");
+    if (*std::max_element(chrom_inds.begin(), chrom_inds.end()) >= ref_genome->size()) {
+        stop("at least one value in chrom_inds is too large");
     }
-    for (uint64 i = 0; i < seq_inds.size(); i++) {
-        (*ref_genome)[seq_inds[i]].name = names[i];
+    for (uint64 i = 0; i < chrom_inds.size(); i++) {
+        (*ref_genome)[chrom_inds[i]].name = names[i];
     }
     return;
 }
@@ -451,7 +451,7 @@ void set_ref_genome_seq_names(
 
 
 //[[Rcpp::export]]
-void clean_ref_genome_seq_names(SEXP ref_genome_ptr) {
+void clean_ref_genome_chrom_names(SEXP ref_genome_ptr) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
 
@@ -500,29 +500,29 @@ void set_var_set_var_names(
 
 
 //[[Rcpp::export]]
-void remove_ref_genome_seqs(
+void remove_ref_genome_chroms(
         SEXP ref_genome_ptr,
-        std::vector<uint64> seq_inds) {
+        std::vector<uint64> chrom_inds) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    std::deque<RefSequence>& sequences(ref_genome->sequences);
+    std::deque<RefChrom>& chromosomes(ref_genome->chromosomes);
 
     // Checking for duplicates:
-    std::sort(seq_inds.begin(), seq_inds.end());
-    if (adjacent_find(seq_inds.begin(), seq_inds.end()) != seq_inds.end()) {
-        stop("duplicates detected in seq_inds");
+    std::sort(chrom_inds.begin(), chrom_inds.end());
+    if (adjacent_find(chrom_inds.begin(), chrom_inds.end()) != chrom_inds.end()) {
+        stop("duplicates detected in chrom_inds");
     }
 
     // Number of deleted nucleotides:
     uint64 n_del = 0;
 
-    for (uint64 i = 1; i <= seq_inds.size(); i++) {
+    for (uint64 i = 1; i <= chrom_inds.size(); i++) {
         // Going backward so I don't have to update later ones each time:
-        uint64 j = seq_inds[(seq_inds.size() - i)];
-        n_del += sequences[j].size();
-        sequences.erase(sequences.begin() + j);
+        uint64 j = chrom_inds[(chrom_inds.size() - i)];
+        n_del += chromosomes[j].size();
+        chromosomes.erase(chromosomes.begin() + j);
     }
-    clear_memory<std::deque<RefSequence>>(sequences);
+    clear_memory<std::deque<RefChrom>>(chromosomes);
 
     // Update total size:
     ref_genome->total_size -= n_del;
@@ -571,22 +571,22 @@ void remove_var_set_vars(
 
 
 //[[Rcpp::export]]
-void add_ref_genome_seqs(
+void add_ref_genome_chroms(
         SEXP ref_genome_ptr,
-        const std::vector<std::string>& new_seqs,
+        const std::vector<std::string>& new_chroms,
         const std::vector<std::string>& new_names) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    std::deque<RefSequence>& sequences(ref_genome->sequences);
+    std::deque<RefChrom>& chromosomes(ref_genome->chromosomes);
 
-    if (new_seqs.size() != new_names.size()) {
-        stop("In `add_ref_genome_seqs`, `new_seqs` must be the same size as `new_names`");
+    if (new_chroms.size() != new_names.size()) {
+        stop("In `add_ref_genome_chroms`, `new_chroms` must be the same size as `new_names`");
     }
 
-    for (uint64 i = 0; i < new_seqs.size(); i++) {
-        sequences.push_back(RefSequence(new_names[i], new_seqs[i]));
+    for (uint64 i = 0; i < new_chroms.size(); i++) {
+        chromosomes.push_back(RefChrom(new_names[i], new_chroms[i]));
         // Update total size:
-        ref_genome->total_size += new_seqs[i].size();
+        ref_genome->total_size += new_chroms[i].size();
     }
 
 
@@ -695,24 +695,24 @@ DataFrame view_mutations(SEXP var_set_ptr, const uint64& var_ind) {
     std::vector<std::string> nucleos;
     nucleos.reserve(n_muts);
     std::vector<uint64> vars(n_muts, var_ind);
-    std::vector<uint64> seqs;
-    seqs.reserve(n_muts);
+    std::vector<uint64> chroms;
+    chroms.reserve(n_muts);
 
     for (uint64 i = 0; i < var_genome.size(); i++) {
-        const VarSequence& var_seq(var_genome.var_genome[i]);
-        uint64 n_muts_i = var_seq.mutations.size();
+        const VarSequence& var_chrom(var_genome.var_genome[i]);
+        uint64 n_muts_i = var_chrom.mutations.size();
         for (uint64 j = 0; j < n_muts_i; ++j) {
-            size_mod.push_back(var_seq.mutations[j].size_modifier);
-            old_pos.push_back(var_seq.mutations[j].old_pos);
-            new_pos.push_back(var_seq.mutations[j].new_pos);
-            nucleos.push_back(var_seq.mutations[j].nucleos);
-            seqs.push_back(i);
+            size_mod.push_back(var_chrom.mutations[j].size_modifier);
+            old_pos.push_back(var_chrom.mutations[j].old_pos);
+            new_pos.push_back(var_chrom.mutations[j].new_pos);
+            nucleos.push_back(var_chrom.mutations[j].nucleos);
+            chroms.push_back(i);
         }
     }
 
     DataFrame out = DataFrame::create(
         _["var"] = vars,
-        _["seq"] = seqs,
+        _["chrom"] = chroms,
         _["size_mod"] = size_mod,
         _["old_pos"] = old_pos,
         _["new_pos"] = new_pos,
@@ -730,11 +730,11 @@ DataFrame view_mutations(SEXP var_set_ptr, const uint64& var_ind) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& seq_ind) {
+List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& chrom_ind) {
 
     XPtr<VarSet> var_set_xptr(var_set_ptr);
     const VarGenome& var_genome((*var_set_xptr)[var_ind]);
-    const VarSequence& var_seq(var_genome[seq_ind]);
+    const VarSequence& var_chrom(var_genome[chrom_ind]);
 
     std::string bases = "TCAG";
     std::vector<uint64> base_inds(85);
@@ -744,12 +744,12 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& se
         j++;
     }
 
-    uint64 n_muts = var_seq.mutations.size();
+    uint64 n_muts = var_chrom.mutations.size();
     arma::mat sub_mat(4, 4, arma::fill::zeros);
     uint64 max_ins = 0;
     uint64 max_del = 0;
     for (uint64 i = 0; i < n_muts; i++) {
-        sint64 mi = var_seq.mutations[i].size_modifier;
+        sint64 mi = var_chrom.mutations[i].size_modifier;
         if (mi == 0) continue;
         if (mi > 0) {
             if (mi > static_cast<sint64>(max_ins)) max_ins = mi;
@@ -764,9 +764,9 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& se
 
     for (uint64 mut_i = 0; mut_i < n_muts; mut_i++) {
 
-        const Mutation& m(var_seq.mutations[mut_i]);
+        const Mutation& m(var_chrom.mutations[mut_i]);
 
-        char c = (*(var_seq.ref_seq))[m.old_pos];
+        char c = (*(var_chrom.ref_seq))[m.old_pos];
         uint64 i = base_inds[static_cast<uint64>(c)];
         sint64 smod = m.size_modifier;
         if (smod == 0) {
@@ -780,7 +780,7 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& se
             del_mat(i, j)++;
         }
 
-        pos_vec[mut_i] = var_seq.mutations[mut_i].old_pos;
+        pos_vec[mut_i] = var_chrom.mutations[mut_i].old_pos;
     }
 
     List out = List::create(
@@ -824,7 +824,7 @@ std::vector<uint64> table_gammas(const std::vector<uint64>& gamma_ends,
 //'
 //' @param var_set_ptr External pointer to a C++ `VarSet` object
 //' @param var_ind Integer index to the desired variant. Uses 0-based indexing!
-//' @param seq_ind Integer index to the desired sequence. Uses 0-based indexing!
+//' @param chrom_ind Integer index to the desired chromosome. Uses 0-based indexing!
 //' @param new_pos_ Integer index to the desired subsitution location.
 //'     Uses 0-based indexing!
 //'
@@ -840,13 +840,13 @@ NULL_ENTRY;
 //'
 //[[Rcpp::export]]
 void add_substitution(SEXP var_set_ptr, const uint64& var_ind,
-                      const uint64& seq_ind,
+                      const uint64& chrom_ind,
                       const char& nucleo_,
                       const uint64& new_pos_) {
     XPtr<VarSet> var_set(var_set_ptr);
     VarGenome& var_genome((*var_set)[var_ind]);
-    VarSequence& var_seq(var_genome[seq_ind]);
-    var_seq.add_substitution(nucleo_, new_pos_);
+    VarSequence& var_chrom(var_genome[chrom_ind]);
+    var_chrom.add_substitution(nucleo_, new_pos_);
     return;
 }
 //' @describeIn add_mutations Add an insertion.
@@ -859,13 +859,13 @@ void add_substitution(SEXP var_set_ptr, const uint64& var_ind,
 //'
 //[[Rcpp::export]]
 void add_insertion(SEXP var_set_ptr, const uint64& var_ind,
-                   const uint64& seq_ind,
+                   const uint64& chrom_ind,
                    const std::string& nucleos_,
                    const uint64& new_pos_) {
     XPtr<VarSet> var_set(var_set_ptr);
     VarGenome& var_genome((*var_set)[var_ind]);
-    VarSequence& var_seq(var_genome[seq_ind]);
-    var_seq.add_insertion(nucleos_, new_pos_);
+    VarSequence& var_chrom(var_genome[chrom_ind]);
+    var_chrom.add_insertion(nucleos_, new_pos_);
     return;
 }
 //' @describeIn add_mutations Add a deletion.
@@ -879,13 +879,13 @@ void add_insertion(SEXP var_set_ptr, const uint64& var_ind,
 //[[Rcpp::export]]
 void add_deletion(SEXP var_set_ptr,
                   const uint64& var_ind,
-                  const uint64& seq_ind,
+                  const uint64& chrom_ind,
                   const uint64& size_,
                   const uint64& new_pos_) {
     XPtr<VarSet> var_set(var_set_ptr);
     VarGenome& var_genome((*var_set)[var_ind]);
-    VarSequence& var_seq(var_genome[seq_ind]);
-    var_seq.add_deletion(size_, new_pos_);
+    VarSequence& var_chrom(var_genome[chrom_ind]);
+    var_chrom.add_deletion(size_, new_pos_);
     return;
 }
 
@@ -898,18 +898,18 @@ void add_deletion(SEXP var_set_ptr,
 //'
 //[[Rcpp::export]]
 double test_rate(const uint64& start, const uint64& end,
-                 const uint64& var_ind, const uint64& seq_ind,
+                 const uint64& var_ind, const uint64& chrom_ind,
                  SEXP var_set_ptr, SEXP sampler_base_ptr,
                  const arma::mat& gamma_mat_) {
 
     XPtr<VarSet> var_set(var_set_ptr);
 
-    VarSequence& var_seq((*var_set)[var_ind][seq_ind]);
+    VarSequence& var_chrom((*var_set)[var_ind][chrom_ind]);
 
     XPtr<MutationSampler> sampler_base(sampler_base_ptr);
 
     MutationSampler sampler(*sampler_base);
-    sampler.new_seq(var_seq, gamma_mat_);
+    sampler.new_seq(var_chrom, gamma_mat_);
 
     double out = 0;
 
