@@ -213,7 +213,7 @@ test_that("variant creation works with ms-style file output", {
 
     expect_error(
         vars_gtrees(fn = .p("ms_out_err1")),
-        regexp = "one or more sequences have no trees",
+        regexp = "one or more chromosomes have no trees",
         info = "returns error when no gene trees provided - ms-file")
 
     expect_error(
@@ -276,7 +276,7 @@ test_that("variant creation works with ms-style file output", {
     },
     regexp = paste("A coalescent string appears to include recombination",
                    "but the combined sizes of all regions don't match the",
-                   "size of the sequence"))
+                   "size of the chromosome"))
 
 })
 
@@ -376,7 +376,7 @@ test_that("gene trees written properly by write_gtrees", {
                              collapse = ""), "//")[[1]]
     wr_str <- wr_str[grepl("^\\[", wr_str)]
 
-    # original file, split by sequence:
+    # original file, split by chromosome:
     og_str <- strsplit(strsplit(paste(readLines(test_path("files/ms_out.txt"))[-1:-2],
                                       collapse = "\n"), "//\n")[[1]], "\n")[-1]
     # Now get just the gene trees:

@@ -13,8 +13,8 @@ set.seed(4616515)
 pars <- new.env()
 with(pars, {
     # For reference genome:
-    n_seqs <- 10
-    seq_len <- 1000
+    n_chroms <- 10
+    chrom_len <- 1000
     # Molecular evolution:
     lambda = 0.1
     alpha = 0.25
@@ -33,12 +33,12 @@ with(pars, {
     # For site variability:
     shape = 0.5
     region_size = 10
-    ends = seq(region_size, seq_len, region_size)
-    mats = replicate(n_seqs,
+    ends = seq(region_size, chrom_len, region_size)
+    mats = replicate(n_chroms,
                      cbind(ends, rgamma(length(ends), shape = shape, rate = shape)),
                      simplify = FALSE)
     # Gamma matrices that should throw errors:
-    mats_err1 = replicate(n_seqs,
+    mats_err1 = replicate(n_chroms,
                           cbind(ends, rgamma(length(ends), shape = shape, rate = shape)),
                           simplify = TRUE)
     mats_err2 = mats
@@ -58,7 +58,7 @@ create_mevo <- function(reference, sub,
 }
 
 # Create reference genome
-ref <- with(pars, create_genome(n_seqs, seq_len))
+ref <- with(pars, create_genome(n_chroms, chrom_len))
 
 
 
@@ -276,9 +276,9 @@ M <- site_var(ref, shape = pars$shape, region_size = pars$region_size,
 test_that("proper gamma distance values with `shape` and `region_size` inputs", {
     # Testing end points:
     expect_equal(sapply(M, function(x) x[,1]),
-                 matrix(rep(seq(pars$region_size, pars$seq_len, pars$region_size),
-                            pars$n_seqs),
-                        ceiling(pars$seq_len / pars$region_size), pars$n_seqs))
+                 matrix(rep(seq(pars$region_size, pars$chrom_len, pars$region_size),
+                            pars$n_chroms),
+                        ceiling(pars$chrom_len / pars$region_size), pars$n_chroms))
     # Testing mean:
     expect_equal(mean(sapply(M, function(x) mean(x[,2]))), 1)
     # Testing SD:
@@ -297,7 +297,7 @@ test_that("BED file of gamma values is correct", {
 
     gmat_df <- do.call(rbind, lapply(1:length(M),
                                      function(i) {
-                                         cbind(nm = ref$names()[i],
+                                         cbind(nm = ref$chrom_names()[i],
                                                as.data.frame(M[[i]]))
                                          }))
 
@@ -326,7 +326,7 @@ test_that("throws proper errors when inputting an incorrect `site_var$mats` inpu
     expect_error(site_var(ref, mats = pars$mats_err2),
                  regexp = paste("all matrices need to have a maximum end point",
                                 "\\(in the first column\\) equal to the size of",
-                                "the associated sequence"))
+                                "the associated chromosome"))
     expect_error(site_var(ref, mats = pars$mats_err3),
                  regexp = "all matrices should contain only whole numbers as end points")
     expect_error(site_var(ref, mats = pars$mats_err4),

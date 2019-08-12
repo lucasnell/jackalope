@@ -33,7 +33,7 @@ test_that("basics of vars_theta work", {
 
     vars <- cv(vars_theta(0.1, n_vars = 4))
 
-    expect_identical(vars$n_seqs(), arg_list$reference$n_seqs())
+    expect_identical(vars$n_chroms(), arg_list$reference$n_chroms())
     expect_identical(vars$n_vars(), 4L)
 
     vars2 <- cv(vars_theta(4, n_vars = 4))
@@ -57,7 +57,7 @@ test_that("basics of vars_phylo with object work", {
 
     vars <- cv(vars_phylo(tr))
 
-    expect_identical(vars$n_seqs(), arg_list$reference$n_seqs())
+    expect_identical(vars$n_chroms(), arg_list$reference$n_chroms())
     expect_identical(vars$n_vars(), 4L)
 
     tr$edge.length <- tr$edge.length * 100
@@ -85,7 +85,7 @@ test_that("basics of vars_phylo with file work", {
 
     vars <- cv(vars_phylo(fn = tr_file))
 
-    expect_identical(vars$n_seqs(), arg_list$reference$n_seqs())
+    expect_identical(vars$n_chroms(), arg_list$reference$n_chroms())
     expect_identical(vars$n_vars(), 4L)
 
     expect_error(vars_phylo(fn = tr),
@@ -102,7 +102,7 @@ test_that("basic diagnostic functions work for variants", {
     vars <- cv(vars_theta(theta = 0.1, n_vars = 4))
 
     Z <- jackalope:::examine_mutations(var_set_ptr = vars$ptr(),
-                                       var_ind = 0, seq_ind = 0)
+                                       var_ind = 0, chrom_ind = 0)
 
     expect_identical(length(Z$pos), as.integer(sum(sapply(c("sub", "ins", "del"),
                                                           function(x) sum(Z[[x]])))))

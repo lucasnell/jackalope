@@ -109,7 +109,7 @@ To generate many mutations, I set the population-scaled mutation rate
 ($\theta = 4 N_0 \mu$) to `100` for this example.
 
 ```{r examples-divergence-scrm}
-ssites <- scrm(paste("40", ref$n_seqs(), "-t 100 -I 2 20 20 100"))
+ssites <- scrm(paste("40", ref$n_chroms(), "-t 100 -I 2 20 20 100"))
 ```
 
 Using the previously created objects for molecular evolution information (`sub`,
@@ -197,20 +197,20 @@ illumina(vars, out_prefix = "phylo_tree", seq_sys = "MSv3",
 Similar to the section above, the ultimate goal here is to test phylogeny
 reconstruction methods.
 The difference in this section is that instead of using a single, straightforward
-phylogeny, I use multiple gene trees per sequence.
+phylogeny, I use multiple gene trees per chromosome.
 In the species used in these simulations, species 3 diverged from 1 and 2 at $t = 0.5$,
 where $t$ indicates time into the past and is in units of $4 N_0$ generations.
 Species 1 and 2 diverged at $t = 0.25$.
-I assume a recombination rate of $1 / (4 N_0)$ recombination events per sequence
+I assume a recombination rate of $1 / (4 N_0)$ recombination events per chromosome
 per generation.
-Because each sequence is a different length and the length is required for including
-a recombination rate, I had to run `scrm` separately for each sequence.
+Because each chromosome is a different length and the length is required for including
+a recombination rate, I had to run `scrm` separately for each chromosome.
 There are 4 diploid individuals sampled per species.
 
 
 ```{r examples-phylogeny-gtrees-scrm}
-# Run scrm for one sequence size:
-one_seq <- function(size) {
+# Run scrm for one chromosome size:
+one_chrom <- function(size) {
     sims <- scrm(
         paste("24 1",
               # Output gene trees:
@@ -226,8 +226,8 @@ one_seq <- function(size) {
         ))
     return(sims$trees[[1]])
 }
-# For all sequences:
-gtrees <- list(trees = lapply(ref$sizes(), one_seq))
+# For all chromosomes:
+gtrees <- list(trees = lapply(ref$sizes(), one_chrom))
 ```
 
 ```{r examples-phylogeny-gtrees-create-variants,}
