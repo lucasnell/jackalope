@@ -51,8 +51,8 @@ class MutationSampler {
 
 public:
 
-    // VarSequence object pointer to be manipulated
-    VarSequence* var_seq;
+    // VarChrom object pointer to be manipulated
+    VarChrom* var_seq;
     // For sampling the mutation location:
     LocationSampler location;
     // For sampling the type of mutation:
@@ -74,7 +74,7 @@ public:
         return *this;
     }
 
-    void new_seq(VarSequence& vs_, const arma::mat& gamma_mat) {
+    void new_seq(VarChrom& vs_, const arma::mat& gamma_mat) {
         var_seq = &vs_;
         location.new_seq(vs_, gamma_mat);
         return;

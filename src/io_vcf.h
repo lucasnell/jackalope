@@ -88,7 +88,7 @@ public:
 
 
     // Reset to new variant sequence
-    void set_var(const VarSequence& var_seq_) {
+    void set_var(const VarChrom& var_seq_) {
         var_seq = &var_seq_;
         gt_index = 0;
         ind = std::make_pair(0, 0);
@@ -121,7 +121,7 @@ public:
 
 private:
 
-    const VarSequence* var_seq;
+    const VarChrom* var_seq;
 
     // Set positions when indices are the same (when initializing, iterating, new variant)
     void reset_pos() {
@@ -268,7 +268,7 @@ public:
         pool += '\n';
         pool += "##source=jackalope\n";
         for (uint64 i = 0; i < var_set->reference->size(); i++) {
-            const RefSequence& rs(var_set->reference->operator[](i));
+            const RefChrom& rs(var_set->reference->operator[](i));
             pool += "##contig=<ID=" + rs.name + ',';
             pool += "length=" + std::to_string(rs.size()) + ">\n";
         }

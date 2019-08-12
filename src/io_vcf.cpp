@@ -329,7 +329,7 @@ SEXP read_vcfr(SEXP reference_ptr,
             if (alt.size() == 0 || alt == ref) continue;
 
             // Else, mutate accordingly:
-            VarSequence& var_seq((*var_set)[var_i][seq_i]);
+            VarChrom& var_seq((*var_set)[var_i][seq_i]);
 
             if (alt.size() == ref.size()) {
                 /*
@@ -412,7 +412,7 @@ SEXP read_vcfr(SEXP reference_ptr,
      */
     for (uint64 seq_i = 0; seq_i < n_seqs; seq_i++) {
         for (uint64 var_i = 0; var_i < n_vars; var_i++) {
-            VarSequence& var_seq((*var_set)[var_i][seq_i]);
+            VarChrom& var_seq((*var_set)[var_i][seq_i]);
             var_seq.calc_positions();
         }
     }

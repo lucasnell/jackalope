@@ -38,7 +38,7 @@ using namespace Rcpp;
 /*
  Process one phylogenetic tree for a single sequence with no recombination.
 
- Note that this function should be changed if any of these VarSequences differ from
+ Note that this function should be changed if any of these VarChroms differ from
  each other (within the range specified if recombination = true).
  They can already have mutations, but to start out, they must all be the same.
  */
@@ -46,7 +46,7 @@ int PhyloOneSeq::one_tree(PhyloTree& tree,
                              pcg64& eng,
                              Progress& prog_bar) {
 
-    // Reset tree of samplers and VarSequence objects representing nodes and tips:
+    // Reset tree of samplers and VarChrom objects representing nodes and tips:
     reset(tree);
 
     /*
@@ -128,7 +128,7 @@ int PhyloOneSeq::one_tree(PhyloTree& tree,
         }
 
         /*
-         To free up some memory, clear info from VarSequence object at `b1` if it's no
+         To free up some memory, clear info from VarChrom object at `b1` if it's no
          longer needed.
          */
         clear_branches(b1, i, tree);
@@ -136,7 +136,7 @@ int PhyloOneSeq::one_tree(PhyloTree& tree,
     }
 
     /*
-     Update final `VarSequence` objects:
+     Update final `VarChrom` objects:
      */
     update_var_seq(tree);
 

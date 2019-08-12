@@ -66,7 +66,7 @@ struct Mutation {
      These operators compare Mutation objects.
      If there is any overlap between the two mutations, then neither > nor <
      will return true.
-     They are used to determine how and whether to merge VarSequence objects.
+     They are used to determine how and whether to merge VarChrom objects.
     */
     bool operator<(const Mutation& other) const {
         // Check for a deletion spanning the distance between the two:
@@ -110,7 +110,7 @@ struct Mutation {
  ========================================================================================
  */
 
-// (This class will later need access to private members of VarSequence.)
+// (This class will later need access to private members of VarChrom.)
 class LocationSampler;
 
 
@@ -120,20 +120,20 @@ class LocationSampler;
  =========================================
  */
 
-class VarSequence {
+class VarChrom {
 
     friend class LocationSampler;
 
 public:
 
-    const RefSequence* ref_seq;  // pointer to const RefSequence
+    const RefChrom* ref_seq;  // pointer to const RefChrom
     std::deque<Mutation> mutations;
     uint64 seq_size;
     std::string name;
 
     // Constructors
-    VarSequence() : ref_seq(nullptr) {};
-    VarSequence(const RefSequence& ref)
+    VarChrom() : ref_seq(nullptr) {};
+    VarChrom(const RefChrom& ref)
         : ref_seq(&ref),
           mutations(),
           seq_size(ref.size()),
@@ -154,8 +154,8 @@ public:
         return;
     }
 
-    // Replace existing mutation information in this VarSequence with another
-    void replace(const VarSequence& other) {
+    // Replace existing mutation information in this VarChrom with another
+    void replace(const VarChrom& other) {
         ref_seq = other.ref_seq;
         mutations = other.mutations;
         seq_size = other.seq_size;
@@ -163,8 +163,8 @@ public:
         return;
     }
 
-    // Add existing mutation information in another `VarSequence` to this one
-    VarSequence& operator+=(const VarSequence& other);
+    // Add existing mutation information in another `VarChrom` to this one
+    VarChrom& operator+=(const VarChrom& other);
 
 
     /*
@@ -299,33 +299,33 @@ public:
 
     // Fields
     std::string name;
-    std::deque<VarSequence> var_genome;
+    std::deque<VarChrom> var_genome;
 
     // Constructors
     VarGenome() {};
     VarGenome(const RefGenome& ref) {
         name = "";
         for (uint64 i = 0; i < ref.size(); i++) {
-            VarSequence var_seq(ref[i]);
+            VarChrom var_seq(ref[i]);
             var_genome.push_back(var_seq);
         }
     };
     VarGenome(const std::string& name_, const RefGenome& ref) {
         name = name_;
         for (uint64 i = 0; i < ref.size(); i++) {
-            VarSequence var_seq(ref[i]);
+            VarChrom var_seq(ref[i]);
             var_genome.push_back(var_seq);
         }
     };
 
-    // For easily outputting a reference to a VarSequence
-    VarSequence& operator[](const uint64& idx) {
-        VarSequence& var_seq(var_genome[idx]);
+    // For easily outputting a reference to a VarChrom
+    VarChrom& operator[](const uint64& idx) {
+        VarChrom& var_seq(var_genome[idx]);
         return var_seq;
     }
     // const version
-    const VarSequence& operator[](const uint64& idx) const {
-        const VarSequence& var_seq(var_genome[idx]);
+    const VarChrom& operator[](const uint64& idx) const {
+        const VarChrom& var_seq(var_genome[idx]);
         return var_seq;
     }
     // To return the number of sequences

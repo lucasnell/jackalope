@@ -62,7 +62,7 @@ namespace alter_scaffs {
 void merge_sequences_cpp(SEXP ref_genome_ptr) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    std::deque<RefSequence>& seqs(ref_genome->sequences);
+    std::deque<RefChrom>& seqs(ref_genome->sequences);
 
     // Shuffling ref_genome info.
     std::random_shuffle(seqs.begin(), seqs.end(), alter_scaffs::rand_wrapper);
@@ -81,7 +81,7 @@ void merge_sequences_cpp(SEXP ref_genome_ptr) {
     // clear memory in string
     clear_memory<std::string>(nts);
     // clear memory in deque
-    clear_memory<std::deque<RefSequence>>(seqs);
+    clear_memory<std::deque<RefChrom>>(seqs);
 
     ref_genome->merged = true;
 
@@ -126,7 +126,7 @@ void filter_sequences_cpp(SEXP ref_genome_ptr,
                           const double& out_seq_prop = 0) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    std::deque<RefSequence>& seqs(ref_genome->sequences);
+    std::deque<RefChrom>& seqs(ref_genome->sequences);
 
     // Checking for sensible inputs
     if (out_seq_prop <= 0 && min_seq_size == 0) {
@@ -138,7 +138,7 @@ void filter_sequences_cpp(SEXP ref_genome_ptr,
     if (out_seq_prop > 1) stop("out_seq_prop must be between 0 and 1");
 
     // Sorting sequence set by size (largest first)
-    std::sort(seqs.begin(), seqs.end(), std::greater<RefSequence>());
+    std::sort(seqs.begin(), seqs.end(), std::greater<RefChrom>());
 
     // Index that will point to the first sequence to be deleted
     uint64 i = 0;
@@ -173,7 +173,7 @@ void filter_sequences_cpp(SEXP ref_genome_ptr,
     if (i < seqs.size()) {
         seqs.erase(seqs.begin() + i, seqs.end());
         // clear memory:
-        clear_memory<std::deque<RefSequence>>(seqs);
+        clear_memory<std::deque<RefChrom>>(seqs);
     }
 
     ref_genome->total_size = static_cast<uint64>(out_seq);
@@ -247,7 +247,7 @@ void replace_Ns_cpp(SEXP ref_genome_ptr,
 #endif
     for (uint64 i = 0; i < n_seqs; i++) {
         if (prog_bar.is_aborted() || prog_bar.check_abort()) continue;
-        RefSequence& seq(ref_genome->sequences[i]);
+        RefChrom& seq(ref_genome->sequences[i]);
         for (char& c : seq.nucleos) {
             if (c == 'N') c = sampler.sample(eng);
         }

@@ -104,7 +104,7 @@ public:
     RegionTree() {};
     RegionTree(const arma::mat& gamma_mat,
                const uint64& region_size,
-               const VarSequence* var_seq,
+               const VarChrom* var_seq,
                const std::vector<double>& nt_rates)
         : total_rate(0) {
         // below also calculates `total_rate`
@@ -197,14 +197,14 @@ private:
 
     inline void construct_tips_one_row(const arma::mat& gamma_mat,
                                        const uint64& region_size,
-                                       const VarSequence* var_seq,
+                                       const VarChrom* var_seq,
                                        const std::vector<double>& nt_rates,
                                        const uint64& i,
                                        uint64& mut_i,
                                        std::vector<uint64>& sizes);
     void construct_tips(arma::mat gamma_mat,
                         const uint64& region_size,
-                        const VarSequence* var_seq,
+                        const VarChrom* var_seq,
                         const std::vector<double>& nt_rates);
     void construct_nodes();
 
@@ -257,7 +257,7 @@ struct LocationBounds {
           start_rate(0), end_rate(0),
           start_end_set(false) {};
 
-    LocationBounds(const VarSequence& vs_)
+    LocationBounds(const VarChrom& vs_)
         : start_pos(0), end_pos(vs_.size()),
           start_rate(0), end_rate(0),
           start_end_set(false) {};
@@ -302,7 +302,7 @@ class LocationSampler {
 
 public:
 
-    const VarSequence * var_seq;  // pointer to const VarSequence
+    const VarChrom * var_seq;  // pointer to const VarChrom
     std::vector<double> nt_rates = std::vector<double>(256, 0.0);
     // Binary search tree for sampling regions:
     RegionTree regions;
@@ -335,8 +335,8 @@ public:
     uint64 sample(pcg64& eng) const;
 
 
-    // Fill pointer for a new VarSequence
-    void new_seq(const VarSequence& vs_, const arma::mat& gamma_mat) {
+    // Fill pointer for a new VarChrom
+    void new_seq(const VarChrom& vs_, const arma::mat& gamma_mat) {
         var_seq = &vs_;
         // Reset search tree for regions:
         regions = RegionTree(gamma_mat, region_size, var_seq, nt_rates);

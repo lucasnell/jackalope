@@ -78,7 +78,7 @@ void Region::del_adjust_bounds(const uint64& del_start,
 
 inline void RegionTree::construct_tips_one_row(const arma::mat& gamma_mat,
                                                const uint64& region_size,
-                                               const VarSequence* var_seq,
+                                               const VarChrom* var_seq,
                                                const std::vector<double>& nt_rates,
                                                const uint64& i,
                                                uint64& mut_i,
@@ -145,7 +145,7 @@ inline void RegionTree::construct_tips_one_row(const arma::mat& gamma_mat,
 
 void RegionTree::construct_tips(arma::mat gamma_mat,
                                 const uint64& region_size,
-                                const VarSequence* var_seq,
+                                const VarChrom* var_seq,
                                 const std::vector<double>& nt_rates) {
 
     total_rate = 0;
@@ -315,7 +315,7 @@ double LocationSampler::deletion_rate_change(const uint64& del_size,
 
 /*
  This more-efficiently retrieves the index to the Mutation object inside mutations
- field, much like `VarSequence::get_mut_`.
+ field, much like `VarChrom::get_mut_`.
  The difference is that it returns 0 in the situations where the`get_mut_` returns
  mutations.size(). This works more safely for methods here.
  */

@@ -107,7 +107,7 @@ private:
  Class template for table sampling a string, using an underlying AliasSampler object.
  `chars_in` should be the characters to sample from, `probs` the probabilities of
  sampling those characters.
- `T` can be `std::string` or `RefSequence`. Others may work, but are not guaranteed.
+ `T` can be `std::string` or `RefChrom`. Others may work, but are not guaranteed.
  */
 template <typename T>
 class AliasStringSampler {

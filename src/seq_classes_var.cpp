@@ -25,7 +25,7 @@ using namespace Rcpp;
 
 
 
-VarSequence& VarSequence::operator+=(const VarSequence& other) {
+VarChrom& VarChrom::operator+=(const VarChrom& other) {
 
     // If either is empty, then this is easy:
     if (other.mutations.empty()) return *this;
@@ -73,8 +73,8 @@ VarSequence& VarSequence::operator+=(const VarSequence& other) {
             mutations.back().new_pos += diff;
         }
     } else {
-        str_stop({"\nOverlapping VarSequence.mutations in +=. ",
-                 "Note that when combining VarSequence objects, you must ",
+        str_stop({"\nOverlapping VarChrom.mutations in +=. ",
+                 "Note that when combining VarChrom objects, you must ",
                  "do it sequentially, either from the front or back."});
     }
 
@@ -88,7 +88,7 @@ VarSequence& VarSequence::operator+=(const VarSequence& other) {
  based on the position in the new, variant sequence
  ------------------
  */
-char VarSequence::get_nt(const uint64& new_pos) const {
+char VarChrom::get_nt(const uint64& new_pos) const {
     char out;
     /*
      Index to the Mutation object nearest to (without being past)
@@ -123,7 +123,7 @@ char VarSequence::get_nt(const uint64& new_pos) const {
  ------------------
  */
 
-std::string VarSequence::get_seq_full() const {
+std::string VarChrom::get_seq_full() const {
 
     if (mutations.empty()) return ref_seq->nucleos;
 
@@ -176,7 +176,7 @@ std::string VarSequence::get_seq_full() const {
  and clears `chunk_str`.
  ------------------
  */
-void VarSequence::set_seq_chunk(std::string& chunk_str,
+void VarChrom::set_seq_chunk(std::string& chunk_str,
                                 const uint64& start,
                                 const uint64& chunk_size,
                                 uint64& mut_i) const {
@@ -256,7 +256,7 @@ void VarSequence::set_seq_chunk(std::string& chunk_str,
  read, since I don't want to muck with the barcodes.
  */
 
-void VarSequence::fill_read(std::string& read,
+void VarChrom::fill_read(std::string& read,
                             const uint64& read_start,
                             const uint64& seq_start,
                             uint64 n_to_add) const {
@@ -342,7 +342,7 @@ void VarSequence::fill_read(std::string& read,
  that is directly previous to the index position.
  ------------------
  */
-char VarSequence::get_char_(const uint64& new_pos,
+char VarChrom::get_char_(const uint64& new_pos,
                             const uint64& mut_i) const {
     const Mutation& m(mutations[mut_i]);
     char out;
@@ -369,7 +369,7 @@ char VarSequence::get_char_(const uint64& new_pos,
 /*
  For ALL Mutation objects (this is only used when reading VCF files)
  */
-void VarSequence::calc_positions() {
+void VarChrom::calc_positions() {
 
     if (mutations.size() == 0) return;
 
@@ -393,7 +393,7 @@ void VarSequence::calc_positions() {
  (this is for after you insert a NEW Mutation, where `mut_i` below points to
  that Mutation)
  */
-void VarSequence::calc_positions(uint64 mut_i) {
+void VarChrom::calc_positions(uint64 mut_i) {
 
     sint64 modifier = mutations[mut_i].size_modifier;
     ++mut_i;
@@ -413,7 +413,7 @@ void VarSequence::calc_positions(uint64 mut_i) {
  that merged Mutation and `modifier` refers to the net change in sequence size
  after the merge)
  */
-void VarSequence::calc_positions(uint64 mut_i, const sint64& modifier) {
+void VarChrom::calc_positions(uint64 mut_i, const sint64& modifier) {
     // Updating individual Mutation objects
     for (; mut_i < mutations.size(); ++mut_i) {
         mutations[mut_i].new_pos += modifier;
@@ -440,7 +440,7 @@ void VarSequence::calc_positions(uint64 mut_i, const sint64& modifier) {
  Add a deletion somewhere in the deque
  ------------------
  */
-void VarSequence::add_deletion(const uint64& size_, const uint64& new_pos_) {
+void VarChrom::add_deletion(const uint64& size_, const uint64& new_pos_) {
 
     if (size_ == 0 || new_pos_ >= seq_size) return;
 
@@ -537,7 +537,7 @@ void VarSequence::add_deletion(const uint64& size_, const uint64& new_pos_) {
  Add an insertion somewhere in the deque
  ------------------
  */
-void VarSequence::add_insertion(const std::string& nucleos_, const uint64& new_pos_) {
+void VarChrom::add_insertion(const std::string& nucleos_, const uint64& new_pos_) {
 
     uint64 mut_i = get_mut_(new_pos_);
     // `mutations.size()` is returned above if `new_pos_` is before the
@@ -597,7 +597,7 @@ void VarSequence::add_insertion(const std::string& nucleos_, const uint64& new_p
  Add a substitution somewhere in the deque
  ------------------
  */
-void VarSequence::add_substitution(const char& nucleo, const uint64& new_pos_) {
+void VarChrom::add_substitution(const char& nucleo, const uint64& new_pos_) {
 
     uint64 mut_i = get_mut_(new_pos_);
 
@@ -643,7 +643,7 @@ void VarSequence::add_substitution(const char& nucleo, const uint64& new_pos_) {
  Note that there's a check to ensure that this is never run when `mutations`
  is empty.
  */
-void VarSequence::deletion_blowup_(uint64& mut_i, uint64& deletion_start,
+void VarChrom::deletion_blowup_(uint64& mut_i, uint64& deletion_start,
                                    uint64& deletion_end, sint64& size_mod) {
 
     /*
@@ -767,7 +767,7 @@ void VarSequence::deletion_blowup_(uint64& mut_i, uint64& deletion_start,
  `n_iters` is how many positions were moved during this function.
  It also moves the index to the next Mutation object.
  */
-void VarSequence::merge_del_ins_(uint64& insert_i,
+void VarChrom::merge_del_ins_(uint64& insert_i,
                                  uint64& deletion_start, uint64& deletion_end,
                                  sint64& size_mod) {
 
@@ -854,7 +854,7 @@ void VarSequence::merge_del_ins_(uint64& insert_i,
  If the removal occurs at the beginning of the mutations deque, then
  `mut_i == 0 && mut_i2 == 0` after this function is run.
  */
-void VarSequence::remove_mutation_(uint64& mut_i) {
+void VarChrom::remove_mutation_(uint64& mut_i) {
     if (mut_i == mutations.size()) return;
     // erase:
     mutations.erase(mutations.begin() + mut_i);
@@ -862,7 +862,7 @@ void VarSequence::remove_mutation_(uint64& mut_i) {
     clear_memory<std::deque<Mutation>>(mutations);
     return;
 }
-void VarSequence::remove_mutation_(uint64& mut_i1, uint64& mut_i2) {
+void VarChrom::remove_mutation_(uint64& mut_i1, uint64& mut_i2) {
 
     // erase range:
     mutations.erase(mutations.begin() + mut_i1, mutations.begin() + mut_i2);
@@ -894,7 +894,7 @@ void VarSequence::remove_mutation_(uint64& mut_i1, uint64& mut_i2) {
  ------------------
  */
 
-uint64 VarSequence::get_mut_(const uint64& new_pos) const {
+uint64 VarChrom::get_mut_(const uint64& new_pos) const {
 
     uint64 mut_i = 0;
 
@@ -950,7 +950,7 @@ void VarSet::print() const noexcept {
 
     uint64 total_muts = 0;
     for (const VarGenome& vg : variants) {
-        for (const VarSequence& vs : vg.var_genome) {
+        for (const VarChrom& vs : vg.var_genome) {
             total_muts += vs.mutations.size();
         }
     }

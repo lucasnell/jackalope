@@ -30,17 +30,17 @@ using namespace Rcpp;
  One reference-genome sequence (e.g., chromosome, scaffold)
  =========================================
  */
-struct RefSequence {
+struct RefChrom {
 
     // Member variables
     std::string name;
     std::string nucleos;
 
     // Constructors
-    RefSequence() : name(""), nucleos("") {};
-    RefSequence(const std::string& name_, const std::string& nucleos_)
+    RefChrom() : name(""), nucleos("") {};
+    RefChrom(const std::string& name_, const std::string& nucleos_)
         : name(name_), nucleos(nucleos_) {};
-    RefSequence(const std::string& nucleos_)
+    RefChrom(const std::string& nucleos_)
         : name(""), nucleos(nucleos_) {};
 
     // Overloaded operator so nucleotides can be easily extracted
@@ -82,7 +82,7 @@ struct RefSequence {
         return nucleos.size();
     }
     // For sorting from largest to smallest sequence
-    bool operator > (const RefSequence& other) const noexcept {
+    bool operator > (const RefChrom& other) const noexcept {
         return size() > other.size();
     }
 
@@ -124,7 +124,7 @@ struct RefGenome {
 
     // Member variables
     uint64 total_size = 0;
-    std::deque<RefSequence> sequences;
+    std::deque<RefChrom> sequences;
     bool merged = false;
     // For storing original names if merged:
     std::deque<std::string> old_names = std::deque<std::string>(0);
@@ -133,15 +133,15 @@ struct RefGenome {
 
     // Constructors
     RefGenome()
-        : sequences(std::deque<RefSequence>(0)) {};
+        : sequences(std::deque<RefChrom>(0)) {};
     RefGenome(const RefGenome& ref_)
         : total_size(ref_.total_size), sequences(ref_.sequences),
           merged(ref_.merged), old_names(ref_.old_names) {};
     RefGenome(const uint64& N)
-        : sequences(std::deque<RefSequence>(N, RefSequence())) {};
+        : sequences(std::deque<RefChrom>(N, RefChrom())) {};
     RefGenome(const std::deque<std::string>& seqs) {
         uint64 n_seqs = seqs.size();
-        sequences = std::deque<RefSequence>(n_seqs, RefSequence());
+        sequences = std::deque<RefChrom>(n_seqs, RefChrom());
         for (uint64 i = 0; i < n_seqs; i++) {
             sequences[i].nucleos = seqs[i];
             sequences[i].name = "seq" + std::to_string(i);
@@ -150,13 +150,13 @@ struct RefGenome {
     }
     // Overloaded operator so sequences can be easily extracted
     // It returns a reference so no copying is done and so changes can be made
-    RefSequence& operator[](const uint64& idx) {
+    RefChrom& operator[](const uint64& idx) {
         if (idx >= sequences.size()) {
             stop("Trying to extract sequence that doesn't exist");
         }
         return sequences[idx];
     }
-    const RefSequence& operator[](const uint64& idx) const {
+    const RefChrom& operator[](const uint64& idx) const {
         if (idx >= sequences.size()) {
             stop("Trying to extract sequence that doesn't exist");
         }
@@ -214,7 +214,7 @@ struct RefGenome {
                 Rprintf("%-10s %-*s %9s\n", "...", seq_print_len, "...", "...");
                 continue;
             }
-            const RefSequence& rs(sequences[ind_i]);
+            const RefChrom& rs(sequences[ind_i]);
             const std::string& name_i(rs.name);
             const std::string& seq_i(rs.nucleos);
             // Print name

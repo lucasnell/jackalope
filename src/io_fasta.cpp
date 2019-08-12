@@ -54,7 +54,7 @@ void parse_fasta_line(const std::string& line, const bool& cut_names,
         } else {
             name_i = line.substr(1, line.size());
         }
-        RefSequence seq(name_i, "");
+        RefChrom seq(name_i, "");
         ref.sequences.push_back(seq);
     } else {
         ref.sequences.back().nucleos += line;
@@ -306,13 +306,13 @@ void append_ref_ind(RefGenome& ref,
     const uint64 n_seqs0 = ref.size(); // starting # sequences
     uint64 n_new_seqs = offsets.size();
     uint64 LIMIT = 4194304;
-    ref.sequences.resize(n_seqs0 + n_new_seqs, RefSequence());
+    ref.sequences.resize(n_seqs0 + n_new_seqs, RefChrom());
 
     for (uint64 i = 0; i < n_new_seqs; i++) {
 
         Rcpp::checkUserInterrupt();
 
-        RefSequence& rs(ref.sequences[i+n_seqs0]);
+        RefChrom& rs(ref.sequences[i+n_seqs0]);
         rs.name = names[i];
 
         // Length of the whole sequence including newlines
@@ -569,7 +569,7 @@ void write_vars_fasta__(const std::string& out_prefix,
             name += '\n';
             out_file.write(name);
 
-            const VarSequence& var_seq(var_set[v][s]);
+            const VarChrom& var_seq(var_set[v][s]);
             uint64 mut_i = 0;
             uint64 line_start = 0;
             uint64 n_chars = 0;

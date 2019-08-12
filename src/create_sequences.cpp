@@ -51,7 +51,7 @@ using namespace Rcpp;
  Template that does most of the work for creating new sequences for the following two
  functions when `len_sd > 0`.
  Classes `OuterClass` and `InnerClass` can be `std::vector<std::string>` and
- `std::string` or `RefGenome` and `RefSequence`.
+ `std::string` or `RefGenome` and `RefChrom`.
  No other combinations are guaranteed to work.
  */
 
@@ -172,7 +172,7 @@ SEXP create_genome_cpp(const uint64& n_seqs,
     XPtr<RefGenome> ref_xptr(new RefGenome(), true);
     RefGenome& ref(*ref_xptr);
 
-    ref = create_sequences_<RefGenome, RefSequence>(
+    ref = create_sequences_<RefGenome, RefChrom>(
         n_seqs, len_mean, len_sd, pi_tcag, n_threads);
 
     for (uint64 i = 0; i < n_seqs; i++) {

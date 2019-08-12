@@ -138,8 +138,8 @@ class PhyloOneSeq {
 
 public:
     std::vector<PhyloTree> trees;
-    std::vector<VarSequence*> var_seq_ptrs;    // pointers to original VarSequence objects
-    std::vector<VarSequence> var_seqs;  // blank VarSequence objects to evolve across tree
+    std::vector<VarChrom*> var_seq_ptrs;    // pointers to original VarChrom objects
+    std::vector<VarChrom> var_seqs;  // blank VarChrom objects to evolve across tree
     std::vector<MutationSampler> samplers; // to do the mutation additions across tree
     std::vector<double> seq_rates;   // sequence rates
     uint64 n_tips;                  // number of tips (i.e., variants)
@@ -196,9 +196,9 @@ public:
             var_seq_ptrs[i] = &var_set[i][seq_ind];
         }
 
-        // Fill in blank VarSequence objects:
-        var_seqs = std::vector<VarSequence>(tree_size,
-                                            VarSequence((*var_set.reference)[seq_ind]));
+        // Fill in blank VarChrom objects:
+        var_seqs = std::vector<VarChrom>(tree_size,
+                                            VarChrom((*var_set.reference)[seq_ind]));
 
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
@@ -273,9 +273,9 @@ public:
             var_seq_ptrs[i] = &var_set[i][seq_ind];
         }
 
-        // Fill in blank VarSequence objects:
-        var_seqs = std::vector<VarSequence>(tree_size,
-                                            VarSequence((*var_set.reference)[seq_ind]));
+        // Fill in blank VarChrom objects:
+        var_seqs = std::vector<VarChrom>(tree_size,
+                                            VarChrom((*var_set.reference)[seq_ind]));
 
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
@@ -389,13 +389,13 @@ private:
         if (tree_size == 0) {
             throw(Rcpp::exception("\ntree size of zero is non-sensical.", false));
         }
-        // Resize blank VarSequence objects if necessary:
+        // Resize blank VarChrom objects if necessary:
         if (tree_size != var_seqs.size()) {
-            VarSequence var_seq_(*(var_seq_ptrs[0]->ref_seq));
+            VarChrom var_seq_(*(var_seq_ptrs[0]->ref_seq));
             var_seqs.resize(tree_size, var_seq_);
         }
-        // Empty mutations from tree of VarSequence objects:
-        for (VarSequence& var_seq : var_seqs) var_seq.clear();
+        // Empty mutations from tree of VarChrom objects:
+        for (VarChrom& var_seq : var_seqs) var_seq.clear();
 
         // Re-size samplers if necessary
         if (tree_size != samplers.size()) {
@@ -433,7 +433,7 @@ private:
                 const uint64& b2) {
 
         /*
-         Replace existing mutation information in VarSequence at `b1` with info in the
+         Replace existing mutation information in VarChrom at `b1` with info in the
          one at `b2`
          */
         samplers[b2].var_seq->replace(*samplers[b1].var_seq);
@@ -454,7 +454,7 @@ private:
     }
 
     /*
-     Clear info from VarSequence object at `b1` if it's no longer needed, to free up
+     Clear info from VarChrom object at `b1` if it's no longer needed, to free up
      some memory.
      (If it's the last branch length, `b1` will always be a node and thus no longer
      needed.)
@@ -473,7 +473,7 @@ private:
     }
 
     /*
-     Update final `VarSequence` objects in the same order as `ordered_tip_labels`:
+     Update final `VarChrom` objects in the same order as `ordered_tip_labels`:
      */
     void update_var_seq(const PhyloTree& tree);
 
