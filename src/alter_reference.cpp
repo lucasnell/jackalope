@@ -26,13 +26,6 @@
 using namespace Rcpp;
 
 
-namespace alter_scaffs {
-    // wrapper around R's RNG such that we get a uniform distribution over
-    // [0,n) as required by the STL algorithm
-    // (see http://gallery.rcpp.org/articles/stl-random-shuffle/)
-    inline int rand_wrapper(const int n) { return std::floor(unif_rand()*n); }
-}
-
 
 
 // ======================================================================================
@@ -64,8 +57,10 @@ void merge_chromosomes_cpp(SEXP ref_genome_ptr) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::deque<RefChrom>& chroms(ref_genome->chromosomes);
 
+    pcg64 eng = seeded_pcg();
+
     // Shuffling ref_genome info.
-    std::random_shuffle(chroms.begin(), chroms.end(), alter_scaffs::rand_wrapper);
+    std::shuffle(chroms.begin(), chroms.end(), eng);
 
     // Merging the back chromosomes to the first one:
     std::string& nts(chroms.front().nucleos);
