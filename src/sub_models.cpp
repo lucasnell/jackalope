@@ -49,6 +49,32 @@ inline void vec_check(const std::vector<double>& in_vec,
 
 
 
+
+void gamma_checks(double& gamma_shape,
+                  const int& gamma_k,
+                  const double& gamma_invariant) {
+
+    if (gamma_shape != NA_REAL) {
+        if (gamma_shape <= 0) {
+            str_stop({"\nFor Gamma substitution models, the gamma_shape ",
+                     "parameter must be NA or > 0."});
+        }
+        if (gamma_k <= 0 || gamma_k > 255) {
+            str_stop({"\nFor Gamma substitution models, the gamma_k ",
+                     "parameter must be > 0 and <= 255."});
+        }
+        if (gamma_invariant < 0 || gamma_invariant >= 1) {
+            str_stop({"\nFor Gamma substitution models, the gamma_invariant ",
+                     "parameter must be >= 0 and < 1."});
+        }
+
+    } else gamma_shape = -1;
+
+    return;
+}
+
+
+
 //' Construct necessary information for substitution models.
 //'
 //' For a more detailed explanation, see `vignette("sub-models")`.
@@ -97,7 +123,10 @@ NULL_ENTRY;
 List sub_TN93(std::vector<double> pi_tcag,
               const double& alpha_1,
               const double& alpha_2,
-              const double& beta) {
+              const double& beta,
+              double gamma_shape = NA_REAL,
+              const int& gamma_k = 5,
+              const double& gamma_invariant = 0) {
 
     // Check that pi_tcag is proper size, no values < 0, at least one value > 0.
     vec_check(pi_tcag, "pi_tcag", true, 4);
@@ -119,7 +148,12 @@ List sub_TN93(std::vector<double> pi_tcag,
     // Reset diagonals to zero
     Q.diag().fill(0.0);
 
-    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag);
+    // Now looking over gamma info and change gamma_shape to -1 if it's not being used
+    gamma_checks(gamma_shape, gamma_k, gamma_invariant);
+
+    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag,
+                            _["shape"] = gamma_shape, _["k"] = gamma_k,
+                            _["invariant"] = gamma_invariant);
 
     out.attr("class") = "sub_model_info";
 
@@ -136,14 +170,18 @@ List sub_TN93(std::vector<double> pi_tcag,
 //'
 //'
 //[[Rcpp::export]]
-List sub_JC69(double lambda) {
+List sub_JC69(double lambda,
+              const double& gamma_shape = NA_REAL,
+              const int& gamma_k = 5,
+              const double& gamma_invariant = 0) {
 
     if (lambda < 0) str_stop({"\nFor the JC69 model, `lambda` should be >= 0."});
 
     std::vector<double> pi_tcag(4, 0.25);
     lambda *= 4; // bc it's being multiplied by pi_tcag
 
-    List out = sub_TN93(pi_tcag, lambda, lambda, lambda);
+    List out = sub_TN93(pi_tcag, lambda, lambda, lambda,
+                        gamma_shape, gamma_k, gamma_invariant);
 
     return out;
 }
@@ -158,7 +196,10 @@ List sub_JC69(double lambda) {
 //'
 //[[Rcpp::export]]
 List sub_K80(double alpha,
-             double beta) {
+             double beta,
+             const double& gamma_shape = NA_REAL,
+             const int& gamma_k = 5,
+             const double& gamma_invariant = 0) {
 
     if (alpha < 0) str_stop({"\nFor the K80 model, `alpha` should be >= 0."});
     if (beta < 0) str_stop({"\nFor the K80 model, `beta` should be >= 0."});
@@ -167,7 +208,8 @@ List sub_K80(double alpha,
     alpha *= 4;  // bc they're being multiplied by pi_tcag
     beta *= 4;  // bc they're being multiplied by pi_tcag
 
-    List out = sub_TN93(pi_tcag, alpha, alpha, beta);
+    List out = sub_TN93(pi_tcag, alpha, alpha, beta,
+                        gamma_shape, gamma_k, gamma_invariant);
 
     return out;
 }
@@ -180,9 +222,13 @@ List sub_K80(double alpha,
 //' @export
 //'
 //[[Rcpp::export]]
-List sub_F81(const std::vector<double>& pi_tcag) {
+List sub_F81(const std::vector<double>& pi_tcag,
+             const double& gamma_shape = NA_REAL,
+             const int& gamma_k = 5,
+             const double& gamma_invariant = 0) {
 
-    List out = sub_TN93(pi_tcag, 1, 1, 1);
+    List out = sub_TN93(pi_tcag, 1, 1, 1,
+                        gamma_shape, gamma_k, gamma_invariant);
 
     return out;
 }
@@ -199,12 +245,16 @@ List sub_F81(const std::vector<double>& pi_tcag) {
 //[[Rcpp::export]]
 List sub_HKY85(const std::vector<double>& pi_tcag,
                const double& alpha,
-               const double& beta) {
+               const double& beta,
+               const double& gamma_shape = NA_REAL,
+               const int& gamma_k = 5,
+               const double& gamma_invariant = 0) {
 
     if (alpha < 0) str_stop({"\nFor the HKY85 model, `alpha` should be >= 0."});
     if (beta < 0) str_stop({"\nFor the HKY85 model, `beta` should be >= 0."});
 
-    List out = sub_TN93(pi_tcag, alpha, alpha, beta);
+    List out = sub_TN93(pi_tcag, alpha, alpha, beta,
+                        gamma_shape, gamma_k, gamma_invariant);
 
     return out;
 }
@@ -222,7 +272,10 @@ List sub_HKY85(const std::vector<double>& pi_tcag,
 //[[Rcpp::export]]
 List sub_F84(const std::vector<double>& pi_tcag,
              const double& beta,
-             const double& kappa) {
+             const double& kappa,
+             const double& gamma_shape = NA_REAL,
+             const int& gamma_k = 5,
+             const double& gamma_invariant = 0) {
 
     if (beta < 0) str_stop({"\nFor the F84 model, `beta` should be >= 0."});
     if (kappa < 0) str_stop({"\nFor the F84 model, `kappa` should be >= 0."});
@@ -233,7 +286,8 @@ List sub_F84(const std::vector<double>& pi_tcag,
     double alpha_1 = (1 + kappa / pi_y) * beta;
     double alpha_2 = (1 + kappa / pi_r) * beta;
 
-    List out = sub_TN93(pi_tcag, alpha_1, alpha_2, beta);
+    List out = sub_TN93(pi_tcag, alpha_1, alpha_2, beta,
+                        gamma_shape, gamma_k, gamma_invariant);
 
     return out;
 }
@@ -252,7 +306,10 @@ List sub_F84(const std::vector<double>& pi_tcag,
 //'
 //[[Rcpp::export]]
 List sub_GTR(std::vector<double> pi_tcag,
-             const std::vector<double>& abcdef) {
+             const std::vector<double>& abcdef,
+             double gamma_shape = NA_REAL,
+             const int& gamma_k = 5,
+             const double& gamma_invariant = 0) {
 
     // Check that pi_tcag is proper size, no values < 0, at least one value > 0.
     vec_check(pi_tcag, "pi_tcag", true, 4);
@@ -276,7 +333,12 @@ List sub_GTR(std::vector<double> pi_tcag,
     }
     for (uint64 i = 0; i < 4; i++) Q.col(i) *= pi_tcag[i];
 
-    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag);
+    // Now looking over gamma info and change gamma_shape to -1 if it's not being used
+    gamma_checks(gamma_shape, gamma_k, gamma_invariant);
+
+    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag,
+                            _["shape"] = gamma_shape, _["k"] = gamma_k,
+                            _["invariant"] = gamma_invariant);
 
     out.attr("class") = "sub_model_info";
 
@@ -299,7 +361,10 @@ List sub_GTR(std::vector<double> pi_tcag,
 //'
 //'
 //[[Rcpp::export]]
-List sub_UNREST(arma::mat Q) {
+List sub_UNREST(arma::mat Q,
+                double gamma_shape = NA_REAL,
+                const int& gamma_k = 5,
+                const double& gamma_invariant = 0) {
 
     /*
      This function also fills in a vector of equilibrium frequencies for each nucleotide.
@@ -349,7 +414,12 @@ List sub_UNREST(arma::mat Q) {
     // Reset diagonal to zero for later steps
     Q.diag().fill(0.0);
 
-    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag);
+    // Now looking over gamma info and change gamma_shape to -1 if it's not being used
+    gamma_checks(gamma_shape, gamma_k, gamma_invariant);
+
+    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag,
+                            _["shape"] = gamma_shape, _["k"] = gamma_k,
+                            _["invariant"] = gamma_invariant);
 
     out.attr("class") = "sub_model_info";
 
