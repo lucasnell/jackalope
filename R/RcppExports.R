@@ -609,22 +609,35 @@ NULL
 #' @param alpha_1 Substitution rate for T <-> C transition.
 #' @param alpha_2 Substitution rate for A <-> G transition.
 #' @param beta Substitution rate for transversions.
+#' @param gamma_shape Numeric shape parameter for discrete Gamma distribution used for
+#'     among-site variability. Values must be greater than zero.
+#'     If this parameter is `NA`, among-site variability is not included.
+#'     Defaults to `NA`.
+#' @param gamma_k The number of categories to split the discrete Gamma distribution
+#'     into. Values must be an integer in the range `[1,255]`.
+#'     This argument is ignored if `gamma_shape` is `NA`.
+#'     Defaults to `5`.
+#' @param gamma_invariant Proportion of sites that are invariant.
+#'     Values must be in the range `[0,1)`.
+#'     This argument is ignored if `gamma_shape` is `NA`.
+#'     Defaults to `0`.
 #'
 #' @export
 #'
-sub_TN93 <- function(pi_tcag, alpha_1, alpha_2, beta) {
-    .Call(`_jackalope_sub_TN93`, pi_tcag, alpha_1, alpha_2, beta)
+sub_TN93 <- function(pi_tcag, alpha_1, alpha_2, beta, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
+    .Call(`_jackalope_sub_TN93`, pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, gamma_invariant)
 }
 
 #' @describeIn sub_models JC69 model.
 #'
 #' @param lambda Substitution rate for all possible substitutions.
+#' @inheritParams sub_TN93
 #'
 #' @export
 #'
 #'
-sub_JC69 <- function(lambda) {
-    .Call(`_jackalope_sub_JC69`, lambda)
+sub_JC69 <- function(lambda, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
+    .Call(`_jackalope_sub_JC69`, lambda, gamma_shape, gamma_k, gamma_invariant)
 }
 
 #' @describeIn sub_models K80 model.
@@ -634,8 +647,8 @@ sub_JC69 <- function(lambda) {
 #'
 #' @export
 #'
-sub_K80 <- function(alpha, beta) {
-    .Call(`_jackalope_sub_K80`, alpha, beta)
+sub_K80 <- function(alpha, beta, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
+    .Call(`_jackalope_sub_K80`, alpha, beta, gamma_shape, gamma_k, gamma_invariant)
 }
 
 #' @describeIn sub_models F81 model.
@@ -644,8 +657,8 @@ sub_K80 <- function(alpha, beta) {
 #'
 #' @export
 #'
-sub_F81 <- function(pi_tcag) {
-    .Call(`_jackalope_sub_F81`, pi_tcag)
+sub_F81 <- function(pi_tcag, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
+    .Call(`_jackalope_sub_F81`, pi_tcag, gamma_shape, gamma_k, gamma_invariant)
 }
 
 #' @describeIn sub_models HKY85 model.
@@ -656,8 +669,8 @@ sub_F81 <- function(pi_tcag) {
 #'
 #' @export
 #'
-sub_HKY85 <- function(pi_tcag, alpha, beta) {
-    .Call(`_jackalope_sub_HKY85`, pi_tcag, alpha, beta)
+sub_HKY85 <- function(pi_tcag, alpha, beta, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
+    .Call(`_jackalope_sub_HKY85`, pi_tcag, alpha, beta, gamma_shape, gamma_k, gamma_invariant)
 }
 
 #' @describeIn sub_models F84 model.
@@ -669,8 +682,8 @@ sub_HKY85 <- function(pi_tcag, alpha, beta) {
 #'
 #' @export
 #'
-sub_F84 <- function(pi_tcag, beta, kappa) {
-    .Call(`_jackalope_sub_F84`, pi_tcag, beta, kappa)
+sub_F84 <- function(pi_tcag, beta, kappa, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
+    .Call(`_jackalope_sub_F84`, pi_tcag, beta, kappa, gamma_shape, gamma_k, gamma_invariant)
 }
 
 #' @describeIn sub_models GTR model.
@@ -682,8 +695,8 @@ sub_F84 <- function(pi_tcag, beta, kappa) {
 #'
 #' @export
 #'
-sub_GTR <- function(pi_tcag, abcdef) {
-    .Call(`_jackalope_sub_GTR`, pi_tcag, abcdef)
+sub_GTR <- function(pi_tcag, abcdef, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
+    .Call(`_jackalope_sub_GTR`, pi_tcag, abcdef, gamma_shape, gamma_k, gamma_invariant)
 }
 
 #' @describeIn sub_models UNREST model.
@@ -693,12 +706,13 @@ sub_GTR <- function(pi_tcag, abcdef) {
 #'     Item `Q[i,j]` is the rate of substitution from nucleotide `i` to nucleotide `j`.
 #'     Do not include indel rates here!
 #'     Values on the diagonal are calculated inside the function so are ignored.
+#' @inheritParams sub_TN93
 #'
 #' @export
 #'
 #'
-sub_UNREST <- function(Q) {
-    .Call(`_jackalope_sub_UNREST`, Q)
+sub_UNREST <- function(Q, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
+    .Call(`_jackalope_sub_UNREST`, Q, gamma_shape, gamma_k, gamma_invariant)
 }
 
 using_openmp <- function() {

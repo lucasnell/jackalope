@@ -14,6 +14,7 @@
 
 #include <RcppArmadillo.h>
 
+#include <cmath> // exp, pow, remainder
 #include "jackalope_types.h" // integer types
 #include "util.h" // str_stop
 
@@ -50,25 +51,26 @@ inline void vec_check(const std::vector<double>& in_vec,
 
 
 
-void gamma_checks(double& gamma_shape,
-                  const int& gamma_k,
-                  const double& gamma_invariant) {
+void site_hetero_checks(double& gamma_shape,
+                        const double& gamma_k,
+                        const double& invariant) {
 
     if (gamma_shape != NA_REAL) {
         if (gamma_shape <= 0) {
             str_stop({"\nFor Gamma substitution models, the gamma_shape ",
                      "parameter must be NA or > 0."});
         }
-        if (gamma_k <= 0 || gamma_k > 255) {
+        if (gamma_k <= 0 || gamma_k > 255 || (std::remainder(gamma_k, 1.0) != 0.0)) {
             str_stop({"\nFor Gamma substitution models, the gamma_k ",
-                     "parameter must be > 0 and <= 255."});
-        }
-        if (gamma_invariant < 0 || gamma_invariant >= 1) {
-            str_stop({"\nFor Gamma substitution models, the gamma_invariant ",
-                     "parameter must be >= 0 and < 1."});
+                     "parameter must be an integer > 0 and <= 255."});
         }
 
     } else gamma_shape = -1;
+
+    if (invariant < 0 || invariant >= 1) {
+        str_stop({"\nFor invariant substitution models, the invariant ",
+                 "parameter must be >= 0 and < 1."});
+    }
 
     return;
 }
@@ -116,6 +118,17 @@ NULL_ENTRY;
 //' @param alpha_1 Substitution rate for T <-> C transition.
 //' @param alpha_2 Substitution rate for A <-> G transition.
 //' @param beta Substitution rate for transversions.
+//' @param gamma_shape Numeric shape parameter for discrete Gamma distribution used for
+//'     among-site variability. Values must be greater than zero.
+//'     If this parameter is `NA`, among-site variability is not included.
+//'     Defaults to `NA`.
+//' @param gamma_k The number of categories to split the discrete Gamma distribution
+//'     into. Values must be an integer in the range `[1,255]`.
+//'     This argument is ignored if `gamma_shape` is `NA`.
+//'     Defaults to `5`.
+//' @param invariant Proportion of sites that are invariant.
+//'     Values must be in the range `[0,1)`.
+//'     Defaults to `0`.
 //'
 //' @export
 //'
@@ -125,8 +138,8 @@ List sub_TN93(std::vector<double> pi_tcag,
               const double& alpha_2,
               const double& beta,
               double gamma_shape = NA_REAL,
-              const int& gamma_k = 5,
-              const double& gamma_invariant = 0) {
+              const double& gamma_k = 5,
+              const double& invariant = 0) {
 
     // Check that pi_tcag is proper size, no values < 0, at least one value > 0.
     vec_check(pi_tcag, "pi_tcag", true, 4);
@@ -148,12 +161,13 @@ List sub_TN93(std::vector<double> pi_tcag,
     // Reset diagonals to zero
     Q.diag().fill(0.0);
 
-    // Now looking over gamma info and change gamma_shape to -1 if it's not being used
-    gamma_checks(gamma_shape, gamma_k, gamma_invariant);
+    // Now looking over site-hetero info and change gamma_shape to -1 if it's
+    // not being used
+    site_hetero_checks(gamma_shape, gamma_k, invariant);
 
     List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag,
                             _["shape"] = gamma_shape, _["k"] = gamma_k,
-                            _["invariant"] = gamma_invariant);
+                            _["invariant"] = invariant);
 
     out.attr("class") = "sub_model_info";
 
@@ -165,6 +179,7 @@ List sub_TN93(std::vector<double> pi_tcag,
 //' @describeIn sub_models JC69 model.
 //'
 //' @param lambda Substitution rate for all possible substitutions.
+//' @inheritParams sub_TN93
 //'
 //' @export
 //'
@@ -172,8 +187,8 @@ List sub_TN93(std::vector<double> pi_tcag,
 //[[Rcpp::export]]
 List sub_JC69(double lambda,
               const double& gamma_shape = NA_REAL,
-              const int& gamma_k = 5,
-              const double& gamma_invariant = 0) {
+              const double& gamma_k = 5,
+              const double& invariant = 0) {
 
     if (lambda < 0) str_stop({"\nFor the JC69 model, `lambda` should be >= 0."});
 
@@ -181,7 +196,7 @@ List sub_JC69(double lambda,
     lambda *= 4; // bc it's being multiplied by pi_tcag
 
     List out = sub_TN93(pi_tcag, lambda, lambda, lambda,
-                        gamma_shape, gamma_k, gamma_invariant);
+                        gamma_shape, gamma_k, invariant);
 
     return out;
 }
@@ -198,8 +213,8 @@ List sub_JC69(double lambda,
 List sub_K80(double alpha,
              double beta,
              const double& gamma_shape = NA_REAL,
-             const int& gamma_k = 5,
-             const double& gamma_invariant = 0) {
+             const double& gamma_k = 5,
+             const double& invariant = 0) {
 
     if (alpha < 0) str_stop({"\nFor the K80 model, `alpha` should be >= 0."});
     if (beta < 0) str_stop({"\nFor the K80 model, `beta` should be >= 0."});
@@ -209,7 +224,7 @@ List sub_K80(double alpha,
     beta *= 4;  // bc they're being multiplied by pi_tcag
 
     List out = sub_TN93(pi_tcag, alpha, alpha, beta,
-                        gamma_shape, gamma_k, gamma_invariant);
+                        gamma_shape, gamma_k, invariant);
 
     return out;
 }
@@ -224,11 +239,11 @@ List sub_K80(double alpha,
 //[[Rcpp::export]]
 List sub_F81(const std::vector<double>& pi_tcag,
              const double& gamma_shape = NA_REAL,
-             const int& gamma_k = 5,
-             const double& gamma_invariant = 0) {
+             const double& gamma_k = 5,
+             const double& invariant = 0) {
 
     List out = sub_TN93(pi_tcag, 1, 1, 1,
-                        gamma_shape, gamma_k, gamma_invariant);
+                        gamma_shape, gamma_k, invariant);
 
     return out;
 }
@@ -247,14 +262,14 @@ List sub_HKY85(const std::vector<double>& pi_tcag,
                const double& alpha,
                const double& beta,
                const double& gamma_shape = NA_REAL,
-               const int& gamma_k = 5,
-               const double& gamma_invariant = 0) {
+               const double& gamma_k = 5,
+               const double& invariant = 0) {
 
     if (alpha < 0) str_stop({"\nFor the HKY85 model, `alpha` should be >= 0."});
     if (beta < 0) str_stop({"\nFor the HKY85 model, `beta` should be >= 0."});
 
     List out = sub_TN93(pi_tcag, alpha, alpha, beta,
-                        gamma_shape, gamma_k, gamma_invariant);
+                        gamma_shape, gamma_k, invariant);
 
     return out;
 }
@@ -274,8 +289,8 @@ List sub_F84(const std::vector<double>& pi_tcag,
              const double& beta,
              const double& kappa,
              const double& gamma_shape = NA_REAL,
-             const int& gamma_k = 5,
-             const double& gamma_invariant = 0) {
+             const double& gamma_k = 5,
+             const double& invariant = 0) {
 
     if (beta < 0) str_stop({"\nFor the F84 model, `beta` should be >= 0."});
     if (kappa < 0) str_stop({"\nFor the F84 model, `kappa` should be >= 0."});
@@ -287,7 +302,7 @@ List sub_F84(const std::vector<double>& pi_tcag,
     double alpha_2 = (1 + kappa / pi_r) * beta;
 
     List out = sub_TN93(pi_tcag, alpha_1, alpha_2, beta,
-                        gamma_shape, gamma_k, gamma_invariant);
+                        gamma_shape, gamma_k, invariant);
 
     return out;
 }
@@ -308,8 +323,8 @@ List sub_F84(const std::vector<double>& pi_tcag,
 List sub_GTR(std::vector<double> pi_tcag,
              const std::vector<double>& abcdef,
              double gamma_shape = NA_REAL,
-             const int& gamma_k = 5,
-             const double& gamma_invariant = 0) {
+             const double& gamma_k = 5,
+             const double& invariant = 0) {
 
     // Check that pi_tcag is proper size, no values < 0, at least one value > 0.
     vec_check(pi_tcag, "pi_tcag", true, 4);
@@ -333,12 +348,13 @@ List sub_GTR(std::vector<double> pi_tcag,
     }
     for (uint64 i = 0; i < 4; i++) Q.col(i) *= pi_tcag[i];
 
-    // Now looking over gamma info and change gamma_shape to -1 if it's not being used
-    gamma_checks(gamma_shape, gamma_k, gamma_invariant);
+    // Now looking over site-hetero info and change gamma_shape to -1 if it's
+    // not being used
+    site_hetero_checks(gamma_shape, gamma_k, invariant);
 
     List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag,
                             _["shape"] = gamma_shape, _["k"] = gamma_k,
-                            _["invariant"] = gamma_invariant);
+                            _["invariant"] = invariant);
 
     out.attr("class") = "sub_model_info";
 
@@ -356,6 +372,7 @@ List sub_GTR(std::vector<double> pi_tcag,
 //'     Item `Q[i,j]` is the rate of substitution from nucleotide `i` to nucleotide `j`.
 //'     Do not include indel rates here!
 //'     Values on the diagonal are calculated inside the function so are ignored.
+//' @inheritParams sub_TN93
 //'
 //' @export
 //'
@@ -363,8 +380,8 @@ List sub_GTR(std::vector<double> pi_tcag,
 //[[Rcpp::export]]
 List sub_UNREST(arma::mat Q,
                 double gamma_shape = NA_REAL,
-                const int& gamma_k = 5,
-                const double& gamma_invariant = 0) {
+                const double& gamma_k = 5,
+                const double& invariant = 0) {
 
     /*
      This function also fills in a vector of equilibrium frequencies for each nucleotide.
@@ -414,12 +431,13 @@ List sub_UNREST(arma::mat Q,
     // Reset diagonal to zero for later steps
     Q.diag().fill(0.0);
 
-    // Now looking over gamma info and change gamma_shape to -1 if it's not being used
-    gamma_checks(gamma_shape, gamma_k, gamma_invariant);
+    // Now looking over site-hetero info and change gamma_shape to -1 if it's
+    // not being used
+    site_hetero_checks(gamma_shape, gamma_k, invariant);
 
     List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag,
                             _["shape"] = gamma_shape, _["k"] = gamma_k,
-                            _["invariant"] = gamma_invariant);
+                            _["invariant"] = invariant);
 
     out.attr("class") = "sub_model_info";
 

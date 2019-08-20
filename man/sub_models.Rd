@@ -12,21 +12,29 @@
 \alias{sub_UNREST}
 \title{Construct necessary information for substitution models.}
 \usage{
-sub_TN93(pi_tcag, alpha_1, alpha_2, beta)
+sub_TN93(pi_tcag, alpha_1, alpha_2, beta, gamma_shape = NA_real_,
+  gamma_k = 5L, gamma_invariant = 0)
 
-sub_JC69(lambda)
+sub_JC69(lambda, gamma_shape = NA_real_, gamma_k = 5L,
+  gamma_invariant = 0)
 
-sub_K80(alpha, beta)
+sub_K80(alpha, beta, gamma_shape = NA_real_, gamma_k = 5L,
+  gamma_invariant = 0)
 
-sub_F81(pi_tcag)
+sub_F81(pi_tcag, gamma_shape = NA_real_, gamma_k = 5L,
+  gamma_invariant = 0)
 
-sub_HKY85(pi_tcag, alpha, beta)
+sub_HKY85(pi_tcag, alpha, beta, gamma_shape = NA_real_, gamma_k = 5L,
+  gamma_invariant = 0)
 
-sub_F84(pi_tcag, beta, kappa)
+sub_F84(pi_tcag, beta, kappa, gamma_shape = NA_real_, gamma_k = 5L,
+  gamma_invariant = 0)
 
-sub_GTR(pi_tcag, abcdef)
+sub_GTR(pi_tcag, abcdef, gamma_shape = NA_real_, gamma_k = 5L,
+  gamma_invariant = 0)
 
-sub_UNREST(Q)
+sub_UNREST(Q, gamma_shape = NA_real_, gamma_k = 5L,
+  gamma_invariant = 0)
 }
 \arguments{
 \item{pi_tcag}{Vector of length 4 indicating the equilibrium distributions of
@@ -38,6 +46,21 @@ they are forced to sum to 1.}
 \item{alpha_2}{Substitution rate for A <-> G transition.}
 
 \item{beta}{Substitution rate for transversions.}
+
+\item{gamma_shape}{Numeric shape parameter for discrete Gamma distribution used for
+among-site variability. Values must be greater than zero.
+If this parameter is \code{NA}, among-site variability is not included.
+Defaults to \code{NA}.}
+
+\item{gamma_k}{The number of categories to split the discrete Gamma distribution
+into. Values must be an integer in the range \code{[1,255]}.
+This argument is ignored if \code{gamma_shape} is \code{NA}.
+Defaults to \code{5}.}
+
+\item{gamma_invariant}{Proportion of sites that are invariant.
+Values must be in the range \code{[0,1)}.
+This argument is ignored if \code{gamma_shape} is \code{NA}.
+Defaults to \code{0}.}
 
 \item{lambda}{Substitution rate for all possible substitutions.}
 
