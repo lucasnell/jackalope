@@ -23,8 +23,7 @@
 #'     information for the substitution models.
 #'     See \code{\link{sub_models}} for more information on these models and
 #'     their required parameters.
-#'     This argument is only allowed to be missing if you are using a VCF file to create
-#'     variants.
+#'     This argument is ignored if you are using a VCF file to create variants.
 #'     Defaults to `NULL`.
 #' @param ins Output from the \code{\link{indels}} function that specifies rates
 #'     of insertions by length.
@@ -34,18 +33,6 @@
 #'     of deletions by length.
 #'     Passing `NULL` to this argument results in no deletions.
 #'     Defaults to `NULL`.
-#' @param gamma_mats Output from the \code{\link{site_var}} function that specifies
-#'     variability in mutation rates among sites (for both substitutions and indels).
-#'     Passing `NULL` to this argument results in no variability among sites.
-#'     Defaults to `NULL`.
-#' @param region_size Size of regions to break genome into for sampling mutation
-#'     locations.
-#'     This causes Gamma regions to be split into smaller sections (obviously the
-#'     Gamma values themselves are not changed).
-#'     Doing this splitting is useful because sampling within a region is more
-#'     computationally costly than sampling among regions.
-#'     Higher numbers will result in lower memory usage but slower speed.
-#'     Defaults to `100`.
 #' @param n_threads Number of threads to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
 #'     Threads are spread across chromosomes, so it
@@ -66,11 +53,9 @@
 # doc end ----
 create_variants <- function(reference,
                             vars_info,
-                            sub,
+                            sub = NULL,
                             ins = NULL,
                             del = NULL,
-                            gamma_mats = NULL,
-                            region_size = 100,
                             n_threads = 1,
                             show_progress = FALSE) {
 
@@ -104,14 +89,13 @@ create_variants <- function(reference,
         err_msg("create_variants", "vars_info", "NULL or one of the following classes:",
                 paste(sprintf("\"%s\"", do.call(c, vic)), collapse = ", "))
     }
-    # If you're using a VCF, change `sub` to `NULL` bc it's not used:
-    if (inherits(vars_info, vic$non[grepl("vcf", vic$non)])) sub <- NULL
-    # Check that sub info was passed if a non-VCF method is desired:
-    if (missing(sub)) {
-        err_msg("create_variants", "sub", "provided if you",
-                "want to create variants using any method other than a VCF file.",
-                "You should use one of the `sub_models` functions to create the `sub`",
-                "argument object (see `?sub_models`)")
+    # Check that sub, ins, or del info was passed if a non-VCF method is desired:
+    vcf <- inherits(vars_info, vic$non[grepl("vcf", vic$non)])
+    if (!vcf && is.null(sub) && is.null(ins) && is.null(del)) {
+        stop("\nFor the `create_variants` function in jackalope, ",
+             "if you are using a variant-creation method other than a VCF file, ",
+             "you must provide input to the `sub`, `ins`, or `del` argument.",
+             call. = FALSE)
     }
 
     # -----------------*
