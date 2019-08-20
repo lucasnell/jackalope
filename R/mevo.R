@@ -495,6 +495,73 @@ sub_UNREST <- function(Q, gamma_shape = NULL, gamma_k = 5, invariant = 0) {
 # INDELS -----
 
 
+# ... indel_info class -------
+
+
+
+#' An R6 class representing information for indel rates.
+#'
+#'
+#' This class should NEVER be created using `indel_info$new`.
+#' Only use function `indels`.
+#' That's why I'm not exporting it.
+#'
+#' @noRd
+#'
+#'
+#' @importFrom R6 R6Class
+#'
+indel_info <- R6Class(
+
+    "indel_info",
+
+    public = list(
+
+        initialize = function(rates) {
+
+            extra_msg <- paste(" Please only create these objects using the indels",
+                               "function, NOT using indel_info$new().")
+            if (!inherits(rates, "numeric") || any(rates < 0)) {
+                stop("\nWhen initializing an indel_info object, you need to use ",
+                     "a numeric vector of values >= 0.", extra_msg, call. = FALSE)
+            }
+
+            private$r_rates <- rates
+        },
+
+        print = function(...) {
+
+            digits <- max(3, getOption("digits") - 3)
+
+            cat("< Indel rates >\n")
+            cat(sprintf("# Total rate = %.3g\n", sum(private$r_rates)))
+            cat(sprintf("# Max length = %i\n", length(private$r_rates)))
+
+            invisible(self)
+
+        },
+
+        rates = function() return(private$r_rates)
+
+    ),
+
+    private = list(
+
+        r_rates = NULL
+
+    ),
+
+    lock_class = TRUE
+
+)
+
+
+
+
+
+# ... main function -----
+
+
 #' Insertions and deletions (indels) specification
 #'
 #' Construct necessary information for insertions and deletions (indels) that will
@@ -555,6 +622,13 @@ sub_UNREST <- function(Q, gamma_shape = NULL, gamma_k = 5, invariant = 0) {
 #' You can access the rates vector for `indel_rates` object `x` by running
 #' `as.numeric(x)`.
 #'
+#'
+#' @return An `indel_info` object, which is an R6 class that wraps the info needed for
+#' the `create_variants` function.
+#' It does not allow the user to directly manipulate the info inside, as that
+#' should be done using this function.
+#' You can use the `rates()` method to view the indel rates by size.
+#'
 #' @examples
 #' # relative rates are proportional to `exp(-L)` for indel
 #' # length `L` from 1 to 5:
@@ -605,24 +679,8 @@ indels <- function(rate,
     # Absolute rates:
     rates <- rel_rates * rate
 
-    class(rates) <- "indel_rates"
+    rates_obj <- indel_info$new(rates)
 
-    return(rates)
+    return(rates_obj)
 }
-
-#' Print method for indel_rates objects.
-#'
-#' I added this mostly to make sure a giant vector doesn't ever print.
-#'
-#' @noRd
-#' @export
-#'
-print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-    cat("< Indel rates vector >\n")
-    cat(sprintf("  * Total rate = %.3g\n", sum(x)))
-    cat(sprintf("  * Max length = %i\n", length(x)))
-    invisible(NULL)
-}
-
-
 
