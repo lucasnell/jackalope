@@ -79,21 +79,19 @@ double trunc_Gamma_mean(const double& b, const double& c,
 //'
 //' @noRd
 //'
-void discrete_gamma(const uint32& k,
-                    const double& shape,
-                    std::vector<double>& gammas) {
+std::vector<double> discrete_gamma(const uint32& k,
+                                   const double& shape) {
 
-    if (k > 256) stop("k cannot be > 256");
-    if (shape <= 0) stop("Gamma shape cannot be <= 0");
+    if (shape <= 0 || k <= 1) return std::vector<double>(1, 1.0);
+
+    std::vector<double> gammas;
+    gammas.reserve(k);
 
     double scale = 1 / shape;
     double d_k = 1.0 / static_cast<double>(k);
 
     double p_cutoff = d_k;
     double xl = 0, xu = 0;
-
-    if (gammas.size() > 0) gammas.clear();
-    gammas.reserve(k);
 
     for (uint32 i = 0; i < k; i++) {
         xl = xu;
@@ -104,95 +102,86 @@ void discrete_gamma(const uint32& k,
         p_cutoff += d_k;
     }
 
-    return;
+    return gammas;
 
 }
 
 
-
-
-
-
-
-
-
-
-
-
-/*
- ======================================================================================
- ======================================================================================
-
- Helpers for the sub_* functions
-
- ======================================================================================
- ======================================================================================
- */
-
-
-
-
-/*
- Check that vectors meet criteria. Used for `pi_tcag` and `abcdef` below.
- */
-inline void vec_check(const std::vector<double>& in_vec,
-                      const std::string& vec_name,
-                      const bool& zero_check,
-                      const uint64& needed_size) {
-    if (in_vec.size() != needed_size) {
-        str_stop({"\nFor substitution models, the vector `", vec_name,
-                 "` should always be of length ", std::to_string(needed_size), "."});
-    }
-    bool all_zero = true;
-    for (const double& d : in_vec) {
-        if (d < 0) {
-            str_stop({"\nFor substitution models, all values in vector `", vec_name,
-                     "` should be >= 0."});
-        }
-        if (d > 0) all_zero = false;
-    }
-    if (zero_check && all_zero) {
-        str_stop({"\nFor substitution models, at least one value in vector `", vec_name,
-                 "` should be > 0."});
-    }
-    return;
-}
-
-
-
-//' Check arguments for both options for among-site variability (Gamma and invariant).
-//' It returns a vector of Gamma rates for each of the `gamma_k` discrete regions.
+//' Info to calculate P(t) for TN93 model and its special cases
+//'
 //'
 //' @noRd
 //'
-std::vector<double> site_hetero(const double& gamma_shape,
-                                const double& gamma_k,
-                                const double& invariant) {
+void Pt_info(std::vector<double> pi_tcag,
+             const double& alpha_1,
+             const double& alpha_2,
+             const double& beta,
+             std::vector<std::vector<double>>& U,
+             std::vector<std::vector<double>>& Ui,
+             std::vector<double>& L) {
 
-    std::vector<double> gammas(0);
 
-    if (gamma_shape != NA_REAL) {
+    const double& pi_t(pi_tcag[0]);
+    const double& pi_c(pi_tcag[1]);
+    const double& pi_a(pi_tcag[2]);
+    const double& pi_g(pi_tcag[3]);
 
-        if (gamma_shape <= 0) {
-            str_stop({"\nFor Gamma substitution models, the gamma_shape ",
-                     "parameter must be NA or > 0."});
-        }
-        if (gamma_k <= 0 || gamma_k > 255 || (std::remainder(gamma_k, 1.0) != 0.0)) {
-            str_stop({"\nFor Gamma substitution models, the gamma_k ",
-                     "parameter must be an integer > 0 and <= 255."});
-        }
+    double pi_y = pi_t + pi_c;
+    double pi_r = pi_a + pi_g;
 
-        discrete_gamma(static_cast<uint32>(gamma_k), gamma_shape, gammas);
+    U = {
+        {1,     1 / pi_y,       0,              pi_c / pi_y},
+        {1,     1 / pi_y,       0,              -pi_t / pi_y},
+        {1,     -1 / pi_r,      pi_g / pi_r,    0},
+        {1,     -1 / pi_r,      -pi_a / pi_r,   0}};
 
-    }
+    Ui = {
+        {pi_t,          pi_c,           pi_a,           pi_g},
+        {pi_t * pi_r,   pi_c * pi_r,    -pi_a * pi_y,   -pi_g * pi_y},
+        {0,             0,              1,              -1},
+        {1,             -1,             0,              0}};
 
-    if (invariant < 0 || invariant >= 1) {
-        str_stop({"\nFor invariant substitution models, the invariant ",
-                 "parameter must be >= 0 and < 1."});
-    }
+    L = {0, -beta, -(pi_r * alpha_2 + pi_y * beta), -(pi_y * alpha_1 + pi_r * beta)};
 
-    return gammas;
+    return;
 }
+
+//' Info to calculate P(t) for GTR model
+//'
+//'
+//' @noRd
+//'
+void Pt_info(const arma::mat& Q,
+             std::vector<std::vector<double>>& U,
+             std::vector<std::vector<double>>& Ui,
+             std::vector<double>& L) {
+
+
+    arma::cx_vec L_;
+    arma::cx_mat U_;
+
+    arma::eig_gen(L_, U_, Q);
+
+    arma::uvec I = arma::sort_index(arma::abs(arma::real(L_)), "descend");
+    L_ = L_(I);
+    U_ = U_.cols(I);
+
+    L = arma::conv_to<std::vector<double>>::from(arma::real(L_));
+    arma::mat U_mat = arma::real(U_);
+
+    arma::mat Ui_mat = U_mat.i();
+
+    for (uint32 i = 0; i < 4; i++) {
+        U.push_back(arma::conv_to<std::vector<double>>::from(U_mat.row(i)));
+        Ui.push_back(arma::conv_to<std::vector<double>>::from(Ui_mat.row(i)));
+    }
+
+    return;
+
+}
+
+
+
 
 
 
@@ -215,33 +204,6 @@ std::vector<double> site_hetero(const double& gamma_shape,
  */
 
 
-//' Construct necessary information for substitution models.
-//'
-//' For a more detailed explanation, see `vignette("sub-models")`.
-//'
-//'
-//' @name sub_models
-//'
-//' @seealso \code{\link{create_variants}}
-//'
-//' @return A `sub_model_info` object, which is just a wrapper around a list with
-//' fields `Q` and `pi_tcag`. The former has the rate matrix, and the latter
-//' has the equilibrium nucleotide densities for "T", "C", "A", and "G", respectively.
-//' Access the rate matrix for a `sub_model_info` object named `x` via `x$Q` and
-//' densities via `x$pi_tcag`.
-//'
-//' @examples
-//' # Same substitution rate for all types:
-//' Q_JC69 <- sub_JC69(lambda = 0.1)
-//'
-//' # Transitions 2x more likely than transversions:
-//' Q_K80 <- sub_K80(alpha = 0.2, beta = 0.1)
-//'
-//' # Same as above, but incorporating equilibrium frequencies
-//' sub_HKY85(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
-//'           alpha = 0.2, beta = 0.1)
-//'
-NULL_ENTRY;
 
 
 
@@ -268,23 +230,16 @@ NULL_ENTRY;
 //'     Values must be in the range `[0,1)`.
 //'     Defaults to `0`.
 //'
-//' @export
+//' @noRd
 //'
 //[[Rcpp::export]]
-List sub_TN93(std::vector<double> pi_tcag,
-              const double& alpha_1,
-              const double& alpha_2,
-              const double& beta,
-              double gamma_shape = NA_REAL,
-              const double& gamma_k = 5,
-              const double& invariant = 0) {
-
-    // Check that pi_tcag is proper size, no values < 0, at least one value > 0.
-    vec_check(pi_tcag, "pi_tcag", true, 4);
-
-    if (alpha_1 < 0) str_stop({"\nFor the TN93 model, `alpha_1` should be >= 0."});
-    if (alpha_2 < 0) str_stop({"\nFor the TN93 model, `alpha_2` should be >= 0."});
-    if (beta < 0) str_stop({"\nFor the TN93 model, `beta` should be >= 0."});
+List sub_TN93_cpp(std::vector<double> pi_tcag,
+                  const double& alpha_1,
+                  const double& alpha_2,
+                  const double& beta,
+                  const double& gamma_shape,
+                  const uint32& gamma_k,
+                  const double& invariant) {
 
     // Standardize pi_tcag first:
     double pi_sum = std::accumulate(pi_tcag.begin(), pi_tcag.end(), 0.0);
@@ -298,149 +253,31 @@ List sub_TN93(std::vector<double> pi_tcag,
 
     // Reset diagonals to zero
     Q.diag().fill(0.0);
+    // Filling in diagonals
+    arma::vec rowsums = arma::sum(Q, 1);
+    rowsums *= -1;
+    Q.diag() = rowsums;
 
-    // Now looking over site-hetero info and getting vector of Gammas (which is empty if
-    // gamma_shape is NA_REAL)
-    std::vector<double> gammas = site_hetero(gamma_shape, gamma_k, invariant);
+    // Extract info for P(t)
+    std::vector<std::vector<double>> U;
+    std::vector<std::vector<double>> Ui;
+    std::vector<double> L;
+    Pt_info(pi_tcag, alpha_1, alpha_2, beta, U, Ui, L);
 
-    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag,
+
+    // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape is <= 0)
+    std::vector<double> gammas = discrete_gamma(gamma_k, gamma_shape);
+
+
+    List out = List::create(_["Q"] = Q,
+                            _["pi_tcag"] = pi_tcag,
+                            _["U"] = U,
+                            _["Ui"] = Ui,
+                            _["L"] = L,
                             _["gammas"] = gammas,
-                            _["invariant"] = invariant);
+                            _["invariant"] = invariant,
+                            _["model"] = "TN93");
 
-    out.attr("class") = "sub_model_info";
-
-    return out;
-}
-
-
-
-//' @describeIn sub_models JC69 model.
-//'
-//' @param lambda Substitution rate for all possible substitutions.
-//' @inheritParams sub_TN93
-//'
-//' @export
-//'
-//'
-//[[Rcpp::export]]
-List sub_JC69(double lambda,
-              const double& gamma_shape = NA_REAL,
-              const double& gamma_k = 5,
-              const double& invariant = 0) {
-
-    if (lambda < 0) str_stop({"\nFor the JC69 model, `lambda` should be >= 0."});
-
-    std::vector<double> pi_tcag(4, 0.25);
-    lambda *= 4; // bc it's being multiplied by pi_tcag
-
-    List out = sub_TN93(pi_tcag, lambda, lambda, lambda,
-                        gamma_shape, gamma_k, invariant);
-
-    return out;
-}
-
-
-//' @describeIn sub_models K80 model.
-//'
-//' @param alpha Substitution rate for transitions.
-//' @inheritParams sub_TN93
-//'
-//' @export
-//'
-//[[Rcpp::export]]
-List sub_K80(double alpha,
-             double beta,
-             const double& gamma_shape = NA_REAL,
-             const double& gamma_k = 5,
-             const double& invariant = 0) {
-
-    if (alpha < 0) str_stop({"\nFor the K80 model, `alpha` should be >= 0."});
-    if (beta < 0) str_stop({"\nFor the K80 model, `beta` should be >= 0."});
-
-    std::vector<double> pi_tcag(4, 0.25);
-    alpha *= 4;  // bc they're being multiplied by pi_tcag
-    beta *= 4;  // bc they're being multiplied by pi_tcag
-
-    List out = sub_TN93(pi_tcag, alpha, alpha, beta,
-                        gamma_shape, gamma_k, invariant);
-
-    return out;
-}
-
-
-//' @describeIn sub_models F81 model.
-//'
-//' @inheritParams sub_TN93
-//'
-//' @export
-//'
-//[[Rcpp::export]]
-List sub_F81(const std::vector<double>& pi_tcag,
-             const double& gamma_shape = NA_REAL,
-             const double& gamma_k = 5,
-             const double& invariant = 0) {
-
-    List out = sub_TN93(pi_tcag, 1, 1, 1,
-                        gamma_shape, gamma_k, invariant);
-
-    return out;
-}
-
-
-//' @describeIn sub_models HKY85 model.
-//'
-//'
-//' @inheritParams sub_TN93
-//' @inheritParams sub_K80
-//'
-//' @export
-//'
-//[[Rcpp::export]]
-List sub_HKY85(const std::vector<double>& pi_tcag,
-               const double& alpha,
-               const double& beta,
-               const double& gamma_shape = NA_REAL,
-               const double& gamma_k = 5,
-               const double& invariant = 0) {
-
-    if (alpha < 0) str_stop({"\nFor the HKY85 model, `alpha` should be >= 0."});
-    if (beta < 0) str_stop({"\nFor the HKY85 model, `beta` should be >= 0."});
-
-    List out = sub_TN93(pi_tcag, alpha, alpha, beta,
-                        gamma_shape, gamma_k, invariant);
-
-    return out;
-}
-
-
-//' @describeIn sub_models F84 model.
-//'
-//'
-//' @inheritParams sub_TN93
-//' @inheritParams sub_K80
-//' @param kappa The transition/transversion rate ratio.
-//'
-//' @export
-//'
-//[[Rcpp::export]]
-List sub_F84(const std::vector<double>& pi_tcag,
-             const double& beta,
-             const double& kappa,
-             const double& gamma_shape = NA_REAL,
-             const double& gamma_k = 5,
-             const double& invariant = 0) {
-
-    if (beta < 0) str_stop({"\nFor the F84 model, `beta` should be >= 0."});
-    if (kappa < 0) str_stop({"\nFor the F84 model, `kappa` should be >= 0."});
-
-    double pi_y = pi_tcag[0] + pi_tcag[1];
-    double pi_r = pi_tcag[2] + pi_tcag[3];
-
-    double alpha_1 = (1 + kappa / pi_y) * beta;
-    double alpha_2 = (1 + kappa / pi_r) * beta;
-
-    List out = sub_TN93(pi_tcag, alpha_1, alpha_2, beta,
-                        gamma_shape, gamma_k, invariant);
 
     return out;
 }
@@ -455,19 +292,14 @@ List sub_F84(const std::vector<double>& pi_tcag,
 //'     for the substitution rate matrix.
 //'     See `vignette("sub-models")` for how the values are ordered in the matrix.
 //'
-//' @export
+//' @noRd
 //'
 //[[Rcpp::export]]
-List sub_GTR(std::vector<double> pi_tcag,
-             const std::vector<double>& abcdef,
-             double gamma_shape = NA_REAL,
-             const double& gamma_k = 5,
-             const double& invariant = 0) {
-
-    // Check that pi_tcag is proper size, no values < 0, at least one value > 0.
-    vec_check(pi_tcag, "pi_tcag", true, 4);
-    // Check that abcdef is proper size, no values < 0.
-    vec_check(abcdef, "abcdef", false, 6);
+List sub_GTR_cpp(std::vector<double> pi_tcag,
+                 const std::vector<double>& abcdef,
+                 const double& gamma_shape,
+                 const uint32& gamma_k,
+                 const double& invariant) {
 
     // Standardize pi_tcag first:
     double pi_sum = std::accumulate(pi_tcag.begin(), pi_tcag.end(), 0.0);
@@ -486,15 +318,28 @@ List sub_GTR(std::vector<double> pi_tcag,
     }
     for (uint64 i = 0; i < 4; i++) Q.col(i) *= pi_tcag[i];
 
-    // Now looking over site-hetero info and getting vector of Gammas (which is empty if
-    // gamma_shape is NA_REAL)
-    std::vector<double> gammas = site_hetero(gamma_shape, gamma_k, invariant);
+    // Filling in diagonals
+    arma::vec rowsums = arma::sum(Q, 1);
+    rowsums *= -1;
+    Q.diag() = rowsums;
 
-    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag,
+    // Extract info for P(t)
+    std::vector<std::vector<double>> U;
+    std::vector<std::vector<double>> Ui;
+    std::vector<double> L;
+    Pt_info(Q, U, Ui, L);
+
+    // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape is <= 0)
+    std::vector<double> gammas = discrete_gamma(gamma_k, gamma_shape);
+
+    List out = List::create(_["Q"] = Q,
+                            _["pi_tcag"] = pi_tcag,
+                            _["U"] = U,
+                            _["Ui"] = Ui,
+                            _["L"] = L,
                             _["gammas"] = gammas,
-                            _["invariant"] = invariant);
-
-    out.attr("class") = "sub_model_info";
+                            _["invariant"] = invariant,
+                            _["model"] = "GTR");
 
     return out;
 
@@ -512,14 +357,14 @@ List sub_GTR(std::vector<double> pi_tcag,
 //'     Values on the diagonal are calculated inside the function so are ignored.
 //' @inheritParams sub_TN93
 //'
-//' @export
+//' @noRd
 //'
 //'
 //[[Rcpp::export]]
-List sub_UNREST(arma::mat Q,
-                double gamma_shape = NA_REAL,
-                const double& gamma_k = 5,
-                const double& invariant = 0) {
+List sub_UNREST_cpp(arma::mat Q,
+                    const double& gamma_shape,
+                    const uint32& gamma_k,
+                    const double& invariant) {
 
     /*
      This function also fills in a vector of equilibrium frequencies for each nucleotide.
@@ -529,10 +374,6 @@ List sub_UNREST(arma::mat Q,
      It does this by solving for πQ = 0 by finding the left eigenvector of Q that
      corresponds to the eigenvalue closest to zero.
      */
-
-    if (Q.n_rows != 4 || Q.n_cols != 4) {
-        str_stop({"\nIn UNREST model, the matrix `Q` should have 4 rows and 4 columns."});
-    }
 
     /*
      Standardize `Q` matrix
@@ -563,21 +404,23 @@ List sub_UNREST(arma::mat Q,
 
     for (uint64 i = 0; i < 4; i++) pi_tcag[i] = left_vec(i) / sumlv;
 
-    /*
-     Assemble final output:
-    */
-    // Reset diagonal to zero for later steps
-    Q.diag().fill(0.0);
 
-    // Now looking over site-hetero info and getting vector of Gammas (which is empty if
-    // gamma_shape is NA_REAL)
-    std::vector<double> gammas = site_hetero(gamma_shape, gamma_k, invariant);
+    // Info for P(t) is empty for UNREST model, since it requires matrix squaring
+    std::vector<std::vector<double>> U;
+    std::vector<std::vector<double>> Ui;
+    std::vector<double> L;
 
-    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag,
+    // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape is <= 0)
+    std::vector<double> gammas = discrete_gamma(gamma_k, gamma_shape);
+
+    List out = List::create(_["Q"] = Q,
+                            _["pi_tcag"] = pi_tcag,
+                            _["U"] = U,
+                            _["Ui"] = Ui,
+                            _["L"] = L,
                             _["gammas"] = gammas,
-                            _["invariant"] = invariant);
-
-    out.attr("class") = "sub_model_info";
+                            _["invariant"] = invariant,
+                            _["model"] = "UNREST");
 
     return out;
 }
