@@ -32,8 +32,20 @@ print.sub_model_info <- function(x, digits = max(3, getOption("digits") - 3), ..
              rowlab = paste("  ", c("T", "C", "A", "G")),
              collab = c("T", "C", "A", "G"))
 
-    cat("(View rate matrix in the \"Q\" field)\n")
-    cat("(View equil. densities in the \"pi_tcag\" field)")
+    if (length(x$gammas) == 0 & x$invariant == 0) {
+        cat("# No among-site variability\n")
+    } else {
+        if (length(x$gammas) > 0) {
+            cat(sprintf("# Discrete Gamma classes: %i\n", length(x$gammas)))
+        } else {
+            cat("# No continuous variability among sites\n")
+        }
+        if (x$invariant > 0) {
+            cat(sprintf(paste("# Proportion of invariant sites:", fmt, "\n"), x$invariant))
+        } else {
+            cat("# No invariant sites\n")
+        }
+    }
 
     invisible(NULL)
 }
@@ -171,7 +183,6 @@ print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) 
     cat("< Indel rates vector >\n")
     cat(sprintf("  * Total rate = %.3g\n", sum(x)))
     cat(sprintf("  * Max length = %i\n", length(x)))
-    cat("(View raw data using `as.numeric`)\n")
     invisible(NULL)
 }
 
@@ -350,7 +361,6 @@ print.site_var_mats <- function(x, digits = max(3, getOption("digits") - 3), ...
     cat("< Site variability matrices >\n")
     cat(sprintf("  * Number of chromosomes = %i\n", length(x)))
     cat(sprintf("  * Number of regions = %i\n", sum(sapply(x, nrow))))
-    cat("(View raw data the same as you would a list)\n")
     invisible(NULL)
 }
 

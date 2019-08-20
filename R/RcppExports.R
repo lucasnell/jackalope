@@ -573,6 +573,34 @@ check_gamma_mats <- function(mats, chrom_sizes) {
     invisible(.Call(`_jackalope_check_gamma_mats`, mats, chrom_sizes))
 }
 
+#' Incomplete Gamma function
+#'
+#' @noRd
+#'
+NULL
+
+#' Mean of truncated Gamma distribution
+#'
+#' From http://dx.doi.org/10.12988/astp.2013.310125.
+#' As in that paper, b > 0 is the scale and c > 0 is the shape.
+#'
+#' @noRd
+#'
+NULL
+
+#' Create a vector of Gamma values for a discrete Gamma distribution
+#'
+#' @noRd
+#'
+NULL
+
+#' Check arguments for both options for among-site variability (Gamma and invariant).
+#' It returns a vector of Gamma rates for each of the `gamma_k` discrete regions.
+#'
+#' @noRd
+#'
+NULL
+
 #' Construct necessary information for substitution models.
 #'
 #' For a more detailed explanation, see `vignette("sub-models")`.
@@ -617,15 +645,14 @@ NULL
 #'     into. Values must be an integer in the range `[1,255]`.
 #'     This argument is ignored if `gamma_shape` is `NA`.
 #'     Defaults to `5`.
-#' @param gamma_invariant Proportion of sites that are invariant.
+#' @param invariant Proportion of sites that are invariant.
 #'     Values must be in the range `[0,1)`.
-#'     This argument is ignored if `gamma_shape` is `NA`.
 #'     Defaults to `0`.
 #'
 #' @export
 #'
-sub_TN93 <- function(pi_tcag, alpha_1, alpha_2, beta, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
-    .Call(`_jackalope_sub_TN93`, pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, gamma_invariant)
+sub_TN93 <- function(pi_tcag, alpha_1, alpha_2, beta, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
+    .Call(`_jackalope_sub_TN93`, pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant)
 }
 
 #' @describeIn sub_models JC69 model.
@@ -636,8 +663,8 @@ sub_TN93 <- function(pi_tcag, alpha_1, alpha_2, beta, gamma_shape = NA_real_, ga
 #' @export
 #'
 #'
-sub_JC69 <- function(lambda, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
-    .Call(`_jackalope_sub_JC69`, lambda, gamma_shape, gamma_k, gamma_invariant)
+sub_JC69 <- function(lambda, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
+    .Call(`_jackalope_sub_JC69`, lambda, gamma_shape, gamma_k, invariant)
 }
 
 #' @describeIn sub_models K80 model.
@@ -647,8 +674,8 @@ sub_JC69 <- function(lambda, gamma_shape = NA_real_, gamma_k = 5L, gamma_invaria
 #'
 #' @export
 #'
-sub_K80 <- function(alpha, beta, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
-    .Call(`_jackalope_sub_K80`, alpha, beta, gamma_shape, gamma_k, gamma_invariant)
+sub_K80 <- function(alpha, beta, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
+    .Call(`_jackalope_sub_K80`, alpha, beta, gamma_shape, gamma_k, invariant)
 }
 
 #' @describeIn sub_models F81 model.
@@ -657,8 +684,8 @@ sub_K80 <- function(alpha, beta, gamma_shape = NA_real_, gamma_k = 5L, gamma_inv
 #'
 #' @export
 #'
-sub_F81 <- function(pi_tcag, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
-    .Call(`_jackalope_sub_F81`, pi_tcag, gamma_shape, gamma_k, gamma_invariant)
+sub_F81 <- function(pi_tcag, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
+    .Call(`_jackalope_sub_F81`, pi_tcag, gamma_shape, gamma_k, invariant)
 }
 
 #' @describeIn sub_models HKY85 model.
@@ -669,8 +696,8 @@ sub_F81 <- function(pi_tcag, gamma_shape = NA_real_, gamma_k = 5L, gamma_invaria
 #'
 #' @export
 #'
-sub_HKY85 <- function(pi_tcag, alpha, beta, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
-    .Call(`_jackalope_sub_HKY85`, pi_tcag, alpha, beta, gamma_shape, gamma_k, gamma_invariant)
+sub_HKY85 <- function(pi_tcag, alpha, beta, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
+    .Call(`_jackalope_sub_HKY85`, pi_tcag, alpha, beta, gamma_shape, gamma_k, invariant)
 }
 
 #' @describeIn sub_models F84 model.
@@ -682,8 +709,8 @@ sub_HKY85 <- function(pi_tcag, alpha, beta, gamma_shape = NA_real_, gamma_k = 5L
 #'
 #' @export
 #'
-sub_F84 <- function(pi_tcag, beta, kappa, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
-    .Call(`_jackalope_sub_F84`, pi_tcag, beta, kappa, gamma_shape, gamma_k, gamma_invariant)
+sub_F84 <- function(pi_tcag, beta, kappa, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
+    .Call(`_jackalope_sub_F84`, pi_tcag, beta, kappa, gamma_shape, gamma_k, invariant)
 }
 
 #' @describeIn sub_models GTR model.
@@ -695,8 +722,8 @@ sub_F84 <- function(pi_tcag, beta, kappa, gamma_shape = NA_real_, gamma_k = 5L, 
 #'
 #' @export
 #'
-sub_GTR <- function(pi_tcag, abcdef, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
-    .Call(`_jackalope_sub_GTR`, pi_tcag, abcdef, gamma_shape, gamma_k, gamma_invariant)
+sub_GTR <- function(pi_tcag, abcdef, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
+    .Call(`_jackalope_sub_GTR`, pi_tcag, abcdef, gamma_shape, gamma_k, invariant)
 }
 
 #' @describeIn sub_models UNREST model.
@@ -711,8 +738,8 @@ sub_GTR <- function(pi_tcag, abcdef, gamma_shape = NA_real_, gamma_k = 5L, gamma
 #' @export
 #'
 #'
-sub_UNREST <- function(Q, gamma_shape = NA_real_, gamma_k = 5L, gamma_invariant = 0) {
-    .Call(`_jackalope_sub_UNREST`, Q, gamma_shape, gamma_k, gamma_invariant)
+sub_UNREST <- function(Q, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
+    .Call(`_jackalope_sub_UNREST`, Q, gamma_shape, gamma_k, invariant)
 }
 
 using_openmp <- function() {

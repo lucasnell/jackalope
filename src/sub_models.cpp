@@ -22,6 +22,116 @@ using namespace Rcpp;
 
 
 
+
+/*
+ ======================================================================================
+ ======================================================================================
+
+ +Gamma model functions
+
+ ======================================================================================
+ ======================================================================================
+ */
+
+
+
+//' Incomplete Gamma function
+//'
+//' @noRd
+//'
+inline double incG(const double& a, const double& z) {
+    return R::pgamma(z, a, 1.0, 0, 0) * R::gammafn(a);
+}
+
+
+
+
+//' Mean of truncated Gamma distribution
+//'
+//' From http://dx.doi.org/10.12988/astp.2013.310125.
+//' As in that paper, b > 0 is the scale and c > 0 is the shape.
+//'
+//' @noRd
+//'
+double trunc_Gamma_mean(const double& b, const double& c,
+                        const double& xl, const double& xu) {
+
+    // Ran the following in Mathematica to find out that this part goes to
+    // zero as xu goes to infinity:
+    // > Limit[b^(-c + 1) Exp[-x/b] x^c, x -> Infinity, Assumptions -> c in real && b > 0]
+    // So if xu is Inf, then we set this to zero:
+    double k_;
+    if (xu == arma::datum::inf) {
+        k_ = 0;
+    } else {
+        k_ = std::exp(-1.0 * xu / b) * std::pow(b, 1-c) * std::pow(xu, c);
+    }
+    double k = c / (
+        b * incG(1+c, xl/b) - b * incG(1+c, xu/b) +
+            k_ -
+            std::exp(-1.0 * xl / b) * std::pow(b, 1.0 - c) * std::pow(xl, c)
+    );
+    double z = -(b * b) * k * (- incG(1+c, xl / b) + incG(1+c, xu / b));
+    return z;
+}
+
+//' Create a vector of Gamma values for a discrete Gamma distribution
+//'
+//' @noRd
+//'
+void discrete_gamma(const uint32& k,
+                    const double& shape,
+                    std::vector<double>& gammas) {
+
+    if (k > 256) stop("k cannot be > 256");
+    if (shape <= 0) stop("Gamma shape cannot be <= 0");
+
+    double scale = 1 / shape;
+    double d_k = 1.0 / static_cast<double>(k);
+
+    double p_cutoff = d_k;
+    double xl = 0, xu = 0;
+
+    if (gammas.size() > 0) gammas.clear();
+    gammas.reserve(k);
+
+    for (uint32 i = 0; i < k; i++) {
+        xl = xu;
+        if (p_cutoff < 1) {
+            xu = R::qgamma(p_cutoff, shape, scale, 1, 0);
+        } else xu = arma::datum::inf;
+        gammas.push_back(trunc_Gamma_mean(scale, shape, xl, xu));
+        p_cutoff += d_k;
+    }
+
+    return;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+ ======================================================================================
+ ======================================================================================
+
+ Helpers for the sub_* functions
+
+ ======================================================================================
+ ======================================================================================
+ */
+
+
+
+
 /*
  Check that vectors meet criteria. Used for `pi_tcag` and `abcdef` below.
  */
@@ -50,12 +160,19 @@ inline void vec_check(const std::vector<double>& in_vec,
 
 
 
+//' Check arguments for both options for among-site variability (Gamma and invariant).
+//' It returns a vector of Gamma rates for each of the `gamma_k` discrete regions.
+//'
+//' @noRd
+//'
+std::vector<double> site_hetero(const double& gamma_shape,
+                                const double& gamma_k,
+                                const double& invariant) {
 
-void site_hetero_checks(double& gamma_shape,
-                        const double& gamma_k,
-                        const double& invariant) {
+    std::vector<double> gammas(0);
 
     if (gamma_shape != NA_REAL) {
+
         if (gamma_shape <= 0) {
             str_stop({"\nFor Gamma substitution models, the gamma_shape ",
                      "parameter must be NA or > 0."});
@@ -65,16 +182,37 @@ void site_hetero_checks(double& gamma_shape,
                      "parameter must be an integer > 0 and <= 255."});
         }
 
-    } else gamma_shape = -1;
+        discrete_gamma(static_cast<uint32>(gamma_k), gamma_shape, gammas);
+
+    }
 
     if (invariant < 0 || invariant >= 1) {
         str_stop({"\nFor invariant substitution models, the invariant ",
                  "parameter must be >= 0 and < 1."});
     }
 
-    return;
+    return gammas;
 }
 
+
+
+
+
+
+
+
+
+
+
+/*
+ ======================================================================================
+ ======================================================================================
+
+ Substitution model functions
+
+ ======================================================================================
+ ======================================================================================
+ */
 
 
 //' Construct necessary information for substitution models.
@@ -161,12 +299,12 @@ List sub_TN93(std::vector<double> pi_tcag,
     // Reset diagonals to zero
     Q.diag().fill(0.0);
 
-    // Now looking over site-hetero info and change gamma_shape to -1 if it's
-    // not being used
-    site_hetero_checks(gamma_shape, gamma_k, invariant);
+    // Now looking over site-hetero info and getting vector of Gammas (which is empty if
+    // gamma_shape is NA_REAL)
+    std::vector<double> gammas = site_hetero(gamma_shape, gamma_k, invariant);
 
     List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag,
-                            _["shape"] = gamma_shape, _["k"] = gamma_k,
+                            _["gammas"] = gammas,
                             _["invariant"] = invariant);
 
     out.attr("class") = "sub_model_info";
@@ -348,12 +486,12 @@ List sub_GTR(std::vector<double> pi_tcag,
     }
     for (uint64 i = 0; i < 4; i++) Q.col(i) *= pi_tcag[i];
 
-    // Now looking over site-hetero info and change gamma_shape to -1 if it's
-    // not being used
-    site_hetero_checks(gamma_shape, gamma_k, invariant);
+    // Now looking over site-hetero info and getting vector of Gammas (which is empty if
+    // gamma_shape is NA_REAL)
+    std::vector<double> gammas = site_hetero(gamma_shape, gamma_k, invariant);
 
     List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag,
-                            _["shape"] = gamma_shape, _["k"] = gamma_k,
+                            _["gammas"] = gammas,
                             _["invariant"] = invariant);
 
     out.attr("class") = "sub_model_info";
@@ -431,12 +569,12 @@ List sub_UNREST(arma::mat Q,
     // Reset diagonal to zero for later steps
     Q.diag().fill(0.0);
 
-    // Now looking over site-hetero info and change gamma_shape to -1 if it's
-    // not being used
-    site_hetero_checks(gamma_shape, gamma_k, invariant);
+    // Now looking over site-hetero info and getting vector of Gammas (which is empty if
+    // gamma_shape is NA_REAL)
+    std::vector<double> gammas = site_hetero(gamma_shape, gamma_k, invariant);
 
     List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag,
-                            _["shape"] = gamma_shape, _["k"] = gamma_k,
+                            _["gammas"] = gammas,
                             _["invariant"] = invariant);
 
     out.attr("class") = "sub_model_info";
