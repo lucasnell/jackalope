@@ -208,20 +208,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// write_bed
-void write_bed(std::string out_prefix, const std::vector<arma::mat>& gamma_mats, const std::vector<std::string>& chrom_names, const int& compress, const std::string& comp_method);
-RcppExport SEXP _jackalope_write_bed(SEXP out_prefixSEXP, SEXP gamma_matsSEXP, SEXP chrom_namesSEXP, SEXP compressSEXP, SEXP comp_methodSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type out_prefix(out_prefixSEXP);
-    Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type gamma_mats(gamma_matsSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type chrom_names(chrom_namesSEXP);
-    Rcpp::traits::input_parameter< const int& >::type compress(compressSEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type comp_method(comp_methodSEXP);
-    write_bed(out_prefix, gamma_mats, chrom_names, compress, comp_method);
-    return R_NilValue;
-END_RCPP
-}
 // read_fasta_noind
 SEXP read_fasta_noind(const std::vector<std::string>& fasta_files, const bool& cut_names, const bool& remove_soft_mask);
 RcppExport SEXP _jackalope_read_fasta_noind(SEXP fasta_filesSEXP, SEXP cut_namesSEXP, SEXP remove_soft_maskSEXP) {
@@ -789,34 +775,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// make_gamma_mats
-arma::field<arma::mat> make_gamma_mats(const std::vector<uint64>& chrom_sizes, const uint64& region_size_, const double& shape, const double& invariant);
-RcppExport SEXP _jackalope_make_gamma_mats(SEXP chrom_sizesSEXP, SEXP region_size_SEXP, SEXP shapeSEXP, SEXP invariantSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<uint64>& >::type chrom_sizes(chrom_sizesSEXP);
-    Rcpp::traits::input_parameter< const uint64& >::type region_size_(region_size_SEXP);
-    Rcpp::traits::input_parameter< const double& >::type shape(shapeSEXP);
-    Rcpp::traits::input_parameter< const double& >::type invariant(invariantSEXP);
-    rcpp_result_gen = Rcpp::wrap(make_gamma_mats(chrom_sizes, region_size_, shape, invariant));
-    return rcpp_result_gen;
-END_RCPP
-}
-// check_gamma_mats
-void check_gamma_mats(const std::vector<arma::mat>& mats, const std::vector<uint64>& chrom_sizes);
-RcppExport SEXP _jackalope_check_gamma_mats(SEXP matsSEXP, SEXP chrom_sizesSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type mats(matsSEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint64>& >::type chrom_sizes(chrom_sizesSEXP);
-    check_gamma_mats(mats, chrom_sizes);
-    return R_NilValue;
-END_RCPP
-}
-// sub_TN93
-List sub_TN93(std::vector<double> pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta, double gamma_shape, const double& gamma_k, const double& invariant);
-RcppExport SEXP _jackalope_sub_TN93(SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP, SEXP gamma_shapeSEXP, SEXP gamma_kSEXP, SEXP invariantSEXP) {
+// sub_TN93_cpp
+List sub_TN93_cpp(std::vector<double> pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta, const double& gamma_shape, const uint32& gamma_k, const double& invariant);
+RcppExport SEXP _jackalope_sub_TN93_cpp(SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP, SEXP gamma_shapeSEXP, SEXP gamma_kSEXP, SEXP invariantSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -824,114 +785,39 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double& >::type alpha_1(alpha_1SEXP);
     Rcpp::traits::input_parameter< const double& >::type alpha_2(alpha_2SEXP);
     Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma_shape(gamma_shapeSEXP);
-    Rcpp::traits::input_parameter< const double& >::type gamma_k(gamma_kSEXP);
-    Rcpp::traits::input_parameter< const double& >::type invariant(invariantSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_TN93(pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sub_JC69
-List sub_JC69(double lambda, const double& gamma_shape, const double& gamma_k, const double& invariant);
-RcppExport SEXP _jackalope_sub_JC69(SEXP lambdaSEXP, SEXP gamma_shapeSEXP, SEXP gamma_kSEXP, SEXP invariantSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< const double& >::type gamma_shape(gamma_shapeSEXP);
-    Rcpp::traits::input_parameter< const double& >::type gamma_k(gamma_kSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type gamma_k(gamma_kSEXP);
     Rcpp::traits::input_parameter< const double& >::type invariant(invariantSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_JC69(lambda, gamma_shape, gamma_k, invariant));
+    rcpp_result_gen = Rcpp::wrap(sub_TN93_cpp(pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant));
     return rcpp_result_gen;
 END_RCPP
 }
-// sub_K80
-List sub_K80(double alpha, double beta, const double& gamma_shape, const double& gamma_k, const double& invariant);
-RcppExport SEXP _jackalope_sub_K80(SEXP alphaSEXP, SEXP betaSEXP, SEXP gamma_shapeSEXP, SEXP gamma_kSEXP, SEXP invariantSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type gamma_shape(gamma_shapeSEXP);
-    Rcpp::traits::input_parameter< const double& >::type gamma_k(gamma_kSEXP);
-    Rcpp::traits::input_parameter< const double& >::type invariant(invariantSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_K80(alpha, beta, gamma_shape, gamma_k, invariant));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sub_F81
-List sub_F81(const std::vector<double>& pi_tcag, const double& gamma_shape, const double& gamma_k, const double& invariant);
-RcppExport SEXP _jackalope_sub_F81(SEXP pi_tcagSEXP, SEXP gamma_shapeSEXP, SEXP gamma_kSEXP, SEXP invariantSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const double& >::type gamma_shape(gamma_shapeSEXP);
-    Rcpp::traits::input_parameter< const double& >::type gamma_k(gamma_kSEXP);
-    Rcpp::traits::input_parameter< const double& >::type invariant(invariantSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_F81(pi_tcag, gamma_shape, gamma_k, invariant));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sub_HKY85
-List sub_HKY85(const std::vector<double>& pi_tcag, const double& alpha, const double& beta, const double& gamma_shape, const double& gamma_k, const double& invariant);
-RcppExport SEXP _jackalope_sub_HKY85(SEXP pi_tcagSEXP, SEXP alphaSEXP, SEXP betaSEXP, SEXP gamma_shapeSEXP, SEXP gamma_kSEXP, SEXP invariantSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type gamma_shape(gamma_shapeSEXP);
-    Rcpp::traits::input_parameter< const double& >::type gamma_k(gamma_kSEXP);
-    Rcpp::traits::input_parameter< const double& >::type invariant(invariantSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_HKY85(pi_tcag, alpha, beta, gamma_shape, gamma_k, invariant));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sub_F84
-List sub_F84(const std::vector<double>& pi_tcag, const double& beta, const double& kappa, const double& gamma_shape, const double& gamma_k, const double& invariant);
-RcppExport SEXP _jackalope_sub_F84(SEXP pi_tcagSEXP, SEXP betaSEXP, SEXP kappaSEXP, SEXP gamma_shapeSEXP, SEXP gamma_kSEXP, SEXP invariantSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const double& >::type beta(betaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type kappa(kappaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type gamma_shape(gamma_shapeSEXP);
-    Rcpp::traits::input_parameter< const double& >::type gamma_k(gamma_kSEXP);
-    Rcpp::traits::input_parameter< const double& >::type invariant(invariantSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_F84(pi_tcag, beta, kappa, gamma_shape, gamma_k, invariant));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sub_GTR
-List sub_GTR(std::vector<double> pi_tcag, const std::vector<double>& abcdef, double gamma_shape, const double& gamma_k, const double& invariant);
-RcppExport SEXP _jackalope_sub_GTR(SEXP pi_tcagSEXP, SEXP abcdefSEXP, SEXP gamma_shapeSEXP, SEXP gamma_kSEXP, SEXP invariantSEXP) {
+// sub_GTR_cpp
+List sub_GTR_cpp(std::vector<double> pi_tcag, const std::vector<double>& abcdef, const double& gamma_shape, const uint32& gamma_k, const double& invariant);
+RcppExport SEXP _jackalope_sub_GTR_cpp(SEXP pi_tcagSEXP, SEXP abcdefSEXP, SEXP gamma_shapeSEXP, SEXP gamma_kSEXP, SEXP invariantSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::vector<double> >::type pi_tcag(pi_tcagSEXP);
     Rcpp::traits::input_parameter< const std::vector<double>& >::type abcdef(abcdefSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma_shape(gamma_shapeSEXP);
-    Rcpp::traits::input_parameter< const double& >::type gamma_k(gamma_kSEXP);
+    Rcpp::traits::input_parameter< const double& >::type gamma_shape(gamma_shapeSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type gamma_k(gamma_kSEXP);
     Rcpp::traits::input_parameter< const double& >::type invariant(invariantSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_GTR(pi_tcag, abcdef, gamma_shape, gamma_k, invariant));
+    rcpp_result_gen = Rcpp::wrap(sub_GTR_cpp(pi_tcag, abcdef, gamma_shape, gamma_k, invariant));
     return rcpp_result_gen;
 END_RCPP
 }
-// sub_UNREST
-List sub_UNREST(arma::mat Q, double gamma_shape, const double& gamma_k, const double& invariant);
-RcppExport SEXP _jackalope_sub_UNREST(SEXP QSEXP, SEXP gamma_shapeSEXP, SEXP gamma_kSEXP, SEXP invariantSEXP) {
+// sub_UNREST_cpp
+List sub_UNREST_cpp(arma::mat Q, const double& gamma_shape, const uint32& gamma_k, const double& invariant);
+RcppExport SEXP _jackalope_sub_UNREST_cpp(SEXP QSEXP, SEXP gamma_shapeSEXP, SEXP gamma_kSEXP, SEXP invariantSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::mat >::type Q(QSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma_shape(gamma_shapeSEXP);
-    Rcpp::traits::input_parameter< const double& >::type gamma_k(gamma_kSEXP);
+    Rcpp::traits::input_parameter< const double& >::type gamma_shape(gamma_shapeSEXP);
+    Rcpp::traits::input_parameter< const uint32& >::type gamma_k(gamma_kSEXP);
     Rcpp::traits::input_parameter< const double& >::type invariant(invariantSEXP);
-    rcpp_result_gen = Rcpp::wrap(sub_UNREST(Q, gamma_shape, gamma_k, invariant));
+    rcpp_result_gen = Rcpp::wrap(sub_UNREST_cpp(Q, gamma_shape, gamma_k, invariant));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -974,7 +860,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_illumina_var_cpp", (DL_FUNC) &_jackalope_illumina_var_cpp, 26},
     {"_jackalope_pacbio_ref_cpp", (DL_FUNC) &_jackalope_pacbio_ref_cpp, 24},
     {"_jackalope_pacbio_var_cpp", (DL_FUNC) &_jackalope_pacbio_var_cpp, 26},
-    {"_jackalope_write_bed", (DL_FUNC) &_jackalope_write_bed, 5},
     {"_jackalope_read_fasta_noind", (DL_FUNC) &_jackalope_read_fasta_noind, 3},
     {"_jackalope_read_fasta_ind", (DL_FUNC) &_jackalope_read_fasta_ind, 3},
     {"_jackalope_write_ref_fasta", (DL_FUNC) &_jackalope_write_ref_fasta, 6},
@@ -1020,16 +905,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_add_insertion", (DL_FUNC) &_jackalope_add_insertion, 5},
     {"_jackalope_add_deletion", (DL_FUNC) &_jackalope_add_deletion, 5},
     {"_jackalope_test_rate", (DL_FUNC) &_jackalope_test_rate, 7},
-    {"_jackalope_make_gamma_mats", (DL_FUNC) &_jackalope_make_gamma_mats, 4},
-    {"_jackalope_check_gamma_mats", (DL_FUNC) &_jackalope_check_gamma_mats, 2},
-    {"_jackalope_sub_TN93", (DL_FUNC) &_jackalope_sub_TN93, 7},
-    {"_jackalope_sub_JC69", (DL_FUNC) &_jackalope_sub_JC69, 4},
-    {"_jackalope_sub_K80", (DL_FUNC) &_jackalope_sub_K80, 5},
-    {"_jackalope_sub_F81", (DL_FUNC) &_jackalope_sub_F81, 4},
-    {"_jackalope_sub_HKY85", (DL_FUNC) &_jackalope_sub_HKY85, 6},
-    {"_jackalope_sub_F84", (DL_FUNC) &_jackalope_sub_F84, 6},
-    {"_jackalope_sub_GTR", (DL_FUNC) &_jackalope_sub_GTR, 5},
-    {"_jackalope_sub_UNREST", (DL_FUNC) &_jackalope_sub_UNREST, 4},
+    {"_jackalope_sub_TN93_cpp", (DL_FUNC) &_jackalope_sub_TN93_cpp, 7},
+    {"_jackalope_sub_GTR_cpp", (DL_FUNC) &_jackalope_sub_GTR_cpp, 5},
+    {"_jackalope_sub_UNREST_cpp", (DL_FUNC) &_jackalope_sub_UNREST_cpp, 4},
     {"_jackalope_using_openmp", (DL_FUNC) &_jackalope_using_openmp, 0},
     {"_jackalope_add_ssites_cpp", (DL_FUNC) &_jackalope_add_ssites_cpp, 8},
     {NULL, NULL, 0}

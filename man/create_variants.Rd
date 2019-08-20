@@ -4,9 +4,8 @@
 \alias{create_variants}
 \title{Create variants from a reference genome.}
 \usage{
-create_variants(reference, vars_info, sub, ins = NULL, del = NULL,
-  gamma_mats = NULL, region_size = 100, n_threads = 1,
-  show_progress = FALSE)
+create_variants(reference, vars_info, sub = NULL, ins = NULL,
+  del = NULL, n_threads = 1, show_progress = FALSE)
 }
 \arguments{
 \item{reference}{A \code{ref_genome} object from which to generate variants.
@@ -25,8 +24,7 @@ to add variants manually.}
 information for the substitution models.
 See \code{\link{sub_models}} for more information on these models and
 their required parameters.
-This argument is only allowed to be missing if you are using a VCF file to create
-variants.
+This argument is ignored if you are using a VCF file to create variants.
 Defaults to \code{NULL}.}
 
 \item{ins}{Output from the \code{\link{indels}} function that specifies rates
@@ -38,20 +36,6 @@ Defaults to \code{NULL}.}
 of deletions by length.
 Passing \code{NULL} to this argument results in no deletions.
 Defaults to \code{NULL}.}
-
-\item{gamma_mats}{Output from the \code{\link{site_var}} function that specifies
-variability in mutation rates among sites (for both substitutions and indels).
-Passing \code{NULL} to this argument results in no variability among sites.
-Defaults to \code{NULL}.}
-
-\item{region_size}{Size of regions to break genome into for sampling mutation
-locations.
-This causes Gamma regions to be split into smaller sections (obviously the
-Gamma values themselves are not changed).
-Doing this splitting is useful because sampling within a region is more
-computationally costly than sampling among regions.
-Higher numbers will result in lower memory usage but slower speed.
-Defaults to \code{100}.}
 
 \item{n_threads}{Number of threads to use for parallel processing.
 This argument is ignored if OpenMP is not enabled.

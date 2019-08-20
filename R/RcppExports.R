@@ -130,16 +130,6 @@ pacbio_var_cpp <- function(var_set_ptr, out_prefix, sep_files, compress, comp_me
     invisible(.Call(`_jackalope_pacbio_var_cpp`, var_set_ptr, out_prefix, sep_files, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, variant_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
 }
 
-#' Write Gamma matrix info to a tab-delimited BED file.
-#'
-#'
-#'
-#' @noRd
-#'
-write_bed <- function(out_prefix, gamma_mats, chrom_names, compress, comp_method) {
-    invisible(.Call(`_jackalope_write_bed`, out_prefix, gamma_mats, chrom_names, compress, comp_method))
-}
-
 #' Read a non-indexed fasta file to a \code{RefGenome} object.
 #'
 #' @param file_names File names of the fasta file(s).
@@ -526,53 +516,6 @@ test_rate <- function(start, end, var_ind, chrom_ind, var_set_ptr, sampler_base_
     .Call(`_jackalope_test_rate`, start, end, var_ind, chrom_ind, var_set_ptr, sampler_base_ptr, gamma_mat_)
 }
 
-#' Fill matrix of Gamma-region end points and Gamma values.
-#'
-#' @param gamma_mat The gamma matrix to fill.
-#' @param gammas_x_sizes The value of `sum(gamma[i] * region_size[i])` to fill in.
-#'     This value is used to later determine (in fxn `make_gamma_mats`) the
-#'     mean gamma value across the whole genome, which is then used to make sure that
-#'     the overall mean is 1.
-#' @param chrom_size_ Length of the focal chromosome.
-#' @param region_size_ Size of each Gamma region.
-#' @param shape The shape parameter for the Gamma distribution from which
-#'     Gamma values will be derived.
-#' @param invariant Proportion of invariant regions.
-#' @param eng A random number generator.
-#'
-#'
-#' @noRd
-#'
-NULL
-
-#' Make matrices of Gamma-region end points and Gamma values for multiple chromosomes.
-#'
-#' @param chrom_sizes Lengths of the chromosomes in the genome.
-#' @param region_size_ Size of each Gamma region.
-#' @param shape The shape parameter for the Gamma distribution from which
-#'     Gamma values will be derived.
-#'
-#'
-#' @noRd
-#'
-make_gamma_mats <- function(chrom_sizes, region_size_, shape, invariant) {
-    .Call(`_jackalope_make_gamma_mats`, chrom_sizes, region_size_, shape, invariant)
-}
-
-#' Check input Gamma matrices for proper # columns and end points.
-#'
-#' @param mats List of matrices to check.
-#' @param chrom_sizes Vector of chromosomes sizes for all chromosomes.
-#'
-#' @return A length-2 vector of potential error codes and the index (1-based indexing)
-#'     to which matrix was a problem.
-#'
-#' @noRd
-#'
-check_gamma_mats <- function(mats, chrom_sizes) {
-    invisible(.Call(`_jackalope_check_gamma_mats`, mats, chrom_sizes))
-}
-
 #' Incomplete Gamma function
 #'
 #' @noRd
@@ -594,38 +537,17 @@ NULL
 #'
 NULL
 
-#' Check arguments for both options for among-site variability (Gamma and invariant).
-#' It returns a vector of Gamma rates for each of the `gamma_k` discrete regions.
+#' Info to calculate P(t) for TN93 model and its special cases
+#'
 #'
 #' @noRd
 #'
 NULL
 
-#' Construct necessary information for substitution models.
-#'
-#' For a more detailed explanation, see `vignette("sub-models")`.
+#' Info to calculate P(t) for GTR model
 #'
 #'
-#' @name sub_models
-#'
-#' @seealso \code{\link{create_variants}}
-#'
-#' @return A `sub_model_info` object, which is just a wrapper around a list with
-#' fields `Q` and `pi_tcag`. The former has the rate matrix, and the latter
-#' has the equilibrium nucleotide densities for "T", "C", "A", and "G", respectively.
-#' Access the rate matrix for a `sub_model_info` object named `x` via `x$Q` and
-#' densities via `x$pi_tcag`.
-#'
-#' @examples
-#' # Same substitution rate for all types:
-#' Q_JC69 <- sub_JC69(lambda = 0.1)
-#'
-#' # Transitions 2x more likely than transversions:
-#' Q_K80 <- sub_K80(alpha = 0.2, beta = 0.1)
-#'
-#' # Same as above, but incorporating equilibrium frequencies
-#' sub_HKY85(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
-#'           alpha = 0.2, beta = 0.1)
+#' @noRd
 #'
 NULL
 
@@ -649,68 +571,10 @@ NULL
 #'     Values must be in the range `[0,1)`.
 #'     Defaults to `0`.
 #'
-#' @export
+#' @noRd
 #'
-sub_TN93 <- function(pi_tcag, alpha_1, alpha_2, beta, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
-    .Call(`_jackalope_sub_TN93`, pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant)
-}
-
-#' @describeIn sub_models JC69 model.
-#'
-#' @param lambda Substitution rate for all possible substitutions.
-#' @inheritParams sub_TN93
-#'
-#' @export
-#'
-#'
-sub_JC69 <- function(lambda, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
-    .Call(`_jackalope_sub_JC69`, lambda, gamma_shape, gamma_k, invariant)
-}
-
-#' @describeIn sub_models K80 model.
-#'
-#' @param alpha Substitution rate for transitions.
-#' @inheritParams sub_TN93
-#'
-#' @export
-#'
-sub_K80 <- function(alpha, beta, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
-    .Call(`_jackalope_sub_K80`, alpha, beta, gamma_shape, gamma_k, invariant)
-}
-
-#' @describeIn sub_models F81 model.
-#'
-#' @inheritParams sub_TN93
-#'
-#' @export
-#'
-sub_F81 <- function(pi_tcag, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
-    .Call(`_jackalope_sub_F81`, pi_tcag, gamma_shape, gamma_k, invariant)
-}
-
-#' @describeIn sub_models HKY85 model.
-#'
-#'
-#' @inheritParams sub_TN93
-#' @inheritParams sub_K80
-#'
-#' @export
-#'
-sub_HKY85 <- function(pi_tcag, alpha, beta, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
-    .Call(`_jackalope_sub_HKY85`, pi_tcag, alpha, beta, gamma_shape, gamma_k, invariant)
-}
-
-#' @describeIn sub_models F84 model.
-#'
-#'
-#' @inheritParams sub_TN93
-#' @inheritParams sub_K80
-#' @param kappa The transition/transversion rate ratio.
-#'
-#' @export
-#'
-sub_F84 <- function(pi_tcag, beta, kappa, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
-    .Call(`_jackalope_sub_F84`, pi_tcag, beta, kappa, gamma_shape, gamma_k, invariant)
+sub_TN93_cpp <- function(pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant) {
+    .Call(`_jackalope_sub_TN93_cpp`, pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant)
 }
 
 #' @describeIn sub_models GTR model.
@@ -720,10 +584,10 @@ sub_F84 <- function(pi_tcag, beta, kappa, gamma_shape = NA_real_, gamma_k = 5, i
 #'     for the substitution rate matrix.
 #'     See `vignette("sub-models")` for how the values are ordered in the matrix.
 #'
-#' @export
+#' @noRd
 #'
-sub_GTR <- function(pi_tcag, abcdef, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
-    .Call(`_jackalope_sub_GTR`, pi_tcag, abcdef, gamma_shape, gamma_k, invariant)
+sub_GTR_cpp <- function(pi_tcag, abcdef, gamma_shape, gamma_k, invariant) {
+    .Call(`_jackalope_sub_GTR_cpp`, pi_tcag, abcdef, gamma_shape, gamma_k, invariant)
 }
 
 #' @describeIn sub_models UNREST model.
@@ -735,11 +599,11 @@ sub_GTR <- function(pi_tcag, abcdef, gamma_shape = NA_real_, gamma_k = 5, invari
 #'     Values on the diagonal are calculated inside the function so are ignored.
 #' @inheritParams sub_TN93
 #'
-#' @export
+#' @noRd
 #'
 #'
-sub_UNREST <- function(Q, gamma_shape = NA_real_, gamma_k = 5, invariant = 0) {
-    .Call(`_jackalope_sub_UNREST`, Q, gamma_shape, gamma_k, invariant)
+sub_UNREST_cpp <- function(Q, gamma_shape, gamma_k, invariant) {
+    .Call(`_jackalope_sub_UNREST_cpp`, Q, gamma_shape, gamma_k, invariant)
 }
 
 using_openmp <- function() {
