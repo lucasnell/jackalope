@@ -2,9 +2,7 @@
 #' ========================================================================`
 #'
 #' This file stores functions for molecular-evolution info.
-#' This includes those for substitutions, indels,
-#' among-site variability in mutation rates, and
-#' creating `mevo` objects that organize molecular-evolution info.
+#' This includes those for substitutions and indels.
 #'
 #' ========================================================================`
 
@@ -184,124 +182,6 @@ print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) 
     cat(sprintf("  * Total rate = %.3g\n", sum(x)))
     cat(sprintf("  * Max length = %i\n", length(x)))
     invisible(NULL)
-}
-
-
-
-
-
-
-# mevo objects -----
-
-
-#' Make a `mevo` object to store information needed for molecular evolution simulation.
-#'
-#'
-#'
-#' @param reference A \code{ref_genome} object from which you will generate variants.
-#' @param sub Output from one of the \code{\link{sub_models}} functions that organizes
-#'     information for the substitution models.
-#'     See `?sub_models` for more information on these models and
-#'     their required parameters.
-#' @param ins Output from the \code{\link{indels}} function that specifies rates
-#'     of insertions by length.
-#'     Passing `NULL` to this argument results in no insertions.
-#'     Defaults to `NULL`.
-#' @param del Output from the \code{\link{indels}} function that specifies rates
-#'     of deletions by length.
-#'     Passing `NULL` to this argument results in no deletions.
-#'     Defaults to `NULL`.
-#' @param gamma_mats Output from the \code{\link{site_var}} function that specifies
-#'     variability in mutation rates among sites (for both substitutions and indels).
-#'     Passing `NULL` to this argument results in no variability among sites.
-#'     Defaults to `NULL`.
-#'
-#' @return An object of class \code{\link{mevo}}.
-#'
-#' @noRd
-#'
-create_mevo <- function(reference,
-                        sub,
-                        ins,
-                        del,
-                        gamma_mats,
-                        region_size) {
-
-    if (!inherits(reference, "ref_genome")) {
-        err_msg("create_variants", "reference", "a \"ref_genome\" object")
-    }
-    if (!is.null(sub) && !is_type(sub, "sub_model_info")) {
-        err_msg("create_variants", "sub", "NULL or a \"sub_model_info\" object")
-    }
-    if (!is.null(ins) && !is_type(ins, "indel_rates")) {
-        err_msg("create_variants", "ins", "NULL or a \"indel_rates\" object")
-    }
-    if (!is.null(del) && !is_type(del, "indel_rates")) {
-        err_msg("create_variants", "del", "NULL or a \"indel_rates\" object")
-    }
-    if (!is.null(gamma_mats) && !is_type(gamma_mats, "site_var_mats")) {
-        err_msg("create_variants", "gamma_mats", "NULL or a \"site_var_mats\" object")
-    }
-    if (!single_integer(region_size, 1)) {
-        err_msg("create_variants", "region_size", "a single integer >= 1")
-    }
-
-    # `sub` must be provided if others are:
-    if (is.null(sub) && (!is.null(ins) ||
-                         !is.null(del) ||
-                         !is.null(gamma_mats))) {
-        stop("\nIn `create_variants`, if you want insertions, deletions, ",
-             "or among-site variability, you must also provide substituion information ",
-             "via one of the `sub_models` functions.", call. = FALSE)
-    }
-
-    # If no molecular evolution is provided, return NULL (only happens for VCF method)
-    if (is.null(sub)) return(NULL)
-
-    # Below will turn `NULL` into `numeric(0)` and
-    # indel_rates object into simple numeric:
-    ins <- as.numeric(ins)
-    del <- as.numeric(del)
-
-
-    # This results in no variability among sites and 1 Gamma region per chromosome
-    # (they'll get split later if desired):
-    if (is.null(gamma_mats)) {
-        chrom_sizes <- reference$sizes()
-        gamma_mats <- make_gamma_mats(chrom_sizes, region_size_ = max(chrom_sizes),
-                                      shape = 0, invariant = 0)
-        dim(gamma_mats) <- NULL # so it's just a list now
-    }
-
-    # -------+
-    # Make final output object
-    # -------+
-    out <- mevo$new(sub,
-                    ins,
-                    del,
-                    gamma_mats,
-                    region_size)
-
-    return(out)
-}
-
-
-
-
-
-#' Convert to a XPtr<MutationSampler> object
-#'
-#' @noRd
-#'
-mevo_obj_to_ptr <- function(mevo_obj) {
-
-    sampler_ptr <- make_mutation_sampler_base(mevo_obj$Q,
-                                              mevo_obj$pi_tcag,
-                                              mevo_obj$insertion_rates,
-                                              mevo_obj$deletion_rates,
-                                              mevo_obj$region_size)
-
-    return(sampler_ptr)
 }
 
 

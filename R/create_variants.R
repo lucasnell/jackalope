@@ -114,9 +114,27 @@ create_variants <- function(reference,
                 "argument object (see `?sub_models`)")
     }
 
-    # Do checks and organize molecular-evolution info into `mevo` object
+    # -----------------*
+    # Do checks and organize molecular-evolution info
     # (or `NULL` if `sub` was not provided):
-    mevo_obj <- create_mevo(reference, sub, ins, del, gamma_mats, region_size)
+    # -----------------*
+    if (!is.null(sub) && !is_type(sub, "sub_model_info")) {
+        err_msg("create_variants", "sub", "NULL or a \"sub_model_info\" object")
+    }
+    if (!is.null(ins) && !is_type(ins, "indel_rates")) {
+        err_msg("create_variants", "ins", "NULL or a \"indel_rates\" object")
+    }
+    if (!is.null(del) && !is_type(del, "indel_rates")) {
+        err_msg("create_variants", "del", "NULL or a \"indel_rates\" object")
+    }
+    # If sub is NULL and it's not a vcf file method, convert sub to rate-0 matrix:
+    if (is.null(sub) && !vcf) sub <- sub_JC69(0)
+
+    # Below will turn `NULL` into `numeric(0)` and
+    # indel_rates object into simple numeric:
+    ins <- as.numeric(ins)
+    del <- as.numeric(del)
+
 
     if (!single_integer(n_threads, .min = 1)) {
         err_msg("create_variants", "n_threads", "a single integer >= 1")
@@ -126,8 +144,12 @@ create_variants <- function(reference,
     }
 
     # `to_var_set` is a method defined for each class of input for `vars_info`
-    variants_ptr <- to_var_set(x = vars_info, reference = reference,
-                               mevo_obj = mevo_obj, n_threads = n_threads,
+    variants_ptr <- to_var_set(x = vars_info,
+                               reference = reference,
+                               sub = sub,
+                               ins = ins,
+                               del = del,
+                               n_threads = n_threads,
                                show_progress = show_progress)
 
     var_obj <- variants$new(variants_ptr, reference$ptr())
