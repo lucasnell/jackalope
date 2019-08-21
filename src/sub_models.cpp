@@ -80,16 +80,20 @@ double trunc_Gamma_mean(const double& b, const double& c,
     return z;
 }
 
-//' Create a vector of Gamma values for a discrete Gamma distribution
+//' Create a vector of Gamma values for a discrete Gamma distribution.
+//'
 //'
 //' @noRd
 //'
-std::vector<double> discrete_gamma(const uint32& k,
-                                   const double& shape) {
+void discrete_gamma(std::vector<double>& gammas,
+                    const uint32& k,
+                    const double& shape) {
 
-    if (shape <= 0 || k <= 1) return std::vector<double>(1, 1.0);
+    if (shape <= 0 || k <= 1) {
+        gammas.push_back(1.0);
+        return;
+    }
 
-    std::vector<double> gammas;
     gammas.reserve(k);
 
     double scale = 1 / shape;
@@ -107,7 +111,7 @@ std::vector<double> discrete_gamma(const uint32& k,
         p_cutoff += d_k;
     }
 
-    return gammas;
+    return;
 
 }
 
@@ -258,18 +262,22 @@ List sub_TN93_cpp(std::vector<double> pi_tcag,
     rowsums *= -1;
     Q.diag() = rowsums;
 
+    // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape <= 0)
+    std::vector<double> gammas;
+    discrete_gamma(gammas, gamma_k, gamma_shape);
+
     // Extract info for P(t)
-    arma::mat U;
-    arma::mat Ui;
-    arma::vec L;
-    Pt_info(pi_tcag, alpha_1, alpha_2, beta, U, Ui, L);
+    std::vector<arma::mat> Q_vec(gammas.size());
+    std::vector<arma::mat> U(gammas.size());
+    std::vector<arma::mat> Ui(gammas.size());
+    std::vector<arma::vec> L(gammas.size());
+    for (uint32 i = 0; i < gammas.size(); i++) {
+        Q_vec[i] = Q * gammas[i];
+        Pt_info(pi_tcag, alpha_1 * gammas[i], alpha_2 * gammas[i], beta * gammas[i],
+                U[i], Ui[i], L[i]);
+    }
 
-
-    // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape is <= 0)
-    std::vector<double> gammas = discrete_gamma(gamma_k, gamma_shape);
-
-
-    List out = List::create(_["Q"] = Q,
+    List out = List::create(_["Q"] = Q_vec,
                             _["pi_tcag"] = pi_tcag,
                             _["U"] = U,
                             _["Ui"] = Ui,
@@ -323,16 +331,21 @@ List sub_GTR_cpp(std::vector<double> pi_tcag,
     rowsums *= -1;
     Q.diag() = rowsums;
 
+    // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape <= 0)
+    std::vector<double> gammas;
+    discrete_gamma(gammas, gamma_k, gamma_shape);
+
     // Extract info for P(t)
-    arma::mat U;
-    arma::mat Ui;
-    arma::vec L;
-    Pt_info(Q, U, Ui, L);
+    std::vector<arma::mat> Q_vec(gammas.size());
+    std::vector<arma::mat> U(gammas.size());
+    std::vector<arma::mat> Ui(gammas.size());
+    std::vector<arma::vec> L(gammas.size());
+    for (uint32 i = 0; i < gammas.size(); i++) {
+        Q_vec[i] = Q * gammas[i];
+        Pt_info(Q_vec[i], U[i], Ui[i], L[i]);
+    }
 
-    // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape is <= 0)
-    std::vector<double> gammas = discrete_gamma(gamma_k, gamma_shape);
-
-    List out = List::create(_["Q"] = Q,
+    List out = List::create(_["Q"] = Q_vec,
                             _["pi_tcag"] = pi_tcag,
                             _["U"] = U,
                             _["Ui"] = Ui,
@@ -404,27 +417,38 @@ List sub_UNREST_cpp(arma::mat Q,
 
     for (uint64 i = 0; i < 4; i++) pi_tcag[i] = left_vec(i) / sumlv;
 
+    // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape <= 0)
+    std::vector<double> gammas;
+    discrete_gamma(gammas, gamma_k, gamma_shape);
 
     // Info for P(t) calculation
-    arma::mat U;
-    arma::mat Ui;
-    arma::vec L;
+    std::vector<arma::mat> Q_vec(gammas.size());
+    std::vector<arma::mat> U;
+    std::vector<arma::mat> Ui;
+    std::vector<arma::vec> L;
     // Check to see if the eigenvalues are real:
     arma::cx_vec L_;
     arma::cx_mat U_;
     arma::eig_gen(L_, U_, Q);
     bool all_real = arma::all(arma::imag(L_) == 0) &&
         arma::all(arma::vectorise(arma::imag(U_)) == 0);
-    // If they're real, fill U, Ui, and L using GTR method:
+    // If they're real, fill U, Ui, and L using GTR method.
+    // Otherwise they'll be empty, so we'll use repeated matrix squaring.
+
     if (all_real) {
-        Pt_info(Q, U, Ui, L);
+        U.resize(gammas.size());
+        Ui.resize(gammas.size());
+        L.resize(gammas.size());
     }
-    // (Otherwise they'll be empty, so we'll use repeated matrix squaring.)
+    for (uint32 i = 0; i < gammas.size(); i++) {
+        Q_vec[i] = Q * gammas[i];
+        if (all_real) {
+            Pt_info(Q_vec[i], U[i], Ui[i], L[i]);
+        }
+    }
 
-    // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape is <= 0)
-    std::vector<double> gammas = discrete_gamma(gamma_k, gamma_shape);
 
-    List out = List::create(_["Q"] = Q,
+    List out = List::create(_["Q"] = Q_vec,
                             _["pi_tcag"] = pi_tcag,
                             _["U"] = U,
                             _["Ui"] = Ui,
