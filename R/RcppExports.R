@@ -239,6 +239,21 @@ write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, show
     invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix, show_progress))
 }
 
+#' Changing P(t) matrix with new branch lengths or times.
+#'
+#'
+#' Equivalent to `U %*% diag(exp(L * t)) %*% Ui`
+#'
+#' @noRd
+#'
+NULL
+
+#' Calculating P(t) using repeated matrix squaring, for UNREST model only.
+#'
+#' @noRd
+#'
+NULL
+
 make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates, region_size) {
     .Call(`_jackalope_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates, region_size)
 }

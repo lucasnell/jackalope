@@ -414,7 +414,8 @@ List sub_UNREST_cpp(arma::mat Q,
     arma::cx_vec L_;
     arma::cx_mat U_;
     arma::eig_gen(L_, U_, Q);
-    bool all_real = arma::all(arma::imag(L_) == 0) && arma::all(arma::imag(U_) == 0);
+    bool all_real = arma::all(arma::imag(L_) == 0) &&
+        arma::all(arma::vectorise(arma::imag(U_)) == 0);
     // If they're real, fill U, Ui, and L using GTR method:
     if (all_real) {
         Pt_info(Q, U, Ui, L);
