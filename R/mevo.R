@@ -70,7 +70,7 @@ sub_info <- R6Class(
             cat("  ", sprintf(fmt, private$r_pi_tcag), "\n")
 
             cat("# Substitution rate matrix:\n")
-            prmatrix(private$r_Q, digits = digits,
+            prmatrix(private$r_Q[[1]] / private$r_gammas[1], digits = digits,
                      rowlab = paste("  ", c("T", "C", "A", "G")),
                      collab = c("T", "C", "A", "G"))
 
@@ -192,9 +192,9 @@ sub_arg_checks <- function(mod_name,
         err_msg(paste0("sub_", mod_name), "gamma_shape",
                 "NULL or a single number > 0.")
     }
-    if (!single_integer(gamma_k, 2, 256)) {
+    if (!single_integer(gamma_k, 2, 255)) {
         err_msg(paste0("sub_", mod_name), "gamma_k",
-             "a single integer in range [2, 256].", call. = FALSE)
+             "a single integer in range [2, 255].", call. = FALSE)
     }
     if (!single_number(invariant, 0) || invariant >= 1) {
         err_msg(paste0("sub_", mod_name), "invariant",
@@ -384,7 +384,7 @@ sub_F84 <- function(pi_tcag, beta, kappa,
 #'     If this parameter is `NA`, among-site variability is not included.
 #'     Defaults to `NA`.
 #' @param gamma_k The number of categories to split the discrete Gamma distribution
-#'     into. Values must be an integer in the range `[2,256]`.
+#'     into. Values must be an integer in the range `[2,255]`.
 #'     This argument is ignored if `gamma_shape` is `NA`.
 #'     Defaults to `5`.
 #' @param invariant Proportion of sites that are invariant.
