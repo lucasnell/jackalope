@@ -10,13 +10,12 @@
  ******************************************************************************
  */
 
+#include "jackalope_types.h" // integer types and debugging preprocessor directives
 
-// #define ARMA_NO_DEBUG // uncomment once debugging is finished
 
 #include <RcppArmadillo.h>
 
 #include <cmath> // exp, pow, remainder
-#include "jackalope_types.h" // integer types
 #include "util.h" // str_stop
 
 

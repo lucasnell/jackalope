@@ -1,6 +1,6 @@
 
-// #define ARMA_NO_DEBUG // uncomment once debugging is finished
 
+#include "jackalope_types.h"
 
 #include <RcppArmadillo.h>
 #include <cmath>  // exp
@@ -8,7 +8,6 @@
 #include <string>  // string class
 
 
-#include "jackalope_types.h"
 #include "mutator_location.h"
 #include "mutator_type.h"
 #include "mutator.h"
