@@ -88,5 +88,52 @@ private:
 
 
 
+//' Changing P(t) matrix with new branch lengths or times.
+//'
+//'
+//' Equivalent to `U %*% diag(exp(L * t)) %*% Ui`
+//'
+//' @noRd
+//'
+inline void Pt_calc(const arma::mat& U,
+                    const arma::mat& Ui,
+                    const arma::vec& L,
+                    const double& t,
+                    arma::mat& Pt) {
+
+    arma::mat diag_L = arma::diagmat(arma::exp(L * t));
+
+    Pt = U * diag_L * Ui;
+
+    return;
+}
+
+//' Calculating P(t) using repeated matrix squaring, for UNREST model only.
+//'
+//' @noRd
+//'
+inline void Pt_calc(const arma::mat& Q,
+                    const uint32& k,
+                    const double& t,
+                    arma::mat& Pt) {
+
+    double m = static_cast<double>(1U<<k);
+
+    Pt = arma::eye<arma::mat>(4, 4) + Q * t / m + 0.5 * (Q * t / m) * (Q * t / m);
+
+    for (uint32 i = 0; i < k; i++) Pt = Pt * Pt;
+
+    return;
+
+}
+
+
+
+
+
+
+
+
+
 
 #endif
