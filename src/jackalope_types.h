@@ -20,6 +20,9 @@
 #include "pcg/pcg_extras.hpp"  // pcg 128-bit integer type
 
 
+#define __JACKALOPE_DEBUG // comment out when done debugging
+
+
 using namespace Rcpp;
 
 typedef uint_fast8_t uint8;

@@ -376,17 +376,21 @@ public:
 
     // For easily outputting a reference to a VarGenome
     VarGenome& operator[](const uint64& idx) {
+#ifdef __JACKALOPE_DEBUG
         if (idx >= variants.size()) {
             stop("trying to access a VarGenome that doesn't exist");
         }
+#endif
         VarGenome& vg(variants[idx]);
         return vg;
     }
     // const version of above
     const VarGenome& operator[](const uint64& idx) const {
+#ifdef __JACKALOPE_DEBUG
         if (idx >= variants.size()) {
             stop("trying to access a VarGenome that doesn't exist");
         }
+#endif
         const VarGenome& vg(variants[idx]);
         return vg;
     }
