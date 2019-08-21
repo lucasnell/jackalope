@@ -42,43 +42,12 @@ public:
     AliasSampler() : Prob(), Alias(), n(0) {};
     AliasSampler(const std::vector<double>& probs)
         : Prob(probs.size()), Alias(probs.size()), n(probs.size()) {
-
-        arma::vec p(probs);
-        p /= arma::accu(p);  // make sure they sum to 1
-        p *= n;
-
-        std::deque<uint64> Small;
-        std::deque<uint64> Large;
-        for (uint64 i = 0; i < n; i++) {
-            if (p(i) < 1) {
-                Small.push_back(i);
-            } else Large.push_back(i);
-        }
-
-        uint64 l, g;
-        while (!Small.empty() && !Large.empty()) {
-            l = Small.front();
-            Small.pop_front();
-            g = Large.front();
-            Large.pop_front();
-            Prob[l] = p[l];
-            Alias[l] = g;
-            p(g) = (p(g) + p(l)) - 1;
-            if (p(g) < 1) {
-                Small.push_back(g);
-            } else Large.push_back(g);
-        }
-        while (!Large.empty()) {
-            g = Large.front();
-            Large.pop_front();
-            Prob[g] = 1;
-        }
-        while (!Small.empty()) {
-            l = Small.front();
-            Small.pop_front();
-            Prob[l] = 1;
-        }
-
+        arma::rowvec p(probs);
+        construct(p);
+    }
+    AliasSampler(arma::rowvec probs)
+        : Prob(probs.n_elem), Alias(probs.n_elem), n(probs.n_elem) {
+        construct(probs);
     }
     // Copy constructor
     AliasSampler(const AliasSampler& other)
@@ -98,6 +67,47 @@ private:
     std::vector<double> Prob;
     std::vector<uint64> Alias;
     uint64 n;
+
+
+    void construct(arma::rowvec& p) {
+
+        p /= arma::accu(p);  // make sure they sum to 1
+        p *= n;
+
+        std::deque<uint64> Small;
+        std::deque<uint64> Large;
+        for (uint64 i = 0; i < n; i++) {
+            if (p(i) < 1) {
+                Small.push_back(i);
+            } else Large.push_back(i);
+        }
+
+        uint64 l, g;
+        while (!Small.empty() && !Large.empty()) {
+            l = Small.front();
+            Small.pop_front();
+            g = Large.front();
+            Large.pop_front();
+            Prob[l] = p(l);
+            Alias[l] = g;
+            p(g) = (p(g) + p(l)) - 1;
+            if (p(g) < 1) {
+                Small.push_back(g);
+            } else Large.push_back(g);
+        }
+        while (!Large.empty()) {
+            g = Large.front();
+            Large.pop_front();
+            Prob[g] = 1;
+        }
+        while (!Small.empty()) {
+            l = Small.front();
+            Small.pop_front();
+            Prob[l] = 1;
+        }
+
+        return;
+    }
 };
 
 
