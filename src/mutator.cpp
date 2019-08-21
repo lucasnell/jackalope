@@ -1,5 +1,9 @@
 
+// #define ARMA_NO_DEBUG // uncomment once debugging is finished
+
+
 #include <RcppArmadillo.h>
+#include <cmath>  // exp
 #include <vector>  // vector class
 #include <string>  // string class
 
@@ -10,6 +14,55 @@
 #include "mutator.h"
 
 using namespace Rcpp;
+
+
+
+
+
+
+//' Changing P(t) matrix with new branch lengths or times.
+//'
+//'
+//' Equivalent to `U %*% diag(exp(L * t)) %*% Ui`
+//'
+//' @noRd
+//'
+void Pt_calc(const arma::mat& U,
+             const arma::mat& Ui,
+             const arma::vec& L,
+             const double& t,
+             arma::mat& Pt) {
+
+    arma::mat diag_L = arma::diagmat(arma::exp(L * t));
+
+    Pt = U * diag_L * Ui;
+
+    return;
+}
+
+//' Calculating P(t) using repeated matrix squaring, for UNREST model only.
+//'
+//' @noRd
+//'
+void Pt_calc(const arma::mat& Q,
+             const uint32& k,
+             const double& t,
+             arma::mat& Pt) {
+
+    double m = static_cast<double>(1U<<k);
+
+    Pt = arma::eye<arma::mat>(4, 4) + Q * t / m + 0.5 * (Q * t / m) * (Q * t / m);
+
+    for (uint32 i = 0; i < k; i++) Pt = Pt * Pt;
+
+    return;
+
+}
+
+
+
+
+
 
 // Does most of the work of mutating for the below methods (all but location sampling)
 inline double MutationSampler::mutate__(pcg64& eng, const uint64& pos, sint64& end) {

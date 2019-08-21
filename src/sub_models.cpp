@@ -11,6 +11,7 @@
  */
 
 
+// #define ARMA_NO_DEBUG // uncomment once debugging is finished
 
 #include <RcppArmadillo.h>
 
@@ -18,7 +19,12 @@
 #include "jackalope_types.h" // integer types
 #include "util.h" // str_stop
 
+
+
 using namespace Rcpp;
+
+
+
 
 
 
@@ -116,9 +122,9 @@ void Pt_info(std::vector<double> pi_tcag,
              const double& alpha_1,
              const double& alpha_2,
              const double& beta,
-             std::vector<std::vector<double>>& U,
-             std::vector<std::vector<double>>& Ui,
-             std::vector<double>& L) {
+             arma::mat& U,
+             arma::mat& Ui,
+             arma::vec& L) {
 
 
     const double& pi_t(pi_tcag[0]);
@@ -152,9 +158,9 @@ void Pt_info(std::vector<double> pi_tcag,
 //' @noRd
 //'
 void Pt_info(const arma::mat& Q,
-             std::vector<std::vector<double>>& U,
-             std::vector<std::vector<double>>& Ui,
-             std::vector<double>& L) {
+             arma::mat& U,
+             arma::mat& Ui,
+             arma::vec& L) {
 
 
     arma::cx_vec L_;
@@ -166,15 +172,10 @@ void Pt_info(const arma::mat& Q,
     L_ = L_(I);
     U_ = U_.cols(I);
 
-    L = arma::conv_to<std::vector<double>>::from(arma::real(L_));
-    arma::mat U_mat = arma::real(U_);
+    L = arma::real(L_);
+    U = arma::real(U_);
 
-    arma::mat Ui_mat = U_mat.i();
-
-    for (uint32 i = 0; i < 4; i++) {
-        U.push_back(arma::conv_to<std::vector<double>>::from(U_mat.row(i)));
-        Ui.push_back(arma::conv_to<std::vector<double>>::from(Ui_mat.row(i)));
-    }
+    Ui = U.i();
 
     return;
 
@@ -259,9 +260,9 @@ List sub_TN93_cpp(std::vector<double> pi_tcag,
     Q.diag() = rowsums;
 
     // Extract info for P(t)
-    std::vector<std::vector<double>> U;
-    std::vector<std::vector<double>> Ui;
-    std::vector<double> L;
+    arma::mat U;
+    arma::mat Ui;
+    arma::vec L;
     Pt_info(pi_tcag, alpha_1, alpha_2, beta, U, Ui, L);
 
 
@@ -324,9 +325,9 @@ List sub_GTR_cpp(std::vector<double> pi_tcag,
     Q.diag() = rowsums;
 
     // Extract info for P(t)
-    std::vector<std::vector<double>> U;
-    std::vector<std::vector<double>> Ui;
-    std::vector<double> L;
+    arma::mat U;
+    arma::mat Ui;
+    arma::vec L;
     Pt_info(Q, U, Ui, L);
 
     // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape is <= 0)
@@ -405,10 +406,10 @@ List sub_UNREST_cpp(arma::mat Q,
     for (uint64 i = 0; i < 4; i++) pi_tcag[i] = left_vec(i) / sumlv;
 
 
-    // Info for P(t) is empty for UNREST model, since it requires matrix squaring
-    std::vector<std::vector<double>> U;
-    std::vector<std::vector<double>> Ui;
-    std::vector<double> L;
+    // Info for P(t) calculation
+    arma::mat U;
+    arma::mat Ui;
+    arma::vec L;
     // Check to see if the eigenvalues are real:
     arma::cx_vec L_;
     arma::cx_mat U_;
@@ -418,7 +419,7 @@ List sub_UNREST_cpp(arma::mat Q,
     if (all_real) {
         Pt_info(Q, U, Ui, L);
     }
-    // (They'll be empty otherwise.)
+    // (Otherwise they'll be empty, so we'll use repeated matrix squaring.)
 
     // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape is <= 0)
     std::vector<double> gammas = discrete_gamma(gamma_k, gamma_shape);
