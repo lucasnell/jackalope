@@ -72,12 +72,28 @@ public:
 
     void new_chrom(VarChrom& var_chrom_, pcg64& eng);
 
-    void add_subs(const double& b_len, pcg64& eng);
+    void add_subs(const double& b_len,
+                  const uint64& begin,
+                  const uint64& end,
+                  pcg64& eng);
 
 
 private:
 
-    void new_branch(const double& b_len);
+    inline void new_branch(const double& b_len);
+
+    inline void subs_before_muts(uint64& pos,
+                                 const uint64& end,
+                                 const uint8& max_gamma,
+                                 const std::string& bases,
+                                 pcg64& eng);
+    inline void subs_after_muts(uint64& pos,
+                                const uint64& end1,
+                                const uint64& end2,
+                                const uint64& mut_i,
+                                const uint8& max_gamma,
+                                const std::string& bases,
+                                pcg64& eng);
 
 
 
