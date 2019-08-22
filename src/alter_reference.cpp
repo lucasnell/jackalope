@@ -20,7 +20,7 @@
 #include "ref_classes.h"  // Ref* classes
 #include "jackalope_types.h"  // integer types
 #include "alias_sampler.h"  // alias string sampler
-#include "util.h"  // clear_memory, thread_check
+#include "util.h"  // clear_memory, thread_check, jlp_shuffle
 
 
 using namespace Rcpp;
@@ -60,7 +60,7 @@ void merge_chromosomes_cpp(SEXP ref_genome_ptr) {
     pcg64 eng = seeded_pcg();
 
     // Shuffling ref_genome info.
-    std::shuffle(chroms.begin(), chroms.end(), eng);
+    jlp_shuffle<std::deque<RefChrom>>(chroms, eng);
 
     // Merging the back chromosomes to the first one:
     std::string& nts(chroms.front().nucleos);

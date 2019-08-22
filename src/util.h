@@ -72,6 +72,22 @@ void clear_memory(U& x) {
 }
 
 
+/*
+ Shuffles a vector or deque more quickly than the default std::shuffle
+ */
+template <typename T>
+void jlp_shuffle(T& input, pcg64& eng) {
+    for (uint32 i = input.size(); i > 1; i--) {
+        uint32 j = runif_01(eng) * i;
+        std::swap(input[i-1], input[j]);
+    }
+    return input;
+}
+
+
+
+
+
 
 //' GC proportion for a single string.
 //'
