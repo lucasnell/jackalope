@@ -11,10 +11,8 @@
 
 
 #include "var_classes.h"  // Var* classes
-#include "pcg.h"  // pcg seeding
+#include "pcg.h"  // runif_01
 #include "alias_sampler.h"  // alias method of sampling
-#include "util.h"  // str_stop
-
 
 
 
@@ -206,8 +204,9 @@ void SubMutator::add_subs(const double& b_len,
                           pcg64& eng) {
 
 #ifdef __JACKALOPE_DEBUG
+    if (!var_chrom) stop("var_chrom is nullptr in add_subs");
     if (b_len < 0) stop("b_len < 0 in add_subs");
-    if (begin > var_chrom->size()) stop("begin > var_chrom->size() in add_subs");
+    if (begin >= var_chrom->size()) stop("begin >= var_chrom->size() in add_subs");
     if (end > var_chrom->size()) stop("end > var_chrom->size() in add_subs");
 #endif
 
