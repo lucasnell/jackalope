@@ -77,6 +77,10 @@ public:
                   const uint64& end,
                   pcg64& eng);
 
+    // Adjust rate_inds for indels:
+    void deletion_adjust(const uint64& size, const uint64& pos);
+    void insertion_adjust(const uint64& size, const uint64& pos, pcg64& eng);
+
 
 private:
 
