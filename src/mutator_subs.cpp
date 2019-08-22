@@ -87,10 +87,13 @@ inline void SubMutator::new_branch(const double& b_len) {
     // UNREST model
     if (U.size() == 0) {
         for (uint32 i = 0; i < Q.size(); i++) {
-            // Adjust P(t) matrix
+            // Adjust P(t) matrix using repeated matrix squaring
             Pt_calc(Q[i], 30, b_len, Pt[i]);
             // Now adjust the alias samplers:
             std::vector<AliasSampler>& samp(samplers[i]);
+#ifdef __JACKALOPE_DEBUG
+            if (samp.size() != 4) stop("SubMutator::new_branch-> samp.size() != 4");
+#endif
             for (uint32 j = 0; j < 4; j++) {
                 samp[j] = AliasSampler(Pt[i].row(j));
             }
@@ -103,10 +106,13 @@ inline void SubMutator::new_branch(const double& b_len) {
 #endif
         // All other models
         for (uint32 i = 0; i < Q.size(); i++) {
-            // Adjust P(t) matrix
+            // Adjust P(t) matrix using eigenvalues and eigenvectors in U, Ui, and L
             Pt_calc(U[i], Ui[i], L[i], b_len, Pt[i]);
             // Now adjust the alias samplers:
             std::vector<AliasSampler>& samp(samplers[i]);
+#ifdef __JACKALOPE_DEBUG
+            if (samp.size() != 4) stop("SubMutator::new_branch-> samp.size() != 4");
+#endif
             for (uint32 j = 0; j < 4; j++) {
                 samp[j] = AliasSampler(Pt[i].row(j));
             }
@@ -118,6 +124,11 @@ inline void SubMutator::new_branch(const double& b_len) {
 }
 
 
+
+//' Add substitutions within a range (pos to (end-1)) before any mutations have occurred.
+//'
+//' @noRd
+//'
 inline void SubMutator::subs_before_muts(uint64& pos,
                                          const uint64& end,
                                          const uint8& max_gamma,
@@ -141,6 +152,10 @@ inline void SubMutator::subs_before_muts(uint64& pos,
 
 }
 
+//' Add substitutions within a range (pos to (end-1)) after mutations have occurred.
+//'
+//' @noRd
+//'
 inline void SubMutator::subs_after_muts(uint64& pos,
                                         const uint64& end1,
                                         const uint64& end2,
@@ -242,10 +257,10 @@ void SubMutator::add_subs(const double& b_len,
      at or after its position but before the next one.
      */
     uint64 next_mut_i = mut_i + 1;
-    while (pos <= end && next_mut_i < mutations.size()) {
+    while (pos < end && next_mut_i < mutations.size()) {
 
         subs_after_muts(pos, end, mutations[next_mut_i].new_pos,
-                          mut_i, max_gamma, bases, eng);
+                        mut_i, max_gamma, bases, eng);
 
         ++mut_i;
         ++next_mut_i;
@@ -253,7 +268,7 @@ void SubMutator::add_subs(const double& b_len,
 
     // Now taking care of nucleotides after the last Mutation
     subs_after_muts(pos, end, var_chrom->chrom_size,
-                      mut_i, max_gamma, bases, eng);
+                    mut_i, max_gamma, bases, eng);
 
 
     return;
