@@ -72,40 +72,60 @@ void IndelMutator::add_indels(double b_len,
     if (end > var_chrom->size()) stop("end > var_chrom->size() in add_indels");
 #endif
 
+    // Vector of indel-type indices, one item per indel "event"
+    std::vector<uint32> events;
+
     while (b_len > 0) {
+
+
+        /*
+         ----------------
+         Determine how many of each indel-type occur over `tau` time units:
+         ----------------
+         */
 
         calc_tau(b_len);
 
-        std::deque<uint32> non_zeros;
-        uint32 total_events = 0;
+        // Reset `events` between rounds:
+        if (events.size() > 0) events.clear();
+        // Reserve memory (`arma::accu(rates_tau)` is the expected value of the # events)
+        events.reserve(1 + 1.5 * arma::accu(rates_tau));
 
         for (uint32 i = 0; i < rates_tau.n_elem; i++) {
 
             distr.param(std::poisson_distribution<uint32>::param_type(rates_tau(i)));
 
-            n_events[i] = distr(eng);
-            if (n_events[i] > 0U) {
-                non_zeros.push_back(i);
-                total_events += n_events[i];
-            }
+            uint32 n_events = distr(eng);
+            for (uint32 j = 0; j < n_events; j++) events.push_back(i);
 
         }
 
-        // Adding indels in random order:
-        while (total_events > 0) {
+        /*
+         ----------------
+         Adding indels in random order:
+         ----------------
+         */
+        jlp_shuffle<std::vector<uint32>>(events, eng);   // shuffle them first
 
-            uint32 nz_i = static_cast<uint32>(runif_01(eng) * non_zeros.size());
-            uint32 ch_i = non_zeros[nz_i];
 
-            if (changes(ch_i) > 0) {
-                uint64 size = static_cast<uint64>(changes(ch_i));
+        for (uint32 i = 0; i < events.size(); i++) {
+
+            // The amount that this indel-type changes the chromosome size:
+            double& change(changes(events[i]));
+
+#ifdef __JACKALOPE_DEBUG
+            if (change == 0) stop("change == 0 inside add_indels");
+#endif
+
+            if (change > 0) {
+                uint64 size = static_cast<uint64>(change);
                 uint64 pos = static_cast<uint64>(runif_01(eng) * (end - begin) + begin);
                 std::string str(size, 'x');
                 insert.sample(str, eng);
                 var_chrom->add_insertion(str, pos);
                 subs.insertion_adjust(size, pos, eng);
             } else {
-                uint64 size = std::min(static_cast<uint64>(std::abs(changes(ch_i))),
+                uint64 size = std::min(static_cast<uint64>(std::abs(change)),
                                        end - begin);
                 uint64 pos = static_cast<uint64>(runif_01(eng) *
                     (end - begin - size + 1) + begin);
@@ -113,12 +133,7 @@ void IndelMutator::add_indels(double b_len,
                 subs.deletion_adjust(size, pos);
             }
 
-            n_events[ch_i]--;
-            if (n_events[ch_i] == 0) non_zeros.erase(non_zeros.begin() + ch_i);
-
-            total_events--;
         }
-
 
     }
 
