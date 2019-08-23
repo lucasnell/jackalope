@@ -69,6 +69,14 @@ public:
         indels.new_chrom(var_chrom_);
         return;
     }
+    // For writing to a file (used internally for testing):
+    void new_chrom(VarChrom& var_chrom_, pcg64& eng, FileUncomp& file) {
+        var_chrom = &var_chrom_;
+        subs.new_chrom(var_chrom_, eng);
+        subs.write_gammas(file);
+        indels.new_chrom(var_chrom_);
+        return;
+    }
 
     /*
      Add mutations for a branch within a range:
