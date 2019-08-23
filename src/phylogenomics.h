@@ -78,8 +78,8 @@ struct PhyloTree {
     arma::Mat<uint64> edges;
     std::vector<std::string> tip_labels;
     uint64 start;
-    sint64 end;
-    std::vector<sint64> ends;  // `end` values for each tree node and tip
+    uint64 end;
+    std::vector<uint64> ends;  // (non-inclusive) `end` values for each tree node and tip
     uint64 n_tips;             // # tips = # variants
     uint64 tree_size;          // tree size is # tips plus # nodes
     uint64 n_edges;            // # edges = # connections between nodes/tips
@@ -90,7 +90,7 @@ struct PhyloTree {
         const arma::Mat<uint64>& edges_,
         const std::vector<std::string>& tip_labels_,
         const uint64& start_,
-        const sint64& end_
+        const uint64& end_
     )
         : branch_lens(branch_lens_), edges(edges_), tip_labels(tip_labels_),
           start(start_), end(end_),
@@ -141,7 +141,6 @@ public:
     std::vector<VarChrom*> var_chrom_ptrs;    // pointers to original VarChrom objects
     std::vector<VarChrom> var_chroms;  // blank VarChrom objects to evolve across tree
     std::vector<MutationSampler> samplers; // to do the mutation additions across tree
-    std::vector<double> chrom_rates;   // chromosome rates
     uint64 n_tips;                  // number of tips (i.e., variants)
 
     PhyloOneChrom() {}
@@ -149,11 +148,11 @@ public:
         VarSet& var_set,
         const MutationSampler& sampler_base,
         const uint64& chrom_ind,
-        const arma::mat& gamma_mat_,
         const std::vector<uint64>& n_bases_,
         const std::vector<std::vector<double>>& branch_lens_,
         const std::vector<arma::Mat<uint64>>& edges_,
-        const std::vector<std::vector<std::string>>& tip_labels_
+        const std::vector<std::vector<std::string>>& tip_labels_,
+        pcg64& eng
     )
         : trees(edges_.size()),
           var_chrom_ptrs(var_set.size()),
@@ -161,7 +160,6 @@ public:
           samplers(),
           chrom_rates(edges_[0].max()),
           n_tips(tip_labels_[0].size()),
-          gamma_mat(gamma_mat_),
           ordered_tip_labels(),
           recombination(branch_lens_.size() > 1)
     {
@@ -183,7 +181,7 @@ public:
 
         // Fill `trees`:
         uint64 start_ = 0;
-        sint64 end_ = -1;
+        uint64 end_ = 0; // note: non-inclusive end point
         for (uint64 i = 0; i < n_trees; i++) {
             end_ += n_bases_[i];
             if (i > 0) start_ += n_bases_[i-1];
@@ -203,7 +201,7 @@ public:
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
         for (uint64 i = 0; i < tree_size; i++) {
-            samplers[i].new_chrom(var_chroms[i], gamma_mat);
+            samplers[i].new_chrom(var_chroms[i], eng);
         }
 
     }
@@ -224,7 +222,6 @@ public:
           samplers(),
           chrom_rates(edges_[0].max()),
           n_tips(tip_labels_[0].size()),
-          gamma_mat(),
           ordered_tip_labels(),
           recombination(branch_lens_.size() > 1)
     {
@@ -241,7 +238,7 @@ public:
 
         // Fill `trees`:
         uint64 start_ = 0;
-        sint64 end_ = -1;
+        uint64 end_ = 0; // note: non-inclusive end point
         for (uint64 i = 0; i < n_trees; i++) {
             end_ += n_bases_[i];
             if (i > 0) start_ += n_bases_[i-1];
@@ -257,12 +254,10 @@ public:
     void set_samp_var_info(VarSet& var_set,
                            const MutationSampler& sampler_base,
                            const uint64& chrom_ind,
-                           const arma::mat& gamma_mat_) {
+                           pcg64& eng) {
 
         uint64 tree_size = trees[0].tree_size;
         uint64 n_vars = var_set.size();
-
-        gamma_mat = gamma_mat_;
 
         ordered_tip_labels.resize(n_vars);
         for (uint64 i = 0; i < n_vars; i++) ordered_tip_labels[i] = var_set[i].name;
@@ -280,7 +275,7 @@ public:
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
         for (uint64 i = 0; i < tree_size; i++) {
-            samplers[i].new_chrom(var_chroms[i], gamma_mat);
+            samplers[i].new_chrom(var_chroms[i], eng);
         }
 
         return;
@@ -342,14 +337,15 @@ public:
                 throw(Rcpp::exception(err_msg.c_str(), false));
             }
             uint64 start = as<uint64>(phylo_info["start"]);
-            sint64 end = as<sint64>(phylo_info["end"]);
-            if (end < static_cast<sint64>(start)) {
-                err_msg = "\nEnd position < start position on chromosome ";
+            uint64 end = as<uint64>(phylo_info["end"]);
+            end++; // note: non-inclusive end point
+            if (end <= start) {
+                err_msg = "\nEnd position <= start position on chromosome ";
                 err_msg += std::to_string(i+1) + " and tree " + std::to_string(j+1);
                 throw(Rcpp::exception(err_msg.c_str(), false));
             }
 
-            n_bases_[j] = end - start + 1;
+            n_bases_[j] = end - start;
             branch_lens_[j] = branch_lens;
             edges_[j] = edges;
             tip_labels_[j] = tip_labels;
@@ -366,7 +362,6 @@ public:
 
 
 private:
-    arma::mat gamma_mat;
     std::vector<std::string> ordered_tip_labels;
     bool recombination;
 
@@ -380,7 +375,7 @@ private:
     /*
      Reset for a new tree:
      */
-    void reset(const PhyloTree& tree) {
+    void reset(const PhyloTree& tree, pcg64& eng) {
 
         const uint64& tree_size(tree.tree_size);
         const uint64& start(tree.start);
@@ -401,9 +396,9 @@ private:
         if (tree_size != samplers.size()) {
             samplers.resize(tree_size, samplers[0]);
         }
-        // Fill in sampler pointers and original gamma matrix:
+        // Fill in sampler pointers:
         for (uint64 i = 0; i < tree_size; i++) {
-            samplers[i].new_chrom(var_chroms[i], gamma_mat);
+            samplers[i].new_chrom(var_chroms[i], eng);
         }
         /*
          Set up vector of overall chromosome rates.
@@ -419,7 +414,6 @@ private:
             rate_ = samplers[0].location.bounds.end_rate -
                 samplers[0].location.bounds.start_rate;
         }
-        chrom_rates = std::vector<double>(tree_size, rate_);
 
         return;
     }
@@ -442,10 +436,6 @@ private:
          */
         samplers[b2].location.regions = samplers[b1].location.regions;
 
-        /*
-         Update overall chromosome rate:
-         */
-        chrom_rates[b2] = chrom_rates[b1];
 
         // Set exponential distribution to use this chromosome's rate:
         distr.param(std::exponential_distribution<double>::param_type(chrom_rates[b2]));
@@ -513,7 +503,6 @@ public:
     XPtr<VarSet> evolve_chroms(
             SEXP& ref_genome_ptr,
             SEXP& sampler_base_ptr,
-            const std::vector<arma::mat>& gamma_mats,
             uint64 n_threads,
             const bool& show_progress);
 

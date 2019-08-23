@@ -84,9 +84,9 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
         double time_jumped = distr(eng);
         double rate_change = 0;
         if (recombination) {
-            sint64& end_(tree.ends[b2]);
+            uint64& end_(tree.ends[b2]);
             end_ = tree.ends[b1];
-            const sint64 start_ = static_cast<sint64>(tree.start);
+            const uint64 start_ = tree.start;
             uint64 n_jumps = 0;
             while (time_jumped <= amt_time && end_ >= start_) {
                 /*
@@ -178,7 +178,6 @@ void PhyloOneChrom::update_var_chrom(const PhyloTree& tree) {
 XPtr<VarSet> PhyloInfo::evolve_chroms(
         SEXP& ref_genome_ptr,
         SEXP& sampler_base_ptr,
-        const std::vector<arma::mat>& gamma_mats,
         uint64 n_threads,
         const bool& show_progress) {
 
@@ -196,29 +195,12 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
     Progress prog_bar(total_chrom, show_progress);
     std::vector<int> status_codes(n_threads, 0);
 
-    if (n_chroms != gamma_mats.size()) {
-        std::string err_msg = "\ngamma_mats must be of same length as # chromosomes in ";
-        err_msg += "reference";
-        throw(Rcpp::exception(err_msg.c_str(), false));
-    }
-
 
     if (n_chroms != phylo_one_chroms.size()) {
         std::string err_msg = "\n# tips in phylo. info must be of same length as ";
         err_msg += "# chromosomes in reference genome";
         throw(Rcpp::exception(err_msg.c_str(), false));
     }
-
-    for (uint64 i = 0; i < n_chroms; i++) {
-        if (gamma_mats[i](gamma_mats[i].n_rows-1,0) != (*var_set)[0][i].size()) {
-            std::string err_msg = "\nGamma matrices must have max values equal to ";
-            err_msg += "the respective chromosome's length.\n";
-            err_msg += "This error occurred on Gamma matrix number ";
-            err_msg += std::to_string(i+1);
-            throw(Rcpp::exception(err_msg.c_str(), false));
-        }
-    }
-
 
     // Generate seeds for random number generators (1 RNG per thread)
     const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
@@ -251,10 +233,8 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
 
         PhyloOneChrom& chrom_phylo(phylo_one_chroms[i]);
 
-        const arma::mat& gamma_mat(gamma_mats[i]);
-
         // Set values for variant info and sampler:
-        chrom_phylo.set_samp_var_info(*var_set, *sampler_base, i, gamma_mat);
+        chrom_phylo.set_samp_var_info(*var_set, *sampler_base, i, eng);
 
         // Evolve the chromosome using the chrom_phylo object:
         status_code = chrom_phylo.evolve(eng, prog_bar);
@@ -317,7 +297,6 @@ SEXP evolve_chroms(
         SEXP& ref_genome_ptr,
         SEXP& sampler_base_ptr,
         SEXP& phylo_info_ptr,
-        const std::vector<arma::mat>& gamma_mats,
         uint64 n_threads,
         const bool& show_progress) {
 
@@ -328,7 +307,7 @@ SEXP evolve_chroms(
 
     XPtr<VarSet> var_set = phylo_info->evolve_chroms(
         ref_genome_ptr, sampler_base_ptr,
-        gamma_mats, n_threads, show_progress);
+        n_threads, show_progress);
 
     return var_set;
 }
