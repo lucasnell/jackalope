@@ -8,8 +8,8 @@
 #include <string>  // string class
 
 
-#include "mutator_location.h"
-#include "mutator_type.h"
+#include "mutator_subs.h"   // SubMutator
+#include "mutator_indels.h" // IndelMutator
 #include "mutator.h"
 
 using namespace Rcpp;
@@ -18,107 +18,56 @@ using namespace Rcpp;
 
 
 
-// Does most of the work of mutating for the below methods (all but location sampling)
-inline double MutationSampler::mutate__(pcg64& eng, const uint64& pos, sint64& end) {
-
-    char c = var_chrom->get_nt(pos);
-    MutationInfo m = type.sample(c, eng);
-    double rate_change;
-    if (m.length == 0) {
-        rate_change = location.substitution_rate_change(m.nucleo, pos);
-        var_chrom->add_substitution(m.nucleo, pos);
-    } else {
-        if (m.length > 0) {
-            std::string nts = new_nucleos(m.length, eng);
-            rate_change = location.insertion_rate_change(nts, pos);
-            var_chrom->add_insertion(nts, pos);
-        } else {
-            sint64 pos_ = static_cast<sint64>(pos);
-            sint64 size_ = end + 1;
-            if (pos_ - m.length > size_) m.length = static_cast<sint64>(pos_-size_);
-            uint64 del_size = std::abs(m.length);
-            rate_change = location.deletion_rate_change(del_size, pos);
-            var_chrom->add_deletion(del_size, pos);
-        }
-        // Update end point:
-        end += static_cast<sint64>(m.length);
-    }
-
-    // Update regions, rates, and bounds:
-    location.update(rate_change, m.length, pos);
-
-    return rate_change;
-}
-
-
-// Add mutation and return the change in the chromosome rate that results
-double MutationSampler::mutate(pcg64& eng) {
-
-    uint64 pos = location.sample(eng);
-
-    if (pos >= var_chrom->size()) {
-        Rcout << pos << ' ' << var_chrom->size() << std::endl;
-        stop("pos returning too large a pos");
-    }
-
-    // Dummy end point for use in mutate__
-    sint64 end = var_chrom->size() - 1;
-
-    double rate_change = mutate__(eng, pos, end);
-
-    return rate_change;
-}
 
 /*
- Overloaded for only mutating within a range.
- It also updates `end` if an indel occurs in the range.
- Make sure to keep checking for situation where `end < start` (i.e., chromosome section
- is empty).
+ Add mutations for a branch within a range.
+ It also updates `end` for indels that occur in the range.
+ (`end == begin` when chromosome region is of size zero bc `end` is non-inclusive)
  */
-double MutationSampler::mutate(pcg64& eng, const uint64& start, sint64& end) {
+void MutationSampler::mutate(const double& b_len,
+                             pcg64& eng,
+                             const uint64& begin,
+                             uint64& end) {
 
-    if (end < 0) stop("end is negative in MutationSampler.mutate");
-    uint64 pos = location.sample(eng, start, static_cast<uint64>(end));
+#ifdef __JACKALOPE_DEBUG
+    if (end < begin) stop("end < begin in MutationSampler.mutate");
+    if (end == begin) stop("end == begin in MutationSampler.mutate");
+#endif
 
-    double rate_change = mutate__(eng, pos, end);
+    indels.add_indels(b_len, begin, end, subs, eng);
 
-    return rate_change;
+    subs.add_subs(b_len, begin, end, eng);
+
+    return;
 }
+
+
 
 
 
 // Wrapper to make mutation sampler available from R
 
 //[[Rcpp::export]]
-SEXP make_mutation_sampler_base(const arma::mat& Q,
-                                const std::vector<double>& pi_tcag,
-                                const std::vector<double>& insertion_rates,
-                                const std::vector<double>& deletion_rates,
-                                const uint64& region_size) {
+SEXP make_mutation_sampler_base(const std::vector<arma::mat>& Q,
+                                const std::vector<arma::mat>& U,
+                                const std::vector<arma::mat>& Ui,
+                                const std::vector<arma::vec>& L,
+                                const double& invariant,
+                                const arma::vec& insertion_rates,
+                                const arma::vec& deletion_rates,
+                                const double& epsilon,
+                                const std::vector<double>& pi_tcag) {
 
-    std::vector<std::vector<double>> probs;
-    std::vector<sint64> mut_lengths;
-    std::vector<double> q_tcag;
-    /*
-     (1) Combine substitution, insertion, and deletion rates into a single vector
-     (2) Fill the `q_tcag` vector with mutation rates for each nucleotide
-     */
-    fill_probs_q_tcag(probs, q_tcag, Q, pi_tcag, insertion_rates, deletion_rates);
-
-    // Now filling in mut_lengths vector
-    fill_mut_lengths(mut_lengths, insertion_rates, deletion_rates);
 
     /*
      Now create and fill output pointer to base sampler:
      */
-    XPtr<MutationSampler> out(new MutationSampler());
+    XPtr<MutationSampler> mutator(new MutationSampler());
 
-    out->type = MutationTypeSampler(probs, mut_lengths);
-    out->insert = AliasStringSampler<std::string>("TCAG", pi_tcag);
+    mutator->subs = SubMutator(Q, U, Ui, L, invariant);
+    mutator->indels = IndelMutator(insertion_rates, deletion_rates, epsilon, pi_tcag);
 
-    out->location = LocationSampler(q_tcag, region_size);
-
-    return out;
+    return mutator;
 }
 
 

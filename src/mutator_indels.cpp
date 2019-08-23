@@ -58,10 +58,10 @@ void IndelMutator::calc_tau(double& b_len) {
 
 
 
-
+// Add indels, adjust `end` (`end == begin` when chromosome region is of size zero)
 void IndelMutator::add_indels(double b_len,
                               const uint64& begin,
-                              const uint64& end,
+                              uint64& end,
                               SubMutator& subs,
                               pcg64& eng) {
 
@@ -71,6 +71,8 @@ void IndelMutator::add_indels(double b_len,
     if (begin >= var_chrom->size()) stop("begin >= var_chrom->size() in add_indels");
     if (end > var_chrom->size()) stop("end > var_chrom->size() in add_indels");
 #endif
+
+    if ((rates.n_elem == 0) || (b_len == 0) || (end == begin)) return;
 
     // Vector of indel-type indices, one item per indel "event"
     std::vector<uint32> events;
@@ -127,6 +129,7 @@ void IndelMutator::add_indels(double b_len,
                 for (uint32 j = 0; j < size; j++) insert_str += insert.sample(eng);
                 var_chrom->add_insertion(insert_str, pos);
                 subs.insertion_adjust(size, pos, eng);
+                end += size;
             } else {
                 uint64 size = std::min(static_cast<uint64>(std::abs(change)),
                                        end - begin);
@@ -134,6 +137,8 @@ void IndelMutator::add_indels(double b_len,
                     (end - begin - size + 1) + begin);
                 var_chrom->add_deletion(size, pos);
                 subs.deletion_adjust(size, pos);
+                end -= size;
+                if (end == begin) return;
             }
 
         }

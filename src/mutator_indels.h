@@ -98,9 +98,10 @@ public:
     }
 
 
+    // Add indels, adjust `end` (`end == begin` when chromosome region is of size zero)
     void add_indels(double b_len,
                     const uint64& begin,
-                    const uint64& end,
+                    uint64& end,
                     SubMutator& subs,
                     pcg64& eng);
 

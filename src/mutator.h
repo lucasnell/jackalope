@@ -33,13 +33,9 @@ using namespace Rcpp;
 
 
 /*
- MutationSampler combines objects for sampling mutation types and new
- nucleotides for insertions.
+ MutationSampler combines objects for sampling substitutions and indels.
  */
 class MutationSampler {
-
-    // Does most of the work for the mutate methods (all but location sampling)
-    inline double mutate__(pcg64& eng, const uint64& start, sint64& end);
 
 public:
 
@@ -79,11 +75,11 @@ public:
     }
 
     /*
-     Add mutations for a branch within a range:
+     Add mutations for a branch within a range.
      It also updates `end` for indels that occur in the range.
-     Returns true only if the chromosome section is empty.
+     (`end == begin` when chromosome region is of size zero bc `end` is non-inclusive)
      */
-    bool mutate(const double& b_len, pcg64& eng, const uint64& start, uint64& end);
+    void mutate(const double& b_len, pcg64& eng, const uint64& begin, uint64& end);
 
 };
 

@@ -210,7 +210,7 @@ void SubMutator::add_subs(const double& b_len,
     if (end > var_chrom->size()) stop("end > var_chrom->size() in add_subs");
 #endif
 
-    if (b_len == 0) return;
+    if ((b_len == 0) || (end == begin)) return;
 
     new_branch(b_len);
 
