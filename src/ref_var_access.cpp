@@ -890,36 +890,3 @@ void add_deletion(SEXP var_set_ptr,
 }
 
 
-
-
-//' Get a rate for given start and end points of a VarChrom.
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-double test_rate(const uint64& start, const uint64& end,
-                 const uint64& var_ind, const uint64& chrom_ind,
-                 SEXP var_set_ptr, SEXP sampler_base_ptr,
-                 const arma::mat& gamma_mat_) {
-
-    XPtr<VarSet> var_set(var_set_ptr);
-
-    VarChrom& var_chrom((*var_set)[var_ind][chrom_ind]);
-
-    XPtr<MutationSampler> sampler_base(sampler_base_ptr);
-
-    MutationSampler sampler(*sampler_base);
-    sampler.new_chrom(var_chrom, gamma_mat_);
-
-    double out = 0;
-
-    // Do something like this:
-    // sampler.location.set_bounds(start, end);
-    // double out = sampler.location.bounds.end_rate - sampler.location.bounds.start_rate;
-
-    return out;
-
-}
-
-
-
