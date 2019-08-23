@@ -35,6 +35,12 @@ std::vector<uint8> make_char_map() {
 
 
 
+
+
+
+
+
+
 class SubMutator {
 
 public:
@@ -44,14 +50,14 @@ public:
     std::vector<arma::mat> Ui;
     std::vector<arma::vec> L;
     double invariant;
-    VarChrom* var_chrom = nullptr;  // VarChrom object pointer to be manipulated
+    VarChrom* var_chrom;  // VarChrom object pointer to be manipulated
     const std::vector<uint8> char_map = make_char_map();
     std::vector<std::vector<AliasSampler>> samplers;
     std::vector<arma::mat> Pt;
     std::deque<uint8> rate_inds;
 
 
-    SubMutator() {}
+    SubMutator() : var_chrom(nullptr) {}
     SubMutator(const std::vector<arma::mat>& Q_,
                const std::vector<arma::mat>& U_,
                const std::vector<arma::mat>& Ui_,
@@ -67,6 +73,25 @@ public:
         if (Ui_.size() > 255) stop("in SubMutator constr, Ui_.size() > 255");
         if (L_.size() > 255) stop("in SubMutator constr, L_.size() > 255");
 #endif
+    }
+
+
+    SubMutator(const SubMutator& other)
+        : Q(other.Q), U(other.U), Ui(other.Ui), L(other.L), invariant(other.invariant),
+          var_chrom(other.var_chrom), samplers(other.samplers), Pt(other.Pt),
+          rate_inds(other.rate_inds) {};
+
+    SubMutator& operator=(const SubMutator& other) {
+        Q = other.Q;
+        U = other.U;
+        Ui = other.Ui;
+        L = other.L;
+        invariant = other.invariant;
+        var_chrom = other.var_chrom;
+        samplers = other.samplers;
+        Pt = other.Pt;
+        rate_inds = other.rate_inds;
+        return *this;
     }
 
 

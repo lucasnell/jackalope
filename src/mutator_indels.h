@@ -30,6 +30,7 @@ using namespace Rcpp;
 
 
 
+
 class IndelMutator {
 
 public:
@@ -41,11 +42,11 @@ public:
     // Error control parameter (0 < `eps` << 1)
     double eps;
     // VarChrom object pointer to be manipulated:
-    VarChrom* var_chrom = nullptr;
+    VarChrom* var_chrom;
     // For creating insertion sequences:
     AliasStringSampler<std::string> insert;
 
-    IndelMutator() {};
+    IndelMutator() : var_chrom(nullptr) {}
     IndelMutator(const arma::vec& insertion_rates,
                  const arma::vec& deletion_rates,
                  const double& epsilon,
@@ -70,6 +71,23 @@ public:
             changes(i+n) = -1.0 * static_cast<double>(i+1);
         }
 
+    }
+
+    IndelMutator(const IndelMutator& other)
+        : rates(other.rates), changes(other.changes), eps(other.eps),
+          var_chrom(other.var_chrom), insert(other.insert), tau(other.tau),
+          rates_tau(other.rates_tau), n_events(other.n_events) {}
+
+    IndelMutator& operator=(const IndelMutator& other) {
+        rates = other.rates;
+        changes = other.changes;
+        eps = other.eps;
+        var_chrom = other.var_chrom;
+        insert = other.insert;
+        tau = other.tau;
+        rates_tau = other.rates_tau;
+        n_events = other.n_events;
+        return *this;
     }
 
 
