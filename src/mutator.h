@@ -53,7 +53,7 @@ public:
         : var_chrom(other.var_chrom), subs(other.subs), indels(other.indels) {}
 
     MutationSampler& operator=(const MutationSampler& other) {
-        if (other.var_chrom) var_chrom = other.var_chrom;
+        var_chrom = other.var_chrom;
         subs = other.subs;
         indels = other.indels;
         return *this;

@@ -54,6 +54,7 @@ public:
         : rates(insertion_rates.n_elem + deletion_rates.n_elem),
           changes(insertion_rates.n_elem + deletion_rates.n_elem),
           eps(epsilon),
+          var_chrom(nullptr),
           insert("TCAG", pi_tcag),
           tau(0),
           rates_tau(insertion_rates.n_elem + deletion_rates.n_elem),

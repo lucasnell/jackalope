@@ -63,7 +63,7 @@ public:
                const std::vector<arma::mat>& Ui_,
                const std::vector<arma::vec>& L_,
                const double& invariant_)
-        : Q(Q_), U(U_), Ui(Ui_), L(L_), invariant(invariant_),
+        : Q(Q_), U(U_), Ui(Ui_), L(L_), invariant(invariant_), var_chrom(nullptr),
           samplers(Q_.size(), std::vector<AliasSampler>(4))),
           Pt(Q_.size(), arma::mat(4,4)) {
 #ifdef __JACKALOPE_DEBUG
