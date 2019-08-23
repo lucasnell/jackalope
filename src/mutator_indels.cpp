@@ -74,6 +74,9 @@ void IndelMutator::add_indels(double b_len,
 
     // Vector of indel-type indices, one item per indel "event"
     std::vector<uint32> events;
+    // For insertions:
+    std::string insert_str;
+    insert_str.reserve(rates.n_elem / 2);
 
     while (b_len > 0) {
 
@@ -120,9 +123,9 @@ void IndelMutator::add_indels(double b_len,
             if (change > 0) {
                 uint64 size = static_cast<uint64>(change);
                 uint64 pos = static_cast<uint64>(runif_01(eng) * (end - begin) + begin);
-                std::string str(size, 'x');
-                insert.sample(str, eng);
-                var_chrom->add_insertion(str, pos);
+                insert_str.clear();
+                for (uint32 j = 0; j < size; j++) insert_str += insert.sample(eng);
+                var_chrom->add_insertion(insert_str, pos);
                 subs.insertion_adjust(size, pos, eng);
             } else {
                 uint64 size = std::min(static_cast<uint64>(std::abs(change)),
