@@ -654,14 +654,19 @@ fill_coal_mat_pos <- function(sites_mats, chrom_sizes) {
 #'
 #' @noRd
 #'
-trees_to_var_set <- function(phylo_info_ptr, reference, sub, ins, del, n_threads,
-                             show_progress) {
+trees_to_var_set <- function(phylo_info_ptr, reference, sub, ins, del, epsilon,
+                             n_threads, show_progress) {
 
     # Make sampler_base_ptr
-    sampler_base_ptr <- make_mutation_sampler_base(sub$Q,
-                                                   sub$pi_tcag,
-                                                   ins,
-                                                   del)
+    sampler_base_ptr <- make_mutation_sampler_base(sub$Q(),
+                                                   sub$U(),
+                                                   sub$Ui(),
+                                                   sub$L(),
+                                                   sub$invariant(),
+                                                   ins$rates(),
+                                                   del$rates(),
+                                                   epsilon,
+                                                   sub$pi_tcag())
 
     # Make variants pointer:
     variants_ptr <- evolve_chroms(reference$ptr(),
@@ -965,7 +970,7 @@ print.vars_gtrees_info <- function(x, digits = max(3, getOption("digits") - 3), 
 #'
 #' @noRd
 #'
-to_var_set <- function (x, reference, sub, ins, del, n_threads, show_progress) {
+to_var_set <- function (x, reference, sub, ins, del, epsilon, n_threads, show_progress) {
     UseMethod("to_var_set", x)
 }
 
@@ -974,8 +979,8 @@ to_var_set <- function (x, reference, sub, ins, del, n_threads, show_progress) {
 #'
 #' @noRd
 #'
-to_var_set.vars_ssites_info <- function(x, reference, sub, ins, del,
-                                        n_threads, show_progress, ...) {
+to_var_set.vars_ssites_info <- function(x, reference, sub, ins, del, epsilon,
+                                        n_threads, show_progress) {
 
 
     chrom_sizes <- reference$sizes()
@@ -985,10 +990,10 @@ to_var_set.vars_ssites_info <- function(x, reference, sub, ins, del,
 
     variants_ptr <- add_ssites_cpp(reference$ptr(),
                                    x$mats,
-                                   sub$Q,
-                                   sub$pi_tcag,
-                                   ins,
-                                   del,
+                                   sub$Q(),
+                                   sub$pi_tcag(),
+                                   ins$rates(),
+                                   del$rates(),
                                    n_threads,
                                    show_progress)
 
@@ -1002,7 +1007,7 @@ to_var_set.vars_ssites_info <- function(x, reference, sub, ins, del,
 #'
 #' @noRd
 #'
-to_var_set.vars_vcf_info <- function(x, reference, sub, ins, del,
+to_var_set.vars_vcf_info <- function(x, reference, sub, ins, del, epsilon,
                                      n_threads, show_progress) {
 
     chrom_names <- view_ref_genome_chrom_names(reference$ptr())
@@ -1035,7 +1040,7 @@ to_var_set.vars_vcf_info <- function(x, reference, sub, ins, del,
 #'
 #' @noRd
 #'
-to_var_set.vars_phylo_info <- function(x, reference, sub, ins, del,
+to_var_set.vars_phylo_info <- function(x, reference, sub, ins, del, epsilon,
                                        n_threads, show_progress) {
 
     phy <- x$phylo
@@ -1055,8 +1060,8 @@ to_var_set.vars_phylo_info <- function(x, reference, sub, ins, del,
 
     trees_ptr <- phylo_to_ptr(phy, n_chroms)
 
-    var_set_ptr <- trees_to_var_set(trees_ptr, reference, sub, ins, del, n_threads,
-                                    show_progress)
+    var_set_ptr <- trees_to_var_set(trees_ptr, reference, sub, ins, del, epsilon,
+                                    n_threads, show_progress)
 
     return(var_set_ptr)
 
@@ -1070,7 +1075,7 @@ to_var_set.vars_phylo_info <- function(x, reference, sub, ins, del,
 #'
 to_var_set.vars_theta_info <- function(x,
                                        reference,
-                                       sub, ins, del,
+                                       sub, ins, del, epsilon,
                                        n_threads, show_progress) {
 
     phy <- x$phylo
@@ -1087,9 +1092,9 @@ to_var_set.vars_theta_info <- function(x,
     # Calculating mu:
     # ------------*
     # Indel rates (same for each nucleotide):
-    indel <- sum(ins * 0.25) + sum(del * 0.25)
+    indel <- sum(ins$rates() * 0.25) + sum(del$rates() * 0.25)
     # Average mutation rate among all nucleotides:
-    mu <- sum({rowSums(sub$Q) + indel} * sub$pi_tcag)
+    mu <- sum({rowSums(sub$Q()) + indel} * sub$pi_tcag())
     # ------------*
     # So if we know theta and mu, then...
     # ------------*
@@ -1099,8 +1104,8 @@ to_var_set.vars_theta_info <- function(x,
 
     trees_ptr <- phylo_to_ptr(phy, n_chroms)
 
-    var_set_ptr <- trees_to_var_set(trees_ptr, reference, sub, ins, del, n_threads,
-                                    show_progress)
+    var_set_ptr <- trees_to_var_set(trees_ptr, reference, sub, ins, del, epsilon,
+                                    n_threads, show_progress)
 
     return(var_set_ptr)
 
@@ -1112,13 +1117,13 @@ to_var_set.vars_theta_info <- function(x,
 #'
 #' @noRd
 #'
-to_var_set.vars_gtrees_info <- function(x, reference, sub, ins, del,
+to_var_set.vars_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
                                         n_threads, show_progress) {
 
     trees_ptr <- gtrees_to_ptr(x$trees, reference)
 
-    var_set_ptr <- trees_to_var_set(trees_ptr, reference, sub, ins, del, n_threads,
-                                    show_progress)
+    var_set_ptr <- trees_to_var_set(trees_ptr, reference, sub, ins, del, epsilon,
+                                    n_threads, show_progress)
 
     return(var_set_ptr)
 
