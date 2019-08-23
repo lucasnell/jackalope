@@ -28,10 +28,6 @@
 
 using namespace Rcpp;
 
-namespace mut_type {
-    const std::string bases = "TCAG";
-}
-
 
 
 
@@ -55,7 +51,7 @@ struct MutationInfo {
     MutationInfo (const uint64& ind, const std::vector<sint64>& mut_lengths)
         : nucleo('\0'), length(0) {
         if (ind < 4) {
-            nucleo = mut_type::bases[ind];
+            nucleo = jlp::bases[ind];
         } else {
             length = mut_lengths[ind];
         }
@@ -76,7 +72,7 @@ struct MutationInfo {
 inline std::vector<uint8> make_base_inds() {
     std::vector<uint8> base_inds(85);
     uint8 i = 0;
-    for (const char& c : mut_type::bases) {
+    for (const char& c : jlp::bases) {
         base_inds[c] = i;
         i++;
     }

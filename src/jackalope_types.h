@@ -38,5 +38,10 @@ typedef pcg_extras::pcg128_t uint128;
 
 
 
+namespace jlp {
+const std::string bases = "TCAG";
+}
+
+
 
 #endif

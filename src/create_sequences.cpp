@@ -103,7 +103,7 @@ OuterClass create_chromosomes_(const uint64& n_chroms,
         distr = std::gamma_distribution<double>(gamma_shape, gamma_scale);
     }
 
-    std::string bases_ = alias_sampler::bases;
+    std::string bases_ = jlp::bases;
 
     // Parallelize the Loop
     #ifdef _OPENMP

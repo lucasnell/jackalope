@@ -212,7 +212,7 @@ public:
         uint64 chrom_pos = read.size() - 1ULL;
         while (!insertions.empty() || !deletions.empty()) {
             if (!insertions.empty() && chrom_pos == insertions.back()) {
-                char c = alias_sampler::bases[static_cast<uint64>(runif_01(eng) * 4.0)];
+                char c = jlp::bases[static_cast<uint64>(runif_01(eng) * 4.0)];
                 read.insert(chrom_pos + 1, 1, c);
                 insertions.pop_back();
             } else if (!deletions.empty() && chrom_pos == deletions.back()) {

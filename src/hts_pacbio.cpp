@@ -269,7 +269,7 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
         if (!insertions.empty() && read_pos == insertions.front()) {
             rndi = static_cast<uint64>(runif_01(eng) * 4);
             fastq_pool.push_back(read[read_pos]);
-            fastq_pool.push_back(alias_sampler::bases[rndi]);
+            fastq_pool.push_back(jlp::bases[rndi]);
             insertions.pop_front();
             current_length += 2;
         } else if (!deletions.empty() && read_pos == deletions.front()) {
