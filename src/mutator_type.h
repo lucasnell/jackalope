@@ -38,7 +38,7 @@ struct MutationInfo {
     char nucleo;
     sint64 length;
 
-    MutationInfo() : nucleo(), length() {}
+    MutationInfo() : nucleo('X'), length() {}
     MutationInfo(const MutationInfo& other)
         : nucleo(other.nucleo), length(other.length) {}
     MutationInfo& operator=(const MutationInfo& other) {
@@ -66,11 +66,9 @@ struct MutationInfo {
  and get out an index to which AliasSampler object to sample from.
  This way is much faster than using an unordered_map.
  Using 8-bit uints bc the char should never be >= 256.
- It's only of length 85 (versus 256 in LocationSampler class) because characters other
- than T, C, A, or G have rates hard-coded to zero and should never be chosen.
  */
 inline std::vector<uint8> make_base_inds() {
-    std::vector<uint8> base_inds(85);
+    std::vector<uint8> base_inds(256, 4);
     uint8 i = 0;
     for (const char& c : jlp::bases) {
         base_inds[c] = i;
@@ -121,7 +119,9 @@ public:
      from 0 to 3.
      */
     MutationInfo sample(const char& c, pcg64& eng) const {
-        uint64 ind = sampler[base_inds[c]].sample(eng);
+        uint8 j = base_inds[c];
+        if (j > 3) return MutationInfo(); // only mutating T, C, A, or G
+        uint64 ind = sampler[j].sample(eng);
         MutationInfo mi(ind, mut_lengths);
         return mi;
     }

@@ -75,7 +75,9 @@ void add_one_chrom_ssites(VarSet& var_set,
     for (uint64 k = 0; k < ss_i.n_rows; k++) {
         uint64 i = ss_i.n_rows - 1 - k;
         pos = ss_i(i, 0);
-        MutationInfo mut = type_sampler.sample(ref_genome[chrom_i][pos], eng);
+        const char& c(ref_genome[chrom_i][pos]);
+        MutationInfo mut = type_sampler.sample(c, eng);
+        if (mut.nucleo == 'X') continue; // This happens when `c` isn't T, C, A, or G
         if (mut.length == 0) {
             for (uint64 j = 1; j < ss_i.n_cols; j++) {
                 if (ss_i(i,j) == 1) {
