@@ -384,8 +384,10 @@ void SubMutator::insertion_adjust(const uint64& size, uint64 pos, pcg64& eng) {
 
 
 
-// For writing to a file (used internally for testing):
-// `F` should be `FileUncomp`, `FileGZ`, or `FileBGZF` from `io.h`
+
+/*
+ For writing to a file (used internally for testing):
+ */
 
 void SubMutator::write_gammas(FileUncomp& file) {
 

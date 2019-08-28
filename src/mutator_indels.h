@@ -93,7 +93,7 @@ public:
 
 
 
-    void new_chrom(VarChrom& var_chrom_) {
+    inline void new_chrom(VarChrom& var_chrom_) {
         var_chrom = &var_chrom_;
         return;
     }
