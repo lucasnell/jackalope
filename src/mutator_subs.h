@@ -122,7 +122,7 @@ private:
 
     bool site_var; // for whether to include among-site variability
 
-    inline void new_branch(const double& b_len);
+    inline void adjust_mats(const double& b_len);
 
     inline void subs_before_muts(uint64& pos,
                                  const uint64& end,

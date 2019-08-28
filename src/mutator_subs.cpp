@@ -83,7 +83,7 @@ void SubMutator::new_gammas(pcg64& eng) {
 
 
 
-inline void SubMutator::new_branch(const double& b_len) {
+inline void SubMutator::adjust_mats(const double& b_len) {
 
     // UNREST model
     if (U.size() == 0) {
@@ -93,7 +93,7 @@ inline void SubMutator::new_branch(const double& b_len) {
             // Now adjust the alias samplers:
             std::vector<AliasSampler>& samp(samplers[i]);
 #ifdef __JACKALOPE_DEBUG
-            if (samp.size() != 4) stop("SubMutator::new_branch-> samp.size() != 4");
+            if (samp.size() != 4) stop("SubMutator::adjust_mats-> samp.size() != 4");
 #endif
             for (uint32 j = 0; j < 4; j++) {
                 samp[j] = AliasSampler(Pt[i].row(j));
@@ -101,9 +101,9 @@ inline void SubMutator::new_branch(const double& b_len) {
         }
     } else {
 #ifdef __JACKALOPE_DEBUG
-        if (U.size() != Q.size()) stop("SubMutator::new_branch-> U.size() != Q.size()");
-        if (Ui.size() != Q.size()) stop("SubMutator::new_branch-> Ui.size() != Q.size()");
-        if (L.size() != Q.size()) stop("SubMutator::new_branch-> L.size() != Q.size()");
+        if (U.size() != Q.size()) stop("SubMutator::adjust_mats-> U.size() != Q.size()");
+        if (Ui.size() != Q.size()) stop("SubMutator::adjust_mats-> Ui.size() != Q.size()");
+        if (L.size() != Q.size()) stop("SubMutator::adjust_mats-> L.size() != Q.size()");
 #endif
         // All other models
         for (uint32 i = 0; i < Q.size(); i++) {
@@ -112,7 +112,7 @@ inline void SubMutator::new_branch(const double& b_len) {
             // Now adjust the alias samplers:
             std::vector<AliasSampler>& samp(samplers[i]);
 #ifdef __JACKALOPE_DEBUG
-            if (samp.size() != 4) stop("SubMutator::new_branch-> samp.size() != 4");
+            if (samp.size() != 4) stop("SubMutator::adjust_mats-> samp.size() != 4");
 #endif
             for (uint32 j = 0; j < 4; j++) {
                 samp[j] = AliasSampler(Pt[i].row(j));
@@ -266,7 +266,7 @@ void SubMutator::add_subs(const double& b_len,
 
     if ((b_len == 0) || (end == begin)) return;
 
-    new_branch(b_len);
+    adjust_mats(b_len);
 
     uint8 max_gamma = Q.size() - 1; // any rate_inds above this means an invariant region
     std::string bases = "TCAG";
