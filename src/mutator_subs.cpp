@@ -17,14 +17,17 @@
 
 
 
-void SubMutator::new_chrom(VarChrom& var_chrom_, pcg64& eng) {
+void SubMutator::new_gammas(pcg64& eng) {
 
-    var_chrom = &var_chrom_;
+    if (!site_var) {
+        if (!rate_inds.empty()) rate_inds.clear();
+        return;
+    }
 
     // (Gammas go from 0 to (n-1), invariants are n.)
     const uint8 n = Q.size();
 
-    const uint64 N = var_chrom_.size();
+    const uint64 N = var_chrom->size();
     const uint64 N0 = rate_inds.size();
 
     if (invariant <= 0) {
@@ -133,18 +136,46 @@ inline void SubMutator::subs_before_muts(uint64& pos,
                                          const std::string& bases,
                                          pcg64& eng) {
 
-    for (; pos < end; pos++) {
+#ifdef __JACKALOPE_DEBUG
+    if (rate_inds.empty() && max_gamma > 1) {
+        stop("rate_inds shouldn't be empty when max_gamma > 1");
+    }
+    if (rate_inds.empty() && invariant > 0) {
+        stop("rate_inds shouldn't be empty when invariant > 0");
+    }
+#endif
 
-        uint8& rate_i(rate_inds[pos]);
-        if (rate_i > max_gamma) continue; // this is an invariant region
+    if (site_var) {
 
-        uint8 c_i = char_map[var_chrom->ref_chrom->nucleos[pos]];
-        if (c_i > 3) continue; // only changing T, C, A, or G
-        AliasSampler& samp(samplers[rate_i][c_i]);
-        uint8 nt_i = samp.sample(eng);
-        if (nt_i != c_i) var_chrom->add_substitution(bases[nt_i], pos);
+        for (; pos < end; pos++) {
+
+            uint8& rate_i(rate_inds[pos]);
+            if (rate_i > max_gamma) continue; // this is an invariant region
+
+            uint8 c_i = char_map[var_chrom->ref_chrom->nucleos[pos]];
+            if (c_i > 3) continue; // only changing T, C, A, or G
+            AliasSampler& samp(samplers[rate_i][c_i]);
+            uint8 nt_i = samp.sample(eng);
+            if (nt_i != c_i) var_chrom->add_substitution(bases[nt_i], pos);
+
+        }
+
+
+    } else {
+
+        for (; pos < end; pos++) {
+
+            uint8 c_i = char_map[var_chrom->ref_chrom->nucleos[pos]];
+            if (c_i > 3) continue; // only changing T, C, A, or G
+            AliasSampler& samp(samplers.front()[c_i]);
+            uint8 nt_i = samp.sample(eng);
+            if (nt_i != c_i) var_chrom->add_substitution(bases[nt_i], pos);
+
+        }
 
     }
+
+
 
     return;
 
@@ -164,25 +195,48 @@ inline void SubMutator::subs_after_muts(uint64& pos,
 
     uint64 end = std::min(end1, end2);
 
-    while (pos < end) {
+    if (site_var) {
 
-        uint8& rate_i(rate_inds[pos]);
-        if (rate_i > max_gamma) {
-            pos++;
-            continue; // this is an invariant region
+        while (pos < end) {
+
+            uint8& rate_i(rate_inds[pos]);
+            if (rate_i > max_gamma) {
+                pos++;
+                continue; // this is an invariant region
+            }
+
+            uint8 c_i = char_map[var_chrom->get_char_(pos, mut_i)];
+            if (c_i > 3) {
+                pos++;
+                continue; // only changing T, C, A, or G
+            }
+            AliasSampler& samp(samplers[rate_i][c_i]);
+            uint8 nt_i = samp.sample(eng);
+            if (nt_i != c_i) var_chrom->add_substitution(bases[nt_i], pos);
+
+            ++pos;
         }
 
-        uint8 c_i = char_map[var_chrom->get_char_(pos, mut_i)];
-        if (c_i > 3) {
-            pos++;
-            continue; // only changing T, C, A, or G
-        }
-        AliasSampler& samp(samplers[rate_i][c_i]);
-        uint8 nt_i = samp.sample(eng);
-        if (nt_i != c_i) var_chrom->add_substitution(bases[nt_i], pos);
 
-        ++pos;
+    } else {
+
+        while (pos < end) {
+
+            uint8 c_i = char_map[var_chrom->get_char_(pos, mut_i)];
+            if (c_i > 3) {
+                pos++;
+                continue; // only changing T, C, A, or G
+            }
+            AliasSampler& samp(samplers.front()[c_i]);
+            uint8 nt_i = samp.sample(eng);
+            if (nt_i != c_i) var_chrom->add_substitution(bases[nt_i], pos);
+
+            ++pos;
+        }
+
+
     }
+
 
     return;
 

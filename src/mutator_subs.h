@@ -65,7 +65,9 @@ public:
                const double& invariant_)
         : Q(Q_), U(U_), Ui(Ui_), L(L_), invariant(invariant_), var_chrom(nullptr),
           samplers(Q_.size(), std::vector<AliasSampler>(4))),
-          Pt(Q_.size(), arma::mat(4,4)) {
+          Pt(Q_.size(), arma::mat(4,4)),
+          rate_inds(),
+          site_var(((invariant_ > 0) || (Q_.size() > 1)) ? true : false) {
 #ifdef __JACKALOPE_DEBUG
         if (Q_.size() == 0) stop("in SubMutator constr, Q_.size() == 0");
         if (Q_.size() > 255) stop("in SubMutator constr, Q_.size() > 255");
@@ -79,7 +81,7 @@ public:
     SubMutator(const SubMutator& other)
         : Q(other.Q), U(other.U), Ui(other.Ui), L(other.L), invariant(other.invariant),
           var_chrom(other.var_chrom), samplers(other.samplers), Pt(other.Pt),
-          rate_inds(other.rate_inds) {};
+          rate_inds(other.rate_inds), site_var(other.site_var) {};
 
     SubMutator& operator=(const SubMutator& other) {
         Q = other.Q;
@@ -91,11 +93,17 @@ public:
         samplers = other.samplers;
         Pt = other.Pt;
         rate_inds = other.rate_inds;
+        site_var = other.site_var;
         return *this;
     }
 
 
-    void new_chrom(VarChrom& var_chrom_, pcg64& eng);
+    inline void new_chrom(VarChrom& var_chrom_) {
+        var_chrom = &var_chrom_;
+        return;
+    }
+
+    void new_gammas(pcg64& eng);
 
     void add_subs(const double& b_len,
                   const uint64& begin,
@@ -111,6 +119,8 @@ public:
 
 
 private:
+
+    bool site_var; // for whether to include among-site variability
 
     inline void new_branch(const double& b_len);
 
