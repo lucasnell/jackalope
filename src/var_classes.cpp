@@ -612,7 +612,15 @@ void VarChrom::add_substitution(const char& nucleo, const uint64& new_pos_) {
         uint64 ind = new_pos_ - mutations[mut_i].new_pos;
         // If `new_pos_` is within the mutation chromosome:
         if (static_cast<sint64>(ind) <= mutations[mut_i].size_modifier) {
-            mutations[mut_i].nucleos[ind] = nucleo;
+            /*
+             If this new mutation reverts a substitution back to reference state,
+             delete the Mutation object from the `mutations` deque.
+             Otherwise, adjust the mutation's sequence.
+             */
+            if ((mutations[mut_i].size_modifier == 0) &&
+                (ref_chrom->nucleos[mutations[mut_i].old_pos] == nucleo)) {
+                mutations.erase(mutations.begin() + mut_i);
+            } else mutations[mut_i].nucleos[ind] = nucleo;
             // If `new_pos_` is in the reference chromosome following the mutation:
         } else {
             uint64 old_pos_ = ind + (mutations[mut_i].old_pos -
