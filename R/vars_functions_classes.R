@@ -218,9 +218,9 @@ vars_theta_info <- R6Class(
 
             extra_msg <- paste(" Please only create these objects using the vars_theta",
                                "function, NOT using vars_theta_info$new().")
-            if (!inherits(phylo, "phylo") || !single_number(theta) || theta <= 0) {
+            if (!inherits(phylo, "phylo") || !single_number(theta) || theta < 0) {
                 stop("\nWhen initializing a vars_theta_info object, you need to use",
-                     "a `phylo` object and a single number > 0.", extra_msg,
+                     "a `phylo` object and a single number >= 0.", extra_msg,
                      call. = FALSE)
             }
 
@@ -241,7 +241,7 @@ vars_theta_info <- R6Class(
 
         },
 
-        phylo = function() return(private$r_phylo)
+        phylo = function() return(private$r_phylo),
         theta = function() return(private$r_theta)
 
     ),

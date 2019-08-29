@@ -676,42 +676,80 @@ trees_to_var_set <- function(phylo_info_ptr, reference, sub, ins, del, epsilon,
 
 
 
+
+#' Process phylogenetic trees.
+#'
+#' It also standardizes tip indices so that in all phylogenies, edge-matrix indices refer
+#' to the same tips.
+#'
+#' @noRd
+#'
+process_phy <- function(phy, ordered_tip_labels) {
+
+    # Order phylogeny so that extra objects at nodes can be cleared away ASAP:
+    phy <- ape::reorder.phylo(phy, order = "cladewise")
+
+    # Make sure tip labels are strings:
+    phy$tip.label <- paste(phy$tip.label)
+
+    # -----------*
+    # Standarize tips:
+    # -----------*
+
+    if (!identical(sort(ordered_tip_labels), sort(phy$tip.label))) {
+        stop("\nOne or more trees have differing tip labels.", call. = FALSE)
+    }
+
+    # If tips need re-ordering, do that now:
+    if (!identical(ordered_tip_labels, phy$tip.label)) {
+
+        new_phy <- phy
+
+        m <- match(ordered_tip_labels, phy$tip.label)
+
+        for (i in 1:length(m)) {
+            new_phy$edge[,2][phy$edge[,2] == m[i]] <- i
+        }
+
+        new_phy$tip.label <- ordered_tip_labels
+
+        phy <- new_phy
+    }
+
+    # -----------*
+    # Extract all info:
+    # -----------*
+
+    phy_info <- list(branch_lens = phy$edge.length,
+                     edges = phy$edge,
+                     labels = phy$tip.label,
+                     start = 0, end = 0)
+
+    return(new_phy)
+
+}
+
+
+
+
 #' Read info from a `phylo` object.
 #'
 #' @return An external pointer to the phylogenetic info needed to do the simulations.
 #'
 #' @noRd
 #'
-phylo_to_ptr <- function(phy, n_chroms) {
+phylo_to_ptr <- function(phy) {
 
-    if ((!inherits(phy, "phylo") && !inherits(phy, "multiPhylo") &&
-         !inherits(phy, "list")) ||
-        (inherits(phy, "list") && !all(sapply(phy, inherits, what = "phylo")))) {
+    if (!inherits(phy, "list") || !all(sapply(phy, inherits, what = "phylo"))) {
         stop("\nThe `phy` argument to the internal function `phylo_to_ptr` should ",
-             "only ever be an object of class \"phylo\", \"multiPhylo\", or a ",
-             "list of \"phylo\" objects.")
+             "only ever be a list of \"phylo\" objects.")
     }
 
-    if ((inherits(phy, "multiPhylo") || inherits(phy, "list")) &&
-        length(phy) != n_chroms) {
-        stop("\nThe `phy` argument to the internal function `phylo_to_ptr` should ",
-             "have a length of 1 or equal to the number of chromosomes if it's of class",
-             "\"multiPhylo\" or list.")
-    }
-    # So all inputs are lists of the proper length:
-    if (inherits(phy, "phylo")) phy <- rep(list(phy), n_chroms)
-    if (inherits(phy, "multiPhylo")) class(phy) <- "list"
+    # Ordered tip labels:
+    otl <- phy[[1]]$tip.labels
 
-    phylo_info <- lapply(phy,
-                         function(p) {
-                             p <- ape::reorder.phylo(p, order = "cladewise")
-                             labels <- paste(p$tip.label)# <-- making sure they're strings
-                             branch_lens <- p$edge.length
-                             edges <- p$edge
-                             phy_info <- list(branch_lens = branch_lens, edges = edges,
-                                              labels = labels, start = 0, end = 0)
-                             return(list(phy_info))
-                         })
+    # Phylogeny information:
+    phylo_info <- lapply(phy, process_phy, ordered_tip_labels = otl)
 
     trees_ptr <- phylo_info_to_trees(phylo_info)
 
@@ -732,7 +770,7 @@ phylo_to_ptr <- function(phy, n_chroms) {
 #'
 #' @noRd
 #'
-process_coal_tree_string <- function(str, chrom_size) {
+process_coal_tree_string <- function(str, chrom_size, ordered_tip_labels) {
 
     if (length(str) > 1) {
         if (!all(grepl("^\\[", str))) {
@@ -774,15 +812,11 @@ process_coal_tree_string <- function(str, chrom_size) {
         phylo_ <- list(phylo_)
     }
 
-    out <- rep(list(NA), length(phylo_))
+    out <- lapply(phylo_, process_phy, ordered_tip_labels = ordered_tip_labels)
 
     for (i in 1:length(phylo_)) {
-        phy <- ape::reorder.phylo(phylo_[[i]], order = "cladewise")
-        labels <- paste(phy$tip.label) # used paste to make sure they're characters
-        branch_lens <- phy$edge.length
-        edges <- phy$edge
-        out[[i]] <- list(branch_lens = branch_lens, edges = edges, labels = labels,
-                         start = starts[i], end = ends[i])
+        out[[i]][["start"]] <- starts[i]
+        out[[i]][["end"]] <- ends[i]
     }
 
     return(out)
@@ -803,50 +837,18 @@ gtrees_to_ptr <- function(trees, reference) {
     chrom_sizes <- reference$sizes()
 
     if (length(trees) != length(chrom_sizes)) {
-        stop("\nIn function `vars_gtrees`, there must be a set of gene trees ",
-             "for each reference genome chromosome. ",
+        stop("\nFor the gene-trees method of variant creation, there must be a set ",
+             "of gene trees for each reference genome chromosome. ",
              "It appears you need to re-run `vars_gtrees` before attempting to ",
              "run `create_variants` again.")
     }
 
+    otl <- paste(ape::read.tree(text = trees[[1]][1])[["tip.label"]])
+
+    # The process_phy function inside process_coal_tree_string does checking of tip names
     phylo_info <- mapply(process_coal_tree_string, trees, chrom_sizes,
+                         MoreArgs = list(ordered_tip_labels = otl),
                          SIMPLIFY = FALSE, USE.NAMES = FALSE)
-
-    unq_n_tips <- lapply(phylo_info,
-                         function(x) sapply(x, function(xx) length(xx$labels)))
-    unq_n_tips <- unique(do.call(c, unq_n_tips))
-    if (length(unq_n_tips) > 1) {
-        stop("\nIn function `vars_gtrees`, all gene trees must have the same ",
-             "number of tips. ",
-             "It appears you need to re-run `vars_gtrees` before attempting to ",
-             "run `create_variants` again.")
-    }
-    unq_tips_names <- sapply(phylo_info,
-                             function(x) {
-                                 tips_ <- do.call(c, lapply(x, function(xx) xx$labels))
-                                 paste(sort(unique(tips_)), collapse = "___")
-                             })
-    if (length(unique(unq_tips_names)) > 1) {
-        stop("\nIn function `vars_gtrees`, all gene trees must have the same ",
-             "tip names. ",
-             "It appears you need to re-run `vars_gtrees` before attempting to ",
-             "run `create_variants` again.")
-    }
-
-    # Making sure all labels are the same
-    label_mat <- do.call(rbind,
-                         lapply(phylo_info, function(x) {
-                             t(sapply(x, function(xx) xx$labels))
-                         }))
-    label_mat <- t(apply(label_mat, 1, sort))
-    for (i in 2:nrow(label_mat)) {
-        if (any(label_mat[1,] != label_mat[i,])) {
-            stop("\nIn function `vars_gtrees`, all gene trees must have the same ",
-                 "tip names. ",
-                 "It appears you need to re-run `vars_gtrees` before attempting to ",
-                 "run `create_variants` again.")
-        }
-    }
 
     trees_ptr <- phylo_info_to_trees(phylo_info)
 
@@ -946,21 +948,19 @@ to_var_set.vars_phylo_info <- function(x, reference, sub, ins, del, epsilon,
                                        n_threads, show_progress) {
 
     phy <- x$phylo
-    class(phy) <- "list"
 
-    n_vars <- length(phy$tip.label)
     n_chroms <- as.integer(reference$n_chroms())
 
-    if (!length(phy) %in% c(1L, n_chroms)) {
+    if (length(phy) == 1 && n_chroms != 1) phy <- rep(phy, n_chroms)
+
+    if (length(phy) !=  n_chroms) {
         stop("\nIn function `vars_phylo`, you must provide information for 1 tree ",
              "or a tree for each reference genome chromosome. ",
              "It appears you need to re-run `vars_phylo` before attempting to ",
              "run `create_variants` again.")
     }
 
-    if (length(phy) == 1) phy <- rep(phy, n_chroms)
-
-    trees_ptr <- phylo_to_ptr(phy, n_chroms)
+    trees_ptr <- phylo_to_ptr(phy)
 
     var_set_ptr <- trees_to_var_set(trees_ptr, reference, sub, ins, del, epsilon,
                                     n_threads, show_progress)
@@ -1004,7 +1004,9 @@ to_var_set.vars_theta_info <- function(x,
     # Now rescale to have total tree length of `L`:
     phy$edge.length <- phy$edge.length / max(ape::node.depth.edgelength(phy)) * L
 
-    trees_ptr <- phylo_to_ptr(phy, n_chroms)
+    phy <- rep(list(phy), n_chroms)
+
+    trees_ptr <- phylo_to_ptr(phy)
 
     var_set_ptr <- trees_to_var_set(trees_ptr, reference, sub, ins, del, epsilon,
                                     n_threads, show_progress)
