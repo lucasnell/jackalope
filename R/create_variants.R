@@ -146,10 +146,9 @@ create_variants <- function(reference,
     # If sub is NULL and it's not a vcf file method, convert sub to rate-0 matrix:
     if (is.null(sub) && !vcf) sub <- sub_JC69(0)
 
-    # Below will turn `NULL` into `numeric(0)` and
-    # indel_rates object into simple numeric:
-    ins <- as.numeric(ins)
-    del <- as.numeric(del)
+    # Below will turn `NULL` into indel_info object with `numeric(0)` as `rates` method:
+    if (is.null(ins)) ins <- indel_info$new(numeric(0))
+    if (is.null(del)) del <- indel_info$new(numeric(0))
 
 
     if (!single_integer(n_threads, .min = 1)) {

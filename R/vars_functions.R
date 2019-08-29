@@ -141,8 +141,7 @@ vars_ssites <- function(obj = NULL,
     }
 
 
-    out <- list(mats = sites_mats)
-    class(out) <- "vars_ssites_info"
+    out <- vars_ssites_info$new(mats = sites_mats)
 
     return(out)
 
@@ -208,7 +207,7 @@ vars_vcf <- function(fn, print_names = FALSE, ...) {
     vcf <- do.call(vcfR::read.vcfR, read_args)
 
     chrom <- vcf@fix[,"CHROM"]
-    pos <- as.integer(vcf@fix[,"POS"]) - 1  # -1 is to convert to C++ indices
+    pos <- as.integer(vcf@fix[,"POS"] - 1)  # -1 is to convert to C++ indices
     ref_chrom <- vcf@fix[,"REF"]
     alts <- strsplit(vcf@fix[,"ALT"], ",")
 
@@ -259,10 +258,8 @@ vars_vcf <- function(fn, print_names = FALSE, ...) {
                    })
     }
 
-    out <- list(haps = haps, pos = pos, chrom = chrom, var_names = var_names,
-                ref_chrom = ref_chrom, print_names = print_names)
-
-    class(out) <- "vars_vcf_info"
+    out <- vars_vcf_info$new(haps = haps, pos = pos, chrom = chrom, var_names = var_names,
+                             ref_chrom = ref_chrom, print_names = print_names)
 
     return(out)
 
@@ -352,8 +349,7 @@ vars_phylo <- function(obj = NULL,
         phy <- lapply(fn, ape::read.tree)
     }
 
-    out <- list(phylo = phy)
-    class(out) <- "vars_phylo_info"
+    out <- vars_phylo_info$new(phylo = phy)
 
     return(out)
 
@@ -395,8 +391,7 @@ vars_theta <- function(theta, n_vars) {
     # Generate random coalescent tree:
     phy <- ape::rcoal(n_vars)
 
-    out <- list(phylo = phy, theta = theta)
-    class(out) <- "vars_theta_info"
+    out <- vars_theta_info$new(phylo = phy, theta = theta)
 
     return(out)
 
@@ -500,8 +495,7 @@ vars_gtrees <- function(obj = NULL,
 
     }
 
-    out <- list(trees = trees)
-    class(out) <- "vars_gtrees_info"
+    out <- vars_gtrees_info$new(trees = trees)
 
     return(out)
 
@@ -530,7 +524,7 @@ write_gtrees <- function(gtrees, out_prefix) {
 
     # Trees separated by empty line, then one with just "//"
     # This is to emulate ms-style output
-    out_str <- paste0("//\n", paste(lapply(gtrees$trees, paste, collapse = "\n"),
+    out_str <- paste0("//\n", paste(lapply(gtrees$trees(), paste, collapse = "\n"),
                                     collapse = "\n\n//\n"))
 
     write(out_str, out_fn)
@@ -859,98 +853,6 @@ gtrees_to_ptr <- function(trees, reference) {
     return(trees_ptr)
 }
 
-
-
-
-
-
-# ====================================================================================`
-# ====================================================================================`
-
-# * PRINT * -----
-
-# ====================================================================================`
-# ====================================================================================`
-
-#' Print output from `vars_ssites`
-#'
-#' @noRd
-#' @export
-#'
-print.vars_ssites_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-
-    cat("< Seg. site variant-creation info >\n")
-    cat(sprintf("  * Number of variants: %i\n", ncol(x$mats[[1]]) - 1))
-    cat(sprintf("  * Number of sites: %s\n", format(as.integer(sum(sapply(x$mats, nrow))),
-                                                    big.mark = ",")))
-    invisible(NULL)
-
-}
-
-
-#' Print output from `vars_vcf`
-#'
-#'
-#' @noRd
-#' @export
-#'
-print.vars_vcf_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-    cat("< VCF variant-creation info >\n")
-    cat(sprintf("  * Number of variants: %i\n", ncol(x$haps[[1]])))
-    cat(sprintf("  * Number of chromosomes: %i\n", length(unique(x$chrom))))
-    cat(sprintf("  * Number of sites: %s\n", format(as.integer(length(x$pos)),
-                                                    big.mark = ",")))
-    invisible(NULL)
-}
-
-
-#' Print output from `vars_phylo`
-#'
-#'
-#' @noRd
-#' @export
-#'
-print.vars_phylo_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-
-    cat("< Phylo variant-creation info >\n")
-    cat(sprintf("  * Number of variants: %i\n", length(x$phylo[[1]]$tip.label)))
-    cat(sprintf("  * Number of trees: %i\n", length(x$phylo)))
-    invisible(NULL)
-
-}
-
-
-#' Print output from `vars_theta`
-#'
-#'
-#' @noRd
-#' @export
-#'
-print.vars_theta_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-
-    cat("< Theta variant-creation info >\n")
-    cat(sprintf("  * Theta: %.3g\n", x$theta))
-    cat("# Phylogenetic tree:\n")
-    print(x$phylo)
-    invisible(NULL)
-
-}
-
-
-#' Print output from `vars_gtrees`
-#'
-#'
-#'
-#' @noRd
-#' @export
-#'
-print.vars_gtrees_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-
-    cat("< Gene trees variant-creation info >\n")
-    cat(sprintf("  * Number of chromosomes: %i\n", length(x$trees)))
-    invisible(NULL)
-
-}
 
 
 

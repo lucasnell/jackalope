@@ -534,7 +534,7 @@ indel_info <- R6Class(
             digits <- max(3, getOption("digits") - 3)
 
             cat("< Indel rates >\n")
-            cat(sprintf("# Total rate = %.3g\n", sum(private$r_rates)))
+            cat(sprintf(sprintf("# Total rate = %%.%ig\n", digits), sum(private$r_rates)))
             cat(sprintf("# Max length = %i\n", length(private$r_rates)))
 
             invisible(self)
