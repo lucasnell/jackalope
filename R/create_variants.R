@@ -77,24 +77,20 @@ fill_coal_mat_pos <- function(sites_mats, chrom_sizes) {
 #'
 #' @noRd
 #'
-trees_to_var_set <- function(phylo_info_ptr, reference, sub, ins, del, epsilon,
+trees_to_var_set <- function(trees_info, reference, sub, ins, del, epsilon,
                              n_threads, show_progress) {
 
-    # Make sampler_base_ptr
-    sampler_base_ptr <- make_mutation_sampler_base(sub$Q(),
-                                                   sub$U(),
-                                                   sub$Ui(),
-                                                   sub$L(),
-                                                   sub$invariant(),
-                                                   ins$rates(),
-                                                   del$rates(),
-                                                   epsilon,
-                                                   sub$pi_tcag())
-
-    # Make variants pointer:
     variants_ptr <- evolve_chroms(reference$ptr(),
-                                  sampler_base_ptr,
-                                  phylo_info_ptr,
+                                  trees_info,
+                                  sub$Q(),
+                                  sub$U(),
+                                  sub$Ui(),
+                                  sub$L(),
+                                  sub$invariant(),
+                                  ins$rates(),
+                                  del$rates(),
+                                  epsilon,
+                                  sub$pi_tcag(),
                                   n_threads,
                                   show_progress)
 
@@ -111,7 +107,7 @@ trees_to_var_set <- function(phylo_info_ptr, reference, sub, ins, del, epsilon,
 #' It also standardizes tip indices so that in all phylogenies, edge-matrix indices refer
 #' to the same tips.
 #'
-#' Used in `phylo_to_ptr` and `process_coal_tree_string`
+#' Used in `phylo_to_info_list` and `process_coal_tree_string`
 #'
 #' @noRd
 #'
@@ -163,7 +159,7 @@ process_phy <- function(phy, ordered_tip_labels) {
 
 
 
-#' Read info from a `phylo` object.
+#' Organize info into list to later create C++ tree class from phylo info.
 #'
 #' Used in `to_var_set` for phylo and theta methods.
 #'
@@ -171,10 +167,10 @@ process_phy <- function(phy, ordered_tip_labels) {
 #'
 #' @noRd
 #'
-phylo_to_ptr <- function(phy) {
+phylo_to_info_list <- function(phy) {
 
     if (!inherits(phy, "list") || !all(sapply(phy, inherits, what = "phylo"))) {
-        stop("\nThe `phy` argument to the internal function `phylo_to_ptr` should ",
+        stop("\nThe `phy` argument to the internal function `phylo_to_info_list` should ",
              "only ever be a list of \"phylo\" objects.")
     }
 
@@ -184,9 +180,7 @@ phylo_to_ptr <- function(phy) {
     # Phylogeny information:
     phylo_info <- lapply(phy, process_phy, ordered_tip_labels = otl)
 
-    trees_ptr <- phylo_info_to_trees(phylo_info)
-
-    return(trees_ptr)
+    return(phylo_info)
 }
 
 
@@ -196,7 +190,7 @@ phylo_to_ptr <- function(phy) {
 
 #' Process one gene-tree string from a coalescent simulator with ms-style output.
 #'
-#' Used in `gtrees_to_ptr`.
+#' Used in `gtrees_to_info_list`.
 #'
 #' @param str The string to process.
 #' @param chrom_size The number of bp in the chromosome associated with the input string.
@@ -256,7 +250,7 @@ process_coal_tree_string <- function(str, chrom_size, ordered_tip_labels) {
 }
 
 
-#' Create pointer to trees C++ class from gene-tree info.
+#' Organize info into list to later create C++ tree class from gene-tree info.
 #'
 #' Used in `to_var_set` for gtrees method.
 #'
@@ -265,7 +259,7 @@ process_coal_tree_string <- function(str, chrom_size, ordered_tip_labels) {
 #' @noRd
 #'
 #'
-gtrees_to_ptr <- function(trees, reference) {
+gtrees_to_info_list <- function(trees, reference) {
 
     chrom_sizes <- reference$sizes()
 
@@ -283,9 +277,7 @@ gtrees_to_ptr <- function(trees, reference) {
                          MoreArgs = list(ordered_tip_labels = otl),
                          SIMPLIFY = FALSE, USE.NAMES = FALSE)
 
-    trees_ptr <- phylo_info_to_trees(phylo_info)
-
-    return(trees_ptr)
+    return(phylo_info)
 }
 
 
@@ -413,9 +405,9 @@ to_var_set__vars_phylo_info <- function(x, reference, sub, ins, del, epsilon,
              "run `create_variants` again.")
     }
 
-    trees_ptr <- phylo_to_ptr(phy)
+    trees_info <- phylo_to_info_list(phy)
 
-    var_set_ptr <- trees_to_var_set(trees_ptr, reference, sub, ins, del, epsilon,
+    var_set_ptr <- trees_to_var_set(trees_info, reference, sub, ins, del, epsilon,
                                     n_threads, show_progress)
 
     return(var_set_ptr)
@@ -459,9 +451,9 @@ to_var_set__vars_theta_info <- function(x,
 
     phy <- rep(list(phy), n_chroms)
 
-    trees_ptr <- phylo_to_ptr(phy)
+    trees_info <- phylo_to_info_list(phy)
 
-    var_set_ptr <- trees_to_var_set(trees_ptr, reference, sub, ins, del, epsilon,
+    var_set_ptr <- trees_to_var_set(trees_info, reference, sub, ins, del, epsilon,
                                     n_threads, show_progress)
 
     return(var_set_ptr)
@@ -477,9 +469,9 @@ to_var_set__vars_theta_info <- function(x,
 to_var_set__vars_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
                                         n_threads, show_progress) {
 
-    trees_ptr <- gtrees_to_ptr(x$trees(), reference)
+    trees_info <- gtrees_to_info_list(x$trees(), reference)
 
-    var_set_ptr <- trees_to_var_set(trees_ptr, reference, sub, ins, del, epsilon,
+    var_set_ptr <- trees_to_var_set(trees_info, reference, sub, ins, del, epsilon,
                                     n_threads, show_progress)
 
     return(var_set_ptr)

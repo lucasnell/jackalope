@@ -201,7 +201,7 @@ public:
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
         for (uint64 i = 0; i < tree_size; i++) {
-            samplers[i].new_chrom(tmp_chroms[i], eng);
+            samplers[i].new_chrom(tmp_chroms[i]);
         }
 
     }
@@ -488,7 +488,7 @@ public:
 
     XPtr<VarSet> evolve_chroms(
             SEXP& ref_genome_ptr,
-            SEXP& sampler_base_ptr,
+            const MutationSampler& mutator_base,
             uint64 n_threads,
             const bool& show_progress);
 

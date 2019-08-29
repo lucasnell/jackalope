@@ -50,20 +50,19 @@ public:
     std::vector<arma::mat> Ui;
     std::vector<arma::vec> L;
     double invariant;
-    VarChrom* var_chrom;  // VarChrom object pointer to be manipulated
     const std::vector<uint8> char_map = make_char_map();
     std::vector<std::vector<AliasSampler>> samplers;
     std::vector<arma::mat> Pt;
     std::deque<uint8> rate_inds;
 
 
-    SubMutator() : var_chrom(nullptr) {}
+    SubMutator() {}
     SubMutator(const std::vector<arma::mat>& Q_,
                const std::vector<arma::mat>& U_,
                const std::vector<arma::mat>& Ui_,
                const std::vector<arma::vec>& L_,
                const double& invariant_)
-        : Q(Q_), U(U_), Ui(Ui_), L(L_), invariant(invariant_), var_chrom(nullptr),
+        : Q(Q_), U(U_), Ui(Ui_), L(L_), invariant(invariant_),
           samplers(Q_.size(), std::vector<AliasSampler>(4))),
           Pt(Q_.size(), arma::mat(4,4)),
           rate_inds(),
@@ -80,7 +79,7 @@ public:
 
     SubMutator(const SubMutator& other)
         : Q(other.Q), U(other.U), Ui(other.Ui), L(other.L), invariant(other.invariant),
-          var_chrom(other.var_chrom), samplers(other.samplers), Pt(other.Pt),
+          samplers(other.samplers), Pt(other.Pt),
           rate_inds(other.rate_inds), site_var(other.site_var) {};
 
     SubMutator& operator=(const SubMutator& other) {
@@ -89,7 +88,6 @@ public:
         Ui = other.Ui;
         L = other.L;
         invariant = other.invariant;
-        var_chrom = other.var_chrom;
         samplers = other.samplers;
         Pt = other.Pt;
         rate_inds = other.rate_inds;
@@ -98,16 +96,12 @@ public:
     }
 
 
-    inline void new_chrom(VarChrom& var_chrom_) {
-        var_chrom = &var_chrom_;
-        return;
-    }
-
-    void new_gammas(pcg64& eng);
+    void new_gammas(VarChrom& var_chrom, pcg64& eng);
 
     void add_subs(const double& b_len,
                   const uint64& begin,
                   const uint64& end,
+                  VarChrom& var_chrom,
                   pcg64& eng);
 
     // Adjust rate_inds for indels:
@@ -128,6 +122,7 @@ private:
                                  const uint64& end,
                                  const uint8& max_gamma,
                                  const std::string& bases,
+                                 VarChrom& var_chrom,
                                  pcg64& eng);
     inline void subs_after_muts(uint64& pos,
                                 const uint64& end1,
@@ -135,6 +130,7 @@ private:
                                 const uint64& mut_i,
                                 const uint8& max_gamma,
                                 const std::string& bases,
+                                VarChrom& var_chrom,
                                 pcg64& eng);
 
 

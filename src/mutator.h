@@ -35,44 +35,44 @@ using namespace Rcpp;
 /*
  MutationSampler combines objects for sampling substitutions and indels.
  */
-class MutationSampler {
+struct MutationSampler {
 
-public:
-
-    // VarChrom object pointer to be manipulated
-    VarChrom* var_chrom;
     // For adding substitutions:
     SubMutator subs;
     // For adding indels:
     IndelMutator indels;
 
 
-    MutationSampler() : var_chrom(nullptr) {}
+    MutationSampler() {}
 
     MutationSampler(const MutationSampler& other)
-        : var_chrom(other.var_chrom), subs(other.subs), indels(other.indels) {}
+        : subs(other.subs), indels(other.indels) {}
 
     MutationSampler& operator=(const MutationSampler& other) {
-        var_chrom = other.var_chrom;
         subs = other.subs;
         indels = other.indels;
         return *this;
     }
-
-    void new_chrom(VarChrom& var_chrom_) {
-        var_chrom = &var_chrom_;
-        subs.new_chrom(var_chrom_);
-        indels.new_chrom(var_chrom_);
-        return;
-    }
-
 
     /*
      Add mutations for a branch within a range.
      It also updates `end` for indels that occur in the range.
      (`end == begin` when chromosome region is of size zero bc `end` is non-inclusive)
      */
-    void mutate(const double& b_len, pcg64& eng, const uint64& begin, uint64& end);
+    void mutate(const double& b_len, VarChrom& var_chrom, pcg64& eng,
+                const uint64& begin, uint64& end)  {
+
+#ifdef __JACKALOPE_DEBUG
+        if (end < begin) stop("end < begin in MutationSampler.mutate");
+        if (end == begin) stop("end == begin in MutationSampler.mutate");
+#endif
+
+        indels.add_indels(b_len, begin, end, subs, var_chrom, eng);
+
+        subs.add_subs(b_len, begin, end, var_chrom, eng);
+
+        return;
+    }
 
 };
 

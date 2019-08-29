@@ -29,9 +29,9 @@ using namespace Rcpp;
  - rates over the whole chromosome and `tau` time units (`rates_tau`)
  - new branch length after progressing `tau` time units (`b_len`)
  */
-void IndelMutator::calc_tau(double& b_len) {
+void IndelMutator::calc_tau(double& b_len, VarChrom& var_chrom) {
 
-    const double chrom_size(var_chrom->chrom_size);
+    const double chrom_size(var_chrom.chrom_size);
 
     // Now rates are in units of "indels per unit time" (NOT yet over `tau` time units):
     rates_tau = rates * chrom_size;
@@ -63,13 +63,13 @@ void IndelMutator::add_indels(double b_len,
                               const uint64& begin,
                               uint64& end,
                               SubMutator& subs,
+                              VarChrom& var_chrom,
                               pcg64& eng) {
 
 #ifdef __JACKALOPE_DEBUG
-    if (!var_chrom) stop("var_chrom is nullptr in add_indels");
     if (b_len < 0) stop("b_len < 0 in add_indels");
-    if (begin >= var_chrom->size()) stop("begin >= var_chrom->size() in add_indels");
-    if (end > var_chrom->size()) stop("end > var_chrom->size() in add_indels");
+    if (begin >= var_chrom.size()) stop("begin >= var_chrom.size() in add_indels");
+    if (end > var_chrom.size()) stop("end > var_chrom.size() in add_indels");
 #endif
 
     if ((rates.n_elem == 0) || (b_len == 0) || (end == begin)) return;
@@ -89,7 +89,7 @@ void IndelMutator::add_indels(double b_len,
          ----------------
          */
 
-        calc_tau(b_len);
+        calc_tau(b_len, var_chrom);
 
         // Reset `events` between rounds:
         if (events.size() > 0) events.clear();
@@ -127,7 +127,7 @@ void IndelMutator::add_indels(double b_len,
                 uint64 pos = static_cast<uint64>(runif_01(eng) * (end - begin) + begin);
                 insert_str.clear();
                 for (uint32 j = 0; j < size; j++) insert_str += insert.sample(eng);
-                var_chrom->add_insertion(insert_str, pos);
+                var_chrom.add_insertion(insert_str, pos);
                 subs.insertion_adjust(size, pos, eng);
                 end += size;
             } else {
@@ -135,7 +135,7 @@ void IndelMutator::add_indels(double b_len,
                                        end - begin);
                 uint64 pos = static_cast<uint64>(runif_01(eng) *
                     (end - begin - size + 1) + begin);
-                var_chrom->add_deletion(size, pos);
+                var_chrom.add_deletion(size, pos);
                 subs.deletion_adjust(size, pos);
                 end -= size;
                 if (end == begin) return;

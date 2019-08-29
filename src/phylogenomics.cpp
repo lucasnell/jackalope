@@ -150,24 +150,19 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
 }
 
 
-void PhyloOneChrom::update_var_chrom(const PhyloTree& tree) {
-
-    std::vector<uint64> spp_order = match_(ordered_tip_labels,
-                                           tree.tip_labels);
-
-    if (recombination) {
-        for (uint64 i = 0; i < tree.n_tips; i++) {
-            uint64 j = spp_order[i];
-            (*var_chrom_ptrs[i]) += tmp_chroms[j];
-        }
-    } else {
-        for (uint64 i = 0; i < tree.n_tips; i++) {
-            uint64 j = spp_order[i];
-            (*var_chrom_ptrs[i]).replace(tmp_chroms[j]);
-        }
-    }
-    return;
-}
+// void PhyloOneChrom::update_var_chrom(const PhyloTree& tree) {
+//
+//     if (recombination) {
+//         for (uint64 i = 0; i < tree.n_tips; i++) {
+//             (*var_chrom_ptrs[i]) += tmp_chroms[i];
+//         }
+//     } else {
+//         for (uint64 i = 0; i < tree.n_tips; i++) {
+//             (*var_chrom_ptrs[i]).replace(tmp_chroms[i]);
+//         }
+//     }
+//     return;
+// }
 
 
 
@@ -177,17 +172,16 @@ void PhyloOneChrom::update_var_chrom(const PhyloTree& tree) {
 */
 XPtr<VarSet> PhyloInfo::evolve_chroms(
         SEXP& ref_genome_ptr,
-        SEXP& sampler_base_ptr,
+        const MutationSampler& mutator_base,
         uint64 n_threads,
         const bool& show_progress) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    XPtr<MutationSampler> sampler_base(sampler_base_ptr);
 
-    // Extract tip labels from the first tree:
-    std::vector<std::string> var_names = phylo_one_chroms[0].trees[0].tip_labels;
-
-    XPtr<VarSet> var_set(new VarSet(*ref_genome, var_names), true);
+    // (I'm simply extracting tip labels from the first tree, as they should all be
+    // the same due to the process_phy function in R/create_variants.R)
+    XPtr<VarSet> var_set(new VarSet(*ref_genome, phylo_one_chroms[0].trees[0].tip_labels),
+                         true);
 
     uint64 n_chroms = ref_genome->size();
     uint64 total_chrom = ref_genome->total_size;
@@ -197,7 +191,7 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
 
 
     if (n_chroms != phylo_one_chroms.size()) {
-        std::string err_msg = "\n# tips in phylo. info must be of same length as ";
+        std::string err_msg = "\n# items in phylo. info must be of same length as ";
         err_msg += "# chromosomes in reference genome";
         throw(Rcpp::exception(err_msg.c_str(), false));
     }
@@ -222,6 +216,8 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
     active_seeds = seeds[active_thread];
 
     pcg64 eng = seeded_pcg(active_seeds);
+
+    MutationSampler mutator(mutator_base);
 
     // Parallelize the Loop
 #ifdef _OPENMP
@@ -264,30 +260,6 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
 
 
 
-
-//' Create XPtr to nested vector of PhyloTree objects from phylogeny information.
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-SEXP phylo_info_to_trees(const List& genome_phylo_info) {
-
-    uint64 n_chroms = genome_phylo_info.size();
-
-    if (n_chroms == 0) {
-        throw(Rcpp::exception("\nEmpty list provided for phylogenetic information.",
-                              false));
-    }
-
-    XPtr<PhyloInfo> all_chroms_xptr(new PhyloInfo(genome_phylo_info));
-
-    return all_chroms_xptr;
-}
-
-
-
-
-
 //' Evolve all chromosomes in a reference genome.
 //'
 //' @noRd
@@ -295,19 +267,43 @@ SEXP phylo_info_to_trees(const List& genome_phylo_info) {
 //[[Rcpp::export]]
 SEXP evolve_chroms(
         SEXP& ref_genome_ptr,
-        SEXP& sampler_base_ptr,
-        SEXP& phylo_info_ptr,
+        const List& genome_phylo_info,
+        const std::vector<arma::mat>& Q,
+        const std::vector<arma::mat>& U,
+        const std::vector<arma::mat>& Ui,
+        const std::vector<arma::vec>& L,
+        const double& invariant,
+        const arma::vec& insertion_rates,
+        const arma::vec& deletion_rates,
+        const double& epsilon,
+        const std::vector<double>& pi_tcag,
         uint64 n_threads,
         const bool& show_progress) {
 
-    XPtr<PhyloInfo> phylo_info(phylo_info_ptr);
+
+    // Create phylogenetic tree object:
+    if (genome_phylo_info.size() == 0) {
+        throw(Rcpp::exception("\nEmpty list provided for phylogenetic information.",
+                              false));
+    }
+    PhyloInfo phylo_info(genome_phylo_info);
+
 
     // Check that # threads isn't too high and change to 1 if not using OpenMP:
     thread_check(n_threads);
 
-    XPtr<VarSet> var_set = phylo_info->evolve_chroms(
-        ref_genome_ptr, sampler_base_ptr,
-        n_threads, show_progress);
+    // Now create and fill mutation sampler:
+    MutationSampler mutator;
+    mutator.subs = SubMutator(Q, U, Ui, L, invariant);
+    mutator.indels = IndelMutator(insertion_rates, deletion_rates, epsilon, pi_tcag);
+
+    /*
+     Now that we have samplers, we can create variants:
+     */
+
+    XPtr<VarSet> var_set = phylo_info.evolve_chroms(ref_genome_ptr, mutator,
+                                                    n_threads, show_progress);
+
 
     return var_set;
 }

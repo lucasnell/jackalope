@@ -41,12 +41,10 @@ public:
     arma::vec changes;
     // Error control parameter (0 < `eps` << 1)
     double eps;
-    // VarChrom object pointer to be manipulated:
-    VarChrom* var_chrom;
     // For creating insertion sequences:
     AliasStringSampler<std::string> insert;
 
-    IndelMutator() : var_chrom(nullptr) {}
+    IndelMutator() {}
     IndelMutator(const arma::vec& insertion_rates,
                  const arma::vec& deletion_rates,
                  const double& epsilon,
@@ -54,7 +52,6 @@ public:
         : rates(insertion_rates.n_elem + deletion_rates.n_elem),
           changes(insertion_rates.n_elem + deletion_rates.n_elem),
           eps(epsilon),
-          var_chrom(nullptr),
           insert("TCAG", pi_tcag),
           tau(0),
           rates_tau(insertion_rates.n_elem + deletion_rates.n_elem),
@@ -76,14 +73,13 @@ public:
 
     IndelMutator(const IndelMutator& other)
         : rates(other.rates), changes(other.changes), eps(other.eps),
-          var_chrom(other.var_chrom), insert(other.insert), tau(other.tau),
+          insert(other.insert), tau(other.tau),
           rates_tau(other.rates_tau), n_events(other.n_events) {}
 
     IndelMutator& operator=(const IndelMutator& other) {
         rates = other.rates;
         changes = other.changes;
         eps = other.eps;
-        var_chrom = other.var_chrom;
         insert = other.insert;
         tau = other.tau;
         rates_tau = other.rates_tau;
@@ -92,25 +88,19 @@ public:
     }
 
 
-
-    inline void new_chrom(VarChrom& var_chrom_) {
-        var_chrom = &var_chrom_;
-        return;
-    }
-
-
     // Add indels, adjust `end` (`end == begin` when chromosome region is of size zero)
     void add_indels(double b_len,
                     const uint64& begin,
                     uint64& end,
                     SubMutator& subs,
+                    VarChrom& var_chrom,
                     pcg64& eng);
 
 
 private:
 
 
-    void calc_tau(double& b_len);
+    void calc_tau(double& b_len, VarChrom& var_chrom);
 
     // For generating # events per time period:
     std::poisson_distribution<uint32> distr = std::poisson_distribution<uint32>(1);
