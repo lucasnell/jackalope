@@ -387,140 +387,134 @@ void SubMutator::insertion_adjust(const uint64& size, uint64 pos, pcg64& eng) {
 
 
 
-/*
- For writing to a file (used internally for testing):
- */
-
-void SubMutator::write_gammas(FileUncomp& file) {
-
-    file.write(std::string('>' + var_chrom.ref_chrom->name + '\n'));
-
-    uint64 = text_width = 80;
-
-    uint64 num_rows = rate_inds.size() / text_width;
-    std::string one_line(text_width + 1);
-    one_line.back() = '\n';
-
-    for (uint64 i = 0; i < num_rows; i++) {
-        for (uint64 j = 0; j < text_width; j++) {
-            one_line[j] = static_cast<char>(static_cast<uint8>('!') +
-                rate_inds[i * text_width + j]);
-        }
-        file.write(one_line);
-    }
-
-    // If there are leftover characters, create a shorter item at the end.
-    if (rate_inds.size() % text_width != 0) {
-        one_line.clear();
-        for (uint64 j = (text_width * num_rows); j < rate_inds.size(); j++) {
-            one_line.push_back(
-                static_cast<char>(static_cast<uint8>('!') + rate_inds[j]));
-        }
-        one_line += '\n';
-        file.write(one_line);
-    }
-
-    return;
-}
-
-
-
-
-
-
-
-
-
-
-// Parse one line of input from a file and add to output
-
-void parse_gamma_line(const std::string& line,
-                      std::vector<std::vector<uint8>>& gammas,
-                      std::vector<std::string>& names) {
-
-    if (line.find(">") != std::string::npos) {
-        std::string name_i = "";
-        name_i = line.substr(1, line.size());
-        names.push_back(name_i);
-        gammas.push_back(std::vector<uint8>(0));
-    } else {
-        for (const char& c : line) {
-            gammas.push_back(static_cast<uint8>(c) - static_cast<uint8>('!'));
-        }
-    }
-    return;
-}
-
-
-
-
-/*
- C++ function to add to a RefGenome object from a non-indexed fasta file.
- Does most of the work for `read_fasta_noind` below.
- */
-//[[Rcpp::export]]
-List read_gammas(std::string gammas_file) {
-
-    expand_path(gammas_file);
-
-    std::vector<std::vector<uint8>> gammas;
-    std::vector<std::string> names;
-
-    gzFile file;
-    file = gzopen(gammas_file.c_str(), "rb");
-    if (! file) {
-        std::string e = "gzopen of " + gammas_file + " failed: " + strerror(errno) + ".\n";
-        Rcpp::stop(e);
-    }
-
-    // Scroll through buffers
-    std::string lastline = "";
-    char *buffer = new char[LENGTH];
-
-    while (1) {
-        Rcpp::checkUserInterrupt();
-        int err;
-        int bytes_read;
-        bytes_read = gzread(file, buffer, LENGTH - 1);
-        buffer[bytes_read] = '\0';
-
-        // Recast buffer as a std::string:
-        std::string mystring(buffer);
-        mystring = lastline + mystring;
-
-        // std::vector of strings for parsed buffer:
-        std::vector<std::string> svec = cpp_str_split_newline(mystring);
-
-        // Scroll through lines derived from the buffer.
-        for (uint64 i = 0; i < svec.size() - 1; i++){
-            parse_gamma_line(svec[i], gammas, names);
-        }
-        // Manage the last line.
-        lastline = svec.back();
-
-        // Check for end of file (EOF) or errors.
-        if (bytes_read < LENGTH - 1) {
-            if ( gzeof(file) ) {
-                parse_gamma_line(lastline, gammas, names);
-                break;
-            } else {
-                std::string error_string = gzerror (file, & err);
-                if (err) {
-                    std::string e = "Error: " + error_string + ".\n";
-                    stop(e);
-                }
-            }
-        }
-
-    }
-    delete[] buffer;
-    gzclose (file);
-
-    List out = List::create(_["names"] = names,
-                            _["gammas"] = gammas);
-
-
-    return out;
-
-}
+// /*
+//  For writing to a file (used internally for testing):
+//  */
+//
+// void SubMutator::write_gammas(FileUncomp& file) {
+//
+//     file.write(std::string('>' + var_chrom.ref_chrom->name + '\n'));
+//
+//     uint64 = text_width = 80;
+//
+//     uint64 num_rows = rate_inds.size() / text_width;
+//     std::string one_line(text_width + 1);
+//     one_line.back() = '\n';
+//
+//     for (uint64 i = 0; i < num_rows; i++) {
+//         for (uint64 j = 0; j < text_width; j++) {
+//             one_line[j] = static_cast<char>(static_cast<uint8>('!') +
+//                 rate_inds[i * text_width + j]);
+//         }
+//         file.write(one_line);
+//     }
+//
+//     // If there are leftover characters, create a shorter item at the end.
+//     if (rate_inds.size() % text_width != 0) {
+//         one_line.clear();
+//         for (uint64 j = (text_width * num_rows); j < rate_inds.size(); j++) {
+//             one_line.push_back(
+//                 static_cast<char>(static_cast<uint8>('!') + rate_inds[j]));
+//         }
+//         one_line += '\n';
+//         file.write(one_line);
+//     }
+//
+//     return;
+// }
+//
+//
+//
+//
+// // Parse one line of input from a file and add to output
+//
+// void parse_gamma_line(const std::string& line,
+//                       std::vector<std::vector<uint8>>& gammas,
+//                       std::vector<std::string>& names) {
+//
+//     if (line.find(">") != std::string::npos) {
+//         std::string name_i = "";
+//         name_i = line.substr(1, line.size());
+//         names.push_back(name_i);
+//         gammas.push_back(std::vector<uint8>(0));
+//     } else {
+//         for (const char& c : line) {
+//             gammas.push_back(static_cast<uint8>(c) - static_cast<uint8>('!'));
+//         }
+//     }
+//     return;
+// }
+//
+//
+//
+//
+// /*
+//  C++ function to add to a RefGenome object from a non-indexed fasta file.
+//  Does most of the work for `read_fasta_noind` below.
+//  */
+// //[[Rcpp::export]]
+// List read_gammas(std::string gammas_file) {
+//
+//     expand_path(gammas_file);
+//
+//     std::vector<std::vector<uint8>> gammas;
+//     std::vector<std::string> names;
+//
+//     gzFile file;
+//     file = gzopen(gammas_file.c_str(), "rb");
+//     if (! file) {
+//         std::string e = "gzopen of " + gammas_file + " failed: " + strerror(errno) + ".\n";
+//         Rcpp::stop(e);
+//     }
+//
+//     // Scroll through buffers
+//     std::string lastline = "";
+//     char *buffer = new char[LENGTH];
+//
+//     while (1) {
+//         Rcpp::checkUserInterrupt();
+//         int err;
+//         int bytes_read;
+//         bytes_read = gzread(file, buffer, LENGTH - 1);
+//         buffer[bytes_read] = '\0';
+//
+//         // Recast buffer as a std::string:
+//         std::string mystring(buffer);
+//         mystring = lastline + mystring;
+//
+//         // std::vector of strings for parsed buffer:
+//         std::vector<std::string> svec = cpp_str_split_newline(mystring);
+//
+//         // Scroll through lines derived from the buffer.
+//         for (uint64 i = 0; i < svec.size() - 1; i++){
+//             parse_gamma_line(svec[i], gammas, names);
+//         }
+//         // Manage the last line.
+//         lastline = svec.back();
+//
+//         // Check for end of file (EOF) or errors.
+//         if (bytes_read < LENGTH - 1) {
+//             if ( gzeof(file) ) {
+//                 parse_gamma_line(lastline, gammas, names);
+//                 break;
+//             } else {
+//                 std::string error_string = gzerror (file, & err);
+//                 if (err) {
+//                     std::string e = "Error: " + error_string + ".\n";
+//                     stop(e);
+//                 }
+//             }
+//         }
+//
+//     }
+//     delete[] buffer;
+//     gzclose (file);
+//
+//     List out = List::create(_["names"] = names,
+//                             _["gammas"] = gammas);
+//
+//
+//     return out;
+//
+// }
 

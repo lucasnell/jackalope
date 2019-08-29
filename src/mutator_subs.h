@@ -108,8 +108,8 @@ public:
     void deletion_adjust(const uint64& size, const uint64& pos);
     void insertion_adjust(const uint64& size, const uint64& pos, pcg64& eng);
 
-    // For writing to a file (used internally for testing):
-    void write_gammas(FileUncomp& file);
+    // // For writing to a file (used internally for testing):
+    // void write_gammas(FileUncomp& file);
 
 
 private:
