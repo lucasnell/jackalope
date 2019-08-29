@@ -113,6 +113,15 @@ trees_to_var_set <- function(trees_info, reference, sub, ins, del, epsilon,
 #'
 process_phy <- function(phy, ordered_tip_labels) {
 
+    if (!ape::is.binary.tree(phy)) {
+        stop("\nAll phylogenetic trees must be binary. An option to remedy this might ",
+             "be the function `ape::multi2di`.", call. = FALSE)
+    }
+    if (!ape::is.rooted(phy)) {
+        stop("\nAll phylogenetic trees must be rooted. An option to remedy this might ",
+             "be the function `ape::root`.", call. = FALSE)
+    }
+
     # Order phylogeny so that extra objects at nodes can be cleared away ASAP:
     phy <- ape::reorder.phylo(phy, order = "cladewise")
 

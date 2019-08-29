@@ -308,6 +308,7 @@ vars_vcf <- function(fn, print_names = FALSE, ...) {
 #' This function organizes higher-level information for creating variants from
 #' phylogenetic tree(s) output as `phylo` or `multiPhylo` objects
 #' (both from the `ape` package) or NEWICK files.
+#' Note that all phylogenetic trees must be rooted and binary.
 #' If using this function, I encourage you to cite `ape`. For citation
 #' information, see output from `citation("ape")`.
 #'
@@ -431,6 +432,7 @@ vars_theta <- function(theta, n_vars) {
 #'
 #' This function organizes higher-level information for creating variants from
 #' gene trees output from coalescent simulations.
+#' Note that all gene trees must be rooted and binary.
 #'
 #' Using the `obj` argument is designed after the `trees` fields in the output from
 #' the `scrm` and `coala` packages.
