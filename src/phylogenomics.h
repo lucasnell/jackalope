@@ -138,8 +138,8 @@ class PhyloOneChrom {
 
 public:
     std::vector<PhyloTree> trees;
-    std::vector<VarChrom*> var_chrom_ptrs;    // pointers to original VarChrom objects
-    std::vector<VarChrom> var_chroms;  // blank VarChrom objects to evolve across tree
+    std::vector<VarChrom*> var_chrom_ptrs;    // pointers to final VarChrom objects
+    std::vector<VarChrom> tmp_chroms;  // temporary VarChrom's to evolve across tree
     std::vector<MutationSampler> samplers; // to do the mutation additions across tree
     uint64 n_tips;                  // number of tips (i.e., variants)
 
@@ -156,7 +156,7 @@ public:
     )
         : trees(edges_.size()),
           var_chrom_ptrs(var_set.size()),
-          var_chroms(),
+          tmp_chroms(),
           samplers(),
           chrom_rates(edges_[0].max()),
           n_tips(tip_labels_[0].size()),
@@ -164,7 +164,7 @@ public:
           recombination(branch_lens_.size() > 1)
     {
 
-        uint64 tree_size = edges_[0].max();
+        uint64 tree_size = edges_[0].max();  // # tips + # nodes
         uint64 n_vars = var_set.size();
         uint64 n_trees = edges_.size();
 
@@ -195,13 +195,13 @@ public:
         }
 
         // Fill in blank VarChrom objects:
-        var_chroms = std::vector<VarChrom>(tree_size,
+        tmp_chroms = std::vector<VarChrom>(tree_size,
                                             VarChrom((*var_set.reference)[chrom_ind]));
 
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
         for (uint64 i = 0; i < tree_size; i++) {
-            samplers[i].new_chrom(var_chroms[i], eng);
+            samplers[i].new_chrom(tmp_chroms[i], eng);
         }
 
     }
@@ -218,7 +218,7 @@ public:
     )
         : trees(edges_.size()),
           var_chrom_ptrs(),
-          var_chroms(),
+          tmp_chroms(),
           samplers(),
           chrom_rates(edges_[0].max()),
           n_tips(tip_labels_[0].size()),
@@ -269,13 +269,13 @@ public:
         }
 
         // Fill in blank VarChrom objects:
-        var_chroms = std::vector<VarChrom>(tree_size,
+        tmp_chroms = std::vector<VarChrom>(tree_size,
                                             VarChrom((*var_set.reference)[chrom_ind]));
 
         // Fill in samplers:
         samplers = std::vector<MutationSampler>(tree_size, sampler_base);
         for (uint64 i = 0; i < tree_size; i++) {
-            samplers[i].new_chrom(var_chroms[i], eng);
+            samplers[i].new_chrom(tmp_chroms[i], eng);
         }
 
         return;
@@ -385,12 +385,12 @@ private:
             throw(Rcpp::exception("\ntree size of zero is non-sensical.", false));
         }
         // Resize blank VarChrom objects if necessary:
-        if (tree_size != var_chroms.size()) {
+        if (tree_size != tmp_chroms.size()) {
             VarChrom var_chrom_(*(var_chrom_ptrs[0]->ref_chrom));
-            var_chroms.resize(tree_size, var_chrom_);
+            tmp_chroms.resize(tree_size, var_chrom_);
         }
         // Empty mutations from tree of VarChrom objects:
-        for (VarChrom& var_chrom : var_chroms) var_chrom.clear();
+        for (VarChrom& var_chrom : tmp_chroms) var_chrom.clear();
 
         // Re-size samplers if necessary
         if (tree_size != samplers.size()) {
@@ -398,21 +398,7 @@ private:
         }
         // Fill in sampler pointers:
         for (uint64 i = 0; i < tree_size; i++) {
-            samplers[i].new_chrom(var_chroms[i], eng);
-        }
-        /*
-         Set up vector of overall chromosome rates.
-         They should all be the same as the first one to start out.
-         */
-        double rate_;
-        if (!recombination) {
-            rate_ = samplers[0].location.total_rate();
-        } else {
-            // (This will be checked every call to `sample`, so no need to do it for
-            // all samplers)
-            samplers[0].location.new_bounds(start, end);
-            rate_ = samplers[0].location.bounds.end_rate -
-                samplers[0].location.bounds.start_rate;
+            samplers[i].new_chrom(tmp_chroms[i]);
         }
 
         return;

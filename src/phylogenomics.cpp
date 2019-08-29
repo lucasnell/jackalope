@@ -113,7 +113,7 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
         } else {
             uint64 n_jumps = 0;
             // Same thing but without recombination
-            while (time_jumped <= amt_time && var_chroms[b2].size() > 0) {
+            while (time_jumped <= amt_time && tmp_chroms[b2].size() > 0) {
                 rate_change = m_samp.mutate(eng);
                 rate += rate_change;
                 distr.param(std::exponential_distribution<double>::param_type(rate));
@@ -158,12 +158,12 @@ void PhyloOneChrom::update_var_chrom(const PhyloTree& tree) {
     if (recombination) {
         for (uint64 i = 0; i < tree.n_tips; i++) {
             uint64 j = spp_order[i];
-            (*var_chrom_ptrs[i]) += var_chroms[j];
+            (*var_chrom_ptrs[i]) += tmp_chroms[j];
         }
     } else {
         for (uint64 i = 0; i < tree.n_tips; i++) {
             uint64 j = spp_order[i];
-            (*var_chrom_ptrs[i]).replace(var_chroms[j]);
+            (*var_chrom_ptrs[i]).replace(tmp_chroms[j]);
         }
     }
     return;
