@@ -62,6 +62,7 @@ void IndelMutator::calc_tau(double& b_len, VarChrom& var_chrom) {
 void IndelMutator::add_indels(double b_len,
                               const uint64& begin,
                               uint64& end,
+                              std::deque<uint8>& rate_inds,
                               SubMutator& subs,
                               VarChrom& var_chrom,
                               pcg64& eng) {
@@ -128,7 +129,7 @@ void IndelMutator::add_indels(double b_len,
                 insert_str.clear();
                 for (uint32 j = 0; j < size; j++) insert_str += insert.sample(eng);
                 var_chrom.add_insertion(insert_str, pos);
-                subs.insertion_adjust(size, pos, eng);
+                subs.insertion_adjust(size, pos, rate_inds, eng);
                 end += size;
             } else {
                 uint64 size = std::min(static_cast<uint64>(std::abs(change)),
@@ -136,7 +137,7 @@ void IndelMutator::add_indels(double b_len,
                 uint64 pos = static_cast<uint64>(runif_01(eng) *
                     (end - begin - size + 1) + begin);
                 var_chrom.add_deletion(size, pos);
-                subs.deletion_adjust(size, pos);
+                subs.deletion_adjust(size, pos, rate_inds);
                 end -= size;
                 if (end == begin) return;
             }

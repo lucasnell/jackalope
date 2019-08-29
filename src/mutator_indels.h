@@ -92,6 +92,7 @@ public:
     void add_indels(double b_len,
                     const uint64& begin,
                     uint64& end,
+                    std::deque<uint8>& rate_inds,
                     SubMutator& subs,
                     VarChrom& var_chrom,
                     pcg64& eng);

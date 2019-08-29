@@ -134,6 +134,7 @@ inline void SubMutator::subs_before_muts(uint64& pos,
                                          const uint64& end,
                                          const uint8& max_gamma,
                                          const std::string& bases,
+                                         const std::deque<uint8>& rate_inds,
                                          VarChrom& var_chrom,
                                          pcg64& eng) {
 
@@ -192,6 +193,7 @@ inline void SubMutator::subs_after_muts(uint64& pos,
                                         const uint64& mut_i,
                                         const uint8& max_gamma,
                                         const std::string& bases,
+                                        const std::deque<uint8>& rate_inds,
                                         VarChrom& var_chrom,
                                         pcg64& eng) {
 
@@ -338,7 +340,9 @@ void SubMutator::add_subs(const double& b_len,
 
 
 // Adjust rate_inds for deletions:
-void SubMutator::deletion_adjust(const uint64& size, const uint64& pos) {
+void SubMutator::deletion_adjust(const uint64& size,
+                                 const uint64& pos,
+                                 std::deque<uint8>& rate_inds) {
 
     rate_inds.erase(rate_inds.begin() + pos,
                     rate_inds.begin() + (pos + size));
@@ -349,7 +353,10 @@ void SubMutator::deletion_adjust(const uint64& size, const uint64& pos) {
 
 
 // Adjust rate_inds for insertions:
-void SubMutator::insertion_adjust(const uint64& size, uint64 pos, pcg64& eng) {
+void SubMutator::insertion_adjust(const uint64& size,
+                                  uint64 pos,
+                                  std::deque<uint8>& rate_inds,
+                                  pcg64& eng) {
 
     /*
      Because `deque::insert` will insert items before `pos`, and we want it after

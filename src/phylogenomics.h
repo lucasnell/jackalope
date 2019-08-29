@@ -36,34 +36,6 @@ using namespace Rcpp;
 
 
 
-/*
- This function produces a vector of which indices in the phylogeny tips should go first.
- This effectively ensures that the tip labels line up with the output from this function.
- It's equivalent to the following R code, where `ordered_tip_labels` is a character vector
- of the tip names in the order you always want them:
- `spp_order <- match(ordered_tip_labels, phy$tip.label)`
- */
-inline std::vector<uint64> match_(const std::vector<std::string>& ordered_tip_labels,
-                                  const std::vector<std::string>& tip_labels) {
-
-    std::vector<uint64> spp_order(ordered_tip_labels.size());
-
-    for (uint64 i = 0; i < spp_order.size(); i++) {
-        auto iter = std::find(tip_labels.begin(), tip_labels.end(),
-                              ordered_tip_labels[i]);
-        if (iter == tip_labels.end()) {
-            std::string err_msg = ordered_tip_labels[i];
-            err_msg += " not found in `tip_labels`.";
-            stop(err_msg.c_str());
-        }
-        spp_order[i] = iter - tip_labels.begin();
-    }
-
-    return spp_order;
-}
-
-
-
 
 /*
  Phylogenetic tree info for one chromosome range.
@@ -138,10 +110,11 @@ class PhyloOneChrom {
 
 public:
     std::vector<PhyloTree> trees;
-    std::vector<VarChrom*> var_chrom_ptrs;    // pointers to final VarChrom objects
-    std::vector<VarChrom> tmp_chroms;  // temporary VarChrom's to evolve across tree
-    std::vector<MutationSampler> samplers; // to do the mutation additions across tree
-    uint64 n_tips;                  // number of tips (i.e., variants)
+    std::vector<VarChrom*> var_chrom_ptrs;  // pointers to final VarChrom objects
+    std::vector<VarChrom> tmp_chroms;       // temporary VarChrom's to evolve across tree
+    std::vector<std::deque<uint8>> rates;   // rate indices (Gammas + invariants) for tree
+    MutationSampler sampler;                // to do the mutation additions across tree
+    uint64 n_tips;                          // number of tips (i.e., variants)
 
     PhyloOneChrom() {}
     PhyloOneChrom(
@@ -151,16 +124,14 @@ public:
         const std::vector<uint64>& n_bases_,
         const std::vector<std::vector<double>>& branch_lens_,
         const std::vector<arma::Mat<uint64>>& edges_,
-        const std::vector<std::vector<std::string>>& tip_labels_,
-        pcg64& eng
+        const std::vector<std::vector<std::string>>& tip_labels_
     )
         : trees(edges_.size()),
           var_chrom_ptrs(var_set.size()),
           tmp_chroms(),
-          samplers(),
+          sampler(sampler_base),
           chrom_rates(edges_[0].max()),
           n_tips(tip_labels_[0].size()),
-          ordered_tip_labels(),
           recombination(branch_lens_.size() > 1)
     {
 
@@ -175,9 +146,6 @@ public:
             err_msg += "edges, and tip labels do not all have the same length.";
             throw(Rcpp::exception(err_msg.c_str(), false));
         }
-
-        ordered_tip_labels = std::vector<std::string>(n_vars);
-        for (uint64 i = 0; i < n_vars; i++) ordered_tip_labels[i] = var_set[i].name;
 
         // Fill `trees`:
         uint64 start_ = 0;
@@ -198,11 +166,6 @@ public:
         tmp_chroms = std::vector<VarChrom>(tree_size,
                                             VarChrom((*var_set.reference)[chrom_ind]));
 
-        // Fill in samplers:
-        samplers = std::vector<MutationSampler>(tree_size, sampler_base);
-        for (uint64 i = 0; i < tree_size; i++) {
-            samplers[i].new_chrom(tmp_chroms[i]);
-        }
 
     }
 
@@ -222,7 +185,6 @@ public:
           samplers(),
           chrom_rates(edges_[0].max()),
           n_tips(tip_labels_[0].size()),
-          ordered_tip_labels(),
           recombination(branch_lens_.size() > 1)
     {
 
@@ -258,9 +220,6 @@ public:
 
         uint64 tree_size = trees[0].tree_size;
         uint64 n_vars = var_set.size();
-
-        ordered_tip_labels.resize(n_vars);
-        for (uint64 i = 0; i < n_vars; i++) ordered_tip_labels[i] = var_set[i].name;
 
         // Filling in pointers:
         var_chrom_ptrs.resize(n_vars);
@@ -362,7 +321,8 @@ public:
 
 
 private:
-    std::vector<std::string> ordered_tip_labels;
+
+
     bool recombination;
 
 
@@ -447,11 +407,6 @@ private:
         if (clear_b1) samplers[b1].var_chrom->clear();
         return;
     }
-
-    /*
-     Update final `VarChrom` objects in the same order as `ordered_tip_labels`:
-     */
-    void update_var_chrom(const PhyloTree& tree);
 
 };
 
