@@ -15,7 +15,7 @@
 
 #' Check validity of position columns in segregating-sites matrices.
 #'
-#' Used in `to_var_set.vars_ssites_info` below.
+#' Used in `to_var_set` for the ssites method.
 #'
 #' @noRd
 #'
@@ -73,7 +73,7 @@ fill_coal_mat_pos <- function(sites_mats, chrom_sizes) {
 
 #' Go from pointer to trees info to a pointer to a VarSet object
 #'
-#' Used below in `to_var_set` methods
+#' Used below in theta, phylo, and gtrees `to_var_set` methods
 #'
 #' @noRd
 #'
@@ -110,6 +110,8 @@ trees_to_var_set <- function(phylo_info_ptr, reference, sub, ins, del, epsilon,
 #'
 #' It also standardizes tip indices so that in all phylogenies, edge-matrix indices refer
 #' to the same tips.
+#'
+#' Used in `phylo_to_ptr` and `process_coal_tree_string`
 #'
 #' @noRd
 #'
@@ -162,6 +164,8 @@ process_phy <- function(phy, ordered_tip_labels) {
 
 
 #' Read info from a `phylo` object.
+#'
+#' Used in `to_var_set` for phylo and theta methods.
 #'
 #' @return An external pointer to the phylogenetic info needed to do the simulations.
 #'
@@ -254,7 +258,7 @@ process_coal_tree_string <- function(str, chrom_size, ordered_tip_labels) {
 
 #' Create pointer to trees C++ class from gene-tree info.
 #'
-#' Used in `to_var_set.vars_gtrees_info`.
+#' Used in `to_var_set` for gtrees method.
 #'
 #' @return An XPtr to the info needed from the gene trees to do the simulations.
 #'
@@ -303,8 +307,28 @@ gtrees_to_ptr <- function(trees, reference) {
 #'
 #' @noRd
 #'
-to_var_set <- function (x, reference, sub, ins, del, epsilon, n_threads, show_progress) {
-    UseMethod("to_var_set", x)
+to_var_set <- function(x, reference, sub, ins, del, epsilon, n_threads, show_progress) {
+
+    fun <- NULL
+
+    if (inherits(x, "vars_vcf_info")) {
+        fun <- to_var_set__vars_vcf_info
+    } else if (inherits(x, "vars_ssites_info")) {
+        fun <- to_var_set__vars_ssites_info
+    } else if (inherits(x, "vars_theta_info")) {
+        fun <- to_var_set__vars_theta_info
+    } else if (inherits(x, "vars_phylo_info")) {
+        fun <- to_var_set__vars_phylo_info
+    } else if (inherits(x, "vars_gtrees_info")) {
+        fun <- to_var_set__vars_gtrees_info
+    } else stop("Unknown input to `vars_info` arg in `create_variants`")
+
+    variants_ptr <- fun(x = x, reference = reference,
+                        sub = sub, ins = ins, del = del, epsilon = epsilon,
+                        n_threads = n_threads, show_progress = show_progress)
+
+    return(variants_ptr)
+
 }
 
 #' Create variants from segregating-site info from coalescent simulations.
@@ -312,17 +336,17 @@ to_var_set <- function (x, reference, sub, ins, del, epsilon, n_threads, show_pr
 #'
 #' @noRd
 #'
-to_var_set.vars_ssites_info <- function(x, reference, sub, ins, del, epsilon,
+to_var_set__vars_ssites_info <- function(x, reference, sub, ins, del, epsilon,
                                         n_threads, show_progress) {
 
 
     chrom_sizes <- reference$sizes()
 
-    # Fill and check the position column in `x$mats`
-    x$mats <- fill_coal_mat_pos(x$mats, chrom_sizes)
+    # Fill and check the position column in `x$mats()`
+    mats <- fill_coal_mat_pos(x$mats(), chrom_sizes)
 
     variants_ptr <- add_ssites_cpp(reference$ptr(),
-                                   x$mats,
+                                   mats,
                                    sub$Q(),
                                    sub$pi_tcag(),
                                    ins$rates(),
@@ -340,14 +364,14 @@ to_var_set.vars_ssites_info <- function(x, reference, sub, ins, del, epsilon,
 #'
 #' @noRd
 #'
-to_var_set.vars_vcf_info <- function(x, reference, sub, ins, del, epsilon,
+to_var_set__vars_vcf_info <- function(x, reference, sub, ins, del, epsilon,
                                      n_threads, show_progress) {
 
     chrom_names <- view_ref_genome_chrom_names(reference$ptr())
-    unq_chrom <- unique(x$chrom)
+    unq_chrom <- unique(x$chrom())
 
     if (!all(unq_chrom %in% chrom_names)) {
-        if (x$print_names) print(unq_chrom)
+        if (x$print_names()) print(unq_chrom)
         stop("\nChromosome name(s) in VCF file don't match those in the ",
              "`ref_genome` object. ",
              "It's probably easiest to manually change the `ref_genome` object ",
@@ -357,11 +381,11 @@ to_var_set.vars_vcf_info <- function(x, reference, sub, ins, del, epsilon,
     }
 
     # Converts items in `chrom` to 0-based indices of chromosomes in ref. genome
-    chrom_inds <- match(x$chrom, chrom_names) - 1
+    chrom_inds <- match(x$chrom(), chrom_names) - 1
 
 
-    variants_ptr <- read_vcfr(reference$ptr(), x$var_names,
-                              x$haps, chrom_inds, x$pos, x$ref_chrom)
+    variants_ptr <- read_vcfr(reference$ptr(), x$var_names(),
+                              x$haps(), chrom_inds, x$pos(), x$ref_chrom())
 
     return(variants_ptr)
 
@@ -373,10 +397,10 @@ to_var_set.vars_vcf_info <- function(x, reference, sub, ins, del, epsilon,
 #'
 #' @noRd
 #'
-to_var_set.vars_phylo_info <- function(x, reference, sub, ins, del, epsilon,
+to_var_set__vars_phylo_info <- function(x, reference, sub, ins, del, epsilon,
                                        n_threads, show_progress) {
 
-    phy <- x$phylo
+    phy <- x$phylo()
 
     n_chroms <- as.integer(reference$n_chroms())
 
@@ -404,13 +428,13 @@ to_var_set.vars_phylo_info <- function(x, reference, sub, ins, del, epsilon,
 #'
 #' @noRd
 #'
-to_var_set.vars_theta_info <- function(x,
+to_var_set__vars_theta_info <- function(x,
                                        reference,
                                        sub, ins, del, epsilon,
                                        n_threads, show_progress) {
 
-    phy <- x$phylo
-    theta <- x$theta
+    phy <- x$phylo()
+    theta <- x$theta()
 
     n_vars <- length(phy$tip.label)
     n_chroms <- reference$n_chroms()
@@ -450,10 +474,10 @@ to_var_set.vars_theta_info <- function(x,
 #'
 #' @noRd
 #'
-to_var_set.vars_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
+to_var_set__vars_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
                                         n_threads, show_progress) {
 
-    trees_ptr <- gtrees_to_ptr(x$trees, reference)
+    trees_ptr <- gtrees_to_ptr(x$trees(), reference)
 
     var_set_ptr <- trees_to_var_set(trees_ptr, reference, sub, ins, del, epsilon,
                                     n_threads, show_progress)
