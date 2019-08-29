@@ -21,7 +21,6 @@
 #include "jackalope_types.h"  // integer types
 #include "ref_classes.h"  // Ref* classes
 #include "var_classes.h"  // Var* classes
-#include "mutator.h"    // MutationSampler in test_rate fxn
 #include "pcg.h"  // pcg seeding
 #include "phylogenomics.h"  // match_ and template functions
 

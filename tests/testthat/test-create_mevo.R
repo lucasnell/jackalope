@@ -91,6 +91,14 @@ test_that("proper output for JC69 model", {
     expect_equal(M$Q, Q)
     expect_equal(M$pi_tcag, rep(0.25, 4))
     expect_equal(M$q(), rowSums(Q))
+    # # Overall mutation rate by nucleotide
+    # q = function() {
+    #     # Indel rates (same for each nucleotide):
+    #     indel <- sum(self$insertion_rates * 0.25) + sum(self$deletion_rates * 0.25)
+    #     # Mutation rates by nucleotides:
+    #     q <- rowSums(self$Q) + indel
+    #     return(q)
+    # }
 })
 
 # *  K80 ----
