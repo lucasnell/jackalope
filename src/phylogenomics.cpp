@@ -173,7 +173,7 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
 XPtr<VarSet> PhyloInfo::evolve_chroms(
         SEXP& ref_genome_ptr,
         const MutationSampler& mutator_base,
-        uint64 n_threads,
+        const uint64& n_threads,
         const bool& show_progress) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
@@ -292,10 +292,9 @@ SEXP evolve_across_trees(
     // Check that # threads isn't too high and change to 1 if not using OpenMP:
     thread_check(n_threads);
 
-    // Now create and fill mutation sampler:
-    MutationSampler mutator;
-    mutator.subs = SubMutator(Q, U, Ui, L, invariant);
-    mutator.indels = IndelMutator(insertion_rates, deletion_rates, epsilon, pi_tcag);
+    // Now create mutation sampler:
+    MutationSampler mutator(Q, U, Ui, L, invariant,
+                            insertion_rates, deletion_rates, epsilon, pi_tcag);
 
     /*
      Now that we have samplers, we can create variants:

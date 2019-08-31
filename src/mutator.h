@@ -45,6 +45,18 @@ struct MutationSampler {
 
     MutationSampler() {}
 
+    MutationSampler(const std::vector<arma::mat>& Q_,
+                    const std::vector<arma::mat>& U_,
+                    const std::vector<arma::mat>& Ui_,
+                    const std::vector<arma::vec>& L_,
+                    const double& invariant_,
+                    const arma::vec& insertion_rates,
+                    const arma::vec& deletion_rates,
+                    const double& epsilon,
+                    const std::vector<double>& pi_tcag)
+        : subs(Q_, U_, Ui_, L_, invariant_),
+          indels(insertion_rates, deletion_rates, epsilon, pi_tcag) {}
+
     MutationSampler(const MutationSampler& other)
         : subs(other.subs), indels(other.indels) {}
 
