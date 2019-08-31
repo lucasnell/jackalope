@@ -51,7 +51,6 @@ public:
     std::vector<arma::vec> L;
     double invariant;
     const std::vector<uint8> char_map = make_char_map();
-    std::vector<uint8> rate_inds;
     std::vector<std::vector<AliasSampler>> samplers;
     std::vector<arma::mat> Pt;
 
@@ -63,7 +62,6 @@ public:
                const std::vector<arma::vec>& L_,
                const double& invariant_)
         : Q(Q_), U(U_), Ui(Ui_), L(L_), invariant(invariant_),
-          rate_inds(),
           samplers(Q_.size(), std::vector<AliasSampler>(4))),
           Pt(Q_.size(), arma::mat(4,4)),
           site_var(((invariant_ > 0) || (Q_.size() > 1)) ? true : false) {
@@ -79,7 +77,7 @@ public:
 
     SubMutator(const SubMutator& other)
         : Q(other.Q), U(other.U), Ui(other.Ui), L(other.L), invariant(other.invariant),
-          rate_inds(other.rate_inds), samplers(other.samplers), Pt(other.Pt),
+          samplers(other.samplers), Pt(other.Pt),
           site_var(other.site_var) {};
 
     SubMutator& operator=(const SubMutator& other) {
@@ -88,7 +86,6 @@ public:
         Ui = other.Ui;
         L = other.L;
         invariant = other.invariant;
-        rate_inds = other.rate_inds;
         samplers = other.samplers;
         Pt = other.Pt;
         site_var = other.site_var;
@@ -101,8 +98,15 @@ public:
     void add_subs(const double& b_len,
                   const uint64& begin,
                   const uint64& end,
+                  const std::deque<uint8>& rate_inds,
                   VarChrom& var_chrom,
                   pcg64& eng);
+
+    // Adjust rate_inds for indels:
+    void deletion_adjust(const uint64& size, const uint64& pos,
+                         std::deque<uint8>& rate_inds);
+    void insertion_adjust(const uint64& size, uint64 pos,
+                          std::deque<uint8>& rate_inds, pcg64& eng);
 
     // // For writing to a file (used internally for testing):
     // void write_gammas(FileUncomp& file);
@@ -118,6 +122,7 @@ private:
                                  const uint64& end,
                                  const uint8& max_gamma,
                                  const std::string& bases,
+                                 const std::deque<uint8>& rate_inds,
                                  VarChrom& var_chrom,
                                  pcg64& eng);
     inline void subs_after_muts(uint64& pos,
@@ -126,6 +131,7 @@ private:
                                 const uint64& mut_i,
                                 const uint8& max_gamma,
                                 const std::string& bases,
+                                const std::deque<uint8>& rate_inds,
                                 VarChrom& var_chrom,
                                 pcg64& eng);
 

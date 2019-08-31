@@ -134,6 +134,7 @@ inline void SubMutator::subs_before_muts(uint64& pos,
                                          const uint64& end,
                                          const uint8& max_gamma,
                                          const std::string& bases,
+                                         const std::deque<uint8>& rate_inds,
                                          VarChrom& var_chrom,
                                          pcg64& eng) {
 
@@ -192,6 +193,7 @@ inline void SubMutator::subs_after_muts(uint64& pos,
                                         const uint64& mut_i,
                                         const uint8& max_gamma,
                                         const std::string& bases,
+                                        const std::deque<uint8>& rate_inds,
                                         VarChrom& var_chrom,
                                         pcg64& eng) {
 
@@ -328,6 +330,64 @@ void SubMutator::add_subs(const double& b_len,
 
     return;
 
+}
+
+
+
+
+
+
+
+
+// Adjust rate_inds for deletions:
+void SubMutator::deletion_adjust(const uint64& size,
+                                 const uint64& pos,
+                                 std::deque<uint8>& rate_inds) {
+
+    rate_inds.erase(rate_inds.begin() + pos,
+                    rate_inds.begin() + (pos + size));
+
+    return;
+
+}
+
+
+// Adjust rate_inds for insertions:
+void SubMutator::insertion_adjust(const uint64& size,
+                                  uint64 pos,
+                                  std::deque<uint8>& rate_inds,
+                                  pcg64& eng) {
+
+    /*
+     Because `deque::insert` will insert items before `pos`, and we want it after
+     the original `pos`:
+     */
+    pos++;
+
+    // (Gammas go from 0 to (n-1), invariants are n.)
+    const uint8 n = Q.size();
+
+    if (invariant <= 0) {
+
+        for (uint64 i = 0; i < size; i++) {
+            rate_inds.insert(rate_inds.begin() + pos,
+                             static_cast<uint8>(runif_01(eng) * n));
+        }
+
+    } else {
+
+        for (uint64 i = 0; i < size; i++) {
+            if (runif_01(eng) > invariant) {
+                rate_inds.insert(rate_inds.begin() + pos,
+                                 static_cast<uint8>(runif_01(eng) * n));
+            } else rate_inds.insert(rate_inds.begin() + pos, n);
+        }
+
+    }
+
+
+
+    return;
 }
 
 
