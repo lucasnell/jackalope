@@ -265,7 +265,7 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
 //' @noRd
 //'
 //[[Rcpp::export]]
-SEXP evolve_chroms(
+SEXP evolve_across_trees(
         SEXP& ref_genome_ptr,
         const List& genome_phylo_info,
         const std::vector<arma::mat>& Q,

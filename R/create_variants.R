@@ -80,19 +80,19 @@ fill_coal_mat_pos <- function(sites_mats, chrom_sizes) {
 trees_to_var_set <- function(trees_info, reference, sub, ins, del, epsilon,
                              n_threads, show_progress) {
 
-    variants_ptr <- evolve_chroms(reference$ptr(),
-                                  trees_info,
-                                  sub$Q(),
-                                  sub$U(),
-                                  sub$Ui(),
-                                  sub$L(),
-                                  sub$invariant(),
-                                  ins$rates(),
-                                  del$rates(),
-                                  epsilon,
-                                  sub$pi_tcag(),
-                                  n_threads,
-                                  show_progress)
+    variants_ptr <- evolve_across_trees(reference$ptr(),
+                                        trees_info,
+                                        sub$Q(),
+                                        sub$U(),
+                                        sub$Ui(),
+                                        sub$L(),
+                                        sub$invariant(),
+                                        ins$rates(),
+                                        del$rates(),
+                                        epsilon,
+                                        sub$pi_tcag(),
+                                        n_threads,
+                                        show_progress)
 
     return(variants_ptr)
 
