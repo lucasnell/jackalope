@@ -64,7 +64,7 @@ VarChrom& VarChrom::operator+=(const VarChrom& other) {
         }
     } else if (other_is_after) {
         // The amount to adjust the new mutation's `new_pos` fields:
-        diff = static_cast<sint64>(chrom_size) - static_cast<sint64>(ref_chrom->size());
+        diff = static_cast<sint64>(chrom_size) - static_cast<sint64>(other.chrom_size);
         auto mut = other.mutations.begin();
         for (; mut != other.mutations.end(); ++mut) {
             // Add the new mutation to the back of `(*this).mutations`:
