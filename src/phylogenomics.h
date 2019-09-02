@@ -113,13 +113,13 @@ public:
     std::vector<VarChrom*> var_chrom_ptrs;  // pointers to final VarChrom objects
     std::vector<VarChrom> tmp_chroms;       // temporary VarChrom's to evolve across tree
     std::vector<std::deque<uint8>> rates;   // rate indices (Gammas + invariants) for tree
-    MutationSampler mutator;                // to do the mutation additions across tree
+    TreeMutator mutator;                    // to do the mutation additions across tree
     uint64 n_tips;                          // number of tips (i.e., variants)
 
     PhyloOneChrom() {}
     PhyloOneChrom(
         VarSet& var_set,
-        const MutationSampler& mutator_base,
+        const TreeMutator& mutator_base,
         const uint64& chrom_ind,
         const std::vector<uint64>& n_bases_,
         const std::vector<std::vector<double>>& branch_lens_,
@@ -214,7 +214,7 @@ public:
      Set mutator and variant info:
      */
     void set_samp_var_info(VarSet& var_set,
-                           const MutationSampler& mutator_base,
+                           const TreeMutator& mutator_base,
                            const uint64& chrom_ind,
                            pcg64& eng) {
 
@@ -434,7 +434,7 @@ public:
 
     XPtr<VarSet> evolve_chroms(
             SEXP& ref_genome_ptr,
-            const MutationSampler& mutator_base,
+            const TreeMutator& mutator_base,
             uint64 n_threads,
             const bool& show_progress);
 

@@ -74,7 +74,7 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
          Update `samplers`, `chrom_rates`, and `distr` for this edge:
          */
         update(distr, b1, b2);
-        MutationSampler& m_samp(samplers[b2]);
+        TreeMutator& m_samp(samplers[b2]);
 
         /*
          Now do exponential jumps and mutate until you exceed the branch length.
@@ -172,7 +172,7 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
 */
 XPtr<VarSet> PhyloInfo::evolve_chroms(
         SEXP& ref_genome_ptr,
-        const MutationSampler& mutator_base,
+        const TreeMutator& mutator_base,
         const uint64& n_threads,
         const bool& show_progress) {
 
@@ -217,7 +217,7 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
 
     pcg64 eng = seeded_pcg(active_seeds);
 
-    MutationSampler mutator(mutator_base);
+    TreeMutator mutator(mutator_base);
 
     // Parallelize the Loop
 #ifdef _OPENMP
@@ -293,8 +293,8 @@ SEXP evolve_across_trees(
     thread_check(n_threads);
 
     // Now create mutation sampler:
-    MutationSampler mutator(Q, U, Ui, L, invariant,
-                            insertion_rates, deletion_rates, epsilon, pi_tcag);
+    TreeMutator mutator(Q, U, Ui, L, invariant,
+                        insertion_rates, deletion_rates, epsilon, pi_tcag);
 
     /*
      Now that we have samplers, we can create variants:

@@ -4,7 +4,7 @@
 
 /*
  Combining samplers for substitutions and indels into a mutation sampler for
- a single chromosome.
+ evolving chromosomes along trees.
  */
 
 
@@ -33,9 +33,10 @@ using namespace Rcpp;
 
 
 /*
- MutationSampler combines objects for sampling substitutions and indels.
+ TreeMutator combines objects for adding substitutions and indels to chromosomes
+ when evolving along trees.
  */
-struct MutationSampler {
+struct TreeMutator {
 
     // For adding substitutions:
     SubMutator subs;
@@ -43,9 +44,9 @@ struct MutationSampler {
     IndelMutator indels;
 
 
-    MutationSampler() {}
+    TreeMutator() {}
 
-    MutationSampler(const std::vector<arma::mat>& Q_,
+    TreeMutator(const std::vector<arma::mat>& Q_,
                     const std::vector<arma::mat>& U_,
                     const std::vector<arma::mat>& Ui_,
                     const std::vector<arma::vec>& L_,
@@ -57,10 +58,10 @@ struct MutationSampler {
         : subs(Q_, U_, Ui_, L_, invariant_),
           indels(insertion_rates, deletion_rates, epsilon, pi_tcag) {}
 
-    MutationSampler(const MutationSampler& other)
+    TreeMutator(const TreeMutator& other)
         : subs(other.subs), indels(other.indels) {}
 
-    MutationSampler& operator=(const MutationSampler& other) {
+    TreeMutator& operator=(const TreeMutator& other) {
         subs = other.subs;
         indels = other.indels;
         return *this;
@@ -76,8 +77,8 @@ struct MutationSampler {
                 std::deque<uint8>& rate_inds)  {
 
 #ifdef __JACKALOPE_DEBUG
-        if (end < begin) stop("end < begin in MutationSampler.mutate");
-        if (end == begin) stop("end == begin in MutationSampler.mutate");
+        if (end < begin) stop("end < begin in TreeMutator.mutate");
+        if (end == begin) stop("end == begin in TreeMutator.mutate");
 #endif
 
         indels.add_indels(b_len, begin, end, rate_inds, subs, var_chrom, eng);
