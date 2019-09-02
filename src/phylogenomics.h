@@ -25,7 +25,7 @@
 
 #include "jackalope_types.h"  // integer types
 #include "var_classes.h"  // Var* classes
-#include "mutator.h"  // samplers
+#include "mutator.h"  // mutators
 #include "alias_sampler.h" // alias sampling
 #include "pcg.h" // pcg sampler types
 
@@ -113,13 +113,13 @@ public:
     std::vector<VarChrom*> var_chrom_ptrs;  // pointers to final VarChrom objects
     std::vector<VarChrom> tmp_chroms;       // temporary VarChrom's to evolve across tree
     std::vector<std::deque<uint8>> rates;   // rate indices (Gammas + invariants) for tree
-    MutationSampler sampler;                // to do the mutation additions across tree
+    MutationSampler mutator;                // to do the mutation additions across tree
     uint64 n_tips;                          // number of tips (i.e., variants)
 
     PhyloOneChrom() {}
     PhyloOneChrom(
         VarSet& var_set,
-        const MutationSampler& sampler_base,
+        const MutationSampler& mutator_base,
         const uint64& chrom_ind,
         const std::vector<uint64>& n_bases_,
         const std::vector<std::vector<double>>& branch_lens_,
@@ -129,7 +129,7 @@ public:
         : trees(edges_.size()),
           var_chrom_ptrs(var_set.size()),
           tmp_chroms(),
-          sampler(sampler_base),
+          mutator(mutator_base),
           chrom_rates(edges_[0].max()),
           n_tips(tip_labels_[0].size()),
           recombination(branch_lens_.size() > 1)
@@ -170,7 +170,7 @@ public:
     }
 
     /*
-     Similar to above, but no VarSet or sampler info yet available
+     Similar to above, but no VarSet or mutator info yet available
      */
 
     PhyloOneChrom(
@@ -182,7 +182,7 @@ public:
         : trees(edges_.size()),
           var_chrom_ptrs(),
           tmp_chroms(),
-          samplers(),
+          mutators(),
           chrom_rates(edges_[0].max()),
           n_tips(tip_labels_[0].size()),
           recombination(branch_lens_.size() > 1)
@@ -211,10 +211,10 @@ public:
     }
 
     /*
-     Set sampler and variant info:
+     Set mutator and variant info:
      */
     void set_samp_var_info(VarSet& var_set,
-                           const MutationSampler& sampler_base,
+                           const MutationSampler& mutator_base,
                            const uint64& chrom_ind,
                            pcg64& eng) {
 
@@ -231,11 +231,8 @@ public:
         tmp_chroms = std::vector<VarChrom>(tree_size,
                                             VarChrom((*var_set.reference)[chrom_ind]));
 
-        // Fill in samplers:
-        samplers = std::vector<MutationSampler>(tree_size, sampler_base);
-        for (uint64 i = 0; i < tree_size; i++) {
-            samplers[i].new_chrom(tmp_chroms[i], eng);
-        }
+        // Fill in mutator:
+        mutator = mutator_base;
 
         return;
 
@@ -352,14 +349,8 @@ private:
         // Empty mutations from tree of VarChrom objects:
         for (VarChrom& var_chrom : tmp_chroms) var_chrom.clear();
 
-        // Re-size samplers if necessary
-        if (tree_size != samplers.size()) {
-            samplers.resize(tree_size, samplers[0]);
-        }
-        // Fill in sampler pointers:
-        for (uint64 i = 0; i < tree_size; i++) {
-            samplers[i].new_chrom(tmp_chroms[i]);
-        }
+        // Generate new rate values:
+        samplers[i].new_chrom(tmp_chroms[i]);
 
         return;
     }
