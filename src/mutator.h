@@ -72,16 +72,17 @@ struct MutationSampler {
      (`end == begin` when chromosome region is of size zero bc `end` is non-inclusive)
      */
     void mutate(const double& b_len, VarChrom& var_chrom, pcg64& eng,
-                const uint64& begin, uint64& end)  {
+                const uint64& begin, uint64& end,
+                std::deque<uint8>& rate_inds)  {
 
 #ifdef __JACKALOPE_DEBUG
         if (end < begin) stop("end < begin in MutationSampler.mutate");
         if (end == begin) stop("end == begin in MutationSampler.mutate");
 #endif
 
-        indels.add_indels(b_len, begin, end, subs, var_chrom, eng);
+        indels.add_indels(b_len, begin, end, rate_inds, subs, var_chrom, eng);
 
-        subs.add_subs(b_len, begin, end, var_chrom, eng);
+        subs.add_subs(b_len, begin, end, rate_inds, var_chrom, eng);
 
         return;
     }
