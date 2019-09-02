@@ -172,7 +172,6 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
 */
 XPtr<VarSet> PhyloInfo::evolve_chroms(
         SEXP& ref_genome_ptr,
-        const TreeMutator& mutator_base,
         const uint64& n_threads,
         const bool& show_progress) {
 
@@ -217,8 +216,6 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
 
     pcg64 eng = seeded_pcg(active_seeds);
 
-    TreeMutator mutator(mutator_base);
-
     // Parallelize the Loop
 #ifdef _OPENMP
 #pragma omp for schedule(static)
@@ -229,8 +226,8 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
 
         PhyloOneChrom& chrom_phylo(phylo_one_chroms[i]);
 
-        // Set values for variant info and sampler:
-        chrom_phylo.set_samp_var_info(*var_set, *sampler_base, i, eng);
+        // Set values for variant info:
+        chrom_phylo.set_var_info(*var_set, i);
 
         // Evolve the chromosome using the chrom_phylo object:
         status_code = chrom_phylo.evolve(eng, prog_bar);
@@ -281,14 +278,6 @@ SEXP evolve_across_trees(
         const bool& show_progress) {
 
 
-    // Create phylogenetic tree object:
-    if (genome_phylo_info.size() == 0) {
-        throw(Rcpp::exception("\nEmpty list provided for phylogenetic information.",
-                              false));
-    }
-    PhyloInfo phylo_info(genome_phylo_info);
-
-
     // Check that # threads isn't too high and change to 1 if not using OpenMP:
     thread_check(n_threads);
 
@@ -296,11 +285,19 @@ SEXP evolve_across_trees(
     TreeMutator mutator(Q, U, Ui, L, invariant,
                         insertion_rates, deletion_rates, epsilon, pi_tcag);
 
+    // Create phylogenetic tree object:
+    if (genome_phylo_info.size() == 0) {
+        throw(Rcpp::exception("\nEmpty list provided for phylogenetic information.",
+                              false));
+    }
+    PhyloInfo phylo_info(genome_phylo_info, mutator);
+
+
     /*
-     Now that we have samplers, we can create variants:
+     Now that we have tree(s) and mutator info, we can create variants:
      */
 
-    XPtr<VarSet> var_set = phylo_info.evolve_chroms(ref_genome_ptr, mutator,
+    XPtr<VarSet> var_set = phylo_info.evolve_chroms(ref_genome_ptr,
                                                     n_threads, show_progress);
 
 

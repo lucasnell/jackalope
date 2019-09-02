@@ -25,7 +25,7 @@
 
 #include "jackalope_types.h"  // integer types
 #include "var_classes.h"  // Var* classes
-#include "mutator.h"  // mutators
+#include "mutator.h"  // TreeMutator
 #include "alias_sampler.h" // alias sampling
 #include "pcg.h" // pcg sampler types
 
@@ -116,73 +116,23 @@ public:
     TreeMutator mutator;                    // to do the mutation additions across tree
     uint64 n_tips;                          // number of tips (i.e., variants)
 
+
     PhyloOneChrom() {}
-    PhyloOneChrom(
-        VarSet& var_set,
-        const TreeMutator& mutator_base,
-        const uint64& chrom_ind,
-        const std::vector<uint64>& n_bases_,
-        const std::vector<std::vector<double>>& branch_lens_,
-        const std::vector<arma::Mat<uint64>>& edges_,
-        const std::vector<std::vector<std::string>>& tip_labels_
-    )
-        : trees(edges_.size()),
-          var_chrom_ptrs(var_set.size()),
-          tmp_chroms(),
-          mutator(mutator_base),
-          chrom_rates(edges_[0].max()),
-          n_tips(tip_labels_[0].size()),
-          recombination(branch_lens_.size() > 1)
-    {
-
-        uint64 tree_size = edges_[0].max();  // # tips + # nodes
-        uint64 n_vars = var_set.size();
-        uint64 n_trees = edges_.size();
-
-        if (branch_lens_.size() != n_trees ||
-            n_bases_.size() != n_trees ||
-            tip_labels_.size() != n_trees) {
-            std::string err_msg = "\nVectors for number of bases, branch lengths, ";
-            err_msg += "edges, and tip labels do not all have the same length.";
-            throw(Rcpp::exception(err_msg.c_str(), false));
-        }
-
-        // Fill `trees`:
-        uint64 start_ = 0;
-        uint64 end_ = 0; // note: non-inclusive end point
-        for (uint64 i = 0; i < n_trees; i++) {
-            end_ += n_bases_[i];
-            if (i > 0) start_ += n_bases_[i-1];
-            trees[i] = PhyloTree(branch_lens_[i], edges_[i], tip_labels_[i],
-                                 start_, end_);
-        }
-
-        // Filling in pointers:
-        for (uint64 i = 0; i < n_vars; i++) {
-            var_chrom_ptrs[i] = &var_set[i][chrom_ind];
-        }
-
-        // Fill in blank VarChrom objects:
-        tmp_chroms = std::vector<VarChrom>(tree_size,
-                                            VarChrom((*var_set.reference)[chrom_ind]));
-
-
-    }
-
     /*
-     Similar to above, but no VarSet or mutator info yet available
+     Construct just tree and mutator info, when no VarSet info yet available.
+     Used in `fill_tree_mutator` method below.
      */
-
     PhyloOneChrom(
         const std::vector<uint64>& n_bases_,
         const std::vector<std::vector<double>>& branch_lens_,
         const std::vector<arma::Mat<uint64>>& edges_,
-        const std::vector<std::vector<std::string>>& tip_labels_
+        const std::vector<std::vector<std::string>>& tip_labels_,
+        const TreeMutator& mutator_base
     )
         : trees(edges_.size()),
           var_chrom_ptrs(),
           tmp_chroms(),
-          mutators(),
+          mutator(mutator_base),
           chrom_rates(edges_[0].max()),
           n_tips(tip_labels_[0].size()),
           recombination(branch_lens_.size() > 1)
@@ -211,12 +161,9 @@ public:
     }
 
     /*
-     Set mutator and variant info:
+     Set variant info:
      */
-    void set_samp_var_info(VarSet& var_set,
-                           const TreeMutator& mutator_base,
-                           const uint64& chrom_ind,
-                           pcg64& eng) {
+    void set_var_info(VarSet& var_set, const uint64& chrom_ind) {
 
         uint64 tree_size = trees[0].tree_size;
         uint64 n_vars = var_set.size();
@@ -230,9 +177,6 @@ public:
         // Fill in blank VarChrom objects:
         tmp_chroms = std::vector<VarChrom>(tree_size,
                                             VarChrom((*var_set.reference)[chrom_ind]));
-
-        // Fill in mutator:
-        mutator = mutator_base;
 
         return;
 
@@ -254,9 +198,10 @@ public:
 
 
     /*
-     Fill a PhyloOneChrom object from an input list
+     Fill tree and mutator info from an input list and base mutator object
     */
-    void fill_from_list(const List& genome_phylo_info, const uint64& i) {
+    void fill_tree_mutator(const List& genome_phylo_info, const uint64& i,
+                           const TreeMutator& mutator_base) {
 
         std::string err_msg;
 
@@ -308,7 +253,7 @@ public:
         }
 
 
-        *this = PhyloOneChrom(n_bases_, branch_lens_, edges_, tip_labels_);
+        *this = PhyloOneChrom(n_bases_, branch_lens_, edges_, tip_labels_, mutator_base);
 
         return;
 
@@ -348,9 +293,6 @@ private:
         }
         // Empty mutations from tree of VarChrom objects:
         for (VarChrom& var_chrom : tmp_chroms) var_chrom.clear();
-
-        // Generate new rate values:
-        samplers[i].new_chrom(tmp_chroms[i]);
 
         return;
     }
@@ -416,7 +358,7 @@ public:
 
     std::vector<PhyloOneChrom> phylo_one_chroms;
 
-    PhyloInfo(const List& genome_phylo_info) {
+    PhyloInfo(const List& genome_phylo_info, const TreeMutator& mutator_base) {
 
         uint64 n_chroms = genome_phylo_info.size();
 
@@ -427,15 +369,15 @@ public:
 
         phylo_one_chroms = std::vector<PhyloOneChrom>(n_chroms);
 
+        // Fill tree and mutator info (i.e., everything but variant info):
         for (uint64 i = 0; i < n_chroms; i++) {
-            phylo_one_chroms[i].fill_from_list(genome_phylo_info, i);
+            phylo_one_chroms[i].fill_tree_mutator(genome_phylo_info, i, mutator_base);
         }
     }
 
     XPtr<VarSet> evolve_chroms(
             SEXP& ref_genome_ptr,
-            const TreeMutator& mutator_base,
-            uint64 n_threads,
+            const uint64& n_threads,
             const bool& show_progress);
 
 

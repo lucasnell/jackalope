@@ -344,6 +344,8 @@ void SubMutator::deletion_adjust(const uint64& size,
                                  const uint64& pos,
                                  std::deque<uint8>& rate_inds) {
 
+    if (!site_var) return;
+
     rate_inds.erase(rate_inds.begin() + pos,
                     rate_inds.begin() + (pos + size));
 
@@ -357,6 +359,8 @@ void SubMutator::insertion_adjust(const uint64& size,
                                   uint64 pos,
                                   std::deque<uint8>& rate_inds,
                                   pcg64& eng) {
+
+    if (!site_var) return;
 
     /*
      Because `deque::insert` will insert items before `pos`, and we want it after
