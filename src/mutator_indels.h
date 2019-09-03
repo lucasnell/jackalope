@@ -11,6 +11,7 @@
 
 #include <RcppArmadillo.h>
 #include <pcg/pcg_random.hpp> // pcg prng
+#include <progress.hpp>  // for the progress bar
 #include <vector>  // vector class
 #include <string>  // string class
 #include <random>  // poisson_distribution
@@ -89,13 +90,14 @@ public:
 
 
     // Add indels, adjust `end` (`end == begin` when chromosome region is of size zero)
-    void add_indels(double b_len,
-                    const uint64& begin,
-                    uint64& end,
-                    std::deque<uint8>& rate_inds,
-                    SubMutator& subs,
-                    VarChrom& var_chrom,
-                    pcg64& eng);
+    int add_indels(double b_len,
+                   const uint64& begin,
+                   uint64& end,
+                   std::deque<uint8>& rate_inds,
+                   SubMutator& subs,
+                   VarChrom& var_chrom,
+                   pcg64& eng,
+                   Progress& prog_bar);
 
 
 private:

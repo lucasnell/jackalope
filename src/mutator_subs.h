@@ -11,6 +11,7 @@
 
 #include <RcppArmadillo.h>
 #include <pcg/pcg_random.hpp> // pcg prng
+#include <progress.hpp>  // for the progress bar
 #include <vector>  // vector class
 #include <string>  // string class
 
@@ -32,8 +33,6 @@ std::vector<uint8> make_char_map() {
     for (uint32 i = 0; i < 4; i++) out[bases[i]] = i;
     return out;
 }
-
-
 
 
 
@@ -93,19 +92,24 @@ public:
     }
 
 
-    void new_gammas(VarChrom& var_chrom, pcg64& eng);
-
-    void add_subs(const double& b_len,
-                  const uint64& begin,
+    int new_rates(const uint64& begin,
                   const uint64& end,
-                  const std::deque<uint8>& rate_inds,
-                  VarChrom& var_chrom,
-                  pcg64& eng);
+                  std::deque<uint8>& rate_inds,
+                  pcg64& eng,
+                  Progress& prog_bar);
+
+    int add_subs(const double& b_len,
+                 const uint64& begin,
+                 const uint64& end,
+                 const std::deque<uint8>& rate_inds,
+                 VarChrom& var_chrom,
+                 pcg64& eng,
+                 Progress& prog_bar);
 
     // Adjust rate_inds for indels:
-    void deletion_adjust(const uint64& size, const uint64& pos,
+    void deletion_adjust(const uint64& size, uint64 pos, const uint64& begin,
                          std::deque<uint8>& rate_inds);
-    void insertion_adjust(const uint64& size, uint64 pos,
+    void insertion_adjust(const uint64& size, uint64 pos, const uint64& begin,
                           std::deque<uint8>& rate_inds, pcg64& eng);
 
     // // For writing to a file (used internally for testing):
@@ -118,22 +122,26 @@ private:
 
     inline void adjust_mats(const double& b_len);
 
-    inline void subs_before_muts(uint64& pos,
-                                 const uint64& end,
-                                 const uint8& max_gamma,
-                                 const std::string& bases,
-                                 const std::deque<uint8>& rate_inds,
-                                 VarChrom& var_chrom,
-                                 pcg64& eng);
-    inline void subs_after_muts(uint64& pos,
-                                const uint64& end1,
-                                const uint64& end2,
-                                const uint64& mut_i,
+    inline int subs_before_muts(uint64& pos,
+                                const uint64& begin,
+                                const uint64& end,
                                 const uint8& max_gamma,
                                 const std::string& bases,
                                 const std::deque<uint8>& rate_inds,
                                 VarChrom& var_chrom,
-                                pcg64& eng);
+                                pcg64& eng,
+                                Progress& prog_bar);
+    inline int subs_after_muts(uint64& pos,
+                               const uint64& begin,
+                               const uint64& end1,
+                               const uint64& end2,
+                               const uint64& mut_i,
+                               const uint8& max_gamma,
+                               const std::string& bases,
+                               const std::deque<uint8>& rate_inds,
+                               VarChrom& var_chrom,
+                               pcg64& eng,
+                               Progress& prog_bar);
 
 
 

@@ -6,29 +6,39 @@
 
 #include <RcppArmadillo.h>
 #include <pcg/pcg_random.hpp> // pcg prng
+#include <progress.hpp>  // for the progress bar
 #include <vector>  // vector class
 #include <string>  // string class
 
 
 #include "var_classes.h"  // Var* classes
 #include "pcg.h"  // runif_01
+#include "util.h"  // interrupt_check
 #include "alias_sampler.h"  // alias method of sampling
 
 
 
 
-void SubMutator::new_gammas(VarChrom& var_chrom, pcg64& eng) {
+
+
+int SubMutator::new_rates(const uint64& begin,
+                          const uint64& end,
+                          std::deque<uint8>& rate_inds,
+                          pcg64& eng,
+                          Progress& prog_bar) {
 
     if (!site_var) {
         if (!rate_inds.empty()) rate_inds.clear();
-        return;
+        return 0;
     }
 
     // (Gammas go from 0 to (n-1), invariants are n.)
     const uint8 n = Q.size();
 
-    const uint64 N = var_chrom.size();
+    const uint64 N = end - begin;
     const uint64 N0 = rate_inds.size();
+
+    uint32 iters = 0;
 
     if (invariant <= 0) {
 
@@ -36,9 +46,11 @@ void SubMutator::new_gammas(VarChrom& var_chrom, pcg64& eng) {
 
             for (uint64 i = 0; i < N0; i++) {
                 rate_inds[i] = static_cast<uint8>(runif_01(eng) * n);
+                if (interrupt_check(iters, prog_bar)) return -1;
             }
             for (uint64 i = N0; i < N; i++) {
                 rate_inds.push_back(static_cast<uint8>(runif_01(eng) * n));
+                if (interrupt_check(iters, prog_bar)) return -1;
             }
 
         } else {
@@ -46,6 +58,7 @@ void SubMutator::new_gammas(VarChrom& var_chrom, pcg64& eng) {
             if (N0 > N) rate_inds.resize(N);
             for (uint64 i = 0; i < N; i++) {
                 rate_inds[i] = static_cast<uint8>(runif_01(eng) * n);
+                if (interrupt_check(iters, prog_bar)) return -1;
             }
 
         }
@@ -58,11 +71,13 @@ void SubMutator::new_gammas(VarChrom& var_chrom, pcg64& eng) {
                 if (runif_01(eng) > invariant) {
                     rate_inds[i] = static_cast<uint8>(runif_01(eng) * n);
                 } else rate_inds[i] = n;
+                if (interrupt_check(iters, prog_bar)) return -1;
             }
             for (uint64 i = N0; i < N; i++) {
                 if (runif_01(eng) > invariant) {
                     rate_inds.push_back(static_cast<uint8>(runif_01(eng) * n));
                 } else rate_inds.push_back(n);
+                if (interrupt_check(iters, prog_bar)) return -1;
             }
 
         } else {
@@ -72,13 +87,15 @@ void SubMutator::new_gammas(VarChrom& var_chrom, pcg64& eng) {
                 if (runif_01(eng) > invariant) {
                     rate_inds[i] = static_cast<uint8>(runif_01(eng) * n);
                 } else rate_inds[i] = n;
+                if (interrupt_check(iters, prog_bar)) return -1;
             }
 
         }
     }
 
-    return;
+    return 0;
 }
+
 
 
 
@@ -130,13 +147,15 @@ inline void SubMutator::adjust_mats(const double& b_len) {
 //'
 //' @noRd
 //'
-inline void SubMutator::subs_before_muts(uint64& pos,
-                                         const uint64& end,
-                                         const uint8& max_gamma,
-                                         const std::string& bases,
-                                         const std::deque<uint8>& rate_inds,
-                                         VarChrom& var_chrom,
-                                         pcg64& eng) {
+inline int SubMutator::subs_before_muts(uint64& pos,
+                                        const uint64& begin,
+                                        const uint64& end,
+                                        const uint8& max_gamma,
+                                        const std::string& bases,
+                                        const std::deque<uint8>& rate_inds,
+                                        VarChrom& var_chrom,
+                                        pcg64& eng,
+                                        Progress& prog_bar) {
 
 #ifdef __JACKALOPE_DEBUG
     if (rate_inds.empty() && max_gamma > 1) {
@@ -147,11 +166,13 @@ inline void SubMutator::subs_before_muts(uint64& pos,
     }
 #endif
 
+    uint32 iters = 0;
+
     if (site_var) {
 
         for (; pos < end; pos++) {
 
-            uint8& rate_i(rate_inds[pos]);
+            uint8& rate_i(rate_inds[(pos-begin)]);
             if (rate_i > max_gamma) continue; // this is an invariant region
 
             uint8 c_i = char_map[var_chrom.ref_chrom->nucleos[pos]];
@@ -159,6 +180,8 @@ inline void SubMutator::subs_before_muts(uint64& pos,
             AliasSampler& samp(samplers[rate_i][c_i]);
             uint8 nt_i = samp.sample(eng);
             if (nt_i != c_i) var_chrom.add_substitution(bases[nt_i], pos);
+
+            if (interrupt_check(iters, prog_bar)) return -1;
 
         }
 
@@ -173,13 +196,14 @@ inline void SubMutator::subs_before_muts(uint64& pos,
             uint8 nt_i = samp.sample(eng);
             if (nt_i != c_i) var_chrom.add_substitution(bases[nt_i], pos);
 
+            if (interrupt_check(iters, prog_bar)) return -1;
+
         }
 
     }
 
 
-
-    return;
+    return 0;
 
 }
 
@@ -187,23 +211,27 @@ inline void SubMutator::subs_before_muts(uint64& pos,
 //'
 //' @noRd
 //'
-inline void SubMutator::subs_after_muts(uint64& pos,
-                                        const uint64& end1,
-                                        const uint64& end2,
-                                        const uint64& mut_i,
-                                        const uint8& max_gamma,
-                                        const std::string& bases,
-                                        const std::deque<uint8>& rate_inds,
-                                        VarChrom& var_chrom,
-                                        pcg64& eng) {
+inline int SubMutator::subs_after_muts(uint64& pos,
+                                       const uint64& begin,
+                                       const uint64& end1,
+                                       const uint64& end2,
+                                       const uint64& mut_i,
+                                       const uint8& max_gamma,
+                                       const std::string& bases,
+                                       const std::deque<uint8>& rate_inds,
+                                       VarChrom& var_chrom,
+                                       pcg64& eng,
+                                       Progress& prog_bar) {
 
     uint64 end = std::min(end1, end2);
+
+    uint32 iters = 0;
 
     if (site_var) {
 
         while (pos < end) {
 
-            uint8& rate_i(rate_inds[pos]);
+            uint8& rate_i(rate_inds[(pos-begin)]);
             if (rate_i > max_gamma) {
                 pos++;
                 continue; // this is an invariant region
@@ -219,6 +247,8 @@ inline void SubMutator::subs_after_muts(uint64& pos,
             if (nt_i != c_i) var_chrom.add_substitution(bases[nt_i], pos);
 
             ++pos;
+
+            if (interrupt_check(iters, prog_bar)) return -1;
         }
 
 
@@ -236,13 +266,15 @@ inline void SubMutator::subs_after_muts(uint64& pos,
             if (nt_i != c_i) var_chrom.add_substitution(bases[nt_i], pos);
 
             ++pos;
+
+            if (interrupt_check(iters, prog_bar)) return -1;
         }
 
 
     }
 
 
-    return;
+    return 0;
 
 }
 
@@ -256,11 +288,13 @@ inline void SubMutator::subs_after_muts(uint64& pos,
 //'
 //' @noRd
 //'
-void SubMutator::add_subs(const double& b_len,
-                          const uint64& begin,
-                          const uint64& end,
-                          VarChrom& var_chrom,
-                          pcg64& eng) {
+int SubMutator::add_subs(const double& b_len,
+                         const uint64& begin,
+                         const uint64& end,
+                         const std::deque<uint8>& rate_inds,
+                         VarChrom& var_chrom,
+                         pcg64& eng,
+                         Progress& prog_bar) {
 
 #ifdef __JACKALOPE_DEBUG
     if (b_len < 0) stop("b_len < 0 in add_subs");
@@ -268,7 +302,9 @@ void SubMutator::add_subs(const double& b_len,
     if (end > var_chrom.size()) stop("end > var_chrom.size() in add_subs");
 #endif
 
-    if ((b_len == 0) || (end == begin)) return;
+    if ((b_len == 0) || (end == begin)) return 0;
+
+    if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
 
     adjust_mats(b_len);
 
@@ -278,6 +314,8 @@ void SubMutator::add_subs(const double& b_len,
     // To make code less clunky:
     std::deque<Mutation>& mutations(var_chrom.mutations);
 
+    int status;
+
     /*
      If there are no mutations or if `end-1` is before the first mutation,
      then we don't need to use the `mutations` field at all.
@@ -285,9 +323,9 @@ void SubMutator::add_subs(const double& b_len,
     if (mutations.empty() || ((end-1) < mutations.front().new_pos)) {
 
         uint64 pos = begin;
-        subs_before_muts(pos, end, max_gamma, bases, var_chrom, eng);
-
-        return;
+        status = subs_before_muts(pos, end, max_gamma, bases, rate_inds, var_chrom,
+                                  eng, prog_bar);
+        return status;
 
     }
 
@@ -304,7 +342,10 @@ void SubMutator::add_subs(const double& b_len,
     if (mut_i == mutations.size()) {
 
         mut_i = 0;
-        subs_before_muts(pos, mutations[mut_i].new_pos, max_gamma, bases, var_chrom, eng);
+        status = subs_before_muts(pos, mutations[mut_i].new_pos, max_gamma, bases,
+                                  rate_inds, var_chrom, eng, prog_bar);
+
+        if (status < 0) return status;
 
     }
 
@@ -316,19 +357,20 @@ void SubMutator::add_subs(const double& b_len,
     uint64 next_mut_i = mut_i + 1;
     while (pos < end && next_mut_i < mutations.size()) {
 
-        subs_after_muts(pos, end, mutations[next_mut_i].new_pos,
-                        mut_i, max_gamma, bases, var_chrom, eng);
+        status = subs_after_muts(pos, end, mutations[next_mut_i].new_pos, mut_i,
+                                 max_gamma, bases, rate_inds, var_chrom, eng, prog_bar);
+
+        if (status < 0) return status;
 
         ++mut_i;
         ++next_mut_i;
     }
 
     // Now taking care of nucleotides after the last Mutation
-    subs_after_muts(pos, end, var_chrom.chrom_size,
-                    mut_i, max_gamma, bases, var_chrom, eng);
+    status = subs_after_muts(pos, end, var_chrom.chrom_size, mut_i, max_gamma, bases,
+                             rate_inds, var_chrom, eng, prog_bar);
 
-
-    return;
+    return status;
 
 }
 
@@ -341,10 +383,14 @@ void SubMutator::add_subs(const double& b_len,
 
 // Adjust rate_inds for deletions:
 void SubMutator::deletion_adjust(const uint64& size,
-                                 const uint64& pos,
+                                 uint64 pos,
+                                 const uint64& begin,
                                  std::deque<uint8>& rate_inds) {
 
     if (!site_var) return;
+
+    // Because rate_inds is from `begin` to `end` only
+    pos -= begin;
 
     rate_inds.erase(rate_inds.begin() + pos,
                     rate_inds.begin() + (pos + size));
@@ -357,6 +403,7 @@ void SubMutator::deletion_adjust(const uint64& size,
 // Adjust rate_inds for insertions:
 void SubMutator::insertion_adjust(const uint64& size,
                                   uint64 pos,
+                                  const uint64& begin,
                                   std::deque<uint8>& rate_inds,
                                   pcg64& eng) {
 
@@ -367,6 +414,8 @@ void SubMutator::insertion_adjust(const uint64& size,
      the original `pos`:
      */
     pos++;
+    // Because rate_inds is from `begin` to `end` only
+    pos -= begin;
 
     // (Gammas go from 0 to (n-1), invariants are n.)
     const uint8 n = Q.size();

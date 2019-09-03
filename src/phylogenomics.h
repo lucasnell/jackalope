@@ -110,8 +110,8 @@ class PhyloOneChrom {
 
 public:
     std::vector<PhyloTree> trees;
-    std::vector<VarChrom*> var_chrom_ptrs;  // pointers to final VarChrom objects
-    std::vector<VarChrom> tmp_chroms;       // temporary VarChrom's to evolve across tree
+    std::vector<VarChrom*> tip_chroms;      // pointers to final VarChrom objects
+    std::vector<VarChrom> node_chroms;      // temporary `VarChrom`s for nodes (NOT tips)
     std::vector<std::deque<uint8>> rates;   // rate indices (Gammas + invariants) for tree
     TreeMutator mutator;                    // to do the mutation additions across tree
     uint64 n_tips;                          // number of tips (i.e., variants)
@@ -130,8 +130,9 @@ public:
         const TreeMutator& mutator_base
     )
         : trees(edges_.size()),
-          var_chrom_ptrs(),
-          tmp_chroms(),
+          tip_chroms(),
+          node_chroms(),
+          rates(edges_.size()),
           mutator(mutator_base),
           chrom_rates(edges_[0].max()),
           n_tips(tip_labels_[0].size()),
@@ -169,13 +170,14 @@ public:
         uint64 n_vars = var_set.size();
 
         // Filling in pointers:
-        var_chrom_ptrs.resize(n_vars);
+        tip_chroms.clear();
+        tip_chroms.reserve(n_vars);
         for (uint64 i = 0; i < n_vars; i++) {
-            var_chrom_ptrs[i] = &var_set[i][chrom_ind];
+            tip_chroms.push_back(&var_set[i][chrom_ind]);
         }
 
-        // Fill in blank VarChrom objects:
-        tmp_chroms = std::vector<VarChrom>(tree_size,
+        // Fill in blank VarChrom objects for nodes:
+        node_chroms = std::vector<VarChrom>(tree_size - n_vars,
                                             VarChrom((*var_set.reference)[chrom_ind]));
 
         return;
@@ -189,8 +191,8 @@ public:
     int evolve(pcg64& eng, Progress& prog_bar) {
 
         for (PhyloTree& tree : trees) {
-            int code = one_tree(tree, eng, prog_bar);
-            if (code == -1) return code;
+            int status = one_tree(tree, eng, prog_bar);
+            if (status < 0) return status;
         }
         return 0;
     }
@@ -277,7 +279,9 @@ private:
     /*
      Reset for a new tree:
      */
-    void reset(const PhyloTree& tree, pcg64& eng) {
+    int reset(const PhyloTree& tree,
+              pcg64& eng,
+              Progress& prog_bar) {
 
         const uint64& tree_size(tree.tree_size);
         const uint64& start(tree.start);
@@ -287,40 +291,24 @@ private:
             throw(Rcpp::exception("\ntree size of zero is non-sensical.", false));
         }
         // Resize blank VarChrom objects if necessary:
-        if (tree_size != tmp_chroms.size()) {
-            VarChrom var_chrom_(*(var_chrom_ptrs[0]->ref_chrom));
-            tmp_chroms.resize(tree_size, var_chrom_);
+        if (tree_size != node_chroms.size()) {
+            VarChrom var_chrom_(*(tip_chroms[0]->ref_chrom));
+            node_chroms.resize(tree_size, var_chrom_);
         }
         // Empty mutations from tree of VarChrom objects:
-        for (VarChrom& var_chrom : tmp_chroms) var_chrom.clear();
+        for (VarChrom& var_chrom : node_chroms) var_chrom.clear();
 
-        return;
+        // Create rates:
+        if (rates.size() != tree_size) rates.resize(tree_size);
+        uint64 root = tree.edges(0,0); // <-- should be index to root of tree
+        // Generate rates for root of tree (`status` is -1 if user interrupts process):
+        int status = mutator.new_rates(start, end, rates[root], eng, prog_bar);
+        // The rest of the nodes/tips will have rates based on parent nodes
+        // as we progress through the tree.
+
+        return status;
     }
 
-
-    /*
-     Update for a new edge:
-     */
-    void update(std::exponential_distribution<double>& distr,
-                const uint64& b1,
-                const uint64& b2) {
-
-        /*
-         Replace existing mutation information in VarChrom at `b1` with info in the
-         one at `b2`
-         */
-        samplers[b2].var_chrom->replace(*samplers[b1].var_chrom);
-        /*
-         Do the same for the ChromGammas in the sampler:
-         */
-        samplers[b2].location.regions = samplers[b1].location.regions;
-
-
-        // Set exponential distribution to use this chromosome's rate:
-        distr.param(std::exponential_distribution<double>::param_type(chrom_rates[b2]));
-
-        return;
-    }
 
     /*
      Clear info from VarChrom object at `b1` if it's no longer needed, to free up
@@ -337,7 +325,11 @@ private:
             clear_b1 = ! arma::any(tree.edges(arma::span(i+1, tree.edges.n_rows - 1),
                                               0) == b1);
         } else clear_b1 = true;
-        if (clear_b1) samplers[b1].var_chrom->clear();
+        if (clear_b1) {
+            node_chroms[b1].clear();
+            rates[b1].clear();
+            clear_memory<std::deque<uint8>>(rates[b1]);
+        }
         return;
     }
 

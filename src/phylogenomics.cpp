@@ -21,7 +21,7 @@
 
 #include "jackalope_types.h"  // integer types
 #include "var_classes.h"  // Var* classes
-#include "mutator.h"  // samplers
+#include "mutator.h"  // TreeMutator
 #include "pcg.h" // pcg sampler types
 #include "phylogenomics.h"
 #include "util.h"  // thread_check
@@ -43,20 +43,21 @@ using namespace Rcpp;
  They can already have mutations, but to start out, they must all be the same.
  */
 int PhyloOneChrom::one_tree(PhyloTree& tree,
-                             pcg64& eng,
-                             Progress& prog_bar) {
+                            pcg64& eng,
+                            Progress& prog_bar) {
+
+    // For when/if user interrupts function:
+    int status;
 
     // Reset tree of samplers and VarChrom objects representing nodes and tips:
-    reset(tree);
+    status = reset(tree, eng, prog_bar);
+    if (status < 0) return status;
 
-    /*
-     Check for a user interrupt. Using a Progress object allows the user to interrupt
-     the process during multithreaded operations.
-     */
-    if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
 
-    // Exponential distribution to do the time-jumps along the branch lengths:
-    std::exponential_distribution<double> distr(1.0);
+    uint64 b1, b2;
+    VarChrom* chrom1;
+    VarChrom* chrom2;
+    double b_len;
 
     /*
      Now iterate through the phylogeny:
@@ -67,65 +68,34 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
         if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
 
         // Indices for nodes/tips that the branch length in `branch_lens` refers to
-        uint64 b1 = tree.edges(i,0);
-        uint64 b2 = tree.edges(i,1);
+        b1 = tree.edges(i,0);
+        b2 = tree.edges(i,1);
+
+        // VarChrom object that parent node refers to:
+        chrom1 = &node_chroms[(b1 - n_tips)];
+        // For whether chrom we're changing is a tip:
+        bool at_tip = b2 < n_tips;
+        // Pointer to chrom we're changing:
+        chrom2 = (at_tip) ? tip_chroms[b2] : &node_chroms[(b2 - n_tips)];
+
+        // Update rate indices:
+        rates[b2] = rates[b1];
 
         /*
-         Update `samplers`, `chrom_rates`, and `distr` for this edge:
+         Update VarChrom objects for this branch.
+         Because node VarChrom objects are emptied of mutations for each new tree,
+         the below works to add just the mutations related to this tree:
          */
-        update(distr, b1, b2);
-        TreeMutator& m_samp(samplers[b2]);
+        (*chrom2) += (*chrom1);
 
         /*
-         Now do exponential jumps and mutate until you exceed the branch length.
+         Now mutate along branch length:
          */
-        double& rate(chrom_rates[b2]);
-        double amt_time = tree.branch_lens[i];
-        double time_jumped = distr(eng);
-        double rate_change = 0;
-        if (recombination) {
-            uint64& end_(tree.ends[b2]);
-            end_ = tree.ends[b1];
-            const uint64 start_ = tree.start;
-            uint64 n_jumps = 0;
-            while (time_jumped <= amt_time && end_ >= start_) {
-                /*
-                 Add mutation here, outputting how much the overall chromosome rate should
-                 change:
-                 (`end_` is automatically adjusted for indels)
-                 */
-                rate_change = m_samp.mutate(eng, start_, end_);
-                /*
-                 Adjust the overall chromosome rate, then update the exponential
-                 distribution:
-                 */
-                rate += rate_change;
-                distr.param(std::exponential_distribution<double>::param_type(rate));
-                // Jump again:
-                time_jumped += distr(eng);
-                // Check for a user interrupt every 128 (2^7) jumps:
-                if (n_jumps == 128) {
-                    if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
-                    n_jumps = 0;
-                }
-                n_jumps++;
-            }
-        } else {
-            uint64 n_jumps = 0;
-            // Same thing but without recombination
-            while (time_jumped <= amt_time && tmp_chroms[b2].size() > 0) {
-                rate_change = m_samp.mutate(eng);
-                rate += rate_change;
-                distr.param(std::exponential_distribution<double>::param_type(rate));
-                time_jumped += distr(eng);
-                // Check for a user interrupt every 128 (2^7) jumps:
-                if (n_jumps == 128) {
-                    if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
-                    n_jumps = 0;
-                }
-                n_jumps++;
-            }
-        }
+        b_len = tree.branch_lens[i];
+        status = mutator.mutate(b_len, *chrom2, eng, prog_bar,
+                                tree.start, tree.ends[b2], rates[b2]);
+        if (status < 0) return status;
+
 
         /*
          To free up some memory, clear info from VarChrom object at `b1` if it's no
@@ -135,34 +105,14 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
 
     }
 
-    /*
-     Update final `VarChrom` objects:
-     */
-    update_var_chrom(tree);
 
     // Update progress bar:
-    if (recombination) {
-        prog_bar.increment(tree.end - tree.start + 1);
-    } else prog_bar.increment(var_chrom_ptrs[0]->ref_chrom->size());
+    prog_bar.increment(tree.end - tree.start + 1);
 
     return 0;
 
 }
 
-
-// void PhyloOneChrom::update_var_chrom(const PhyloTree& tree) {
-//
-//     if (recombination) {
-//         for (uint64 i = 0; i < tree.n_tips; i++) {
-//             (*var_chrom_ptrs[i]) += tmp_chroms[i];
-//         }
-//     } else {
-//         for (uint64 i = 0; i < tree.n_tips; i++) {
-//             (*var_chrom_ptrs[i]).replace(tmp_chroms[i]);
-//         }
-//     }
-//     return;
-// }
 
 
 

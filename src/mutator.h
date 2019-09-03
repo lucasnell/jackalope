@@ -10,6 +10,7 @@
 
 #include <RcppArmadillo.h>
 #include <pcg/pcg_random.hpp> // pcg prng
+#include <progress.hpp>  // for the progress bar
 #include <vector>  // vector class
 #include <string>  // string class
 #include <random>  // gamma_distribution
@@ -72,19 +73,36 @@ struct TreeMutator {
      It also updates `end` for indels that occur in the range.
      (`end == begin` when chromosome region is of size zero bc `end` is non-inclusive)
      */
-    void mutate(const double& b_len, VarChrom& var_chrom, pcg64& eng,
-                const uint64& begin, uint64& end,
-                std::deque<uint8>& rate_inds)  {
+    int mutate(const double& b_len,
+               VarChrom& var_chrom,
+               pcg64& eng,
+               Progress& prog_bar,
+               const uint64& begin,
+               uint64& end,
+               std::deque<uint8>& rate_inds)  {
 
 #ifdef __JACKALOPE_DEBUG
         if (end < begin) stop("end < begin in TreeMutator.mutate");
         if (end == begin) stop("end == begin in TreeMutator.mutate");
 #endif
 
-        indels.add_indels(b_len, begin, end, rate_inds, subs, var_chrom, eng);
+        int status;
 
-        subs.add_subs(b_len, begin, end, rate_inds, var_chrom, eng);
+        status = indels.add_indels(b_len, begin, end, rate_inds, subs, var_chrom,
+                                   eng, prog_bar);
+        if (status < 0) return status;
 
+        status = subs.add_subs(b_len, begin, end, rate_inds, var_chrom, eng, prog_bar);
+
+        return status;
+    }
+
+    void new_rates(const uint64& begin,
+                   const uint64& end,
+                   std::deque<uint8>& rate_inds,
+                   pcg64& eng,
+                   Progress& prog_bar) {
+        subs.new_rates(begin, end, rate_inds, eng, prog_bar);
         return;
     }
 

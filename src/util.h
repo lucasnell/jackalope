@@ -16,6 +16,7 @@
 #include <vector>
 #include <string>
 #include <pcg/pcg_random.hpp> // pcg prng
+#include <progress.hpp>  // for the progress bar
 
 #ifdef _OPENMP
 #include <omp.h>  // omp
@@ -207,6 +208,23 @@ inline void thread_check(uint64& n_threads) {
 
     return;
 }
+
+
+
+// For checking for user interrupts every N iterations:
+inline bool interrupt_check(uint32& iters,
+                            Progress& prog_bar,
+                            const uint32& N = 1000) {
+    ++iters;
+    if (iters > N) {
+        if (prog_bar.is_aborted() || prog_bar.check_abort()) return true;
+        iters = 0;
+    }
+    return false;
+}
+
+
+
 
 
 
