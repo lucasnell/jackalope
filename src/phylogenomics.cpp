@@ -116,6 +116,92 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
 
 
 
+void PhyloOneChrom::fill_tree_mutator(const List& genome_phylo_info,
+                                      const uint64& i,
+                                      const TreeMutator& mutator_base) {
+
+    std::string err_msg;
+
+    const List& chrom_phylo_info(genome_phylo_info[i]);
+
+    uint64 n_trees = chrom_phylo_info.size();
+    if (n_trees == 0) {
+        err_msg = "\nNo trees supplied on chromosome " + std::to_string(i+1);
+        throw(Rcpp::exception(err_msg.c_str(), false));
+    }
+
+    std::vector<uint64> n_bases_(n_trees);
+    std::vector<std::vector<double>> branch_lens_(n_trees);
+    std::vector<arma::Mat<uint64>> edges_(n_trees);
+    std::vector<std::vector<std::string>> tip_labels_(n_trees);
+
+    for (uint64 j = 0; j < n_trees; j++) {
+
+        const List& phylo_info(chrom_phylo_info[j]);
+        std::vector<double> branch_lens = as<std::vector<double>>(
+            phylo_info["branch_lens"]);
+        arma::Mat<uint64> edges = as<arma::Mat<uint64>>(phylo_info["edges"]);
+        std::vector<std::string> tip_labels = as<std::vector<std::string>>(
+            phylo_info["labels"]);
+        if (branch_lens.size() != edges.n_rows) {
+            err_msg = "\nBranch lengths and edges don't have the same ";
+            err_msg += "size on chromosome " + std::to_string(i+1) + " and tree ";
+            err_msg += std::to_string(j+1);
+            throw(Rcpp::exception(err_msg.c_str(), false));
+        }
+        if (branch_lens.size() == 0) {
+            err_msg = "\nEmpty tree on chromosome " + std::to_string(i+1);
+            err_msg += " and tree " + std::to_string(j+1);
+            throw(Rcpp::exception(err_msg.c_str(), false));
+        }
+        uint64 start = as<uint64>(phylo_info["start"]);
+        uint64 end = as<uint64>(phylo_info["end"]);
+        end++; // note: non-inclusive end point
+        if (end <= start) {
+            err_msg = "\nEnd position <= start position on chromosome ";
+            err_msg += std::to_string(i+1) + " and tree " + std::to_string(j+1);
+            throw(Rcpp::exception(err_msg.c_str(), false));
+        }
+
+        n_bases_[j] = end - start;
+        branch_lens_[j] = branch_lens;
+        edges_[j] = edges;
+        tip_labels_[j] = tip_labels;
+    }
+
+
+    *this = PhyloOneChrom(n_bases_, branch_lens_, edges_, tip_labels_, mutator_base);
+
+    return;
+
+}
+
+
+
+
+
+PhyloInfo::PhyloInfo(const List& genome_phylo_info, const TreeMutator& mutator_base) {
+
+    uint64 n_chroms = genome_phylo_info.size();
+
+    if (n_chroms == 0) {
+        throw(Rcpp::exception("\nEmpty list provided for phylogenetic information.",
+                              false));
+    }
+
+    phylo_one_chroms = std::vector<PhyloOneChrom>(n_chroms);
+
+    // Fill tree and mutator info (i.e., everything but variant info):
+    for (uint64 i = 0; i < n_chroms; i++) {
+        phylo_one_chroms[i].fill_tree_mutator(genome_phylo_info, i, mutator_base);
+    }
+}
+
+
+
+
+
+
 
 /*
  Evolve all chromosomes along trees.
@@ -235,13 +321,13 @@ SEXP evolve_across_trees(
     TreeMutator mutator(Q, U, Ui, L, invariant,
                         insertion_rates, deletion_rates, epsilon, pi_tcag);
 
+
     // Create phylogenetic tree object:
     if (genome_phylo_info.size() == 0) {
         throw(Rcpp::exception("\nEmpty list provided for phylogenetic information.",
                               false));
     }
     PhyloInfo phylo_info(genome_phylo_info, mutator);
-
 
     /*
      Now that we have tree(s) and mutator info, we can create variants:

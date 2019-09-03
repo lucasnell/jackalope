@@ -57,6 +57,12 @@ sub_info <- R6Class(
             private$r_gammas <- info_list$gammas
             private$r_invariant <- info_list$invariant
             private$r_model <- info_list$model
+
+            # Revert these back to list (from arma::field which adds dims):
+            dim(private$r_Q) <- NULL
+            dim(private$r_U) <- NULL
+            dim(private$r_Ui) <- NULL
+            dim(private$r_L) <- NULL
         },
 
         print = function(...) {

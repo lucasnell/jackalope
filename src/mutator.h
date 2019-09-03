@@ -97,13 +97,13 @@ struct TreeMutator {
         return status;
     }
 
-    void new_rates(const uint64& begin,
-                   const uint64& end,
-                   std::deque<uint8>& rate_inds,
-                   pcg64& eng,
-                   Progress& prog_bar) {
-        subs.new_rates(begin, end, rate_inds, eng, prog_bar);
-        return;
+    int new_rates(const uint64& begin,
+                  const uint64& end,
+                  std::deque<uint8>& rate_inds,
+                  pcg64& eng,
+                  Progress& prog_bar) {
+        int status = subs.new_rates(begin, end, rate_inds, eng, prog_bar);
+        return status;
     }
 
 };

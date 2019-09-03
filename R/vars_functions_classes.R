@@ -292,6 +292,8 @@ vars_gtrees_info <- R6Class(
 
             cat("< Gene trees variant-creation info >\n")
             cat(sprintf("# Number of chromosomes: %i\n", length(private$r_trees)))
+            cat(sprintf("# Number of variants: %i\n",
+                        length(ape::read.tree(text = private$r_trees[[1]][1])$tip.label)))
             cat(sprintf("# Total trees: %i\n", sum(sapply(private$r_trees, length))))
 
             invisible(self)

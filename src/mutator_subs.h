@@ -27,7 +27,7 @@ using namespace Rcpp;
 
 
 // All return 4 except for TCAG
-std::vector<uint8> make_char_map() {
+inline std::vector<uint8> make_char_map() {
     std::vector<uint8> out(256, 4);
     std::string bases = "TCAG";
     for (uint32 i = 0; i < 4; i++) out[bases[i]] = i;
@@ -61,7 +61,7 @@ public:
                const std::vector<arma::vec>& L_,
                const double& invariant_)
         : Q(Q_), U(U_), Ui(Ui_), L(L_), invariant(invariant_),
-          samplers(Q_.size(), std::vector<AliasSampler>(4))),
+          samplers(Q_.size(), std::vector<AliasSampler>(4)),
           Pt(Q_.size(), arma::mat(4,4)),
           site_var(((invariant_ > 0) || (Q_.size() > 1)) ? true : false) {
 #ifdef __JACKALOPE_DEBUG

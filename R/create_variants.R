@@ -80,6 +80,8 @@ fill_coal_mat_pos <- function(sites_mats, chrom_sizes) {
 trees_to_var_set <- function(trees_info, reference, sub, ins, del, epsilon,
                              n_threads, show_progress) {
 
+    names(trees_info) <- paste(1:length(trees_info) - 1)
+
     variants_ptr <- evolve_across_trees(reference$ptr(),
                                         trees_info,
                                         sub$Q(),
@@ -159,9 +161,10 @@ process_phy <- function(phy, ordered_tip_labels) {
     phy_info <- list(branch_lens = phy$edge.length,
                      edges = phy$edge,
                      labels = phy$tip.label,
-                     start = 0, end = 0)
+                     start = 0,
+                     end = 0)
 
-    return(new_phy)
+    return(phy_info)
 
 }
 
@@ -184,10 +187,13 @@ phylo_to_info_list <- function(phy) {
     }
 
     # Ordered tip labels:
-    otl <- phy[[1]]$tip.labels
+    otl <- phy[[1]]$tip.label
 
     # Phylogeny information:
-    phylo_info <- lapply(phy, process_phy, ordered_tip_labels = otl)
+    phylo_info <- lapply(phy, jackalope:::process_phy, ordered_tip_labels = otl)
+
+    # For proper nestedness:
+    phylo_info <- lapply(phylo_info, function(x) list(x))
 
     return(phylo_info)
 }
@@ -628,13 +634,13 @@ create_variants <- function(reference,
     # Do checks and organize molecular-evolution info
     # (or `NULL` if `sub` was not provided):
     # -----------------*
-    if (!is.null(sub) && !is_type(sub, "sub_info")) {
+    if (!is.null(sub) && !inherits(sub, "sub_info")) {
         err_msg("create_variants", "sub", "NULL or a \"sub_info\" object")
     }
-    if (!is.null(ins) && !is_type(ins, "indel_info")) {
+    if (!is.null(ins) && !inherits(ins, "indel_info")) {
         err_msg("create_variants", "ins", "NULL or a \"indel_info\" object")
     }
-    if (!is.null(del) && !is_type(del, "indel_info")) {
+    if (!is.null(del) && !inherits(del, "indel_info")) {
         err_msg("create_variants", "del", "NULL or a \"indel_info\" object")
     }
     if (!single_number(epsilon) || epsilon <= 0 || epsilon >= 1) {
@@ -661,6 +667,7 @@ create_variants <- function(reference,
                                sub = sub,
                                ins = ins,
                                del = del,
+                               epsilon = epsilon,
                                n_threads = n_threads,
                                show_progress = show_progress)
 

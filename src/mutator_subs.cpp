@@ -172,10 +172,10 @@ inline int SubMutator::subs_before_muts(uint64& pos,
 
         for (; pos < end; pos++) {
 
-            uint8& rate_i(rate_inds[(pos-begin)]);
+            const uint8& rate_i(rate_inds[(pos-begin)]);
             if (rate_i > max_gamma) continue; // this is an invariant region
 
-            uint8 c_i = char_map[var_chrom.ref_chrom->nucleos[pos]];
+            const uint8& c_i(char_map[var_chrom.ref_chrom->nucleos[pos]]);
             if (c_i > 3) continue; // only changing T, C, A, or G
             AliasSampler& samp(samplers[rate_i][c_i]);
             uint8 nt_i = samp.sample(eng);
@@ -190,7 +190,7 @@ inline int SubMutator::subs_before_muts(uint64& pos,
 
         for (; pos < end; pos++) {
 
-            uint8 c_i = char_map[var_chrom.ref_chrom->nucleos[pos]];
+            const uint8& c_i(char_map[var_chrom.ref_chrom->nucleos[pos]]);
             if (c_i > 3) continue; // only changing T, C, A, or G
             AliasSampler& samp(samplers.front()[c_i]);
             uint8 nt_i = samp.sample(eng);
@@ -231,13 +231,13 @@ inline int SubMutator::subs_after_muts(uint64& pos,
 
         while (pos < end) {
 
-            uint8& rate_i(rate_inds[(pos-begin)]);
+            const uint8& rate_i(rate_inds[(pos-begin)]);
             if (rate_i > max_gamma) {
                 pos++;
                 continue; // this is an invariant region
             }
 
-            uint8 c_i = char_map[var_chrom.get_char_(pos, mut_i)];
+            const uint8& c_i(char_map[var_chrom.get_char_(pos, mut_i)]);
             if (c_i > 3) {
                 pos++;
                 continue; // only changing T, C, A, or G
@@ -256,7 +256,7 @@ inline int SubMutator::subs_after_muts(uint64& pos,
 
         while (pos < end) {
 
-            uint8 c_i = char_map[var_chrom.get_char_(pos, mut_i)];
+            const uint8& c_i(char_map[var_chrom.get_char_(pos, mut_i)]);
             if (c_i > 3) {
                 pos++;
                 continue; // only changing T, C, A, or G
@@ -323,26 +323,26 @@ int SubMutator::add_subs(const double& b_len,
     if (mutations.empty() || ((end-1) < mutations.front().new_pos)) {
 
         uint64 pos = begin;
-        status = subs_before_muts(pos, end, max_gamma, bases, rate_inds, var_chrom,
+        status = subs_before_muts(pos, begin, end, max_gamma, bases, rate_inds, var_chrom,
                                   eng, prog_bar);
         return status;
 
     }
 
 
-    // Index to the first Mutation object not past `start` position:
-    uint64 mut_i = var_chrom.get_mut_(start);
+    // Index to the first Mutation object not past `begin` position:
+    uint64 mut_i = var_chrom.get_mut_(begin);
     // Current position
-    pos = start;
+    uint64 pos = begin;
 
     /*
-     If `start` is before the first mutation (resulting in `mut_i == mutations.size()`),
+     If `begin` is before the first mutation (resulting in `mut_i == mutations.size()`),
      we must process any nucleotides before the first mutation.
      */
     if (mut_i == mutations.size()) {
 
         mut_i = 0;
-        status = subs_before_muts(pos, mutations[mut_i].new_pos, max_gamma, bases,
+        status = subs_before_muts(pos, begin, mutations[mut_i].new_pos, max_gamma, bases,
                                   rate_inds, var_chrom, eng, prog_bar);
 
         if (status < 0) return status;
@@ -357,7 +357,7 @@ int SubMutator::add_subs(const double& b_len,
     uint64 next_mut_i = mut_i + 1;
     while (pos < end && next_mut_i < mutations.size()) {
 
-        status = subs_after_muts(pos, end, mutations[next_mut_i].new_pos, mut_i,
+        status = subs_after_muts(pos, begin, end, mutations[next_mut_i].new_pos, mut_i,
                                  max_gamma, bases, rate_inds, var_chrom, eng, prog_bar);
 
         if (status < 0) return status;
@@ -367,8 +367,8 @@ int SubMutator::add_subs(const double& b_len,
     }
 
     // Now taking care of nucleotides after the last Mutation
-    status = subs_after_muts(pos, end, var_chrom.chrom_size, mut_i, max_gamma, bases,
-                             rate_inds, var_chrom, eng, prog_bar);
+    status = subs_after_muts(pos, begin, end, var_chrom.chrom_size, mut_i,
+                             max_gamma, bases, rate_inds, var_chrom, eng, prog_bar);
 
     return status;
 

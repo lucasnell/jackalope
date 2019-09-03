@@ -267,14 +267,14 @@ List sub_TN93_cpp(std::vector<double> pi_tcag,
     discrete_gamma(gammas, gamma_k, gamma_shape);
 
     // Extract info for P(t)
-    std::vector<arma::mat> Q_vec(gammas.size());
-    std::vector<arma::mat> U(gammas.size());
-    std::vector<arma::mat> Ui(gammas.size());
-    std::vector<arma::vec> L(gammas.size());
+    arma::field<arma::mat> Q_vec(gammas.size());
+    arma::field<arma::mat> U(gammas.size());
+    arma::field<arma::mat> Ui(gammas.size());
+    arma::field<arma::vec> L(gammas.size());
     for (uint32 i = 0; i < gammas.size(); i++) {
-        Q_vec[i] = Q * gammas[i];
+        Q_vec(i) = Q * gammas[i];
         Pt_info(pi_tcag, alpha_1 * gammas[i], alpha_2 * gammas[i], beta * gammas[i],
-                U[i], Ui[i], L[i]);
+                U(i), Ui(i), L(i));
     }
 
     List out = List::create(_["Q"] = Q_vec,
@@ -336,13 +336,13 @@ List sub_GTR_cpp(std::vector<double> pi_tcag,
     discrete_gamma(gammas, gamma_k, gamma_shape);
 
     // Extract info for P(t)
-    std::vector<arma::mat> Q_vec(gammas.size());
-    std::vector<arma::mat> U(gammas.size());
-    std::vector<arma::mat> Ui(gammas.size());
-    std::vector<arma::vec> L(gammas.size());
+    arma::field<arma::mat> Q_vec(gammas.size());
+    arma::field<arma::mat> U(gammas.size());
+    arma::field<arma::mat> Ui(gammas.size());
+    arma::field<arma::vec> L(gammas.size());
     for (uint32 i = 0; i < gammas.size(); i++) {
-        Q_vec[i] = Q * gammas[i];
-        Pt_info(Q_vec[i], U[i], Ui[i], L[i]);
+        Q_vec(i) = Q * gammas[i];
+        Pt_info(Q_vec(i), U(i), Ui(i), L(i));
     }
 
     List out = List::create(_["Q"] = Q_vec,
@@ -422,10 +422,10 @@ List sub_UNREST_cpp(arma::mat Q,
     discrete_gamma(gammas, gamma_k, gamma_shape);
 
     // Info for P(t) calculation
-    std::vector<arma::mat> Q_vec(gammas.size());
-    std::vector<arma::mat> U;
-    std::vector<arma::mat> Ui;
-    std::vector<arma::vec> L;
+    arma::field<arma::mat> Q_vec(gammas.size());
+    arma::field<arma::mat> U;
+    arma::field<arma::mat> Ui;
+    arma::field<arma::vec> L;
     // Check to see if the eigenvalues are real:
     arma::cx_vec L_;
     arma::cx_mat U_;
@@ -434,16 +434,15 @@ List sub_UNREST_cpp(arma::mat Q,
         arma::all(arma::vectorise(arma::imag(U_)) == 0);
     // If they're real, fill U, Ui, and L using GTR method.
     // Otherwise they'll be empty, so we'll use repeated matrix squaring.
-
     if (all_real) {
-        U.resize(gammas.size());
-        Ui.resize(gammas.size());
-        L.resize(gammas.size());
+        U.set_size(gammas.size());
+        Ui.set_size(gammas.size());
+        L.set_size(gammas.size());
     }
     for (uint32 i = 0; i < gammas.size(); i++) {
-        Q_vec[i] = Q * gammas[i];
+        Q_vec(i) = Q * gammas[i];
         if (all_real) {
-            Pt_info(Q_vec[i], U[i], Ui[i], L[i]);
+            Pt_info(Q_vec(i), U(i), Ui(i), L(i));
         }
     }
 

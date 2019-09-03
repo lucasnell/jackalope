@@ -82,7 +82,7 @@ void jlp_shuffle(T& input, pcg64& eng) {
         uint32 j = runif_01(eng) * i;
         std::swap(input[i-1], input[j]);
     }
-    return input;
+    return;
 }
 
 
