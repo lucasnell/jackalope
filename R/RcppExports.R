@@ -239,39 +239,32 @@ write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, show
     invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix, show_progress))
 }
 
-#' Changing P(t) matrix with new branch lengths or times.
-#'
-#'
-#' Equivalent to `U %*% diag(exp(L * t)) %*% Ui`
+#' Add substitutions within a range (pos to (end-1)) before any mutations have occurred.
 #'
 #' @noRd
 #'
 NULL
 
-#' Calculating P(t) using repeated matrix squaring, for UNREST model only.
+#' Add substitutions within a range (pos to (end-1)) after mutations have occurred.
 #'
 #' @noRd
 #'
 NULL
 
-make_mutation_sampler_base <- function(Q, pi_tcag, insertion_rates, deletion_rates, region_size) {
-    .Call(`_jackalope_make_mutation_sampler_base`, Q, pi_tcag, insertion_rates, deletion_rates, region_size)
-}
-
-#' Create XPtr to nested vector of PhyloTree objects from phylogeny information.
+#' Add substitutions for a whole chromosome or just part of one.
+#'
+#' Here, `end` is NOT inclusive, so can be == var_chrom.size()
 #'
 #' @noRd
 #'
-phylo_info_to_trees <- function(genome_phylo_info) {
-    .Call(`_jackalope_phylo_info_to_trees`, genome_phylo_info)
-}
+NULL
 
 #' Evolve all chromosomes in a reference genome.
 #'
 #' @noRd
 #'
-evolve_chroms <- function(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress) {
-    .Call(`_jackalope_evolve_chroms`, ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress)
+evolve_across_trees <- function(ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, n_threads, show_progress) {
+    .Call(`_jackalope_evolve_across_trees`, ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, n_threads, show_progress)
 }
 
 #' Add mutations manually from R.
@@ -523,14 +516,6 @@ add_deletion <- function(var_set_ptr, var_ind, chrom_ind, size_, new_pos_) {
     invisible(.Call(`_jackalope_add_deletion`, var_set_ptr, var_ind, chrom_ind, size_, new_pos_))
 }
 
-#' Get a rate for given start and end points of a VarChrom.
-#'
-#' @noRd
-#'
-test_rate <- function(start, end, var_ind, chrom_ind, var_set_ptr, sampler_base_ptr, gamma_mat_) {
-    .Call(`_jackalope_test_rate`, start, end, var_ind, chrom_ind, var_set_ptr, sampler_base_ptr, gamma_mat_)
-}
-
 #' Incomplete Gamma function
 #'
 #' @noRd
@@ -546,7 +531,8 @@ NULL
 #'
 NULL
 
-#' Create a vector of Gamma values for a discrete Gamma distribution
+#' Create a vector of Gamma values for a discrete Gamma distribution.
+#'
 #'
 #' @noRd
 #'

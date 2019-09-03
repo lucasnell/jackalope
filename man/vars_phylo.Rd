@@ -34,6 +34,7 @@ information for each reference chromosome.
 This function organizes higher-level information for creating variants from
 phylogenetic tree(s) output as \code{phylo} or \code{multiPhylo} objects
 (both from the \code{ape} package) or NEWICK files.
+Note that all phylogenetic trees must be rooted and binary.
 If using this function, I encourage you to cite \code{ape}. For citation
 information, see output from \code{citation("ape")}.
 }

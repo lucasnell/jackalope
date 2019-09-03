@@ -317,45 +317,26 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// make_mutation_sampler_base
-SEXP make_mutation_sampler_base(const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, const uint64& region_size);
-RcppExport SEXP _jackalope_make_mutation_sampler_base(SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP region_sizeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type insertion_rates(insertion_ratesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
-    Rcpp::traits::input_parameter< const uint64& >::type region_size(region_sizeSEXP);
-    rcpp_result_gen = Rcpp::wrap(make_mutation_sampler_base(Q, pi_tcag, insertion_rates, deletion_rates, region_size));
-    return rcpp_result_gen;
-END_RCPP
-}
-// phylo_info_to_trees
-SEXP phylo_info_to_trees(const List& genome_phylo_info);
-RcppExport SEXP _jackalope_phylo_info_to_trees(SEXP genome_phylo_infoSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List& >::type genome_phylo_info(genome_phylo_infoSEXP);
-    rcpp_result_gen = Rcpp::wrap(phylo_info_to_trees(genome_phylo_info));
-    return rcpp_result_gen;
-END_RCPP
-}
-// evolve_chroms
-SEXP evolve_chroms(SEXP& ref_genome_ptr, SEXP& sampler_base_ptr, SEXP& phylo_info_ptr, const std::vector<arma::mat>& gamma_mats, uint64 n_threads, const bool& show_progress);
-RcppExport SEXP _jackalope_evolve_chroms(SEXP ref_genome_ptrSEXP, SEXP sampler_base_ptrSEXP, SEXP phylo_info_ptrSEXP, SEXP gamma_matsSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
+// evolve_across_trees
+SEXP evolve_across_trees(SEXP& ref_genome_ptr, const List& genome_phylo_info, const std::vector<arma::mat>& Q, const std::vector<arma::mat>& U, const std::vector<arma::mat>& Ui, const std::vector<arma::vec>& L, const double& invariant, const arma::vec& insertion_rates, const arma::vec& deletion_rates, const double& epsilon, const std::vector<double>& pi_tcag, uint64 n_threads, const bool& show_progress);
+RcppExport SEXP _jackalope_evolve_across_trees(SEXP ref_genome_ptrSEXP, SEXP genome_phylo_infoSEXP, SEXP QSEXP, SEXP USEXP, SEXP UiSEXP, SEXP LSEXP, SEXP invariantSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP epsilonSEXP, SEXP pi_tcagSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP& >::type ref_genome_ptr(ref_genome_ptrSEXP);
-    Rcpp::traits::input_parameter< SEXP& >::type sampler_base_ptr(sampler_base_ptrSEXP);
-    Rcpp::traits::input_parameter< SEXP& >::type phylo_info_ptr(phylo_info_ptrSEXP);
-    Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type gamma_mats(gamma_matsSEXP);
+    Rcpp::traits::input_parameter< const List& >::type genome_phylo_info(genome_phylo_infoSEXP);
+    Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type U(USEXP);
+    Rcpp::traits::input_parameter< const std::vector<arma::mat>& >::type Ui(UiSEXP);
+    Rcpp::traits::input_parameter< const std::vector<arma::vec>& >::type L(LSEXP);
+    Rcpp::traits::input_parameter< const double& >::type invariant(invariantSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type insertion_rates(insertion_ratesSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type deletion_rates(deletion_ratesSEXP);
+    Rcpp::traits::input_parameter< const double& >::type epsilon(epsilonSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
     Rcpp::traits::input_parameter< uint64 >::type n_threads(n_threadsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
-    rcpp_result_gen = Rcpp::wrap(evolve_chroms(ref_genome_ptr, sampler_base_ptr, phylo_info_ptr, gamma_mats, n_threads, show_progress));
+    rcpp_result_gen = Rcpp::wrap(evolve_across_trees(ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, n_threads, show_progress));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -758,23 +739,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// test_rate
-double test_rate(const uint64& start, const uint64& end, const uint64& var_ind, const uint64& chrom_ind, SEXP var_set_ptr, SEXP sampler_base_ptr, const arma::mat& gamma_mat_);
-RcppExport SEXP _jackalope_test_rate(SEXP startSEXP, SEXP endSEXP, SEXP var_indSEXP, SEXP chrom_indSEXP, SEXP var_set_ptrSEXP, SEXP sampler_base_ptrSEXP, SEXP gamma_mat_SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const uint64& >::type start(startSEXP);
-    Rcpp::traits::input_parameter< const uint64& >::type end(endSEXP);
-    Rcpp::traits::input_parameter< const uint64& >::type var_ind(var_indSEXP);
-    Rcpp::traits::input_parameter< const uint64& >::type chrom_ind(chrom_indSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type var_set_ptr(var_set_ptrSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type sampler_base_ptr(sampler_base_ptrSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type gamma_mat_(gamma_mat_SEXP);
-    rcpp_result_gen = Rcpp::wrap(test_rate(start, end, var_ind, chrom_ind, var_set_ptr, sampler_base_ptr, gamma_mat_));
-    return rcpp_result_gen;
-END_RCPP
-}
 // sub_TN93_cpp
 List sub_TN93_cpp(std::vector<double> pi_tcag, const double& alpha_1, const double& alpha_2, const double& beta, const double& gamma_shape, const uint32& gamma_k, const double& invariant);
 RcppExport SEXP _jackalope_sub_TN93_cpp(SEXP pi_tcagSEXP, SEXP alpha_1SEXP, SEXP alpha_2SEXP, SEXP betaSEXP, SEXP gamma_shapeSEXP, SEXP gamma_kSEXP, SEXP invariantSEXP) {
@@ -868,9 +832,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_coal_file_sites", (DL_FUNC) &_jackalope_coal_file_sites, 1},
     {"_jackalope_read_vcfr", (DL_FUNC) &_jackalope_read_vcfr, 6},
     {"_jackalope_write_vcf_cpp", (DL_FUNC) &_jackalope_write_vcf_cpp, 5},
-    {"_jackalope_make_mutation_sampler_base", (DL_FUNC) &_jackalope_make_mutation_sampler_base, 5},
-    {"_jackalope_phylo_info_to_trees", (DL_FUNC) &_jackalope_phylo_info_to_trees, 1},
-    {"_jackalope_evolve_chroms", (DL_FUNC) &_jackalope_evolve_chroms, 6},
+    {"_jackalope_evolve_across_trees", (DL_FUNC) &_jackalope_evolve_across_trees, 13},
     {"_jackalope_print_ref_genome", (DL_FUNC) &_jackalope_print_ref_genome, 1},
     {"_jackalope_print_var_set", (DL_FUNC) &_jackalope_print_var_set, 1},
     {"_jackalope_make_ref_genome", (DL_FUNC) &_jackalope_make_ref_genome, 1},
@@ -904,7 +866,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_add_substitution", (DL_FUNC) &_jackalope_add_substitution, 5},
     {"_jackalope_add_insertion", (DL_FUNC) &_jackalope_add_insertion, 5},
     {"_jackalope_add_deletion", (DL_FUNC) &_jackalope_add_deletion, 5},
-    {"_jackalope_test_rate", (DL_FUNC) &_jackalope_test_rate, 7},
     {"_jackalope_sub_TN93_cpp", (DL_FUNC) &_jackalope_sub_TN93_cpp, 7},
     {"_jackalope_sub_GTR_cpp", (DL_FUNC) &_jackalope_sub_GTR_cpp, 5},
     {"_jackalope_sub_UNREST_cpp", (DL_FUNC) &_jackalope_sub_UNREST_cpp, 4},

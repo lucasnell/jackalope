@@ -37,6 +37,7 @@ each gene tree.
 \description{
 This function organizes higher-level information for creating variants from
 gene trees output from coalescent simulations.
+Note that all gene trees must be rooted and binary.
 }
 \details{
 Using the \code{obj} argument is designed after the \code{trees} fields in the output from

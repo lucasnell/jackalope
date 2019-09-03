@@ -41,7 +41,7 @@ If this parameter is \code{NA}, among-site variability is not included.
 Defaults to \code{NA}.}
 
 \item{gamma_k}{The number of categories to split the discrete Gamma distribution
-into. Values must be an integer in the range \code{[2,256]}.
+into. Values must be an integer in the range \code{[2,255]}.
 This argument is ignored if \code{gamma_shape} is \code{NA}.
 Defaults to \code{5}.}
 
