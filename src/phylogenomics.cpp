@@ -154,16 +154,8 @@ void PhyloOneChrom::fill_tree_mutator(const List& genome_phylo_info,
             err_msg += " and tree " + std::to_string(j+1);
             throw(Rcpp::exception(err_msg.c_str(), false));
         }
-        uint64 start = as<uint64>(phylo_info["start"]);
-        uint64 end = as<uint64>(phylo_info["end"]);
-        end++; // note: non-inclusive end point
-        if (end <= start) {
-            err_msg = "\nEnd position <= start position on chromosome ";
-            err_msg += std::to_string(i+1) + " and tree " + std::to_string(j+1);
-            throw(Rcpp::exception(err_msg.c_str(), false));
-        }
 
-        n_bases_[j] = end - start;
+        n_bases_[j] = as<uint64>(phylo_info["n_bases"]);
         branch_lens_[j] = branch_lens;
         edges_[j] = edges;
         tip_labels_[j] = tip_labels;

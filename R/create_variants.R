@@ -80,8 +80,6 @@ fill_coal_mat_pos <- function(sites_mats, chrom_sizes) {
 trees_to_var_set <- function(trees_info, reference, sub, ins, del, epsilon,
                              n_threads, show_progress) {
 
-    names(trees_info) <- paste(1:length(trees_info) - 1)
-
     variants_ptr <- evolve_across_trees(reference$ptr(),
                                         trees_info,
                                         sub$Q(),
@@ -108,6 +106,8 @@ trees_to_var_set <- function(trees_info, reference, sub, ins, del, epsilon,
 #'
 #' It also standardizes tip indices so that in all phylogenies, edge-matrix indices refer
 #' to the same tips.
+#'
+#' It does NOT create a sensible `n_bases` field!
 #'
 #' Used in `phylo_to_info_list` and `process_coal_tree_string`
 #'
@@ -161,8 +161,7 @@ process_phy <- function(phy, ordered_tip_labels) {
     phy_info <- list(branch_lens = phy$edge.length,
                      edges = phy$edge,
                      labels = phy$tip.label,
-                     start = 0,
-                     end = 0)
+                     n_bases = 0)
 
     return(phy_info)
 
@@ -179,7 +178,9 @@ process_phy <- function(phy, ordered_tip_labels) {
 #'
 #' @noRd
 #'
-phylo_to_info_list <- function(phy) {
+phylo_to_info_list <- function(phy, reference) {
+
+    chrom_sizes <- reference$sizes()
 
     if (!inherits(phy, "list") || !all(sapply(phy, inherits, what = "phylo"))) {
         stop("\nThe `phy` argument to the internal function `phylo_to_info_list` should ",
@@ -191,6 +192,7 @@ phylo_to_info_list <- function(phy) {
 
     # Phylogeny information:
     phylo_info <- lapply(phy, jackalope:::process_phy, ordered_tip_labels = otl)
+    for (i in 1:length(phylo_info)) phylo_info[[i]][["n_bases"]] <- chrom_sizes[i]
 
     # For proper nestedness:
     phylo_info <- lapply(phylo_info, function(x) list(x))
@@ -241,10 +243,9 @@ process_coal_tree_string <- function(str, chrom_size, ordered_tip_labels) {
                  "the size of the chromosome.", call. = FALSE)
         }
     } else {
-        sizes_ <- 1
+        sizes_ <- chrom_size
     }
-    ends <- cumsum(sizes_) - 1
-    starts <- c(0, utils::head(ends, -1) + 1)
+
 
     phylo_ <- ape::read.tree(text = str)
     # If no recombination (so only one phylo per chromosome),
@@ -256,10 +257,7 @@ process_coal_tree_string <- function(str, chrom_size, ordered_tip_labels) {
 
     out <- lapply(phylo_, process_phy, ordered_tip_labels = ordered_tip_labels)
 
-    for (i in 1:length(phylo_)) {
-        out[[i]][["start"]] <- starts[i]
-        out[[i]][["end"]] <- ends[i]
-    }
+    for (i in 1:length(phylo_)) out[[i]][["n_bases"]] <- sizes_[i]
 
     return(out)
 }
@@ -420,7 +418,7 @@ to_var_set__vars_phylo_info <- function(x, reference, sub, ins, del, epsilon,
              "run `create_variants` again.")
     }
 
-    trees_info <- phylo_to_info_list(phy)
+    trees_info <- phylo_to_info_list(phy, reference)
 
     var_set_ptr <- trees_to_var_set(trees_info, reference, sub, ins, del, epsilon,
                                     n_threads, show_progress)
@@ -466,7 +464,7 @@ to_var_set__vars_theta_info <- function(x,
 
     phy <- rep(list(phy), n_chroms)
 
-    trees_info <- phylo_to_info_list(phy)
+    trees_info <- phylo_to_info_list(phy, reference$sizes())
 
     var_set_ptr <- trees_to_var_set(trees_info, reference, sub, ins, del, epsilon,
                                     n_threads, show_progress)
