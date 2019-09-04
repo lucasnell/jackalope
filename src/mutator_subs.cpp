@@ -297,10 +297,20 @@ int SubMutator::add_subs(const double& b_len,
                          Progress& prog_bar) {
 
 #ifdef __JACKALOPE_DEBUG
-    if (b_len < 0) stop("b_len < 0 in add_subs");
-    if (begin >= var_chrom.size()) stop("begin >= var_chrom.size() in add_subs");
-    if (end > var_chrom.size()) stop("end > var_chrom.size() in add_subs");
+    if (b_len < 0) {
+        Rcout << std::endl << b_len << std::endl;
+        stop("b_len < 0 in add_indels");
+    }
+    if (begin >= var_chrom.size()) {
+        Rcout << std::endl << begin << ' ' << var_chrom.size() << std::endl;
+        stop("begin >= var_chrom.size() in add_indels");
+    }
+    if (end > var_chrom.size()) {
+        Rcout << std::endl << end << ' ' << var_chrom.size() << std::endl;
+        stop("end > var_chrom.size() in add_indels");
+    }
 #endif
+
 
     if ((b_len == 0) || (end == begin)) return 0;
 
