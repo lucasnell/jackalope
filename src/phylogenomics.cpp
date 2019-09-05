@@ -305,6 +305,7 @@ SEXP evolve_across_trees(
         const std::vector<arma::mat>& U,
         const std::vector<arma::mat>& Ui,
         const std::vector<arma::vec>& L,
+        const std::vector<double>& gammas,
         const double& invariant,
         const arma::vec& insertion_rates,
         const arma::vec& deletion_rates,
@@ -326,7 +327,7 @@ SEXP evolve_across_trees(
 
 
     // Now create mutation sampler:
-    TreeMutator mutator(Q, U, Ui, L, invariant,
+    TreeMutator mutator(Q, U, Ui, L, gammas, invariant,
                         insertion_rates, deletion_rates, epsilon, pi_tcag);
 
 

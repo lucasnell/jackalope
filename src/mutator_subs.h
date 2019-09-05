@@ -49,6 +49,7 @@ public:
     std::vector<arma::mat> U;
     std::vector<arma::mat> Ui;
     std::vector<arma::vec> L;
+    std::vector<double> gammas;
     double invariant;
     const std::vector<uint8> char_map = make_char_map();
     std::vector<std::vector<AliasSampler>> samplers;
@@ -60,8 +61,9 @@ public:
                const std::vector<arma::mat>& U_,
                const std::vector<arma::mat>& Ui_,
                const std::vector<arma::vec>& L_,
+               const std::vector<double>& gammas_,
                const double& invariant_)
-        : Q(Q_), U(U_), Ui(Ui_), L(L_), invariant(invariant_),
+        : Q(Q_), U(U_), Ui(Ui_), L(L_), gammas(gammas_), invariant(invariant_),
           samplers(Q_.size(), std::vector<AliasSampler>(4)),
           Pt(Q_.size(), arma::mat(4,4)),
           site_var(((invariant_ > 0) || (Q_.size() > 1)) ? true : false) {
@@ -76,7 +78,8 @@ public:
 
 
     SubMutator(const SubMutator& other)
-        : Q(other.Q), U(other.U), Ui(other.Ui), L(other.L), invariant(other.invariant),
+        : Q(other.Q), U(other.U), Ui(other.Ui), L(other.L), gammas(other.gammas),
+          invariant(other.invariant),
           samplers(other.samplers), Pt(other.Pt),
           site_var(other.site_var) {};
 
@@ -85,6 +88,7 @@ public:
         U = other.U;
         Ui = other.Ui;
         L = other.L;
+        gammas = other.gammas;
         invariant = other.invariant;
         samplers = other.samplers;
         Pt = other.Pt;
