@@ -93,6 +93,9 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
          Now mutate along branch length:
          */
         b_len = tree.branch_lens[i];
+#ifdef __JACKALOPE_DIAGNOSTICS
+        Rcout << std::endl << "b_len = " << b_len << std::endl;
+#endif
         status = mutator.mutate(b_len, *chrom2, eng, prog_bar,
                                 tree.start, tree.ends[b2], rates[b2]);
         if (status < 0) return status;
@@ -253,6 +256,10 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
 
         if (status_code != 0) continue;
 
+#ifdef __JACKALOPE_DIAGNOSTICS
+        Rcout << std::endl << "> chrom = " << i << std::endl;
+#endif
+
         PhyloOneChrom& chrom_phylo(phylo_one_chroms[i]);
 
         // Set values for variant info:
@@ -307,8 +314,16 @@ SEXP evolve_across_trees(
         const bool& show_progress) {
 
 
+#ifdef __JACKALOPE_DIAGNOSTICS
+    if (n_threads > 1) {
+        n_threads = 1;
+        Rcpp::warning("\nCannot do diagnostics with n_threads > 1, so changing it to 1.");
+    }
+#else
     // Check that # threads isn't too high and change to 1 if not using OpenMP:
     thread_check(n_threads);
+#endif
+
 
     // Now create mutation sampler:
     TreeMutator mutator(Q, U, Ui, L, invariant,

@@ -40,6 +40,10 @@ int SubMutator::new_rates(const uint64& begin,
 
     uint32 iters = 0;
 
+#ifdef __JACKALOPE_DIAGNOSTICS
+    Rcout << std::endl << "rates for " << begin << ' ' << end << ':' << std::endl;
+#endif
+
     if (invariant <= 0) {
 
         if (N0 > N) rate_inds.resize(N);
@@ -47,10 +51,16 @@ int SubMutator::new_rates(const uint64& begin,
         for (uint64 i = 0; i < rate_inds.size(); i++) {
             rate_inds[i] = static_cast<uint8>(runif_01(eng) * n);
             if (interrupt_check(iters, prog_bar)) return -1;
+#ifdef __JACKALOPE_DIAGNOSTICS
+            Rcout << rate_inds[i] << ' ';
+#endif
         }
         while (rate_inds.size() < N) {
             rate_inds.push_back(static_cast<uint8>(runif_01(eng) * n));
             if (interrupt_check(iters, prog_bar)) return -1;
+#ifdef __JACKALOPE_DIAGNOSTICS
+            Rcout << rate_inds.back() << ' ';
+#endif
         }
 
     } else {
@@ -62,15 +72,25 @@ int SubMutator::new_rates(const uint64& begin,
                 rate_inds[i] = static_cast<uint8>(runif_01(eng) * n);
             } else rate_inds[i] = n;
             if (interrupt_check(iters, prog_bar)) return -1;
+#ifdef __JACKALOPE_DIAGNOSTICS
+            Rcout << rate_inds[i] << ' ';
+#endif
         }
         while (rate_inds.size() < N) {
             if (runif_01(eng) > invariant) {
                 rate_inds.push_back(static_cast<uint8>(runif_01(eng) * n));
             } else rate_inds.push_back(n);
             if (interrupt_check(iters, prog_bar)) return -1;
+#ifdef __JACKALOPE_DIAGNOSTICS
+            Rcout << rate_inds.back() << ' ';
+#endif
         }
 
     }
+
+#ifdef __JACKALOPE_DIAGNOSTICS
+    Rcout << std::endl;
+#endif
 
     return 0;
 }
@@ -256,6 +276,7 @@ inline int SubMutator::subs_after_muts(uint64& pos,
     return 0;
 
 }
+
 
 
 

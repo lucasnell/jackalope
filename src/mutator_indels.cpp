@@ -97,8 +97,12 @@ int IndelMutator::add_indels(double b_len,
 
     uint32 iters = 0;
 
-    while (b_len > 0) {
+#ifdef __JACKALOPE_DIAGNOSTICS
+    double csize;
+    arma::vec n_muts;
+#endif
 
+    while (b_len > 0) {
 
         /*
          ----------------
@@ -107,6 +111,11 @@ int IndelMutator::add_indels(double b_len,
          */
 
         calc_tau(b_len, var_chrom);
+
+#ifdef __JACKALOPE_DIAGNOSTICS
+        csize = var_chrom.size();
+        n_muts.zeros(rates_tau.n_elem);
+#endif
 
         // Reset `events` between rounds:
         if (events.size() > 0) events.clear();
@@ -118,6 +127,11 @@ int IndelMutator::add_indels(double b_len,
             distr.param(std::poisson_distribution<uint32>::param_type(rates_tau(i)));
 
             uint32 n_events = distr(eng);
+
+#ifdef __JACKALOPE_DIAGNOSTICS
+            n_muts(i) += n_events;
+#endif
+
             for (uint32 j = 0; j < n_events; j++) events.push_back(i);
 
             if (interrupt_check(iters, prog_bar, 10)) return -1;
@@ -166,7 +180,15 @@ int IndelMutator::add_indels(double b_len,
 
         }
 
+#ifdef __JACKALOPE_DIAGNOSTICS
+        Rcout << std::endl;
+        Rcout << csize << ' ' << this->tau << ' ';
+        for (double& n : n_muts) Rcout << n << ' ';
+        Rcout << std::endl;
+#endif
+
     }
+
 
     return 0;
 }
