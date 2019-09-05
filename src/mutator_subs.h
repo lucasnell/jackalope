@@ -128,7 +128,8 @@ private:
                                 const std::deque<uint8>& rate_inds,
                                 VarChrom& var_chrom,
                                 pcg64& eng,
-                                Progress& prog_bar);
+                                Progress& prog_bar,
+                                uint32& iters);
     inline int subs_after_muts(uint64& pos,
                                const uint64& begin,
                                const uint64& end1,
@@ -139,7 +140,8 @@ private:
                                const std::deque<uint8>& rate_inds,
                                VarChrom& var_chrom,
                                pcg64& eng,
-                               Progress& prog_bar);
+                               Progress& prog_bar,
+                               uint32& iters);
 
 
 
