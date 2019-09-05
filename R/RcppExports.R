@@ -239,26 +239,6 @@ write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, show
     invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, var_set_ptr, sample_matrix, show_progress))
 }
 
-#' Add substitutions within a range (pos to (end-1)) before any mutations have occurred.
-#'
-#' @noRd
-#'
-NULL
-
-#' Add substitutions within a range (pos to (end-1)) after mutations have occurred.
-#'
-#' @noRd
-#'
-NULL
-
-#' Add substitutions for a whole chromosome or just part of one.
-#'
-#' Here, `end` is NOT inclusive, so can be == var_chrom.size()
-#'
-#' @noRd
-#'
-NULL
-
 #' Evolve all chromosomes in a reference genome.
 #'
 #' @noRd
