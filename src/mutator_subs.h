@@ -113,9 +113,6 @@ public:
     void insertion_adjust(const uint64& size, uint64 pos, const uint64& begin,
                           std::deque<uint8>& rate_inds, pcg64& eng);
 
-    // // For writing to a file (used internally for testing):
-    // void write_gammas(FileUncomp& file);
-
 
 private:
 
