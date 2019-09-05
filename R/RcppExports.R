@@ -243,8 +243,8 @@ write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, show
 #'
 #' @noRd
 #'
-evolve_across_trees <- function(ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, gammas, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, n_threads, show_progress) {
-    .Call(`_jackalope_evolve_across_trees`, ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, gammas, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, n_threads, show_progress)
+evolve_across_trees <- function(ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, n_threads, show_progress) {
+    .Call(`_jackalope_evolve_across_trees`, ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, n_threads, show_progress)
 }
 
 #' Add mutations manually from R.

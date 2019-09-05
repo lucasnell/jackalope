@@ -606,8 +606,9 @@ void VarChrom::add_substitution(const char& nucleo, const uint64& new_pos_) {
     // `mutations.size()` is returned above if `new_pos_` is before the
     // first Mutation object or if `mutations` is empty
     if (mut_i == mutations.size()) {
+        std::string nucleos_(1, nucleo);
         // (below, notice that new position and old position are the same)
-        Mutation new_mut(new_pos_, new_pos_, nucleo);
+        Mutation new_mut(new_pos_, new_pos_, nucleos_);
         mutations.push_front(new_mut);
     } else {
         uint64 ind = new_pos_ - mutations[mut_i].new_pos;
