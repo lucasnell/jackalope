@@ -1,4 +1,6 @@
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 #include <RcppArmadillo.h>
 #include <cmath>  // pow, log, exp
 #include <pcg/pcg_random.hpp> // pcg prng

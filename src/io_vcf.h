@@ -1,6 +1,8 @@
 #ifndef __JACKALOPE_VCF_IO_H
 #define __JACKALOPE_VCF_IO_H
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 #include <RcppArmadillo.h>
 #include <vector>               // vector class
 #include <string>               // string class

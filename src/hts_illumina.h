@@ -2,6 +2,7 @@
 #define __JACKALOPE_ILLUMINA_H
 
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <vector>  // vector class

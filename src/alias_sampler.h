@@ -2,6 +2,8 @@
 #define __JACKALOPE_ALIAS_SAMPLER_H
 
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 /*
  ********************************************************
 

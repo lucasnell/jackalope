@@ -1,8 +1,6 @@
 
 
-#include "mutator_subs.h" // SubMutator and debugging preprocessor directives
-
-
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <pcg/pcg_random.hpp> // pcg prng
@@ -11,6 +9,7 @@
 #include <string>  // string class
 
 
+#include "mutator_subs.h" // SubMutator
 #include "var_classes.h"  // Var* classes
 #include "pcg.h"  // runif_01
 #include "util.h"  // interrupt_check

@@ -2,6 +2,8 @@
 # define __JACKALOPE_STR_MANIP_H
 
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 #include <RcppArmadillo.h>
 #include <iostream>
 #include <vector>

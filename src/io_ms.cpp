@@ -2,6 +2,8 @@
  Read info from ms-style output files
  */
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 #include <RcppArmadillo.h>
 
 #include <fstream>

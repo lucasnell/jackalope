@@ -2,12 +2,12 @@
 #define __JACKALOPE_MUTATOR_SUBS_H
 
 
-#include "jackalope_types.h" // integer types and debugging preprocessor directives
 
 /*
  This defines classes for adding substitutions.
  */
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <pcg/pcg_random.hpp> // pcg prng
@@ -16,6 +16,7 @@
 #include <string>  // string class
 
 
+#include "jackalope_types.h" // integer types
 #include "var_classes.h"  // Var* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling

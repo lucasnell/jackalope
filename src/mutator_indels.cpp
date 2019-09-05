@@ -1,10 +1,11 @@
 
-#include "mutator_indels.h"  // IndelMutator and debugging preprocessor directives
 
 /*
  This defines classes for adding insertions and deletions.
  */
 
+
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <pcg/pcg_random.hpp> // pcg prng
@@ -15,6 +16,7 @@
 #include <random>  // poisson_distribution
 
 
+#include "mutator_indels.h"  // IndelMutator
 #include "var_classes.h"  // Var* classes
 #include "pcg.h"  // runif_01()
 #include "util.h"  // interrupt_check

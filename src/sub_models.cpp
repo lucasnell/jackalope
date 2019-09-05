@@ -10,12 +10,13 @@
  ******************************************************************************
  */
 
-#include "jackalope_types.h" // integer types and debugging preprocessor directives
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
-
 #include <cmath> // exp, pow, remainder
+
+#include "jackalope_types.h" // integer types
 #include "util.h" // str_stop
 
 

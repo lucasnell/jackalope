@@ -7,6 +7,7 @@
  evolving chromosomes along trees.
  */
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <pcg/pcg_random.hpp> // pcg prng

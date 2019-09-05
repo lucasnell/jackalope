@@ -1,9 +1,6 @@
 #ifndef __JACKALOPE_TYPES_H
 #define __JACKALOPE_TYPES_H
 
-#define __JACKALOPE_DEBUG // comment out when done debugging
-
-
 
 /*
  ********************************************************
@@ -13,9 +10,7 @@
  ********************************************************
  */
 
-#ifndef __JACKALOPE_DEBUG
-#define ARMA_NO_DEBUG
-#endif
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <cstdint>
@@ -23,7 +18,6 @@
 #include <string>
 #include <deque>
 #include "pcg/pcg_extras.hpp"  // pcg 128-bit integer type
-
 
 
 
