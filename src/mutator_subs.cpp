@@ -16,6 +16,7 @@
 #include "alias_sampler.h"  // alias method of sampling
 
 
+using namespace Rcpp;
 
 
 
@@ -41,55 +42,34 @@ int SubMutator::new_rates(const uint64& begin,
 
     if (invariant <= 0) {
 
-        if (N0 < N) {
+        if (N0 > N) rate_inds.resize(N);
 
-            for (uint64 i = 0; i < N0; i++) {
-                rate_inds[i] = static_cast<uint8>(runif_01(eng) * n);
-                if (interrupt_check(iters, prog_bar)) return -1;
-            }
-            for (uint64 i = N0; i < N; i++) {
-                rate_inds.push_back(static_cast<uint8>(runif_01(eng) * n));
-                if (interrupt_check(iters, prog_bar)) return -1;
-            }
-
-        } else {
-
-            if (N0 > N) rate_inds.resize(N);
-            for (uint64 i = 0; i < N; i++) {
-                rate_inds[i] = static_cast<uint8>(runif_01(eng) * n);
-                if (interrupt_check(iters, prog_bar)) return -1;
-            }
-
+        for (uint64 i = 0; i < rate_inds.size(); i++) {
+            rate_inds[i] = static_cast<uint8>(runif_01(eng) * n);
+            if (interrupt_check(iters, prog_bar)) return -1;
+        }
+        while (rate_inds.size() < N) {
+            rate_inds.push_back(static_cast<uint8>(runif_01(eng) * n));
+            if (interrupt_check(iters, prog_bar)) return -1;
         }
 
     } else {
 
-        if (N0 < N) {
+        if (N0 > N) rate_inds.resize(N);
 
-            for (uint64 i = 0; i < N0; i++) {
-                if (runif_01(eng) > invariant) {
-                    rate_inds[i] = static_cast<uint8>(runif_01(eng) * n);
-                } else rate_inds[i] = n;
-                if (interrupt_check(iters, prog_bar)) return -1;
-            }
-            for (uint64 i = N0; i < N; i++) {
-                if (runif_01(eng) > invariant) {
-                    rate_inds.push_back(static_cast<uint8>(runif_01(eng) * n));
-                } else rate_inds.push_back(n);
-                if (interrupt_check(iters, prog_bar)) return -1;
-            }
-
-        } else {
-
-            if (N0 > N) rate_inds.resize(N);
-            for (uint64 i = 0; i < N; i++) {
-                if (runif_01(eng) > invariant) {
-                    rate_inds[i] = static_cast<uint8>(runif_01(eng) * n);
-                } else rate_inds[i] = n;
-                if (interrupt_check(iters, prog_bar)) return -1;
-            }
-
+        for (uint64 i = 0; i < rate_inds.size(); i++) {
+            if (runif_01(eng) > invariant) {
+                rate_inds[i] = static_cast<uint8>(runif_01(eng) * n);
+            } else rate_inds[i] = n;
+            if (interrupt_check(iters, prog_bar)) return -1;
         }
+        while (rate_inds.size() < N) {
+            if (runif_01(eng) > invariant) {
+                rate_inds.push_back(static_cast<uint8>(runif_01(eng) * n));
+            } else rate_inds.push_back(n);
+            if (interrupt_check(iters, prog_bar)) return -1;
+        }
+
     }
 
     return 0;
@@ -298,15 +278,15 @@ int SubMutator::add_subs(const double& b_len,
 #ifdef __JACKALOPE_DEBUG
     if (b_len < 0) {
         Rcout << std::endl << b_len << std::endl;
-        stop("b_len < 0 in add_indels");
+        stop("b_len < 0 in add_subs");
     }
     if (begin >= var_chrom.size()) {
         Rcout << std::endl << begin << ' ' << var_chrom.size() << std::endl;
-        stop("begin >= var_chrom.size() in add_indels");
+        stop("begin >= var_chrom.size() in add_subs");
     }
     if (end > var_chrom.size()) {
         Rcout << std::endl << end << ' ' << var_chrom.size() << std::endl;
-        stop("end > var_chrom.size() in add_indels");
+        stop("end > var_chrom.size() in add_subs");
     }
 #endif
 
