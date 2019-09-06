@@ -112,7 +112,6 @@ struct Mutation {
  */
 
 // (These classes will later need access to private members of VarChrom.)
-class LocationSampler;
 class SubMutator;
 
 
@@ -124,7 +123,6 @@ class SubMutator;
 
 class VarChrom {
 
-    friend LocationSampler;
     friend SubMutator;
 
 public:

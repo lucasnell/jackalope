@@ -232,6 +232,7 @@ inline int SubMutator::subs_after_muts(uint64& pos,
     uint64 end = std::min(end1, end2);
 
     std::deque<Mutation>& mutations(var_chrom.mutations);
+    const std::string& reference(var_chrom.ref_chrom->nucleos);
 
     sint64 ind;
     uint64 old_pos_;
@@ -254,8 +255,8 @@ inline int SubMutator::subs_after_muts(uint64& pos,
             }
             AliasSampler& samp(samplers[rate_i][c_i]);
             nt_i = samp.sample(eng);
+            const char& nucleo(bases[nt_i]);
             if (nt_i != c_i) {
-                // var_chrom.add_substitution(bases[nt_i], pos);
                 ind = pos - mutations[mut_i].new_pos; // <-- should always be >= 0
                 // If `pos` is within the mutation chromosome:
                 if (ind <= mutations[mut_i].size_modifier) {
@@ -264,17 +265,16 @@ inline int SubMutator::subs_after_muts(uint64& pos,
                      delete the Mutation object from the `mutations` deque.
                      Otherwise, adjust the mutation's sequence.
                      */
-                    // if ((mutations[mut_i].size_modifier == 0) &&
-                    //     (ref_chrom->nucleos[mutations[mut_i].old_pos] == nucleo)) {
-                    //     mutations.erase(mutations.begin() + mut_i);
-                    // } else
-                    mutations[mut_i].nucleos[ind] = bases[nt_i];
+                    if ((mutations[mut_i].size_modifier == 0) &&
+                        (reference[mutations[mut_i].old_pos] == nucleo)) {
+                        mutations.erase(mutations.begin() + mut_i);
+                    } else mutations[mut_i].nucleos[ind] = nucleo;
                 } else {
                     // If `pos` is in the reference chromosome following the mutation:
                     old_pos_ = ind + (mutations[mut_i].old_pos -
                         mutations[mut_i].size_modifier);
                     mutations.insert(mutations.begin() + mut_i + 1,
-                                     Mutation(old_pos_, pos, bases[nt_i]));
+                                     Mutation(old_pos_, pos, nucleo));
                 }
 
             }
@@ -296,20 +296,19 @@ inline int SubMutator::subs_after_muts(uint64& pos,
             }
             AliasSampler& samp(samplers.front()[c_i]);
             nt_i = samp.sample(eng);
+            const char& nucleo(bases[nt_i]);
             if (nt_i != c_i) {
-                // var_chrom.add_substitution(bases[nt_i], pos);
                 ind = pos - mutations[mut_i].new_pos; // <-- should always be >= 0
                 if (ind <= mutations[mut_i].size_modifier) {
-                    // if ((mutations[mut_i].size_modifier == 0) &&
-                    //     (ref_chrom->nucleos[mutations[mut_i].old_pos] == nucleo)) {
-                    //     mutations.erase(mutations.begin() + mut_i);
-                    // } else
-                    mutations[mut_i].nucleos[ind] = bases[nt_i];
+                    if ((mutations[mut_i].size_modifier == 0) &&
+                        (reference[mutations[mut_i].old_pos] == nucleo)) {
+                        mutations.erase(mutations.begin() + mut_i);
+                    } else mutations[mut_i].nucleos[ind] = nucleo;
                 } else {
                     old_pos_ = ind + (mutations[mut_i].old_pos -
                         mutations[mut_i].size_modifier);
                     mutations.insert(mutations.begin() + mut_i + 1,
-                                     Mutation(old_pos_, pos, bases[nt_i]));
+                                     Mutation(old_pos_, pos, nucleo));
                 }
             }
 
@@ -345,6 +344,7 @@ int SubMutator::add_subs(const double& b_len,
                          VarChrom& var_chrom,
                          pcg64& eng,
                          Progress& prog_bar) {
+
 
 #ifdef __JACKALOPE_DEBUG
     if (b_len < 0) {
