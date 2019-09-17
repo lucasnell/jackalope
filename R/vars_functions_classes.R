@@ -78,7 +78,7 @@ vars_vcf_info <- R6Class(
             err <- function(a, b) {
                 msg <- paste0("\nWhen initializing a vars_vcf_info object, the ",
                               "argument `", a, "` should be ", b, ". ",
-                              "Please only create these objects using the vars_vcf",
+                              "Please only create these objects using the vars_vcf ",
                               "function, NOT using vars_vcf_info$new().")
                 stop(msg, call. = FALSE)
             }
@@ -89,7 +89,7 @@ vars_vcf_info <- R6Class(
             if (!inherits(pos, "integer")) err("pos", "an integer vector")
             if (!inherits(chrom, "character")) err("chrom", "a character vector")
             if (!inherits(var_names, "character")) err("var_names", "a character vector")
-            if (!inherits(ref_chrom, "a character vector")) {
+            if (!inherits(ref_chrom, "character")) {
                 err("ref_chrom", "a character vector")
             }
             if (!is_type(print_names, "logical", 1L)) {

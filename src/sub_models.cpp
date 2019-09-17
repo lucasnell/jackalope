@@ -166,6 +166,23 @@ void Pt_info(const arma::mat& Q,
              arma::mat& Ui,
              arma::vec& L) {
 
+    // Special case when all Q are zeros:
+    if (arma::all(arma::vectorise(Q) == 0)) {
+
+        U = {{1,    2,      0.0,    0.5},
+            {1,     2,      0.0,    -0.5},
+            {1,     -2,     0.5,    0.0},
+            {1,     -2,     -0.5,   0.0}};
+        Ui = {{0.250,     0.250,      0.250,      0.250},
+            {0.125,     0.125,      -0.125,     -0.125},
+            {0.000,     0.000,      1.000,      -1.000},
+            {1.000,     -1.000,     0.000,       0.000}};
+
+        L = arma::vec(4, arma::fill::zeros);
+
+        return;
+    }
+
 
     arma::cx_vec L_;
     arma::cx_mat U_;

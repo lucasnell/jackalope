@@ -174,37 +174,37 @@ sub_arg_checks <- function(mod_name,
 
     # Single-number parameters:
     if (!is.null(alpha_1) && !single_number(alpha_1, 0)) {
-        err_msg(paste0("sub_", mod_name), "alpha_1", "a single number > 0.")
+        err_msg(paste0("sub_", mod_name), "alpha_1", "a single number > 0")
     }
     if (!is.null(alpha_2) && !single_number(alpha_2, 0)) {
-        err_msg(paste0("sub_", mod_name), "alpha_2", "a single number > 0.")
+        err_msg(paste0("sub_", mod_name), "alpha_2", "a single number > 0")
     }
     if (!is.null(beta) && !single_number(beta, 0)) {
-        err_msg(paste0("sub_", mod_name), "beta", "a single number > 0.")
+        err_msg(paste0("sub_", mod_name), "beta", "a single number > 0")
     }
     if (!is.null(lambda) && !single_number(lambda, 0)) {
-        err_msg(paste0("sub_", mod_name), "lambda", "a single number > 0.")
+        err_msg(paste0("sub_", mod_name), "lambda", "a single number > 0")
     }
     if (!is.null(alpha) && !single_number(alpha, 0)) {
-        err_msg(paste0("sub_", mod_name), "alpha", "a single number > 0.")
+        err_msg(paste0("sub_", mod_name), "alpha", "a single number > 0")
     }
     if (!is.null(kappa) && !single_number(kappa, 0)) {
-        err_msg(paste0("sub_", mod_name), "kappa", "a single number > 0.")
+        err_msg(paste0("sub_", mod_name), "kappa", "a single number > 0")
     }
 
 
     # Site-heterogeneity parameters:
-    if (!is.null(gamma_shape) && !(single_number(gamma_shape) || gamma_shape <= 0)) {
+    if (!is.null(gamma_shape) && !(single_number(gamma_shape) && gamma_shape > 0)) {
         err_msg(paste0("sub_", mod_name), "gamma_shape",
-                "NULL or a single number > 0.")
+                "NULL or a single number > 0")
     }
     if (!single_integer(gamma_k, 2, 255)) {
         err_msg(paste0("sub_", mod_name), "gamma_k",
-             "a single integer in range [2, 255].", call. = FALSE)
+                "a single integer in range [2, 255]")
     }
     if (!single_number(invariant, 0) || invariant >= 1) {
         err_msg(paste0("sub_", mod_name), "invariant",
-             "a single number >= 0 and < 1.", call. = FALSE)
+                "a single number >= 0 and < 1")
     }
 
 
@@ -458,6 +458,7 @@ sub_GTR <- function(pi_tcag, abcdef, gamma_shape = NULL, gamma_k = 5, invariant 
 
     sub_arg_checks("GTR", pi_tcag = pi_tcag, abcdef = abcdef,
                    gamma_shape = gamma_shape, gamma_k = gamma_k, invariant = invariant)
+    if (is.null(gamma_shape)) gamma_shape <- 0
 
     info_list <- sub_GTR_cpp(pi_tcag, abcdef, gamma_shape, gamma_k, invariant)
 

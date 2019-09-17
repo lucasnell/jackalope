@@ -234,7 +234,7 @@ vars_vcf <- function(fn, print_names = FALSE, ...) {
     vcf <- do.call(vcfR::read.vcfR, read_args)
 
     chrom <- vcf@fix[,"CHROM"]
-    pos <- as.integer(vcf@fix[,"POS"] - 1)  # -1 is to convert to C++ indices
+    pos <- as.integer(vcf@fix[,"POS"]) - 1L  # -1 is to convert to C++ indices
     ref_chrom <- vcf@fix[,"REF"]
     alts <- strsplit(vcf@fix[,"ALT"], ",")
 

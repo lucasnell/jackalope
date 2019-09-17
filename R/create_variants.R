@@ -453,8 +453,10 @@ to_var_set__vars_theta_info <- function(x,
     # ------------*
     # Indel rates (same for each nucleotide):
     indel <- sum(ins$rates() * 0.25) + sum(del$rates() * 0.25)
+    # Average substution rate for each nucleotide (goes across Gammas):
+    avg_subs <- colMeans(do.call(rbind, lapply(sub$Q(), diag)))
     # Average mutation rate among all nucleotides:
-    mu <- sum({rowSums(sub$Q()) + indel} * sub$pi_tcag())
+    mu <- sum({avg_subs + indel} * sub$pi_tcag())
     # ------------*
     # So if we know theta and mu, then...
     # ------------*
@@ -464,7 +466,7 @@ to_var_set__vars_theta_info <- function(x,
 
     phy <- rep(list(phy), n_chroms)
 
-    trees_info <- phylo_to_info_list(phy, reference$sizes())
+    trees_info <- phylo_to_info_list(phy, reference)
 
     var_set_ptr <- trees_to_var_set(trees_info, reference, sub, ins, del, epsilon,
                                     n_threads, show_progress)

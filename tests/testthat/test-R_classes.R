@@ -1,8 +1,8 @@
 
-context("Testing R class methods and info")
-
 # library(jackalope)
 # library(testthat)
+
+context("Testing R class methods and info")
 
 
 n_chroms <- 10L
