@@ -81,6 +81,8 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
 
         // Update rate indices:
         rates[b2] = rates[b1];
+        // Update end points:
+        tree.ends[b2] = tree.ends[b1];
 
         /*
          Update VarChrom objects for this branch.
@@ -171,6 +173,35 @@ void PhyloOneChrom::fill_tree_mutator(const List& genome_phylo_info,
     return;
 
 }
+
+
+
+
+
+/*
+ Evolve all trees.
+ */
+int PhyloOneChrom::evolve(pcg64& eng,
+                          Progress& prog_bar) {
+
+
+#ifdef __JACKALOPE_DIAGNOSTICS
+    for (uint64 i = trees.size(); i > 0; i--) {
+        PhyloTree& tree(trees[i-1]);
+        Rcout << std::endl << "--- tree " << i << std::endl;
+        int status = one_tree(tree, eng, prog_bar);
+        if (status < 0) return status;
+    }
+#else
+    for (uint64 i = trees.size(); i > 0; i--) {
+        PhyloTree& tree(trees[i-1]);
+        int status = one_tree(tree, eng, prog_bar);
+        if (status < 0) return status;
+    }
+#endif
+    return 0;
+}
+
 
 
 

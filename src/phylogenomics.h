@@ -188,24 +188,7 @@ public:
     /*
      Evolve all trees.
      */
-    int evolve(pcg64& eng, Progress& prog_bar) {
-
-
-#ifdef __JACKALOPE_DIAGNOSTICS
-        for (uint64 i = 0; i < trees.size(); i++) {
-            PhyloTree& tree(trees[i]);
-            Rcout << std::endl << "--- tree " << i << std::endl;
-            int status = one_tree(tree, eng, prog_bar);
-            if (status < 0) return status;
-        }
-#else
-        for (PhyloTree& tree : trees) {
-            int status = one_tree(tree, eng, prog_bar);
-            if (status < 0) return status;
-        }
-#endif
-        return 0;
-    }
+    int evolve(pcg64& eng, Progress& prog_bar);
 
 
 
