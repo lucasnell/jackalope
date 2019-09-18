@@ -454,7 +454,7 @@ to_var_set__vars_theta_info <- function(x,
     # Indel rates (same for each nucleotide):
     indel <- sum(ins$rates() * 0.25) + sum(del$rates() * 0.25)
     # Average substution rate for each nucleotide (goes across Gammas):
-    avg_subs <- colMeans(do.call(rbind, lapply(sub$Q(), diag)))
+    avg_subs <- -1 * colMeans(do.call(rbind, lapply(sub$Q(), diag)))
     # Average mutation rate among all nucleotides:
     mu <- sum({avg_subs + indel} * sub$pi_tcag())
     # ------------*

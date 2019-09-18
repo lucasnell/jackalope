@@ -91,6 +91,9 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
          */
         (*chrom2) += (*chrom1);
 
+        // This happens if it's been totally deleted:
+        if (tree.start == tree.ends[b2]) continue;
+
         /*
          Now mutate along branch length:
          */

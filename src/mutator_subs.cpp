@@ -345,6 +345,7 @@ int SubMutator::add_subs(const double& b_len,
                          pcg64& eng,
                          Progress& prog_bar) {
 
+    if ((b_len == 0) || (end == begin)) return 0;
 
 #ifdef __JACKALOPE_DEBUG
     if (b_len < 0) {
@@ -361,8 +362,6 @@ int SubMutator::add_subs(const double& b_len,
     }
 #endif
 
-
-    if ((b_len == 0) || (end == begin)) return 0;
 
     if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
 
