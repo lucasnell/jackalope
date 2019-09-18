@@ -80,23 +80,7 @@ struct TreeMutator {
                Progress& prog_bar,
                const uint64& begin,
                uint64& end,
-               std::deque<uint8>& rate_inds)  {
-
-#ifdef __JACKALOPE_DEBUG
-        if (end < begin) stop("end < begin in TreeMutator.mutate");
-        if (end == begin) stop("end == begin in TreeMutator.mutate");
-#endif
-
-        int status;
-
-        status = indels.add_indels(b_len, begin, end, rate_inds, subs, var_chrom,
-                                   eng, prog_bar);
-        if (status < 0) return status;
-
-        status = subs.add_subs(b_len, begin, end, rate_inds, var_chrom, eng, prog_bar);
-
-        return status;
-    }
+               std::deque<uint8>& rate_inds);
 
     int new_rates(const uint64& begin,
                   const uint64& end,
