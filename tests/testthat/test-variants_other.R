@@ -1,16 +1,15 @@
 
 
-context("Testing basics of creating variants")
-
 # library(jackalope)
 # library(testthat)
 
+context("Testing basics of creating variants")
+
 
 arg_list <- list(reference = create_genome(3, 100),
-                 sub = sub_JC69(0.1))
+                 sub = sub_JC69(0.1, gamma_shape = 1))
 arg_list$ins <- indels(rate = 0.1, max_length = 10)
 arg_list$del <- indels(rate = 0.1, max_length = 10)
-arg_list$gamma_mats <- site_var(arg_list$reference, shape = 2, region_size = 10)
 
 
 cv <- function(vars_info, al = arg_list) {
@@ -19,27 +18,34 @@ cv <- function(vars_info, al = arg_list) {
     return(vars)
 }
 
-test_that("missing `sub` arg throws error", {
+test_that("nonsense `sub` arg throws error", {
     al2 <- arg_list
-    al2$sub <- NULL
+    al2$sub <- "sub"
     expect_error(cv(vars_theta(0.1, n_vars = 4), al2),
-                 regexp = paste("argument `sub` must be provided if you want to create",
-                                "variants using any method other than a VCF file"))
+                 regexp = "argument `sub` must be NULL or a \"sub_info\" object")
 })
+
+
+# E(# mutations) = (<mean sub rate> + 0.25 * {<ins. rate> + <del. rate>}) *
+#   <ref. genome size> * <# variants> * max(ape::node.depth.edgelength(<tree>))
 
 
 # vars_theta -----
 test_that("basics of vars_theta work", {
 
-    vars <- cv(vars_theta(0.1, n_vars = 4))
+    vi <- vars_theta(0.1, n_vars = 4)
+    vars <- cv(vi)
 
     expect_identical(vars$n_chroms(), arg_list$reference$n_chroms())
     expect_identical(vars$n_vars(), 4L)
 
     vars2 <- cv(vars_theta(4, n_vars = 4))
 
-    expect_gt(nrow(jackalope:::view_mutations(vars2$ptr(), 0)),
-              nrow(jackalope:::view_mutations(vars$ptr(), 0)))
+    muts <- jackalope:::view_mutations(vars$ptr(), 0)
+    muts2 <- jackalope:::view_mutations(vars2$ptr(), 0)
+
+    expect_gt(sum(abs(muts2$size_mod)) + sum(muts2$size_mod == 0),
+              sum(abs(muts$size_mod)) + sum(muts$size_mod == 0))
 
     expect_error(vars_theta("0.1", n_vars = 4),
                  regexp = "argument `theta` must be a single number >= 0.")
@@ -106,7 +112,6 @@ test_that("basic diagnostic functions work for variants", {
 
     expect_identical(length(Z$pos), as.integer(sum(sapply(c("sub", "ins", "del"),
                                                           function(x) sum(Z[[x]])))))
-    expect_identical(jackalope:::table_gammas(seq(9, 99, 10), 0:99), rep(10, 10))
 
 })
 
