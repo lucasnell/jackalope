@@ -15,10 +15,11 @@
 
 
 
-context("Testing creating variants from coalescent simulations")
 
 # library(jackalope)
 # library(testthat)
+
+context("Testing creating variants from coalescent simulations")
 
 # necessary objects -----
 
@@ -109,7 +110,7 @@ coal_obj_err_miss_tree_tip <- function(coal_obj, pkg) {
 
     expect_error(
         do.call(create_variants, arg_list_),
-        regexp = "all gene trees must have the same number of tips.",
+        regexp = "One or more trees have differing tip labels.",
         info = paste("returns error when improper gene trees provided -", pkg))
     invisible(NULL)
 }
@@ -245,7 +246,7 @@ test_that("variant creation works with ms-style file output", {
         arg_list_ <- c(list(vars_info = vars_gtrees(fn = .p("ms_out_err2"))), arg_list)
         do.call(create_variants, arg_list_)
     },
-    regexp = "all gene trees must have the same number of tips.",
+    regexp = "One or more trees have differing tip labels.",
     info = "returns error when improper gene trees provided - ms-file")
 
 
@@ -385,3 +386,4 @@ test_that("gene trees written properly by write_gtrees", {
     expect_identical(wr_str, og_str)
 
 })
+

@@ -191,7 +191,7 @@ phylo_to_info_list <- function(phy, reference) {
     otl <- phy[[1]]$tip.label
 
     # Phylogeny information:
-    phylo_info <- lapply(phy, jackalope:::process_phy, ordered_tip_labels = otl)
+    phylo_info <- lapply(phy, process_phy, ordered_tip_labels = otl)
     for (i in 1:length(phylo_info)) phylo_info[[i]][["n_bases"]] <- chrom_sizes[i]
 
     # For proper nestedness:
@@ -347,12 +347,17 @@ to_var_set__vars_ssites_info <- function(x, reference, sub, ins, del, epsilon,
 
     chrom_sizes <- reference$sizes()
 
+    # Ignoring among-site heterogeneity:
+    if (length(sub$Q()) > 1) {
+        Q <- Reduce(`+`, sub$Q()) / length(sub$Q())
+    } else Q <- sub$Q()[[1]]
+
     # Fill and check the position column in `x$mats()`
     mats <- fill_coal_mat_pos(x$mats(), chrom_sizes)
 
     variants_ptr <- add_ssites_cpp(reference$ptr(),
                                    mats,
-                                   sub$Q(),
+                                   Q,
                                    sub$pi_tcag(),
                                    ins$rates(),
                                    del$rates(),
