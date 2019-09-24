@@ -346,11 +346,55 @@ void VarChrom::fill_read(std::string& read,
  */
 char VarChrom::get_char_(const uint64& new_pos,
                             const uint64& mut_i) const {
+    // <<<<<<<<<<<<<<<<<<<<
+    if (new_pos >= this->chrom_size) stop("new_pos > this->chrom_size in get_char_");
+    // >>>>>>>>>>>>>>>>>>>>
     const Mutation& m(mutations[mut_i]);
     char out;
     uint64 ind = new_pos - m.new_pos;
     if (static_cast<sint64>(ind) > m.size_modifier) {
         ind += (m.old_pos - m.size_modifier);
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        if (ind >= ref_chrom->size()) {
+            sint64 sums = 0;
+            sint64 sums2 = 0;
+            for (uint64 j = 0; j < mutations.size(); j++) {
+                sums += mutations[j].size_modifier;
+            }
+            for (uint64 j = 0; j < mut_i; j++) {
+                sums2 += mutations[j].size_modifier;
+            }
+            Rcout << std::endl << std::endl;
+            Rcout << "new_pos = " << new_pos << std::endl;
+            Rcout << "ind = " << ind << std::endl;
+            Rcout << "mutations.size() = " << mutations.size() << std::endl;
+            Rcout << "total sums = " << sums << std::endl;
+            Rcout << "sums to mut_i = " << sums2 << std::endl;
+            Rcout << "m.old_pos = " << m.old_pos << std::endl;
+            Rcout << "m.new_pos = " << m.new_pos << std::endl;
+            Rcout << "m.size_modifier = " << m.size_modifier << std::endl;
+            Rcout << "mut_i = " << mut_i << std::endl;
+            Rcout << "ref_chrom->size() = " << ref_chrom->size() << std::endl;
+            Rcout << "this->chrom_size = " << this->chrom_size << std::endl;
+            uint64 ii = 1;
+            Rcout << std::endl;
+            while ((mut_i + ii) < mutations.size() && ii < 10) {
+                const Mutation& mm(mutations[mut_i+ii]);
+                Rcout << "m+" << ii << std::endl;
+                Rcout << "    .old_pos = " << mm.old_pos << std::endl;
+                Rcout << "    .new_pos = " << mm.new_pos << std::endl;
+                Rcout << "    .size_modifier = " << mm.size_modifier << std::endl;
+                ii++;
+            }
+            Rcout << std::endl;
+            stop("ind >= ref_chrom->size() in get_char_");
+        }
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         out = (*ref_chrom)[ind];
     } else {
         out = m[ind];
