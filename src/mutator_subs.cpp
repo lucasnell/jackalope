@@ -419,8 +419,6 @@ int SubMutator::add_subs(const double& b_len,
     }
 
 
-    Rcout << "1 "; // <<<<<<<<<
-
     // Current position
     uint64 pos = std::max(begin, mutations[mut_i].new_pos);
 
@@ -440,8 +438,6 @@ int SubMutator::add_subs(const double& b_len,
         ++mut_i;
         next_mut_i = mut_i + 1;
     }
-
-    Rcout << "2 "; // <<<<<<<<<
 
     // Now taking care of nucleotides after the last Mutation
     status = subs_after_muts(pos, begin, end, var_chrom.chrom_size, mut_i,

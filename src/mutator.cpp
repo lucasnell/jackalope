@@ -50,14 +50,11 @@ int TreeMutator::mutate(const double& b_len,
 
     int status;
 
-    Rcout << "indels "; // <<<<<<<<<
     status = indels.add_indels(b_len, begin, end, rate_inds, subs, var_chrom,
                                eng, prog_bar);
     if (status < 0) return status;
 
-    Rcout << "subs "; // <<<<<<<<<
     status = subs.add_subs(b_len, begin, end, rate_inds, var_chrom, eng, prog_bar);
-    Rcout << "done" << std::endl; // <<<<<<<<<
 
     return status;
 }
