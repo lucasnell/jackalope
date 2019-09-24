@@ -174,8 +174,8 @@ std::string VarChrom::get_chrom_full() const {
  the entire mutation deque multiple times.
  If end position is beyond the size of the chromosome, it changes `chunk_str` to the
  chromosome from the start to the chromosome end.
- If start position is beyond the size of the chromosome, it sets `mut` to `mutations.end()`
- and clears `chunk_str`.
+ If start position is beyond the size of the chromosome, it sets `mut` to
+ `mutations.end()` and clears `chunk_str`.
  ------------------
  */
 void VarChrom::set_chrom_chunk(std::string& chunk_str,
@@ -320,8 +320,8 @@ void VarChrom::fill_read(std::string& read,
     }
 
     /*
-     If we reach the last mutation, add nucleotides until `chrom_end` (remember that above,
-     I've made sure that `chrom_end < chrom_size`).
+     If we reach the last mutation, add nucleotides until `chrom_end`
+     (remember that above, I've made sure that `chrom_end < chrom_size`).
      */
     while (chrom_pos <= chrom_end) {
         read[read_pos] = get_char_(chrom_pos, mut_i);

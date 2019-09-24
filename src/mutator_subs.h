@@ -120,8 +120,12 @@ private:
 
     inline void adjust_mats(const double& b_len);
 
-    inline int subs_before_muts(uint64& pos,
-                                const uint64& begin,
+    inline void subs_before_muts__(const uint64& pos,
+                                   const std::string& bases,
+                                   const uint8& rate_i,
+                                   VarChrom& var_chrom,
+                                   pcg64& eng);
+    inline int subs_before_muts(const uint64& begin,
                                 const uint64& end,
                                 const uint8& max_gamma,
                                 const std::string& bases,
@@ -130,11 +134,18 @@ private:
                                 pcg64& eng,
                                 Progress& prog_bar,
                                 uint32& iters);
+
+    inline void subs_after_muts__(const uint64& pos,
+                                  uint64& mut_i,
+                                  const std::string& bases,
+                                  const uint8& rate_i,
+                                  VarChrom& var_chrom,
+                                  pcg64& eng);
     inline int subs_after_muts(uint64& pos,
                                const uint64& begin,
                                const uint64& end1,
                                const uint64& end2,
-                               const uint64& mut_i,
+                               uint64& mut_i,
                                const uint8& max_gamma,
                                const std::string& bases,
                                const std::deque<uint8>& rate_inds,

@@ -142,12 +142,34 @@ inline void SubMutator::adjust_mats(const double& b_len) {
 
 
 
+
+//' Most of the work for `subs_before_muts`
+//'
+//' @noRd
+//'
+inline void SubMutator::subs_before_muts__(const uint64& pos,
+                                           const std::string& bases,
+                                           const uint8& rate_i,
+                                           VarChrom& var_chrom,
+                                           pcg64& eng) {
+
+    const uint8& c_i(char_map[var_chrom.ref_chrom->nucleos[pos]]);
+    if (c_i > 3) return; // only changing T, C, A, or G
+    AliasSampler& samp(samplers[rate_i][c_i]);
+    uint8 nt_i = samp.sample(eng);
+    if (nt_i != c_i) {
+        var_chrom.mutations.push_front(Mutation(pos, pos, bases[nt_i]));
+    }
+
+    return;
+
+}
+
 //' Add substitutions within a range (pos to (end-1)) before any mutations have occurred.
 //'
 //' @noRd
 //'
-inline int SubMutator::subs_before_muts(uint64& pos,
-                                        const uint64& begin,
+inline int SubMutator::subs_before_muts(const uint64& begin,
                                         const uint64& end,
                                         const uint8& max_gamma,
                                         const std::string& bases,
@@ -166,23 +188,20 @@ inline int SubMutator::subs_before_muts(uint64& pos,
     }
 #endif
 
-
-    std::deque<Mutation>& mutations(var_chrom.mutations);
+    uint64 size = end - begin;
+    uint64 pos;
 
     if (site_var) {
 
-        for (; pos < end; pos++) {
+        // Going backwards from `end-1` to `begin` so we can add to front of `mutations`
+        for (uint64 i = 1; i <= size; i++) {
+
+            pos = end - i;
 
             const uint8& rate_i(rate_inds[(pos-begin)]);
             if (rate_i > max_gamma) continue; // this is an invariant region
 
-            const uint8& c_i(char_map[var_chrom.ref_chrom->nucleos[pos]]);
-            if (c_i > 3) continue; // only changing T, C, A, or G
-            AliasSampler& samp(samplers[rate_i][c_i]);
-            uint8 nt_i = samp.sample(eng);
-            if (nt_i != c_i) {
-                mutations.push_front(Mutation(pos, pos, bases[nt_i]));
-            }
+            subs_before_muts__(pos, bases, rate_i, var_chrom, eng);
 
             if (interrupt_check(iters, prog_bar)) return -1;
 
@@ -191,15 +210,13 @@ inline int SubMutator::subs_before_muts(uint64& pos,
 
     } else {
 
-        for (; pos < end; pos++) {
+        const uint8 rate_i = 0;
 
-            const uint8& c_i(char_map[var_chrom.ref_chrom->nucleos[pos]]);
-            if (c_i > 3) continue; // only changing T, C, A, or G
-            AliasSampler& samp(samplers.front()[c_i]);
-            uint8 nt_i = samp.sample(eng);
-            if (nt_i != c_i) {
-                mutations.push_front(Mutation(pos, pos, bases[nt_i]));
-            }
+        for (uint64 i = 1; i <= size; i++) {
+
+            pos = end - i;
+
+            subs_before_muts__(pos, bases, rate_i, var_chrom, eng);
 
             if (interrupt_check(iters, prog_bar)) return -1;
 
@@ -216,11 +233,62 @@ inline int SubMutator::subs_before_muts(uint64& pos,
 //'
 //' @noRd
 //'
+inline void SubMutator::subs_after_muts__(const uint64& pos,
+                                          uint64& mut_i,
+                                          const std::string& bases,
+                                          const uint8& rate_i,
+                                          VarChrom& var_chrom,
+                                          pcg64& eng) {
+
+
+    std::deque<Mutation>& mutations(var_chrom.mutations);
+    // const std::string& reference(var_chrom.ref_chrom->nucleos);
+
+    const uint8& c_i(char_map[var_chrom.get_char_(pos, mut_i)]);
+    if (c_i > 3) return; // only changing T, C, A, or G
+
+    AliasSampler& samp(samplers[rate_i][c_i]);
+    uint8 nt_i = samp.sample(eng);
+    const char& nucleo(bases[nt_i]);
+
+    if (nt_i != c_i) {
+        sint64 ind = pos - mutations[mut_i].new_pos; // <-- should always be >= 0
+        // If `pos` is within the mutation chromosome:
+        if (ind <= mutations[mut_i].size_modifier) {
+            /*
+             If this new mutation reverts a substitution back to reference state,
+             delete the Mutation object from the `mutations` deque.
+             Otherwise, adjust the mutation's sequence.
+             */
+            // if ((mutations[mut_i].size_modifier == 0) &&
+            //     (reference[mutations[mut_i].old_pos] == nucleo)) {
+            //     mutations.erase(mutations.begin() + mut_i);
+            // } else
+            mutations[mut_i].nucleos[ind] = nucleo;
+        } else {
+            // If `pos` is in the reference chromosome following the mutation:
+            uint64 old_pos_ = ind + (mutations[mut_i].old_pos -
+                mutations[mut_i].size_modifier);
+            mutations.insert(mutations.begin() + mut_i + 1,
+                             Mutation(old_pos_, pos, nucleo));
+            mut_i++;
+        }
+
+    }
+
+    return;
+
+}
+
+//' Add substitutions within a range (pos to (end-1)) after mutations have occurred.
+//'
+//' @noRd
+//'
 inline int SubMutator::subs_after_muts(uint64& pos,
                                        const uint64& begin,
                                        const uint64& end1,
                                        const uint64& end2,
-                                       const uint64& mut_i,
+                                       uint64& mut_i,
                                        const uint8& max_gamma,
                                        const std::string& bases,
                                        const std::deque<uint8>& rate_inds,
@@ -230,13 +298,6 @@ inline int SubMutator::subs_after_muts(uint64& pos,
                                        uint32& iters) {
 
     uint64 end = std::min(end1, end2);
-
-    std::deque<Mutation>& mutations(var_chrom.mutations);
-    const std::string& reference(var_chrom.ref_chrom->nucleos);
-
-    sint64 ind;
-    uint64 old_pos_;
-    uint8 nt_i;
 
     if (site_var) {
 
@@ -248,75 +309,23 @@ inline int SubMutator::subs_after_muts(uint64& pos,
                 continue; // this is an invariant region
             }
 
-            const uint8& c_i(char_map[var_chrom.get_char_(pos, mut_i)]);
-            if (c_i > 3) {
-                pos++;
-                continue; // only changing T, C, A, or G
-            }
-            AliasSampler& samp(samplers[rate_i][c_i]);
-            nt_i = samp.sample(eng);
-            const char& nucleo(bases[nt_i]);
-            if (nt_i != c_i) {
-                ind = pos - mutations[mut_i].new_pos; // <-- should always be >= 0
-                // If `pos` is within the mutation chromosome:
-                if (ind <= mutations[mut_i].size_modifier) {
-                    /*
-                     If this new mutation reverts a substitution back to reference state,
-                     delete the Mutation object from the `mutations` deque.
-                     Otherwise, adjust the mutation's sequence.
-                     */
-                    if ((mutations[mut_i].size_modifier == 0) &&
-                        (reference[mutations[mut_i].old_pos] == nucleo)) {
-                        mutations.erase(mutations.begin() + mut_i);
-                    } else mutations[mut_i].nucleos[ind] = nucleo;
-                } else {
-                    // If `pos` is in the reference chromosome following the mutation:
-                    old_pos_ = ind + (mutations[mut_i].old_pos -
-                        mutations[mut_i].size_modifier);
-                    mutations.insert(mutations.begin() + mut_i + 1,
-                                     Mutation(old_pos_, pos, nucleo));
-                }
-
-            }
-
+            subs_after_muts__(pos, mut_i, bases, rate_i, var_chrom, eng);
             ++pos;
-
             if (interrupt_check(iters, prog_bar)) return -1;
-        }
 
+        }
 
     } else {
 
+        const uint8 rate_i = 0;
+
         while (pos < end) {
 
-            const uint8& c_i(char_map[var_chrom.get_char_(pos, mut_i)]);
-            if (c_i > 3) {
-                pos++;
-                continue; // only changing T, C, A, or G
-            }
-            AliasSampler& samp(samplers.front()[c_i]);
-            nt_i = samp.sample(eng);
-            const char& nucleo(bases[nt_i]);
-            if (nt_i != c_i) {
-                ind = pos - mutations[mut_i].new_pos; // <-- should always be >= 0
-                if (ind <= mutations[mut_i].size_modifier) {
-                    if ((mutations[mut_i].size_modifier == 0) &&
-                        (reference[mutations[mut_i].old_pos] == nucleo)) {
-                        mutations.erase(mutations.begin() + mut_i);
-                    } else mutations[mut_i].nucleos[ind] = nucleo;
-                } else {
-                    old_pos_ = ind + (mutations[mut_i].old_pos -
-                        mutations[mut_i].size_modifier);
-                    mutations.insert(mutations.begin() + mut_i + 1,
-                                     Mutation(old_pos_, pos, nucleo));
-                }
-            }
-
+            subs_after_muts__(pos, mut_i, bases, rate_i, var_chrom, eng);
             ++pos;
-
             if (interrupt_check(iters, prog_bar)) return -1;
-        }
 
+        }
 
     }
 
@@ -373,7 +382,7 @@ int SubMutator::add_subs(const double& b_len,
     // To make code less clunky:
     std::deque<Mutation>& mutations(var_chrom.mutations);
 
-    int status;
+    int status = 0;
     uint32 iters = 0;
 
     /*
@@ -382,8 +391,7 @@ int SubMutator::add_subs(const double& b_len,
      */
     if (mutations.empty() || ((end-1) < mutations.front().new_pos)) {
 
-        uint64 pos = begin;
-        status = subs_before_muts(pos, begin, end, max_gamma, bases, rate_inds, var_chrom,
+        status = subs_before_muts(begin, end, max_gamma, bases, rate_inds, var_chrom,
                                   eng, prog_bar, iters);
         return status;
 
@@ -395,8 +403,6 @@ int SubMutator::add_subs(const double& b_len,
      on the variant chromosome.
      */
     uint64 mut_i = var_chrom.get_mut_(begin);
-    // Current position
-    uint64 pos = begin;
 
     /*
      If `begin` is before the first mutation (resulting in `mut_i == mutations.size()`),
@@ -405,13 +411,16 @@ int SubMutator::add_subs(const double& b_len,
     if (mut_i == mutations.size()) {
 
         mut_i = 0;
-        status = subs_before_muts(pos, begin, mutations[mut_i].new_pos, max_gamma, bases,
+        status = subs_before_muts(begin, mutations[mut_i].new_pos, max_gamma, bases,
                                   rate_inds, var_chrom, eng, prog_bar, iters);
 
         if (status < 0) return status;
 
     }
 
+
+    // Current position
+    uint64 pos = std::max(begin, mutations[mut_i].new_pos);
 
     /*
      Now, for each subsequent mutation except the last, process all nucleotides
@@ -427,7 +436,7 @@ int SubMutator::add_subs(const double& b_len,
         if (status < 0) return status;
 
         ++mut_i;
-        ++next_mut_i;
+        next_mut_i = mut_i + 1;
     }
 
     // Now taking care of nucleotides after the last Mutation
