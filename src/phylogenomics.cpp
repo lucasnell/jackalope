@@ -50,14 +50,12 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
     // For when/if user interrupts function:
     int status;
 
-    // Reset tree of samplers and VarChrom objects representing nodes and tips:
+    // Reset rates for tips:
     status = reset(tree, eng, prog_bar);
     if (status < 0) return status;
 
 
     uint64 b1, b2;
-    VarChrom* chrom1;
-    VarChrom* chrom2;
     double b_len;
 
     /*
@@ -72,24 +70,27 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
         b1 = tree.edges(i,0);
         b2 = tree.edges(i,1);
 
-        // VarChrom object that parent node refers to:
-        chrom1 = &node_chroms[(b1 - n_tips)];
-        // For whether chrom we're changing is a tip:
-        bool at_tip = b2 < n_tips;
         // Pointer to chrom we're changing:
-        chrom2 = (at_tip) ? tip_chroms[b2] : &node_chroms[(b2 - n_tips)];
+        VarChrom& chrom2(*(tip_chroms[b2]));
 
-        // Update rate indices:
-        rates[b2] = rates[b1];
-        // Update end points:
-        tree.ends[b2] = tree.ends[b1];
+        if (b1 != b2) {
+            // VarChrom object that parent node refers to:
+            VarChrom& chrom1(*(tip_chroms[b1]));
 
-        /*
-         Update VarChrom objects for this branch.
-         Because node VarChrom objects are emptied of mutations for each new tree,
-         the below works to add just the mutations related to this tree:
-         */
-        (*chrom2) += (*chrom1);
+            // Update rate indices:
+            rates[b2] = rates[b1];
+            // Update end points:
+            tree.ends[b2] = tree.ends[b1];
+
+            /*
+             Update VarChrom objects for this branch.
+             Because node VarChrom objects are emptied of mutations for each new tree,
+             the below works to add just the mutations related to this tree:
+             */
+            chrom2.add_to_front(chrom1, tree.end);
+
+        }
+
 
         // This happens if it's been totally deleted:
         if (tree.start == tree.ends[b2]) continue;
@@ -101,13 +102,13 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
 #ifdef __JACKALOPE_DIAGNOSTICS
         Rcout << std::endl << "b_len = " << b_len << std::endl;
 #endif
-        status = mutator.mutate(b_len, *chrom2, eng, prog_bar,
+        status = mutator.mutate(b_len, chrom2, eng, prog_bar,
                                 tree.start, tree.ends[b2], rates[b2]);
         if (status < 0) return status;
 
 
         /*
-         To free up some memory, clear info from VarChrom object at `b1` if it's no
+         To free up some memory, clear info from `rates` at `b1` if it's no
          longer needed.
          */
         clear_branches(b1, i, tree);

@@ -167,6 +167,9 @@ public:
     // Add existing mutation information in another `VarChrom` to this one
     VarChrom& operator+=(const VarChrom& other);
 
+    // Same as above, but adds to the front of `mutations`, with an ending point
+    void add_to_front(const VarChrom& other, const uint64& end);
+
 
     /*
      ------------------

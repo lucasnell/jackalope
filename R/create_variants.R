@@ -154,6 +154,23 @@ process_phy <- function(phy, ordered_tip_labels) {
         phy <- new_phy
     }
 
+
+    # -----------*
+    # Use tips as nodes (so no intermediate objects must be made):
+    # -----------*
+    n_tips <- length(phy$tip.label)
+    n_nodes <- phy$Nnode
+    edge <- phy$edge
+
+    for (i in 1:n_nodes) {
+        edge_i <- edge[edge[,1] == i + n_tips, ]
+        edge_i[,1] <- tail(edge_i[,2], 1)
+        edge[edge[,1] == i + n_tips, ] <- edge_i
+        edge[edge[,2] == i + n_tips, 2] <- tail(edge_i[,2], 1)
+    }
+    phy$edge <- edge
+
+
     # -----------*
     # Extract all info:
     # -----------*

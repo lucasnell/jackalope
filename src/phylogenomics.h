@@ -52,9 +52,8 @@ struct PhyloTree {
     std::vector<std::string> tip_labels;
     uint64 start;
     uint64 end;
-    std::vector<uint64> ends;  // (non-inclusive) `end` values for each tree node and tip
+    std::vector<uint64> ends;  // (non-inclusive) `end` values for each tree tip
     uint64 n_tips;             // # tips = # variants
-    uint64 tree_size;          // tree size is # tips plus # nodes
     uint64 n_edges;            // # edges = # connections between nodes/tips
 
     PhyloTree() {}
@@ -65,10 +64,13 @@ struct PhyloTree {
         const uint64& start_,
         const uint64& end_
     )
-        : branch_lens(branch_lens_), edges(edges_), tip_labels(tip_labels_),
-          start(start_), end(end_),
-          ends(edges_.max(), end_),
-          n_tips(tip_labels_.size()), tree_size(edges_.max()),
+        : branch_lens(branch_lens_),
+          edges(edges_),
+          tip_labels(tip_labels_),
+          start(start_),
+          end(end_),
+          ends(tip_labels_.size(), end_),
+          n_tips(tip_labels_.size()),
           n_edges(edges_.n_rows) {
 
         // From R to C++ indices
@@ -77,7 +79,7 @@ struct PhyloTree {
     PhyloTree(const PhyloTree& other)
         : branch_lens(other.branch_lens), edges(other.edges),
           tip_labels(other.tip_labels), start(other.start), end(other.end),
-          ends(other.ends), n_tips(other.n_tips), tree_size(other.tree_size),
+          ends(other.ends), n_tips(other.n_tips),
           n_edges(other.n_edges) {}
 
     PhyloTree& operator=(const PhyloTree& other) {
@@ -88,7 +90,6 @@ struct PhyloTree {
         end = other.end;
         ends = other.ends;
         n_tips = other.n_tips;
-        tree_size = other.tree_size;
         n_edges = other.n_edges;
         return *this;
     }
@@ -112,7 +113,6 @@ class PhyloOneChrom {
 public:
     std::vector<PhyloTree> trees;
     std::vector<VarChrom*> tip_chroms;      // pointers to final VarChrom objects
-    std::vector<VarChrom> node_chroms;      // temporary `VarChrom`s for nodes (NOT tips)
     std::vector<std::deque<uint8>> rates;   // rate indices (Gammas + invariants) for tree
     TreeMutator mutator;                    // to do the mutation additions across tree
     uint64 n_tips;                          // number of tips (i.e., variants)
@@ -132,8 +132,7 @@ public:
     )
         : trees(edges_.size()),
           tip_chroms(),
-          node_chroms(),
-          rates(edges_[0].max()),
+          rates(tip_labels_[0].size()),
           mutator(mutator_base),
           n_tips(tip_labels_[0].size()),
           recombination(branch_lens_.size() > 1)
@@ -166,7 +165,6 @@ public:
      */
     void set_var_info(VarSet& var_set, const uint64& chrom_ind) {
 
-        uint64 tree_size = trees[0].tree_size;
         uint64 n_vars = var_set.size();
 
         // Filling in pointers:
@@ -175,10 +173,6 @@ public:
         for (uint64 i = 0; i < n_vars; i++) {
             tip_chroms.push_back(&var_set[i][chrom_ind]);
         }
-
-        // Fill in blank VarChrom objects for nodes:
-        node_chroms = std::vector<VarChrom>(tree_size - n_vars,
-                                            VarChrom((*var_set.reference)[chrom_ind]));
 
         return;
 
@@ -220,23 +214,15 @@ private:
               pcg64& eng,
               Progress& prog_bar) {
 
-        const uint64& tree_size(tree.tree_size);
         const uint64& start(tree.start);
         const uint64& end(tree.end);
 
-        if (tree_size == 0) {
-            throw(Rcpp::exception("\ntree size of zero is non-sensical.", false));
+        if (tree.n_tips == 0) {
+            throw(Rcpp::exception("\n# tips == zero is non-sensical.", false));
         }
-        // Resize blank VarChrom objects if necessary:
-        if (tree_size != node_chroms.size()) {
-            VarChrom var_chrom_(*(tip_chroms[0]->ref_chrom));
-            node_chroms.resize(tree_size, var_chrom_);
-        }
-        // Empty mutations from tree of VarChrom objects:
-        for (VarChrom& var_chrom : node_chroms) var_chrom.clear();
 
         // Create rates:
-        if (rates.size() != tree_size) rates.resize(tree_size);
+        if (rates.size() != this->n_tips) rates.resize(this->n_tips);
         uint64 root = tree.edges(0,0); // <-- should be index to root of tree
         // Generate rates for root of tree (`status` is -1 if user interrupts process):
         int status = mutator.new_rates(start, end, rates[root], eng, prog_bar);
@@ -248,22 +234,19 @@ private:
 
 
     /*
-     Clear info from VarChrom object at `b1` if it's no longer needed, to free up
+     Clear info from `rates` for `b1` if it's no longer needed, to free up
      some memory.
-     (If it's the last branch length, `b1` will always be a node and thus no longer
-     needed.)
      */
     void clear_branches(const uint64& b1,
                         const uint64& i,
                         const PhyloTree& tree) {
-        bool clear_b1;
+        bool do_clear;
         if (i < (tree.edges.n_rows - 1)) {
             // Is it absent from any remaining items in the first column?
-            clear_b1 = ! arma::any(tree.edges(arma::span(i+1, tree.edges.n_rows - 1),
+            do_clear = ! arma::any(tree.edges(arma::span(i+1, tree.edges.n_rows - 1),
                                               0) == b1);
-        } else clear_b1 = true;
-        if (clear_b1) {
-            node_chroms[b1].clear();
+        } else do_clear = true;
+        if (do_clear) {
             rates[b1].clear();
             clear_memory<std::deque<uint8>>(rates[b1]);
         }

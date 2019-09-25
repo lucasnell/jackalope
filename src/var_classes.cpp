@@ -84,6 +84,51 @@ VarChrom& VarChrom::operator+=(const VarChrom& other) {
 }
 
 
+
+// `end` is NOT inclusive
+// this `VarChrom` must be empty up to `end`
+void VarChrom::add_to_front(const VarChrom& other, const uint64& end) {
+
+    if (!mutations.empty() && mutations.front().old_pos < end) {
+        str_stop({"\nOverlapping VarChrom.mutations in VarChrom::add. ",
+                 "Note that when combining VarChrom objects using `add`, you must ",
+                 "do it sequentially, from the front ONLY."});
+    }
+
+    // If `other` is empty or its first mutation's position is `>= end`, then do nothing:
+    if (other.mutations.empty() || other.mutations.front().old_pos >= end) return;
+
+    // Find index to where positions for mutations first become `< end`
+    uint64 i = other.mutations.size() - 1;
+    while (other.mutations[i].old_pos >= end) i--;
+
+    sint64 size_mod = 0;
+
+    /*
+     Adding new mutations
+     */
+    // (`j` is `i+1` bc of how I'm going backwards)
+    for (uint64 j = i + 1; j > 0; j--) {
+        const Mutation& mut(other.mutations[j-1]);
+        mutations.push_front(mut);
+        size_mod += mut.size_modifier;
+    }
+
+    /*
+     Adjusting old mutations and chromosome size
+     */
+    i++; // Now `i` points to the 1st mutation whose position `>= end`---if that exists
+    if (i < mutations.size()) {
+        calc_positions(i, size_mod);
+    } else this->chrom_size += size_mod;
+
+    return;
+
+}
+
+
+
+
 /*
  ------------------
  Retrieve a nucleotide (char type) from the variant chromosome
