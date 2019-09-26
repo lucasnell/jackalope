@@ -106,13 +106,6 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
                                 tree.start, tree.ends[b2], rates[b2]);
         if (status < 0) return status;
 
-
-        /*
-         To free up some memory, clear info from `rates` at `b1` if it's no
-         longer needed.
-         */
-        clear_branches(b1, i, tree);
-
     }
 
 
@@ -152,27 +145,6 @@ int PhyloOneChrom::reset(const PhyloTree& tree,
     // as we progress through the tree.
 
     return status;
-}
-
-
-/*
- Clear info from `rates` for `b1` if it's no longer needed, to free up
- some memory.
- */
-void PhyloOneChrom::clear_branches(const uint64& b1,
-                                   const uint64& i,
-                                   const PhyloTree& tree) {
-    bool do_clear;
-    if (i < (tree.edges.n_rows - 1)) {
-        // Is it absent from any remaining items in the first column?
-        do_clear = ! arma::any(tree.edges(arma::span(i+1, tree.edges.n_rows - 1),
-                                          0) == b1);
-    } else do_clear = true;
-    if (do_clear) {
-        rates[b1].clear();
-        clear_memory<std::deque<uint8>>(rates[b1]);
-    }
-    return;
 }
 
 

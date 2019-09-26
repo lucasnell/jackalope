@@ -214,15 +214,6 @@ private:
               pcg64& eng,
               Progress& prog_bar);
 
-
-    /*
-     Clear info from `rates` for `b1` if it's no longer needed, to free up
-     some memory.
-     */
-    void clear_branches(const uint64& b1,
-                        const uint64& i,
-                        const PhyloTree& tree);
-
 };
 
 

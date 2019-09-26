@@ -28,7 +28,10 @@ int SubMutator::new_rates(const uint64& begin,
                           Progress& prog_bar) {
 
     if (!site_var) {
-        if (!rate_inds.empty()) rate_inds.clear();
+        if (!rate_inds.empty()) {
+            rate_inds.clear();
+            clear_memory<std::deque<uint8>>(rate_inds);
+        }
         return 0;
     }
 
@@ -44,9 +47,12 @@ int SubMutator::new_rates(const uint64& begin,
     Rcout << std::endl << "rates for " << begin << ' ' << end << ':' << std::endl;
 #endif
 
-    if (invariant <= 0) {
+    if (N0 > N) {
+        rate_inds.resize(N);
+        clear_memory<std::deque<uint8>>(rate_inds);
+    }
 
-        if (N0 > N) rate_inds.resize(N);
+    if (invariant <= 0) {
 
         for (uint64 i = 0; i < rate_inds.size(); i++) {
             rate_inds[i] = static_cast<uint8>(runif_01(eng) * n);
@@ -64,8 +70,6 @@ int SubMutator::new_rates(const uint64& begin,
         }
 
     } else {
-
-        if (N0 > N) rate_inds.resize(N);
 
         for (uint64 i = 0; i < rate_inds.size(); i++) {
             if (runif_01(eng) > invariant) {
