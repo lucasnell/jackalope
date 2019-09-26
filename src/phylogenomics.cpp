@@ -126,6 +126,62 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
 
 
 
+
+
+
+/*
+ Reset for a new tree:
+ */
+int PhyloOneChrom::reset(const PhyloTree& tree,
+                         pcg64& eng,
+                         Progress& prog_bar) {
+
+    const uint64& start(tree.start);
+    const uint64& end(tree.end);
+
+    if (tree.n_tips == 0) {
+        throw(Rcpp::exception("\n# tips == zero is non-sensical.", false));
+    }
+
+    // Create rates:
+    if (rates.size() != this->n_tips) rates.resize(this->n_tips);
+    uint64 root = tree.edges(0,0); // <-- should be index to root of tree
+    // Generate rates for root of tree (`status` is -1 if user interrupts process):
+    int status = mutator.new_rates(start, end, rates[root], eng, prog_bar);
+    // The rest of the nodes/tips will have rates based on parent nodes
+    // as we progress through the tree.
+
+    return status;
+}
+
+
+/*
+ Clear info from `rates` for `b1` if it's no longer needed, to free up
+ some memory.
+ */
+void PhyloOneChrom::clear_branches(const uint64& b1,
+                                   const uint64& i,
+                                   const PhyloTree& tree) {
+    bool do_clear;
+    if (i < (tree.edges.n_rows - 1)) {
+        // Is it absent from any remaining items in the first column?
+        do_clear = ! arma::any(tree.edges(arma::span(i+1, tree.edges.n_rows - 1),
+                                          0) == b1);
+    } else do_clear = true;
+    if (do_clear) {
+        rates[b1].clear();
+        clear_memory<std::deque<uint8>>(rates[b1]);
+    }
+    return;
+}
+
+
+
+
+
+
+
+
 void PhyloOneChrom::fill_tree_mutator(const List& genome_phylo_info,
                                       const uint64& i,
                                       const TreeMutator& mutator_base) {
