@@ -170,6 +170,9 @@ public:
     // Same as above, but adds to the front of `mutations`, with an ending point
     void add_to_front(const VarChrom& other, const uint64& end);
 
+    // Same as above, but adds to the back of `mutations`, with a starting mutation index
+    sint64 add_to_back(const VarChrom& other, const uint64& mut_i);
+
 
     /*
      ------------------

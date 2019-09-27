@@ -52,7 +52,10 @@ struct PhyloTree {
     std::vector<std::string> tip_labels;
     uint64 start;
     uint64 end;
+    std::vector<uint64> starts;  // (inclusive) `start` values for each tree tip
     std::vector<uint64> ends;  // (non-inclusive) `end` values for each tree tip
+    // Indices (non-inclusive) for end of this tree's mutations in `VarChrom::mutations`:
+    std::vector<uint64> mut_ends;
     uint64 n_tips;             // # tips = # variants
     uint64 n_edges;            // # edges = # connections between nodes/tips
 
@@ -69,7 +72,9 @@ struct PhyloTree {
           tip_labels(tip_labels_),
           start(start_),
           end(end_),
+          starts(tip_labels_.size(), start_),
           ends(tip_labels_.size(), end_),
+          mut_ends(tip_labels_.size(), 0),
           n_tips(tip_labels_.size()),
           n_edges(edges_.n_rows) {
 
@@ -79,8 +84,8 @@ struct PhyloTree {
     PhyloTree(const PhyloTree& other)
         : branch_lens(other.branch_lens), edges(other.edges),
           tip_labels(other.tip_labels), start(other.start), end(other.end),
-          ends(other.ends), n_tips(other.n_tips),
-          n_edges(other.n_edges) {}
+          ends(other.ends), starts(other.starts), mut_ends(other.mut_ends),
+          n_tips(other.n_tips), n_edges(other.n_edges) {}
 
     PhyloTree& operator=(const PhyloTree& other) {
         branch_lens = other.branch_lens;
@@ -88,7 +93,9 @@ struct PhyloTree {
         tip_labels = other.tip_labels;
         start = other.start;
         end = other.end;
+        starts = other.starts;
         ends = other.ends;
+        mut_ends = other.mut_ends;
         n_tips = other.n_tips;
         n_edges = other.n_edges;
         return *this;
@@ -204,7 +211,7 @@ private:
     /*
      Evolve one tree.
      */
-    int one_tree(PhyloTree& tree, pcg64& eng, Progress& prog_bar);
+    int one_tree(const uint64& idx, pcg64& eng, Progress& prog_bar);
 
 
     /*

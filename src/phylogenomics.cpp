@@ -43,9 +43,12 @@ using namespace Rcpp;
  each other (within the range specified if recombination = true).
  They can already have mutations, but to start out, they must all be the same.
  */
-int PhyloOneChrom::one_tree(PhyloTree& tree,
+int PhyloOneChrom::one_tree(const uint64& idx,
                             pcg64& eng,
                             Progress& prog_bar) {
+
+
+    PhyloTree& tree(trees[idx]);
 
     // For when/if user interrupts function:
     int status;
@@ -56,6 +59,8 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
 
 
     uint64 b1, b2;
+    uint64 mut_i = 0;
+    sint64 size_mod;
     double b_len;
 
     /*
@@ -79,21 +84,21 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
 
             // Update rate indices:
             rates[b2] = rates[b1];
-            // Update end points:
-            tree.ends[b2] = tree.ends[b1];
 
             /*
              Update VarChrom objects for this branch.
-             Because node VarChrom objects are emptied of mutations for each new tree,
-             the below works to add just the mutations related to this tree:
              */
-            chrom2.add_to_front(chrom1, tree.end);
+            if (idx > 0) mut_i = trees[idx - 1].mut_ends[b1];
+            size_mod = chrom2.add_to_back(chrom1, mut_i);
+
+            // Update end point for these new mutations:
+            tree.ends[b2] += size_mod;
 
         }
 
 
         // This happens if it's been totally deleted:
-        if (tree.start == tree.ends[b2]) continue;
+        if (tree.starts[b2] == tree.ends[b2]) continue;
 
         /*
          Now mutate along branch length:
@@ -103,11 +108,16 @@ int PhyloOneChrom::one_tree(PhyloTree& tree,
         Rcout << std::endl << "b_len = " << b_len << std::endl;
 #endif
         status = mutator.mutate(b_len, chrom2, eng, prog_bar,
-                                tree.start, tree.ends[b2], rates[b2]);
+                                tree.starts[b2], tree.ends[b2], rates[b2]);
         if (status < 0) return status;
 
     }
 
+    // Update indices (non-inclusive) for end of this tree's mutations in
+    // `VarChrom::mutations`:
+    for (uint64 i = 0; i < tree.n_tips; i++) {
+        tree.mut_ends[i] = tip_chroms[i]->mutations.size();
+    }
 
     // Update progress bar:
     prog_bar.increment(tree.end - tree.start + 1);
@@ -216,21 +226,23 @@ void PhyloOneChrom::fill_tree_mutator(const List& genome_phylo_info,
 int PhyloOneChrom::evolve(pcg64& eng,
                           Progress& prog_bar) {
 
+    for (uint64 i = 0; i < trees.size(); i++) {
+
+        if (i > 0) {
+            for (uint64 j = 0; j < trees[i].ends.size(); j++) {
+                trees[i].starts[j] = trees[i-1].ends[j];
+                trees[i].ends[j] = trees[i-1].ends[j] + trees[i].end - trees[i-1].end;
+            }
+        }
 
 #ifdef __JACKALOPE_DIAGNOSTICS
-    for (uint64 i = trees.size(); i > 0; i--) {
-        PhyloTree& tree(trees[i-1]);
         Rcout << std::endl << "--- tree " << i << std::endl;
-        int status = one_tree(tree, eng, prog_bar);
-        if (status < 0) return status;
-    }
-#else
-    for (uint64 i = trees.size(); i > 0; i--) {
-        PhyloTree& tree(trees[i-1]);
-        int status = one_tree(tree, eng, prog_bar);
-        if (status < 0) return status;
-    }
 #endif
+
+        int status = one_tree(i, eng, prog_bar);
+        if (status < 0) return status;
+    }
+
     return 0;
 }
 

@@ -90,9 +90,9 @@ VarChrom& VarChrom::operator+=(const VarChrom& other) {
 void VarChrom::add_to_front(const VarChrom& other, const uint64& end) {
 
     if (!mutations.empty() && mutations.front().old_pos < end) {
-        str_stop({"\nOverlapping VarChrom.mutations in VarChrom::add. ",
-                 "Note that when combining VarChrom objects using `add`, you must ",
-                 "do it sequentially, from the front ONLY."});
+        str_stop({"\nOverlapping VarChrom.mutations in VarChrom::add_to_front. ",
+                 "Note that when combining VarChrom objects using `add_to_front`, ",
+                 "you must do it sequentially, from the front ONLY."});
     }
 
     // If `other` is empty or its first mutation's position is `>= end`, then do nothing:
@@ -123,6 +123,44 @@ void VarChrom::add_to_front(const VarChrom& other, const uint64& end) {
     } else this->chrom_size += size_mod;
 
     return;
+
+}
+
+
+// `start` is inclusive
+// this `VarChrom` must be empty after `mut_i`
+// return `sint64` is the size modifier for mutations added
+sint64 VarChrom::add_to_back(const VarChrom& other, const uint64& mut_i) {
+
+    if (other.mutations.size() <= mut_i) return 0;
+
+// #ifdef __JACKALOPE_DEBUG
+//     if (other.mutations.size() <= mut_i) {
+//         stop("\nIn VarChrom::add_to_back, other.mutations.size() <= mut_i");
+//     }
+// #endif
+
+    if (!mutations.empty() &&
+        mutations.back().old_pos >= other.mutations[mut_i].old_pos) {
+        str_stop({"\nOverlapping VarChrom.mutations in VarChrom::add_to_back. ",
+                 "Note that when combining VarChrom objects using `add_to_back`, you ",
+                 "must do it sequentially, from the back ONLY."});
+    }
+
+    sint64 new_size_mod = 0;
+    sint64 old_size_mod = static_cast<sint64>(chrom_size) -
+        static_cast<sint64>(ref_chrom->size());
+
+    for (uint64 i = mut_i; i < other.mutations.size(); i++) {
+        this->mutations.push_back(other.mutations[i]);
+        this->mutations.back().new_pos = this->mutations.back().old_pos +
+            old_size_mod + new_size_mod;
+        new_size_mod += other.mutations[i].size_modifier;
+    }
+
+    this->chrom_size += new_size_mod;
+
+    return new_size_mod;
 
 }
 
