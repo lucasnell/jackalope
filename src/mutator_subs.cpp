@@ -152,6 +152,7 @@ inline void SubMutator::adjust_mats(const double& b_len) {
 //' @noRd
 //'
 inline void SubMutator::subs_before_muts__(const uint64& pos,
+                                           uint64& mut_i,
                                            const std::string& bases,
                                            const uint8& rate_i,
                                            VarChrom& var_chrom,
@@ -163,6 +164,7 @@ inline void SubMutator::subs_before_muts__(const uint64& pos,
     uint8 nt_i = samp.sample(eng);
     if (nt_i != c_i) {
         var_chrom.mutations.push_front(Mutation(pos, pos, bases[nt_i]));
+        mut_i++;
     }
 
     return;
@@ -175,6 +177,7 @@ inline void SubMutator::subs_before_muts__(const uint64& pos,
 //'
 inline int SubMutator::subs_before_muts(const uint64& begin,
                                         const uint64& end,
+                                        uint64& mut_i,
                                         const uint8& max_gamma,
                                         const std::string& bases,
                                         const std::deque<uint8>& rate_inds,
@@ -205,7 +208,7 @@ inline int SubMutator::subs_before_muts(const uint64& begin,
             const uint8& rate_i(rate_inds[(pos-begin)]);
             if (rate_i > max_gamma) continue; // this is an invariant region
 
-            subs_before_muts__(pos, bases, rate_i, var_chrom, eng);
+            subs_before_muts__(pos, mut_i, bases, rate_i, var_chrom, eng);
 
             if (interrupt_check(iters, prog_bar)) return -1;
 
@@ -220,7 +223,7 @@ inline int SubMutator::subs_before_muts(const uint64& begin,
 
             pos = end - i;
 
-            subs_before_muts__(pos, bases, rate_i, var_chrom, eng);
+            subs_before_muts__(pos, mut_i, bases, rate_i, var_chrom, eng);
 
             if (interrupt_check(iters, prog_bar)) return -1;
 
@@ -259,15 +262,6 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
         sint64 ind = pos - mutations[mut_i].new_pos; // <-- should always be >= 0
         // If `pos` is within the mutation chromosome:
         if (ind <= mutations[mut_i].size_modifier) {
-            /*
-             If this new mutation reverts a substitution back to reference state,
-             delete the Mutation object from the `mutations` deque.
-             Otherwise, adjust the mutation's sequence.
-             */
-            // if ((mutations[mut_i].size_modifier == 0) &&
-            //     (reference[mutations[mut_i].old_pos] == nucleo)) {
-            //     mutations.erase(mutations.begin() + mut_i);
-            // } else
             mutations[mut_i].nucleos[ind] = nucleo;
         } else {
             // If `pos` is in the reference chromosome following the mutation:
@@ -389,13 +383,17 @@ int SubMutator::add_subs(const double& b_len,
     int status = 0;
     uint32 iters = 0;
 
+
+    uint64 mut_i = 0;
+    uint64 pos = begin;
+
     /*
      If there are no mutations or if `end-1` is before the first mutation,
      then we don't need to use the `mutations` field at all.
      */
     if (mutations.empty() || ((end-1) < mutations.front().new_pos)) {
 
-        status = subs_before_muts(begin, end, max_gamma, bases, rate_inds, var_chrom,
+        status = subs_before_muts(begin, end, mut_i, max_gamma, bases, rate_inds, var_chrom,
                                   eng, prog_bar, iters);
         return status;
 
@@ -406,7 +404,7 @@ int SubMutator::add_subs(const double& b_len,
      Index to the Mutation object nearest to (without being past) an input position
      on the variant chromosome.
      */
-    uint64 mut_i = var_chrom.get_mut_(begin);
+    mut_i = var_chrom.get_mut_(begin);
 
     /*
      If `begin` is before the first mutation (resulting in `mut_i == mutations.size()`),
@@ -415,16 +413,15 @@ int SubMutator::add_subs(const double& b_len,
     if (mut_i == mutations.size()) {
 
         mut_i = 0;
-        status = subs_before_muts(begin, mutations[mut_i].new_pos, max_gamma, bases,
+        // This is the end for now, but will be `pos` below:
+        pos = mutations[mut_i].new_pos;
+        status = subs_before_muts(begin, pos, mut_i, max_gamma, bases,
                                   rate_inds, var_chrom, eng, prog_bar, iters);
 
         if (status < 0) return status;
 
     }
 
-
-    // Current position
-    uint64 pos = std::max(begin, mutations[mut_i].new_pos);
 
     /*
      Now, for each subsequent mutation except the last, process all nucleotides

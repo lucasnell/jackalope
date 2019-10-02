@@ -134,12 +134,6 @@ sint64 VarChrom::add_to_back(const VarChrom& other, const uint64& mut_i) {
 
     if (other.mutations.size() <= mut_i) return 0;
 
-// #ifdef __JACKALOPE_DEBUG
-//     if (other.mutations.size() <= mut_i) {
-//         stop("\nIn VarChrom::add_to_back, other.mutations.size() <= mut_i");
-//     }
-// #endif
-
     if (!mutations.empty() &&
         mutations.back().old_pos >= other.mutations[mut_i].old_pos) {
         str_stop({"\nOverlapping VarChrom.mutations in VarChrom::add_to_back. ",

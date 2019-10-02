@@ -75,7 +75,7 @@ int PhyloOneChrom::one_tree(const uint64& idx,
         b1 = tree.edges(i,0);
         b2 = tree.edges(i,1);
 
-        // Pointer to chrom we're changing:
+        // VarChrom we're changing:
         VarChrom& chrom2(*(tip_chroms[b2]));
 
         if (b1 != b2) {
