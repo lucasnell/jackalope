@@ -147,30 +147,8 @@ public:
         return chrom_size;
     }
 
-    // Clear mutation info and restore RAM
-    void clear() {
-        mutations.clear();
-        clear_memory<std::deque<Mutation>>(mutations);
-        chrom_size = ref_chrom->size();
-        return;
-    }
-
-    // Replace existing mutation information in this VarChrom with another
-    void replace(const VarChrom& other) {
-        ref_chrom = other.ref_chrom;
-        mutations = other.mutations;
-        chrom_size = other.chrom_size;
-        name = other.name;
-        return;
-    }
-
-    // Add existing mutation information in another `VarChrom` to this one
-    VarChrom& operator+=(const VarChrom& other);
-
-    // Same as above, but adds to the front of `mutations`, with an ending point
-    void add_to_front(const VarChrom& other, const uint64& end);
-
-    // Same as above, but adds to the back of `mutations`, with a starting mutation index
+    // Add existing mutation information in another `VarChrom` to this one,
+    // adding to the back of `mutations`, with a starting mutation index
     sint64 add_to_back(const VarChrom& other, const uint64& mut_i);
 
 
@@ -183,15 +161,6 @@ public:
     void calc_positions(uint64 mut_i);
     void calc_positions(uint64 mut_i, const sint64& modifier);
 
-
-
-    /*
-     ------------------
-     Retrieve a nucleotide (char type) from the variant chromosome
-     based on the position in the new, variant chromosome
-     ------------------
-     */
-    char get_nt(const uint64& new_pos) const;
 
     /*
      ------------------
