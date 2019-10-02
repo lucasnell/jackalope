@@ -247,6 +247,14 @@ evolve_across_trees <- function(ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, 
     .Call(`_jackalope_evolve_across_trees`, ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, n_threads, show_progress)
 }
 
+start_profiler <- function(str) {
+    .Call(`_jackalope_start_profiler`, str)
+}
+
+stop_profiler <- function() {
+    .Call(`_jackalope_stop_profiler`)
+}
+
 #' Add mutations manually from R.
 #'
 #' This section applies to the next 3 functions.
