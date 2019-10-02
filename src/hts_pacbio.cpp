@@ -243,7 +243,7 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
 
     // ID line:
     fastq_pool.push_back('@');
-    for (const char& c : this->name) fastq_pool.push_back(c);
+    for (const char& c : name) fastq_pool.push_back(c);
     fastq_pool.push_back('-');
     for (const char& c : (*chromosomes)[chrom_ind].name) fastq_pool.push_back(c);
     fastq_pool.push_back('-');

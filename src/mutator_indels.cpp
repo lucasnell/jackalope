@@ -182,7 +182,7 @@ int IndelMutator::add_indels(double b_len,
 
 #ifdef __JACKALOPE_DIAGNOSTICS
         Rcout << std::endl;
-        Rcout << csize << ' ' << this->tau << ' ';
+        Rcout << csize << ' ' << tau << ' ';
         for (double& n : n_muts) Rcout << n << ' ';
         Rcout << std::endl;
 #endif

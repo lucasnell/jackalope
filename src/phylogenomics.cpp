@@ -147,7 +147,7 @@ int PhyloOneChrom::reset(const PhyloTree& tree,
     }
 
     // Create rates:
-    if (rates.size() != this->n_tips) rates.resize(this->n_tips);
+    if (rates.size() != n_tips) rates.resize(n_tips);
     uint64 root = tree.edges(0,0); // <-- should be index to root of tree
     // Generate rates for root of tree (`status` is -1 if user interrupts process):
     int status = mutator.new_rates(start, end, rates[root], eng, prog_bar);

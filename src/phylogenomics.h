@@ -84,7 +84,7 @@ struct PhyloTree {
     PhyloTree(const PhyloTree& other)
         : branch_lens(other.branch_lens), edges(other.edges),
           tip_labels(other.tip_labels), start(other.start), end(other.end),
-          ends(other.ends), starts(other.starts), mut_ends(other.mut_ends),
+          starts(other.starts), ends(other.ends), mut_ends(other.mut_ends),
           n_tips(other.n_tips), n_edges(other.n_edges) {}
 
     PhyloTree& operator=(const PhyloTree& other) {

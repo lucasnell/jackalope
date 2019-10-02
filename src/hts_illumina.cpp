@@ -291,7 +291,7 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
         // Combine into 4 lines of output per read:
         // ID line:
         fastq_pools[i].push_back('@');
-        for (const char& c : this->name) fastq_pools[i].push_back(c);
+        for (const char& c : name) fastq_pools[i].push_back(c);
         fastq_pools[i].push_back('-');
         for (const char& c : (*chromosomes)[chrom_ind].name) fastq_pools[i].push_back(c);
         fastq_pools[i].push_back('-');

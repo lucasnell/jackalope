@@ -110,7 +110,7 @@ struct RefChrom {
         // Make sure the read is long enough (this fxn should never shorten it):
         if (read.size() < n_to_add + read_start) read.resize(n_to_add + read_start, 'N');
         for (uint64 i = 0; i < n_to_add; i++) {
-            read[(read_start + i)] = this->nucleos[(chrom_start + i)];
+            read[(read_start + i)] = nucleos[(chrom_start + i)];
         }
         return;
     }

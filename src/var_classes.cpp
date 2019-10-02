@@ -120,7 +120,7 @@ void VarChrom::add_to_front(const VarChrom& other, const uint64& end) {
     i++; // Now `i` points to the 1st mutation whose position `>= end`---if that exists
     if (i < mutations.size()) {
         calc_positions(i, size_mod);
-    } else this->chrom_size += size_mod;
+    } else chrom_size += size_mod;
 
     return;
 
@@ -146,13 +146,13 @@ sint64 VarChrom::add_to_back(const VarChrom& other, const uint64& mut_i) {
         static_cast<sint64>(ref_chrom->size());
 
     for (uint64 i = mut_i; i < other.mutations.size(); i++) {
-        this->mutations.push_back(other.mutations[i]);
-        this->mutations.back().new_pos = this->mutations.back().old_pos +
+        mutations.push_back(other.mutations[i]);
+        mutations.back().new_pos = mutations.back().old_pos +
             old_size_mod + new_size_mod;
         new_size_mod += other.mutations[i].size_modifier;
     }
 
-    this->chrom_size += new_size_mod;
+    chrom_size += new_size_mod;
 
     return new_size_mod;
 
