@@ -685,18 +685,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// table_gammas
-std::vector<uint64> table_gammas(const std::vector<uint64>& gamma_ends, const std::vector<uint64>& positions);
-RcppExport SEXP _jackalope_table_gammas(SEXP gamma_endsSEXP, SEXP positionsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<uint64>& >::type gamma_ends(gamma_endsSEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint64>& >::type positions(positionsSEXP);
-    rcpp_result_gen = Rcpp::wrap(table_gammas(gamma_ends, positions));
-    return rcpp_result_gen;
-END_RCPP
-}
 // add_substitution
 void add_substitution(SEXP var_set_ptr, const uint64& var_ind, const uint64& chrom_ind, const char& nucleo_, const uint64& new_pos_);
 RcppExport SEXP _jackalope_add_substitution(SEXP var_set_ptrSEXP, SEXP var_indSEXP, SEXP chrom_indSEXP, SEXP nucleo_SEXP, SEXP new_pos_SEXP) {
@@ -862,7 +850,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_dup_var_set_vars", (DL_FUNC) &_jackalope_dup_var_set_vars, 3},
     {"_jackalope_view_mutations", (DL_FUNC) &_jackalope_view_mutations, 2},
     {"_jackalope_examine_mutations", (DL_FUNC) &_jackalope_examine_mutations, 3},
-    {"_jackalope_table_gammas", (DL_FUNC) &_jackalope_table_gammas, 2},
     {"_jackalope_add_substitution", (DL_FUNC) &_jackalope_add_substitution, 5},
     {"_jackalope_add_insertion", (DL_FUNC) &_jackalope_add_insertion, 5},
     {"_jackalope_add_deletion", (DL_FUNC) &_jackalope_add_deletion, 5},

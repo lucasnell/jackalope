@@ -450,17 +450,6 @@ examine_mutations <- function(var_set_ptr, var_ind, chrom_ind) {
     .Call(`_jackalope_examine_mutations`, var_set_ptr, var_ind, chrom_ind)
 }
 
-#' Faster version of table function to count the number of mutations in Gamma regions.
-#'
-#' @param gamma_ends Vector of endpoints for gamma regions
-#' @param positions Vector of positions that you want to bin into gamma regions.
-#'
-#' @noRd
-#'
-table_gammas <- function(gamma_ends, positions) {
-    .Call(`_jackalope_table_gammas`, gamma_ends, positions)
-}
-
 #' @describeIn add_mutations Add a substitution.
 #'
 #' @inheritParams add_mutations
