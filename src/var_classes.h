@@ -341,10 +341,18 @@ public:
      ------------------
      Re-calculate new positions (and total chromosome size)
      ------------------
+     It re-calculates positions for all mutations after AND INCLUDING the given index
      */
-    void calc_positions();
-    void calc_positions(uint64 mut_i);
-    void calc_positions(uint64 mut_i, const sint64& modifier);
+    inline void calc_positions(uint64 mut_i, const sint64& modifier) {
+        // Updating individual Mutation objects
+        for (; mut_i < mutations.size(); ++mut_i) {
+            mutations.new_pos[mut_i] += modifier;
+        }
+        // Updating full chromosome size
+        chrom_size += modifier;
+
+        return;
+    }
 
 
     /*
