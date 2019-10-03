@@ -498,7 +498,7 @@ void VarChrom::add_insertion(const std::string& nucleos_, const uint64& new_pos_
         // (below, notice that new position and old position are the same)
         mutations.push_front(size_mod, new_pos_, new_pos_, nts.c_str());
         // Adjust new positions and total chromosome size:
-        calc_positions(0, size_mod);
+        calc_positions(1, size_mod);
         return;
     }
 
@@ -535,7 +535,7 @@ void VarChrom::add_insertion(const std::string& nucleos_, const uint64& new_pos_
         ++mut_i;
         mutations.insert(mut_i, size_mod, old_pos_, new_pos_, nts.c_str());
         // Adjust new positions and total chromosome size:
-        calc_positions(mut_i, size_mod);
+        calc_positions(mut_i + 1, size_mod);
     }
     return;
 }
