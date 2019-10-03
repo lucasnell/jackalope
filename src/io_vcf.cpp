@@ -44,10 +44,9 @@ void OneVarChromVCF::check(const uint64& pos_start,
     if (pos_end >= pos.first) {
 
         gt_index = 1;
-        const Mutation* mut(&(var_chrom->mutations[ind.second]));
 
         while (ind.second < var_chrom->mutations.size() &&
-               get_first_pos(var_chrom->mutations[ind.second]) < pos_end) {
+               get_first_pos(ind.second) < pos_end) {
 
             ind.second++;
 
@@ -55,7 +54,7 @@ void OneVarChromVCF::check(const uint64& pos_start,
 
         if (ind.second >= var_chrom->mutations.size() ||
             (ind.second < var_chrom->mutations.size() &&
-            get_first_pos(var_chrom->mutations[ind.second]) > pos_end)) {
+            get_first_pos(ind.second) > pos_end)) {
 
             ind.second--;
 
@@ -67,16 +66,15 @@ void OneVarChromVCF::check(const uint64& pos_start,
          are prevented)
          */
         if (ind.second < (var_chrom->mutations.size() - 1) &&
-            var_chrom->mutations[ind.second].size_modifier >= 0) {
-            const Mutation& next_mut(var_chrom->mutations[ind.second + 1]);
-            if (next_mut.size_modifier < 0 &&
-                next_mut.old_pos == (var_chrom->mutations[ind.second].old_pos + 1)) {
+            var_chrom->mutations.size_modifier[ind.second] >= 0) {
+            if (var_chrom->mutations.size_modifier[ind.second + 1] < 0 &&
+                var_chrom->mutations.old_pos[ind.second + 1] ==
+                (var_chrom->mutations.old_pos[ind.second] + 1)) {
                 ind.second++;
             }
         }
 
-        mut = &(var_chrom->mutations[ind.second]);
-        set_second_pos(*mut);
+        set_second_pos(ind.second);
 
         if (pos.second > pos_end) {
             pos_end = pos.second;
@@ -98,10 +96,12 @@ void OneVarChromVCF::check(const uint64& pos_start,
  then iterates to the next mutation information
  */
 void OneVarChromVCF::dump(std::vector<std::string>& unq_alts,
-                        uint64& gt_tmp,
-                        const uint64& pos_start,
-                        const uint64& pos_end,
-                        const std::string& ref_str) {
+                          uint64& gt_tmp,
+                          const uint64& pos_start,
+                          const uint64& pos_end,
+                          const std::string& ref_str) {
+
+    const AllMutations& mutations(var_chrom->mutations);
 
     if (gt_index > 0) {
 
@@ -112,28 +112,28 @@ void OneVarChromVCF::dump(std::vector<std::string>& unq_alts,
         std::string alt_str = ref_str;
 
         // Add mutations from back:
-        const Mutation* mut;
         uint64 pos;
         uint64 n_muts = ind.second - ind.first + 1;
         for (uint64 i = 0; i < n_muts; i++) {
-            mut = &(var_chrom->mutations[ind.second - i]);
-            pos = mut->old_pos - pos_start;
+            uint64 index = ind.second - i;
+            pos = mutations.old_pos[index] - pos_start;
             if (pos >= alt_str.size()) {
                 stop(std::string("\nPosition ") + std::to_string(pos) +
                     std::string(" on alt. string is too high for total ") +
                     std::string("alt. string length of ") +
                     std::to_string(alt_str.size()));
             }
-            if (mut->size_modifier == 0) { // substitution
-                alt_str[pos] = mut->nucleos[0];
-            } else if (mut->size_modifier > 0) { // insertion
+            if (mutations.size_modifier[index] == 0) { // substitution
+                alt_str[pos] = mutations.nucleos[index][0];
+            } else if (mutations.size_modifier[index] > 0) { // insertion
                 // Copy so we can remove last nucleotide before inserting:
-                std::string nts = mut->nucleos;
+                std::string nts(mutations.nucleos[index]);
                 alt_str[pos] = nts.back();
                 nts.pop_back();
                 alt_str.insert(pos, nts);  // inserts before `pos`
             } else {  // deletion
-                alt_str.erase(pos, static_cast<size_t>(std::abs(mut->size_modifier)));
+                alt_str.erase(pos, static_cast<size_t>(
+                        std::abs(mutations.size_modifier[index])));
             }
         }
 
@@ -312,7 +312,10 @@ SEXP read_vcfr(SEXP reference_ptr,
     XPtr<RefGenome> reference(reference_ptr);
     uint64 n_muts = haps_list.size();
     uint64 n_vars = var_names.size();
-    uint64 n_chroms = reference->size();
+
+    std::vector<sint64> size_mods(n_vars, 0);
+
+    sint64 size_mod_i; // used temporarily for each deletion and insertion
 
     XPtr<VarSet> var_set(new VarSet(*reference, var_names));
 
@@ -325,12 +328,14 @@ SEXP read_vcfr(SEXP reference_ptr,
         for (uint64 var_i = 0; var_i < n_vars; var_i++) {
 
             const std::string& alt(haps[var_i]);
+            sint64& size_mod(size_mods[var_i]);
 
             // If it's blank or if it's the same as the reference, move on:
             if (alt.size() == 0 || alt == ref) continue;
 
             // Else, mutate accordingly:
             VarChrom& var_chrom((*var_set)[var_i][chrom_i]);
+            AllMutations& mutations(var_chrom.mutations);
 
             if (alt.size() == ref.size()) {
                 /*
@@ -340,8 +345,8 @@ SEXP read_vcfr(SEXP reference_ptr,
                  */
                 for (uint64 i = 0; i < ref.size(); i++) {
                     if (alt[i] != ref[i]) {
-                        Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt[i]);
-                        var_chrom.mutations.push_back(new_mut);
+                        mutations.push_back(0, pos[mut_i] + i, pos[mut_i] + i + size_mod,
+                                            alt[i]);
                     }
                 }
             } else if (alt.size() > ref.size()) {
@@ -360,9 +365,8 @@ SEXP read_vcfr(SEXP reference_ptr,
                 uint64 i = 0;
                 for (; i < (ref.size()-1); i++) {
                     if (alt[i] != ref[i]) {
-                        Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i,
-                                                    alt_copy[i]);
-                        var_chrom.mutations.push_back(new_mut);
+                        mutations.push_back(0, pos[mut_i] + i, pos[mut_i] + i + size_mod,
+                                            alt_copy[i]);
                     }
                 }
                 // Erase all the nucleotides that have already been added (if any):
@@ -370,8 +374,11 @@ SEXP read_vcfr(SEXP reference_ptr,
                 /*
                  Make the last one an insertion proper
                  */
-                Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, alt_copy);
-                var_chrom.mutations.push_back(new_mut);
+                size_mod_i = alt_copy.size() - 1;
+                mutations.push_back(size_mod_i, pos[mut_i] + i, pos[mut_i] + i + size_mod,
+                                    alt_copy.c_str());
+                size_mod += size_mod_i;
+                var_chrom.chrom_size += size_mod_i;
 
             } else {
                 /*
@@ -388,18 +395,18 @@ SEXP read_vcfr(SEXP reference_ptr,
                 uint64 i = 0;
                 for (; i < alt.size(); i++) {
                     if (alt[i] != ref[i]) {
-                        Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i,
-                                                    alt[i]);
-                        var_chrom.mutations.push_back(new_mut);
+                        mutations.push_back(0, pos[mut_i] + i, pos[mut_i] + i + size_mod,
+                                            alt[i]);
                     }
                 }
 
-                // size modifier:
-                sint64 sm = static_cast<sint64>(alt.size()) -
+                size_mod_i = static_cast<sint64>(alt.size()) -
                     static_cast<sint64>(ref.size());
 
-                Mutation new_mut = Mutation(pos[mut_i] + i, pos[mut_i] + i, sm);
-                var_chrom.mutations.push_back(new_mut);
+                mutations.push_back(size_mod_i, pos[mut_i] + i, pos[mut_i] + i + size_mod,
+                                    nullptr);
+                size_mod += size_mod_i;
+                var_chrom.chrom_size += size_mod_i;
 
             }
 
@@ -407,16 +414,6 @@ SEXP read_vcfr(SEXP reference_ptr,
 
     }
 
-
-    /*
-     Go back and re-calculate positions and variant chromosome sizes
-     */
-    for (uint64 chrom_i = 0; chrom_i < n_chroms; chrom_i++) {
-        for (uint64 var_i = 0; var_i < n_vars; var_i++) {
-            VarChrom& var_chrom((*var_set)[var_i][chrom_i]);
-            var_chrom.calc_positions();
-        }
-    }
 
     return var_set;
 }

@@ -163,7 +163,7 @@ inline void SubMutator::subs_before_muts__(const uint64& pos,
     AliasSampler& samp(samplers[rate_i][c_i]);
     uint8 nt_i = samp.sample(eng);
     if (nt_i != c_i) {
-        var_chrom.mutations.push_front(Mutation(pos, pos, bases[nt_i]));
+        var_chrom.mutations.push_front(0, pos, pos, bases[nt_i]);
         mut_i++;
     }
 
@@ -248,7 +248,7 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
                                           pcg64& eng) {
 
 
-    std::deque<Mutation>& mutations(var_chrom.mutations);
+    AllMutations& mutations(var_chrom.mutations);
     // const std::string& reference(var_chrom.ref_chrom->nucleos);
 
     const uint8& c_i(char_map[var_chrom.get_char_(pos, mut_i)]);
@@ -259,16 +259,15 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
     const char& nucleo(bases[nt_i]);
 
     if (nt_i != c_i) {
-        sint64 ind = pos - mutations[mut_i].new_pos; // <-- should always be >= 0
+        sint64 ind = pos - mutations.new_pos[mut_i]; // <-- should always be >= 0
         // If `pos` is within the mutation chromosome:
-        if (ind <= mutations[mut_i].size_modifier) {
-            mutations[mut_i].nucleos[ind] = nucleo;
+        if (ind <= mutations.size_modifier[mut_i]) {
+            mutations.nucleos[mut_i][ind] = nucleo;
         } else {
             // If `pos` is in the reference chromosome following the mutation:
-            uint64 old_pos_ = ind + (mutations[mut_i].old_pos -
-                mutations[mut_i].size_modifier);
-            mutations.insert(mutations.begin() + mut_i + 1,
-                             Mutation(old_pos_, pos, nucleo));
+            uint64 old_pos_ = ind + (mutations.old_pos[mut_i] -
+                mutations.size_modifier[mut_i]);
+            mutations.insert(mut_i + 1, 0, old_pos_, pos, nucleo);
             mut_i++;
         }
 
@@ -378,7 +377,7 @@ int SubMutator::add_subs(const double& b_len,
     std::string bases = "TCAG";
 
     // To make code less clunky:
-    std::deque<Mutation>& mutations(var_chrom.mutations);
+    AllMutations& mutations(var_chrom.mutations);
 
     int status = 0;
     uint32 iters = 0;
@@ -391,7 +390,7 @@ int SubMutator::add_subs(const double& b_len,
      If there are no mutations or if `end-1` is before the first mutation,
      then we don't need to use the `mutations` field at all.
      */
-    if (mutations.empty() || ((end-1) < mutations.front().new_pos)) {
+    if (mutations.empty() || ((end-1) < mutations.new_pos.front())) {
 
         status = subs_before_muts(begin, end, mut_i, max_gamma, bases, rate_inds, var_chrom,
                                   eng, prog_bar, iters);
@@ -414,7 +413,7 @@ int SubMutator::add_subs(const double& b_len,
 
         mut_i = 0;
         // This is the end for now, but will be `pos` below:
-        pos = mutations[mut_i].new_pos;
+        pos = mutations.new_pos[mut_i];
         status = subs_before_muts(begin, pos, mut_i, max_gamma, bases,
                                   rate_inds, var_chrom, eng, prog_bar, iters);
 
@@ -430,7 +429,7 @@ int SubMutator::add_subs(const double& b_len,
     uint64 next_mut_i = mut_i + 1;
     while (pos < end && next_mut_i < mutations.size()) {
 
-        status = subs_after_muts(pos, begin, end, mutations[next_mut_i].new_pos, mut_i,
+        status = subs_after_muts(pos, begin, end, mutations.new_pos[next_mut_i], mut_i,
                                  max_gamma, bases, rate_inds, var_chrom, eng, prog_bar,
                                  iters);
 

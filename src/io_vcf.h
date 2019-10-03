@@ -127,25 +127,27 @@ private:
 
     // Set positions when indices are the same (when initializing, iterating, new variant)
     void reset_pos() {
+
         if (ind.first >= var_chrom->mutations.size()) {
             pos = std::make_pair(MAX_INT, MAX_INT); // max uint64 values
         } else {
-            const Mutation* mut(&(var_chrom->mutations[ind.first]));
-            set_first_pos(*mut);
+            uint64 index;
+            set_first_pos(ind.first);
             /*
              Checking for a deletion right after the current mutation:
              (the second part of this statement is added because contiguous deletions
              are prevented elsewhere)
              */
-            if (ind.second < var_chrom->mutations.size() && mut->size_modifier >= 0) {
-                const Mutation& next_mut(var_chrom->mutations[ind.second + 1]);
-                if (next_mut.size_modifier < 0 &&
-                    next_mut.old_pos == (mut->old_pos + 1)) {
+            if (ind.second < var_chrom->mutations.size() &&
+                var_chrom->mutations.size_modifier[ind.first] >= 0) {
+                if (var_chrom->mutations.size_modifier[ind.second + 1] < 0 &&
+                    var_chrom->mutations.old_pos[ind.second + 1] ==
+                    (var_chrom->mutations.old_pos[ind.first] + 1)) {
                     ind.second++;
-                    mut = &(var_chrom->mutations[ind.second]);
+                    index = ind.second;
                 }
             }
-            set_second_pos(*mut);
+            set_second_pos(index);
         }
         return;
     }
@@ -154,40 +156,42 @@ private:
      Gets first ref. chromosome position for a mutation, compensating for the fact
      that deletions have to be treated differently
      */
-    inline void set_first_pos(const Mutation& mut) {
-        pos.first = mut.old_pos;
-        if (mut.size_modifier < 0 && mut.old_pos > 0) pos.first--;
+    inline void set_first_pos(const uint64& index) {
+        pos.first = var_chrom->mutations.old_pos[index];
+        if (var_chrom->mutations.size_modifier[index] < 0 &&
+            var_chrom->mutations.old_pos[index] > 0) pos.first--;
         return;
     }
     // Same as above, but returns the integer rather than setting it
-    inline uint64 get_first_pos(const Mutation& mut) {
-        uint64 pos_first = mut.old_pos;
-        if (mut.size_modifier < 0 && mut.old_pos > 0) pos_first--;
+    inline uint64 get_first_pos(const uint64& index) {
+        uint64 pos_first = var_chrom->mutations.old_pos[index];
+        if (var_chrom->mutations.size_modifier[index] < 0 &&
+            var_chrom->mutations.old_pos[index] > 0) pos_first--;
         return pos_first;
     }
     /*
      Gets last ref. chromosome position for a mutation, compensating for the fact
      that deletions have to be treated differently
      */
-    inline void set_second_pos(const Mutation& mut) {
-        pos.second = mut.old_pos;
-        if (mut.size_modifier < 0) {
-            if (mut.old_pos > 0) {
-                pos.second -= (1 + mut.size_modifier);
+    inline void set_second_pos(const uint64& index) {
+        pos.second = var_chrom->mutations.old_pos[index];
+        if (var_chrom->mutations.size_modifier[index] < 0) {
+            if (var_chrom->mutations.old_pos[index] > 0) {
+                pos.second -= (1 + var_chrom->mutations.size_modifier[index]);
             } else {
-                pos.second -= mut.size_modifier;
+                pos.second -= var_chrom->mutations.size_modifier[index];
             }
         }
         return;
     }
     // Same as above, but returns the integer rather than setting it
-    inline uint64 get_second_pos(const Mutation& mut) {
-        uint64 pos_second = mut.old_pos;
-        if (mut.size_modifier < 0) {
-            if (mut.old_pos > 0) {
-                pos_second -= (1 + mut.size_modifier);
+    inline uint64 get_second_pos(const uint64& index) {
+        uint64 pos_second = var_chrom->mutations.old_pos[index];
+        if (var_chrom->mutations.size_modifier[index] < 0) {
+            if (var_chrom->mutations.old_pos[index] > 0) {
+                pos_second -= (1 + var_chrom->mutations.size_modifier[index]);
             } else {
-                pos_second -= mut.size_modifier;
+                pos_second -= var_chrom->mutations.size_modifier[index];
             }
         }
         return pos_second;
