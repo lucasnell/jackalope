@@ -284,36 +284,6 @@ void VarChrom::fill_read(std::string& read,
 
 
 
-/*
- ------------------
- Internal function for finding character of either mutation or reference
- given an index (in the "new", variant chromosome) and an index for a
- single Mutation object.
- This only works if you've already narrowed it down to the Mutation object
- that is directly previous to the index position.
- ------------------
- */
-char VarChrom::get_char_(const uint64& new_pos,
-                         const uint64& mut_i) const {
-    char out;
-    uint64 ind = new_pos - mutations.new_pos[mut_i];
-    if (static_cast<sint64>(ind) > mutations.size_modifier[mut_i]) {
-        ind += (mutations.old_pos[mut_i] - mutations.size_modifier[mut_i]);
-        out = (*ref_chrom)[ind];
-    } else {
-        out = mutations.nucleos[mut_i][ind];
-    }
-    return out;
-}
-
-
-
-
-
-
-
-
-
 
 
 /*
