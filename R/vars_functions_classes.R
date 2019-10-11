@@ -68,11 +68,7 @@ vars_vcf_info <- R6Class(
 
     public = list(
 
-        initialize = function(haps,
-                              pos,
-                              chrom,
-                              var_names,
-                              ref_chrom,
+        initialize = function(fn,
                               print_names) {
 
             err <- function(a, b) {
@@ -83,24 +79,14 @@ vars_vcf_info <- R6Class(
                 stop(msg, call. = FALSE)
             }
 
-            if (!inherits(haps, "list") || !all(sapply(haps, is.character))) {
-                err("haps", "a list of character vectors")
-            }
-            if (!inherits(pos, "integer")) err("pos", "an integer vector")
-            if (!inherits(chrom, "character")) err("chrom", "a character vector")
-            if (!inherits(var_names, "character")) err("var_names", "a character vector")
-            if (!inherits(ref_chrom, "character")) {
-                err("ref_chrom", "a character vector")
+            if (!is_type(fn, "character", 1L)) {
+                err("fn", "a single character")
             }
             if (!is_type(print_names, "logical", 1L)) {
                 err("print_names", "a single logical")
             }
 
-            private$r_haps <- haps
-            private$r_pos <- pos
-            private$r_chrom <- chrom
-            private$r_var_names <- var_names
-            private$r_ref_chrom <- ref_chrom
+            private$r_fn <- fn
             private$r_print_names <- print_names
         },
 
@@ -109,31 +95,20 @@ vars_vcf_info <- R6Class(
             digits <- max(3, getOption("digits") - 3)
 
             cat("< VCF variant-creation info >\n")
-            cat(sprintf("# Number of variants: %i\n", ncol(private$r_haps[[1]])))
-            cat(sprintf("# Number of chromosomes: %i\n", length(unique(private$r_chrom))))
-            cat(sprintf("# Number of sites: %s\n",
-                        format(as.integer(length(private$r_pos)), big.mark = ",")))
+            cat(sprintf("# File name: %s\n", fn))
 
             invisible(self)
 
         },
 
-        haps = function() return(private$r_haps),
-        pos = function() return(private$r_pos),
-        chrom = function() return(private$r_chrom),
-        var_names = function() return(private$r_var_names),
-        ref_chrom = function() return(private$r_ref_chrom),
+        fn = function() return(private$r_fn),
         print_names = function() return(private$r_print_names)
 
     ),
 
     private = list(
 
-        r_haps = NULL,
-        r_pos = NULL,
-        r_chrom = NULL,
-        r_var_names = NULL,
-        r_ref_chrom = NULL,
+        r_fn = NULL,
         r_print_names = NULL
 
     ),

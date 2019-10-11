@@ -221,13 +221,8 @@ coal_file_sites <- function(ms_file) {
     .Call(`_jackalope_coal_file_sites`, ms_file)
 }
 
-#' Read VCF from a vcfR object.
-#'
-#'
-#' @noRd
-#'
-read_vcfr <- function(reference_ptr, var_names, haps_list, chrom_inds, pos, ref_chrom) {
-    .Call(`_jackalope_read_vcfr`, reference_ptr, var_names, haps_list, chrom_inds, pos, ref_chrom)
+read_vcf_cpp <- function(reference_ptr, fn, print_names) {
+    .Call(`_jackalope_read_vcf_cpp`, reference_ptr, fn, print_names)
 }
 
 #' Write `variants` to VCF file.

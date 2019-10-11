@@ -27,6 +27,43 @@ using namespace Rcpp;
 
 
 
+/*
+ This function produces a vector of indices that map the VCF indices onto the
+ original chromosome names from the `ref_genome` object.
+ This is in case the chromosomes are in a different order in the VCF file.
+ */
+inline std::vector<uint64> match_chrom_names(const std::vector<std::string>& from_ref,
+                                             const std::vector<std::string>& from_vcf,
+                                             const bool& print_names) {
+
+    std::vector<uint64> order_(from_ref.size());
+
+    for (uint64 i = 0; i < order_.size(); i++) {
+        auto iter = std::find(from_vcf.begin(), from_vcf.end(),
+                              from_ref[i]);
+        if (iter == from_vcf.end()) {
+            std::vector<std::string> err_msg;
+            if (print_names) {
+                for (const std::string& s : from_vcf) err_msg.push_back(s + '\n');
+            }
+            err_msg.push_back("\nChromosome name(s) in VCF file don't match those in the ");
+            err_msg.push_back("`ref_genome` object. It's probably easiest ");
+            err_msg.push_back("to manually change the `ref_genome` object ");
+            err_msg.push_back("(using `$set_names()` method) to have the same names ");
+            err_msg.push_back("as the VCF file.");
+            str_stop(err_msg);
+        }
+        order_[i] = iter - from_vcf.begin();
+    }
+
+    return order_;
+}
+
+
+
+
+
+
 // Formatted date as "20190331"
 inline std::string vcf_date() {
     // Obtain environment containing function

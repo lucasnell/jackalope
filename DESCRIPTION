@@ -45,8 +45,7 @@ Suggests:
     coala,
     knitr,
     scrm,
-    testthat,
-    vcfR
+    testthat
 VignetteBuilder: knitr
 URL: https://github.com/lucasnell/jackalope
 BugReports: https://github.com/lucasnell/jackalope/issues

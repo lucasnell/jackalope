@@ -9,6 +9,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "zlib.h"
 #ifdef _OPENMP
 #include <omp.h>  // omp
@@ -20,10 +21,20 @@
 #include "jackalope_types.h"  // integer types
 #include "ref_classes.h"  // Ref* classes
 #include "var_classes.h"  // Var* classes
-#include "str_manip.h"  // filter_nucleos
+#include "str_manip.h"  // filter_nucleos, cpp_str_split_delim_str, count_substr
 #include "util.h"  // str_stop, thread_check
 #include "io.h"
 #include "io_vcf.h"
+#include "htslib/vcf.h"
+#include "htslib/vcfutils.h"
+
+
+
+
+
+#define EXIT_SUCCESS 0
+#define EXIT_FAILURE 1
+
 
 using namespace Rcpp;
 
@@ -296,46 +307,240 @@ bool WriterVCF::iterate(std::string& pos_str,
  ==================================================================
  */
 
-//' Read VCF from a vcfR object.
-//'
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-SEXP read_vcfr(SEXP reference_ptr,
-               const std::vector<std::string>& var_names,
-               const std::vector<std::vector<std::string>>& haps_list,
-               const std::vector<uint64>& chrom_inds,
-               const std::vector<uint64>& pos,
-               const std::vector<std::string>& ref_chrom) {
 
-    XPtr<RefGenome> reference(reference_ptr);
-    uint64 n_muts = haps_list.size();
-    uint64 n_vars = var_names.size();
+/*
+ Make variant names from vector of sample names and ploidy info.
+ */
+void make_var_names(std::vector<std::string>& var_names,
+                    const std::vector<std::string>& samp_names,
+                    const int& ploidy) {
 
-    arma::Mat<sint64> size_mods(n_vars, reference->size(), arma::fill::zeros);
+    if (ploidy == 1) {
+
+        var_names = samp_names;
+
+    } else {
+
+        var_names.reserve(samp_names.size() * ploidy);
+
+        /*
+         Check for whether they're output from jackalope.
+         If so, then split by "__". Otherwise add "_1", "_2", etc.
+         */
+        bool from_jlp = count_substr(samp_names[0], "__") ==
+            static_cast<uint32>(ploidy - 1);
+        for (uint32 i = 1; i < samp_names.size(); i++) {
+            const std::string& s(samp_names[i]);
+            if (s.size() == 0) stop("Can't have zero-sized sample names in VCF files.");
+            if (!from_jlp) continue;
+            if (s.size() < 3) {
+                from_jlp = false;
+                break;
+            }
+            uint32 n_dunders = count_substr(s, "__");
+            from_jlp = n_dunders == static_cast<uint32>(ploidy - 1);
+            // Can't have "__" on either end:
+            if (from_jlp) {
+                from_jlp = !(s.front() == '_' && s[1] == '_') &&
+                    !(s[s.size() - 2] == '_' && s.back() == '_');
+            }
+        }
+
+        if (from_jlp) {
+
+            for (const std::string& samp : samp_names) {
+                std::vector<std::string> sub_samps = cpp_str_split_delim_str(samp, "__");
+                for (const std::string& s : sub_samps) var_names.push_back(s);
+            }
+
+        } else {
+
+            for (const std::string& samp : samp_names) {
+                for (int j = 0; j < ploidy; j++) {
+                    var_names.push_back(samp + '_' + std::to_string(j + 1));
+                }
+            }
+
+        }
+
+    }
+
+    return;
+}
+
+
+
+/*
+
+ Fill vectors of info from VCF file.
+
+ Used info from http://wresch.github.io/2014/11/18/process-vcf-file-with-htslib.html
+ and
+ <https://github.com/samtools/htslib/blob/dd6f0b72c92591252bb77818663629cc1a129949/
+ htslib/vcf.h#L835>
+
+ */
+
+
+int fill_vcf_info(const std::string& fn,
+                  std::vector<std::string>& chrom_names,
+                  std::vector<std::string>& var_names,
+                  std::vector<std::vector<std::string>>& alts_list,
+                  std::vector<uint64>& chrom_inds,
+                  std::vector<uint64>& positions,
+                  std::vector<std::string>& ref_chrom) {
+
+    int n_chroms = 0;
+
+    // genotype data for each call
+    int ngt_arr = 0;
+    int ngt     = 0;
+    int *gt     = NULL;
+
+    // open VCF/BCF file
+    htsFile * inf = bcf_open(fn.c_str(), "r");
+    if (inf == NULL) {
+        return EXIT_FAILURE;
+    }
+
+    // read header
+    bcf_hdr_t *hdr = bcf_hdr_read(inf);
+    int n_samps = bcf_hdr_nsamples(hdr);
+
+    // Read sample names, to be used later for `var_names`
+    std::vector<std::string> samp_names;
+    samp_names.reserve(n_samps);
+    for (int k = 0; k < n_samps; k++) {
+        samp_names.push_back(std::string(hdr->samples[k]));
+    }
+
+    // report names of all the chromosomes in the VCF file
+    const char **c_names = NULL;
+    c_names = bcf_hdr_seqnames(hdr, &n_chroms);
+    if (c_names == NULL) {
+        bcf_close(inf);
+        bcf_hdr_destroy(hdr);
+        return EXIT_FAILURE;
+    }
+    chrom_names.reserve(n_chroms);
+    for (uint32 i = 0; i < n_chroms; i++) {
+        chrom_names.push_back(std::string(c_names[i]));
+    }
+
+    // struc for storing each record
+    bcf1_t *rec = bcf_init();
+    if (rec == NULL) {
+        free(c_names);
+        bcf_close(inf);
+        bcf_hdr_destroy(hdr);
+        return EXIT_FAILURE;
+    }
+
+    uint64 chrom, pos;
+    std::string ref;
+    int ploidy = -1;
+
+    while (bcf_read(inf, hdr, rec) == 0) {
+
+        ngt = bcf_get_genotypes(hdr, rec, &gt, &ngt_arr);
+        if (ngt <= 0) continue; // GT not present
+
+        // This needs to come before making `ref` so that it fills `rec->d`
+        bcf_unpack(rec, BCF_UN_ALL);
+
+        chrom = static_cast<uint64>(rec->rid);
+        pos = static_cast<uint64>(rec->pos);
+        ref = std::string(rec->d.allele[0]);
+
+        chrom_inds.push_back(chrom);
+        positions.push_back(pos);
+        ref_chrom.push_back(ref);
+
+        if (ploidy != -1 && ploidy != static_cast<int>(ngt / n_samps)) {
+            stop("All ploidy must be the same in VCF files.");
+        }
+        ploidy = ngt / n_samps;
+
+        alts_list.push_back(std::vector<std::string>(0));
+        std::vector<std::string>& alts(alts_list.back());
+        alts.reserve(ngt);
+
+        for (int i = 0; i < n_samps; i++) {
+            int32_t *ptr = gt + i*ploidy;
+            for (int j = 0; j < ploidy; j++) {
+                // if true, the sample has smaller ploidy
+                if (ptr[j] == bcf_int32_vector_end) {
+                    stop("All samples must have the same ploidy");
+                }
+
+                // missing allele
+                if (bcf_gt_is_missing(ptr[j])) {
+                    alts.push_back("");
+                    continue;
+                }
+
+                // the VCF 0-based allele index
+                int allele_index = bcf_gt_allele(ptr[j]);
+
+                alts.push_back(std::string(rec->d.allele[allele_index]));
+            }
+        }
+
+    }
+
+
+    // Memory management
+    free(gt);
+    free(c_names);
+    bcf_hdr_destroy(hdr);
+    bcf_close(inf);
+    bcf_destroy(rec);
+
+    // Create list of variant names:
+    make_var_names(var_names, samp_names, ploidy);
+
+
+    return EXIT_SUCCESS;
+}
+
+
+
+
+/*
+ Add mutations to a VarSet object based on VCF-file info vectors.
+ */
+
+void add_vcf_mutations(VarSet& var_set,
+                       const std::vector<std::vector<std::string>>& alts_list,
+                       const std::vector<uint64>& chrom_inds,
+                       const std::vector<uint64>& pos,
+                       const std::vector<std::string>& ref_chrom,
+                       const std::vector<uint64>& ind_map) {
+
+    uint64 n_muts = alts_list.size();
+    uint64 n_vars = var_set.size();
+
+    arma::Mat<sint64> size_mods(n_vars, var_set.reference->size(), arma::fill::zeros);
 
     sint64 size_mod_i; // used temporarily for each deletion and insertion
-
-    XPtr<VarSet> var_set(new VarSet(*reference, var_names));
 
     uint64 new_pos;
 
     for (uint64 mut_i = 0; mut_i < n_muts; mut_i++) {
 
         const std::string& ref(ref_chrom[mut_i]);
-        const std::vector<std::string>& haps(haps_list[mut_i]);
-        const uint64& chrom_i(chrom_inds[mut_i]);
+        const std::vector<std::string>& alts(alts_list[mut_i]);
+        const uint64& chrom_i(ind_map[chrom_inds[mut_i]]);
 
         for (uint64 var_i = 0; var_i < n_vars; var_i++) {
 
-            const std::string& alt(haps[var_i]);
+            const std::string& alt(alts[var_i]);
 
             // If it's blank or if it's the same as the reference, move on:
             if (alt.size() == 0 || alt == ref) continue;
 
             // Else, mutate accordingly:
-            VarChrom& var_chrom((*var_set)[var_i][chrom_i]);
+            VarChrom& var_chrom(var_set[var_i][chrom_i]);
             AllMutations& mutations(var_chrom.mutations);
             sint64& size_mod(size_mods(var_i, chrom_i));
 
@@ -418,8 +623,89 @@ SEXP read_vcfr(SEXP reference_ptr,
     }
 
 
-    return var_set;
+    return;
 }
+
+
+
+
+
+//[[Rcpp::export]]
+SEXP read_vcf_cpp(SEXP reference_ptr,
+                  const std::string& fn,
+                  const bool& print_names) {
+
+    /*
+     ------------
+     Fill vectors of info from VCF file
+     ------------
+     */
+
+    std::vector<std::string> chrom_names;
+    std::vector<std::string> var_names;
+    std::vector<std::vector<std::string>> alts_list;
+    std::vector<uint64> chrom_inds;
+    std::vector<uint64> positions;
+    std::vector<std::string> ref_chrom;
+
+    /*
+     Count # lines in file. This is an over-estimation bc it includes the header,
+     but I'm okay with this.
+     */
+    uint64 n_lines;
+    if (true) {  // nested scope to close inFile after it's done
+        std::ifstream inFile(fn);
+        n_lines = std::count(std::istreambuf_iterator<char>(inFile),
+                             std::istreambuf_iterator<char>(), '\n');
+    }
+
+    // Reserve memory based on # lines:
+    alts_list.reserve(n_lines);
+    chrom_inds.reserve(n_lines);
+    positions.reserve(n_lines);
+    ref_chrom.reserve(n_lines);
+
+    int status = fill_vcf_info(fn, chrom_names, var_names, alts_list, chrom_inds,
+                               positions, ref_chrom);
+
+    if (status != EXIT_SUCCESS) {
+        stop(std::string("Error reading file ") + fn);
+    }
+
+
+    /*
+     ------------
+     Now add VCF info to a new VarSet object
+     ------------
+     */
+    XPtr<RefGenome> reference(reference_ptr);
+
+    // Verify that names in the VCF file match those in the reference genome
+    if (chrom_names.size() != reference->size()) {
+        str_stop({"\nThe number of chromosomes in the VCF file doesn't match ",
+                 "that for the `ref_genome` object."});
+    }
+    std::vector<std::string> ref_names;
+    ref_names.reserve(reference->size());
+    for (uint32 i = 0; i < reference->size(); i++) {
+        ref_names.push_back(reference->chromosomes[i].name);
+    }
+    // Vector to map indices for position on `chrom_names` to position on
+    // `reference->chromosomes`:
+    std::vector<uint64> ind_map = match_chrom_names(ref_names, chrom_names, print_names);
+
+    // Finally create VarSet
+    XPtr<VarSet> var_set(new VarSet(*reference, var_names));
+    // ...and add mutations:
+    add_vcf_mutations(*var_set, alts_list, chrom_inds, positions, ref_chrom, ind_map);
+
+    return var_set;
+
+}
+
+
+
+
 
 
 

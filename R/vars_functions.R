@@ -23,8 +23,7 @@
 #'         `scrm` or `coala` coalescent-simulator object(s), or
 #'         (2) a `ms`-style output file.}
 #'     \item{\code{\link{vars_vcf}}}{Uses a variant call format (VCF) file that
-#'         directly specifies variants.
-#'         This method does not work if the `vcfR` package isn't installed.}
+#'         directly specifies variants.}
 #' }
 #'
 #'
@@ -186,9 +185,6 @@ vars_ssites <- function(obj = NULL,
 #' This function organizes higher-level information for creating variants from
 #' Variant Call Format (VCF) files.
 #'
-#' This function won't work if the package `vcfR` isn't installed.
-#' If using this function, I encourage you to cite `vcfR`. For citation
-#' information, see output from `citation("vcfR")`.
 #'
 #' @param fn A single string specifying the name of the VCF file
 #' @param print_names Logical for whether to print all unique chromosome names from
@@ -196,8 +192,6 @@ vars_ssites <- function(obj = NULL,
 #'     This printing doesn't happen until this object is passed to `create_variants`.
 #'     This can be useful for troubleshooting.
 #'     Defaults to `FALSE`.
-#' @param ... Arguments to pass to `vcfR::read.vcfR`, excluding the `file` argument
-#'     that will be overridden with the `fn` argument to this function.
 #'
 #' @export
 #'
@@ -207,86 +201,22 @@ vars_ssites <- function(obj = NULL,
 #'     `vcfR::read.vcfR`:
 #'     haplotypes, reference chromosomes, positions, chromosome names, and variant names.
 #'
-vars_vcf <- function(fn, print_names = FALSE, ...) {
-
-    if (!requireNamespace("vcfR", quietly = TRUE)) {
-        stop("\nPackage \"vcfR\" is needed for reading VCF files. ",
-             "Please install it.",
-             call. = FALSE)
-    }
+vars_vcf <- function(fn, print_names = FALSE) {
 
     if (!is_type(fn, "character", 1)) {
         err_msg("vars_vcf", "fn", "a single string")
     }
-
-    read_args <- list(...)
-    if (is.null(read_args$verbose)) read_args$verbose <- FALSE
-    read_args$file <- fn
-
-    if (!all(names(read_args) %in% names(formals(vcfR::read.vcfR)))) {
-        bad_names <- names(read_args)[!names(read_args) %in%
-                                           names(formals(vcfR::read.vcfR))]
-        stop("\nIn function `vars_vcf` in jackalope, the following extra ",
-             "arguments provided don't match any arguments in `vcfR::read.vcfR`: ",
-             paste(bad_names, collapse = ", "), ".", call. = FALSE)
+    if (!is_type(print_names, "logical", 1)) {
+        err_msg("vars_vcf", "print_names", "a single logical")
     }
 
-    vcf <- do.call(vcfR::read.vcfR, read_args)
+    fn <- path.expand(fn)
 
-    chrom <- vcf@fix[,"CHROM"]
-    pos <- as.integer(vcf@fix[,"POS"]) - 1L  # -1 is to convert to C++ indices
-    ref_chrom <- vcf@fix[,"REF"]
-    alts <- strsplit(vcf@fix[,"ALT"], ",")
-
-    if (length(chrom) != length(pos) | length(chrom) != length(ref_chrom)) {
-        stop("\nVCF not parsing correctly. ",
-             "Vectors of chromosomes, positions, and reference-chromosomes aren't ",
-             "all the same length.",
-             call. = FALSE)
+    if (!file.exists(fn)) {
+        stop("\nFile ", fn, " doesn't exist.", call. = FALSE)
     }
 
-    haps <- vcfR::extract.haps(vcf, unphased_as_NA = FALSE, verbose = FALSE)
-
-    if (length(chrom) != length(pos) | length(chrom) != length(ref_chrom)) {
-        stop("\nVCF not parsing correctly. ",
-             "Vectors of chromosomes, positions, and reference-chromosomes aren't ",
-             "all the same length.",
-             call. = FALSE)
-    }
-    if (nrow(haps) != length(pos)) {
-        stop("\nVCF not parsing correctly. ",
-             "Number of haplotypes doesn't match with number of positions.",
-             call. = FALSE)
-    }
-
-
-    # I'm assuming NAs mean no mutation
-    haps[is.na(haps)] <- ""
-
-    var_names <- colnames(haps)
-    colnames(haps) <- NULL
-    rownames(haps) <- NULL
-
-    # Split into list for easier processing in `read_vcfr`
-    haps <- split(haps, row(haps))
-
-    # We treat things differently if vcfR has output numbers rather than nucleotides.
-    # (The below line should be TRUE when it outputs numbers.)
-    if (any(!is.na(suppressWarnings(as.integer(do.call(c, haps)))))) {
-        # Change string integers to actual genotypes:
-        haps <-
-            lapply(1:length(haps),
-                   function(i) {
-                       as.character(sapply(haps[[i]],
-                                           function(j) {
-                                               ifelse(j == "" | j == "0", "",
-                                                      alts[[i]][as.integer(j)])
-                                           }))
-                   })
-    }
-
-    out <- vars_vcf_info$new(haps = haps, pos = pos, chrom = chrom, var_names = var_names,
-                             ref_chrom = ref_chrom, print_names = print_names)
+    out <- vars_vcf_info$new(fn = fn, print_names = print_names)
 
     return(out)
 

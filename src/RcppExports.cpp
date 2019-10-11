@@ -287,19 +287,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// read_vcfr
-SEXP read_vcfr(SEXP reference_ptr, const std::vector<std::string>& var_names, const std::vector<std::vector<std::string>>& haps_list, const std::vector<uint64>& chrom_inds, const std::vector<uint64>& pos, const std::vector<std::string>& ref_chrom);
-RcppExport SEXP _jackalope_read_vcfr(SEXP reference_ptrSEXP, SEXP var_namesSEXP, SEXP haps_listSEXP, SEXP chrom_indsSEXP, SEXP posSEXP, SEXP ref_chromSEXP) {
+// read_vcf_cpp
+SEXP read_vcf_cpp(SEXP reference_ptr, const std::string& fn, const bool& print_names);
+RcppExport SEXP _jackalope_read_vcf_cpp(SEXP reference_ptrSEXP, SEXP fnSEXP, SEXP print_namesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type reference_ptr(reference_ptrSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type var_names(var_namesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::vector<std::string>>& >::type haps_list(haps_listSEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint64>& >::type chrom_inds(chrom_indsSEXP);
-    Rcpp::traits::input_parameter< const std::vector<uint64>& >::type pos(posSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type ref_chrom(ref_chromSEXP);
-    rcpp_result_gen = Rcpp::wrap(read_vcfr(reference_ptr, var_names, haps_list, chrom_inds, pos, ref_chrom));
+    Rcpp::traits::input_parameter< const std::string& >::type fn(fnSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type print_names(print_namesSEXP);
+    rcpp_result_gen = Rcpp::wrap(read_vcf_cpp(reference_ptr, fn, print_names));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -818,7 +815,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_write_vars_fasta", (DL_FUNC) &_jackalope_write_vars_fasta, 7},
     {"_jackalope_read_ms_trees_", (DL_FUNC) &_jackalope_read_ms_trees_, 1},
     {"_jackalope_coal_file_sites", (DL_FUNC) &_jackalope_coal_file_sites, 1},
-    {"_jackalope_read_vcfr", (DL_FUNC) &_jackalope_read_vcfr, 6},
+    {"_jackalope_read_vcf_cpp", (DL_FUNC) &_jackalope_read_vcf_cpp, 3},
     {"_jackalope_write_vcf_cpp", (DL_FUNC) &_jackalope_write_vcf_cpp, 5},
     {"_jackalope_evolve_across_trees", (DL_FUNC) &_jackalope_evolve_across_trees, 13},
     {"_jackalope_print_ref_genome", (DL_FUNC) &_jackalope_print_ref_genome, 1},

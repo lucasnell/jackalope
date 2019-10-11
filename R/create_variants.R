@@ -394,25 +394,7 @@ to_var_set__vars_ssites_info <- function(x, reference, sub, ins, del, epsilon,
 to_var_set__vars_vcf_info <- function(x, reference, sub, ins, del, epsilon,
                                      n_threads, show_progress) {
 
-    chrom_names <- view_ref_genome_chrom_names(reference$ptr())
-    unq_chrom <- unique(x$chrom())
-
-    if (!all(unq_chrom %in% chrom_names)) {
-        if (x$print_names()) print(unq_chrom)
-        stop("\nChromosome name(s) in VCF file don't match those in the ",
-             "`ref_genome` object. ",
-             "It's probably easiest to manually change the `ref_genome` object ",
-             "(using `$set_names()` method) to have the same names as the VCF file. ",
-             "Re-run `vars_vcf` with `print_names = TRUE` to see the VCF-file names.",
-             call. = FALSE)
-    }
-
-    # Converts items in `chrom` to 0-based indices of chromosomes in ref. genome
-    chrom_inds <- match(x$chrom(), chrom_names) - 1
-
-
-    variants_ptr <- read_vcfr(reference$ptr(), x$var_names(),
-                              x$haps(), chrom_inds, x$pos(), x$ref_chrom())
+    variants_ptr <- read_vcf_cpp(reference$ptr(), x$fn(), x$print_names())
 
     return(variants_ptr)
 

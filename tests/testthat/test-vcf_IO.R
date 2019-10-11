@@ -347,8 +347,6 @@ test_that("reading haploid variant info from VCF produces proper output", {
 
     write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"), overwrite = TRUE)
 
-    skip_if_not_installed("vcfR")
-
     vars2 <- create_variants(ref, vars_info = vars_vcf(sprintf("%s/%s.vcf", dir, "test")))
 
 
@@ -364,8 +362,6 @@ test_that("reading haploid variant info from VCF produces proper output", {
 
 
 test_that("reading diploid variant info from VCF produces proper output", {
-
-    skip_if_not_installed("vcfR")
 
     sample_mat <- matrix(1:4, 2, 2, byrow = TRUE)
 
