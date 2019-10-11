@@ -313,11 +313,13 @@ SEXP read_vcfr(SEXP reference_ptr,
     uint64 n_muts = haps_list.size();
     uint64 n_vars = var_names.size();
 
-    std::vector<sint64> size_mods(n_vars, 0);
+    arma::Mat<sint64> size_mods(n_vars, reference->size(), arma::fill::zeros);
 
     sint64 size_mod_i; // used temporarily for each deletion and insertion
 
     XPtr<VarSet> var_set(new VarSet(*reference, var_names));
+
+    uint64 new_pos;
 
     for (uint64 mut_i = 0; mut_i < n_muts; mut_i++) {
 
@@ -328,7 +330,6 @@ SEXP read_vcfr(SEXP reference_ptr,
         for (uint64 var_i = 0; var_i < n_vars; var_i++) {
 
             const std::string& alt(haps[var_i]);
-            sint64& size_mod(size_mods[var_i]);
 
             // If it's blank or if it's the same as the reference, move on:
             if (alt.size() == 0 || alt == ref) continue;
@@ -336,6 +337,7 @@ SEXP read_vcfr(SEXP reference_ptr,
             // Else, mutate accordingly:
             VarChrom& var_chrom((*var_set)[var_i][chrom_i]);
             AllMutations& mutations(var_chrom.mutations);
+            sint64& size_mod(size_mods(var_i, chrom_i));
 
             if (alt.size() == ref.size()) {
                 /*
@@ -345,8 +347,8 @@ SEXP read_vcfr(SEXP reference_ptr,
                  */
                 for (uint64 i = 0; i < ref.size(); i++) {
                     if (alt[i] != ref[i]) {
-                        mutations.push_back(0, pos[mut_i] + i, pos[mut_i] + i + size_mod,
-                                            alt[i]);
+                        new_pos = pos[mut_i] + i + size_mod;
+                        mutations.push_back(0, pos[mut_i] + i, new_pos, alt[i]);
                     }
                 }
             } else if (alt.size() > ref.size()) {
@@ -365,8 +367,8 @@ SEXP read_vcfr(SEXP reference_ptr,
                 uint64 i = 0;
                 for (; i < (ref.size()-1); i++) {
                     if (alt[i] != ref[i]) {
-                        mutations.push_back(0, pos[mut_i] + i, pos[mut_i] + i + size_mod,
-                                            alt_copy[i]);
+                        new_pos = pos[mut_i] + i + size_mod;
+                        mutations.push_back(0, pos[mut_i] + i, new_pos, alt_copy[i]);
                     }
                 }
                 // Erase all the nucleotides that have already been added (if any):
@@ -375,7 +377,8 @@ SEXP read_vcfr(SEXP reference_ptr,
                  Make the last one an insertion proper
                  */
                 size_mod_i = alt_copy.size() - 1;
-                mutations.push_back(size_mod_i, pos[mut_i] + i, pos[mut_i] + i + size_mod,
+                new_pos = pos[mut_i] + i + size_mod;
+                mutations.push_back(size_mod_i, pos[mut_i] + i, new_pos,
                                     alt_copy.c_str());
                 size_mod += size_mod_i;
                 var_chrom.chrom_size += size_mod_i;
@@ -395,16 +398,16 @@ SEXP read_vcfr(SEXP reference_ptr,
                 uint64 i = 0;
                 for (; i < alt.size(); i++) {
                     if (alt[i] != ref[i]) {
-                        mutations.push_back(0, pos[mut_i] + i, pos[mut_i] + i + size_mod,
-                                            alt[i]);
+                        new_pos = pos[mut_i] + i + size_mod;
+                        mutations.push_back(0, pos[mut_i] + i, new_pos, alt[i]);
                     }
                 }
 
                 size_mod_i = static_cast<sint64>(alt.size()) -
                     static_cast<sint64>(ref.size());
 
-                mutations.push_back(size_mod_i, pos[mut_i] + i, pos[mut_i] + i + size_mod,
-                                    nullptr);
+                new_pos = pos[mut_i] + i + size_mod;
+                mutations.push_back(size_mod_i, pos[mut_i] + i, new_pos, nullptr);
                 size_mod += size_mod_i;
                 var_chrom.chrom_size += size_mod_i;
 
