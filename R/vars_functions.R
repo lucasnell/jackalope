@@ -197,9 +197,8 @@ vars_ssites <- function(obj = NULL,
 #'
 #' @return A `vars_vcf_info` object containing information used in `create_variants`
 #'     to create haploid variants.
-#'     This class is just a wrapper around a list containing relevant output from
-#'     `vcfR::read.vcfR`:
-#'     haplotypes, reference chromosomes, positions, chromosome names, and variant names.
+#'     This class is just a wrapper around a list containing the arguments to this
+#'     function.
 #'
 vars_vcf <- function(fn, print_names = FALSE) {
 

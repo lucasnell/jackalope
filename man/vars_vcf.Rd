@@ -4,7 +4,7 @@
 \alias{vars_vcf}
 \title{Create necessary information to create variants using a VCF file}
 \usage{
-vars_vcf(fn, print_names = FALSE, ...)
+vars_vcf(fn, print_names = FALSE)
 }
 \arguments{
 \item{fn}{A single string specifying the name of the VCF file}
@@ -14,23 +14,14 @@ the VCF file when VCF chromosome names don't match those from the reference geno
 This printing doesn't happen until this object is passed to \code{create_variants}.
 This can be useful for troubleshooting.
 Defaults to \code{FALSE}.}
-
-\item{...}{Arguments to pass to \code{vcfR::read.vcfR}, excluding the \code{file} argument
-that will be overridden with the \code{fn} argument to this function.}
 }
 \value{
 A \code{vars_vcf_info} object containing information used in \code{create_variants}
 to create haploid variants.
-This class is just a wrapper around a list containing relevant output from
-\code{vcfR::read.vcfR}:
-haplotypes, reference chromosomes, positions, chromosome names, and variant names.
+This class is just a wrapper around a list containing the arguments to this
+function.
 }
 \description{
 This function organizes higher-level information for creating variants from
 Variant Call Format (VCF) files.
-}
-\details{
-This function won't work if the package \code{vcfR} isn't installed.
-If using this function, I encourage you to cite \code{vcfR}. For citation
-information, see output from \code{citation("vcfR")}.
 }
