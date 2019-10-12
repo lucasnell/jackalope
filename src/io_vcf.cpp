@@ -518,7 +518,7 @@ int fill_vcf_info(const std::string& fn,
 void add_vcf_mutations(VarSet& var_set,
                        const std::vector<std::vector<std::string>>& alts_list,
                        const std::vector<uint64>& chrom_inds,
-                       const std::vector<uint64>& pos,
+                       const std::vector<uint64>& positions,
                        const std::vector<std::string>& ref_chrom,
                        const std::vector<uint64>& ind_map) {
 
@@ -557,8 +557,8 @@ void add_vcf_mutations(VarSet& var_set,
                  */
                 for (uint64 i = 0; i < ref.size(); i++) {
                     if (alt[i] != ref[i]) {
-                        new_pos = pos[mut_i] + i + size_mod;
-                        mutations.push_back(0, pos[mut_i] + i, new_pos, alt[i]);
+                        new_pos = positions[mut_i] + i + size_mod;
+                        mutations.push_back(0, positions[mut_i] + i, new_pos, alt[i]);
                     }
                 }
             } else if (alt.size() > ref.size()) {
@@ -577,8 +577,8 @@ void add_vcf_mutations(VarSet& var_set,
                 uint64 i = 0;
                 for (; i < (ref.size()-1); i++) {
                     if (alt[i] != ref[i]) {
-                        new_pos = pos[mut_i] + i + size_mod;
-                        mutations.push_back(0, pos[mut_i] + i, new_pos, alt_copy[i]);
+                        new_pos = positions[mut_i] + i + size_mod;
+                        mutations.push_back(0, positions[mut_i] + i, new_pos, alt_copy[i]);
                     }
                 }
                 // Erase all the nucleotides that have already been added (if any):
@@ -587,8 +587,8 @@ void add_vcf_mutations(VarSet& var_set,
                  Make the last one an insertion proper
                  */
                 size_mod_i = alt_copy.size() - 1;
-                new_pos = pos[mut_i] + i + size_mod;
-                mutations.push_back(size_mod_i, pos[mut_i] + i, new_pos,
+                new_pos = positions[mut_i] + i + size_mod;
+                mutations.push_back(size_mod_i, positions[mut_i] + i, new_pos,
                                     alt_copy.c_str());
                 size_mod += size_mod_i;
                 var_chrom.chrom_size += size_mod_i;
@@ -608,16 +608,16 @@ void add_vcf_mutations(VarSet& var_set,
                 uint64 i = 0;
                 for (; i < alt.size(); i++) {
                     if (alt[i] != ref[i]) {
-                        new_pos = pos[mut_i] + i + size_mod;
-                        mutations.push_back(0, pos[mut_i] + i, new_pos, alt[i]);
+                        new_pos = positions[mut_i] + i + size_mod;
+                        mutations.push_back(0, positions[mut_i] + i, new_pos, alt[i]);
                     }
                 }
 
                 size_mod_i = static_cast<sint64>(alt.size()) -
                     static_cast<sint64>(ref.size());
 
-                new_pos = pos[mut_i] + i + size_mod;
-                mutations.push_back(size_mod_i, pos[mut_i] + i, new_pos, nullptr);
+                new_pos = positions[mut_i] + i + size_mod;
+                mutations.push_back(size_mod_i, positions[mut_i] + i, new_pos, nullptr);
                 size_mod += size_mod_i;
                 var_chrom.chrom_size += size_mod_i;
 
