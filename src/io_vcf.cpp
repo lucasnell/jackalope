@@ -52,22 +52,22 @@ void OneVarChromVCF::check(const uint64& pos_start,
                          uint64& pos_end,
                          bool& still_growing) {
 
-    if (pos_end >= pos.first) {
+    if (pos_end >= ref_pos.first) {
 
         gt_index = 1;
 
-        while (ind.second < var_chrom->mutations.size() &&
-               get_first_pos(ind.second) < pos_end) {
+        while (mut_ind.second < var_chrom->mutations.size() &&
+               get_first_pos(mut_ind.second) < pos_end) {
 
-            ind.second++;
+            mut_ind.second++;
 
         }
 
-        if (ind.second >= var_chrom->mutations.size() ||
-            (ind.second < var_chrom->mutations.size() &&
-            get_first_pos(ind.second) > pos_end)) {
+        if (mut_ind.second >= var_chrom->mutations.size() ||
+            (mut_ind.second < var_chrom->mutations.size() &&
+            get_first_pos(mut_ind.second) > pos_end)) {
 
-            ind.second--;
+            mut_ind.second--;
 
         }
 
@@ -76,19 +76,19 @@ void OneVarChromVCF::check(const uint64& pos_start,
          (the second part of this statement is added because contiguous deletions
          are prevented)
          */
-        if (ind.second < (var_chrom->mutations.size() - 1) &&
-            var_chrom->mutations.size_modifier[ind.second] >= 0) {
-            if (var_chrom->mutations.size_modifier[ind.second + 1] < 0 &&
-                var_chrom->mutations.old_pos[ind.second + 1] ==
-                (var_chrom->mutations.old_pos[ind.second] + 1)) {
-                ind.second++;
+        if (mut_ind.second < (var_chrom->mutations.size() - 1) &&
+            var_chrom->mutations.size_modifier[mut_ind.second] >= 0) {
+            if (var_chrom->mutations.size_modifier[mut_ind.second + 1] < 0 &&
+                var_chrom->mutations.old_pos[mut_ind.second + 1] ==
+                (var_chrom->mutations.old_pos[mut_ind.second] + 1)) {
+                mut_ind.second++;
             }
         }
 
-        set_second_pos(ind.second);
+        set_second_pos(mut_ind.second);
 
-        if (pos.second > pos_end) {
-            pos_end = pos.second;
+        if (ref_pos.second > pos_end) {
+            pos_end = ref_pos.second;
             still_growing = true;
         }
 
@@ -124,9 +124,9 @@ void OneVarChromVCF::dump(std::vector<std::string>& unq_alts,
 
         // Add mutations from back:
         uint64 pos;
-        uint64 n_muts = ind.second - ind.first + 1;
+        uint64 n_muts = mut_ind.second - mut_ind.first + 1;
         for (uint64 i = 0; i < n_muts; i++) {
-            uint64 index = ind.second - i;
+            uint64 index = mut_ind.second - i;
             pos = mutations.old_pos[index] - pos_start;
             if (pos >= alt_str.size()) {
                 stop(std::string("\nPosition ") + std::to_string(pos) +
@@ -171,8 +171,8 @@ void OneVarChromVCF::dump(std::vector<std::string>& unq_alts,
         }
 
         // Now iterate:
-        ind.second++;
-        ind.first = ind.second;
+        mut_ind.second++;
+        mut_ind.first = mut_ind.second;
         reset_pos();
         gt_index = 0;
 
@@ -225,6 +225,7 @@ bool WriterVCF::iterate(std::string& pos_str,
         }
     }
 
+
     // Create reference chromosome:
     if (mut_pos.second >= ref_nts->size()) {
         str_stop({"\nPosition ", std::to_string(mut_pos.second),
@@ -249,6 +250,8 @@ bool WriterVCF::iterate(std::string& pos_str,
         var_infos[i].dump(unq_alts, gt_indexes[i], mut_pos.first, mut_pos.second,
                           ref_str);
     }
+
+
     /*
      `do_write` will be false if overlapping mutations result in the reference
      chromosome again.
