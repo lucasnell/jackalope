@@ -226,13 +226,15 @@ bool WriterVCF::iterate(std::string& pos_str,
     }
 
     // Create reference chromosome:
-    ref_str.reserve(mut_pos.second - mut_pos.first + 1);
     if (mut_pos.second >= ref_nts->size()) {
-        stop(std::string("\nPosition ") + std::to_string(mut_pos.second) +
-            std::string(" on ref. string is too high for total ") +
-            std::string("ref. string length of ") +
-            std::to_string(ref_nts->size()));
+        str_stop({"\nPosition ", std::to_string(mut_pos.second),
+            " on ref. string is too high for total ",
+            "ref. string length of ",
+            std::to_string(ref_nts->size()), ". ",
+            "For debugging, mut_pos.first = ", std::to_string(mut_pos.first)});
     }
+    ref_str.reserve(mut_pos.second - mut_pos.first + 1);
+
     for (uint64 i = mut_pos.first; i <= mut_pos.second; i++) {
         ref_str.push_back(ref_nts->at(i));
     }

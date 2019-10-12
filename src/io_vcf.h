@@ -46,8 +46,8 @@ inline std::vector<uint64> match_chrom_names(const std::vector<std::string>& fro
             if (print_names) {
                 for (const std::string& s : from_vcf) err_msg.push_back(s + '\n');
             }
-            err_msg.push_back("\nChromosome name(s) in VCF file don't match those in the ");
-            err_msg.push_back("`ref_genome` object. It's probably easiest ");
+            err_msg.push_back("\nChromosome name(s) in VCF file don't match those in ");
+            err_msg.push_back("the `ref_genome` object. It's probably easiest ");
             err_msg.push_back("to manually change the `ref_genome` object ");
             err_msg.push_back("(using `$set_names()` method) to have the same names ");
             err_msg.push_back("as the VCF file.");
