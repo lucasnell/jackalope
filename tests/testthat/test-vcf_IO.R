@@ -441,3 +441,33 @@ test_that("reading variant info from VCF produces proper output when chromosomes
 
 })
 
+
+
+
+
+test_that("out-of-order VCF file returns error", {
+
+    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"), overwrite = TRUE)
+
+    vcf_fn <- sprintf("%s/%s.vcf", dir, "test")
+
+    # Reverse lines for first two chromosomes in the VCF file:
+    vcf <- readLines(vcf_fn)
+    c0 <- vcf[grepl(paste0("^", vars$chrom_names()[1]), vcf)]
+    c1 <- vcf[grepl(paste0("^", vars$chrom_names()[2]), vcf)]
+    c0 <- rev(c0)
+    c1 <- rev(c1)
+    vcf <- c(vcf[!grepl(paste0("^", vars$chrom_names()[1]), vcf) &
+                     !grepl(paste0("^", vars$chrom_names()[2]), vcf)],
+             c1, c0)
+    writeLines(paste(vcf, collapse = "\n"), vcf_fn)
+
+    # Now attempt to create variants and check output
+    expect_error(create_variants(ref, vars_info = vars_vcf(vcf_fn)),
+                 regexp = paste("Positions are sorted numerically, in",
+                                "increasing order, within each reference",
+                                "sequence CHROM"))
+
+})
+
+

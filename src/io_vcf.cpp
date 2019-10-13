@@ -549,6 +549,15 @@ void add_vcf_mutations(VarSet& var_set,
             AllMutations& mutations(var_chrom.mutations);
             sint64& size_mod(size_mods(var_i, chrom_i));
 
+            // Make sure that positions are never before any existing mutations
+            if (!mutations.empty() && mutations.old_pos.back() >= positions[mut_i]) {
+                str_stop({"\nFor VCF files, \"Positions are sorted numerically, in ",
+                         "increasing order, within each reference sequence CHROM.\" ",
+                         "(VCFv4.3 specification). ",
+                         "In jackalope, multiple records with the same POS are also ",
+                         "not permitted"});
+            }
+
             if (alt.size() == ref.size()) {
                 /*
                  ------------
