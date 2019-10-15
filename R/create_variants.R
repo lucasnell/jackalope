@@ -164,9 +164,9 @@ process_phy <- function(phy, ordered_tip_labels) {
 
     for (i in 1:n_nodes) {
         edge_i <- edge[edge[,1] == i + n_tips, ]
-        edge_i[,1] <- tail(edge_i[,2], 1)
+        edge_i[,1] <- utils::tail(edge_i[,2], 1)
         edge[edge[,1] == i + n_tips, ] <- edge_i
-        edge[edge[,2] == i + n_tips, 2] <- tail(edge_i[,2], 1)
+        edge[edge[,2] == i + n_tips, 2] <- utils::tail(edge_i[,2], 1)
     }
     phy$edge <- edge
 
