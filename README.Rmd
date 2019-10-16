@@ -87,7 +87,7 @@ devtools::install_github("lucasnell/jackalope")
 
 To use multithreading in `jackalope`, you'll need to compile it from source using
 the proper flags.
-Regardless of operating system, you should add the following to the
+The first step is to add the following to the
 `.R/Makevars` (`.R/Makevars.win` on Windows) file inside the home directory:
 
 ```{bash enable-openmp-makevars}
@@ -110,7 +110,7 @@ If you've enabled OpenMP properly, running `jackalope:::using_openmp()` in R
 should return `TRUE`.
 
 
-On macOS, it's a bit more work to get things working.
+On macOS, it takes a few more steps to get things working.
 First, make sure the content above is in your `~/.R/Makevars` file.
 Next, go to <https://cran.r-project.org/bin/macosx/tools> and download
 (1\) the newest version of the `clang` compiler (`clang8` at the time of this writing)
@@ -141,11 +141,26 @@ For more information, please see
 Below shows how to simulate a 10kb genome, then create variants from that genome
 using a phylogenetic tree:
 
-```{r, eval = TRUE}
+```{r example-usage-make-ref-var, eval = TRUE}
 library(jackalope)
 reference <- create_genome(n_chroms = 10, len_mean = 1000)
 tr <- ape::rcoal(5)
 ref_variants <- create_variants(reference, vars_phylo(tr), sub_JC69(0.1))
 ref_variants
+```
+
+
+Below simulates 500 million paired-end, 100 bp reads from the variants:
+
+```{r example-usage-make-illumina}
+illumina(ref_variants, out_prefix = "illumina", n_reads = 500e6,
+         paired = TRUE, read_length = 100)
+```
+
+
+Below simulates 500 thousand PacBio reads from the reference genome:
+
+```{r example-usage-make-pacbio}
+pacbio(ref, out_prefix = "pacbio", n_reads = 500e3)
 ```
 
