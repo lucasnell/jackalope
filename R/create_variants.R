@@ -672,14 +672,16 @@ create_variants <- function(reference,
     if (is.null(del)) del <- indel_info$new(numeric(0))
 
 
-    if (!is_type(mode, "character") || length(mode) != 1) {
+    if (!is_type(mode, "character", 1)) {
         err_msg("create_variants", "mode", "a single string")
     }
-    mode <- c("mutation", "sequence")[pmatch(mode, c("mutation", "sequence"))]
-    if (is.na(mode)) {
-        err_msg("create_variants", "mode", "a single string that partially matches",
-                "either \"mutation\" or \"sequence\"")
+    i <- pmatch(mode, c("mutation", "sequence"), nomatch = 0L)
+    if (i == 0L) {
+        jackalope:::err_msg("create_variants", "mode",
+                            "one of \"mutation\" or \"sequence\"")
     }
+    mode <- c("mutation", "sequence")[i]
+
     if (!single_integer(n_threads, .min = 1)) {
         err_msg("create_variants", "n_threads", "a single integer >= 1")
     }
