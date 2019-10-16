@@ -2,6 +2,8 @@
 # define __JACKALOPE_STR_MANIP_H
 
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 #include <RcppArmadillo.h>
 #include <iostream>
 #include <vector>
@@ -171,6 +173,37 @@ inline std::vector<std::string> cpp_str_split_newline(const std::string& in_stri
 
     return out;
 }
+
+
+
+
+// Split a main string by a string delimeter:
+inline std::vector<std::string> cpp_str_split_delim_str(const std::string& in_string,
+                                                        const std::string& split) {
+    std::vector<std::string> splitted;
+    size_t last = 0;
+    size_t next = 0;
+    while ((next = in_string.find(split, last)) != std::string::npos) {
+        splitted.push_back(in_string.substr(last, next-last));
+        last = next + split.size();
+    }
+    splitted.push_back(in_string.substr(last));
+    return splitted;
+}
+
+
+
+// Count a substring in a main string:
+inline uint32 count_substr(const std::string& in_string, const std::string& substr) {
+    uint32 occurrences = 0;
+    std::string::size_type pos = 0;
+    while ((pos = in_string.find(substr, pos)) != std::string::npos) {
+        ++ occurrences;
+        pos += substr.length();
+    }
+    return occurrences;
+}
+
 
 
 /*

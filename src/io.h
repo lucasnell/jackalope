@@ -5,6 +5,8 @@
  Functions common to reading/writing to multiple file types.
  */
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 #include <RcppArmadillo.h>
 #include <vector>               // vector class
 #include <string>               // string class

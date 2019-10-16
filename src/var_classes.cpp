@@ -8,9 +8,12 @@
  */
 
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 #include <RcppArmadillo.h>
 #include <vector>  // vector class
 #include <string>  // string class
+#include <cstring>  // C strings, including std::strcpy
 #include <algorithm>  // lower_bound, sort
 #include <deque>  // deque
 
@@ -24,95 +27,42 @@
 using namespace Rcpp;
 
 
+// `start` is inclusive
+// this `VarChrom` must be empty after `mut_i`
+// return `sint64` is the size modifier for mutations added
+sint64 VarChrom::add_to_back(const VarChrom& other, const uint64& mut_i) {
 
-VarChrom& VarChrom::operator+=(const VarChrom& other) {
+    if (other.mutations.size() <= mut_i) return 0;
 
-    // If either is empty, then this is easy:
-    if (other.mutations.empty()) return *this;
-    if (mutations.empty()) {
-        mutations = other.mutations;
-        chrom_size = other.chrom_size;
-        return *this;
+    if (!mutations.empty() &&
+        mutations.old_pos.back() >= other.mutations.old_pos[mut_i]) {
+        str_stop({"\nOverlapping VarChrom.mutations in VarChrom::add_to_back. ",
+                 "Note that when combining VarChrom objects using `add_to_back`, you ",
+                 "must do it sequentially, from the back ONLY."});
     }
 
-    // Combine chromosome sizes:
-    sint64 diff = static_cast<sint64>(other.chrom_size) -
+    sint64 new_size_mod = 0;
+    sint64 old_size_mod = static_cast<sint64>(chrom_size) -
         static_cast<sint64>(ref_chrom->size());
-    chrom_size += diff;
 
-    /*
-    Now combine `mutations` deques.
-    Process differently depending on whether `other` has its mutations before
-    or after this one's.
-    If they overlap, then throw an error.
-    */
-    // `other` has mutations before this one:
-    bool other_is_before = other.mutations.back() < mutations.front();
-    // `other` has mutations after this one:
-    bool other_is_after = other.mutations.front() > mutations.back();
-    if (other_is_before) {
-        // Adjust current mutations' `new_pos` fields (using `diff` from above):
-        auto mut_ = mutations.begin();
-        for (; mut_ != mutations.end(); ++mut_) {
-            (*mut_).new_pos += diff;
-        }
-        // Now add the new mutations:
-        auto mut = other.mutations.rbegin();  // note the use of reverse iterator!
-        for (; mut != other.mutations.rend(); ++mut) {
-            // Add the new mutation to the front of `(*this).mutations`:
-            mutations.push_front(*mut);
-        }
-    } else if (other_is_after) {
-        // The amount to adjust the new mutation's `new_pos` fields:
-        diff = static_cast<sint64>(chrom_size) - static_cast<sint64>(ref_chrom->size());
-        auto mut = other.mutations.begin();
-        for (; mut != other.mutations.end(); ++mut) {
-            // Add the new mutation to the back of `(*this).mutations`:
-            mutations.push_back(*mut);
-            // Adjust the `new_pos` field:
-            mutations.back().new_pos += diff;
-        }
-    } else {
-        str_stop({"\nOverlapping VarChrom.mutations in +=. ",
-                 "Note that when combining VarChrom objects, you must ",
-                 "do it sequentially, either from the front or back."});
+    for (uint64 i = mut_i; i < other.mutations.size(); i++) {
+        mutations.push_back(other.mutations.size_modifier[i],
+                            other.mutations.old_pos[i],
+                            other.mutations.new_pos[i],
+                            other.mutations.nucleos[i]);
+        mutations.new_pos.back() = mutations.old_pos.back() +
+            old_size_mod + new_size_mod;
+        new_size_mod += other.mutations.size_modifier[i];
     }
 
-    return *this;
+    chrom_size += new_size_mod;
+
+    return new_size_mod;
+
 }
 
 
-/*
- ------------------
- Retrieve a nucleotide (char type) from the variant chromosome
- based on the position in the new, variant chromosome
- ------------------
- */
-char VarChrom::get_nt(const uint64& new_pos) const {
-    char out;
-    /*
-     Index to the Mutation object nearest to (without being past)
-     an input position (see below for the `get_mut_` fxn):
-     */
-    uint64 mut_i = get_mut_(new_pos);
-    /*
-     If the new_pos is less than the position for the first mutation
-     or if mutations is empty
-     (in which cases `get_mut_` returns `mutations.size()`),
-     we just extract the character from the beginning of the reference string:
-     */
-    if (mut_i == mutations.size()) {
-        out = (*ref_chrom)[new_pos];
-        /*
-         If not, then extract the character from the Mutation object that
-         `mut` points to (see below for `get_char_` fxn):
-         */
-    } else {
-        out = get_char_(new_pos, mut_i);
-    }
 
-    return out;
-}
 
 
 
@@ -130,12 +80,13 @@ std::string VarChrom::get_chrom_full() const {
     // Index to the first Mutation object
     uint64 mut_i = 0;
 
-    std::string out(chrom_size, 'x');
+    std::string out;
+    out.reserve(chrom_size);
     uint64 pos = 0;
 
     // Picking up any nucleotides before the first mutation
-    while (pos < mutations[mut_i].new_pos) {
-        out[pos] = (*ref_chrom)[pos];
+    while (pos < mutations.new_pos[mut_i]) {
+        out.push_back((*ref_chrom)[pos]);
         ++pos;
     }
 
@@ -143,8 +94,8 @@ std::string VarChrom::get_chrom_full() const {
     // at or after its position but before the next one
     uint64 next_mut_i = mut_i + 1;
     while (next_mut_i < mutations.size()) {
-        while (pos < mutations[next_mut_i].new_pos) {
-            out[pos] = get_char_(pos, mut_i);
+        while (pos < mutations.new_pos[next_mut_i]) {
+            out.push_back(get_char_(pos, mut_i));
             ++pos;
         }
         ++mut_i;
@@ -153,7 +104,7 @@ std::string VarChrom::get_chrom_full() const {
 
     // Now taking care of nucleotides after the last Mutation
     while (pos < chrom_size) {
-        out[pos] = get_char_(pos, mut_i);
+        out.push_back(get_char_(pos, mut_i));
         ++pos;
     }
 
@@ -172,8 +123,8 @@ std::string VarChrom::get_chrom_full() const {
  the entire mutation deque multiple times.
  If end position is beyond the size of the chromosome, it changes `chunk_str` to the
  chromosome from the start to the chromosome end.
- If start position is beyond the size of the chromosome, it sets `mut` to `mutations.end()`
- and clears `chunk_str`.
+ If start position is beyond the size of the chromosome, it sets `mut` to
+ `mutations.end()` and clears `chunk_str`.
  ------------------
  */
 void VarChrom::set_chrom_chunk(std::string& chunk_str,
@@ -200,7 +151,7 @@ void VarChrom::set_chrom_chunk(std::string& chunk_str,
     }
     // Move mutation to the proper spot
     while (mut_i < mutations.size()) {
-        if (start < mutations[mut_i].new_pos) break;
+        if (start < mutations.new_pos[mut_i]) break;
         ++mut_i;
     }
     if (mut_i != 0) --mut_i;
@@ -214,7 +165,7 @@ void VarChrom::set_chrom_chunk(std::string& chunk_str,
      Picking up any nucleotides before the focal mutation (this should only happen when
      `mut == mutations.begin()` and `start` is before the first mutation)
      */
-    while (pos < mutations[mut_i].new_pos && pos <= end) {
+    while (pos < mutations.new_pos[mut_i] && pos <= end) {
         chunk_str += (*ref_chrom)[pos];
         ++pos;
     }
@@ -225,7 +176,7 @@ void VarChrom::set_chrom_chunk(std::string& chunk_str,
      at or after its position (and `end`) but before the next mutation
      */
     while (next_mut_i < mutations.size()) {
-        while (pos < mutations[next_mut_i].new_pos && pos <= end) {
+        while (pos < mutations.new_pos[next_mut_i] && pos <= end) {
             chunk_str += get_char_(pos, mut_i);
             ++pos;
         }
@@ -282,7 +233,7 @@ void VarChrom::fill_read(std::string& read,
     }
     // Move mutation to the proper spot
     while (mut_i < mutations.size()) {
-        if (chrom_start < mutations[mut_i].new_pos) break;
+        if (chrom_start < mutations.new_pos[mut_i]) break;
         ++mut_i;
     }
     if (mut_i != 0) --mut_i;
@@ -295,7 +246,7 @@ void VarChrom::fill_read(std::string& read,
      Picking up any nucleotides before the focal mutation (this should only happen when
      `mut == mutations.begin()` and `chrom_start` is before the first mutation)
      */
-    while (chrom_pos < mutations[mut_i].new_pos && chrom_pos <= chrom_end) {
+    while (chrom_pos < mutations.new_pos[mut_i] && chrom_pos <= chrom_end) {
         read[read_pos] = (*ref_chrom)[chrom_pos];
         ++chrom_pos;
         ++read_pos;
@@ -307,7 +258,7 @@ void VarChrom::fill_read(std::string& read,
      at or after its position (and `chrom_end`) but before the next mutation
      */
     while (next_mut_i < mutations.size()) {
-        while (chrom_pos < mutations[next_mut_i].new_pos && chrom_pos <= chrom_end) {
+        while (chrom_pos < mutations.new_pos[next_mut_i] && chrom_pos <= chrom_end) {
             read[read_pos] = get_char_(chrom_pos, mut_i);
             ++chrom_pos;
             ++read_pos;
@@ -318,8 +269,8 @@ void VarChrom::fill_read(std::string& read,
     }
 
     /*
-     If we reach the last mutation, add nucleotides until `chrom_end` (remember that above,
-     I've made sure that `chrom_end < chrom_size`).
+     If we reach the last mutation, add nucleotides until `chrom_end`
+     (remember that above, I've made sure that `chrom_end < chrom_size`).
      */
     while (chrom_pos <= chrom_end) {
         read[read_pos] = get_char_(chrom_pos, mut_i);
@@ -329,106 +280,6 @@ void VarChrom::fill_read(std::string& read,
 
     return;
 }
-
-
-
-
-/*
- ------------------
- Internal function for finding character of either mutation or reference
- given an index (in the "new", variant chromosome) and an index for a
- single Mutation object.
- This only works if you've already narrowed it down to the Mutation object
- that is directly previous to the index position.
- ------------------
- */
-char VarChrom::get_char_(const uint64& new_pos,
-                            const uint64& mut_i) const {
-    const Mutation& m(mutations[mut_i]);
-    char out;
-    uint64 ind = new_pos - m.new_pos;
-    if (static_cast<sint64>(ind) > m.size_modifier) {
-        ind += (m.old_pos - m.size_modifier);
-        out = (*ref_chrom)[ind];
-    } else {
-        out = m[ind];
-    }
-    return out;
-}
-
-
-
-
-
-/*
- ------------------
- Re-calculate new positions (and total chromosome size)
- ------------------
- */
-
-/*
- For ALL Mutation objects (this is only used when reading VCF files)
- */
-void VarChrom::calc_positions() {
-
-    if (mutations.size() == 0) return;
-
-    uint64 mut_i = 0;
-
-    sint64 modifier = mutations[mut_i].size_modifier;
-    ++mut_i;
-
-    // Updating individual Mutation objects
-    for (; mut_i < mutations.size(); mut_i++) {
-        mutations[mut_i].new_pos += modifier;
-        modifier += mutations[mut_i].size_modifier;
-    }
-    // Updating full chromosome size
-    chrom_size += modifier;
-
-    return;
-}
-/*
- For all Mutation objects after a given Mutation object
- (this is for after you insert a NEW Mutation, where `mut_i` below points to
- that Mutation)
- */
-void VarChrom::calc_positions(uint64 mut_i) {
-
-    sint64 modifier = mutations[mut_i].size_modifier;
-    ++mut_i;
-
-    // Updating individual Mutation objects
-    for (; mut_i < mutations.size(); mut_i++) {
-        mutations[mut_i].new_pos += modifier;
-    }
-    // Updating full chromosome size
-    chrom_size += modifier;
-
-    return;
-}
-/*
- For all Mutation objects after AND INCLUDING a given Mutation object
- (this is for after you MERGE multiple Mutations, where `mut_i` below points to
- that merged Mutation and `modifier` refers to the net change in chromosome size
- after the merge)
- */
-void VarChrom::calc_positions(uint64 mut_i, const sint64& modifier) {
-    // Updating individual Mutation objects
-    for (; mut_i < mutations.size(); ++mut_i) {
-        mutations[mut_i].new_pos += modifier;
-    }
-    // Updating full chromosome size
-    chrom_size += modifier;
-
-    return;
-}
-
-
-
-
-
-
 
 
 
@@ -471,8 +322,8 @@ void VarChrom::add_deletion(const uint64& size_, const uint64& new_pos_) {
      If `mutations` is empty, just add to the beginning and adjust chromosome size
      */
     if (mutations.empty()) {
-        Mutation new_mut(old_pos_, deletion_start, size_mod);
-        mutations.push_front(new_mut);
+
+        mutations.push_front(size_mod, old_pos_, deletion_start, nullptr);
         chrom_size += size_mod;
 
         /*
@@ -512,8 +363,8 @@ void VarChrom::add_deletion(const uint64& size_, const uint64& new_pos_) {
          */
         if (mut_i != 0) {
             --mut_i;
-            old_pos_ = deletion_start - mutations[mut_i].new_pos +
-            mutations[mut_i].old_pos - mutations[mut_i].size_modifier;
+            old_pos_ = deletion_start - mutations.new_pos[mut_i] +
+                mutations.old_pos[mut_i] - mutations.size_modifier[mut_i];
             ++mut_i;
         } else old_pos_ = deletion_start; // (`deletion_start` may have changed)
 
@@ -522,9 +373,8 @@ void VarChrom::add_deletion(const uint64& size_, const uint64& new_pos_) {
         //        (2) the chromosome size
         calc_positions(mut_i, subchrom_modifier);
 
-        // Now create the Mutation and insert it.
-        Mutation new_mut(old_pos_, deletion_start, size_mod);
-        mutations.insert(mutations.begin() + mut_i, new_mut);
+        // Now insert mutation info:
+        mutations.insert(mut_i, size_mod, old_pos_, deletion_start, nullptr);
     }
     return;
 }
@@ -539,51 +389,54 @@ void VarChrom::add_deletion(const uint64& size_, const uint64& new_pos_) {
  */
 void VarChrom::add_insertion(const std::string& nucleos_, const uint64& new_pos_) {
 
+    sint64 size_mod = nucleos_.size();
+
     uint64 mut_i = get_mut_(new_pos_);
     // `mutations.size()` is returned above if `new_pos_` is before the
-    // first Mutation object or if `mutations` is empty
+    // first mutation  or if `mutations` is empty
     if (mut_i == mutations.size()) {
-        std::string nt = (*ref_chrom)[new_pos_] + nucleos_;
+        std::string nts = (*ref_chrom)[new_pos_] + nucleos_;
         // (below, notice that new position and old position are the same)
-        Mutation new_mut(new_pos_, new_pos_, nt);
-        mutations.push_front(new_mut);
+        mutations.push_front(size_mod, new_pos_, new_pos_, nts.c_str());
         // Adjust new positions and total chromosome size:
-        calc_positions(static_cast<uint64>(0));
+        calc_positions(1, size_mod);
         return;
     }
 
-    uint64 ind = new_pos_ - mutations[mut_i].new_pos;
+    uint64 ind = new_pos_ - mutations.new_pos[mut_i];
     /*
      If `new_pos_` is within the Mutation chromosome (which is never the case for
      deletions), then we adjust it as such:
      */
-    if (static_cast<sint64>(ind) <= mutations[mut_i].size_modifier) {
-        sint64 size_ = nucleos_.size();
+    if (static_cast<sint64>(ind) <= mutations.size_modifier[mut_i]) {
         // string to store combined nucleotides
-        std::string nt = "";
-        for (uint64 j = 0; j <= ind; j++) nt += mutations[mut_i][j];
-        nt += nucleos_;
-        for (uint64 j = ind + 1; j < mutations[mut_i].nucleos.size(); j++) {
-            nt += mutations[mut_i][j];
+        std::string nts = "";
+        for (uint64 j = 0; j <= ind; j++) nts += mutations.nucleos[mut_i][j];
+        nts += nucleos_;
+        uint64 nucleos_size = std::strlen(mutations.nucleos[mut_i]);
+        for (uint64 j = ind + 1; j < nucleos_size; j++) {
+            nts += mutations.nucleos[mut_i][j];
         }
         // Update nucleos and size_modifier fields:
-        mutations[mut_i].nucleos = nt;
-        mutations[mut_i].size_modifier += size_;
+        delete [] mutations.nucleos[mut_i]; // delete old char array
+        mutations.nucleos[mut_i] = new char[nts.size() + 1];
+        std::copy(nts.begin(), nts.end(), mutations.nucleos[mut_i]);
+        mutations.nucleos[mut_i][nts.size()] = '\0';
+        mutations.size_modifier[mut_i] += size_mod;
         // Adjust new positions and total chromosome size:
-        calc_positions(mut_i + 1, size_);
+        calc_positions(mut_i + 1, size_mod);
         /*
          If `new_pos_` is in the reference chromosome following the Mutation, we add
          a new Mutation object:
          */
     } else {
-        uint64 old_pos_ = ind + (mutations[mut_i].old_pos -
-            mutations[mut_i].size_modifier);
-        std::string nt = (*ref_chrom)[old_pos_] + nucleos_;
-        Mutation new_mut(old_pos_, new_pos_, nt);
+        uint64 old_pos_ = ind + (mutations.old_pos[mut_i] -
+            mutations.size_modifier[mut_i]);
+        std::string nts = (*ref_chrom)[old_pos_] + nucleos_;
         ++mut_i;
-        mutations.insert(mutations.begin() + mut_i, new_mut);
+        mutations.insert(mut_i, size_mod, old_pos_, new_pos_, nts.c_str());
         // Adjust new positions and total chromosome size:
-        calc_positions(mut_i);
+        calc_positions(mut_i + 1, size_mod);
     }
     return;
 }
@@ -604,23 +457,27 @@ void VarChrom::add_substitution(const char& nucleo, const uint64& new_pos_) {
     // `mutations.size()` is returned above if `new_pos_` is before the
     // first Mutation object or if `mutations` is empty
     if (mut_i == mutations.size()) {
-        std::string nucleos_(1, nucleo);
         // (below, notice that new position and old position are the same)
-        Mutation new_mut(new_pos_, new_pos_, nucleos_);
-        mutations.push_front(new_mut);
+        mutations.push_front(0, new_pos_, new_pos_, nucleo);
     } else {
-        uint64 ind = new_pos_ - mutations[mut_i].new_pos;
+        uint64 ind = new_pos_ - mutations.new_pos[mut_i];
         // If `new_pos_` is within the mutation chromosome:
-        if (static_cast<sint64>(ind) <= mutations[mut_i].size_modifier) {
-            mutations[mut_i].nucleos[ind] = nucleo;
+        if (static_cast<sint64>(ind) <= mutations.size_modifier[mut_i]) {
+            /*
+             If this new mutation reverts a substitution back to reference state,
+             delete the Mutation object from the `mutations` field.
+             Otherwise, adjust the mutation's sequence.
+             */
+            if ((mutations.size_modifier[mut_i] == 0) &&
+                (ref_chrom->nucleos[mutations.old_pos[mut_i]] == nucleo)) {
+                mutations.erase(mut_i);
+            } else mutations.nucleos[mut_i][ind] = nucleo;
             // If `new_pos_` is in the reference chromosome following the mutation:
         } else {
-            uint64 old_pos_ = ind + (mutations[mut_i].old_pos -
-                mutations[mut_i].size_modifier);
-            std::string nucleos_(1, nucleo);
-            Mutation new_mut(old_pos_, new_pos_, nucleos_);
+            uint64 old_pos_ = ind + (mutations.old_pos[mut_i] -
+                mutations.size_modifier[mut_i]);
             ++mut_i;
-            mutations.insert(mutations.begin() + mut_i, new_mut);
+            mutations.insert(mut_i, 0, old_pos_, new_pos_, nucleo);
         }
     }
 
@@ -643,8 +500,10 @@ void VarChrom::add_substitution(const char& nucleo, const uint64& new_pos_) {
  Note that there's a check to ensure that this is never run when `mutations`
  is empty.
  */
-void VarChrom::deletion_blowup_(uint64& mut_i, uint64& deletion_start,
-                                   uint64& deletion_end, sint64& size_mod) {
+void VarChrom::deletion_blowup_(uint64& mut_i,
+                                uint64& deletion_start,
+                                uint64& deletion_end,
+                                sint64& size_mod) {
 
     /*
      ---------
@@ -665,10 +524,10 @@ void VarChrom::deletion_blowup_(uint64& mut_i, uint64& deletion_start,
          If it's > the deletion starting point, that should never happen if `get_mut_` is
          working properly, so we return an error.
          */
-    } else if (mutations[mut_i].size_modifier == 0) {
-        if (mutations[mut_i].new_pos < deletion_start) {
+    } else if (mutations.size_modifier[mut_i] == 0) {
+        if (mutations.new_pos[mut_i] < deletion_start) {
             ++mut_i;
-        } else if (mutations[mut_i].new_pos == deletion_start) {
+        } else if (mutations.new_pos[mut_i] == deletion_start) {
             ;
         } else {
             stop("Index problem in deletion_blowup_");
@@ -679,7 +538,7 @@ void VarChrom::deletion_blowup_(uint64& mut_i, uint64& deletion_start,
          This function will iterate to the next Mutation.
          It also adjusts `size_mod` appropriately.
          */
-    } else if (mutations[mut_i].size_modifier > 0) {
+    } else if (mutations.size_modifier[mut_i] > 0) {
         merge_del_ins_(mut_i, deletion_start, deletion_end, size_mod);
         /*
          If it's a deletion and next to the new deletion, we merge their information
@@ -690,8 +549,8 @@ void VarChrom::deletion_blowup_(uint64& mut_i, uint64& deletion_start,
          If it's not next to the new deletion, we just iterate to the next mutation.
          */
     } else {
-        if (mutations[mut_i].new_pos == deletion_start) {
-            size_mod += mutations[mut_i].size_modifier;
+        if (mutations.new_pos[mut_i] == deletion_start) {
+            size_mod += mutations.size_modifier[mut_i];
             remove_mutation_(mut_i);
         } else ++mut_i;
     }
@@ -710,7 +569,7 @@ void VarChrom::deletion_blowup_(uint64& mut_i, uint64& deletion_start,
      to be added to a mutations deque.)
      */
     if (mut_i < mutations.size()) {
-        if (mutations[mut_i].new_pos > deletion_end || size_mod == 0) return;
+        if (mutations.new_pos[mut_i] > deletion_end || size_mod == 0) return;
     }
 
     /*
@@ -720,9 +579,9 @@ void VarChrom::deletion_blowup_(uint64& mut_i, uint64& deletion_start,
      */
     uint64 range_begin = mut_i;
     while (mut_i < mutations.size()) {
-        if (mutations[mut_i].new_pos > deletion_end) break;
+        if (mutations.new_pos[mut_i] > deletion_end) break;
         // For substitutions, do nothing before iterating
-        if (mutations[mut_i].size_modifier == 0) {
+        if (mutations.size_modifier[mut_i] == 0) {
             ++mut_i;
             /*
              For insertions, run `merge_del_ins_` to make sure that...
@@ -731,7 +590,7 @@ void VarChrom::deletion_blowup_(uint64& mut_i, uint64& deletion_start,
              (3) insertions that are entirely overlapped by the deletion are erased
              (4) `mut_i` is moved to the next Mutation
              */
-        } else if (mutations[mut_i].size_modifier > 0) {
+        } else if (mutations.size_modifier[mut_i] > 0) {
             merge_del_ins_(mut_i, deletion_start, deletion_end, size_mod);
             // as above, stop here if deletion is absorbed
             if (size_mod == 0) return;
@@ -739,7 +598,7 @@ void VarChrom::deletion_blowup_(uint64& mut_i, uint64& deletion_start,
              For deletions, merge them with the current one
              */
         } else {
-            size_mod += mutations[mut_i].size_modifier;
+            size_mod += mutations.size_modifier[mut_i];
             ++mut_i;
         }
     }
@@ -768,12 +627,13 @@ void VarChrom::deletion_blowup_(uint64& mut_i, uint64& deletion_start,
  It also moves the index to the next Mutation object.
  */
 void VarChrom::merge_del_ins_(uint64& insert_i,
-                                 uint64& deletion_start, uint64& deletion_end,
-                                 sint64& size_mod) {
+                              uint64& deletion_start,
+                              uint64& deletion_end,
+                              sint64& size_mod) {
 
     // The starting and ending positions of the focal insertion
-    uint64& insertion_start(mutations[insert_i].new_pos);
-    uint64 insertion_end = insertion_start + mutations[insert_i].size_modifier;
+    uint64& insertion_start(mutations.new_pos[insert_i]);
+    uint64 insertion_end = insertion_start + mutations.size_modifier[insert_i];
 
     /*
      If the deletion doesn't overlap, move to the next Mutation
@@ -785,7 +645,7 @@ void VarChrom::merge_del_ins_(uint64& insert_i,
          remove the Mutation object for the insertion:
          */
     } else if (deletion_start <= insertion_start && deletion_end >= insertion_end) {
-        size_mod += mutations[insert_i].size_modifier; // making it less negative
+        size_mod += mutations.size_modifier[insert_i]; // making it less negative
         /*
          Because we're deleting a mutation, `insert_i` refers to the next
          object without us doing anything here.
@@ -805,20 +665,27 @@ void VarChrom::merge_del_ins_(uint64& insert_i,
         uint64 erase_ind1 = deletion_end - insertion_start + 1;
         erase_ind1 = std::min(
             erase_ind1,
-            static_cast<uint64>(mutations[insert_i].nucleos.size())
+            static_cast<uint64>(std::strlen(mutations.nucleos[insert_i]))
         );
 
         // Adjust the size modifier for the eventual Mutation object
         // for the deletion (making it less negative)
         size_mod += (erase_ind1 - erase_ind0);
 
-        std::string& nts(mutations[insert_i].nucleos);
+        /*
+         Re-size nucleotides for this mutation.
+         I'm doing this by making a std::string, resizing, then assinging it back
+         to the `char*` object in `nucleos`
+         */
+        std::string nts(mutations.nucleos[insert_i]);
         nts.erase(nts.begin() + erase_ind0, nts.begin() + erase_ind1);
-        // clear memory:
-        clear_memory<std::string>(nts);
+        // delete and re-assign:
+        delete [] mutations.nucleos[insert_i];
+        mutations.nucleos[insert_i] = new char[nts.size() + 1];
+        std::strcpy(mutations.nucleos[insert_i], nts.c_str());
 
         // Adjust the insertion's size modifier
-        mutations[insert_i].size_modifier = mutations[insert_i].nucleos.size() - 1;
+        mutations.size_modifier[insert_i] = static_cast<sint64>(nts.size()) - 1;
 
         /*
          If this deletion removes the first part of the insertion but doesn't reach
@@ -832,7 +699,7 @@ void VarChrom::merge_del_ins_(uint64& insert_i,
          Also, iterating will cause this mutation to be deleted.
          */
         if (deletion_start <= insertion_start && deletion_end < insertion_end) {
-            mutations[insert_i].new_pos += (erase_ind1 - erase_ind0);
+            mutations.new_pos[insert_i] += (erase_ind1 - erase_ind0);
         } else {
             ++insert_i;
         }
@@ -857,17 +724,14 @@ void VarChrom::merge_del_ins_(uint64& insert_i,
 void VarChrom::remove_mutation_(uint64& mut_i) {
     if (mut_i == mutations.size()) return;
     // erase:
-    mutations.erase(mutations.begin() + mut_i);
-    // clear memory:
-    clear_memory<std::deque<Mutation>>(mutations);
+    mutations.erase(mut_i);
     return;
 }
 void VarChrom::remove_mutation_(uint64& mut_i1, uint64& mut_i2) {
 
     // erase range:
-    mutations.erase(mutations.begin() + mut_i1, mutations.begin() + mut_i2);
-    // clear memory:
-    clear_memory<std::deque<Mutation>>(mutations);
+    mutations.erase(mut_i1, mut_i2);
+
     // reset indices:
     if (mut_i1 > 0) {
         mut_i2 = mut_i1;
@@ -909,13 +773,13 @@ uint64 VarChrom::get_mut_(const uint64& new_pos) const {
      If new_pos is less than the position for the first mutation, we return
      mutations.size():
      */
-    if (new_pos < mutations.front().new_pos) return mutations.size();
+    if (new_pos < mutations.new_pos.front()) return mutations.size();
 
     /*
      If the new_pos is greater than or equal to the position for the last
      mutation, we return the last Mutation:
      */
-    if (new_pos >= mutations.back().new_pos) return mutations.size() - 1;
+    if (new_pos >= mutations.new_pos.back()) return mutations.size() - 1;
 
     /*
      If not either of the above, then we will first try to guess the approximate
@@ -930,11 +794,11 @@ uint64 VarChrom::get_mut_(const uint64& new_pos) const {
      (We don't need to check for `mut_i` getting to the last index
      (`mutations.size() - 1`) because we've already checked for that situation above.)
      */
-    while (mutations[mut_i].new_pos <= new_pos) ++mut_i;
+    while (mutations.new_pos[mut_i] <= new_pos) ++mut_i;
     /*
      Now move mutation to the proper spot: the last mutation that is <= `new_pos`.
      */
-    while (mutations[mut_i].new_pos > new_pos) --mut_i;
+    while (mutations.new_pos[mut_i] > new_pos) --mut_i;
 
     return mut_i;
 }
@@ -950,8 +814,8 @@ void VarSet::print() const noexcept {
 
     uint64 total_muts = 0;
     for (const VarGenome& vg : variants) {
-        for (const VarChrom& vs : vg.var_genome) {
-            total_muts += vs.mutations.size();
+        for (const VarChrom& vc : vg.var_genome) {
+            total_muts += vc.mutations.size();
         }
     }
 

@@ -1,9 +1,9 @@
 
-context("Testing FASTA file input/output")
 
 # library(jackalope)
 # library(testthat)
 
+context("Testing FASTA file input/output")
 
 dir <- tempdir(check = TRUE)
 

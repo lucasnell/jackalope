@@ -12,6 +12,8 @@
 
 
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 #include <RcppArmadillo.h>
 #include <vector>  // vector class
 #include <string>  // string class
@@ -45,15 +47,19 @@ struct RefChrom {
 
     // Overloaded operator so nucleotides can be easily extracted
     char operator[](const uint64& idx) const {
+#ifdef __JACKALOPE_DEBUG
         if (idx >= nucleos.size()) {
             stop("Trying to extract nucleotide that doesn't exist");
         }
+#endif
         return nucleos[idx];
     }
     char& operator[](const uint64& idx) {
+#ifdef __JACKALOPE_DEBUG
         if (idx >= nucleos.size()) {
             stop("Trying to extract nucleotide that doesn't exist");
         }
+#endif
         return nucleos[idx];
     }
     // To resize this chromosome
@@ -104,7 +110,7 @@ struct RefChrom {
         // Make sure the read is long enough (this fxn should never shorten it):
         if (read.size() < n_to_add + read_start) read.resize(n_to_add + read_start, 'N');
         for (uint64 i = 0; i < n_to_add; i++) {
-            read[(read_start + i)] = this->nucleos[(chrom_start + i)];
+            read[(read_start + i)] = nucleos[(chrom_start + i)];
         }
         return;
     }
@@ -151,15 +157,19 @@ struct RefGenome {
     // Overloaded operator so chromosomes can be easily extracted
     // It returns a reference so no copying is done and so changes can be made
     RefChrom& operator[](const uint64& idx) {
+#ifdef __JACKALOPE_DEBUG
         if (idx >= chromosomes.size()) {
             stop("Trying to extract chromosome that doesn't exist");
         }
+#endif
         return chromosomes[idx];
     }
     const RefChrom& operator[](const uint64& idx) const {
+#ifdef __JACKALOPE_DEBUG
         if (idx >= chromosomes.size()) {
             stop("Trying to extract chromosome that doesn't exist");
         }
+#endif
         return chromosomes[idx];
     }
     // To return the number of chromosomes

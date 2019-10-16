@@ -11,11 +11,13 @@
  */
 
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <vector>
 #include <string>
 #include <pcg/pcg_random.hpp> // pcg prng
+#include <progress.hpp>  // for the progress bar
 
 #ifdef _OPENMP
 #include <omp.h>  // omp
@@ -70,6 +72,22 @@ template <typename U>
 void clear_memory(U& x) {
     U(x.begin(), x.end()).swap(x);
 }
+
+
+/*
+ Shuffles a vector or deque more quickly than the default std::shuffle
+ */
+template <typename T>
+void jlp_shuffle(T& input, pcg64& eng) {
+    for (uint32 i = input.size(); i > 1; i--) {
+        uint32 j = runif_01(eng) * i;
+        std::swap(input[i-1], input[j]);
+    }
+    return;
+}
+
+
+
 
 
 
@@ -191,6 +209,23 @@ inline void thread_check(uint64& n_threads) {
 
     return;
 }
+
+
+
+// For checking for user interrupts every N iterations:
+inline bool interrupt_check(uint32& iters,
+                            Progress& prog_bar,
+                            const uint32& N = 1000) {
+    ++iters;
+    if (iters > N) {
+        if (prog_bar.is_aborted() || prog_bar.check_abort()) return true;
+        iters = 0;
+    }
+    return false;
+}
+
+
+
 
 
 

@@ -9,6 +9,8 @@
  */
 
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 #include <RcppArmadillo.h>
 #include <vector>  // vector class
 #include <string>  // string class
@@ -21,7 +23,6 @@
 #include "jackalope_types.h"  // integer types
 #include "ref_classes.h"  // Ref* classes
 #include "var_classes.h"  // Var* classes
-#include "mutator.h"    // MutationSampler in test_rate fxn
 #include "pcg.h"  // pcg seeding
 #include "phylogenomics.h"  // match_ and template functions
 
@@ -637,8 +638,8 @@ void dup_var_set_vars(
         for (uint64 j = 0; j < new_vg.var_genome.size(); j++) {
             VarChrom& new_vs(new_vg.var_genome[j]);
             const VarChrom& old_vs(old_vg.var_genome[j]);
-            // This does the work of actually adding mutations:
-            new_vs += old_vs;
+            new_vs.mutations = old_vs.mutations;
+            new_vs.chrom_size = old_vs.chrom_size;
         }
     }
 
@@ -659,12 +660,12 @@ void dup_var_set_vars(
  */
 
 
-// Turn a Mutation into a List
-List conv_mut(const Mutation& mut) {
-    List out = List::create(_["size_modifier"] = mut.size_modifier,
-                            _["old_pos"] = mut.old_pos,
-                            _["new_pos"] = mut.new_pos,
-                            _["nucleos"] = mut.nucleos);
+// Turn a mutation into a List
+List conv_mut(const AllMutations& muts, const uint64& ind) {
+    List out = List::create(_["size_modifier"] = muts.size_modifier[ind],
+                            _["old_pos"] = muts.old_pos[ind],
+                            _["new_pos"] = muts.new_pos[ind],
+                            _["nucleos"] = std::string(muts.nucleos[ind]));
     return out;
 }
 
@@ -702,10 +703,13 @@ DataFrame view_mutations(SEXP var_set_ptr, const uint64& var_ind) {
         const VarChrom& var_chrom(var_genome.var_genome[i]);
         uint64 n_muts_i = var_chrom.mutations.size();
         for (uint64 j = 0; j < n_muts_i; ++j) {
-            size_mod.push_back(var_chrom.mutations[j].size_modifier);
-            old_pos.push_back(var_chrom.mutations[j].old_pos);
-            new_pos.push_back(var_chrom.mutations[j].new_pos);
-            nucleos.push_back(var_chrom.mutations[j].nucleos);
+            size_mod.push_back(var_chrom.mutations.size_modifier[j]);
+            old_pos.push_back(var_chrom.mutations.old_pos[j]);
+            new_pos.push_back(var_chrom.mutations.new_pos[j]);
+            nucleos.push_back("");
+            if (var_chrom.mutations.nucleos[j] != nullptr) {
+                nucleos.back() = std::string(var_chrom.mutations.nucleos[j]);
+            }
             chroms.push_back(i);
         }
     }
@@ -735,6 +739,7 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& ch
     XPtr<VarSet> var_set_xptr(var_set_ptr);
     const VarGenome& var_genome((*var_set_xptr)[var_ind]);
     const VarChrom& var_chrom(var_genome[chrom_ind]);
+    const AllMutations& muts(var_chrom.mutations);
 
     std::string bases = "TCAG";
     std::vector<uint64> base_inds(85);
@@ -749,7 +754,7 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& ch
     uint64 max_ins = 0;
     uint64 max_del = 0;
     for (uint64 i = 0; i < n_muts; i++) {
-        sint64 mi = var_chrom.mutations[i].size_modifier;
+        sint64 mi = var_chrom.mutations.size_modifier[i];
         if (mi == 0) continue;
         if (mi > 0) {
             if (mi > static_cast<sint64>(max_ins)) max_ins = mi;
@@ -764,13 +769,11 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& ch
 
     for (uint64 mut_i = 0; mut_i < n_muts; mut_i++) {
 
-        const Mutation& m(var_chrom.mutations[mut_i]);
-
-        char c = (*(var_chrom.ref_chrom))[m.old_pos];
+        char c = (*(var_chrom.ref_chrom))[muts.old_pos[mut_i]];
         uint64 i = base_inds[static_cast<uint64>(c)];
-        sint64 smod = m.size_modifier;
+        sint64 smod = muts.size_modifier[mut_i];
         if (smod == 0) {
-            uint64 j = base_inds[static_cast<uint64>(m.nucleos[0])];
+            uint64 j = base_inds[static_cast<uint64>(muts.nucleos[mut_i][0])];
             sub_mat(i, j)++;
         } else if (smod > 0) {
             uint64 j = static_cast<uint64>(smod - 1);
@@ -780,7 +783,7 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& ch
             del_mat(i, j)++;
         }
 
-        pos_vec[mut_i] = var_chrom.mutations[mut_i].old_pos;
+        pos_vec[mut_i] = var_chrom.mutations.old_pos[mut_i];
     }
 
     List out = List::create(
@@ -789,26 +792,6 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& ch
         _["del"] = wrap(del_mat),
         _["pos"] = pos_vec);
 
-    return out;
-}
-
-
-//' Faster version of table function to count the number of mutations in Gamma regions.
-//'
-//' @param gamma_ends Vector of endpoints for gamma regions
-//' @param positions Vector of positions that you want to bin into gamma regions.
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-std::vector<uint64> table_gammas(const std::vector<uint64>& gamma_ends,
-                                 const std::vector<uint64>& positions) {
-    std::vector<uint64> out(gamma_ends.size(), 0U);
-    for (uint64 i = 0; i < positions.size(); i++) {
-        uint64 j = std::lower_bound(gamma_ends.begin(), gamma_ends.end(),
-                                    positions[i]) - gamma_ends.begin();
-        out[j]++;
-    }
     return out;
 }
 
@@ -888,38 +871,5 @@ void add_deletion(SEXP var_set_ptr,
     var_chrom.add_deletion(size_, new_pos_);
     return;
 }
-
-
-
-
-//' Get a rate for given start and end points of a VarChrom.
-//'
-//' @noRd
-//'
-//[[Rcpp::export]]
-double test_rate(const uint64& start, const uint64& end,
-                 const uint64& var_ind, const uint64& chrom_ind,
-                 SEXP var_set_ptr, SEXP sampler_base_ptr,
-                 const arma::mat& gamma_mat_) {
-
-    XPtr<VarSet> var_set(var_set_ptr);
-
-    VarChrom& var_chrom((*var_set)[var_ind][chrom_ind]);
-
-    XPtr<MutationSampler> sampler_base(sampler_base_ptr);
-
-    MutationSampler sampler(*sampler_base);
-    sampler.new_chrom(var_chrom, gamma_mat_);
-
-    double out = 0;
-
-    // Do something like this:
-    // sampler.location.set_bounds(start, end);
-    // double out = sampler.location.bounds.end_rate - sampler.location.bounds.start_rate;
-
-    return out;
-
-}
-
 
 

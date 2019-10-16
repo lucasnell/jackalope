@@ -1,4 +1,6 @@
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 #include <RcppArmadillo.h>
 #include <cmath>  // pow, log, exp
 #include <pcg/pcg_random.hpp> // pcg prng
@@ -12,7 +14,6 @@
 
 #include "jackalope_types.h"
 #include "mutator_type.h"
-#include "mutator.h"
 #include "var_classes.h"  // Var* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling
@@ -76,7 +77,9 @@ void add_one_chrom_ssites(VarSet& var_set,
     for (uint64 k = 0; k < ss_i.n_rows; k++) {
         uint64 i = ss_i.n_rows - 1 - k;
         pos = ss_i(i, 0);
-        MutationInfo mut = type_sampler.sample(ref_genome[chrom_i][pos], eng);
+        const char& c(ref_genome[chrom_i][pos]);
+        MutationInfo mut = type_sampler.sample(c, eng);
+        if (mut.nucleo == 'X') continue; // This happens when `c` isn't T, C, A, or G
         if (mut.length == 0) {
             for (uint64 j = 1; j < ss_i.n_cols; j++) {
                 if (ss_i(i,j) == 1) {

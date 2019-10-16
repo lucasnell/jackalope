@@ -3,6 +3,8 @@
  Functions to read and write to/from FASTA files
  */
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 #include <RcppArmadillo.h>
 
 #include <fstream>

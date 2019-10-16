@@ -347,8 +347,6 @@ test_that("reading haploid variant info from VCF produces proper output", {
 
     write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"), overwrite = TRUE)
 
-    skip_if_not_installed("vcfR")
-
     vars2 <- create_variants(ref, vars_info = vars_vcf(sprintf("%s/%s.vcf", dir, "test")))
 
 
@@ -365,8 +363,6 @@ test_that("reading haploid variant info from VCF produces proper output", {
 
 test_that("reading diploid variant info from VCF produces proper output", {
 
-    skip_if_not_installed("vcfR")
-
     sample_mat <- matrix(1:4, 2, 2, byrow = TRUE)
 
     write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"),
@@ -382,4 +378,96 @@ test_that("reading diploid variant info from VCF produces proper output", {
     }
 
 })
+
+
+
+test_that("reading variant info from VCF produces proper output when chromosomes mixed", {
+
+    # --------------*
+    # Haploid version:
+    # --------------*
+
+    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"), overwrite = TRUE)
+
+    vcf_fn <- sprintf("%s/%s.vcf", dir, "test")
+
+    # Mix up the first two chromosomes in the VCF file:
+    vcf <- readLines(vcf_fn)
+    c0 <- vcf[grepl(paste0("^", vars$chrom_names()[1]), vcf)]
+    c1 <- vcf[grepl(paste0("^", vars$chrom_names()[2]), vcf)]
+    vcf <- c(vcf[!grepl(paste0("^", vars$chrom_names()[1]), vcf) &
+                     !grepl(paste0("^", vars$chrom_names()[2]), vcf)],
+             c1, c0)
+    writeLines(paste(vcf, collapse = "\n"), vcf_fn)
+
+    # Now create variants and check output
+    vars2 <- create_variants(ref, vars_info = vars_vcf(vcf_fn))
+
+    expect_identical(vars$n_vars(), vars2$n_vars())
+
+    for (i in 1:vars$n_vars()) {
+        expect_identical(sapply(1:ref$n_chroms(), function(j) vars$chrom(i, j)),
+                         sapply(1:ref$n_chroms(), function(j) vars2$chrom(i, j)))
+    }
+
+
+    # --------------*
+    # Diploid version:
+    # --------------*
+
+    sample_mat <- matrix(1:4, 2, 2, byrow = TRUE)
+
+    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"),
+              sample_matrix = sample_mat, overwrite = TRUE)
+
+    # Mix up the first two chromosomes in the VCF file:
+    vcf <- readLines(vcf_fn)
+    c0 <- vcf[grepl(paste0("^", vars$chrom_names()[1]), vcf)]
+    c1 <- vcf[grepl(paste0("^", vars$chrom_names()[2]), vcf)]
+    vcf <- c(vcf[!grepl(paste0("^", vars$chrom_names()[1]), vcf) &
+                     !grepl(paste0("^", vars$chrom_names()[2]), vcf)],
+             c1, c0)
+    writeLines(paste(vcf, collapse = "\n"), vcf_fn)
+
+    vars2 <- create_variants(ref, vars_info = vars_vcf(vcf_fn))
+
+    expect_identical(vars$n_vars(), vars2$n_vars())
+
+    for (i in 1:vars$n_vars()) {
+        expect_identical(sapply(1:ref$n_chroms(), function(j) vars$chrom(i, j)),
+                         sapply(1:ref$n_chroms(), function(j) vars2$chrom(i, j)))
+    }
+
+
+})
+
+
+
+
+
+test_that("out-of-order VCF file returns error", {
+
+    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"), overwrite = TRUE)
+
+    vcf_fn <- sprintf("%s/%s.vcf", dir, "test")
+
+    # Reverse lines for first two chromosomes in the VCF file:
+    vcf <- readLines(vcf_fn)
+    c0 <- vcf[grepl(paste0("^", vars$chrom_names()[1]), vcf)]
+    c1 <- vcf[grepl(paste0("^", vars$chrom_names()[2]), vcf)]
+    c0 <- rev(c0)
+    c1 <- rev(c1)
+    vcf <- c(vcf[!grepl(paste0("^", vars$chrom_names()[1]), vcf) &
+                     !grepl(paste0("^", vars$chrom_names()[2]), vcf)],
+             c1, c0)
+    writeLines(paste(vcf, collapse = "\n"), vcf_fn)
+
+    # Now attempt to create variants and check output
+    expect_error(create_variants(ref, vars_info = vars_vcf(vcf_fn)),
+                 regexp = paste("Positions are sorted numerically, in",
+                                "increasing order, within each reference",
+                                "sequence CHROM"))
+
+})
+
 

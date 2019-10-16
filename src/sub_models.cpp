@@ -11,71 +11,221 @@
  */
 
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
+#include <cmath> // exp, pow, remainder
 
 #include "jackalope_types.h" // integer types
 #include "util.h" // str_stop
+
+
 
 using namespace Rcpp;
 
 
 
+
+
+
+
 /*
- Check that vectors meet criteria. Used for `pi_tcag` and `abcdef` below.
+ ======================================================================================
+ ======================================================================================
+
+ +Gamma model functions
+
+ ======================================================================================
+ ======================================================================================
  */
-inline void vec_check(const std::vector<double>& in_vec,
-                      const std::string& vec_name,
-                      const bool& zero_check,
-                      const uint64& needed_size) {
-    if (in_vec.size() != needed_size) {
-        str_stop({"\nFor substitution models, the vector `", vec_name,
-                 "` should always be of length ", std::to_string(needed_size), "."});
-    }
-    bool all_zero = true;
-    for (const double& d : in_vec) {
-        if (d < 0) {
-            str_stop({"\nFor substitution models, all values in vector `", vec_name,
-                     "` should be >= 0."});
-        }
-        if (d > 0) all_zero = false;
-    }
-    if (zero_check && all_zero) {
-        str_stop({"\nFor substitution models, at least one value in vector `", vec_name,
-                 "` should be > 0."});
-    }
-    return;
+
+
+
+//' Incomplete Gamma function
+//'
+//' @noRd
+//'
+inline double incG(const double& a, const double& z) {
+    return R::pgamma(z, a, 1.0, 0, 0) * R::gammafn(a);
 }
 
 
 
-//' Construct necessary information for substitution models.
+
+//' Mean of truncated Gamma distribution
 //'
-//' For a more detailed explanation, see `vignette("sub-models")`.
+//' From http://dx.doi.org/10.12988/astp.2013.310125.
+//' As in that paper, b > 0 is the scale and c > 0 is the shape.
+//'
+//' @noRd
+//'
+double trunc_Gamma_mean(const double& b, const double& c,
+                        const double& xl, const double& xu) {
+
+    // Ran the following in Mathematica to find out that this part goes to
+    // zero as xu goes to infinity:
+    // > Limit[b^(-c + 1) Exp[-x/b] x^c, x -> Infinity, Assumptions -> c in real && b > 0]
+    // So if xu is Inf, then we set this to zero:
+    double k_;
+    if (xu == arma::datum::inf) {
+        k_ = 0;
+    } else {
+        k_ = std::exp(-1.0 * xu / b) * std::pow(b, 1-c) * std::pow(xu, c);
+    }
+    double k = c / (
+        b * incG(1+c, xl/b) - b * incG(1+c, xu/b) +
+            k_ -
+            std::exp(-1.0 * xl / b) * std::pow(b, 1.0 - c) * std::pow(xl, c)
+    );
+    double z = -(b * b) * k * (- incG(1+c, xl / b) + incG(1+c, xu / b));
+    return z;
+}
+
+//' Create a vector of Gamma values for a discrete Gamma distribution.
 //'
 //'
-//' @name sub_models
+//' @noRd
 //'
-//' @seealso \code{\link{create_variants}}
+void discrete_gamma(std::vector<double>& gammas,
+                    const uint32& k,
+                    const double& shape) {
+
+    if (shape <= 0 || k <= 1) {
+        gammas.push_back(1.0);
+        return;
+    }
+
+    gammas.reserve(k);
+
+    double scale = 1 / shape;
+    double d_k = 1.0 / static_cast<double>(k);
+
+    double p_cutoff = d_k;
+    double xl = 0, xu = 0;
+
+    for (uint32 i = 0; i < k; i++) {
+        xl = xu;
+        if (p_cutoff < 1) {
+            xu = R::qgamma(p_cutoff, shape, scale, 1, 0);
+        } else xu = arma::datum::inf;
+        gammas.push_back(trunc_Gamma_mean(scale, shape, xl, xu));
+        p_cutoff += d_k;
+    }
+
+    return;
+
+}
+
+
+//' Info to calculate P(t) for TN93 model and its special cases
 //'
-//' @return A `sub_model_info` object, which is just a wrapper around a list with
-//' fields `Q` and `pi_tcag`. The former has the rate matrix, and the latter
-//' has the equilibrium nucleotide densities for "T", "C", "A", and "G", respectively.
-//' Access the rate matrix for a `sub_model_info` object named `x` via `x$Q` and
-//' densities via `x$pi_tcag`.
 //'
-//' @examples
-//' # Same substitution rate for all types:
-//' Q_JC69 <- sub_JC69(lambda = 0.1)
+//' @noRd
 //'
-//' # Transitions 2x more likely than transversions:
-//' Q_K80 <- sub_K80(alpha = 0.2, beta = 0.1)
+void Pt_info(std::vector<double> pi_tcag,
+             const double& alpha_1,
+             const double& alpha_2,
+             const double& beta,
+             arma::mat& U,
+             arma::mat& Ui,
+             arma::vec& L) {
+
+
+    const double& pi_t(pi_tcag[0]);
+    const double& pi_c(pi_tcag[1]);
+    const double& pi_a(pi_tcag[2]);
+    const double& pi_g(pi_tcag[3]);
+
+    double pi_y = pi_t + pi_c;
+    double pi_r = pi_a + pi_g;
+
+    U = {
+        {1,     1 / pi_y,       0,              pi_c / pi_y},
+        {1,     1 / pi_y,       0,              -pi_t / pi_y},
+        {1,     -1 / pi_r,      pi_g / pi_r,    0},
+        {1,     -1 / pi_r,      -pi_a / pi_r,   0}};
+
+    Ui = {
+        {pi_t,          pi_c,           pi_a,           pi_g},
+        {pi_t * pi_r,   pi_c * pi_r,    -pi_a * pi_y,   -pi_g * pi_y},
+        {0,             0,              1,              -1},
+        {1,             -1,             0,              0}};
+
+    L = {0, -beta, -(pi_r * alpha_2 + pi_y * beta), -(pi_y * alpha_1 + pi_r * beta)};
+
+    return;
+}
+
+//' Info to calculate P(t) for GTR model
 //'
-//' # Same as above, but incorporating equilibrium frequencies
-//' sub_HKY85(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
-//'           alpha = 0.2, beta = 0.1)
 //'
-NULL_ENTRY;
+//' @noRd
+//'
+void Pt_info(const arma::mat& Q,
+             arma::mat& U,
+             arma::mat& Ui,
+             arma::vec& L) {
+
+    // Special case when all Q are zeros:
+    if (arma::all(arma::vectorise(Q) == 0)) {
+
+        U = {{1,    2,      0.0,    0.5},
+            {1,     2,      0.0,    -0.5},
+            {1,     -2,     0.5,    0.0},
+            {1,     -2,     -0.5,   0.0}};
+        Ui = {{0.250,     0.250,      0.250,      0.250},
+            {0.125,     0.125,      -0.125,     -0.125},
+            {0.000,     0.000,      1.000,      -1.000},
+            {1.000,     -1.000,     0.000,       0.000}};
+
+        L = arma::vec(4, arma::fill::zeros);
+
+        return;
+    }
+
+
+    arma::cx_vec L_;
+    arma::cx_mat U_;
+
+    arma::eig_gen(L_, U_, Q);
+
+    arma::uvec I = arma::sort_index(arma::abs(arma::real(L_)), "descend");
+    L_ = L_(I);
+    U_ = U_.cols(I);
+
+    L = arma::real(L_);
+    U = arma::real(U_);
+
+    Ui = U.i();
+
+    return;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+ ======================================================================================
+ ======================================================================================
+
+ Substitution model functions
+
+ ======================================================================================
+ ======================================================================================
+ */
+
+
 
 
 
@@ -90,21 +240,28 @@ NULL_ENTRY;
 //' @param alpha_1 Substitution rate for T <-> C transition.
 //' @param alpha_2 Substitution rate for A <-> G transition.
 //' @param beta Substitution rate for transversions.
+//' @param gamma_shape Numeric shape parameter for discrete Gamma distribution used for
+//'     among-site variability. Values must be greater than zero.
+//'     If this parameter is `NA`, among-site variability is not included.
+//'     Defaults to `NA`.
+//' @param gamma_k The number of categories to split the discrete Gamma distribution
+//'     into. Values must be an integer in the range `[1,255]`.
+//'     This argument is ignored if `gamma_shape` is `NA`.
+//'     Defaults to `5`.
+//' @param invariant Proportion of sites that are invariant.
+//'     Values must be in the range `[0,1)`.
+//'     Defaults to `0`.
 //'
-//' @export
+//' @noRd
 //'
 //[[Rcpp::export]]
-List sub_TN93(std::vector<double> pi_tcag,
-              const double& alpha_1,
-              const double& alpha_2,
-              const double& beta) {
-
-    // Check that pi_tcag is proper size, no values < 0, at least one value > 0.
-    vec_check(pi_tcag, "pi_tcag", true, 4);
-
-    if (alpha_1 < 0) str_stop({"\nFor the TN93 model, `alpha_1` should be >= 0."});
-    if (alpha_2 < 0) str_stop({"\nFor the TN93 model, `alpha_2` should be >= 0."});
-    if (beta < 0) str_stop({"\nFor the TN93 model, `beta` should be >= 0."});
+List sub_TN93_cpp(std::vector<double> pi_tcag,
+                  const double& alpha_1,
+                  const double& alpha_2,
+                  const double& beta,
+                  const double& gamma_shape,
+                  const uint32& gamma_k,
+                  const double& invariant) {
 
     // Standardize pi_tcag first:
     double pi_sum = std::accumulate(pi_tcag.begin(), pi_tcag.end(), 0.0);
@@ -118,122 +275,35 @@ List sub_TN93(std::vector<double> pi_tcag,
 
     // Reset diagonals to zero
     Q.diag().fill(0.0);
+    // Filling in diagonals
+    arma::vec rowsums = arma::sum(Q, 1);
+    rowsums *= -1;
+    Q.diag() = rowsums;
 
-    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag);
+    // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape <= 0)
+    std::vector<double> gammas;
+    discrete_gamma(gammas, gamma_k, gamma_shape);
 
-    out.attr("class") = "sub_model_info";
+    // Extract info for P(t)
+    arma::field<arma::mat> Q_vec(gammas.size());
+    arma::field<arma::mat> U(gammas.size());
+    arma::field<arma::mat> Ui(gammas.size());
+    arma::field<arma::vec> L(gammas.size());
+    for (uint32 i = 0; i < gammas.size(); i++) {
+        Q_vec(i) = Q * gammas[i];
+        Pt_info(pi_tcag, alpha_1 * gammas[i], alpha_2 * gammas[i], beta * gammas[i],
+                U(i), Ui(i), L(i));
+    }
 
-    return out;
-}
+    List out = List::create(_["Q"] = Q_vec,
+                            _["pi_tcag"] = pi_tcag,
+                            _["U"] = U,
+                            _["Ui"] = Ui,
+                            _["L"] = L,
+                            _["gammas"] = gammas,
+                            _["invariant"] = invariant,
+                            _["model"] = "TN93");
 
-
-
-//' @describeIn sub_models JC69 model.
-//'
-//' @param lambda Substitution rate for all possible substitutions.
-//'
-//' @export
-//'
-//'
-//[[Rcpp::export]]
-List sub_JC69(double lambda) {
-
-    if (lambda < 0) str_stop({"\nFor the JC69 model, `lambda` should be >= 0."});
-
-    std::vector<double> pi_tcag(4, 0.25);
-    lambda *= 4; // bc it's being multiplied by pi_tcag
-
-    List out = sub_TN93(pi_tcag, lambda, lambda, lambda);
-
-    return out;
-}
-
-
-//' @describeIn sub_models K80 model.
-//'
-//' @param alpha Substitution rate for transitions.
-//' @inheritParams sub_TN93
-//'
-//' @export
-//'
-//[[Rcpp::export]]
-List sub_K80(double alpha,
-             double beta) {
-
-    if (alpha < 0) str_stop({"\nFor the K80 model, `alpha` should be >= 0."});
-    if (beta < 0) str_stop({"\nFor the K80 model, `beta` should be >= 0."});
-
-    std::vector<double> pi_tcag(4, 0.25);
-    alpha *= 4;  // bc they're being multiplied by pi_tcag
-    beta *= 4;  // bc they're being multiplied by pi_tcag
-
-    List out = sub_TN93(pi_tcag, alpha, alpha, beta);
-
-    return out;
-}
-
-
-//' @describeIn sub_models F81 model.
-//'
-//' @inheritParams sub_TN93
-//'
-//' @export
-//'
-//[[Rcpp::export]]
-List sub_F81(const std::vector<double>& pi_tcag) {
-
-    List out = sub_TN93(pi_tcag, 1, 1, 1);
-
-    return out;
-}
-
-
-//' @describeIn sub_models HKY85 model.
-//'
-//'
-//' @inheritParams sub_TN93
-//' @inheritParams sub_K80
-//'
-//' @export
-//'
-//[[Rcpp::export]]
-List sub_HKY85(const std::vector<double>& pi_tcag,
-               const double& alpha,
-               const double& beta) {
-
-    if (alpha < 0) str_stop({"\nFor the HKY85 model, `alpha` should be >= 0."});
-    if (beta < 0) str_stop({"\nFor the HKY85 model, `beta` should be >= 0."});
-
-    List out = sub_TN93(pi_tcag, alpha, alpha, beta);
-
-    return out;
-}
-
-
-//' @describeIn sub_models F84 model.
-//'
-//'
-//' @inheritParams sub_TN93
-//' @inheritParams sub_K80
-//' @param kappa The transition/transversion rate ratio.
-//'
-//' @export
-//'
-//[[Rcpp::export]]
-List sub_F84(const std::vector<double>& pi_tcag,
-             const double& beta,
-             const double& kappa) {
-
-    if (beta < 0) str_stop({"\nFor the F84 model, `beta` should be >= 0."});
-    if (kappa < 0) str_stop({"\nFor the F84 model, `kappa` should be >= 0."});
-
-    double pi_y = pi_tcag[0] + pi_tcag[1];
-    double pi_r = pi_tcag[2] + pi_tcag[3];
-
-    double alpha_1 = (1 + kappa / pi_y) * beta;
-    double alpha_2 = (1 + kappa / pi_r) * beta;
-
-    List out = sub_TN93(pi_tcag, alpha_1, alpha_2, beta);
 
     return out;
 }
@@ -248,16 +318,14 @@ List sub_F84(const std::vector<double>& pi_tcag,
 //'     for the substitution rate matrix.
 //'     See `vignette("sub-models")` for how the values are ordered in the matrix.
 //'
-//' @export
+//' @noRd
 //'
 //[[Rcpp::export]]
-List sub_GTR(std::vector<double> pi_tcag,
-             const std::vector<double>& abcdef) {
-
-    // Check that pi_tcag is proper size, no values < 0, at least one value > 0.
-    vec_check(pi_tcag, "pi_tcag", true, 4);
-    // Check that abcdef is proper size, no values < 0.
-    vec_check(abcdef, "abcdef", false, 6);
+List sub_GTR_cpp(std::vector<double> pi_tcag,
+                 const std::vector<double>& abcdef,
+                 const double& gamma_shape,
+                 const uint32& gamma_k,
+                 const double& invariant) {
 
     // Standardize pi_tcag first:
     double pi_sum = std::accumulate(pi_tcag.begin(), pi_tcag.end(), 0.0);
@@ -276,9 +344,33 @@ List sub_GTR(std::vector<double> pi_tcag,
     }
     for (uint64 i = 0; i < 4; i++) Q.col(i) *= pi_tcag[i];
 
-    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag);
+    // Filling in diagonals
+    arma::vec rowsums = arma::sum(Q, 1);
+    rowsums *= -1;
+    Q.diag() = rowsums;
 
-    out.attr("class") = "sub_model_info";
+    // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape <= 0)
+    std::vector<double> gammas;
+    discrete_gamma(gammas, gamma_k, gamma_shape);
+
+    // Extract info for P(t)
+    arma::field<arma::mat> Q_vec(gammas.size());
+    arma::field<arma::mat> U(gammas.size());
+    arma::field<arma::mat> Ui(gammas.size());
+    arma::field<arma::vec> L(gammas.size());
+    for (uint32 i = 0; i < gammas.size(); i++) {
+        Q_vec(i) = Q * gammas[i];
+        Pt_info(Q_vec(i), U(i), Ui(i), L(i));
+    }
+
+    List out = List::create(_["Q"] = Q_vec,
+                            _["pi_tcag"] = pi_tcag,
+                            _["U"] = U,
+                            _["Ui"] = Ui,
+                            _["L"] = L,
+                            _["gammas"] = gammas,
+                            _["invariant"] = invariant,
+                            _["model"] = "GTR");
 
     return out;
 
@@ -294,12 +386,16 @@ List sub_GTR(std::vector<double> pi_tcag,
 //'     Item `Q[i,j]` is the rate of substitution from nucleotide `i` to nucleotide `j`.
 //'     Do not include indel rates here!
 //'     Values on the diagonal are calculated inside the function so are ignored.
+//' @inheritParams sub_TN93
 //'
-//' @export
+//' @noRd
 //'
 //'
 //[[Rcpp::export]]
-List sub_UNREST(arma::mat Q) {
+List sub_UNREST_cpp(arma::mat Q,
+                    const double& gamma_shape,
+                    const uint32& gamma_k,
+                    const double& invariant) {
 
     /*
      This function also fills in a vector of equilibrium frequencies for each nucleotide.
@@ -309,10 +405,6 @@ List sub_UNREST(arma::mat Q) {
      It does this by solving for πQ = 0 by finding the left eigenvector of Q that
      corresponds to the eigenvalue closest to zero.
      */
-
-    if (Q.n_rows != 4 || Q.n_cols != 4) {
-        str_stop({"\nIn UNREST model, the matrix `Q` should have 4 rows and 4 columns."});
-    }
 
     /*
      Standardize `Q` matrix
@@ -343,15 +435,44 @@ List sub_UNREST(arma::mat Q) {
 
     for (uint64 i = 0; i < 4; i++) pi_tcag[i] = left_vec(i) / sumlv;
 
-    /*
-     Assemble final output:
-    */
-    // Reset diagonal to zero for later steps
-    Q.diag().fill(0.0);
+    // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape <= 0)
+    std::vector<double> gammas;
+    discrete_gamma(gammas, gamma_k, gamma_shape);
 
-    List out = List::create(_["Q"] = Q, _["pi_tcag"] = pi_tcag);
+    // Info for P(t) calculation
+    arma::field<arma::mat> Q_vec(gammas.size());
+    arma::field<arma::mat> U;
+    arma::field<arma::mat> Ui;
+    arma::field<arma::vec> L;
+    // Check to see if the eigenvalues are real:
+    arma::cx_vec L_;
+    arma::cx_mat U_;
+    arma::eig_gen(L_, U_, Q);
+    bool all_real = arma::all(arma::imag(L_) == 0) &&
+        arma::all(arma::vectorise(arma::imag(U_)) == 0);
+    // If they're real, fill U, Ui, and L using GTR method.
+    // Otherwise they'll be empty, so we'll use repeated matrix squaring.
+    if (all_real) {
+        U.set_size(gammas.size());
+        Ui.set_size(gammas.size());
+        L.set_size(gammas.size());
+    }
+    for (uint32 i = 0; i < gammas.size(); i++) {
+        Q_vec(i) = Q * gammas[i];
+        if (all_real) {
+            Pt_info(Q_vec(i), U(i), Ui(i), L(i));
+        }
+    }
 
-    out.attr("class") = "sub_model_info";
+
+    List out = List::create(_["Q"] = Q_vec,
+                            _["pi_tcag"] = pi_tcag,
+                            _["U"] = U,
+                            _["Ui"] = Ui,
+                            _["L"] = L,
+                            _["gammas"] = gammas,
+                            _["invariant"] = invariant,
+                            _["model"] = "UNREST");
 
     return out;
 }

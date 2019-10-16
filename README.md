@@ -69,9 +69,9 @@ devtools::install_github("lucasnell/jackalope")
 ### Enabling OpenMP
 
 To use multithreading in `jackalope`, you’ll need to compile it from
-source using the proper flags. Regardless of operating system, you
-should add the following to the `.R/Makevars` (`.R/Makevars.win` on
-Windows) file inside the home directory:
+source using the proper flags. The first step is to add the following to
+the `.R/Makevars` (`.R/Makevars.win` on Windows) file inside the home
+directory:
 
 ``` bash
 PKG_CXXFLAGS += $(SHLIB_OPENMP_CXXFLAGS)
@@ -91,8 +91,8 @@ install.packages("jackalope", type = "source")
 If you’ve enabled OpenMP properly, running `jackalope:::using_openmp()`
 in R should return `TRUE`.
 
-On macOS, it’s a bit more work to get things working. First, make sure
-the content above is in your `~/.R/Makevars` file. Next, go to
+On macOS, it takes a few more steps to get things working. First, make
+sure the content above is in your `~/.R/Makevars` file. Next, go to
 <https://cran.r-project.org/bin/macosx/tools> and download (1) the
 newest version of the `clang` compiler (`clang8` at the time of this
 writing) and (2) the `gfortran-6.1.pkg` file. After this, add the
@@ -123,26 +123,39 @@ that genome using a phylogenetic tree:
 
 ``` r
 library(jackalope)
-reference <- create_genome(n_seqs = 10, len_mean = 1000)
+reference <- create_genome(n_chroms = 10, len_mean = 1000)
 tr <- ape::rcoal(5)
 ref_variants <- create_variants(reference, vars_phylo(tr), sub_JC69(0.1))
 ref_variants
 #>                            << Variants object >>
 #> # Variants: 5
-#> # Mutations: 17,679
+#> # Mutations: 17,480
 #> 
 #>                         << Reference genome info: >>
-#> < Set of 10 sequences >
+#> < Set of 10 chromosomes >
 #> # Total size: 10,000 bp
-#>   name                          sequence                             length
-#> seq0       CTGGCATTGAATCATATGAGGTGGC...GTTGCACGATTGATTAAATTCCTGAA      1000
-#> seq1       CACTCCGTCGCACACTAGGTTTCGA...GAGCTCGCGTACATGGAGCATTCTGT      1000
-#> seq2       CTTAGCCGGAGCGACTCGGAGCAAC...GCGTAATATGCCAGGTCCCGCGTGGC      1000
-#> seq3       CGCCTTCCATTTAGGACTTGTATTG...TAAACTCCATGTGACTGTAATGTCAG      1000
-#> seq4       GGGTGATATGGTGTGCATGCTGAAT...AGTCTAGAGTCTCTGGGAGGTCAGGT      1000
-#> seq5       TTCGTTGGTGGGTGTCCTATGCTAC...CCCGCCGGTTTGACTTACTCGATTGG      1000
-#> seq6       GCATGGACAGATGTGATCTGAGTAT...GACCCCATAAGGCCTGGGACACTGTG      1000
-#> seq7       TCGTTTCAACGTCCTTAAGTGTAGT...CTCGTTAGCTCTCCGAGGAGACGAGG      1000
-#> seq8       CAGGTAAGTTATCAAAGAACCTTCC...GCATCACCTCGCAAGGAGACTCGTTA      1000
-#> seq9       GGTAGTAATTAGGCTTAAAATAGCA...AACAAATGTTCGGCATACGATCTACG      1000
+#>   name                          chromosome                           length
+#> chrom0     CTGGCATTGAATCATATGAGGTGGC...GTTGCACGATTGATTAAATTCCTGAA      1000
+#> chrom1     CACTCCGTCGCACACTAGGTTTCGA...GAGCTCGCGTACATGGAGCATTCTGT      1000
+#> chrom2     CTTAGCCGGAGCGACTCGGAGCAAC...GCGTAATATGCCAGGTCCCGCGTGGC      1000
+#> chrom3     CGCCTTCCATTTAGGACTTGTATTG...TAAACTCCATGTGACTGTAATGTCAG      1000
+#> chrom4     GGGTGATATGGTGTGCATGCTGAAT...AGTCTAGAGTCTCTGGGAGGTCAGGT      1000
+#> chrom5     TTCGTTGGTGGGTGTCCTATGCTAC...CCCGCCGGTTTGACTTACTCGATTGG      1000
+#> chrom6     GCATGGACAGATGTGATCTGAGTAT...GACCCCATAAGGCCTGGGACACTGTG      1000
+#> chrom7     TCGTTTCAACGTCCTTAAGTGTAGT...CTCGTTAGCTCTCCGAGGAGACGAGG      1000
+#> chrom8     CAGGTAAGTTATCAAAGAACCTTCC...GCATCACCTCGCAAGGAGACTCGTTA      1000
+#> chrom9     GGTAGTAATTAGGCTTAAAATAGCA...AACAAATGTTCGGCATACGATCTACG      1000
+```
+
+Below simulates 500 million paired-end, 100 bp reads from the variants:
+
+``` r
+illumina(ref_variants, out_prefix = "illumina", n_reads = 500e6,
+         paired = TRUE, read_length = 100)
+```
+
+Below simulates 500 thousand PacBio reads from the reference genome:
+
+``` r
+pacbio(ref, out_prefix = "pacbio", n_reads = 500e3)
 ```

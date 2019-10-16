@@ -25,8 +25,7 @@ either in the form of
 \code{scrm} or \code{coala} coalescent-simulator object(s), or
 (2) a \code{ms}-style output file.}
 \item{\code{\link{vars_vcf}}}{Uses a variant call format (VCF) file that
-directly specifies variants.
-This method does not work if the \code{vcfR} package isn't installed.}
+directly specifies variants.}
 }
 }
 \seealso{

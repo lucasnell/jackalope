@@ -5,9 +5,14 @@
     library.dynam.unload("jackalope", libpath)
 }
 
+# For avoiding warnings for comparing nonsensible inputs
+comparable <- function(x) {
+    return(!is.null(x) && (is.vector(x) || is.matrix(x)) && !any(is.na(x)))
+}
+
 # Check for a single, whole number, perhaps in range
 single_integer <- function(x, .min, .max) {
-    if (is.null(x) || any(is.na(x))) return(FALSE)
+    if (!comparable(x)) return(FALSE)
     bool <- is.numeric(x) && length(x) == 1 && x %% 1 == 0
     if (!missing(.min)) bool <- bool && x >= .min
     if (!missing(.max)) bool <- bool && x <= .max
@@ -15,7 +20,7 @@ single_integer <- function(x, .min, .max) {
 }
 # Check for a single number, perhaps in range
 single_number <- function(x, .min, .max) {
-    if (is.null(x) || any(is.na(x))) return(FALSE)
+    if (!comparable(x)) return(FALSE)
     bool <- is.numeric(x) && length(x) == 1
     if (!missing(.min)) bool <- bool && x >= .min
     if (!missing(.max)) bool <- bool && x <= .max
@@ -23,12 +28,12 @@ single_number <- function(x, .min, .max) {
 }
 # Check for a vector of positive numbers that sums to > 0 (used often for relative rates)
 positive_vector <- function(x, zero_comp = `>=`) {
-    if (is.null(x) || any(is.na(x))) return(FALSE)
+    if (!comparable(x)) return(FALSE)
     bool <- inherits(x, c("integer", "numeric")) && zero_comp(sum(x), 0) && all(x >= 0)
     return(bool)
 }
 is_type <- function(x, type, L = NULL) {
-    if (is.null(x) || any(is.na(x))) return(FALSE)
+    if (!comparable(x)) return(FALSE)
     if (!inherits(x, type)) return(FALSE)
     if (!is.null(L) && !length(x) %in% L) return(FALSE)
     return(TRUE)

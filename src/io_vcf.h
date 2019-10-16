@@ -1,6 +1,8 @@
 #ifndef __JACKALOPE_VCF_IO_H
 #define __JACKALOPE_VCF_IO_H
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 #include <RcppArmadillo.h>
 #include <vector>               // vector class
 #include <string>               // string class
@@ -22,6 +24,43 @@ using namespace Rcpp;
 
 // Maximum uint64 value:
 #define MAX_INT 18446744073709551615ULL
+
+
+
+/*
+ This function produces a vector of indices that map the VCF indices onto the
+ original chromosome names from the `ref_genome` object.
+ This is in case the chromosomes are in a different order in the VCF file.
+ */
+inline std::vector<uint64> match_chrom_names(const std::vector<std::string>& from_ref,
+                                             const std::vector<std::string>& from_vcf,
+                                             const bool& print_names) {
+
+    std::vector<uint64> order_(from_ref.size());
+
+    for (uint64 i = 0; i < order_.size(); i++) {
+        auto iter = std::find(from_vcf.begin(), from_vcf.end(),
+                              from_ref[i]);
+        if (iter == from_vcf.end()) {
+            std::vector<std::string> err_msg;
+            if (print_names) {
+                for (const std::string& s : from_vcf) err_msg.push_back(s + '\n');
+            }
+            err_msg.push_back("\nChromosome name(s) in VCF file don't match those in ");
+            err_msg.push_back("the `ref_genome` object. It's probably easiest ");
+            err_msg.push_back("to manually change the `ref_genome` object ");
+            err_msg.push_back("(using `$set_names()` method) to have the same names ");
+            err_msg.push_back("as the VCF file.");
+            str_stop(err_msg);
+        }
+        order_[i] = iter - from_vcf.begin();
+    }
+
+    return order_;
+}
+
+
+
 
 
 
@@ -58,9 +97,9 @@ public:
      */
     uint64 gt_index = 0;
     // Starting/ending indices on mutations vector:
-    std::pair<uint64, uint64> ind = std::make_pair(0, 0);
+    std::pair<uint64, uint64> mut_ind = std::make_pair(0, 0);
     // Starting/ending position on ref. chromosome:
-    std::pair<uint64, uint64> pos;
+    std::pair<uint64, uint64> ref_pos;
 
     OneVarChromVCF() : var_chrom(nullptr) {};
 
@@ -91,7 +130,7 @@ public:
     void set_var(const VarChrom& var_chrom_) {
         var_chrom = &var_chrom_;
         gt_index = 0;
-        ind = std::make_pair(0, 0);
+        mut_ind = std::make_pair(0, 0);
         reset_pos();
         return;
     }
@@ -100,22 +139,23 @@ public:
                      uint64& pos_end) const {
 
         // If this is the new nearest mutation, override both positions:
-        if (pos.first < pos_start) {
-            pos_start = pos.first;
-            pos_end = pos.second;
+        if (ref_pos.first < pos_start) {
+            pos_start = ref_pos.first;
+            pos_end = ref_pos.second;
         }
         /*
          If this one ties with a previous mutation
          and the ending position of this one is further along than the original,
          then we override that.
          */
-        if (pos.first == pos_start && pos.second > pos_end) {
-            pos_end = pos.second;
+        if (ref_pos.first == pos_start && ref_pos.second > pos_end) {
+            pos_end = ref_pos.second;
         }
 
         return;
 
     }
+
 
 
 
@@ -125,25 +165,27 @@ private:
 
     // Set positions when indices are the same (when initializing, iterating, new variant)
     void reset_pos() {
-        if (ind.first >= var_chrom->mutations.size()) {
-            pos = std::make_pair(MAX_INT, MAX_INT); // max uint64 values
+
+        if (mut_ind.first >= var_chrom->mutations.size()) {
+            ref_pos = std::make_pair(MAX_INT, MAX_INT); // max uint64 values
         } else {
-            const Mutation* mut(&(var_chrom->mutations[ind.first]));
-            set_first_pos(*mut);
+            uint64 index = mut_ind.first;
+            set_first_pos(mut_ind.first);
             /*
              Checking for a deletion right after the current mutation:
              (the second part of this statement is added because contiguous deletions
              are prevented elsewhere)
              */
-            if (ind.second < var_chrom->mutations.size() && mut->size_modifier >= 0) {
-                const Mutation& next_mut(var_chrom->mutations[ind.second + 1]);
-                if (next_mut.size_modifier < 0 &&
-                    next_mut.old_pos == (mut->old_pos + 1)) {
-                    ind.second++;
-                    mut = &(var_chrom->mutations[ind.second]);
+            if (mut_ind.second < (var_chrom->mutations.size()-1) &&
+                var_chrom->mutations.size_modifier[mut_ind.first] >= 0) {
+                if (var_chrom->mutations.size_modifier[mut_ind.second + 1] < 0 &&
+                    var_chrom->mutations.old_pos[mut_ind.second + 1] ==
+                    (var_chrom->mutations.old_pos[mut_ind.first] + 1)) {
+                    mut_ind.second++;
+                    index = mut_ind.second;
                 }
             }
-            set_second_pos(*mut);
+            set_second_pos(index);
         }
         return;
     }
@@ -152,40 +194,42 @@ private:
      Gets first ref. chromosome position for a mutation, compensating for the fact
      that deletions have to be treated differently
      */
-    inline void set_first_pos(const Mutation& mut) {
-        pos.first = mut.old_pos;
-        if (mut.size_modifier < 0 && mut.old_pos > 0) pos.first--;
+    inline void set_first_pos(const uint64& index) {
+        ref_pos.first = var_chrom->mutations.old_pos[index];
+        if (var_chrom->mutations.size_modifier[index] < 0 &&
+            var_chrom->mutations.old_pos[index] > 0) ref_pos.first--;
         return;
     }
     // Same as above, but returns the integer rather than setting it
-    inline uint64 get_first_pos(const Mutation& mut) {
-        uint64 pos_first = mut.old_pos;
-        if (mut.size_modifier < 0 && mut.old_pos > 0) pos_first--;
+    inline uint64 get_first_pos(const uint64& index) {
+        uint64 pos_first = var_chrom->mutations.old_pos[index];
+        if (var_chrom->mutations.size_modifier[index] < 0 &&
+            var_chrom->mutations.old_pos[index] > 0) pos_first--;
         return pos_first;
     }
     /*
      Gets last ref. chromosome position for a mutation, compensating for the fact
      that deletions have to be treated differently
      */
-    inline void set_second_pos(const Mutation& mut) {
-        pos.second = mut.old_pos;
-        if (mut.size_modifier < 0) {
-            if (mut.old_pos > 0) {
-                pos.second -= (1 + mut.size_modifier);
+    inline void set_second_pos(const uint64& index) {
+        ref_pos.second = var_chrom->mutations.old_pos[index];
+        if (var_chrom->mutations.size_modifier[index] < 0) {
+            if (var_chrom->mutations.old_pos[index] > 0) {
+                ref_pos.second -= (1 + var_chrom->mutations.size_modifier[index]);
             } else {
-                pos.second -= mut.size_modifier;
+                ref_pos.second -= var_chrom->mutations.size_modifier[index];
             }
         }
         return;
     }
     // Same as above, but returns the integer rather than setting it
-    inline uint64 get_second_pos(const Mutation& mut) {
-        uint64 pos_second = mut.old_pos;
-        if (mut.size_modifier < 0) {
-            if (mut.old_pos > 0) {
-                pos_second -= (1 + mut.size_modifier);
+    inline uint64 get_second_pos(const uint64& index) {
+        uint64 pos_second = var_chrom->mutations.old_pos[index];
+        if (var_chrom->mutations.size_modifier[index] < 0) {
+            if (var_chrom->mutations.old_pos[index] > 0) {
+                pos_second -= (1 + var_chrom->mutations.size_modifier[index]);
             } else {
-                pos_second -= mut.size_modifier;
+                pos_second -= var_chrom->mutations.size_modifier[index];
             }
         }
         return pos_second;

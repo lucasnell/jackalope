@@ -13,7 +13,6 @@ editor_options:
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 options(tibble.print_min = 4L, tibble.print_max = 4L)
 library(jackalope)
-library(scrm)
 library(ape)
 set.seed(65456156)
 ```
@@ -24,11 +23,11 @@ This document provides brief examples of how `jackalope` can be used
 to generate sequencing data that can inform some common sampling decisions for HTS
 studies.
 
-For an example reference assembly, I simply simulated one of size 10 Mb
+For an example reference assembly, I simply simulated one of size 1 kb
 using the following code:
 
 ```{r examples-create-assembly}
-ref <- create_genome(10, 1e6)
+ref <- create_genome(10, 1e2)
 ```
 
 
@@ -43,6 +42,9 @@ For molecular-evolution information, I used the TN93 model,
 an insertion rate of `2e-5` for lengths from 1 to 10,
 and
 a deletion rate of `1e-5` for lengths from 1 to 40.
+By default, the `indel` function creates rates that are proportional to
+`exp(-L)` for indel length `L` from 1 to the maximum length.
+
 
 ```{r examples-mevo-objects}
 sub <- sub_TN93(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
@@ -101,22 +103,31 @@ illumina(ref, out_prefix = "ill_mp", seq_sys = "MSv3",
 Here, I will demonstrate how to generate population-genomic data of a type that might
 be used to estimate the divergence between two populations.
 I first use the `scrm` package to conduct 
-coalescent simulations that will generate segregating sites for 40 haploid variants
+coalescent simulations that will generate segregating sites for 10 haploid variants
 from the reference genome.
-Twenty of the variants are from one population, twenty from another.
+Five of the variants are from one population, five from another.
 The symmetrical migration rate is 100 individuals per generation.
-To generate many mutations, I set the population-scaled mutation rate
-($\theta = 4 N_0 \mu$) to `100` for this example.
+I set the population-scaled mutation rate
+($\theta = 4 N_0 \mu$) to `10` for this example.
 
-```{r examples-divergence-scrm}
-ssites <- scrm(paste("40", ref$n_chroms(), "-t 100 -I 2 20 20 100"))
+```{r examples-divergence-scrm, eval = FALSE}
+library(scrm)
+ssites <- scrm(paste("10", ref$n_chroms(), "-t 10 -I 2 5 5 100"))
 ```
 
 Using the previously created objects for molecular evolution information (`sub`,
 `ins`, and `del`), I create variants from the reference genome:
 
-```{r examples-divergence-create}
+```{r examples-divergence-create, eval = FALSE}
 vars <- create_variants(ref, vars_ssites(ssites), sub, ins, del)
+```
+```{r examples-divergence-create-do, echo = FALSE}
+# For the purposes of the vignette, I'm just going to use `vars_theta` so I
+# don't have to (1) load scrm to build the vignette or (2) keep a relatively
+# large internal data file to store the scrm output
+# theta of 0.05 gives the same # mutations as using `ssites`
+set.seed(7809534)
+vars <- create_variants(ref, vars_theta(theta = 0.05, n_vars = 10), sub, ins, del)
 ```
 
 This results in the following set of variants:
@@ -260,6 +271,7 @@ on an Illumina MiSeq v3.
 ```{r examples-phylogeny-gtrees-illumina, eval = FALSE}
 illumina(ref, out_prefix = "phylo_gtrees",
          seq_sys = "MSv3",
+         paired = TRUE,
          read_length = 250,
          n_reads = 50e6)
 ```
