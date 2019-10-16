@@ -38,7 +38,7 @@ LinkingTo:
     RcppProgress,
     Rhtslib,
     zlibbioc
-SystemRequirements: C++11
+SystemRequirements: GNU make, C++11
 RoxygenNote: 6.1.1
 Roxygen: list(markdown = TRUE)
 Suggests:
