@@ -2,7 +2,7 @@
 % Please edit documentation in R/vars_functions.R
 \name{vars_ssites}
 \alias{vars_ssites}
-\title{Create necessary information to create variants using segregating sites matrices}
+\title{Organize information to create variants using segregating sites matrices}
 \usage{
 vars_ssites(obj = NULL, fn = NULL)
 }
@@ -30,7 +30,8 @@ Defaults to \code{NULL}.}
 \value{
 A \code{vars_ssites_info} object containing information used in \code{create_variants}
 to create haploid variants.
-This class is just a wrapper around a list of matrices of segregating site info.
+This class is just a wrapper around a list of matrices of segregating site info,
+which you can view (but not change) using the object's \code{mats()} method.
 }
 \description{
 This function organizes higher-level information for creating variants from

@@ -79,7 +79,7 @@ process_coal_obj_sites <- function(mat) {
 
 
 
-#' Create necessary information to create variants using segregating sites matrices
+#' Organize information to create variants using segregating sites matrices
 #'
 #'
 #' This function organizes higher-level information for creating variants from
@@ -116,7 +116,8 @@ process_coal_obj_sites <- function(mat) {
 #'
 #' @return A `vars_ssites_info` object containing information used in `create_variants`
 #'     to create haploid variants.
-#'     This class is just a wrapper around a list of matrices of segregating site info.
+#'     This class is just a wrapper around a list of matrices of segregating site info,
+#'     which you can view (but not change) using the object's `mats()` method.
 #'
 #' @export
 #'
@@ -180,7 +181,7 @@ vars_ssites <- function(obj = NULL,
 
 #   __vcf -----
 
-#' Create necessary information to create variants using a VCF file
+#' Organize information to create variants using a VCF file
 #'
 #' This function organizes higher-level information for creating variants from
 #' Variant Call Format (VCF) files.
@@ -198,7 +199,8 @@ vars_ssites <- function(obj = NULL,
 #' @return A `vars_vcf_info` object containing information used in `create_variants`
 #'     to create haploid variants.
 #'     This class is just a wrapper around a list containing the arguments to this
-#'     function.
+#'     function, which you can view (but not change) using the object's `fn()` and
+#'     `print_names()` methods.
 #'
 vars_vcf <- function(fn, print_names = FALSE) {
 
@@ -232,7 +234,7 @@ vars_vcf <- function(fn, print_names = FALSE) {
 # __phylo -----
 
 
-#' Create necessary information to create variants using phylogenetic tree(s)
+#' Organize information to create variants using phylogenetic tree(s)
 #'
 #' This function organizes higher-level information for creating variants from
 #' phylogenetic tree(s) output as `phylo` or `multiPhylo` objects
@@ -264,7 +266,8 @@ vars_vcf <- function(fn, print_names = FALSE) {
 #' @return A `vars_phylo_info` object containing information used in `create_variants`
 #'     to create haploid variants.
 #'     This class is just a wrapper around a list containing phylogenetic tree
-#'     information for each reference chromosome.
+#'     information for each reference chromosome, which you can view (but not change)
+#'     using the object's `phylo()` method.
 #'
 #'
 #' @export
@@ -318,7 +321,7 @@ vars_phylo <- function(obj = NULL,
 
 # __theta -----
 
-#' Create necessary information to create variants using theta parameter
+#' Organize information to create variants using theta parameter
 #'
 #' This function organizes higher-level information for creating variants from
 #' the population-scaled mutation rate and a desired number of variants.
@@ -331,7 +334,8 @@ vars_phylo <- function(obj = NULL,
 #' @return A `vars_theta_info` object containing information used in `create_variants`
 #'     to create haploid variants.
 #'     This class is just a wrapper around a list containing the phylogenetic tree
-#'     and `theta` parameter.
+#'     and `theta` parameter, which you can view (but not change) using the object's
+#'     `phylo()` and `theta()` methods, respectively.
 #'
 #' @export
 #'
@@ -357,7 +361,7 @@ vars_theta <- function(theta, n_vars) {
 
 # __gtrees -----
 
-#' Create necessary information to create variants using gene trees
+#' Organize information to create variants using gene trees
 #'
 #' This function organizes higher-level information for creating variants from
 #' gene trees output from coalescent simulations.
@@ -392,7 +396,8 @@ vars_theta <- function(theta, n_vars) {
 #' @return A `vars_gtrees_info` object containing information used in `create_variants`
 #'     to create haploid variants.
 #'     This class is just a wrapper around a list of NEWICK tree strings, one for
-#'     each gene tree.
+#'     each gene tree, which you can view (but not change) using the object's
+#'     `trees()` method.
 #'
 #' @export
 #'

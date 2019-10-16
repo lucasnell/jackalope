@@ -2,7 +2,7 @@
 % Please edit documentation in R/vars_functions.R
 \name{vars_theta}
 \alias{vars_theta}
-\title{Create necessary information to create variants using theta parameter}
+\title{Organize information to create variants using theta parameter}
 \usage{
 vars_theta(theta, n_vars)
 }
@@ -15,7 +15,8 @@ vars_theta(theta, n_vars)
 A \code{vars_theta_info} object containing information used in \code{create_variants}
 to create haploid variants.
 This class is just a wrapper around a list containing the phylogenetic tree
-and \code{theta} parameter.
+and \code{theta} parameter, which you can view (but not change) using the object's
+\code{phylo()} and \code{theta()} methods, respectively.
 }
 \description{
 This function organizes higher-level information for creating variants from

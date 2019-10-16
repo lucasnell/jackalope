@@ -2,7 +2,7 @@
 % Please edit documentation in R/vars_functions.R
 \name{vars_phylo}
 \alias{vars_phylo}
-\title{Create necessary information to create variants using phylogenetic tree(s)}
+\title{Organize information to create variants using phylogenetic tree(s)}
 \usage{
 vars_phylo(obj = NULL, fn = NULL)
 }
@@ -28,7 +28,8 @@ Defaults to \code{NULL}.}
 A \code{vars_phylo_info} object containing information used in \code{create_variants}
 to create haploid variants.
 This class is just a wrapper around a list containing phylogenetic tree
-information for each reference chromosome.
+information for each reference chromosome, which you can view (but not change)
+using the object's \code{phylo()} method.
 }
 \description{
 This function organizes higher-level information for creating variants from

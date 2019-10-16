@@ -3,7 +3,7 @@
 \name{vars_gtrees}
 \alias{vars_gtrees}
 \alias{write_gtrees}
-\title{Create necessary information to create variants using gene trees}
+\title{Organize information to create variants using gene trees}
 \usage{
 vars_gtrees(obj = NULL, fn = NULL)
 
@@ -32,7 +32,8 @@ The extension will be \code{.trees}.}
 A \code{vars_gtrees_info} object containing information used in \code{create_variants}
 to create haploid variants.
 This class is just a wrapper around a list of NEWICK tree strings, one for
-each gene tree.
+each gene tree, which you can view (but not change) using the object's
+\code{trees()} method.
 }
 \description{
 This function organizes higher-level information for creating variants from

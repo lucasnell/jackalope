@@ -2,7 +2,7 @@
 % Please edit documentation in R/vars_functions.R
 \name{vars_vcf}
 \alias{vars_vcf}
-\title{Create necessary information to create variants using a VCF file}
+\title{Organize information to create variants using a VCF file}
 \usage{
 vars_vcf(fn, print_names = FALSE)
 }
@@ -19,7 +19,8 @@ Defaults to \code{FALSE}.}
 A \code{vars_vcf_info} object containing information used in \code{create_variants}
 to create haploid variants.
 This class is just a wrapper around a list containing the arguments to this
-function.
+function, which you can view (but not change) using the object's \code{fn()} and
+\code{print_names()} methods.
 }
 \description{
 This function organizes higher-level information for creating variants from
