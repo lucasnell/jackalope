@@ -249,7 +249,7 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
 
 
     AllMutations& mutations(var_chrom.mutations);
-    // const std::string& reference(var_chrom.ref_chrom->nucleos);
+    const std::string& reference(var_chrom.ref_chrom->nucleos);
 
     const uint8& c_i(char_map[var_chrom.get_char_(pos, mut_i)]);
     if (c_i > 3) return; // only changing T, C, A, or G
@@ -260,9 +260,25 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
 
     if (nt_i != c_i) {
         sint64 ind = pos - mutations.new_pos[mut_i]; // <-- should always be >= 0
+
+
         // If `pos` is within the mutation chromosome:
         if (ind <= mutations.size_modifier[mut_i]) {
-            mutations.nucleos[mut_i][ind] = nucleo;
+
+            /*
+             If this new mutation reverts a substitution back to reference state,
+             delete the mutation from `mutations`.
+             Otherwise, adjust the mutation's sequence.
+             When `mut_i == 0`, doing this would make `mut_i` become negative,
+             so I just keep the mutation if `mut_i == 0`.
+             */
+            if ((mutations.size_modifier[mut_i] == 0) &&
+                (reference[mutations.old_pos[mut_i]] == nucleo) &&
+                mut_i > 0) {
+                mutations.erase(mut_i);
+                mut_i--;
+            } else mutations.nucleos[mut_i][ind] = nucleo;
+
         } else {
             // If `pos` is in the reference chromosome following the mutation:
             uint64 old_pos_ = ind + (mutations.old_pos[mut_i] -
