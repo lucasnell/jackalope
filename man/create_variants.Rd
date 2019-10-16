@@ -5,7 +5,8 @@
 \title{Create variants from a reference genome.}
 \usage{
 create_variants(reference, vars_info, sub = NULL, ins = NULL,
-  del = NULL, epsilon = 0.03, n_threads = 1, show_progress = FALSE)
+  del = NULL, epsilon = 0.03, mode = "mutation", n_threads = 1,
+  show_progress = FALSE)
 }
 \arguments{
 \item{reference}{A \code{ref_genome} object from which to generate variants.
@@ -47,6 +48,17 @@ Larger values are less exact but faster.
 Values must be \code{> 0} and \code{< 1}.
 For more information, see the references below.
 Defaults to \code{0.03}.}
+
+\item{mode}{A single string ("mutation" or "sequence") specifying the "mode" for how
+variant genomes should be structured. If it's "mutation," then only the
+reference genome and nested vectors of mutation information for each variant
+are stored.
+If it's "sequence," then vectors of entire chromosome sequences for each variant
+are stored. Sequence mode is typically faster, but it can be more memory
+intensive than mutation mode when mutation densities are low.
+Mutation mode is required if you want to output to VCF files, but both
+modes can output to FASTA files.
+Defaults to \code{"mutation"}.}
 
 \item{n_threads}{Number of threads to use for parallel processing.
 This argument is ignored if OpenMP is not enabled.

@@ -329,7 +329,8 @@ gtrees_to_info_list <- function(trees, reference) {
 #'
 #' @noRd
 #'
-to_var_set <- function(x, reference, sub, ins, del, epsilon, n_threads, show_progress) {
+to_var_set <- function(x, reference, sub, ins, del, epsilon,
+                       mode, n_threads, show_progress) {
 
     fun <- NULL
 
@@ -347,6 +348,7 @@ to_var_set <- function(x, reference, sub, ins, del, epsilon, n_threads, show_pro
 
     variants_ptr <- fun(x = x, reference = reference,
                         sub = sub, ins = ins, del = del, epsilon = epsilon,
+                        mode = mode,
                         n_threads = n_threads, show_progress = show_progress)
 
     return(variants_ptr)
@@ -359,7 +361,7 @@ to_var_set <- function(x, reference, sub, ins, del, epsilon, n_threads, show_pro
 #' @noRd
 #'
 to_var_set__vars_ssites_info <- function(x, reference, sub, ins, del, epsilon,
-                                        n_threads, show_progress) {
+                                         mode, n_threads, show_progress) {
 
 
     chrom_sizes <- reference$sizes()
@@ -378,6 +380,7 @@ to_var_set__vars_ssites_info <- function(x, reference, sub, ins, del, epsilon,
                                    sub$pi_tcag(),
                                    ins$rates(),
                                    del$rates(),
+                                   mode,
                                    n_threads,
                                    show_progress)
 
@@ -392,9 +395,9 @@ to_var_set__vars_ssites_info <- function(x, reference, sub, ins, del, epsilon,
 #' @noRd
 #'
 to_var_set__vars_vcf_info <- function(x, reference, sub, ins, del, epsilon,
-                                     n_threads, show_progress) {
+                                      mode, n_threads, show_progress) {
 
-    variants_ptr <- read_vcf_cpp(reference$ptr(), x$fn(), x$print_names())
+    variants_ptr <- read_vcf_cpp(reference$ptr(), x$fn(), x$print_names(), mode)
 
     return(variants_ptr)
 
@@ -407,7 +410,7 @@ to_var_set__vars_vcf_info <- function(x, reference, sub, ins, del, epsilon,
 #' @noRd
 #'
 to_var_set__vars_phylo_info <- function(x, reference, sub, ins, del, epsilon,
-                                       n_threads, show_progress) {
+                                        mode, n_threads, show_progress) {
 
     phy <- x$phylo()
 
@@ -425,7 +428,7 @@ to_var_set__vars_phylo_info <- function(x, reference, sub, ins, del, epsilon,
     trees_info <- phylo_to_info_list(phy, reference)
 
     var_set_ptr <- trees_to_var_set(trees_info, reference, sub, ins, del, epsilon,
-                                    n_threads, show_progress)
+                                    mode, n_threads, show_progress)
 
     return(var_set_ptr)
 
@@ -440,7 +443,7 @@ to_var_set__vars_phylo_info <- function(x, reference, sub, ins, del, epsilon,
 to_var_set__vars_theta_info <- function(x,
                                        reference,
                                        sub, ins, del, epsilon,
-                                       n_threads, show_progress) {
+                                       mode, n_threads, show_progress) {
 
     phy <- x$phylo()
     theta <- x$theta()
@@ -473,7 +476,7 @@ to_var_set__vars_theta_info <- function(x,
     trees_info <- phylo_to_info_list(phy, reference)
 
     var_set_ptr <- trees_to_var_set(trees_info, reference, sub, ins, del, epsilon,
-                                    n_threads, show_progress)
+                                    mode, n_threads, show_progress)
 
     return(var_set_ptr)
 
@@ -486,12 +489,12 @@ to_var_set__vars_theta_info <- function(x,
 #' @noRd
 #'
 to_var_set__vars_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
-                                        n_threads, show_progress) {
+                                         mode, n_threads, show_progress) {
 
     trees_info <- gtrees_to_info_list(x$trees(), reference)
 
     var_set_ptr <- trees_to_var_set(trees_info, reference, sub, ins, del, epsilon,
-                                    n_threads, show_progress)
+                                    mode, n_threads, show_progress)
 
     return(var_set_ptr)
 
@@ -550,6 +553,16 @@ to_var_set__vars_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
 #'     Values must be `> 0` and `< 1`.
 #'     For more information, see the references below.
 #'     Defaults to `0.03`.
+#' @param mode A single string ("mutation" or "sequence") specifying the "mode" for how
+#'     variant genomes should be structured. If it's "mutation," then only the
+#'     reference genome and nested vectors of mutation information for each variant
+#'     are stored.
+#'     If it's "sequence," then vectors of entire chromosome sequences for each variant
+#'     are stored. Sequence mode is typically faster, but it can be more memory
+#'     intensive than mutation mode when mutation densities are low.
+#'     Mutation mode is required if you want to output to VCF files, but both
+#'     modes can output to FASTA files.
+#'     Defaults to `"mutation"`.
 #' @param n_threads Number of threads to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
 #'     Threads are spread across chromosomes, so it
@@ -592,6 +605,7 @@ create_variants <- function(reference,
                             ins = NULL,
                             del = NULL,
                             epsilon = 0.03,
+                            mode = "mutation",
                             n_threads = 1,
                             show_progress = FALSE) {
 
@@ -658,6 +672,14 @@ create_variants <- function(reference,
     if (is.null(del)) del <- indel_info$new(numeric(0))
 
 
+    if (!is_type(mode, "character") || length(mode) != 1) {
+        err_msg("create_variants", "mode", "a single string")
+    }
+    mode <- c("mutation", "sequence")[pmatch(mode, c("mutation", "sequence"))]
+    if (is.na(mode)) {
+        err_msg("create_variants", "mode", "a single string that partially matches",
+                "either \"mutation\" or \"sequence\"")
+    }
     if (!single_integer(n_threads, .min = 1)) {
         err_msg("create_variants", "n_threads", "a single integer >= 1")
     }
@@ -672,6 +694,7 @@ create_variants <- function(reference,
                                ins = ins,
                                del = del,
                                epsilon = epsilon,
+                               mode = mode,
                                n_threads = n_threads,
                                show_progress = show_progress)
 
