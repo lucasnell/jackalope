@@ -13,8 +13,9 @@
 <link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Intro to jackalope">
 <meta property="og:description" content="">
 <meta property="og:image" content="/logo.png">
@@ -37,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">jackalope</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3</span>
       </span>
     </div>
 
@@ -45,7 +46,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -71,7 +72,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/lucasnell/jackalope">
-    <span class="fa fa-github fa-lg"></span>
+    <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -84,6 +85,7 @@
 <!--/.navbar -->
 
       
+
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
@@ -115,7 +117,7 @@
 #&gt; seq8       AGAAATATGCTTACGCATTAGCAGT...CGCCGAAAGACACCTCCCGTCAGTGA   1000000
 #&gt; seq9       GCAGTTACATTTACGCATCCTTACC...GGGGGCCTCGTGAGCTAGAGCTAGGT   1000000</code></pre>
 <p>For molecular-evolution information, I used the TN93 model, an insertion rate of <code>2e-5</code> for lengths from 1 to 10, and a deletion rate of <code>1e-5</code> for lengths from 1 to 40.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">sub &lt;-<span class="st"> </span><span class="kw"><a href="../reference/sub_models.html">sub_TN93</a></span>(<span class="dt">pi_tcag =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.4</span>),</a>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">sub &lt;-<span class="st"> </span><span class="kw"><a href="../reference/sub_models.html">sub_TN93</a></span>(<span class="dt">pi_tcag =</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.4</span>),</a>
 <a class="sourceLine" id="cb3-2" data-line-number="2">                <span class="dt">alpha_1 =</span> <span class="fl">0.0001</span>, <span class="dt">alpha_2 =</span> <span class="fl">0.0002</span>,</a>
 <a class="sourceLine" id="cb3-3" data-line-number="3">                <span class="dt">beta =</span> <span class="fl">0.00015</span>)</a>
 <a class="sourceLine" id="cb3-4" data-line-number="4">ins &lt;-<span class="st"> </span><span class="kw"><a href="../reference/indels.html">indels</a></span>(<span class="dt">rate =</span> <span class="fl">2e-5</span>, <span class="dt">max_length =</span> <span class="dv">10</span>)</a>
@@ -141,7 +143,7 @@
 <h2 class="hasAnchor">
 <a href="#estimating-divergence-between-populations" class="anchor"></a>Estimating divergence between populations</h2>
 <p>Here, I will demonstrate how to generate population-genomic data of a type that might be used to estimate the divergence between two populations. I first use the <code>scrm</code> package to conduct coalescent simulations that will generate segregating sites for 40 haploid variants from the reference genome. Twenty of the variants are from one population, twenty from another. The symmetrical migration rate is 100 individuals per generation. To generate many mutations, I set the population-scaled mutation rate (<span class="math inline">\(\theta = 4 N_0 \mu\)</span>) to <code>100</code> for this example.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1">ssites &lt;-<span class="st"> </span><span class="kw">scrm</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste</a></span>(<span class="st">"40"</span>, ref<span class="op">$</span><span class="kw">n_seqs</span>(), <span class="st">"-t 100 -I 2 20 20 100"</span>))</a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1">ssites &lt;-<span class="st"> </span><span class="kw">scrm</span>(<span class="kw"><a href="https://rdrr.io/r/base/paste.html">paste</a></span>(<span class="st">"40"</span>, ref<span class="op">$</span><span class="kw">n_seqs</span>(), <span class="st">"-t 100 -I 2 20 20 100"</span>))</a></code></pre></div>
 <p>Using the previously created objects for molecular evolution information (<code>sub</code>, <code>ins</code>, and <code>del</code>), I create variants from the reference genome:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1">vars &lt;-<span class="st"> </span><span class="kw"><a href="../reference/create_variants.html">create_variants</a></span>(ref, <span class="kw"><a href="../reference/vars_ssites.html">vars_ssites</a></span>(ssites), sub, ins, del)</a></code></pre></div>
 <p>This results in the following set of variants:</p>
@@ -167,8 +169,8 @@
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="kw"><a href="../reference/write_vcf.html">write_vcf</a></span>(vars, <span class="st">"variants"</span>)</a></code></pre></div>
 <p>Lastly, I simulate 1 lane of <span class="math inline">\(2 \times 100\)</span>bp Illumina HiSeq 2500 sequencing. In this case, individuals within a population are pooled, and the population sequences are derived from are identified by barcodes.</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw"><a href="../reference/illumina.html">illumina</a></span>(vars, <span class="dt">out_prefix =</span> <span class="st">"vars_illumina"</span>, <span class="dt">n_reads =</span> <span class="fl">500e6</span>, <span class="dt">paired =</span> <span class="ot">TRUE</span>,</a>
-<a class="sourceLine" id="cb11-2" data-line-number="2">         <span class="dt">read_length =</span> <span class="dv">100</span>, <span class="dt">barcodes =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rep">rep</a></span>(<span class="st">"AACCGCGG"</span>, <span class="dv">20</span>), </a>
-<a class="sourceLine" id="cb11-3" data-line-number="3">                                         <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rep">rep</a></span>(<span class="st">"GGTTATAA"</span>, <span class="dv">20</span>)))</a></code></pre></div>
+<a class="sourceLine" id="cb11-2" data-line-number="2">         <span class="dt">read_length =</span> <span class="dv">100</span>, <span class="dt">barcodes =</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="st">"AACCGCGG"</span>, <span class="dv">20</span>), </a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">                                         <span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="st">"GGTTATAA"</span>, <span class="dv">20</span>)))</a></code></pre></div>
 <p>The below example instead has each individual variant’s reads output to separate FASTQ files:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="kw"><a href="../reference/illumina.html">illumina</a></span>(vars, <span class="dt">out_prefix =</span> <span class="st">"vars_illumina"</span>, <span class="dt">n_reads =</span> <span class="fl">500e6</span>, <span class="dt">paired =</span> <span class="ot">TRUE</span>,</a>
 <a class="sourceLine" id="cb12-2" data-line-number="2">         <span class="dt">read_length =</span> <span class="dv">100</span>, <span class="dt">sep_files =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
@@ -214,22 +216,22 @@
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="co"># Run scrm for one sequence size:</span></a>
 <a class="sourceLine" id="cb17-2" data-line-number="2">one_seq &lt;-<span class="st"> </span><span class="cf">function</span>(size) {</a>
 <a class="sourceLine" id="cb17-3" data-line-number="3">    sims &lt;-<span class="st"> </span><span class="kw">scrm</span>(</a>
-<a class="sourceLine" id="cb17-4" data-line-number="4">        <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste</a></span>(<span class="st">"24 1"</span>,</a>
+<a class="sourceLine" id="cb17-4" data-line-number="4">        <span class="kw"><a href="https://rdrr.io/r/base/paste.html">paste</a></span>(<span class="st">"24 1"</span>,</a>
 <a class="sourceLine" id="cb17-5" data-line-number="5">              <span class="co"># Output gene trees:</span></a>
 <a class="sourceLine" id="cb17-6" data-line-number="6">              <span class="st">"-T"</span>,</a>
 <a class="sourceLine" id="cb17-7" data-line-number="7">              <span class="co"># Recombination:</span></a>
 <a class="sourceLine" id="cb17-8" data-line-number="8">              <span class="st">"-r 1"</span>, size,</a>
 <a class="sourceLine" id="cb17-9" data-line-number="9">              <span class="co"># 3 species with no ongoing migration:</span></a>
-<a class="sourceLine" id="cb17-10" data-line-number="10">              <span class="st">"-I 3"</span>, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rep">rep</a></span>(<span class="st">"8"</span>, <span class="dv">3</span>), <span class="dt">collapse =</span> <span class="st">" "</span>), <span class="st">"0"</span>,</a>
+<a class="sourceLine" id="cb17-10" data-line-number="10">              <span class="st">"-I 3"</span>, <span class="kw"><a href="https://rdrr.io/r/base/paste.html">paste</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="st">"8"</span>, <span class="dv">3</span>), <span class="dt">collapse =</span> <span class="st">" "</span>), <span class="st">"0"</span>,</a>
 <a class="sourceLine" id="cb17-11" data-line-number="11">              <span class="co"># Species 2 derived from 1 at time 1.0:</span></a>
 <a class="sourceLine" id="cb17-12" data-line-number="12">              <span class="st">"-ej 0.5 2 1"</span>,  </a>
 <a class="sourceLine" id="cb17-13" data-line-number="13">              <span class="co"># Species 3 derived from 2 at time 0.5:</span></a>
 <a class="sourceLine" id="cb17-14" data-line-number="14">              <span class="st">"-ej 0.25 3 2"</span></a>
 <a class="sourceLine" id="cb17-15" data-line-number="15">        ))</a>
-<a class="sourceLine" id="cb17-16" data-line-number="16">    <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/function">return</a></span>(sims<span class="op">$</span>trees[[<span class="dv">1</span>]])</a>
+<a class="sourceLine" id="cb17-16" data-line-number="16">    <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span>(sims<span class="op">$</span>trees[[<span class="dv">1</span>]])</a>
 <a class="sourceLine" id="cb17-17" data-line-number="17">}</a>
 <a class="sourceLine" id="cb17-18" data-line-number="18"><span class="co"># For all sequences:</span></a>
-<a class="sourceLine" id="cb17-19" data-line-number="19">gtrees &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">trees =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/lapply">lapply</a></span>(ref<span class="op">$</span><span class="kw">sizes</span>(), one_seq))</a></code></pre></div>
+<a class="sourceLine" id="cb17-19" data-line-number="19">gtrees &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="dt">trees =</span> <span class="kw"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span>(ref<span class="op">$</span><span class="kw">sizes</span>(), one_seq))</a></code></pre></div>
 <div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1">vars &lt;-<span class="st"> </span><span class="kw"><a href="../reference/create_variants.html">create_variants</a></span>(ref, <span class="kw"><a href="../reference/vars_gtrees.html">vars_gtrees</a></span>(gtrees),</a>
 <a class="sourceLine" id="cb18-2" data-line-number="2">                        sub, ins, del)</a></code></pre></div>
 <p>This results in the following <code>variants</code> object:</p>
@@ -253,7 +255,7 @@
 #&gt; seq9       GCAGTTACATTTACGCATCCTTACC...GGGGGCCTCGTGAGCTAGAGCTAGGT   1000000</code></pre>
 <p>To store mutation information by diploid sample, the <code>write_vcf</code> function writes the <code>variants</code> object to a VCF file. It assigns haplotypes to diploid samples using a matrix for the <code>sample_matrix</code> argument:</p>
 <div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="kw"><a href="../reference/write_vcf.html">write_vcf</a></span>(vars, <span class="dt">out_prefix =</span> <span class="st">"var_gtrees"</span>,</a>
-<a class="sourceLine" id="cb20-2" data-line-number="2">          <span class="dt">sample_matrix =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="dv">1</span><span class="op">:</span>vars<span class="op">$</span><span class="kw">n_vars</span>(), <span class="dt">ncol =</span> <span class="dv">2</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>))</a></code></pre></div>
+<a class="sourceLine" id="cb20-2" data-line-number="2">          <span class="dt">sample_matrix =</span> <span class="kw"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span>(<span class="dv">1</span><span class="op">:</span>vars<span class="op">$</span><span class="kw">n_vars</span>(), <span class="dt">ncol =</span> <span class="dv">2</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>))</a></code></pre></div>
 <p>Now I can generate data for 1 flow cell of <span class="math inline">\(2 \times 250\)</span>bp sequencing on an Illumina MiSeq v3.</p>
 <div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="kw"><a href="../reference/illumina.html">illumina</a></span>(ref, <span class="dt">out_prefix =</span> <span class="st">"phylo_gtrees"</span>,</a>
 <a class="sourceLine" id="cb21-2" data-line-number="2">         <span class="dt">seq_sys =</span> <span class="st">"MSv3"</span>,</a>
@@ -263,6 +265,7 @@
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+
         <div id="tocnav">
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
@@ -279,17 +282,20 @@
 </div>
 
 
+
       <footer><div class="copyright">
   <p>Developed by Lucas A. Nell.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
+
       </footer>
 </div>
 
   
+
 
   </body>
 </html>
