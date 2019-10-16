@@ -50,6 +50,9 @@ in order of their appearance:
 * `Q`: matrix of all parameters, where diagonals are ignored
 
 
+Functions in `jackalope` that employ each model take the form `sub_X` for model `X`
+(e.g., `sub_JC69` for JC69 model).
+
 
 
 
