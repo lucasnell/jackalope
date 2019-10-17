@@ -31,7 +31,6 @@ Imports:
     ape,
     R6,
     Rcpp (>= 0.12.11),
-    RcppProgress (>= 0.1),
     zlibbioc
 LinkingTo:
     Rcpp,
