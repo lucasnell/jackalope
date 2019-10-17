@@ -65,7 +65,7 @@ void OneVarSeqVCF::check(const uint64& pos_start,
          (the second part of this statement is added because contiguous deletions
          are prevented)
          */
-        if (ind.second < var_seq->mutations.size() &&
+        if (ind.second < (var_seq->mutations.size() - 1) &&
             var_seq->mutations[ind.second].size_modifier >= 0) {
             const Mutation& next_mut(var_seq->mutations[ind.second + 1]);
             if (next_mut.size_modifier < 0 &&

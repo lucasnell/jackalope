@@ -135,7 +135,8 @@ private:
              (the second part of this statement is added because contiguous deletions
              are prevented elsewhere)
              */
-            if (ind.second < var_seq->mutations.size() && mut->size_modifier >= 0) {
+            if (ind.second < (var_seq->mutations.size() - 1) &&
+                mut->size_modifier >= 0) {
                 const Mutation& next_mut(var_seq->mutations[ind.second + 1]);
                 if (next_mut.size_modifier < 0 &&
                     next_mut.old_pos == (mut->old_pos + 1)) {
