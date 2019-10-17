@@ -1,3 +1,10 @@
+## Resubmission
+
+This is a resubmission. In this version, I have done the following:
+
+- Fixed valgrind memory-access errors.
+- Fixed the following NOTE on Solaris and macOS: `All declared Imports should be used.`
+
 
 ## Test environments
 
@@ -6,7 +13,9 @@
 * macOS 10.3.3 (on travis-ci), R 3.6.1
 * Windows Server 2012 R2 x64 (on appveyor), R 3.6.1
 * Windows (win-builder), R-devel, R 3.6.1
-
+* Rhub
+    * Oracle Solaris 10, R-patched, 32-bit
+    * Debian Linux, R-release, GCC (with valgrind)
 
 
 
