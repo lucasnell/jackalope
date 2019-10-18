@@ -12,11 +12,14 @@ arg_list$ins <- indels(rate = 0.1, max_length = 10)
 arg_list$del <- indels(rate = 0.1, max_length = 10)
 
 
-cv <- function(vars_info, al = arg_list) {
+cv <- function(vars_info, al = arg_list, .mode = NULL) {
     arg_list_ <- c(list(vars_info = vars_info), al)
+    if (!is.null(.mode)) arg_list_ <- c(list(mode = .mode), arg_list_)
     vars <- do.call(create_variants, arg_list_)
     return(vars)
 }
+
+
 
 test_that("nonsense `sub` arg throws error", {
     al2 <- arg_list
@@ -51,6 +54,25 @@ test_that("basics of vars_theta work", {
                  regexp = "argument `theta` must be a single number >= 0.")
     expect_error(vars_theta(0.1, n_vars = 1),
                  regexp = "argument `n_vars` must be a single integer >= 2.")
+
+
+    vars3 <- cv(vars_theta(4, n_vars = 4), .mode = "sequence")
+
+    expect_identical(vars2$n_vars(), vars3$n_vars())
+
+    lgl_mat <- matrix(FALSE, vars2$n_vars(), arg_list$reference$n_chroms())
+
+    for (i in 1:nrow(lgl_mat)) {
+        for (j in 1:ncol(lgl_mat)) {
+            s2 <- vars2$chrom(i, j)
+            s3 <- vars3$chrom(i, j)
+            lgl_mat[i,j] <- identical(s2, s3)
+        }
+    }
+    expect_true(all(lgl_mat),
+                label = "sequence and mutation modes produce same output")
+
+
 })
 
 

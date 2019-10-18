@@ -410,6 +410,16 @@ public:
                    uint64 n_to_add) const;
 
 
+    // For external functions to see the mode.
+    std::string mode() const {
+        std::string out;
+        if (mut_mode) {
+            out = "mutation";
+        } else out = "sequence";
+        return out;
+    }
+
+
 
 private:
 
@@ -546,6 +556,7 @@ public:
         for (uint64 i = 0; i < out.size(); i++) out[i] = var_genome[i].size();
         return out;
     }
+
 
 private:
 

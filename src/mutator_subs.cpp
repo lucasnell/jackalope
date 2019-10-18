@@ -293,6 +293,7 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
 
 }
 
+
 //' Add substitutions within a range (pos to (end-1)) after mutations have occurred.
 //'
 //' @noRd
@@ -352,6 +353,87 @@ inline int SubMutator::subs_after_muts(uint64& pos,
 
 
 
+//' Add substitutions within a range (pos to (end-1)) after mutations have occurred.
+//'
+//' @noRd
+//'
+inline void SubMutator::subs_seq_mode__(const uint64& pos,
+                                        const std::string& bases,
+                                        const uint8& rate_i,
+                                        VarChrom& var_chrom,
+                                        pcg64& eng) {
+
+
+    std::deque<char>& sequence(var_chrom.sequence);
+
+    const uint8& c_i(char_map[sequence[pos]]);
+    if (c_i > 3) return; // only changing T, C, A, or G
+
+    AliasSampler& samp(samplers[rate_i][c_i]);
+    uint8 nt_i = samp.sample(eng);
+    const char& nucleo(bases[nt_i]);
+
+    if (nt_i != c_i) sequence[pos] = nucleo;
+
+    return;
+
+}
+
+inline int SubMutator::subs_seq_mode(const uint64& begin,
+                                     const uint64& end,
+                                     const uint8& max_gamma,
+                                     const std::string& bases,
+                                     const std::deque<uint8>& rate_inds,
+                                     VarChrom& var_chrom,
+                                     pcg64& eng,
+                                     Progress& prog_bar,
+                                     uint32& iters) {
+
+#ifdef __JACKALOPE_DEBUG
+    if (rate_inds.empty() && max_gamma > 1) {
+        stop("rate_inds shouldn't be empty when max_gamma > 1");
+    }
+    if (rate_inds.empty() && invariant > 0) {
+        stop("rate_inds shouldn't be empty when invariant > 0");
+    }
+#endif
+
+    if (site_var) {
+
+        for (uint64 pos = begin; pos < end; pos++) {
+
+            const uint8& rate_i(rate_inds[(pos-begin)]);
+            if (rate_i > max_gamma) {
+                pos++;
+                continue; // this is an invariant region
+            }
+
+            subs_seq_mode__(pos, bases, rate_i, var_chrom, eng);
+            if (interrupt_check(iters, prog_bar)) return -1;
+
+        }
+
+    } else {
+
+        const uint8 rate_i = 0;
+
+        for (uint64 pos = begin; pos < end; pos++) {
+
+            subs_seq_mode__(pos, bases, rate_i, var_chrom, eng);
+            if (interrupt_check(iters, prog_bar)) return -1;
+
+        }
+
+    }
+
+
+    return 0;
+
+}
+
+
+
+
 
 //' Add substitutions for a whole chromosome or just part of one.
 //'
@@ -392,12 +474,19 @@ int SubMutator::add_subs(const double& b_len,
     uint8 max_gamma = Q.size() - 1; // any rate_inds above this means an invariant region
     std::string bases = "TCAG";
 
-    // To make code less clunky:
-    AllMutations& mutations(var_chrom.mutations);
-
     int status = 0;
     uint32 iters = 0;
 
+    if (var_chrom.mode() != "mutation") {
+
+        status = subs_seq_mode(begin, end, max_gamma, bases, rate_inds,
+                               var_chrom, eng, prog_bar, iters);
+        return status;
+
+    }
+
+    // To make code less clunky:
+    AllMutations& mutations(var_chrom.mutations);
 
     uint64 mut_i = 0;
     uint64 pos = begin;

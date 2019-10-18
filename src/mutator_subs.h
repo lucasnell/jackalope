@@ -158,6 +158,23 @@ private:
 
 
 
+    inline void subs_seq_mode__(const uint64& pos,
+                                const std::string& bases,
+                                const uint8& rate_i,
+                                VarChrom& var_chrom,
+                                pcg64& eng);
+    inline int subs_seq_mode(const uint64& begin,
+                             const uint64& end,
+                             const uint8& max_gamma,
+                             const std::string& bases,
+                             const std::deque<uint8>& rate_inds,
+                             VarChrom& var_chrom,
+                             pcg64& eng,
+                             Progress& prog_bar,
+                             uint32& iters);
+
+
+
 };
 
 
