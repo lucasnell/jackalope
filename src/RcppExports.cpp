@@ -288,15 +288,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // read_vcf_cpp
-SEXP read_vcf_cpp(SEXP reference_ptr, const std::string& fn, const bool& print_names);
-RcppExport SEXP _jackalope_read_vcf_cpp(SEXP reference_ptrSEXP, SEXP fnSEXP, SEXP print_namesSEXP) {
+SEXP read_vcf_cpp(SEXP reference_ptr, const std::string& fn, const bool& print_names, const std::string& mode);
+RcppExport SEXP _jackalope_read_vcf_cpp(SEXP reference_ptrSEXP, SEXP fnSEXP, SEXP print_namesSEXP, SEXP modeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type reference_ptr(reference_ptrSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type fn(fnSEXP);
     Rcpp::traits::input_parameter< const bool& >::type print_names(print_namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(read_vcf_cpp(reference_ptr, fn, print_names));
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
+    rcpp_result_gen = Rcpp::wrap(read_vcf_cpp(reference_ptr, fn, print_names, mode));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -315,8 +316,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // evolve_across_trees
-SEXP evolve_across_trees(SEXP& ref_genome_ptr, const List& genome_phylo_info, const std::vector<arma::mat>& Q, const std::vector<arma::mat>& U, const std::vector<arma::mat>& Ui, const std::vector<arma::vec>& L, const double& invariant, const arma::vec& insertion_rates, const arma::vec& deletion_rates, const double& epsilon, const std::vector<double>& pi_tcag, uint64 n_threads, const bool& show_progress);
-RcppExport SEXP _jackalope_evolve_across_trees(SEXP ref_genome_ptrSEXP, SEXP genome_phylo_infoSEXP, SEXP QSEXP, SEXP USEXP, SEXP UiSEXP, SEXP LSEXP, SEXP invariantSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP epsilonSEXP, SEXP pi_tcagSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
+SEXP evolve_across_trees(SEXP& ref_genome_ptr, const List& genome_phylo_info, const std::vector<arma::mat>& Q, const std::vector<arma::mat>& U, const std::vector<arma::mat>& Ui, const std::vector<arma::vec>& L, const double& invariant, const arma::vec& insertion_rates, const arma::vec& deletion_rates, const double& epsilon, const std::vector<double>& pi_tcag, const std::string& mode, uint64 n_threads, const bool& show_progress);
+RcppExport SEXP _jackalope_evolve_across_trees(SEXP ref_genome_ptrSEXP, SEXP genome_phylo_infoSEXP, SEXP QSEXP, SEXP USEXP, SEXP UiSEXP, SEXP LSEXP, SEXP invariantSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP epsilonSEXP, SEXP pi_tcagSEXP, SEXP modeSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -331,9 +332,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type deletion_rates(deletion_ratesSEXP);
     Rcpp::traits::input_parameter< const double& >::type epsilon(epsilonSEXP);
     Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
     Rcpp::traits::input_parameter< uint64 >::type n_threads(n_threadsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
-    rcpp_result_gen = Rcpp::wrap(evolve_across_trees(ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, n_threads, show_progress));
+    rcpp_result_gen = Rcpp::wrap(evolve_across_trees(ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, mode, n_threads, show_progress));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -369,14 +371,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // make_var_set
-SEXP make_var_set(SEXP ref_genome_ptr, const uint64& n_vars);
-RcppExport SEXP _jackalope_make_var_set(SEXP ref_genome_ptrSEXP, SEXP n_varsSEXP) {
+SEXP make_var_set(SEXP ref_genome_ptr, const uint64& n_vars, const std::string& mode);
+RcppExport SEXP _jackalope_make_var_set(SEXP ref_genome_ptrSEXP, SEXP n_varsSEXP, SEXP modeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
     Rcpp::traits::input_parameter< const uint64& >::type n_vars(n_varsSEXP);
-    rcpp_result_gen = Rcpp::wrap(make_var_set(ref_genome_ptr, n_vars));
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_var_set(ref_genome_ptr, n_vars, mode));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -781,8 +784,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // add_ssites_cpp
-SEXP add_ssites_cpp(SEXP& ref_genome_ptr, const std::vector<arma::mat>& seg_sites, const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, uint64 n_threads, const bool& show_progress);
-RcppExport SEXP _jackalope_add_ssites_cpp(SEXP ref_genome_ptrSEXP, SEXP seg_sitesSEXP, SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
+SEXP add_ssites_cpp(SEXP& ref_genome_ptr, const std::vector<arma::mat>& seg_sites, const arma::mat& Q, const std::vector<double>& pi_tcag, const std::vector<double>& insertion_rates, const std::vector<double>& deletion_rates, const std::string& mode, uint64 n_threads, const bool& show_progress);
+RcppExport SEXP _jackalope_add_ssites_cpp(SEXP ref_genome_ptrSEXP, SEXP seg_sitesSEXP, SEXP QSEXP, SEXP pi_tcagSEXP, SEXP insertion_ratesSEXP, SEXP deletion_ratesSEXP, SEXP modeSEXP, SEXP n_threadsSEXP, SEXP show_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -792,9 +795,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::vector<double>& >::type pi_tcag(pi_tcagSEXP);
     Rcpp::traits::input_parameter< const std::vector<double>& >::type insertion_rates(insertion_ratesSEXP);
     Rcpp::traits::input_parameter< const std::vector<double>& >::type deletion_rates(deletion_ratesSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
     Rcpp::traits::input_parameter< uint64 >::type n_threads(n_threadsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show_progress(show_progressSEXP);
-    rcpp_result_gen = Rcpp::wrap(add_ssites_cpp(ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress));
+    rcpp_result_gen = Rcpp::wrap(add_ssites_cpp(ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, mode, n_threads, show_progress));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -815,13 +819,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_write_vars_fasta", (DL_FUNC) &_jackalope_write_vars_fasta, 7},
     {"_jackalope_read_ms_trees_", (DL_FUNC) &_jackalope_read_ms_trees_, 1},
     {"_jackalope_coal_file_sites", (DL_FUNC) &_jackalope_coal_file_sites, 1},
-    {"_jackalope_read_vcf_cpp", (DL_FUNC) &_jackalope_read_vcf_cpp, 3},
+    {"_jackalope_read_vcf_cpp", (DL_FUNC) &_jackalope_read_vcf_cpp, 4},
     {"_jackalope_write_vcf_cpp", (DL_FUNC) &_jackalope_write_vcf_cpp, 5},
-    {"_jackalope_evolve_across_trees", (DL_FUNC) &_jackalope_evolve_across_trees, 13},
+    {"_jackalope_evolve_across_trees", (DL_FUNC) &_jackalope_evolve_across_trees, 14},
     {"_jackalope_print_ref_genome", (DL_FUNC) &_jackalope_print_ref_genome, 1},
     {"_jackalope_print_var_set", (DL_FUNC) &_jackalope_print_var_set, 1},
     {"_jackalope_make_ref_genome", (DL_FUNC) &_jackalope_make_ref_genome, 1},
-    {"_jackalope_make_var_set", (DL_FUNC) &_jackalope_make_var_set, 2},
+    {"_jackalope_make_var_set", (DL_FUNC) &_jackalope_make_var_set, 3},
     {"_jackalope_view_ref_genome_nchroms", (DL_FUNC) &_jackalope_view_ref_genome_nchroms, 1},
     {"_jackalope_view_var_set_nchroms", (DL_FUNC) &_jackalope_view_var_set_nchroms, 1},
     {"_jackalope_view_var_set_nvars", (DL_FUNC) &_jackalope_view_var_set_nvars, 1},
@@ -854,7 +858,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_jackalope_sub_GTR_cpp", (DL_FUNC) &_jackalope_sub_GTR_cpp, 5},
     {"_jackalope_sub_UNREST_cpp", (DL_FUNC) &_jackalope_sub_UNREST_cpp, 4},
     {"_jackalope_using_openmp", (DL_FUNC) &_jackalope_using_openmp, 0},
-    {"_jackalope_add_ssites_cpp", (DL_FUNC) &_jackalope_add_ssites_cpp, 8},
+    {"_jackalope_add_ssites_cpp", (DL_FUNC) &_jackalope_add_ssites_cpp, 9},
     {NULL, NULL, 0}
 };
 
