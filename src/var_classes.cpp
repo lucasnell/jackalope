@@ -857,19 +857,6 @@ uint64 VarChrom::get_mut_(const uint64& new_pos) const {
 
 void VarSet::print() const noexcept {
 
-    if (!mut_mode) {
-
-
-        return;
-    }
-
-    uint64 total_muts = 0;
-    for (const VarGenome& vg : variants) {
-        for (const VarChrom& vc : vg.var_genome) {
-            total_muts += vc.mutations.size();
-        }
-    }
-
     int console_width = get_width();
 
     int n_spaces = static_cast<int>(
@@ -880,8 +867,26 @@ void VarSet::print() const noexcept {
     Rcout << "<< Variants object >>" << std::endl;
 
     Rcout << "# Variants: " << big_int_format<uint64>(size()) << std::endl;
-    Rcout << "# Mutations: " << big_int_format<uint64>(total_muts) << std::endl;
-    Rcout << std::endl;
+
+    if (!mut_mode) {
+
+        Rcout << "# Mode: \"sequence\"" << std::endl;
+        Rcout << std::endl;
+
+    } else {
+
+        uint64 total_muts = 0;
+        for (const VarGenome& vg : variants) {
+            for (const VarChrom& vc : vg.var_genome) {
+                total_muts += vc.mutations.size();
+            }
+        }
+        Rcout << "# Mode: \"mutation\"" << std::endl;
+        Rcout << "# Mutations: " << big_int_format<uint64>(total_muts) << std::endl;
+        Rcout << std::endl;
+
+    }
+
 
     n_spaces = static_cast<int>(
         std::ceil(static_cast<double>(console_width - 28) / 2)
@@ -890,4 +895,6 @@ void VarSet::print() const noexcept {
     for (int i = 0; i < n_spaces; i++) Rcout << ' ';
     Rcout << "<< Reference genome info: >>" << std::endl;
     reference->print();
+
+    return;
 }
