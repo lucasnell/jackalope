@@ -543,7 +543,7 @@ void remove_var_set_vars(
         std::vector<uint64> var_inds) {
 
     XPtr<VarSet> var_set(var_set_ptr);
-    std::deque<VarGenome>& variants(var_set->variants);
+    std::vector<VarGenome>& variants(var_set->variants);
 
     // Checking for duplicates:
     std::sort(var_inds.begin(), var_inds.end());
@@ -556,7 +556,7 @@ void remove_var_set_vars(
         uint64 j = var_inds[(var_inds.size() - i)];
         variants.erase(variants.begin() + j);
     }
-    clear_memory<std::deque<VarGenome>>(variants);
+    clear_memory<std::vector<VarGenome>>(variants);
     return;
 }
 
@@ -606,7 +606,7 @@ void add_var_set_vars(
         const std::vector<std::string>& new_names) {
 
     XPtr<VarSet> var_set(var_set_ptr);
-    std::deque<VarGenome>& variants(var_set->variants);
+    std::vector<VarGenome>& variants(var_set->variants);
     const RefGenome& ref(*(var_set->reference));
     std::string mode = var_set->mode();
 
@@ -624,7 +624,7 @@ void dup_var_set_vars(
         const std::vector<std::string>& new_names) {
 
     XPtr<VarSet> var_set(var_set_ptr);
-    std::deque<VarGenome>& variants(var_set->variants);
+    std::vector<VarGenome>& variants(var_set->variants);
     const RefGenome& ref(*(var_set->reference));
 
     if (var_inds.size() != new_names.size()) {

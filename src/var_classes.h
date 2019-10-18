@@ -497,7 +497,7 @@ public:
 
     // Fields
     std::string name;
-    std::deque<VarChrom> var_genome;
+    std::vector<VarChrom> var_genome;
 
     // Constructors
     VarGenome() {};
@@ -565,7 +565,7 @@ private:
 
 class VarSet {
 public:
-    std::deque<VarGenome> variants;
+    std::vector<VarGenome> variants;
     const RefGenome* reference;  // pointer to const RefGenome
 
     /*
