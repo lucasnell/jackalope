@@ -279,6 +279,7 @@ PhyloInfo::PhyloInfo(const List& genome_phylo_info, const TreeMutator& mutator_b
 */
 XPtr<VarSet> PhyloInfo::evolve_chroms(
         SEXP& ref_genome_ptr,
+        const std::string& mode,
         const uint64& n_threads,
         const bool& show_progress) {
 
@@ -286,8 +287,8 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
 
     // (I'm simply extracting tip labels from the first tree, as they should all be
     // the same due to the process_phy function in R/create_variants.R)
-    XPtr<VarSet> var_set(new VarSet(*ref_genome, phylo_one_chroms[0].trees[0].tip_labels),
-                         true);
+    const std::vector<std::string>& tip_names(phylo_one_chroms[0].trees[0].tip_labels);
+    XPtr<VarSet> var_set(new VarSet(*ref_genome, tip_names, mode), true);
 
     uint64 n_chroms = ref_genome->size();
     uint64 total_chrom = ref_genome->total_size;
@@ -385,6 +386,7 @@ SEXP evolve_across_trees(
         const arma::vec& deletion_rates,
         const double& epsilon,
         const std::vector<double>& pi_tcag,
+        const std::string& mode,
         uint64 n_threads,
         const bool& show_progress) {
 
@@ -416,7 +418,7 @@ SEXP evolve_across_trees(
      Now that we have tree(s) and mutator info, we can create variants:
      */
 
-    XPtr<VarSet> var_set = phylo_info.evolve_chroms(ref_genome_ptr,
+    XPtr<VarSet> var_set = phylo_info.evolve_chroms(ref_genome_ptr, mode,
                                                     n_threads, show_progress);
 
 

@@ -647,7 +647,8 @@ void add_vcf_mutations(VarSet& var_set,
 //[[Rcpp::export]]
 SEXP read_vcf_cpp(SEXP reference_ptr,
                   const std::string& fn,
-                  const bool& print_names) {
+                  const bool& print_names,
+                  const std::string& mode) {
 
     /*
      ------------
@@ -709,7 +710,7 @@ SEXP read_vcf_cpp(SEXP reference_ptr,
     std::vector<uint64> ind_map = match_chrom_names(ref_names, chrom_names, print_names);
 
     // Finally create VarSet
-    XPtr<VarSet> var_set(new VarSet(*reference, var_names));
+    XPtr<VarSet> var_set(new VarSet(*reference, var_names, mode));
     // ...and add mutations:
     add_vcf_mutations(*var_set, alts_list, chrom_inds, positions, ref_chrom, ind_map);
 

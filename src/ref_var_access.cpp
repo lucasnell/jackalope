@@ -124,10 +124,12 @@ SEXP make_ref_genome(const std::vector<std::string>& chroms) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-SEXP make_var_set(SEXP ref_genome_ptr, const uint64& n_vars) {
+SEXP make_var_set(SEXP ref_genome_ptr,
+                  const uint64& n_vars,
+                  const std::string& mode = "mutation") {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     // FYI, `n_vars` can be zero:
-    XPtr<VarSet> var_set(new VarSet(*ref_genome, n_vars), true);
+    XPtr<VarSet> var_set(new VarSet(*ref_genome, n_vars, mode), true);
     return var_set;
 }
 
@@ -439,7 +441,9 @@ void set_ref_genome_chrom_names(
         const std::vector<uint64>& chrom_inds,
         const std::vector<std::string>& names) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    if (names.size() != chrom_inds.size()) stop("names and chrom_inds aren't the same size");
+    if (names.size() != chrom_inds.size()) {
+        stop("names and chrom_inds aren't the same size");
+    }
     if (*std::max_element(chrom_inds.begin(), chrom_inds.end()) >= ref_genome->size()) {
         stop("at least one value in chrom_inds is too large");
     }
@@ -604,9 +608,10 @@ void add_var_set_vars(
     XPtr<VarSet> var_set(var_set_ptr);
     std::deque<VarGenome>& variants(var_set->variants);
     const RefGenome& ref(*(var_set->reference));
+    std::string mode = var_set->mode();
 
     for (uint64 i = 0; i < new_names.size(); i++) {
-        variants.push_back(VarGenome(new_names[i], ref));
+        variants.push_back(VarGenome(new_names[i], ref, mode));
     }
 
     return;
@@ -629,9 +634,11 @@ void dup_var_set_vars(
         stop("In `dup_var_set_vars`, one or more `var_inds` is too large");
     }
 
+    std::string mode = var_set->mode();
+
     for (uint64 i = 0; i < new_names.size(); i++) {
         // Add blank variant:
-        variants.push_back(VarGenome(new_names[i], ref));
+        variants.push_back(VarGenome(new_names[i], ref, mode));
         // Add mutation information:
         VarGenome& new_vg(variants.back());
         const VarGenome& old_vg(variants[var_inds[i]]);
@@ -639,6 +646,7 @@ void dup_var_set_vars(
             VarChrom& new_vs(new_vg.var_genome[j]);
             const VarChrom& old_vs(old_vg.var_genome[j]);
             new_vs.mutations = old_vs.mutations;
+            new_vs.sequence = old_vs.sequence;
             new_vs.chrom_size = old_vs.chrom_size;
         }
     }
@@ -683,6 +691,10 @@ DataFrame view_mutations(SEXP var_set_ptr, const uint64& var_ind) {
 
     XPtr<VarSet> var_set(var_set_ptr);
     const VarGenome& var_genome((*var_set)[var_ind]);
+
+    if (var_set->mode() != "mutation") {
+        stop("Cannot view mutations when VarSet is not in mutation mode");
+    }
 
     uint64 n_muts = 0;
     for (const VarChrom& vs : var_genome.var_genome) n_muts += vs.mutations.size();
@@ -737,6 +749,11 @@ DataFrame view_mutations(SEXP var_set_ptr, const uint64& var_ind) {
 List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& chrom_ind) {
 
     XPtr<VarSet> var_set_xptr(var_set_ptr);
+
+    if (var_set_xptr->mode() != "mutation") {
+        stop("Cannot examine mutations when VarSet is not in mutation mode");
+    }
+
     const VarGenome& var_genome((*var_set_xptr)[var_ind]);
     const VarChrom& var_chrom(var_genome[chrom_ind]);
     const AllMutations& muts(var_chrom.mutations);

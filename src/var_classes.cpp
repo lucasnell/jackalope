@@ -75,6 +75,11 @@ sint64 VarChrom::add_to_back(const VarChrom& other, const uint64& mut_i) {
 
 std::string VarChrom::get_chrom_full() const {
 
+    if (!mut_mode) {
+        std::string out(sequence.begin(), sequence.end());
+        return out;
+    }
+
     if (mutations.empty()) return ref_chrom->nucleos;
 
     // Index to the first Mutation object
@@ -142,6 +147,12 @@ void VarChrom::set_chrom_chunk(std::string& chunk_str,
     // Making sure end doesn't go beyond the chromosome bounds
     if (end >= chrom_size) end = chrom_size - 1;
 
+    if (!mut_mode) {
+        if (chunk_str.size() > 0) chunk_str.clear();
+        for (uint64 i = start; i <= end; i++) chunk_str.push_back(sequence[i]);
+        return;
+    }
+
     uint64 out_length = end - start + 1;
 
     // No need to mess around with mutations if there aren't any
@@ -208,11 +219,10 @@ void VarChrom::set_chrom_chunk(std::string& chunk_str,
  */
 
 void VarChrom::fill_read(std::string& read,
-                            const uint64& read_start,
-                            const uint64& chrom_start,
-                            uint64 n_to_add) const {
+                         const uint64& read_start,
+                         const uint64& chrom_start,
+                         uint64 n_to_add) const {
 
-    uint64 mut_i = 0;
 
     uint64 chrom_end = chrom_start + n_to_add - 1;
     // Making sure chrom_end doesn't go beyond the chromosome bounds
@@ -224,13 +234,24 @@ void VarChrom::fill_read(std::string& read,
     // Make sure the read is long enough (this fxn should never shorten it):
     if (read.size() < n_to_add + read_start) read.resize(n_to_add + read_start, 'N');
 
-    // No need to mess around with mutations if there aren't any
+    // If not in mutation mode, this is easy:
+    if (!mut_mode) {
+        for (uint64 i = 0; i < n_to_add; i++) {
+            read[(read_start + i)] = sequence[(chrom_start + i)];
+        }
+        return;
+    }
+
+    // No need to mess around with mutations if there aren't any yet
     if (mutations.empty()) {
         for (uint64 i = 0; i < n_to_add; i++) {
             read[(read_start + i)] = ref_chrom->nucleos[(chrom_start + i)];
         }
         return;
     }
+
+
+    uint64 mut_i = 0;
     // Move mutation to the proper spot
     while (mut_i < mutations.size()) {
         if (chrom_start < mutations.new_pos[mut_i]) break;
@@ -294,6 +315,13 @@ void VarChrom::fill_read(std::string& read,
 void VarChrom::add_deletion(const uint64& size_, const uint64& new_pos_) {
 
     if (size_ == 0 || new_pos_ >= chrom_size) return;
+
+    if (!mut_mode) {
+        sequence.erase(sequence.begin() + new_pos_,
+                        sequence.begin() + (new_pos_ + size_));
+        chrom_size -= size_;
+        return;
+    }
 
     uint64 mut_i;
 
@@ -391,6 +419,15 @@ void VarChrom::add_insertion(const std::string& nucleos_, const uint64& new_pos_
 
     sint64 size_mod = nucleos_.size();
 
+    if (!mut_mode) {
+
+        sequence.insert(sequence.begin() + (new_pos_ + 1),
+                        nucleos_.begin(), nucleos_.end());
+        chrom_size += size_mod;
+        return;
+
+    }
+
     uint64 mut_i = get_mut_(new_pos_);
     // `mutations.size()` is returned above if `new_pos_` is before the
     // first mutation  or if `mutations` is empty
@@ -451,6 +488,14 @@ void VarChrom::add_insertion(const std::string& nucleos_, const uint64& new_pos_
  ------------------
  */
 void VarChrom::add_substitution(const char& nucleo, const uint64& new_pos_) {
+
+
+    if (!mut_mode) {
+
+        sequence[new_pos_] = nucleo;
+        return;
+
+    }
 
     uint64 mut_i = get_mut_(new_pos_);
 
@@ -811,6 +856,12 @@ uint64 VarChrom::get_mut_(const uint64& new_pos) const {
 
 
 void VarSet::print() const noexcept {
+
+    if (!mut_mode) {
+
+
+        return;
+    }
 
     uint64 total_muts = 0;
     for (const VarGenome& vg : variants) {
