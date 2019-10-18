@@ -454,7 +454,7 @@ int fill_vcf_info(const std::string& fn,
         bcf_unpack(rec, BCF_UN_ALL);
 
         chrom = static_cast<uint64>(rec->rid);
-        pos = static_cast<uint64>(rec->pos);
+        pos = static_cast<uint64>(rec->pos); // htslib automatically makes it 0-based
         ref = std::string(rec->d.allele[0]);
 
         chrom_inds.push_back(chrom);
@@ -512,9 +512,161 @@ int fill_vcf_info(const std::string& fn,
 
 
 /*
- Add mutations to a VarSet object based on VCF-file info vectors.
+ ========================================
+ The next few functions (through `add_vcf_del`) include template "specializations"
+ that do things differently depending on `ModeChar`.
+ `ModeChar` should be 'M' for mutation mode and 'S' for sequence mode.
+ It uses template specializations so that entirely different functions are compiled
+ for each mode, yet I don't have to repeat a bunch of code, particularly in
+ `add_vcf_mutations`.
+ ========================================
  */
 
+/*
+ Checking for proper position
+ */
+template <char ModeChar>
+inline void vcf_pos_check(const AllMutations& mutations, const uint64& pos) {
+    return;
+}
+// For mutation mode
+template <>
+inline void vcf_pos_check<'M'>(const AllMutations& mutations, const uint64& pos) {
+    if (!mutations.empty() && mutations.old_pos.back() >= pos) {
+        str_stop({"\nFor VCF files, \"Positions are sorted numerically, in ",
+                 "increasing order, within each reference sequence CHROM.\" ",
+                 "(VCFv4.3 specification). ",
+                 "In jackalope, multiple records with the same POS are also ",
+                 "not permitted"});
+    }
+    return;
+}
+// For sequence mode
+template <>
+inline void vcf_pos_check<'S'>(const AllMutations& mutations, const uint64& pos) {
+    // It doesn't matter if there are duplicate or non-consecutive positions when in
+    // sequence mode.
+    return;
+}
+
+/*
+ Substitions
+ */
+template <char ModeChar>
+inline void add_vcf_sub(AllMutations& mutations,
+                        std::deque<char>& sequence,
+                        const uint64& op,
+                        const uint64& np,
+                        const char& nt) {
+    return;
+}
+// For mutation mode
+template <>
+inline void add_vcf_sub<'M'>(AllMutations& mutations,
+                             std::deque<char>& sequence,
+                             const uint64& op,
+                             const uint64& np,
+                             const char& nt) {
+    mutations.push_back(0, op, np, nt);
+    return;
+}
+// For sequence mode
+template <>
+inline void add_vcf_sub<'S'>(AllMutations& mutations,
+                             std::deque<char>& sequence,
+                             const uint64& op,
+                             const uint64& np,
+                             const char& nt) {
+    sequence[np] = nt;
+    return;
+}
+
+
+/*
+ Insertions
+ */
+template <char ModeChar>
+inline void add_vcf_ins(AllMutations& mutations,
+                        std::deque<char>& sequence,
+                        const sint64& sm,
+                        const uint64& op,
+                        const uint64& np,
+                        const std::string& nts) {
+    return;
+}
+// For mutation mode
+template <>
+inline void add_vcf_ins<'M'>(AllMutations& mutations,
+                             std::deque<char>& sequence,
+                             const sint64& sm,
+                             const uint64& op,
+                             const uint64& np,
+                             const std::string& nts) {
+    mutations.push_back(sm, op, np, nts.c_str());
+    return;
+}
+// For sequence mode
+template <>
+inline void add_vcf_ins<'S'>(AllMutations& mutations,
+                             std::deque<char>& sequence,
+                             const sint64& sm,
+                             const uint64& op,
+                             const uint64& np,
+                             const std::string& nts) {
+    /*
+     `nts[0]` should still be the last nt from the REF VCF column,
+     which is why I assign the first char to `sequence[np]` directly
+     and why I use `nts.begin() + 1` in the insert call
+     */
+    sequence[np] = nts[0];
+    sequence.insert(sequence.begin() + (np + 1), nts.begin() + 1, nts.end());
+    return;
+}
+
+/*
+ Deletions
+ */
+template <char ModeChar>
+inline void add_vcf_del(AllMutations& mutations,
+                        std::deque<char>& sequence,
+                        const sint64& sm,
+                        const uint64& op,
+                        const uint64& np) {
+    return;
+}
+// For mutation mode
+template <>
+inline void add_vcf_del<'M'>(AllMutations& mutations,
+                             std::deque<char>& sequence,
+                             const sint64& sm,
+                             const uint64& op,
+                             const uint64& np) {
+    mutations.push_back(sm, op, np, nullptr);
+    return;
+}
+// For sequence mode
+template <>
+inline void add_vcf_del<'S'>(AllMutations& mutations,
+                             std::deque<char>& sequence,
+                             const sint64& sm,
+                             const uint64& op,
+                             const uint64& np) {
+    sequence.erase(sequence.begin() + np,
+                    sequence.begin() + static_cast<uint64>(np + std::abs(sm)));
+    return;
+}
+
+
+
+
+
+/*
+ Add mutations to a VarSet object based on VCF-file info vectors.
+ It uses the different template specializations for the above functions based on
+ the value of `ModeChar`, which should take the values 'M' or 'S' for mutation and
+ sequence mode, respectively.
+ */
+template <char ModeChar>
 void add_vcf_mutations(VarSet& var_set,
                        const std::vector<std::vector<std::string>>& alts_list,
                        const std::vector<uint64>& chrom_inds,
@@ -547,16 +699,13 @@ void add_vcf_mutations(VarSet& var_set,
             // Else, mutate accordingly:
             VarChrom& var_chrom(var_set[var_i][chrom_i]);
             AllMutations& mutations(var_chrom.mutations);
+            std::deque<char>& sequence(var_chrom.sequence);
             sint64& size_mod(size_mods(var_i, chrom_i));
 
             // Make sure that positions are never before any existing mutations
-            if (!mutations.empty() && mutations.old_pos.back() >= positions[mut_i]) {
-                str_stop({"\nFor VCF files, \"Positions are sorted numerically, in ",
-                         "increasing order, within each reference sequence CHROM.\" ",
-                         "(VCFv4.3 specification). ",
-                         "In jackalope, multiple records with the same POS are also ",
-                         "not permitted"});
-            }
+            // if in mutation mode:
+            vcf_pos_check<ModeChar>(mutations, positions[mut_i]);
+
 
             if (alt.size() == ref.size()) {
                 /*
@@ -567,7 +716,8 @@ void add_vcf_mutations(VarSet& var_set,
                 for (uint64 i = 0; i < ref.size(); i++) {
                     if (alt[i] != ref[i]) {
                         new_pos = positions[mut_i] + i + size_mod;
-                        mutations.push_back(0, positions[mut_i] + i, new_pos, alt[i]);
+                        add_vcf_sub<ModeChar>(mutations, sequence,
+                                              positions[mut_i] + i, new_pos, alt[i]);
                     }
                 }
             } else if (alt.size() > ref.size()) {
@@ -587,7 +737,8 @@ void add_vcf_mutations(VarSet& var_set,
                 for (; i < (ref.size()-1); i++) {
                     if (alt[i] != ref[i]) {
                         new_pos = positions[mut_i] + i + size_mod;
-                        mutations.push_back(0, positions[mut_i] + i, new_pos, alt_copy[i]);
+                        add_vcf_sub<ModeChar>(mutations, sequence,
+                                              positions[mut_i] + i, new_pos, alt_copy[i]);
                     }
                 }
                 // Erase all the nucleotides that have already been added (if any):
@@ -597,8 +748,8 @@ void add_vcf_mutations(VarSet& var_set,
                  */
                 size_mod_i = alt_copy.size() - 1;
                 new_pos = positions[mut_i] + i + size_mod;
-                mutations.push_back(size_mod_i, positions[mut_i] + i, new_pos,
-                                    alt_copy.c_str());
+                add_vcf_ins<ModeChar>(mutations, sequence, size_mod_i,
+                                      positions[mut_i] + i, new_pos, alt_copy);
                 size_mod += size_mod_i;
                 var_chrom.chrom_size += size_mod_i;
 
@@ -618,7 +769,8 @@ void add_vcf_mutations(VarSet& var_set,
                 for (; i < alt.size(); i++) {
                     if (alt[i] != ref[i]) {
                         new_pos = positions[mut_i] + i + size_mod;
-                        mutations.push_back(0, positions[mut_i] + i, new_pos, alt[i]);
+                        add_vcf_sub<ModeChar>(mutations, sequence,
+                                              positions[mut_i] + i, new_pos, alt[i]);
                     }
                 }
 
@@ -626,7 +778,8 @@ void add_vcf_mutations(VarSet& var_set,
                     static_cast<sint64>(ref.size());
 
                 new_pos = positions[mut_i] + i + size_mod;
-                mutations.push_back(size_mod_i, positions[mut_i] + i, new_pos, nullptr);
+                add_vcf_del<ModeChar>(mutations, sequence,
+                                      size_mod_i, positions[mut_i] + i, new_pos);
                 size_mod += size_mod_i;
                 var_chrom.chrom_size += size_mod_i;
 
@@ -644,10 +797,14 @@ void add_vcf_mutations(VarSet& var_set,
 
 
 
+
+
+
 //[[Rcpp::export]]
 SEXP read_vcf_cpp(SEXP reference_ptr,
                   const std::string& fn,
-                  const bool& print_names) {
+                  const bool& print_names,
+                  const std::string& mode) {
 
     /*
      ------------
@@ -709,9 +866,15 @@ SEXP read_vcf_cpp(SEXP reference_ptr,
     std::vector<uint64> ind_map = match_chrom_names(ref_names, chrom_names, print_names);
 
     // Finally create VarSet
-    XPtr<VarSet> var_set(new VarSet(*reference, var_names));
+    XPtr<VarSet> var_set(new VarSet(*reference, var_names, mode));
     // ...and add mutations:
-    add_vcf_mutations(*var_set, alts_list, chrom_inds, positions, ref_chrom, ind_map);
+    if (mode == "mutation") {
+        add_vcf_mutations<'M'>(*var_set, alts_list, chrom_inds, positions,
+                               ref_chrom, ind_map);
+    } else {
+        add_vcf_mutations<'S'>(*var_set, alts_list, chrom_inds, positions,
+                               ref_chrom, ind_map);
+    }
 
     return var_set;
 
@@ -750,6 +913,13 @@ void write_vcf_cpp(std::string out_prefix,
                    const bool& show_progress) {
 
     XPtr<VarSet> var_set(var_set_ptr);
+
+    if (var_set->mode() != "mutation") {
+        str_stop({"\nTo write a VCF file, the `variants` object should be in ",
+                 "mutation mode. ",
+                 "If you're sure you want a VCF file, you should re-run ",
+                 "`create_variants` and pass \"mutation\" to its `mode` argument."});
+    }
 
     expand_path(out_prefix);
 

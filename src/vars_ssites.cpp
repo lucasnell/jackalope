@@ -127,6 +127,7 @@ SEXP add_ssites_cpp(SEXP& ref_genome_ptr,
                     const std::vector<double>& pi_tcag,
                     const std::vector<double>& insertion_rates,
                     const std::vector<double>& deletion_rates,
+                    const std::string& mode,
                     uint64 n_threads,
                     const bool& show_progress) {
 
@@ -135,7 +136,7 @@ SEXP add_ssites_cpp(SEXP& ref_genome_ptr,
     const uint64 n_vars = seg_sites[0].n_cols - 1;
 
     // Initialize new VarSet object
-    XPtr<VarSet> var_set(new VarSet(*ref_genome, n_vars), true);
+    XPtr<VarSet> var_set(new VarSet(*ref_genome, n_vars, mode), true);
 
     // Check that # threads isn't too high and change to 1 if not using OpenMP:
     thread_check(n_threads);

@@ -221,8 +221,8 @@ coal_file_sites <- function(ms_file) {
     .Call(`_jackalope_coal_file_sites`, ms_file)
 }
 
-read_vcf_cpp <- function(reference_ptr, fn, print_names) {
-    .Call(`_jackalope_read_vcf_cpp`, reference_ptr, fn, print_names)
+read_vcf_cpp <- function(reference_ptr, fn, print_names, mode) {
+    .Call(`_jackalope_read_vcf_cpp`, reference_ptr, fn, print_names, mode)
 }
 
 #' Write `variants` to VCF file.
@@ -238,8 +238,8 @@ write_vcf_cpp <- function(out_prefix, compress, var_set_ptr, sample_matrix, show
 #'
 #' @noRd
 #'
-evolve_across_trees <- function(ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, n_threads, show_progress) {
-    .Call(`_jackalope_evolve_across_trees`, ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, n_threads, show_progress)
+evolve_across_trees <- function(ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, mode, n_threads, show_progress) {
+    .Call(`_jackalope_evolve_across_trees`, ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, mode, n_threads, show_progress)
 }
 
 #' Add mutations manually from R.
@@ -295,8 +295,8 @@ make_ref_genome <- function(chroms) {
 #'
 #' @noRd
 #'
-make_var_set <- function(ref_genome_ptr, n_vars) {
-    .Call(`_jackalope_make_var_set`, ref_genome_ptr, n_vars)
+make_var_set <- function(ref_genome_ptr, n_vars, mode = "mutation") {
+    .Call(`_jackalope_make_var_set`, ref_genome_ptr, n_vars, mode)
 }
 
 view_ref_genome_nchroms <- function(ref_genome_ptr) {
@@ -591,7 +591,7 @@ NULL
 #'
 #' @noRd
 #'
-add_ssites_cpp <- function(ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress) {
-    .Call(`_jackalope_add_ssites_cpp`, ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress)
+add_ssites_cpp <- function(ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, mode, n_threads, show_progress) {
+    .Call(`_jackalope_add_ssites_cpp`, ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, mode, n_threads, show_progress)
 }
 

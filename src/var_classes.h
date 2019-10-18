@@ -313,7 +313,8 @@ class VarChrom {
 public:
 
     const RefChrom* ref_chrom;  // pointer to const RefChrom
-    AllMutations mutations;
+    AllMutations mutations;     // used for mutation mode
+    std::deque<char> sequence;  // used for sequence mode
     uint64 chrom_size;
     std::string name;
 
@@ -322,8 +323,19 @@ public:
     VarChrom(const RefChrom& ref)
         : ref_chrom(&ref),
           mutations(),
+          sequence(),
           chrom_size(ref.size()),
-          name(ref.name) {};
+          name(ref.name),
+          mut_mode(true) {};
+
+    // Switch to sequence mode
+    void seq_mode() {
+        mut_mode = false;
+        std::string::const_iterator iter = ref_chrom->nucleos.begin();
+        for (; iter != ref_chrom->nucleos.end(); ++iter) {
+            sequence.push_back(*iter);
+        }
+    }
 
     /*
      Since all other classes have a size() method, I'm including this here:
@@ -398,8 +410,20 @@ public:
                    uint64 n_to_add) const;
 
 
+    // For external functions to see the mode.
+    std::string mode() const {
+        std::string out;
+        if (mut_mode) {
+            out = "mutation";
+        } else out = "sequence";
+        return out;
+    }
+
+
 
 private:
+
+    bool mut_mode;      // for whether we're using mutation mode
 
     /*
      -------------------
@@ -483,22 +507,32 @@ public:
 
     // Fields
     std::string name;
-    std::deque<VarChrom> var_genome;
+    std::vector<VarChrom> var_genome;
 
     // Constructors
     VarGenome() {};
-    VarGenome(const RefGenome& ref) {
-        name = "";
+    VarGenome(const RefGenome& ref,
+              const std::string& mode)
+        : name(""),
+          var_genome(),
+          mut_mode(mode == "mutation") {
+
         for (uint64 i = 0; i < ref.size(); i++) {
             VarChrom var_chrom(ref[i]);
             var_genome.push_back(var_chrom);
+            if (!mut_mode) var_genome.back().seq_mode();
         }
     };
-    VarGenome(const std::string& name_, const RefGenome& ref) {
-        name = name_;
+    VarGenome(const std::string& name_,
+              const RefGenome& ref,
+              const std::string& mode)
+        : name(name_),
+          var_genome(),
+          mut_mode(mode == "mutation") {
         for (uint64 i = 0; i < ref.size(); i++) {
             VarChrom var_chrom(ref[i]);
             var_genome.push_back(var_chrom);
+            if (!mut_mode) var_genome.back().seq_mode();
         }
     };
 
@@ -523,7 +557,10 @@ public:
         return out;
     }
 
+
 private:
+
+    bool mut_mode;
 
 };
 
@@ -539,22 +576,27 @@ private:
 
 class VarSet {
 public:
-    std::deque<VarGenome> variants;
+    std::vector<VarGenome> variants;
     const RefGenome* reference;  // pointer to const RefGenome
 
     /*
      Constructors:
      */
-    VarSet(const RefGenome& ref) : variants(), reference(&ref) {};
-    VarSet(const RefGenome& ref, const uint64& n_vars)
-        : variants(n_vars, VarGenome(ref)),
-          reference(&ref) {
+    VarSet(const RefGenome& ref,
+           const uint64& n_vars,
+           const std::string& mode)
+        : variants(n_vars, VarGenome(ref, mode)),
+          reference(&ref),
+          mut_mode(mode == "mutation") {
         for (uint64 i = 0; i < n_vars; i++) variants[i].name = "var" + std::to_string(i);
     };
     // If you already have the names:
-    VarSet(const RefGenome& ref, const std::vector<std::string>& names_)
-        : variants(names_.size(), VarGenome(ref)),
-          reference(&ref) {
+    VarSet(const RefGenome& ref,
+           const std::vector<std::string>& names_,
+           const std::string& mode)
+        : variants(names_.size(), VarGenome(ref, mode)),
+          reference(&ref),
+          mut_mode(mode == "mutation") {
         for (uint64 i = 0; i < names_.size(); i++) variants[i].name = names_[i];
     };
 
@@ -591,25 +633,23 @@ public:
         return ms;
     }
 
-    /*
-     Fill VarGenome objects after the reference has been filled
-     */
-    void fill_vars(const uint64& n_vars) {
-        VarGenome vg(*reference);
-        for (uint64 i = 0; i < n_vars; i++) variants.push_back(vg);
-        return;
-    }
-    // Overloaded for if you want to provide names
-    void fill_vars(const std::vector<std::string>& names) {
-        for (uint64 i = 0; i < names.size(); i++) {
-            VarGenome vg(names[i], *reference);
-            variants.push_back(vg);
-        }
-        return;
-    }
-
     // For printing output
     void print() const noexcept;
+
+    // For external functions to see the mode.
+    std::string mode() const {
+        std::string out;
+        if (mut_mode) {
+            out = "mutation";
+        } else out = "sequence";
+        return out;
+    }
+
+
+private:
+
+    bool mut_mode;
+
 
 };
 

@@ -242,6 +242,7 @@ public:
               const TreeMutator& mutator_base);
 
     XPtr<VarSet> evolve_chroms(SEXP& ref_genome_ptr,
+                               const std::string& mode,
                                const uint64& n_threads,
                                const bool& show_progress);
 

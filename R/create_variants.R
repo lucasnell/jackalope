@@ -78,7 +78,7 @@ fill_coal_mat_pos <- function(sites_mats, chrom_sizes) {
 #' @noRd
 #'
 trees_to_var_set <- function(trees_info, reference, sub, ins, del, epsilon,
-                             n_threads, show_progress) {
+                             mode, n_threads, show_progress) {
 
     variants_ptr <- evolve_across_trees(reference$ptr(),
                                         trees_info,
@@ -91,6 +91,7 @@ trees_to_var_set <- function(trees_info, reference, sub, ins, del, epsilon,
                                         del$rates(),
                                         epsilon,
                                         sub$pi_tcag(),
+                                        mode,
                                         n_threads,
                                         show_progress)
 
@@ -672,14 +673,15 @@ create_variants <- function(reference,
     if (is.null(del)) del <- indel_info$new(numeric(0))
 
 
-    if (!is_type(mode, "character") || length(mode) != 1) {
+    if (!is_type(mode, "character", 1)) {
         err_msg("create_variants", "mode", "a single string")
     }
-    mode <- c("mutation", "sequence")[pmatch(mode, c("mutation", "sequence"))]
-    if (is.na(mode)) {
-        err_msg("create_variants", "mode", "a single string that partially matches",
-                "either \"mutation\" or \"sequence\"")
+    i <- pmatch(mode, c("mutation", "sequence"), nomatch = 0L)
+    if (i == 0L) {
+        err_msg("create_variants", "mode", "one of \"mutation\" or \"sequence\"")
     }
+    mode <- c("mutation", "sequence")[i]
+
     if (!single_integer(n_threads, .min = 1)) {
         err_msg("create_variants", "n_threads", "a single integer >= 1")
     }

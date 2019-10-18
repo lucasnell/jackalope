@@ -143,6 +143,7 @@ test_that("variants print appears about right", {
     expect_output(print(vars),
                   paste0("<< Variants object >>\n",
                          "\\# Variants: ", n_vars, "\n",
+                         "\\# Mode: \"mutation\"\n",
                          "\\# Mutations: "))
 })
 
