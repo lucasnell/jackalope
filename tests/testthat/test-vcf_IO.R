@@ -341,7 +341,7 @@ test_that("VCF file data lines are accurate for diploid samples", {
 
 
 
-
+# haploid -----
 
 test_that("reading haploid variant info from VCF produces proper output", {
 
@@ -359,6 +359,9 @@ test_that("reading haploid variant info from VCF produces proper output", {
 
 
 })
+
+
+# diploid -----
 
 
 test_that("reading diploid variant info from VCF produces proper output", {
@@ -380,6 +383,8 @@ test_that("reading diploid variant info from VCF produces proper output", {
 })
 
 
+
+# mixed chroms -----
 
 test_that("reading variant info from VCF produces proper output when chromosomes mixed", {
 
@@ -442,8 +447,7 @@ test_that("reading variant info from VCF produces proper output when chromosomes
 })
 
 
-
-
+# bad positions -----
 
 test_that("out-of-order VCF file returns error", {
 
@@ -471,3 +475,49 @@ test_that("out-of-order VCF file returns error", {
 })
 
 
+
+
+
+# sequence mode -----
+
+test_that("reading variant info from VCF produces proper output when in sequence mode", {
+
+    # --------------*
+    # Haploid version:
+    # --------------*
+
+    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"), overwrite = TRUE)
+
+    vcf_fn <- sprintf("%s/%s.vcf", dir, "test")
+
+    # Create variants and check output
+    vars2 <- create_variants(ref, vars_info = vars_vcf(vcf_fn), mode = "sequence")
+
+    expect_identical(vars$n_vars(), vars2$n_vars())
+
+    for (i in 1:vars$n_vars()) {
+        expect_identical(sapply(1:ref$n_chroms(), function(j) vars$chrom(i, j)),
+                         sapply(1:ref$n_chroms(), function(j) vars2$chrom(i, j)))
+    }
+
+
+    # --------------*
+    # Diploid version:
+    # --------------*
+
+    sample_mat <- matrix(1:4, 2, 2, byrow = TRUE)
+
+    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"),
+              sample_matrix = sample_mat, overwrite = TRUE)
+
+    vars2 <- create_variants(ref, vars_info = vars_vcf(vcf_fn), mode = "sequence")
+
+    expect_identical(vars$n_vars(), vars2$n_vars())
+
+    for (i in 1:vars$n_vars()) {
+        expect_identical(sapply(1:ref$n_chroms(), function(j) vars$chrom(i, j)),
+                         sapply(1:ref$n_chroms(), function(j) vars2$chrom(i, j)))
+    }
+
+
+})
