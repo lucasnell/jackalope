@@ -483,7 +483,7 @@ public:
 
     // Fields
     std::string name;
-    std::deque<VarChrom> var_genome;
+    std::vector<VarChrom> chromosomes;
 
     // Constructors
     VarGenome() {};
@@ -491,35 +491,35 @@ public:
         name = "";
         for (uint64 i = 0; i < ref.size(); i++) {
             VarChrom var_chrom(ref[i]);
-            var_genome.push_back(var_chrom);
+            chromosomes.push_back(var_chrom);
         }
     };
     VarGenome(const std::string& name_, const RefGenome& ref) {
         name = name_;
         for (uint64 i = 0; i < ref.size(); i++) {
             VarChrom var_chrom(ref[i]);
-            var_genome.push_back(var_chrom);
+            chromosomes.push_back(var_chrom);
         }
     };
 
     // For easily outputting a reference to a VarChrom
     VarChrom& operator[](const uint64& idx) {
-        VarChrom& var_chrom(var_genome[idx]);
+        VarChrom& var_chrom(chromosomes[idx]);
         return var_chrom;
     }
     // const version
     const VarChrom& operator[](const uint64& idx) const {
-        const VarChrom& var_chrom(var_genome[idx]);
+        const VarChrom& var_chrom(chromosomes[idx]);
         return var_chrom;
     }
     // To return the number of chromosomes
     uint64 size() const noexcept {
-        return var_genome.size();
+        return chromosomes.size();
     }
     // To return all the chromosome sizes
     std::vector<uint64> chrom_sizes() const noexcept {
         std::vector<uint64> out(size());
-        for (uint64 i = 0; i < out.size(); i++) out[i] = var_genome[i].size();
+        for (uint64 i = 0; i < out.size(); i++) out[i] = chromosomes[i].size();
         return out;
     }
 
@@ -539,7 +539,7 @@ private:
 
 class VarSet {
 public:
-    std::deque<VarGenome> variants;
+    std::vector<VarGenome> variants;
     const RefGenome* reference;  // pointer to const RefGenome
 
     /*

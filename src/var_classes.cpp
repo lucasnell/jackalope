@@ -814,7 +814,7 @@ void VarSet::print() const noexcept {
 
     uint64 total_muts = 0;
     for (const VarGenome& vg : variants) {
-        for (const VarChrom& vc : vg.var_genome) {
+        for (const VarChrom& vc : vg.chromosomes) {
             total_muts += vc.mutations.size();
         }
     }

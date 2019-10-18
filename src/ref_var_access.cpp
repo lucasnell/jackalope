@@ -207,7 +207,7 @@ IntegerVector view_var_genome_chrom_sizes(SEXP var_set_ptr,
 
     IntegerVector out(var_genome.size());
     for (uint64 i = 0; i < var_genome.size(); i++) {
-        const VarChrom& var_chrom(var_genome.var_genome[i]);
+        const VarChrom& var_chrom(var_genome.chromosomes[i]);
         out[i] = var_chrom.chrom_size;
     }
     return out;
@@ -539,7 +539,7 @@ void remove_var_set_vars(
         std::vector<uint64> var_inds) {
 
     XPtr<VarSet> var_set(var_set_ptr);
-    std::deque<VarGenome>& variants(var_set->variants);
+    std::vector<VarGenome>& variants(var_set->variants);
 
     // Checking for duplicates:
     std::sort(var_inds.begin(), var_inds.end());
@@ -552,7 +552,7 @@ void remove_var_set_vars(
         uint64 j = var_inds[(var_inds.size() - i)];
         variants.erase(variants.begin() + j);
     }
-    clear_memory<std::deque<VarGenome>>(variants);
+    clear_memory<std::vector<VarGenome>>(variants);
     return;
 }
 
@@ -602,7 +602,7 @@ void add_var_set_vars(
         const std::vector<std::string>& new_names) {
 
     XPtr<VarSet> var_set(var_set_ptr);
-    std::deque<VarGenome>& variants(var_set->variants);
+    std::vector<VarGenome>& variants(var_set->variants);
     const RefGenome& ref(*(var_set->reference));
 
     for (uint64 i = 0; i < new_names.size(); i++) {
@@ -619,7 +619,7 @@ void dup_var_set_vars(
         const std::vector<std::string>& new_names) {
 
     XPtr<VarSet> var_set(var_set_ptr);
-    std::deque<VarGenome>& variants(var_set->variants);
+    std::vector<VarGenome>& variants(var_set->variants);
     const RefGenome& ref(*(var_set->reference));
 
     if (var_inds.size() != new_names.size()) {
@@ -635,9 +635,9 @@ void dup_var_set_vars(
         // Add mutation information:
         VarGenome& new_vg(variants.back());
         const VarGenome& old_vg(variants[var_inds[i]]);
-        for (uint64 j = 0; j < new_vg.var_genome.size(); j++) {
-            VarChrom& new_vs(new_vg.var_genome[j]);
-            const VarChrom& old_vs(old_vg.var_genome[j]);
+        for (uint64 j = 0; j < new_vg.chromosomes.size(); j++) {
+            VarChrom& new_vs(new_vg.chromosomes[j]);
+            const VarChrom& old_vs(old_vg.chromosomes[j]);
             new_vs.mutations = old_vs.mutations;
             new_vs.chrom_size = old_vs.chrom_size;
         }
@@ -685,7 +685,7 @@ DataFrame view_mutations(SEXP var_set_ptr, const uint64& var_ind) {
     const VarGenome& var_genome((*var_set)[var_ind]);
 
     uint64 n_muts = 0;
-    for (const VarChrom& vs : var_genome.var_genome) n_muts += vs.mutations.size();
+    for (const VarChrom& vs : var_genome.chromosomes) n_muts += vs.mutations.size();
 
     std::vector<sint64> size_mod;
     size_mod.reserve(n_muts);
@@ -700,7 +700,7 @@ DataFrame view_mutations(SEXP var_set_ptr, const uint64& var_ind) {
     chroms.reserve(n_muts);
 
     for (uint64 i = 0; i < var_genome.size(); i++) {
-        const VarChrom& var_chrom(var_genome.var_genome[i]);
+        const VarChrom& var_chrom(var_genome.chromosomes[i]);
         uint64 n_muts_i = var_chrom.mutations.size();
         for (uint64 j = 0; j < n_muts_i; ++j) {
             size_mod.push_back(var_chrom.mutations.size_modifier[j]);
