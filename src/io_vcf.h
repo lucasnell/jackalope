@@ -176,7 +176,7 @@ private:
              (the second part of this statement is added because contiguous deletions
              are prevented elsewhere)
              */
-            if (mut_ind.second < (var_chrom->mutations.size()-1) &&
+            if (mut_ind.second < (var_chrom->mutations.size() - 1) &&
                 var_chrom->mutations.size_modifier[mut_ind.first] >= 0) {
                 if (var_chrom->mutations.size_modifier[mut_ind.second + 1] < 0 &&
                     var_chrom->mutations.old_pos[mut_ind.second + 1] ==

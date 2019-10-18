@@ -752,6 +752,13 @@ void write_vcf_cpp(std::string out_prefix,
 
     XPtr<VarSet> var_set(var_set_ptr);
 
+    if (var_set->mode() != "mutation") {
+        str_stop({"\nTo write a VCF file, the `variants` object should be in ",
+                 "mutation mode. ",
+                 "If you're sure you want a VCF file, you should re-run ",
+                 "`create_variants` and pass \"mutation\" to its `mode` argument."});
+    }
+
     expand_path(out_prefix);
 
     if (any(sample_matrix < 1).is_true()) {
