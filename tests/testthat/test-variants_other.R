@@ -26,9 +26,6 @@ test_that("nonsense `sub` arg throws error", {
 })
 
 
-# E(# mutations) = (<mean sub rate> + 0.25 * {<ins. rate> + <del. rate>}) *
-#   <ref. genome size> * <# variants> * max(ape::node.depth.edgelength(<tree>))
-
 
 # vars_theta -----
 test_that("basics of vars_theta work", {

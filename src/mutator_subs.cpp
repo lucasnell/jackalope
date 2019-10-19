@@ -166,7 +166,7 @@ inline void SubMutator::subs_before_muts__(const uint64& pos,
     if (nt_i != c_i) {
 #ifdef __JACKALOPE_DIAGNOSTICS
         // __ <new pos> <rate index> <old nucleotide>-<new nucleotide>
-        Rcout << "__ " << pos << ' ' << rate_i << ' ' <<
+        Rcout << "__ " << pos << ' ' << static_cast<unsigned>(rate_i) << ' ' <<
             bases[c_i] << '-' << bases[nt_i] << std::endl;
 #endif
         var_chrom.mutations.push_front(0, pos, pos, bases[nt_i]);
@@ -273,7 +273,7 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
 
 #ifdef __JACKALOPE_DIAGNOSTICS
             // __ <new pos> <rate index> <old nucleotide>-<new nucleotide>
-            Rcout << "__ " << pos << ' ' << rate_i << ' ' <<
+            Rcout << "__ " << pos << ' ' << static_cast<unsigned>(rate_i) << ' ' <<
                 bases[c_i] << '-' << nucleo << std::endl;
 #endif
 
@@ -297,7 +297,7 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
                 mutations.size_modifier[mut_i]);
 #ifdef __JACKALOPE_DIAGNOSTICS
             // __ <new pos> <rate index> <old nucleotide>-<new nucleotide>
-            Rcout << "__ " << pos << ' ' << rate_i << ' ' <<
+            Rcout << "__ " << pos << ' ' << static_cast<unsigned>(rate_i) << ' ' <<
                 bases[c_i] << '-' << nucleo << std::endl;
 #endif
             mutations.insert(mut_i + 1, 0, old_pos_, pos, nucleo);

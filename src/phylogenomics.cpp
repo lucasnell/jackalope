@@ -351,6 +351,7 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
 
     for (const int& status_code : status_codes) {
         if (status_code == -1) {
+            prog_bar.cleanup();
             std::string warn_msg = "\nThe user interrupted phylogenetic evolution. ";
             warn_msg += "Note that changes occur in place, so your variants have ";
             warn_msg += "already been partially added.";
