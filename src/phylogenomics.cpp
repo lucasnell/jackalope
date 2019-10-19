@@ -389,15 +389,8 @@ SEXP evolve_across_trees(
         const bool& show_progress) {
 
 
-#ifdef __JACKALOPE_DIAGNOSTICS
-    if (n_threads > 1) {
-        n_threads = 1;
-        Rcpp::warning("\nCannot do diagnostics with n_threads > 1, so changing it to 1.");
-    }
-#else
     // Check that # threads isn't too high and change to 1 if not using OpenMP:
     thread_check(n_threads);
-#endif
 
 
     // Now create mutation sampler:

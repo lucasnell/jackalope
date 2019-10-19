@@ -207,6 +207,13 @@ inline void thread_check(uint64& n_threads) {
     n_threads = 1;
 #endif
 
+#ifdef __JACKALOPE_DIAGNOSTICS
+    if (n_threads > 1) {
+        n_threads = 1;
+        Rcpp::warning("\nCannot do diagnostics with n_threads > 1, so changing it to 1.");
+    }
+#endif
+
     return;
 }
 
