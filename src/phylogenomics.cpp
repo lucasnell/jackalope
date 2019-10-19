@@ -105,7 +105,7 @@ int PhyloOneChrom::one_tree(const uint64& idx,
          */
         b_len = tree.branch_lens[i];
 #ifdef __JACKALOPE_DIAGNOSTICS
-        Rcout << std::endl << "b_len = " << b_len << std::endl;
+        Rcout << "** b_len " << b_len << std::endl;
 #endif
         status = mutator.mutate(b_len, chrom2, eng, prog_bar,
                                 tree.starts[b2], tree.ends[b2], rates[b2]);
@@ -236,7 +236,7 @@ int PhyloOneChrom::evolve(pcg64& eng,
         }
 
 #ifdef __JACKALOPE_DIAGNOSTICS
-        Rcout << std::endl << "--- tree " << i << std::endl;
+        Rcout << "-- tree " << i << std::endl;
 #endif
 
         int status = one_tree(i, eng, prog_bar);
@@ -332,7 +332,7 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
         if (status_code != 0) continue;
 
 #ifdef __JACKALOPE_DIAGNOSTICS
-        Rcout << std::endl << "> chrom = " << i << std::endl;
+        Rcout << std::endl << ">> chrom " << i << std::endl;
 #endif
 
         PhyloOneChrom& chrom_phylo(phylo_one_chroms[i]);

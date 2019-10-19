@@ -44,7 +44,7 @@ int SubMutator::new_rates(const uint64& begin,
     uint32 iters = 0;
 
 #ifdef __JACKALOPE_DIAGNOSTICS
-    Rcout << std::endl << "rates for " << begin << ' ' << end << ':' << std::endl;
+    Rcout << std::endl << "~~ rates for " << begin << ' ' << end << " = ";
 #endif
 
     if (N0 > N) {
@@ -58,14 +58,15 @@ int SubMutator::new_rates(const uint64& begin,
             rate_inds[i] = static_cast<uint8>(runif_01(eng) * n);
             if (interrupt_check(iters, prog_bar)) return -1;
 #ifdef __JACKALOPE_DIAGNOSTICS
-            Rcout << rate_inds[i] << ' ';
+            // This will be invisible without being converted to unsigned
+            Rcout << static_cast<unsigned>(rate_inds[i]) << ' ';
 #endif
         }
         while (rate_inds.size() < N) {
             rate_inds.push_back(static_cast<uint8>(runif_01(eng) * n));
             if (interrupt_check(iters, prog_bar)) return -1;
 #ifdef __JACKALOPE_DIAGNOSTICS
-            Rcout << rate_inds.back() << ' ';
+            Rcout << static_cast<unsigned>(rate_inds.back()) << ' ';
 #endif
         }
 
@@ -77,7 +78,7 @@ int SubMutator::new_rates(const uint64& begin,
             } else rate_inds[i] = n;
             if (interrupt_check(iters, prog_bar)) return -1;
 #ifdef __JACKALOPE_DIAGNOSTICS
-            Rcout << rate_inds[i] << ' ';
+            Rcout << static_cast<unsigned>(rate_inds[i]) << ' ';
 #endif
         }
         while (rate_inds.size() < N) {
@@ -86,7 +87,7 @@ int SubMutator::new_rates(const uint64& begin,
             } else rate_inds.push_back(n);
             if (interrupt_check(iters, prog_bar)) return -1;
 #ifdef __JACKALOPE_DIAGNOSTICS
-            Rcout << rate_inds.back() << ' ';
+            Rcout << static_cast<unsigned>(rate_inds.back()) << ' ';
 #endif
         }
 
@@ -163,6 +164,11 @@ inline void SubMutator::subs_before_muts__(const uint64& pos,
     AliasSampler& samp(samplers[rate_i][c_i]);
     uint8 nt_i = samp.sample(eng);
     if (nt_i != c_i) {
+#ifdef __JACKALOPE_DIAGNOSTICS
+        // __ <new pos> <rate index> <old nucleotide>-<new nucleotide>
+        Rcout << "__ " << pos << ' ' << rate_i << ' ' <<
+            bases[c_i] << '-' << bases[nt_i] << std::endl;
+#endif
         var_chrom.mutations.push_front(0, pos, pos, bases[nt_i]);
         mut_i++;
     }
@@ -259,11 +265,17 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
     const char& nucleo(bases[nt_i]);
 
     if (nt_i != c_i) {
-        sint64 ind = pos - mutations.new_pos[mut_i]; // <-- should always be >= 0
 
+        sint64 ind = pos - mutations.new_pos[mut_i]; // <-- should always be >= 0
 
         // If `pos` is within the mutation chromosome:
         if (ind <= mutations.size_modifier[mut_i]) {
+
+#ifdef __JACKALOPE_DIAGNOSTICS
+            // __ <new pos> <rate index> <old nucleotide>-<new nucleotide>
+            Rcout << "__ " << pos << ' ' << rate_i << ' ' <<
+                bases[c_i] << '-' << nucleo << std::endl;
+#endif
 
             /*
              If this new mutation reverts a substitution back to reference state,
@@ -283,6 +295,11 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
             // If `pos` is in the reference chromosome following the mutation:
             uint64 old_pos_ = ind + (mutations.old_pos[mut_i] -
                 mutations.size_modifier[mut_i]);
+#ifdef __JACKALOPE_DIAGNOSTICS
+            // __ <new pos> <rate index> <old nucleotide>-<new nucleotide>
+            Rcout << "__ " << pos << ' ' << rate_i << ' ' <<
+                bases[c_i] << '-' << nucleo << std::endl;
+#endif
             mutations.insert(mut_i + 1, 0, old_pos_, pos, nucleo);
             mut_i++;
         }
