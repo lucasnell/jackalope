@@ -219,7 +219,7 @@ a recombination rate, I had to run `scrm` separately for each chromosome.
 There are 4 diploid individuals sampled per species.
 
 
-```{r examples-phylogeny-gtrees-scrm}
+```{r examples-phylogeny-gtrees-scrm, eval = FALSE}
 # Run scrm for one chromosome size:
 one_chrom <- function(size) {
     sims <- scrm(
@@ -241,9 +241,17 @@ one_chrom <- function(size) {
 gtrees <- list(trees = lapply(ref$sizes(), one_chrom))
 ```
 
-```{r examples-phylogeny-gtrees-create-variants,}
+```{r examples-phylogeny-gtrees-create-variants, eval = FALSE}
 vars <- create_variants(ref, vars_gtrees(gtrees),
                         sub, ins, del)
+```
+```{r examples-phylogeny-gtrees-create-do, echo = FALSE}
+# For the purposes of the vignette, I'm just going to use `vars_theta` so I
+# don't have to (1) load scrm to build the vignette or (2) keep a relatively
+# large internal data file to store the scrm output
+# theta of 0.05 gives the same # mutations as using `ssites`
+set.seed(7809534)
+vars <- create_variants(ref, vars_theta(theta = 0.005, n_vars = 24), sub, ins, del)
 ```
 
 
