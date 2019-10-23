@@ -47,6 +47,10 @@ void ms_parse_tree_line(std::string& line,
         return;
     }
     if (line[0] == '[' || line[0] == '(') {
+        if (newick_strings.empty()) {
+            str_stop({"\nIn the input ms-style output file containing gene trees, ",
+                     "the first gene tree is not preceded with a line containing \"//\"."});
+        }
         newick_strings.back().push_back(line);
     }
     return;

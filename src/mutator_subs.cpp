@@ -123,7 +123,9 @@ inline void SubMutator::adjust_mats(const double& b_len) {
     } else {
 #ifdef __JACKALOPE_DEBUG
         if (U.size() != Q.size()) stop("SubMutator::adjust_mats-> U.size() != Q.size()");
-        if (Ui.size() != Q.size()) stop("SubMutator::adjust_mats-> Ui.size() != Q.size()");
+        if (Ui.size() != Q.size()) {
+            stop("SubMutator::adjust_mats-> Ui.size() != Q.size()");
+        }
         if (L.size() != Q.size()) stop("SubMutator::adjust_mats-> L.size() != Q.size()");
 #endif
         // All other models
@@ -425,8 +427,8 @@ int SubMutator::add_subs(const double& b_len,
      */
     if (mutations.empty() || ((end-1) < mutations.new_pos.front())) {
 
-        status = subs_before_muts(begin, end, mut_i, max_gamma, bases, rate_inds, var_chrom,
-                                  eng, prog_bar, iters);
+        status = subs_before_muts(begin, end, mut_i, max_gamma, bases, rate_inds,
+                                  var_chrom, eng, prog_bar, iters);
         return status;
 
     }
