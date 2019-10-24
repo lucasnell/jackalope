@@ -52,7 +52,8 @@ editing the reference genome.
 
 \strong{Viewing information:}
 \describe{
-\item{\code{ptr()}}{View the pointer to the variant information.}
+\item{\code{ptr()}}{View the pointer to the variant information.
+This is used internally by \code{jackalope} and shouldn't be of much use to users.}
 \item{\code{n_chroms()}}{View the number of chromosomes.}
 \item{\code{n_vars()}}{View the number of variants.}
 \item{\code{sizes(var_ind)}}{View vector of chromosome sizes for a given variant.}

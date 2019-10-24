@@ -21,7 +21,7 @@
 #'     \item{\code{\link{vars_ssites}}}{Uses matrices of segregating sites,
 #'         either in the form of
 #'         `scrm` or `coala` coalescent-simulator object(s), or
-#'         (2) a `ms`-style output file.}
+#'         a `ms`-style output file.}
 #'     \item{\code{\link{vars_vcf}}}{Uses a variant call format (VCF) file that
 #'         directly specifies variants.}
 #' }
@@ -328,7 +328,7 @@ vars_phylo <- function(obj = NULL,
 #'
 #'
 #' @param theta Population-scaled mutation rate.
-#' @param n_vars Mumber of desired variants.
+#' @param n_vars Number of desired variants.
 #'
 #'
 #' @return A `vars_theta_info` object containing information used in `create_variants`

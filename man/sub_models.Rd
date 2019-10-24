@@ -37,8 +37,8 @@ sub_UNREST(Q, gamma_shape = NULL, gamma_k = 5, invariant = 0)
 
 \item{gamma_shape}{Numeric shape parameter for discrete Gamma distribution used for
 among-site variability. Values must be greater than zero.
-If this parameter is \code{NA}, among-site variability is not included.
-Defaults to \code{NA}.}
+If this parameter is \code{NULL}, among-site variability is not included.
+Defaults to \code{NULL}.}
 
 \item{gamma_k}{The number of categories to split the discrete Gamma distribution
 into. Values must be an integer in the range \code{[2,255]}.
@@ -76,20 +76,24 @@ Values on the diagonal are calculated inside the function so are ignored.}
 A \code{sub_info} object, which is an R6 class that wraps the info needed for
 the \code{create_variants} function.
 It does not allow the user to directly manipulate the info inside, as that
-should be done using the \code{sub_} functions.
+should be done using the \code{sub_models} functions.
 You can use the following methods from the class to view information:
 \describe{
-\item{\code{Q()}}{View the substituion rate matrix.}
+\item{\code{Q()}}{View a list of substitution rate matrices,
+one for each Gamma category.}
 \item{\code{pi_tcag()}}{View the equilibrium nucleotide frequencies.}
 \item{\code{gammas()}}{View the discrete Gamma-class values.}
 \item{\code{invariant()}}{View the proportion of invariant sites.}
 \item{\code{model()}}{View the substitution model.}
-\item{\code{U()}}{View the \code{U} matrix used for calculating transition-probability
-matrix. This is empty for UNREST models.}
-\item{\code{Ui()}}{View the \code{U^-1} matrix used for calculating transition-probability
-matrix. This is empty for UNREST models.}
-\item{\code{L()}}{View the lambda vector used for calculating transition-probability
-matrix. This is empty for UNREST models.}
+\item{\code{U()}}{View list of the \code{U} matrices (one matrix per Gamma category)
+used for calculating transition-probability matrices.
+This is empty for UNREST models.}
+\item{\code{Ui()}}{View list of the \code{U^-1} matrices (one matrix per Gamma category)
+used for calculating transition-probability matrices.
+This is empty for UNREST models.}
+\item{\code{L()}}{View list of the lambda vectors (one vector per Gamma category)
+used for calculating transition-probability matrices.
+This is empty for UNREST models.}
 }
 }
 \description{
@@ -116,14 +120,22 @@ For a more detailed explanation, see \code{vignette("sub-models")}.
 
 \examples{
 # Same substitution rate for all types:
-Q_JC69 <- sub_JC69(lambda = 0.1)
+obj_JC69 <- sub_JC69(lambda = 0.1)
 
 # Transitions 2x more likely than transversions:
-Q_K80 <- sub_K80(alpha = 0.2, beta = 0.1)
+obj_K80 <- sub_K80(alpha = 0.2, beta = 0.1)
 
-# Same as above, but incorporating equilibrium frequencies
-sub_HKY85(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
-          alpha = 0.2, beta = 0.1)
+# Incorporating equilibrium frequencies:
+obj_HKY85 <- sub_HKY85(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
+                       alpha = 0.2, beta = 0.1)
+
+# 10-category Gamma distribution for among-site variability:
+obj_K80 <- sub_K80(alpha = 0.2, beta = 0.1,
+                   gamma_shape = 1, gamma_k = 10)
+
+# Invariant sites:
+obj_K80 <- sub_K80(alpha = 0.2, beta = 0.1,
+                   invariant = 0.25)
 
 }
 \seealso{

@@ -22,7 +22,8 @@ All manipulations are done through this class's methods.
 
 \strong{Viewing information:}
 \describe{
-\item{\code{ptr()}}{View the pointer to the reference chromosome information.}
+\item{\code{ptr()}}{View the pointer to the reference chromosome information.
+This is used internally by \code{jackalope} and shouldn't be of much use to users.}
 \item{\code{n_chroms()}}{View the number of chromosomes.}
 \item{\code{sizes()}}{View vector of chromosome sizes.}
 \item{\code{chrom_names()}}{View vector of chromosome names.}

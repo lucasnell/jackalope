@@ -548,7 +548,8 @@ to_var_set__vars_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
 #'     Smaller values result in a closer approximation.
 #'     Larger values are less exact but faster.
 #'     Values must be `> 0` and `< 1`.
-#'     For more information, see the references below.
+#'     For more information, see Cao et al. (2006) and Wieder et al. (2011),
+#'     listed below.
 #'     Defaults to `0.03`.
 #' @param n_threads Number of threads to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
@@ -561,8 +562,14 @@ to_var_set__vars_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
 #'
 #' @export
 #'
+#' @return A \code{\link{variants}} object.
+#'
 #'
 #' @references
+#' Cao, Y., D. T. Gillespie, and L. R. Petzold. 2006. Efficient step size
+#' selection for the tau-leaping simulation method.
+#' \emph{The Journal of Chemical Physics} \strong{124}(4): 044109.
+#'
 #' Doob, J. L. 1942. Topics in the theory of markoff chains.
 #' \emph{Transactions of the American Mathematical Society} \strong{52}(1): 37–64.
 #'
@@ -573,10 +580,6 @@ to_var_set__vars_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
 #' Wieder, N., R. H. Fink, and F. von Wegner. 2011. Exact and approximate stochastic
 #' simulation of intracellular calcium dynamics.
 #' \emph{Journal of Biomedicine and Biotechnology} \strong{2011}: 572492.
-#'
-#' Cao, Y., D. T. Gillespie, and L. R. Petzold. 2006. Efficient step size
-#' selection for the tau-leaping simulation method.
-#' \emph{The Journal of Chemical Physics} \strong{124}(4): 044109.
 #'
 #'
 #'

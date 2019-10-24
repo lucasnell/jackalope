@@ -23,7 +23,7 @@ a file containing output in the style of the \code{ms} program.}
 \item{\code{\link{vars_ssites}}}{Uses matrices of segregating sites,
 either in the form of
 \code{scrm} or \code{coala} coalescent-simulator object(s), or
-(2) a \code{ms}-style output file.}
+a \code{ms}-style output file.}
 \item{\code{\link{vars_vcf}}}{Uses a variant call format (VCF) file that
 directly specifies variants.}
 }

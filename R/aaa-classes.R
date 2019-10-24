@@ -13,7 +13,8 @@
 #' @section Methods:
 #' \strong{Viewing information:}
 #' \describe{
-#'     \item{`ptr()`}{View the pointer to the reference chromosome information.}
+#'     \item{`ptr()`}{View the pointer to the reference chromosome information.
+#'         This is used internally by `jackalope` and shouldn't be of much use to users.}
 #'     \item{`n_chroms()`}{View the number of chromosomes.}
 #'     \item{`sizes()`}{View vector of chromosome sizes.}
 #'     \item{`chrom_names()`}{View vector of chromosome names.}
@@ -352,7 +353,8 @@ ref_genome <- R6Class(
 #' @section Methods:
 #' \strong{Viewing information:}
 #' \describe{
-#'     \item{`ptr()`}{View the pointer to the variant information.}
+#'     \item{`ptr()`}{View the pointer to the variant information.
+#'         This is used internally by `jackalope` and shouldn't be of much use to users.}
 #'     \item{`n_chroms()`}{View the number of chromosomes.}
 #'     \item{`n_vars()`}{View the number of variants.}
 #'     \item{`sizes(var_ind)`}{View vector of chromosome sizes for a given variant.}

@@ -9,7 +9,7 @@ vars_theta(theta, n_vars)
 \arguments{
 \item{theta}{Population-scaled mutation rate.}
 
-\item{n_vars}{Mumber of desired variants.}
+\item{n_vars}{Number of desired variants.}
 }
 \value{
 A \code{vars_theta_info} object containing information used in \code{create_variants}

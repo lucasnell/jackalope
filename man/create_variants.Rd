@@ -45,7 +45,8 @@ the Doob–Gillespie algorithm, as used for the indel portion of the simulations
 Smaller values result in a closer approximation.
 Larger values are less exact but faster.
 Values must be \code{> 0} and \code{< 1}.
-For more information, see the references below.
+For more information, see Cao et al. (2006) and Wieder et al. (2011),
+listed below.
 Defaults to \code{0.03}.}
 
 \item{n_threads}{Number of threads to use for parallel processing.
@@ -56,6 +57,9 @@ Defaults to \code{1}.}
 
 \item{show_progress}{Boolean for whether to show a progress bar during processing.
 Defaults to \code{FALSE}.}
+}
+\value{
+A \code{\link{variants}} object.
 }
 \description{
 Uses one of multiple methods to create haploid variants from a reference genome.
@@ -68,6 +72,10 @@ v_theta <- create_variants(r, vars_theta(0.001, 5), sub_K80(0.1, 0.2))
 
 }
 \references{
+Cao, Y., D. T. Gillespie, and L. R. Petzold. 2006. Efficient step size
+selection for the tau-leaping simulation method.
+\emph{The Journal of Chemical Physics} \strong{124}(4): 044109.
+
 Doob, J. L. 1942. Topics in the theory of markoff chains.
 \emph{Transactions of the American Mathematical Society} \strong{52}(1): 37–64.
 
@@ -78,8 +86,4 @@ evolution of coupled chemical reactions. \emph{Journal of Computational Physics}
 Wieder, N., R. H. Fink, and F. von Wegner. 2011. Exact and approximate stochastic
 simulation of intracellular calcium dynamics.
 \emph{Journal of Biomedicine and Biotechnology} \strong{2011}: 572492.
-
-Cao, Y., D. T. Gillespie, and L. R. Petzold. 2006. Efficient step size
-selection for the tau-leaping simulation method.
-\emph{The Journal of Chemical Physics} \strong{124}(4): 044109.
 }

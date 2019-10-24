@@ -4,16 +4,32 @@
 \alias{pacbio}
 \title{Create and write PacBio reads to FASTQ file(s).}
 \usage{
-pacbio(obj, out_prefix, n_reads, chi2_params_s = c(0.01214, -5.12, 675,
-  48303.0732881, 1.46910512123303), chi2_params_n = c(0.00189237136,
-  2.5394497, 5500), max_passes = 40, sqrt_params = c(0.5, 0.2247),
-  norm_params = c(0, 0.2), prob_thresh = 0.2, ins_prob = 0.11,
-  del_prob = 0.04, sub_prob = 0.01, min_read_length = 50,
-  lognorm_read_length = c(0.200110276521, -10075.4363813, 17922.611306),
-  custom_read_lengths = NULL, prob_dup = 0, variant_probs = NULL,
-  sep_files = FALSE, compress = FALSE, comp_method = "bgzip",
-  n_threads = 1L, read_pool_size = 100L, show_progress = FALSE,
-  overwrite = FALSE)
+pacbio(obj,
+       out_prefix,
+       n_reads,
+       chi2_params_s = c(0.01214, -5.12, 675, 48303.0732881,
+                         1.4691051212330266),
+       chi2_params_n = c(0.00189237136, 2.53944970, 5500),
+       max_passes = 40,
+       sqrt_params = c(0.5, 0.2247),
+       norm_params = c(0, 0.2),
+       prob_thresh = 0.2,
+       ins_prob = 0.11,
+       del_prob = 0.04,
+       sub_prob = 0.01,
+       min_read_length = 50,
+       lognorm_read_length = c(0.200110276521, -10075.4363813,
+                               17922.611306),
+       custom_read_lengths = NULL,
+       prob_dup = 0.0,
+       variant_probs = NULL,
+       sep_files = FALSE,
+       compress = FALSE,
+       comp_method = "bgzip",
+       n_threads = 1L,
+       read_pool_size = 100L,
+       show_progress = FALSE,
+       overwrite = FALSE)
 }
 \arguments{
 \item{obj}{Sequencing object of class \code{ref_genome} or \code{variants}.}

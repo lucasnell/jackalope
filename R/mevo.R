@@ -227,34 +227,46 @@ sub_arg_checks <- function(mod_name,
 #' @return A `sub_info` object, which is an R6 class that wraps the info needed for
 #' the `create_variants` function.
 #' It does not allow the user to directly manipulate the info inside, as that
-#' should be done using the `sub_` functions.
+#' should be done using the `sub_models` functions.
 #' You can use the following methods from the class to view information:
 #' \describe{
-#'     \item{`Q()`}{View the substituion rate matrix.}
+#'     \item{`Q()`}{View a list of substitution rate matrices,
+#'         one for each Gamma category.}
 #'     \item{`pi_tcag()`}{View the equilibrium nucleotide frequencies.}
 #'     \item{`gammas()`}{View the discrete Gamma-class values.}
 #'     \item{`invariant()`}{View the proportion of invariant sites.}
 #'     \item{`model()`}{View the substitution model.}
-#'     \item{`U()`}{View the `U` matrix used for calculating transition-probability
-#'         matrix. This is empty for UNREST models.}
-#'     \item{`Ui()`}{View the `U^-1` matrix used for calculating transition-probability
-#'         matrix. This is empty for UNREST models.}
-#'     \item{`L()`}{View the lambda vector used for calculating transition-probability
-#'         matrix. This is empty for UNREST models.}
+#'     \item{`U()`}{View list of the `U` matrices (one matrix per Gamma category)
+#'         used for calculating transition-probability matrices.
+#'         This is empty for UNREST models.}
+#'     \item{`Ui()`}{View list of the `U^-1` matrices (one matrix per Gamma category)
+#'         used for calculating transition-probability matrices.
+#'         This is empty for UNREST models.}
+#'     \item{`L()`}{View list of the lambda vectors (one vector per Gamma category)
+#'         used for calculating transition-probability matrices.
+#'         This is empty for UNREST models.}
 #' }
 #'
 #'
 #'
 #' @examples
 #' # Same substitution rate for all types:
-#' Q_JC69 <- sub_JC69(lambda = 0.1)
+#' obj_JC69 <- sub_JC69(lambda = 0.1)
 #'
 #' # Transitions 2x more likely than transversions:
-#' Q_K80 <- sub_K80(alpha = 0.2, beta = 0.1)
+#' obj_K80 <- sub_K80(alpha = 0.2, beta = 0.1)
 #'
-#' # Same as above, but incorporating equilibrium frequencies
-#' sub_HKY85(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
-#'           alpha = 0.2, beta = 0.1)
+#' # Incorporating equilibrium frequencies:
+#' obj_HKY85 <- sub_HKY85(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
+#'                        alpha = 0.2, beta = 0.1)
+#'
+#' # 10-category Gamma distribution for among-site variability:
+#' obj_K80 <- sub_K80(alpha = 0.2, beta = 0.1,
+#'                    gamma_shape = 1, gamma_k = 10)
+#'
+#' # Invariant sites:
+#' obj_K80 <- sub_K80(alpha = 0.2, beta = 0.1,
+#'                    invariant = 0.25)
 #'
 NULL
 
@@ -387,8 +399,8 @@ sub_F84 <- function(pi_tcag, beta, kappa,
 #' @param beta Substitution rate for transversions.
 #' @param gamma_shape Numeric shape parameter for discrete Gamma distribution used for
 #'     among-site variability. Values must be greater than zero.
-#'     If this parameter is `NA`, among-site variability is not included.
-#'     Defaults to `NA`.
+#'     If this parameter is `NULL`, among-site variability is not included.
+#'     Defaults to `NULL`.
 #' @param gamma_k The number of categories to split the discrete Gamma distribution
 #'     into. Values must be an integer in the range `[2,255]`.
 #'     This argument is ignored if `gamma_shape` is `NA`.
@@ -574,11 +586,10 @@ indel_info <- R6Class(
 #' Construct necessary information for insertions and deletions (indels) that will
 #' be used in `create_variants`.
 #'
-#' Both insertions and deletions require the `rate` parameter, which specifies
-#' the overall insertion/deletion rate among all lengths.
+#' All indels require the `rate` parameter, which specifies
+#' the overall indels rate among all lengths.
 #' The `rate` parameter is ultimately combined with a vector of relative rates among
-#' the different lengths of insertions/deletions from 1 to the maximum
-#' possible length.
+#' the different lengths of indels from 1 to the maximum possible length.
 #' There are three different ways to specify/generate relative-rate values.
 #' \enumerate{
 #'     \item Assume that rates are proportional to `exp(-L)` for indel length
@@ -624,11 +635,6 @@ indel_info <- R6Class(
 #' biological sequence evolution. Molecular Biology and Evolution 26:1879–1888.
 #'
 #' @export
-#'
-#' @return An `indel_rates` object, which is just a wrapper around a numeric vector.
-#' You can access the rates vector for `indel_rates` object `x` by running
-#' `as.numeric(x)`.
-#'
 #'
 #' @return An `indel_info` object, which is an R6 class that wraps the info needed for
 #' the `create_variants` function.

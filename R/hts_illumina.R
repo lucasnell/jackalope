@@ -546,6 +546,34 @@ check_illumina_args <- function(obj, n_reads,
 #'
 #' @export
 #'
+#' @usage illumina(obj,
+#'          out_prefix,
+#'          n_reads,
+#'          read_length,
+#'          paired,
+#'          frag_mean = 400,
+#'          frag_sd = 100,
+#'          matepair = FALSE,
+#'          seq_sys = NULL,
+#'          profile1 = NULL,
+#'          profile2 = NULL,
+#'          ins_prob1 = 0.00009,
+#'          del_prob1 = 0.00011,
+#'          ins_prob2 = 0.00015,
+#'          del_prob2 = 0.00023,
+#'          frag_len_min = NULL,
+#'          frag_len_max = NULL,
+#'          variant_probs = NULL,
+#'          barcodes = NULL,
+#'          prob_dup = 0.02,
+#'          sep_files = FALSE,
+#'          compress = FALSE,
+#'          comp_method = "bgzip",
+#'          n_threads = 1L,
+#'          read_pool_size = 1000L,
+#'          show_progress = FALSE,
+#'          overwrite = FALSE)
+#'
 #' @references
 #' Huang, W., L. Li, J. R. Myers, and G. T. Marth. 2012. ART: a next-generation
 #' sequencing read simulator. \emph{Bioinformatics} \strong{28}:593–594.
