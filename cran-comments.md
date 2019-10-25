@@ -6,7 +6,9 @@
 * macOS 10.3.3 (on travis-ci), R 3.6.1
 * Windows Server 2012 R2 x64 (on appveyor), R 3.6.1
 * Windows (win-builder), R-devel, R 3.6.1
-
+* Rhub
+    - Oracle Solaris 10, R-patched, 32-bit
+    - Debian Linux, R-release, GCC (with valgrind)
 
 
 
