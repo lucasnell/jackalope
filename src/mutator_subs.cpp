@@ -30,7 +30,6 @@ int SubMutator::new_rates(const uint64& begin,
     if (!site_var) {
         if (!rate_inds.empty()) {
             rate_inds.clear();
-            clear_memory<std::deque<uint8>>(rate_inds);
         }
         return 0;
     }
