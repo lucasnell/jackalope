@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Create necessary information to create variants using a VCF file — vars_vcf • jackalope</title>
+<title>Organize information to create variants using a VCF file — vars_vcf • jackalope</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -42,7 +42,7 @@
 
 
 
-<meta property="og:title" content="Create necessary information to create variants using a VCF file — vars_vcf" />
+<meta property="og:title" content="Organize information to create variants using a VCF file — vars_vcf" />
 <meta property="og:description" content="This function organizes higher-level information for creating variants from
 Variant Call Format (VCF) files." />
 <meta property="og:image" content="/logo.png" />
@@ -78,7 +78,7 @@ Variant Call Format (VCF) files." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">jackalope</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -129,7 +129,7 @@ Variant Call Format (VCF) files." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Create necessary information to create variants using a VCF file</h1>
+    <h1>Organize information to create variants using a VCF file</h1>
     <small class="dont-index">Source: <a href='https://github.com/lucasnell/jackalope/blob/master/R/vars_functions.R'><code>R/vars_functions.R</code></a></small>
     <div class="hidden name"><code>vars_vcf.Rd</code></div>
     </div>
@@ -139,7 +139,7 @@ Variant Call Format (VCF) files." />
 Variant Call Format (VCF) files.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>vars_vcf</span>(<span class='no'>fn</span>, <span class='kw'>print_names</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>vars_vcf</span>(<span class='no'>fn</span>, <span class='kw'>print_names</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -150,16 +150,11 @@ Variant Call Format (VCF) files.</p>
     </tr>
     <tr>
       <th>print_names</th>
-      <td><p>Logical for whether to print all unique sequence names from
-the VCF file when VCF sequence names don't match those from the reference genome.
+      <td><p>Logical for whether to print all unique chromosome names from
+the VCF file when VCF chromosome names don't match those from the reference genome.
 This printing doesn't happen until this object is passed to <code>create_variants</code>.
 This can be useful for troubleshooting.
 Defaults to <code>FALSE</code>.</p></td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td><p>Arguments to pass to <code><a href='https://rdrr.io/pkg/vcfR/man/io_vcfR.html'>vcfR::read.vcfR</a></code>, excluding the <code>file</code> argument
-that will be overridden with the <code>fn</code> argument to this function.</p></td>
     </tr>
     </table>
 
@@ -167,12 +162,9 @@ that will be overridden with the <code>fn</code> argument to this function.</p><
 
     <p>A <code>vars_vcf_info</code> object containing information used in <code>create_variants</code>
 to create haploid variants.
-This class is just a wrapper around a list containing relevant output from
-<code><a href='https://rdrr.io/pkg/vcfR/man/io_vcfR.html'>vcfR::read.vcfR</a></code>:
-haplotypes, reference sequences, positions, sequence names, and variant names.</p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    <p>This function won't work if the package <code>vcfR</code> isn't installed.</p>
+This class is just a wrapper around a list containing the arguments to this
+function, which you can view (but not change) using the object's <code>fn()</code> and
+<code>print_names()</code> methods.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -180,7 +172,6 @@ haplotypes, reference sequences, positions, sequence names, and variant names.</
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
       <li><a href="#value">Value</a></li>
-      <li><a href="#details">Details</a></li>
     </ul>
 
   </div>

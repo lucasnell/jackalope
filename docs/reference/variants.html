@@ -43,12 +43,11 @@
 
 
 <meta property="og:title" content="An R6 class representing haploid variants from a reference genome. — variants" />
-<meta property="og:description" content="Note: This class wraps a pointer to a C++ object, so
-do NOT change fields in this class directly.
-It will cause your R session to do bad things.
-(Ever seen the bomb popup on RStudio? Manually mess with these fields and you
-surely will.)
-For safe ways of manipulating the variants' information, see the &quot;Methods&quot; section." />
+<meta property="og:description" content="This class should NEVER be created using variants$new.
+Only use create_variants.
+This class wraps a pointer to a C++ object, which is why
+there are no fields to manipulate directly.
+All manipulations are done through this class's methods." />
 <meta property="og:image" content="/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -82,7 +81,7 @@ For safe ways of manipulating the variants' information, see the &quot;Methods&q
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">jackalope</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -139,12 +138,11 @@ For safe ways of manipulating the variants' information, see the &quot;Methods&q
     </div>
 
     <div class="ref-description">
-    <p><em>Note:</em> This class wraps a pointer to a C++ object, so
-do NOT change fields in this class directly.
-It will cause your R session to do bad things.
-(Ever seen the bomb popup on RStudio? Manually mess with these fields and you
-surely will.)
-For safe ways of manipulating the variants' information, see the "Methods" section.</p>
+    <p>This class should NEVER be created using <code>variants$new</code>.
+Only use <code>create_variants</code>.
+This class wraps a pointer to a C++ object, which is why
+there are no fields to manipulate directly.
+All manipulations are done through this class's methods.</p>
     </div>
 
     <pre class="usage"><span class='no'>variants</span></pre>
@@ -156,55 +154,54 @@ For safe ways of manipulating the variants' information, see the "Methods" secti
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>An object of class <code>variants</code>.</p>
-    <h2 class="hasAnchor" id="fields"><a class="anchor" href="#fields"></a>Fields</h2>
+    <h2 class="hasAnchor" id="connections-to-ref-genome-objects"><a class="anchor" href="#connections-to-ref-genome-objects"></a>Connections to <code>ref_genome</code> objects</h2>
 
     
 
-<dl class='dl-horizontal'>
-<dt><code>genome</code></dt><dd><p>An <code>externalptr</code> to a C++ object storing the sequences
-representing the genome.</p></dd>
-
-<dt><code>reference</code></dt><dd><p>An <code>externalptr</code> to a C++ object storing the sequences
-representing the genome.
-This field is private, so you can't view it, but I'm listing it here
-so that I can provide a few extra notes about it:
+<p>Regarding the <code>ref_genome</code> object you use to create a <code>variants</code> object, you should
+note the following:</p>
 <ul>
 <li><p><strong>This point is the most important.</strong>
-Since it's a pointer, if you make any changes to the reference genome
-that it points to, those changes will also show up in the <code>variants</code>
-object. For example, if you make a <code>variants</code> object named <code>V</code>
+Both the <code>ref_genome</code> and <code>variants</code> objects use the same underlying
+C++ object to store reference genome information.
+Thus, if you make any changes to the <code>ref_genome</code> object, those changes will
+also show up in the <code>variants</code> object.
+For example, if you make a <code>variants</code> object named <code>V</code>
 based on an existing <code>ref_genome</code> object named <code>R</code>,
-then you merge sequences in <code>R</code>,
-<code>V</code> will now have merged sequences.
+then you merge chromosomes in <code>R</code>,
+<code>V</code> will now have merged chromosomes.
 If you've already started adding mutations to <code>V</code>,
 then all the indexes used to store those mutations will be inaccurate.
 So when you do anything with <code>V</code> later, your R session will crash
-or have errors.</p></li>
+or have errors.
+<strong>The lesson here is that you shouldn't edit the reference
+genome after using it to create variants.</strong></p></li>
 <li><p>If a <code>ref_genome</code> object is used to create a <code>variants</code>
 object, deleting the <code>ref_genome</code> object won't cause issues with
 the <code>variants</code> object.
 However, the <code>variants</code> class doesn't provide methods to edit
-sequences, so only remove the <code>ref_genome</code> object when you're done
+chromosomes, so only remove the <code>ref_genome</code> object when you're done
 editing the reference genome.</p></li>
-</ul></p></dd>
+</ul>
 
-</dl>
     <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
 
     
 
 <p><strong>Viewing information:</strong></p><dl class='dl-horizontal'>
-<dt><code>n_seqs()</code></dt><dd><p>View the number of sequences.</p></dd>
+<dt><code>ptr()</code></dt><dd><p>View the pointer to the variant information.
+This is used internally by <code>jackalope</code> and shouldn't be of much use to users.</p></dd>
+<dt><code>n_chroms()</code></dt><dd><p>View the number of chromosomes.</p></dd>
 <dt><code>n_vars()</code></dt><dd><p>View the number of variants.</p></dd>
-<dt><code>sizes(var_ind)</code></dt><dd><p>View vector of sequence sizes for a given variant.</p></dd>
-<dt><code>seq_names()</code></dt><dd><p>View vector of sequence names.</p></dd>
+<dt><code>sizes(var_ind)</code></dt><dd><p>View vector of chromosome sizes for a given variant.</p></dd>
+<dt><code>chrom_names()</code></dt><dd><p>View vector of chromosome names.</p></dd>
 <dt><code>var_names()</code></dt><dd><p>View vector of variant names.</p></dd>
-<dt><code><a href='https://rdrr.io/r/base/sequence.html'>sequence(var_ind, seq_ind)</a></code></dt><dd><p>View a sequence string based on
-indices for the sequence (<code>seq_ind</code>) and variant (<code>var_ind</code>).</p></dd>
-<dt><code>gc_prop(var_ind, seq_ind, start, end)</code></dt><dd><p>View the GC proportion for a range
-within a variant sequence.</p></dd>
-<dt><code>nt_prop(nt, var_ind, seq_ind, start, end)</code></dt><dd><p>View the proportion of a range
-within a variant sequence that is of nucleotide <code>nt</code>.</p></dd>
+<dt><code>chrom(var_ind, chrom_ind)</code></dt><dd><p>View a chromosome sequence string based on
+indices for the chromosome (<code>chrom_ind</code>) and variant (<code>var_ind</code>).</p></dd>
+<dt><code>gc_prop(var_ind, chrom_ind, start, end)</code></dt><dd><p>View the GC proportion for a range
+within a variant chromosome.</p></dd>
+<dt><code>nt_prop(nt, var_ind, chrom_ind, start, end)</code></dt><dd><p>View the proportion of a range
+within a variant chromosome that is of nucleotide <code>nt</code>.</p></dd>
 
 </dl><p><strong>Editing information:</strong></p><dl class='dl-horizontal'>
 <dt><code>set_names(new_names)</code></dt><dd><p>Set names for all variants.
@@ -220,18 +217,18 @@ on their name(s). You can optionally specify the names of the duplicates
 Otherwise, their names are auto-generated.</p></dd>
 <dt><code>rm_vars(var_names)</code></dt><dd><p>Remove one or more variants based on names in
 the <code>var_names</code> vector.</p></dd>
-<dt><code>add_sub(var_ind, seq_ind, pos, nt)</code></dt><dd><p>Manually add a substitution
-for a given variant (<code>var_ind</code>), sequence (<code>seq_ind</code>), and position (<code>pos</code>).
+<dt><code>add_sub(var_ind, chrom_ind, pos, nt)</code></dt><dd><p>Manually add a substitution
+for a given variant (<code>var_ind</code>), chromosome (<code>chrom_ind</code>), and position (<code>pos</code>).
 The reference nucleotide will be changed to <code>nt</code>, which should be a single
 character.</p></dd>
-<dt><code>add_ins(var_ind, seq_ind, pos, nts)</code></dt><dd><p>Manually add an insertion
-for a given variant (<code>var_ind</code>), sequence (<code>seq_ind</code>), and position (<code>pos</code>).
+<dt><code>add_ins(var_ind, chrom_ind, pos, nts)</code></dt><dd><p>Manually add an insertion
+for a given variant (<code>var_ind</code>), chromosome (<code>chrom_ind</code>), and position (<code>pos</code>).
 The nucleotide(s) <code>nts</code> will be inserted after the designated position.</p></dd>
-<dt><code>add_del(var_ind, seq_ind, pos, n_nts)</code></dt><dd><p>Manually add a deletion
-for a given variant (<code>var_ind</code>), sequence (<code>seq_ind</code>), and position (<code>pos</code>).
+<dt><code>add_del(var_ind, chrom_ind, pos, n_nts)</code></dt><dd><p>Manually add a deletion
+for a given variant (<code>var_ind</code>), chromosome (<code>chrom_ind</code>), and position (<code>pos</code>).
 The designated number of nucleotides to delete (<code>n_nts</code>) will be deleted
-starting at <code>pos</code>, unless <code>pos</code> is near the sequence end and doesn't have
-<code>n_nts</code> nucleotides to remove; it simply stops at the sequence end in
+starting at <code>pos</code>, unless <code>pos</code> is near the chromosome end and doesn't have
+<code>n_nts</code> nucleotides to remove; it simply stops at the chromosome end in
 this case.</p></dd>
 
 </dl>
@@ -246,7 +243,7 @@ this case.</p></dd>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#format">Format</a></li>
       <li><a href="#value">Value</a></li>
-      <li><a href="#fields">Fields</a></li>
+      <li><a href="#connections-to-ref-genome-objects">Connections to <code>ref_genome</code> objects</a></li>
       <li><a href="#methods">Methods</a></li>
       <li><a href="#see-also">See also</a></li>
     </ul>

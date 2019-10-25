@@ -43,8 +43,8 @@
 
 
 <meta property="og:title" content="Create a reference genome. — create_genome" />
-<meta property="og:description" content="Random sequences are generated to create a new ref_genome object.
-Note that this function will never generate empty sequences." />
+<meta property="og:description" content="Random chromosomes are generated to create a new ref_genome object.
+Note that this function will never generate empty chromosomes." />
 <meta property="og:image" content="/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -78,7 +78,7 @@ Note that this function will never generate empty sequences." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">jackalope</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -135,28 +135,28 @@ Note that this function will never generate empty sequences." />
     </div>
 
     <div class="ref-description">
-    <p>Random sequences are generated to create a new <code>ref_genome</code> object.
-Note that this function will never generate empty sequences.</p>
+    <p>Random chromosomes are generated to create a new <code>ref_genome</code> object.
+Note that this function will never generate empty chromosomes.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>create_genome</span>(<span class='no'>n_seqs</span>, <span class='no'>len_mean</span>, <span class='kw'>len_sd</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>pi_tcag</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fl'>0.25</span>, <span class='fl'>4</span>),
+    <pre class="usage"><span class='fu'>create_genome</span>(<span class='no'>n_chroms</span>, <span class='no'>len_mean</span>, <span class='kw'>len_sd</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>pi_tcag</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fl'>0.25</span>, <span class='fl'>4</span>),
   <span class='kw'>n_threads</span> <span class='kw'>=</span> <span class='fl'>1</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>n_seqs</th>
-      <td><p>Number of sequences.</p></td>
+      <th>n_chroms</th>
+      <td><p>Number of chromosomes.</p></td>
     </tr>
     <tr>
       <th>len_mean</th>
-      <td><p>Mean for the gamma distribution of sequence sizes.</p></td>
+      <td><p>Mean for the gamma distribution of chromosome sizes.</p></td>
     </tr>
     <tr>
       <th>len_sd</th>
-      <td><p>Standard deviation for the gamma distribution of sequence sizes.
-If set to <code>&lt;= 0</code>, all sequences will be the same length. Defaults to <code>0</code>.</p></td>
+      <td><p>Standard deviation for the gamma distribution of chromosome sizes.
+If set to <code>&lt;= 0</code>, all chromosomes will be the same length. Defaults to <code>0</code>.</p></td>
     </tr>
     <tr>
       <th>pi_tcag</th>

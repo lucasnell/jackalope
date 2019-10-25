@@ -54,7 +54,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">jackalope</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -119,40 +119,85 @@
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="co"># To install the latest stable version from CRAN:</span></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"jackalope"</span>)</a>
-<a class="sourceLine" id="cb1-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="co"># Or the the development version from GitHub:</span></a>
-<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="co"># install.packages("devtools")</span></a>
-<a class="sourceLine" id="cb1-6" data-line-number="6">devtools<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/devtools/man/remote-reexports.html">install_github</a></span>(<span class="st">"lucasnell/jackalope"</span>)</a></code></pre></div>
+<div id="dependencies" class="section level3">
+<h3 class="hasAnchor">
+<a href="#dependencies" class="anchor"></a>Dependencies</h3>
+<p>Before installing <code>jackalope</code>, you should update the packages <code>Rhtslib</code> and <code>zlibbioc</code>. Since both of these are on Bioconductor, you should update <code>BiocManager</code>, too.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="cf">if</span> (<span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/ns-load.html">requireNamespace</a></span>(<span class="st">"BiocManager"</span>, <span class="dt">quietly =</span> <span class="ot">TRUE</span>) <span class="op">||</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="st">    "BiocManager"</span> <span class="op">%in%</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/row.names.html">row.names</a></span>(<span class="kw"><a href="https://rdrr.io/r/utils/update.packages.html">old.packages</a></span>())) {</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">  <span class="kw"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"BiocManager"</span>)</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">}</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">BiocManager<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/BiocManager/man/install.html">install</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"Rhtslib"</span>, <span class="st">"zlibbioc"</span>))</a></code></pre></div>
+</div>
+<div id="stable-version" class="section level3">
+<h3 class="hasAnchor">
+<a href="#stable-version" class="anchor"></a>Stable version</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="co"># To install the latest stable version from CRAN:</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="kw"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"jackalope"</span>)</a></code></pre></div>
+</div>
+<div id="development-version" class="section level3">
+<h3 class="hasAnchor">
+<a href="#development-version" class="anchor"></a>Development version</h3>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="co"># install.packages("devtools")</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">devtools<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/devtools/man/remote-reexports.html">install_github</a></span>(<span class="st">"lucasnell/jackalope"</span>)</a></code></pre></div>
+</div>
+<div id="enabling-openmp" class="section level3">
+<h3 class="hasAnchor">
+<a href="#enabling-openmp" class="anchor"></a>Enabling OpenMP</h3>
+<p>To use multithreading in <code>jackalope</code>, you’ll need to compile it from source using the proper flags. The first step is to add the following to the <code>.R/Makevars</code> (<code>.R/Makevars.win</code> on Windows) file inside the home directory:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="ex">PKG_CXXFLAGS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CXXFLAGS</span><span class="va">)</span></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="ex">PKG_CFLAGS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CFLAGS</span><span class="va">)</span></a>
+<a class="sourceLine" id="cb4-3" data-line-number="3"><span class="ex">PKG_LIBS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CFLAGS</span><span class="va">)</span></a></code></pre></div>
+<p>On Linux and Windows, you should be able to get away with simply adding those lines and installing <code>jackalope</code> by running the following in R:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"jackalope"</span>, <span class="dt">type =</span> <span class="st">"source"</span>)</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="co">## Or, for development version:</span></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3"><span class="co"># devtools::install_github("lucasnell/jackalope")</span></a></code></pre></div>
+<p>If you’ve enabled OpenMP properly, running <code>jackalope:::using_openmp()</code> in R should return <code>TRUE</code>.</p>
+<p>On macOS, it takes a few more steps to get things working. First, make sure the content above is in your <code>~/.R/Makevars</code> file. Next, go to <a href="https://cran.r-project.org/bin/macosx/tools" class="uri">https://cran.r-project.org/bin/macosx/tools</a> and download (1) the newest version of the <code>clang</code> compiler (<code>clang8</code> at the time of this writing) and (2) the <code>gfortran-6.1.pkg</code> file. After this, add the following to your <code>~/.R/Makevars</code> file:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="va">CLANG8=</span>/usr/local/clang8/bin/clang</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"><span class="va">CC=$(</span><span class="ex">CLANG8</span><span class="va">)</span></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"><span class="va">CXX=$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4"><span class="va">CXX11=$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</a>
+<a class="sourceLine" id="cb6-5" data-line-number="5"><span class="va">CXX14=$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</a>
+<a class="sourceLine" id="cb6-6" data-line-number="6"><span class="va">CXX17=$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</a>
+<a class="sourceLine" id="cb6-7" data-line-number="7"><span class="va">CXX1X=$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</a>
+<a class="sourceLine" id="cb6-8" data-line-number="8"><span class="va">LDFLAGS=</span>-L/usr/local/clang8/lib</a></code></pre></div>
+<p>Next, install <code>gfortran</code> 6.1 by opening the <code>gfortran-6.1.pkg</code> file. Now you should be able to install <code>jackalope</code> using the <code>install.packages</code> command above.</p>
+<p>For more information, please see <a href="https://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x" class="uri">https://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x</a>.</p>
+</div>
 </div>
 <div id="usage" class="section level2">
 <h2 class="hasAnchor">
 <a href="#usage" class="anchor"></a>Usage</h2>
 <p>Below shows how to simulate a 10kb genome, then create variants from that genome using a phylogenetic tree:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(jackalope)</a>
-<a class="sourceLine" id="cb2-2" data-line-number="2">reference &lt;-<span class="st"> </span><span class="kw"><a href="reference/create_genome.html">create_genome</a></span>(<span class="dt">n_seqs =</span> <span class="dv">10</span>, <span class="dt">len_mean =</span> <span class="dv">1000</span>)</a>
-<a class="sourceLine" id="cb2-3" data-line-number="3">tr &lt;-<span class="st"> </span>ape<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/ape/man/rtree.html">rcoal</a></span>(<span class="dv">5</span>)</a>
-<a class="sourceLine" id="cb2-4" data-line-number="4">ref_variants &lt;-<span class="st"> </span><span class="kw"><a href="reference/create_variants.html">create_variants</a></span>(reference, <span class="kw"><a href="reference/vars_phylo.html">vars_phylo</a></span>(tr), <span class="kw"><a href="reference/sub_models.html">sub_JC69</a></span>(<span class="fl">0.1</span>))</a>
-<a class="sourceLine" id="cb2-5" data-line-number="5">ref_variants</a>
-<a class="sourceLine" id="cb2-6" data-line-number="6"><span class="co">#&gt;                            &lt;&lt; Variants object &gt;&gt;</span></a>
-<a class="sourceLine" id="cb2-7" data-line-number="7"><span class="co">#&gt; # Variants: 5</span></a>
-<a class="sourceLine" id="cb2-8" data-line-number="8"><span class="co">#&gt; # Mutations: 17,679</span></a>
-<a class="sourceLine" id="cb2-9" data-line-number="9"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-10" data-line-number="10"><span class="co">#&gt;                         &lt;&lt; Reference genome info: &gt;&gt;</span></a>
-<a class="sourceLine" id="cb2-11" data-line-number="11"><span class="co">#&gt; &lt; Set of 10 sequences &gt;</span></a>
-<a class="sourceLine" id="cb2-12" data-line-number="12"><span class="co">#&gt; # Total size: 10,000 bp</span></a>
-<a class="sourceLine" id="cb2-13" data-line-number="13"><span class="co">#&gt;   name                          sequence                             length</span></a>
-<a class="sourceLine" id="cb2-14" data-line-number="14"><span class="co">#&gt; seq0       CTGGCATTGAATCATATGAGGTGGC...GTTGCACGATTGATTAAATTCCTGAA      1000</span></a>
-<a class="sourceLine" id="cb2-15" data-line-number="15"><span class="co">#&gt; seq1       CACTCCGTCGCACACTAGGTTTCGA...GAGCTCGCGTACATGGAGCATTCTGT      1000</span></a>
-<a class="sourceLine" id="cb2-16" data-line-number="16"><span class="co">#&gt; seq2       CTTAGCCGGAGCGACTCGGAGCAAC...GCGTAATATGCCAGGTCCCGCGTGGC      1000</span></a>
-<a class="sourceLine" id="cb2-17" data-line-number="17"><span class="co">#&gt; seq3       CGCCTTCCATTTAGGACTTGTATTG...TAAACTCCATGTGACTGTAATGTCAG      1000</span></a>
-<a class="sourceLine" id="cb2-18" data-line-number="18"><span class="co">#&gt; seq4       GGGTGATATGGTGTGCATGCTGAAT...AGTCTAGAGTCTCTGGGAGGTCAGGT      1000</span></a>
-<a class="sourceLine" id="cb2-19" data-line-number="19"><span class="co">#&gt; seq5       TTCGTTGGTGGGTGTCCTATGCTAC...CCCGCCGGTTTGACTTACTCGATTGG      1000</span></a>
-<a class="sourceLine" id="cb2-20" data-line-number="20"><span class="co">#&gt; seq6       GCATGGACAGATGTGATCTGAGTAT...GACCCCATAAGGCCTGGGACACTGTG      1000</span></a>
-<a class="sourceLine" id="cb2-21" data-line-number="21"><span class="co">#&gt; seq7       TCGTTTCAACGTCCTTAAGTGTAGT...CTCGTTAGCTCTCCGAGGAGACGAGG      1000</span></a>
-<a class="sourceLine" id="cb2-22" data-line-number="22"><span class="co">#&gt; seq8       CAGGTAAGTTATCAAAGAACCTTCC...GCATCACCTCGCAAGGAGACTCGTTA      1000</span></a>
-<a class="sourceLine" id="cb2-23" data-line-number="23"><span class="co">#&gt; seq9       GGTAGTAATTAGGCTTAAAATAGCA...AACAAATGTTCGGCATACGATCTACG      1000</span></a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(jackalope)</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">reference &lt;-<span class="st"> </span><span class="kw"><a href="reference/create_genome.html">create_genome</a></span>(<span class="dt">n_chroms =</span> <span class="dv">10</span>, <span class="dt">len_mean =</span> <span class="dv">1000</span>)</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">tr &lt;-<span class="st"> </span>ape<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/ape/man/rtree.html">rcoal</a></span>(<span class="dv">5</span>)</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">ref_variants &lt;-<span class="st"> </span><span class="kw"><a href="reference/create_variants.html">create_variants</a></span>(reference, <span class="kw"><a href="reference/vars_phylo.html">vars_phylo</a></span>(tr), <span class="kw"><a href="reference/sub_models.html">sub_JC69</a></span>(<span class="fl">0.1</span>))</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">ref_variants</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6"><span class="co">#&gt;                            &lt;&lt; Variants object &gt;&gt;</span></a>
+<a class="sourceLine" id="cb7-7" data-line-number="7"><span class="co">#&gt; # Variants: 5</span></a>
+<a class="sourceLine" id="cb7-8" data-line-number="8"><span class="co">#&gt; # Mutations: 17,480</span></a>
+<a class="sourceLine" id="cb7-9" data-line-number="9"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb7-10" data-line-number="10"><span class="co">#&gt;                         &lt;&lt; Reference genome info: &gt;&gt;</span></a>
+<a class="sourceLine" id="cb7-11" data-line-number="11"><span class="co">#&gt; &lt; Set of 10 chromosomes &gt;</span></a>
+<a class="sourceLine" id="cb7-12" data-line-number="12"><span class="co">#&gt; # Total size: 10,000 bp</span></a>
+<a class="sourceLine" id="cb7-13" data-line-number="13"><span class="co">#&gt;   name                          chromosome                           length</span></a>
+<a class="sourceLine" id="cb7-14" data-line-number="14"><span class="co">#&gt; chrom0     CTGGCATTGAATCATATGAGGTGGC...GTTGCACGATTGATTAAATTCCTGAA      1000</span></a>
+<a class="sourceLine" id="cb7-15" data-line-number="15"><span class="co">#&gt; chrom1     CACTCCGTCGCACACTAGGTTTCGA...GAGCTCGCGTACATGGAGCATTCTGT      1000</span></a>
+<a class="sourceLine" id="cb7-16" data-line-number="16"><span class="co">#&gt; chrom2     CTTAGCCGGAGCGACTCGGAGCAAC...GCGTAATATGCCAGGTCCCGCGTGGC      1000</span></a>
+<a class="sourceLine" id="cb7-17" data-line-number="17"><span class="co">#&gt; chrom3     CGCCTTCCATTTAGGACTTGTATTG...TAAACTCCATGTGACTGTAATGTCAG      1000</span></a>
+<a class="sourceLine" id="cb7-18" data-line-number="18"><span class="co">#&gt; chrom4     GGGTGATATGGTGTGCATGCTGAAT...AGTCTAGAGTCTCTGGGAGGTCAGGT      1000</span></a>
+<a class="sourceLine" id="cb7-19" data-line-number="19"><span class="co">#&gt; chrom5     TTCGTTGGTGGGTGTCCTATGCTAC...CCCGCCGGTTTGACTTACTCGATTGG      1000</span></a>
+<a class="sourceLine" id="cb7-20" data-line-number="20"><span class="co">#&gt; chrom6     GCATGGACAGATGTGATCTGAGTAT...GACCCCATAAGGCCTGGGACACTGTG      1000</span></a>
+<a class="sourceLine" id="cb7-21" data-line-number="21"><span class="co">#&gt; chrom7     TCGTTTCAACGTCCTTAAGTGTAGT...CTCGTTAGCTCTCCGAGGAGACGAGG      1000</span></a>
+<a class="sourceLine" id="cb7-22" data-line-number="22"><span class="co">#&gt; chrom8     CAGGTAAGTTATCAAAGAACCTTCC...GCATCACCTCGCAAGGAGACTCGTTA      1000</span></a>
+<a class="sourceLine" id="cb7-23" data-line-number="23"><span class="co">#&gt; chrom9     GGTAGTAATTAGGCTTAAAATAGCA...AACAAATGTTCGGCATACGATCTACG      1000</span></a></code></pre></div>
+<p>Below simulates 500 million paired-end, 100 bp reads from the variants:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw"><a href="reference/illumina.html">illumina</a></span>(ref_variants, <span class="dt">out_prefix =</span> <span class="st">"illumina"</span>, <span class="dt">n_reads =</span> <span class="fl">500e6</span>,</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">         <span class="dt">paired =</span> <span class="ot">TRUE</span>, <span class="dt">read_length =</span> <span class="dv">100</span>)</a></code></pre></div>
+<p>Below simulates 500 thousand PacBio reads from the reference genome:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw"><a href="reference/pacbio.html">pacbio</a></span>(ref, <span class="dt">out_prefix =</span> <span class="st">"pacbio"</span>, <span class="dt">n_reads =</span> <span class="fl">500e3</span>)</a></code></pre></div>
 </div>
 </div>
 

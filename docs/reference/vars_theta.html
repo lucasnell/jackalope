@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Create necessary information to create variants using theta parameter — vars_theta • jackalope</title>
+<title>Organize information to create variants using theta parameter — vars_theta • jackalope</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -42,7 +42,7 @@
 
 
 
-<meta property="og:title" content="Create necessary information to create variants using theta parameter — vars_theta" />
+<meta property="og:title" content="Organize information to create variants using theta parameter — vars_theta" />
 <meta property="og:description" content="This function organizes higher-level information for creating variants from
 the population-scaled mutation rate and a desired number of variants." />
 <meta property="og:image" content="/logo.png" />
@@ -78,7 +78,7 @@ the population-scaled mutation rate and a desired number of variants." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">jackalope</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -129,7 +129,7 @@ the population-scaled mutation rate and a desired number of variants." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Create necessary information to create variants using theta parameter</h1>
+    <h1>Organize information to create variants using theta parameter</h1>
     <small class="dont-index">Source: <a href='https://github.com/lucasnell/jackalope/blob/master/R/vars_functions.R'><code>R/vars_functions.R</code></a></small>
     <div class="hidden name"><code>vars_theta.Rd</code></div>
     </div>
@@ -150,7 +150,7 @@ the population-scaled mutation rate and a desired number of variants.</p>
     </tr>
     <tr>
       <th>n_vars</th>
-      <td><p>Mumber of desired variants.</p></td>
+      <td><p>Number of desired variants.</p></td>
     </tr>
     </table>
 
@@ -159,7 +159,8 @@ the population-scaled mutation rate and a desired number of variants.</p>
     <p>A <code>vars_theta_info</code> object containing information used in <code>create_variants</code>
 to create haploid variants.
 This class is just a wrapper around a list containing the phylogenetic tree
-and <code>theta</code> parameter.</p>
+and <code>theta</code> parameter, which you can view (but not change) using the object's
+<code>phylo()</code> and <code>theta()</code> methods, respectively.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
