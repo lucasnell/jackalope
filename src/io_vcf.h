@@ -177,8 +177,8 @@ private:
              are prevented elsewhere)
              */
             if (mut_ind.second < (var_chrom->mutations.size()-1) &&
-                var_chrom->mutations.size_modifier[mut_ind.first] >= 0) {
-                if (var_chrom->mutations.size_modifier[mut_ind.second + 1] < 0 &&
+                var_chrom->size_modifier(mut_ind.first) >= 0) {
+                if (var_chrom->size_modifier(mut_ind.second + 1) < 0 &&
                     var_chrom->mutations.old_pos[mut_ind.second + 1] ==
                     (var_chrom->mutations.old_pos[mut_ind.first] + 1)) {
                     mut_ind.second++;
@@ -196,14 +196,14 @@ private:
      */
     inline void set_first_pos(const uint64& index) {
         ref_pos.first = var_chrom->mutations.old_pos[index];
-        if (var_chrom->mutations.size_modifier[index] < 0 &&
+        if (var_chrom->size_modifier(index) < 0 &&
             var_chrom->mutations.old_pos[index] > 0) ref_pos.first--;
         return;
     }
     // Same as above, but returns the integer rather than setting it
     inline uint64 get_first_pos(const uint64& index) {
         uint64 pos_first = var_chrom->mutations.old_pos[index];
-        if (var_chrom->mutations.size_modifier[index] < 0 &&
+        if (var_chrom->size_modifier(index) < 0 &&
             var_chrom->mutations.old_pos[index] > 0) pos_first--;
         return pos_first;
     }
@@ -213,11 +213,11 @@ private:
      */
     inline void set_second_pos(const uint64& index) {
         ref_pos.second = var_chrom->mutations.old_pos[index];
-        if (var_chrom->mutations.size_modifier[index] < 0) {
+        if (var_chrom->size_modifier(index) < 0) {
             if (var_chrom->mutations.old_pos[index] > 0) {
-                ref_pos.second -= (1 + var_chrom->mutations.size_modifier[index]);
+                ref_pos.second -= (1 + var_chrom->size_modifier(index));
             } else {
-                ref_pos.second -= var_chrom->mutations.size_modifier[index];
+                ref_pos.second -= var_chrom->size_modifier(index);
             }
         }
         return;
@@ -225,11 +225,11 @@ private:
     // Same as above, but returns the integer rather than setting it
     inline uint64 get_second_pos(const uint64& index) {
         uint64 pos_second = var_chrom->mutations.old_pos[index];
-        if (var_chrom->mutations.size_modifier[index] < 0) {
+        if (var_chrom->size_modifier(index) < 0) {
             if (var_chrom->mutations.old_pos[index] > 0) {
-                pos_second -= (1 + var_chrom->mutations.size_modifier[index]);
+                pos_second -= (1 + var_chrom->size_modifier(index));
             } else {
-                pos_second -= var_chrom->mutations.size_modifier[index];
+                pos_second -= var_chrom->size_modifier(index);
             }
         }
         return pos_second;

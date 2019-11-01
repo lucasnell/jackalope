@@ -99,16 +99,14 @@ using namespace Rcpp;
 
 struct AllMutations {
 
-    std::deque<sint64> size_modifier;
     std::deque<uint64> old_pos;
     std::deque<uint64> new_pos;
     std::deque<char*> nucleos;
 
-    AllMutations() : size_modifier(), old_pos(), new_pos(), nucleos() {}
+    AllMutations() : old_pos(), new_pos(), nucleos() {}
 
     AllMutations(const AllMutations& other)
-        : size_modifier(other.size_modifier),
-          old_pos(other.old_pos),
+        : old_pos(other.old_pos),
           new_pos(other.new_pos),
           nucleos(other.nucleos.size(), nullptr) {
         for (uint64 i = 0; i < nucleos.size(); i++) {
@@ -117,7 +115,6 @@ struct AllMutations {
     }
     AllMutations& operator=(const AllMutations& other) {
 
-        size_modifier = other.size_modifier;
         old_pos = other.old_pos;
         new_pos = other.new_pos;
         for (uint64 i = 0; i < nucleos.size(); i++) delete [] nucleos[i];
@@ -134,6 +131,7 @@ struct AllMutations {
         }
     }
 
+
     inline size_t size() const noexcept {
         return old_pos.size();
     }
@@ -146,35 +144,25 @@ struct AllMutations {
 
         if (old_pos.size() == 0) return;
 
-        size_modifier.clear();
         old_pos.clear();
         new_pos.clear();
         nucleos.clear();
-        // // Clear memory:
-        // clear_memory<std::deque<sint64>>(size_modifier);
-        // clear_memory<std::deque<uint64>>(old_pos);
-        // clear_memory<std::deque<uint64>>(new_pos);
-        // clear_memory<std::deque<char*>>(nucleos);
 
         return;
     }
     // Add to front
-    inline void push_front(const sint64& sm,
-                           const uint64& op,
+    inline void push_front(const uint64& op,
                            const uint64& np,
                            const char* nts) {
-        size_modifier.push_front(sm);
         old_pos.push_front(op);
         new_pos.push_front(np);
         nucleos.push_front(nullptr);
         fill_one_nucleos__(nts, &nucleos.front());
         return;
     }
-    inline void push_front(const sint64& sm,
-                           const uint64& op,
+    inline void push_front(const uint64& op,
                            const uint64& np,
                            const char& nt) {
-        size_modifier.push_front(sm);
         old_pos.push_front(op);
         new_pos.push_front(np);
         nucleos.push_front(nullptr);
@@ -182,22 +170,18 @@ struct AllMutations {
         return;
     }
     // Add to back
-    inline void push_back(const sint64& sm,
-                          const uint64& op,
+    inline void push_back(const uint64& op,
                           const uint64& np,
                           const char* nts) {
-        size_modifier.push_back(sm);
         old_pos.push_back(op);
         new_pos.push_back(np);
         nucleos.push_back(nullptr);
         fill_one_nucleos__(nts, &nucleos.back());
         return;
     }
-    inline void push_back(const sint64& sm,
-                          const uint64& op,
+    inline void push_back(const uint64& op,
                           const uint64& np,
                           const char& nt) {
-        size_modifier.push_back(sm);
         old_pos.push_back(op);
         new_pos.push_back(np);
         nucleos.push_back(nullptr);
@@ -206,12 +190,10 @@ struct AllMutations {
     }
     // Add to middle
     inline void insert(const uint64& ind,
-                       const sint64& sm,
                        const uint64& op,
                        const uint64& np,
                        const char* nts) {
 
-        size_modifier.insert(size_modifier.begin() + ind, sm);
         old_pos.insert(old_pos.begin() + ind, op);
         new_pos.insert(new_pos.begin() + ind, np);
         nucleos.insert(nucleos.begin() + ind, nullptr);
@@ -219,12 +201,10 @@ struct AllMutations {
         return;
     }
     inline void insert(const uint64& ind,
-                       const sint64& sm,
                        const uint64& op,
                        const uint64& np,
                        const char& nt) {
 
-        size_modifier.insert(size_modifier.begin() + ind, sm);
         old_pos.insert(old_pos.begin() + ind, op);
         new_pos.insert(new_pos.begin() + ind, np);
         nucleos.insert(nucleos.begin() + ind, nullptr);
@@ -234,7 +214,6 @@ struct AllMutations {
     // Remove from position
     inline void erase(const uint64& ind) {
 
-        size_modifier.erase(size_modifier.begin() + ind);
         old_pos.erase(old_pos.begin() + ind);
         new_pos.erase(new_pos.begin() + ind);
         delete [] nucleos[ind];
@@ -245,7 +224,6 @@ struct AllMutations {
     // Remove between positions
     inline void erase(const uint64& ind1, const uint64& ind2) {
 
-        size_modifier.erase(size_modifier.begin() + ind1, size_modifier.begin() + ind2);
         old_pos.erase(old_pos.begin() + ind1, old_pos.begin() + ind2);
         new_pos.erase(new_pos.begin() + ind1, new_pos.begin() + ind2);
         for (uint64 ind = ind1; ind < ind2; ind++) delete [] nucleos[ind];
@@ -331,6 +309,28 @@ public:
     uint64 size() const noexcept {
         return chrom_size;
     }
+
+    // Size modifier for a mutation
+    sint64 size_modifier(const uint64& ind) const {
+
+        sint64 size_mod;
+
+        if (ind < (mutations.new_pos.size() - 1)) {
+            size_mod = mutations.new_pos[ind+1] - mutations.old_pos[ind+1];
+#ifdef __JACKALOPE_DEBUG
+        } else if (ind == (mutations.size() - 1)) {
+            size_mod = chrom_size - ref_chrom->size();
+        } else stop("ind too large inside size_modifier function.");
+#else
+        } else {
+            size_mod = chrom_size - ref_chrom->size();
+        }
+#endif
+
+        size_mod += static_cast<sint64>(mutations.old_pos[ind] - mutations.new_pos[ind]);
+
+        return size_mod;
+}
 
     // Add existing mutation information in another `VarChrom` to this one,
     // adding to the back of `mutations`, with a starting mutation index
@@ -449,8 +449,8 @@ private:
                           const uint64& mut_i) const {
         char out;
         uint64 ind = new_pos - mutations.new_pos[mut_i];
-        if (static_cast<sint64>(ind) > mutations.size_modifier[mut_i]) {
-            ind += (mutations.old_pos[mut_i] - mutations.size_modifier[mut_i]);
+        if (static_cast<sint64>(ind) > size_modifier(mut_i)) {
+            ind += (mutations.old_pos[mut_i] - size_modifier(mut_i));
             out = (*ref_chrom)[ind];
         } else {
             out = mutations.nucleos[mut_i][ind];

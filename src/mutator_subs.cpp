@@ -170,7 +170,7 @@ inline void SubMutator::subs_before_muts__(const uint64& pos,
         Rcout << "__ " << pos << ' ' << static_cast<unsigned>(rate_i) << ' ' <<
             bases[c_i] << '-' << bases[nt_i] << std::endl;
 #endif
-        var_chrom.mutations.push_front(0, pos, pos, bases[nt_i]);
+        var_chrom.mutations.push_front(pos, pos, bases[nt_i]);
         mut_i++;
     }
 
@@ -270,7 +270,7 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
         sint64 ind = pos - mutations.new_pos[mut_i]; // <-- should always be >= 0
 
         // If `pos` is within the mutation chromosome:
-        if (ind <= mutations.size_modifier[mut_i]) {
+        if (ind <= var_chrom.size_modifier(mut_i)) {
 
 #ifdef __JACKALOPE_DIAGNOSTICS
             // __ <new pos> <rate index> <old nucleotide>-<new nucleotide>
@@ -285,7 +285,7 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
              When `mut_i == 0`, doing this would make `mut_i` become negative,
              so I just keep the mutation if `mut_i == 0`.
              */
-            if ((mutations.size_modifier[mut_i] == 0) &&
+            if ((var_chrom.size_modifier(mut_i) == 0) &&
                 (reference[mutations.old_pos[mut_i]] == nucleo) &&
                 mut_i > 0) {
                 mutations.erase(mut_i);
@@ -295,13 +295,13 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
         } else {
             // If `pos` is in the reference chromosome following the mutation:
             uint64 old_pos_ = ind + (mutations.old_pos[mut_i] -
-                mutations.size_modifier[mut_i]);
+                var_chrom.size_modifier(mut_i));
 #ifdef __JACKALOPE_DIAGNOSTICS
             // __ <new pos> <rate index> <old nucleotide>-<new nucleotide>
             Rcout << "__ " << pos << ' ' << static_cast<unsigned>(rate_i) << ' ' <<
                 bases[c_i] << '-' << nucleo << std::endl;
 #endif
-            mutations.insert(mut_i + 1, 0, old_pos_, pos, nucleo);
+            mutations.insert(mut_i + 1, old_pos_, pos, nucleo);
             mut_i++;
         }
 
