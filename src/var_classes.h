@@ -401,39 +401,30 @@ public:
 
 private:
 
-    /*
-     -------------------
-     Internal function to "blowup" mutation(s) due to a deletion.
-     By "blowup", I mean it removes substitutions and insertions if they're covered
-     entirely by the deletion, and it merges any deletions that are contiguous.
-     -------------------
-     */
-    void deletion_blowup_(uint64& mut_i, uint64& deletion_start, uint64& deletion_end,
-                          sint64& size_mod);
-
-
-
 
     /*
      -------------------
-     Inner function to merge an insertion and deletion.
+     Inner function to get old position for deletion.
      -------------------
      */
-    void merge_del_ins_(uint64& insert_i,
-                        uint64& deletion_start,
-                        uint64& deletion_end,
-                        sint64& size_mod);
-
+    uint64 deletion_old_pos_(const uint64& deletion_start,
+                             const uint64& deletion_end,
+                             const uint64& mut_i) const;
 
 
 
     /*
      -------------------
-     Inner function to remove Mutation and keep iterator from being invalidated.
+     Inner function to adjust a single mutation for a deletion.
      -------------------
      */
-    void remove_mutation_(uint64& mut_i);
-    void remove_mutation_(uint64& mut_i1, uint64& mut_i2);
+    void deletion_one_mut_(const uint64& mut_i,
+                           const uint64& deletion_start,
+                           const uint64& deletion_end,
+                           const sint64& full_size_mod,
+                           sint64& new_size_mod,
+                           std::vector<uint64>& rm_inds);
+
 
 
     /*
@@ -446,17 +437,7 @@ private:
      ------------------
      */
     inline char get_char_(const uint64& new_pos,
-                          const uint64& mut_i) const {
-        char out;
-        uint64 ind = new_pos - mutations.new_pos[mut_i];
-        if (static_cast<sint64>(ind) > size_modifier(mut_i)) {
-            ind += (mutations.old_pos[mut_i] - size_modifier(mut_i));
-            out = (*ref_chrom)[ind];
-        } else {
-            out = mutations.nucleos[mut_i][ind];
-        }
-        return out;
-    }
+                          const uint64& mut_i) const;
 
 
 

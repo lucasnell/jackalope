@@ -27,6 +27,29 @@
 using namespace Rcpp;
 
 
+
+
+
+inline char VarChrom::get_char_(const uint64& new_pos,
+                                const uint64& mut_i) const {
+    char out;
+    uint64 ind = new_pos - mutations.new_pos[mut_i];
+    if (static_cast<sint64>(ind) > size_modifier(mut_i)) {
+        ind += (mutations.old_pos[mut_i] - size_modifier(mut_i));
+        out = (*ref_chrom)[ind];
+    } else {
+        if (mutations.nucleos[mut_i] == nullptr) {
+            std::string err_msg = "mutations.nucleos[mut_i] == nullptr at ";
+            err_msg += std::to_string(mut_i);
+            stop(err_msg.c_str());
+        }
+        out = mutations.nucleos[mut_i][ind];
+    }
+    return out;
+}
+
+
+
 // `start` is inclusive
 // this `VarChrom` must be empty after `mut_i`
 // return `sint64` is the size modifier for mutations added
@@ -294,89 +317,110 @@ void VarChrom::add_deletion(const uint64& size_, const uint64& new_pos_) {
 
     if (size_ == 0 || new_pos_ >= chrom_size) return;
 
-    uint64 mut_i;
-
     // Renaming this for a more descriptive name and to allow it to change
     uint64 deletion_start = new_pos_;
-
-    /*
-     Last position this deletion refers to
-     (`std::min` is to coerce this deletion to one that's possible):
-     */
     uint64 deletion_end = std::min(deletion_start + size_ - 1, chrom_size - 1);
+    const sint64 size_mod(deletion_start - deletion_end - 1);
 
-    /*
-     Position on the old reference chromosome for this deletion.
-     This will change if there are insertions or deletions before `new_pos_`.
-     */
-    uint64 old_pos_ = new_pos_;
-
-    /*
-     Size modifier of this deletion. This can change when deletion merges with an
-     insertion or another deletion.
-     */
-    sint64 size_mod = deletion_start - deletion_end - 1;
-
-    /*
-     If `mutations` is empty, just add to the beginning and adjust chromosome size
-     */
+    // If `mutations` is empty, just add to the beginning and adjust chromosome size
     if (mutations.empty()) {
 
-        mutations.push_front(old_pos_, deletion_start, nullptr);
+        mutations.push_front(new_pos_, deletion_start, nullptr);
         chrom_size += size_mod;
-
-        /*
-         If the mutations deque isn't empty, we may need to edit some of the mutations
-         after this deletion if they're affected by it.
-         See `deletion_blowup_` below for more info.
-         */
-    } else {
-
-        /*
-         Chromosome-size modifier to be used to edit subsequent mutations.
-         This number does not change.
-         */
-        const sint64 subchrom_modifier(size_mod);
-
-        mut_i = get_mut_(deletion_start);
-
-        /*
-         This "blows up" subsequent mutations if they're destroyed/altered
-         by this deletion.
-         See `deletion_blowup_` below for more info.
-         */
-        deletion_blowup_(mut_i, deletion_start, deletion_end, size_mod);
-
-        /*
-         If `size_mod` is zero, this means that an insertion/insertions absorbed all
-         of the deletion, so after adjusting sizes, our business is done here.
-         */
-        if (size_mod == 0) {
-            calc_positions(mut_i, subchrom_modifier);
-            return;
-        }
-
-        /*
-         If the deletion hasn't been absorbed, we need to calculate its
-         position on the old (i.e., reference) chromosome:
-         */
-        if (mut_i != 0) {
-            --mut_i;
-            old_pos_ = deletion_start - mutations.new_pos[mut_i] +
-                mutations.old_pos[mut_i] - size_modifier(mut_i);
-            ++mut_i;
-        } else old_pos_ = deletion_start; // (`deletion_start` may have changed)
-
-
-        // Adjust (1) positions of all mutations after and including `mut_i`, and
-        //        (2) the chromosome size
-        calc_positions(mut_i, subchrom_modifier);
-
-        // Now insert mutation info:
-        mutations.insert(mut_i, old_pos_, deletion_start, nullptr);
+        return;
     }
+    /*
+     If the first mutation is after the deletion,
+     just add to the beginning, adjust the `new_pos`s, and adjust chromosome size
+     */
+    if (mutations.new_pos.front() > deletion_end) {
+
+        /*
+         In the rare case where the first mutation is a deletion that's right after
+         the new deletion, we don't need to add an extra mutation but we do need to
+         adjust the first mutation's `old_pos`.
+         */
+        bool del_after = mutations.new_pos.front() == (deletion_end + 1) &&
+            size_modifier(0) < 0;
+
+        for (uint64& np : mutations.new_pos) np += size_mod; // <-- gets done either way
+
+        if (del_after) {
+            mutations.old_pos.front() += size_mod;
+        } else {
+            mutations.push_front(new_pos_, deletion_start, nullptr);
+        }
+        chrom_size += size_mod;
+        return;
+    }
+
+    /*
+     This is for when the first mutation starts after the deletion but will be at
+     least partially removed by it.
+     This is a weird situation that needs to be addressed explicitly.
+     */
+    bool first_overlap = mutations.new_pos.front() > deletion_start &&
+        mutations.new_pos.front() <= deletion_end;
+
+    /*
+     (Not using `get_mut_` below bc we want the first mutation that's == `deletion_start`
+      or, if that doesn't exist, the last one that's < `deletion_start`.)
+     */
+    uint64 mut_i;
+    if (mutations.new_pos.back() < deletion_start) {
+        mut_i = mutations.size() - 1;
+    } else {
+        mut_i = 0;
+        // Iterate until the first mutation that's >= `deletion_start`
+        while (mutations.new_pos[mut_i] < deletion_start) ++mut_i;
+        // Go back one if it's > `deletion_start` (But not if `mut_i` is zero!)
+        if (mutations.new_pos[mut_i] > deletion_start && mut_i > 0) --mut_i;
+    }
+
+    // Getting old position info before changing any mutation info
+    uint64 old_pos_ = deletion_old_pos_(deletion_start, deletion_end, mut_i);
+
+
+    /*
+     This (1) returns which mutations get removed because of this deletion,
+     (2) adjusts size_mod for both insertions and (contiguous) deletions, and
+     (3) edits insertions that are partially deleted.
+     */
+    std::vector<uint64> rm_inds;
+    sint64 size_mod_remaining = size_mod; // to keep track of how much deletion remains
+    for (uint64 i = mut_i; i < mutations.size(); i++) {
+        deletion_one_mut_(i, deletion_start, deletion_end, size_mod,
+                          size_mod_remaining, rm_inds);
+    }
+
+    chrom_size += size_mod;
+
+    // Remove all mutations that have been deleted / merged:
+    if (rm_inds.size() == 1) {
+        mutations.erase(rm_inds.front());
+    } else if (rm_inds.size() > 1) {
+        mutations.erase(rm_inds.front(), rm_inds.back() + 1);
+    } else {
+        // Because in situations above, `rm_inds.front()` points to position after removal
+        rm_inds = {mut_i};
+        // Because in the first overlap scenario, we want to add it to the beginning:
+        if (!first_overlap) rm_inds.front()++;
+    }
+
+    /*
+     If `size_mod` is >= zero, this means that insertion(s) absorbed all
+     of the deletion, so our business is done here.
+     */
+    if (size_mod_remaining >= 0) return;
+
+
+    // Otherwise insert mutation info:
+    mutations.insert(rm_inds.front(), old_pos_, deletion_start, nullptr);
+
     return;
 }
+
+
 
 
 
@@ -484,264 +528,206 @@ void VarChrom::add_substitution(const char& nucleo, const uint64& new_pos_) {
 
 
 
+
+
+
 /*
  -------------------
- Internal function to "blowup" mutation(s) due to a deletion.
- By "blowup", I mean it removes substitutions and insertions if they're covered
- entirely by the deletion, and it merges any deletions that are contiguous.
- This function is designed to be used after `get_mut_`, and the output from that
- function should be the `mut_i` argument for this function.
- It is also designed for `calc_positions` to be used on `mut_i` afterward
- (bc this function alters `mut_i` to point to the position after the deletion),
- along with `size_mod` for the `modifier` argument
- (i.e., `calc_positions(mut_i, size_mod)`).
- Note that there's a check to ensure that this is never run when `mutations`
- is empty.
+ Inner function to get old position for deletion.
+ -------------------
  */
-void VarChrom::deletion_blowup_(uint64& mut_i,
-                                uint64& deletion_start,
-                                uint64& deletion_end,
-                                sint64& size_mod) {
+uint64 VarChrom::deletion_old_pos_(const uint64& deletion_start,
+                                    const uint64& deletion_end,
+                                    const uint64& mut_i) const {
+
+    if (mutations.new_pos[mut_i] == deletion_start) {
+        return mutations.old_pos[mut_i];
+    }
+    /*
+     This is for when the first mutation starts after the deletion but will be at
+     least partially removed by it.
+     */
+    if (mutations.new_pos[mut_i] > deletion_start) {
+        return deletion_start;
+    }
+
+    sint64 sm = size_modifier(mut_i);
+    // (below can overflow if sm < 0, but that's fine bc it won't be used in that case.)
+    uint64 mut_end = mutations.new_pos[mut_i] + sm;
+
+    // This works only for subs and deletions, plus for insertions that aren't overlapping
+    if (sm <= 0 || mut_end < deletion_start) {
+        uint64 old_pos = deletion_start - mutations.new_pos[mut_i] +
+            mutations.old_pos[mut_i] - sm;
+        return old_pos;
+    }
 
     /*
-     ---------
-     Taking care of the initial mutation pointed to:
-     ---------
+     This is true if the deletion...
+     (1) takes out the first chunk of the insertion but some inserted sequence remains
+     (2) takes out the whole insertion.
+     For (1), this value won't be used bc no extra mutation will be added.
+     For (2), this is the right value to use for the new mutation.
      */
-
-    /*
-     `mutations.size()` is returned from the `get_mut_` function if
-     `deletion_start` is before the first Mutation object.
-     */
-    if (mut_i == mutations.size()) {
-        mut_i = 0;
-        /*
-         If it's a substitution and has a position < the deletion starting point,
-         we can simply skip to the next one.
-         If they're equal, we don't iterate.
-         If it's > the deletion starting point, that should never happen if `get_mut_` is
-         working properly, so we return an error.
-         */
-    } else {
-        sint64 sm = size_modifier(mut_i);
-        if (sm == 0) {
-            if (mutations.new_pos[mut_i] < deletion_start) {
-                ++mut_i;
-            } else if (mutations.new_pos[mut_i] == deletion_start) {
-                ;
-            } else {
-                stop("Index problem in deletion_blowup_");
-            }
-            /*
-             If the first Mutation is an insertion, we may have to merge it with
-             this deletion, and this is done with `merge_del_ins_`.
-             This function will iterate to the next Mutation.
-             It also adjusts `size_mod` appropriately.
-             */
-        } else if (sm > 0) {
-            merge_del_ins_(mut_i, deletion_start, deletion_end, size_mod);
-            /*
-             If it's a deletion and next to the new deletion, we merge their information
-             before removing the old mutation.
-             (`remove_mutation_` automatically moves the index to the location
-             after the original.)
-
-             If it's not next to the new deletion, we just iterate to the next mutation.
-             */
-        } else {
-            if (mutations.new_pos[mut_i] == deletion_start) {
-                size_mod += sm;
-                remove_mutation_(mut_i);
-            } else ++mut_i;
-        }
+    if (deletion_start == mutations.new_pos[mut_i]) {
+        return mutations.old_pos[mut_i];
     }
 
 
     /*
-     ---------
-     Taking care of subsequent mutations:
-     ---------
+     This is true if the deletion...
+     (1) takes out a middle / ending chunk of the insertion but some inserted
+         sequence remains
+     (2) takes out an ending chunk of the insertion but some deletion remains
+     For (1), this value won't be used bc no extra mutation will be added.
+     For (2), this is the right value to use for the new mutation.
      */
+    return mutations.old_pos[mut_i] + 1;
 
-    /*
-     If `mut_i` no longer overlaps this deletion or if the deletion is gone (bc it
-     absorbed part/all of an insertion), return now.
-     (The first check is to prevent segfault when two deletions are the first
-     to be added to a mutations deque.)
-     */
-    if (mut_i < mutations.size()) {
-        if (mutations.new_pos[mut_i] > deletion_end || size_mod == 0) return;
-    }
-
-    /*
-     If there is overlap, then we delete a range of Mutation objects.
-     `mut_i` will point to the object after the last to be erased.
-     `range_begin` will point to the first object to be erased.
-     */
-    uint64 range_begin = mut_i;
-    while (mut_i < mutations.size()) {
-        if (mutations.new_pos[mut_i] > deletion_end) break;
-        sint64 sm = size_modifier(mut_i);
-        // For substitutions, do nothing before iterating
-        if (sm == 0) {
-            ++mut_i;
-            /*
-             For insertions, run `merge_del_ins_` to make sure that...
-             (1) any chromosome not overlapping the deletion is kept
-             (2) `size_mod` is adjusted properly
-             (3) insertions that are entirely overlapped by the deletion are erased
-             (4) `mut_i` is moved to the next Mutation
-             */
-        } else if (sm > 0) {
-            merge_del_ins_(mut_i, deletion_start, deletion_end, size_mod);
-            // as above, stop here if deletion is absorbed
-            if (size_mod == 0) return;
-            /*
-             For deletions, merge them with the current one
-             */
-        } else {
-            size_mod += sm;
-            ++mut_i;
-        }
-    }
-
-    // Remove all mutations in the specified range:
-    remove_mutation_(range_begin, mut_i);
-
-    // `mut_i` now points to the position AFTER the erasing.
-
-    return;
 }
 
 
 
-
-
 /*
- Inner function to merge an insertion and deletion.
- `insert_i` points to the focal insertion.
- Deletion start and end points are for the new, variant chromosome.
- `size_mod` is the size_modifier field for the Mutation object that will be
- created for the deletion. I change this value by the number of "virtual" nucleotides
- removed during this operation. Virtual nucleotides are the extra ones stored
- in an insertion's Mutation object (i.e., the ones other than the reference chromosome).
- `n_iters` is how many positions were moved during this function.
- It also moves the index to the next Mutation object.
- */
-void VarChrom::merge_del_ins_(uint64& insert_i,
-                              uint64& deletion_start,
-                              uint64& deletion_end,
-                              sint64& size_mod) {
+ -------------------
+ Inner function to adjust a single mutation for a deletion.
 
-    // The starting and ending positions of the focal insertion
-    uint64& insertion_start(mutations.new_pos[insert_i]);
-    uint64 insertion_end = insertion_start + size_modifier(insert_i);
+ This (1) adds indices for mutations that get removed because of this deletion,
+ (2) merges any deletions that are contiguous,
+ (3) edits insertions that are partially deleted, and
+ (4) adjusts `new_size_mod` to inform whether it's been absorbed by insertion(s).
+ -------------------
+ */
+void VarChrom::deletion_one_mut_(const uint64& mut_i,
+                                 const uint64& deletion_start,
+                                 const uint64& deletion_end,
+                                 const sint64& full_size_mod,
+                                 sint64& new_size_mod,
+                                 std::vector<uint64>& rm_inds) {
+
+    uint64& mut_pos(mutations.new_pos[mut_i]);
+
+    // If it's after (and not next to) the deletion, then adjust the new_pos and finish
+    if (mut_pos > (deletion_end + 1)) {
+        mut_pos += full_size_mod;
+        return;
+    }
+
+    sint64 sm = size_modifier(mut_i);
+
 
     /*
-     If the deletion doesn't overlap, move to the next Mutation
+     Substitutions
      */
-    if (deletion_start > insertion_end || deletion_end < insertion_start) {
-        ++insert_i;
+    if (sm == 0) {
+        // If it's immediately after the deletion, adjust new_pos and finish
+        if (mut_pos > deletion_end) {
+            mut_pos += full_size_mod;
+            return;
+        }
+        // If it's before the deletion, do nothing
+        if (mut_pos < deletion_start) return;
         /*
-         Else if the entire insertion is covered by the deletion, adjust size_mod and
-         remove the Mutation object for the insertion:
+         If neither of the above is true, there must be overlap, so we mark this
+         mutation for removal.
          */
-    } else if (deletion_start <= insertion_start && deletion_end >= insertion_end) {
-        size_mod += size_modifier(insert_i); // making it less negative
+        rm_inds.push_back(mut_i);
+        return;
+    }
+
+    /*
+     Insertions
+     */
+    if (sm > 0) {
+
+        // If it's immediately after the deletion, adjust new_pos and finish
+        if (mut_pos > deletion_end) {
+            mut_pos += full_size_mod;
+            return;
+        }
+
+        uint64 mut_end = mut_pos + sm;
+
+        if (mut_end < deletion_start) return;
+
+
         /*
-         Because we're deleting a mutation, `insert_i` refers to the next
-         object without us doing anything here.
+         If the entire insertion is covered by the deletion, adjust new_size_mod and
+         mark this mutation for removal.
          */
-        remove_mutation_(insert_i);
+        if (deletion_start <= mut_pos && deletion_end >= mut_end) {
+            new_size_mod += sm; // making it less negative
+            rm_inds.push_back(mut_i);
+            return;
+        }
+
         /*
-         Else if there is overlap, adjust the size_mod, remove that part of
-         the inserted chromosome, and adjust the insertion's size modifier:
+         Else if there is overlap, adjust the new_size_mod and remove that part of
+         the inserted chromosome:
          */
-    } else {
 
         // index for first char to erase from `nucleos`
-        sint64 tmp = deletion_start - insertion_start;
+        sint64 tmp = deletion_start - mut_pos;
         if (tmp < 0L) tmp = 0L;
         uint64 erase_ind0 = static_cast<uint64>(tmp);
         // index for last char NOT to erase from `nucleos`
-        uint64 erase_ind1 = deletion_end - insertion_start + 1;
+        uint64 erase_ind1 = deletion_end - mut_pos + 1;
         erase_ind1 = std::min(
             erase_ind1,
-            static_cast<uint64>(std::strlen(mutations.nucleos[insert_i]))
+            static_cast<uint64>(std::strlen(mutations.nucleos[mut_i]))
         );
-
-        // Adjust the size modifier for the eventual Mutation object
-        // for the deletion (making it less negative)
-        size_mod += (erase_ind1 - erase_ind0);
+        new_size_mod += (erase_ind1 - erase_ind0);
 
         /*
          Re-size nucleotides for this mutation.
          I'm doing this by making a std::string, resizing, then assinging it back
          to the `char*` object in `nucleos`
          */
-        std::string nts(mutations.nucleos[insert_i]);
+        std::string nts(mutations.nucleos[mut_i]);
         nts.erase(nts.begin() + erase_ind0, nts.begin() + erase_ind1);
         // delete and re-assign:
-        delete [] mutations.nucleos[insert_i];
-        mutations.nucleos[insert_i] = new char[nts.size() + 1];
-        std::strcpy(mutations.nucleos[insert_i], nts.c_str());
+        delete [] mutations.nucleos[mut_i];
+        mutations.nucleos[mut_i] = new char[nts.size() + 1];
+        std::strcpy(mutations.nucleos[mut_i], nts.c_str());
+
 
         /*
-         If this deletion removes the first part of the insertion but doesn't reach
-         the end of the insertion, we have to adjust this insertion's `new_pos` manually
-         and not iterate.
-
-         This is because this insertion's starting position is not affected by
-         the positions within this insertion that were removed.
-         (All subsequent mutations' starting positions are.)
-
-         Also, iterating will cause this mutation to be deleted.
+         Only adjust this insertion's `new_pos` if the deletion...
+         (1) removes the first part of the insertion
+         (2) does NOT reach the end of the insertion
+         (3) has a starting position before this insertion
          */
-        if (deletion_start <= insertion_start && deletion_end < insertion_end) {
-            mutations.new_pos[insert_i] += (erase_ind1 - erase_ind0);
-        } else {
-            ++insert_i;
+        if (deletion_start < mut_pos && deletion_end < mut_end) {
+            // mut_pos -= (erase_ind1 + erase_ind0);
+            mut_pos += (erase_ind1 - erase_ind0);
+            mut_pos += full_size_mod;
         }
+
+        return;
+
     }
 
-    return;
-}
+    /*
+     Deletions
+     */
 
+    // If it's before the deletion, do nothing
+    if (mut_pos < deletion_start) return;
 
-
-
-
-
-/*
- Inner function to remove Mutation.
- After this function, `mut_i` points to the next item or `mutations.size()`.
- If two indices are provided, the range of mutations are removed and each
- index now points to directly outside the range that was removed.
- If the removal occurs at the beginning of the mutations deque, then
- `mut_i == 0 && mut_i2 == 0` after this function is run.
- */
-void VarChrom::remove_mutation_(uint64& mut_i) {
-    if (mut_i == mutations.size()) return;
-    // erase:
-    mutations.erase(mut_i);
-    return;
-}
-void VarChrom::remove_mutation_(uint64& mut_i1, uint64& mut_i2) {
-
-    // erase range:
-    mutations.erase(mut_i1, mut_i2);
-
-    // reset indices:
-    if (mut_i1 > 0) {
-        mut_i2 = mut_i1;
-        mut_i1--;
-    } else {
-        mut_i1 = 0;
-        mut_i2 = 0;
-    }
+    /*
+     In any other situation, we merge the deletions' information and mark the
+     old one for removal.
+     */
+    new_size_mod += sm; // making it more negative
+    rm_inds.push_back(mut_i);
 
     return;
 }
+
+
+
+
+
 
 
 
