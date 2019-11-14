@@ -428,7 +428,7 @@ int fill_vcf_info(const std::string& fn,
         return EXIT_FAILURE;
     }
     chrom_names.reserve(n_chroms);
-    for (uint32 i = 0; i < n_chroms; i++) {
+    for (uint32 i = 0; i < static_cast<uint32>(n_chroms); i++) {
         chrom_names.push_back(std::string(c_names[i]));
     }
 
