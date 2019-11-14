@@ -660,15 +660,6 @@ void dup_var_set_vars(
  */
 
 
-// Turn a mutation into a List
-List conv_mut(const AllMutations& muts, const uint64& ind) {
-    List out = List::create(_["size_modifier"] = muts.size_modifier[ind],
-                            _["old_pos"] = muts.old_pos[ind],
-                            _["new_pos"] = muts.new_pos[ind],
-                            _["nucleos"] = std::string(muts.nucleos[ind]));
-    return out;
-}
-
 
 
 //' Turns a VarGenome's mutations into a list of data frames.
@@ -703,7 +694,7 @@ DataFrame view_mutations(SEXP var_set_ptr, const uint64& var_ind) {
         const VarChrom& var_chrom(var_genome.chromosomes[i]);
         uint64 n_muts_i = var_chrom.mutations.size();
         for (uint64 j = 0; j < n_muts_i; ++j) {
-            size_mod.push_back(var_chrom.mutations.size_modifier[j]);
+            size_mod.push_back(var_chrom.size_modifier(j));
             old_pos.push_back(var_chrom.mutations.old_pos[j]);
             new_pos.push_back(var_chrom.mutations.new_pos[j]);
             nucleos.push_back("");
@@ -754,7 +745,7 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& ch
     uint64 max_ins = 0;
     uint64 max_del = 0;
     for (uint64 i = 0; i < n_muts; i++) {
-        sint64 mi = var_chrom.mutations.size_modifier[i];
+        sint64 mi = var_chrom.size_modifier(i);
         if (mi == 0) continue;
         if (mi > 0) {
             if (mi > static_cast<sint64>(max_ins)) max_ins = mi;
@@ -771,7 +762,7 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& ch
 
         char c = (*(var_chrom.ref_chrom))[muts.old_pos[mut_i]];
         uint64 i = base_inds[static_cast<uint64>(c)];
-        sint64 smod = muts.size_modifier[mut_i];
+        sint64 smod = var_chrom.size_modifier(mut_i);
         if (smod == 0) {
             uint64 j = base_inds[static_cast<uint64>(muts.nucleos[mut_i][0])];
             sub_mat(i, j)++;

@@ -77,8 +77,8 @@ void OneVarChromVCF::check(const uint64& pos_start,
          are prevented)
          */
         if (mut_ind.second < (var_chrom->mutations.size() - 1) &&
-            var_chrom->mutations.size_modifier[mut_ind.second] >= 0) {
-            if (var_chrom->mutations.size_modifier[mut_ind.second + 1] < 0 &&
+            var_chrom->size_modifier(mut_ind.second) >= 0) {
+            if (var_chrom->size_modifier(mut_ind.second + 1) < 0 &&
                 var_chrom->mutations.old_pos[mut_ind.second + 1] ==
                 (var_chrom->mutations.old_pos[mut_ind.second] + 1)) {
                 mut_ind.second++;
@@ -134,9 +134,9 @@ void OneVarChromVCF::dump(std::vector<std::string>& unq_alts,
                     std::string("alt. string length of ") +
                     std::to_string(alt_str.size()));
             }
-            if (mutations.size_modifier[index] == 0) { // substitution
+            if (var_chrom->size_modifier(index) == 0) { // substitution
                 alt_str[pos] = mutations.nucleos[index][0];
-            } else if (mutations.size_modifier[index] > 0) { // insertion
+            } else if (var_chrom->size_modifier(index) > 0) { // insertion
                 // Copy so we can remove last nucleotide before inserting:
                 std::string nts(mutations.nucleos[index]);
                 alt_str[pos] = nts.back();
@@ -144,7 +144,7 @@ void OneVarChromVCF::dump(std::vector<std::string>& unq_alts,
                 alt_str.insert(pos, nts);  // inserts before `pos`
             } else {  // deletion
                 alt_str.erase(pos, static_cast<size_t>(
-                        std::abs(mutations.size_modifier[index])));
+                        std::abs(var_chrom->size_modifier(index))));
             }
         }
 
@@ -567,7 +567,7 @@ void add_vcf_mutations(VarSet& var_set,
                 for (uint64 i = 0; i < ref.size(); i++) {
                     if (alt[i] != ref[i]) {
                         new_pos = positions[mut_i] + i + size_mod;
-                        mutations.push_back(0, positions[mut_i] + i, new_pos, alt[i]);
+                        mutations.push_back(positions[mut_i] + i, new_pos, alt[i]);
                     }
                 }
             } else if (alt.size() > ref.size()) {
@@ -587,7 +587,7 @@ void add_vcf_mutations(VarSet& var_set,
                 for (; i < (ref.size()-1); i++) {
                     if (alt[i] != ref[i]) {
                         new_pos = positions[mut_i] + i + size_mod;
-                        mutations.push_back(0, positions[mut_i] + i, new_pos, alt_copy[i]);
+                        mutations.push_back(positions[mut_i] + i, new_pos, alt_copy[i]);
                     }
                 }
                 // Erase all the nucleotides that have already been added (if any):
@@ -597,7 +597,7 @@ void add_vcf_mutations(VarSet& var_set,
                  */
                 size_mod_i = alt_copy.size() - 1;
                 new_pos = positions[mut_i] + i + size_mod;
-                mutations.push_back(size_mod_i, positions[mut_i] + i, new_pos,
+                mutations.push_back(positions[mut_i] + i, new_pos,
                                     alt_copy.c_str());
                 size_mod += size_mod_i;
                 var_chrom.chrom_size += size_mod_i;
@@ -618,7 +618,7 @@ void add_vcf_mutations(VarSet& var_set,
                 for (; i < alt.size(); i++) {
                     if (alt[i] != ref[i]) {
                         new_pos = positions[mut_i] + i + size_mod;
-                        mutations.push_back(0, positions[mut_i] + i, new_pos, alt[i]);
+                        mutations.push_back(positions[mut_i] + i, new_pos, alt[i]);
                     }
                 }
 
@@ -626,7 +626,7 @@ void add_vcf_mutations(VarSet& var_set,
                     static_cast<sint64>(ref.size());
 
                 new_pos = positions[mut_i] + i + size_mod;
-                mutations.push_back(size_mod_i, positions[mut_i] + i, new_pos, nullptr);
+                mutations.push_back(positions[mut_i] + i, new_pos, nullptr);
                 size_mod += size_mod_i;
                 var_chrom.chrom_size += size_mod_i;
 

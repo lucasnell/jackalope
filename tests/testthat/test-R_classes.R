@@ -16,7 +16,6 @@ chroms <- jackalope:::rando_chroms(n_chroms, len, len_sd, pi_tcag = c(8, 4, 2, 1
 
 
 
-
 # reference basics -----
 
 test_that("Chromosomes from `create_genome` aren't very different from expectation.", {
@@ -134,6 +133,7 @@ ref <- ref_genome$new(jackalope:::make_ref_genome(chroms))
 # Create variants:
 phy <- ape::rcoal(n_vars)
 vars <- create_variants(ref, vars_phylo(phy), sub = sub_JC69(0.01))
+
 test_that("variants class starts with the correct fields", {
     expect_is(vars$ptr(), "externalptr")
 })
@@ -235,9 +235,7 @@ for (v in 1:n_vars) {
 }
 
 # Converting to list like vars_R:
-vars_cpp <- lapply(1:n_vars,
-                   function(v) sapply(1:n_chroms,
-                                      function(s) vars$chrom(v, s)))
+vars_cpp <- lapply(1:n_vars, function(v) sapply(1:n_chroms, function(s) vars$chrom(v, s)))
 
 test_that("Mutations produced are accurate", {
     expect_identical(vars_R, vars_cpp)
