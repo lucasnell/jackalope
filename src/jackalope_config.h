@@ -9,8 +9,8 @@
  */
 
 
-// Comment this out when done debugging:
-#define __JACKALOPE_DEBUG
+// // Comment this out when done debugging:
+// #define __JACKALOPE_DEBUG
 
 // // Comment this out when done with diagnostics:
 // #define __JACKALOPE_DIAGNOSTICS
