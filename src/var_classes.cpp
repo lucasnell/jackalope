@@ -30,24 +30,6 @@ using namespace Rcpp;
 
 
 
-inline char VarChrom::get_char_(const uint64& new_pos,
-                                const uint64& mut_i) const {
-    char out;
-    uint64 ind = new_pos - mutations.new_pos[mut_i];
-    if (static_cast<sint64>(ind) > size_modifier(mut_i)) {
-        ind += (mutations.old_pos[mut_i] - size_modifier(mut_i));
-        out = (*ref_chrom)[ind];
-    } else {
-        if (mutations.nucleos[mut_i] == nullptr) {
-            std::string err_msg = "mutations.nucleos[mut_i] == nullptr at ";
-            err_msg += std::to_string(mut_i);
-            stop(err_msg.c_str());
-        }
-        out = mutations.nucleos[mut_i][ind];
-    }
-    return out;
-}
-
 
 
 // `start` is inclusive
