@@ -58,15 +58,13 @@ const std::vector<std::string> mm_nucleos = {"CAG", "TAG", "TCG", "TCA", "NNN"};
 inline std::vector<uint64> reads_per_group(uint64 n_reads,
                                            std::vector<double> probs) {
 
-    std::vector<uint64> out;
+    std::vector<uint64> out(probs.size(), 0.0);
     if (n_reads == 0 || probs.size() == 0) return out;
 
     pcg64 eng = seeded_pcg();
 
     double sum_probs = std::accumulate(probs.begin(), probs.end(), 0.0);
     for (double& p : probs) p /= sum_probs;
-
-    out.reserve(probs.size());
 
     std::binomial_distribution<uint64> distr(n_reads, 0.5);
 
@@ -77,15 +75,12 @@ inline std::vector<uint64> reads_per_group(uint64 n_reads,
                 n_reads, probs[i]));
 
         // Sample from binomial distribution:
-        out.push_back(distr(eng));
+        out[i] = distr(eng);
 
         // Decrease `n_reads` based on # sampled:
-        n_reads -= out.back();
-        // If `n_reads` is zero, we can resize `out` and stop now:
-        if (n_reads == 0) {
-            out.resize(probs.size(), 0ULL);
-            break;
-        }
+        n_reads -= out[i];
+        // If `n_reads` is zero, we can stop now:
+        if (n_reads == 0) break;
 
         // Increase probabilities:
         sum_probs = 1 - probs[i];
@@ -102,11 +97,11 @@ inline std::vector<uint64> reads_per_group(uint64 n_reads,
 
 // Fill read from string rather than variant chromosome
 
-void fill_read__(const std::string& chrom,
-                 std::string& read,
-                 const uint64& read_start,
-                 const uint64& chrom_start,
-                 uint64 n_to_add) {
+inline void fill_read__(const std::string& chrom,
+                        std::string& read,
+                        const uint64& read_start,
+                        const uint64& chrom_start,
+                        uint64 n_to_add) {
 
     uint64 chrom_end = chrom_start + n_to_add - 1;
     // Making sure chrom_end doesn't go beyond the chromosome bounds
