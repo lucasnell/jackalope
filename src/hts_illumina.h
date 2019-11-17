@@ -352,7 +352,6 @@ public:
               }
               qual_errors = {IlluminaQualityError(qual_probs1, quals1),
                                    IlluminaQualityError(qual_probs2, quals2)};
-              construct_chroms();
               ins_probs[0] = ins_prob1;
               ins_probs[1] = ins_prob2;
               del_probs[0] = del_prob1;
@@ -385,7 +384,6 @@ public:
           frag_len_min(frag_len_min_),
           frag_len_max(frag_len_max_),
           constr_info(paired, read_length, barcode) {
-              construct_chroms();
               ins_probs[0] = ins_prob;
               del_probs[0] = del_prob;
           };
@@ -439,13 +437,6 @@ public:
     void re_read(const std::string& chrom, const uint64& chrom_i,
                  std::vector<U>& fastq_pools, pcg64& eng);
 
-    /*
-     Add information about a RefGenome or VarGenome object
-     This is used when making multiple samplers that share most info except for
-     that related to the chromosome object.
-     */
-    void add_chrom_info(const T& chrom_object, const std::string& barcode);
-
 
 
 
@@ -461,10 +452,6 @@ protected:
     IlluminaReadConstrInfo constr_info;
 
 
-    // Construct chromosome-sampling probabilities:
-    void construct_chroms();
-
-
     // Sample for insertion and deletion positions
     void sample_indels(pcg64& eng);
 
@@ -476,7 +463,7 @@ protected:
      Sample a chromosome, indels, fragment length, and starting position for the fragment.
      Lastly, it sets the chromosome spaces required for these reads.
      */
-    void chrom_indels_frag(bool& finished, pcg64& eng);
+    void chrom_indels_frag(pcg64& eng);
 
 
     /*
@@ -558,7 +545,7 @@ public:
           var_probs(variant_probs),
           var(0),
           chr(0),
-          var_chrom_seq(){
+          var_chrom_seq() {
 
         if (barcodes.size() < var_set.size()) barcodes.resize(var_set.size(), "");
 
@@ -663,65 +650,15 @@ public:
      */
     // If only providing rng and id info, sample for a variant, then make read(s):
     template <typename U>
-    void one_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng) {
+    void one_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
 
-        if (var == variants->size()) {
-            finished = true;
-            return;
-        }
-
-        if (n_reads_vc[var][chr] == 0 || var_chrom_seq.empty()) {
-
-            uint64 new_var = var;
-            uint64 new_chr = chr;
-            for (; new_var < n_reads_vc.size(); new_var++) {
-                while (n_reads_vc[new_var][new_chr] == 0) {
-                    new_chr++;
-                    if (new_chr == n_reads_vc[new_var].size()) break;
-                }
-                if (new_chr < n_reads_vc[new_var].size()) {
-                    break;
-                } else new_chr = 0;
-            }
-
-            var = new_var;
-            chr = new_chr;
-
-            if (var == variants->size())  {
-                finished = true;
-                return;
-            }
-
-            var_chrom_seq = (*variants)[var][chr].get_chrom_full();
-        }
-
-        read_makers[var].one_read<U>(var_chrom_seq, chr, fastq_pools, eng);
-
-        n_reads_vc[var][chr]--;
-        if (paired && n_reads_vc[var][chr] > 0) n_reads_vc[var][chr]--;
-
-        return;
-    }
     /*
      -------------
      `re_read` methods (for duplicates)
      -------------
      */
     template <typename U>
-    void re_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng) {
-
-        if (var == variants->size()) {
-            finished = true;
-            return;
-        }
-
-        read_makers[var].re_read<U>(var_chrom_seq, chr, fastq_pools, eng);
-
-        if (n_reads_vc[var][chr] > 0) n_reads_vc[var][chr]--;
-        if (paired && n_reads_vc[var][chr] > 0) n_reads_vc[var][chr]--;
-
-        return;
-    }
+    void re_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
 
 
 

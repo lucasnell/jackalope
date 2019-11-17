@@ -261,7 +261,12 @@ public:
         double dup = runif_01(eng);
         while (dup < prob_dup && reads_made < n_reads &&
                reads_in_pool < read_pool_size) {
-            read_filler->template re_read<std::vector<char>>(fastq_pools, eng);
+            read_filler->template re_read<std::vector<char>>(fastq_pools, finished, eng);
+            if (finished) {
+                reads_made = n_reads;
+                do_write = true;
+                return;
+            }
             reads_made += n_read_ends;
             reads_in_pool += n_read_ends;
             dup = runif_01(eng);
