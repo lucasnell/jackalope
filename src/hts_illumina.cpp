@@ -20,6 +20,8 @@
 #include "hts_illumina.h"  // Illumina-specific classes
 #include "str_manip.h"  // rev_comp
 #include "io.h"  // File* types
+#include "util.h"  // split_int
+
 
 using namespace Rcpp;
 
@@ -31,6 +33,7 @@ using namespace Rcpp;
 template <typename T>
 template <typename U>
 void IlluminaOneGenome<T>::one_read(std::vector<U>& fastq_pools,
+                                    bool& finished,
                                     pcg64& eng) {
 
     /*
@@ -44,6 +47,27 @@ void IlluminaOneGenome<T>::one_read(std::vector<U>& fastq_pools,
     return;
 }
 
+// Overloaded for when we input a variant chromosome stored as string
+template <typename T>
+template <typename U>
+void IlluminaOneGenome<T>::one_read(const std::string& chrom,
+                                    const uint64& chrom_i,
+                                    std::vector<U>& fastq_pools,
+                                    pcg64& eng) {
+
+    constr_info.chrom_ind = chrom_i;
+
+    /*
+     Sample indels, and set the chromosome space(s) required for these read(s).
+     */
+    indels_frag(eng);
+
+    // Fill the reads and qualities
+    append_pools<U>(chrom, fastq_pools, eng);
+
+    return;
+}
+
 /*
  Same as above, but for a duplicate. It's assumed that `one_read` has been
  run once before.
@@ -51,6 +75,7 @@ void IlluminaOneGenome<T>::one_read(std::vector<U>& fastq_pools,
 template <typename T>
 template <typename U>
 void IlluminaOneGenome<T>::re_read(std::vector<U>& fastq_pools,
+                                   bool& finished,
                                    pcg64& eng) {
 
     // Here I'm just re-doing indels bc it's a duplicate.
@@ -61,6 +86,23 @@ void IlluminaOneGenome<T>::re_read(std::vector<U>& fastq_pools,
 
     return;
 }
+template <typename T>
+template <typename U>
+void IlluminaOneGenome<T>::re_read(const std::string& chrom,
+                                   const uint64& chrom_i,
+                                   std::vector<U>& fastq_pools,
+                                   pcg64& eng) {
+
+    constr_info.chrom_ind = chrom_i;
+
+    // Here I'm just re-doing indels bc it's a duplicate.
+    just_indels(eng);
+
+    // Fill the reads and qualities
+    append_pools<U>(chrom, fastq_pools, eng);
+
+    return;
+}
 
 /*
  Add information about a RefGenome or VarGenome object
@@ -68,7 +110,8 @@ void IlluminaOneGenome<T>::re_read(std::vector<U>& fastq_pools,
  that related to the chromosome object.
  */
 template <typename T>
-void IlluminaOneGenome<T>::add_chrom_info(const T& chrom_object, const std::string& barcode) {
+void IlluminaOneGenome<T>::add_chrom_info(const T& chrom_object,
+                                          const std::string& barcode) {
 
     chrom_lengths = chrom_object.chrom_sizes();
     chromosomes = &chrom_object;
@@ -80,18 +123,6 @@ void IlluminaOneGenome<T>::add_chrom_info(const T& chrom_object, const std::stri
     return;
 }
 
-
-// Construct chromosome-sampling probabilities:
-template <typename T>
-void IlluminaOneGenome<T>::construct_chroms() {
-    std::vector<double> probs_;
-    probs_.reserve(chrom_lengths.size());
-    for (uint64 i = 0; i < chrom_lengths.size(); i++) {
-        probs_.push_back(static_cast<double>(chrom_lengths[i]));
-    }
-    chrom_sampler = AliasSampler(probs_);
-    return;
-}
 
 
 // Sample for insertion and deletion positions
@@ -171,14 +202,58 @@ void IlluminaOneGenome<T>::adjust_chrom_spaces() {
  Lastly, it sets the chromosome spaces required for these reads.
  */
 template <typename T>
-void IlluminaOneGenome<T>::chrom_indels_frag(pcg64& eng) {
+void IlluminaOneGenome<T>::chrom_indels_frag(bool& finished, pcg64& eng) {
 
     uint64& chrom_ind(constr_info.chrom_ind);
     uint64& frag_len(constr_info.frag_len);
     uint64& frag_start(constr_info.frag_start);
 
-    // Sample chromosome:
-    chrom_ind = chrom_sampler.sample(eng);
+    // Get chromosome:
+    chrom_ind = 0;
+    while (chrom_reads[chrom_ind] == 0) chrom_ind++;
+    if (chrom_ind == chromosomes->size())  {
+        finished = true;
+        return;
+    }
+    uint64 chrom_len = (*chromosomes)[chrom_ind].size();
+
+    // Sample fragment length:
+    frag_len = static_cast<uint64>(frag_lengths(eng));
+    if (frag_len < frag_len_min) frag_len = frag_len_min;
+    if (frag_len > frag_len_max) frag_len = frag_len_max;
+
+    // Sample fragment starting position:
+    if (frag_len >= chrom_len) {
+        frag_len = chrom_len;
+        frag_start = 0;
+    } else {
+        double u = runif_01(eng);
+        frag_start = static_cast<uint64>(u * (chrom_len - frag_len + 1));
+    }
+
+    // Sample indels:
+    sample_indels(eng);
+
+    // Adjust chromosome spaces:
+    adjust_chrom_spaces();
+
+    return;
+}
+
+
+
+/*
+ Sample indels, fragment length, and starting position for the fragment.
+ Lastly, it sets the chromosome spaces required for these reads.
+ This is for when the chromosome is already set.
+ */
+template <typename T>
+void IlluminaOneGenome<T>::indels_frag(pcg64& eng) {
+
+    uint64& chrom_ind(constr_info.chrom_ind);
+    uint64& frag_len(constr_info.frag_len);
+    uint64& frag_start(constr_info.frag_start);
+
     uint64 chrom_len = (*chromosomes)[chrom_ind].size();
 
     // Sample fragment length:
@@ -206,7 +281,7 @@ void IlluminaOneGenome<T>::chrom_indels_frag(pcg64& eng) {
 
 
 /*
- Same as above, but for duplicates.
+ Same as `chrom_indels_frag` above, but for duplicates.
  This means skipping the chromosome and fragment info parts.
  */
 template <typename T>
@@ -220,6 +295,51 @@ void IlluminaOneGenome<T>::just_indels(pcg64& eng) {
 
     return;
 }
+
+
+template <typename U>
+void fill_fq_lines(U& fq_pool,
+                   const std::string& name,
+                   const std::string& chrom_name,
+                   const std::string& read,
+                   const std::string& qual,
+                   const uint64& i,
+                   const uint64& start,
+                   const bool& paired,
+                   bool& reverse) {
+
+    // Combine into 4 lines of output per read:
+    // ID line:
+    fq_pool.push_back('@');
+    for (const char& c : name) fq_pool.push_back(c);
+    fq_pool.push_back('-');
+    for (const char& c : chrom_name) fq_pool.push_back(c);
+    fq_pool.push_back('-');
+    for (const char& c : std::to_string(start)) fq_pool.push_back(c);
+    fq_pool.push_back('-');
+    if (reverse) {
+        fq_pool.push_back('R');
+    } else fq_pool.push_back('F');
+    if (paired) {
+        fq_pool.push_back('/');
+        for (const char& c : std::to_string(i+1)) fq_pool.push_back(c);
+    }
+    fq_pool.push_back('\n');
+    // The rest:
+    for (const char& c : read) fq_pool.push_back(c);
+    fq_pool.push_back('\n');
+    fq_pool.push_back('+');
+    fq_pool.push_back('\n');
+    for (const char& c : qual) fq_pool.push_back(c);
+    fq_pool.push_back('\n');
+
+    // If doing paired reads, the second one should be the reverse of the first
+    reverse = !reverse;
+
+    return;
+
+}
+
 
 
 
@@ -288,33 +408,88 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
         // Sample mapping quality and add errors to read:
         qual_errors[i].fill_read_qual(read, qual, insertions[i], deletions[i], eng);
 
-        // Combine into 4 lines of output per read:
-        // ID line:
-        fastq_pools[i].push_back('@');
-        for (const char& c : name) fastq_pools[i].push_back(c);
-        fastq_pools[i].push_back('-');
-        for (const char& c : (*chromosomes)[chrom_ind].name) fastq_pools[i].push_back(c);
-        fastq_pools[i].push_back('-');
-        for (const char& c : std::to_string(start)) fastq_pools[i].push_back(c);
-        fastq_pools[i].push_back('-');
-        if (reverse) {
-            fastq_pools[i].push_back('R');
-        } else fastq_pools[i].push_back('F');
-        if (paired) {
-            fastq_pools[i].push_back('/');
-            for (const char& c : std::to_string(i+1)) fastq_pools[i].push_back(c);
-        }
-        fastq_pools[i].push_back('\n');
-        // The rest:
-        for (const char& c : read) fastq_pools[i].push_back(c);
-        fastq_pools[i].push_back('\n');
-        fastq_pools[i].push_back('+');
-        fastq_pools[i].push_back('\n');
-        for (const char& c : qual) fastq_pools[i].push_back(c);
-        fastq_pools[i].push_back('\n');
+        std::string chrom_name = (*chromosomes)[chrom_ind].name;
 
-        // If doing paired reads, the second one should be the reverse of the first
-        reverse = !reverse;
+        // Combine into 4 lines of output per read, and add to `fastq_pools[i]`
+        fill_fq_lines<U>(fastq_pools[i], name, chrom_name, read, qual, i, start,
+                         paired, reverse);
+
+    }
+
+    if (chrom_reads[constr_info.chrom_ind] < n_read_ends) {
+        chrom_reads[constr_info.chrom_ind] = 0;
+    } else chrom_reads[constr_info.chrom_ind] -= n_read_ends;
+
+    return;
+}
+
+// Overloaded for when a variant chromosome sequence is provided
+template <typename T>
+template <typename U>
+void IlluminaOneGenome<T>::append_pools(const std::string& chrom,
+                                        std::vector<U>& fastq_pools,
+                                        pcg64& eng) {
+
+    uint64 n_read_ends = ins_probs.size();
+    if (fastq_pools.size() != n_read_ends) fastq_pools.resize(n_read_ends);
+
+    const std::string& barcode(constr_info.barcode);
+    const std::vector<uint64>& read_chrom_spaces(constr_info.read_chrom_spaces);
+
+    // Just making this reference to keep lines from getting very long.
+    const uint64& chrom_ind(constr_info.chrom_ind);
+
+    // Boolean for whether we take the reverse side first:
+    bool reverse = runif_01(eng) < 0.5;
+    for (uint64 i = 0; i < n_read_ends; i++) {
+        std::string& read(constr_info.reads[i]);
+        std::string& qual(constr_info.quals[i]);
+
+        // Read starting location depends on if mate-pair and if reverse strand:
+        uint64 start;
+        if ((!matepair && !reverse) || (matepair && reverse)) {
+            start = constr_info.frag_start;
+        } else {
+            start = constr_info.frag_start + constr_info.frag_len -
+                read_chrom_spaces[i];
+        }
+
+        /*
+         Filling `read` only depends on whether it's the reverse strand:
+        */
+        if (!reverse) {
+
+            // Fill in read starting with position after barcode:
+            fill_read__(chrom, read, barcode.size(), start, read_chrom_spaces[i]);
+            // `fill_read__` fxn found in hts.h
+
+
+        } else {
+            /*
+             If doing reverse, we can add the actual chromosome to the front of the
+             read instead of starting at `barcode.size()`.
+
+             (Even though `rev_comp` requires only T, C, A, G, or N characters,
+             `read` should already have filler 'N' chars present at initialization
+             of the `constr_info` field, so no need to add any now.)
+             */
+            fill_read__(chrom, read, 0, start, read_chrom_spaces[i]);
+
+            // Now do reverse complement:
+            rev_comp(read);
+        }
+
+        // Now fill barcode:
+        for (uint64 i = 0; i < barcode.size(); i++) read[i] = barcode[i];
+
+        // Sample mapping quality and add errors to read:
+        qual_errors[i].fill_read_qual(read, qual, insertions[i], deletions[i], eng);
+
+        std::string chrom_name = (*chromosomes)[chrom_ind].name;
+
+        // Combine into 4 lines of output per read, and add to `fastq_pools[i]`
+        fill_fq_lines<U>(fastq_pools[i], name, chrom_name, read, qual, i, start,
+                         paired, reverse);
 
     }
 
@@ -377,6 +552,7 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
                       const std::vector<std::string>& barcodes) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
+
     IlluminaReference read_filler_base;
 
     uint64 n_read_ends;
@@ -454,7 +630,9 @@ void illumina_var_cpp(SEXP var_set_ptr,
     IlluminaVariants read_filler_base;
 
     uint64 n_read_ends;
+
     if (paired) {
+
         n_read_ends = 2;
         read_filler_base = IlluminaVariants(*var_set, variant_probs,
                                             matepair,
@@ -463,13 +641,16 @@ void illumina_var_cpp(SEXP var_set_ptr,
                                             qual_probs1, quals1, ins_prob1, del_prob1,
                                             qual_probs2, quals2, ins_prob2, del_prob2,
                                             barcodes);
+
     } else {
+
         n_read_ends = 1;
         read_filler_base = IlluminaVariants(*var_set, variant_probs,
                                             frag_len_shape, frag_len_scale,
                                             frag_len_min, frag_len_max,
                                             qual_probs1, quals1, ins_prob1, del_prob1,
                                             barcodes);
+
     }
 
     // For doing multithreaded compression after initial uncompressed run:
