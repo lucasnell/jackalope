@@ -422,8 +422,6 @@ class PacBioOneGenome {
 public:
 
     /* __ Samplers __ */
-    // Samples index for which genome-chromosome to chromosome
-    AliasSampler chrom_sampler;
     // Samples read lengths:
     PacBioReadLenSampler len_sampler;
     // Samples numbers of passes over read:
@@ -433,6 +431,7 @@ public:
 
 
     /* __ Info __ */
+    std::vector<uint64> chrom_reads;      // # reads per chromosome
     std::vector<uint64> chrom_lengths;    // genome-chromosome lengths
     const T* chromosomes;                 // pointer to `const T`
     std::string name;
@@ -454,16 +453,15 @@ public:
                     const double& prob_ins_,
                     const double& prob_del_,
                     const double& prob_subst_)
-        : chrom_sampler(),
-          len_sampler(scale_, sigma_, loc_, min_read_len_),
+        : len_sampler(scale_, sigma_, loc_, min_read_len_),
           pass_sampler(max_passes_, chi2_params_n_, chi2_params_s_),
           qe_sampler(sqrt_params_, norm_params_, prob_thresh_, prob_ins_,
           prob_del_, prob_subst_),
+          chrom_reads(),
           chrom_lengths(chrom_object.chrom_sizes()),
           chromosomes(&chrom_object),
-          name(chrom_object.name) {
-        construct_chroms();
-    };
+          name(chrom_object.name) {};
+
     // Using vectors of read lengths and sampling weight for read lengths:
     PacBioOneGenome(const T& chrom_object,
                     const std::vector<double>& read_probs_,
@@ -477,50 +475,51 @@ public:
                     const double& prob_ins_,
                     const double& prob_del_,
                     const double& prob_subst_)
-        : chrom_sampler(),
-          len_sampler(read_probs_, read_lens_),
+        : len_sampler(read_probs_, read_lens_),
           pass_sampler(max_passes_, chi2_params_n_, chi2_params_s_),
           qe_sampler(sqrt_params_, norm_params_, prob_thresh_, prob_ins_,
           prob_del_, prob_subst_),
+          chrom_reads(),
           chrom_lengths(chrom_object.chrom_sizes()),
           chromosomes(&chrom_object),
-          name(chrom_object.name) {
-        construct_chroms();
-    };
+          name(chrom_object.name) {};
 
     PacBioOneGenome(const PacBioOneGenome& other)
-        : chrom_sampler(other.chrom_sampler),
-          len_sampler(other.len_sampler),
+        : len_sampler(other.len_sampler),
           pass_sampler(other.pass_sampler),
           qe_sampler(other.qe_sampler),
+          chrom_reads(other.chrom_reads),
           chrom_lengths(other.chrom_lengths),
           chromosomes(other.chromosomes),
           name(other.name) {};
 
 
+
+    void add_n_reads(const uint64& n_reads) {
+
+        std::vector<double> probs_(chrom_lengths.begin(), chrom_lengths.end());
+        chrom_reads = reads_per_group(n_reads, probs_);
+
+        return;
+    }
+
     // Add one read string (with 4 lines: ID, chromosome, "+", quality) to a FASTQ pool
     // `U` should be a std::string or std::vector<char>
     template <typename U>
-    void one_read(std::vector<U>& fastq_pools, pcg64& eng);
+    void one_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
+    // Overloaded for when we input a variant chromosome stored as string
+    template <typename U>
+    void one_read(const std::string& chrom, const uint64& chrom_i,
+                  std::vector<U>& fastq_pools, pcg64& eng);
     /*
      Same as above, but for a duplicate. It's assumed that `one_read` has been
      run once before.
      */
     template <typename U>
-    void re_read(std::vector<U>& fastq_pools, pcg64& eng);
-
-
-    /*
-     Add information about a RefGenome or VarGenome object
-     This is used when making multiple samplers that share most info except for
-     that related to the chromosome object.
-     */
-    void add_chrom_info(const T& chrom_object) {
-        chrom_lengths = chrom_object.chrom_sizes();
-        chromosomes = &chrom_object;
-        name = chrom_object.name;
-        construct_chroms();
-    }
+    void re_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
+    template <typename U>
+    void re_read(const std::string& chrom, const uint64& chrom_i,
+                 std::vector<U>& fastq_pools, pcg64& eng);
 
 
 private:
@@ -547,19 +546,11 @@ private:
     uint64 read_length = 0;
     uint64 read_start = 0;
 
-    // Construct chromosome-sampling probabilities:
-    void construct_chroms() {
-        std::vector<double> probs_;
-        probs_.reserve(chrom_lengths.size());
-        for (uint64 i = 0; i < chrom_lengths.size(); i++) {
-            probs_.push_back(static_cast<double>(chrom_lengths[i]));
-        }
-        chrom_sampler = AliasSampler(probs_);
-    }
-
     // Append quality and read to fastq pool
     template <typename U>
     void append_pool(U& fastq_pool, pcg64& eng);
+    template <typename U>
+    void append_pool(const std::string& chrom, U& fastq_pool, pcg64& eng);
 
 
 };
@@ -580,8 +571,9 @@ class PacBioVariants {
 public:
 
     const VarSet* variants;                         // pointer to `const VarSet`
-    AliasSampler variant_sampler;                   // chooses which variant to use
+    std::vector<std::vector<uint64>> n_reads_vc;    // # reads per variant and chromosome
     std::vector<PacBioOneVariant> read_makers;      // makes PacBio reads
+    std::vector<double> var_probs;                  // probs of sampling variants
 
     /* Initializers */
     PacBioVariants() : variants(nullptr) {};
@@ -602,13 +594,28 @@ public:
                    const double& prob_del_,
                    const double& prob_subst_)
         : variants(&var_set),
-          variant_sampler(variant_probs),
-          read_makers(1, PacBioOneVariant(var_set[0],
-                                          scale_, sigma_, loc_, min_read_len_,
-                                          max_passes_, chi2_params_n_, chi2_params_s_,
-                                          sqrt_params_, norm_params_, prob_thresh_,
-                                          prob_ins_, prob_del_, prob_subst_)) {
-        construct_makers();
+          n_reads_vc(),
+          read_makers(),
+          var_probs(variant_probs),
+          var(0),
+          chr(0),
+          var_chrom_seq() {
+
+        /*
+         Fill `read_makers` field:
+         */
+        uint64 n_vars = variants->size();
+        read_makers.reserve(n_vars);
+        for (uint64 i = 0; i < n_vars; i++) {
+            read_makers.push_back(
+                PacBioOneVariant(var_set[i],
+                                 scale_, sigma_, loc_, min_read_len_,
+                                 max_passes_, chi2_params_n_, chi2_params_s_,
+                                 sqrt_params_, norm_params_, prob_thresh_,
+                                 prob_ins_, prob_del_, prob_subst_)
+            );
+        }
+
     };
     // Using vectors of read lengths and sampling weight for read lengths:
     PacBioVariants(const VarSet& var_set,
@@ -625,62 +632,85 @@ public:
                    const double& prob_del_,
                    const double& prob_subst_)
         : variants(&var_set),
-          variant_sampler(variant_probs),
-          read_makers(1, PacBioOneVariant(var_set[0],
-                                          read_probs_, read_lens_,
-                                          max_passes_, chi2_params_n_, chi2_params_s_,
-                                          sqrt_params_, norm_params_, prob_thresh_,
-                                          prob_ins_, prob_del_, prob_subst_)) {
-        construct_makers();
+          n_reads_vc(),
+          read_makers(),
+          var_probs(variant_probs),
+          var(0),
+          chr(0),
+          var_chrom_seq() {
+
+        /*
+         Fill `read_makers` field:
+         */
+        uint64 n_vars = variants->size();
+        read_makers.reserve(n_vars);
+        for (uint64 i = 0; i < n_vars; i++) {
+            read_makers.push_back(
+                PacBioOneVariant(var_set[i],
+                                 read_probs_, read_lens_,
+                                 max_passes_, chi2_params_n_, chi2_params_s_,
+                                 sqrt_params_, norm_params_, prob_thresh_,
+                                 prob_ins_, prob_del_, prob_subst_)
+            );
+        }
+
     };
+
     // Copy constructor
     PacBioVariants(const PacBioVariants& other)
         : variants(other.variants),
-          variant_sampler(other.variant_sampler),
-          read_makers(other.read_makers) {};
+          n_reads_vc(other.n_reads_vc),
+          read_makers(other.read_makers),
+          var_probs(other.var_probs),
+          var(other.var),
+          chr(other.chr),
+          var_chrom_seq(other.var_chrom_seq) {};
 
 
-    /*
-     -------------
-     `one_read` methods
-     -------------
-     */
-    // If only providing rng and id info, sample for a variant, then make read(s):
-    template <typename U>
-    void one_read(std::vector<U>& fastq_pools, pcg64& eng) {
-        var = variant_sampler.sample(eng);
-        read_makers[var].one_read<U>(fastq_pools, eng);
+    // Add info on # reads
+    void add_n_reads(const uint64& n_reads) {
+
+        uint64 n_vars = variants->size();
+
+        // split # reads by variant
+        std::vector<uint64> var_reads = reads_per_group(n_reads, var_probs);
+        // splitting by chromosome, too:
+        for (uint64 v = 0; v < n_vars; v++) {
+            std::vector<double> chrom_probs;
+            for (const VarChrom& vc : (*variants)[v].chromosomes) {
+                chrom_probs.push_back(vc.size());
+            }
+            n_reads_vc.push_back(reads_per_group(var_reads[v], chrom_probs));
+        }
+
+        // Fill `read_makers` field:
+        for (uint64 i = 0; i < n_vars; i++) {
+            read_makers[i].add_n_reads(var_reads[i]);
+        }
+
         return;
     }
-    /*
-     -------------
-     `re_read` methods (for duplicates)
-    -------------
-    */
+
+
+
+    // `one_read` method
     template <typename U>
-    void re_read(std::vector<U>& fastq_pools, pcg64& eng) {
-        read_makers[var].re_read<U>(fastq_pools, eng);
-        return;
-    }
+    void one_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
+    // `re_read` method (for duplicates)
+    template <typename U>
+    void re_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
 
 
 
 private:
 
-    // Variant to sample from. It's saved in this class in case of duplicates.
+    // Variant to create read from.
     uint64 var;
+    // Chromosome to create read from.
+    uint64 chr;
+    // String for variant chromosome. It's saved to make things faster.
+    std::string var_chrom_seq;
 
-    // Construct read_makers field if the first item in that vector has been filled out
-    void construct_makers() {
-        uint64 n_vars = variants->size();
-        read_makers.reserve(n_vars);
-        for (uint64 i = 1; i < n_vars; i++) {
-            // Add read maker for the first variant:
-            read_makers.push_back(read_makers[0]);
-            // Now update it for the correct VarGenome info:
-            read_makers[i].add_chrom_info((*variants)[i]);
-        }
-    }
 
 };
 

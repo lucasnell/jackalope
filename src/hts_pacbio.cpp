@@ -134,6 +134,7 @@ void PacBioQualityError::update_probs(pcg64& eng,
 template <typename T>
 template <typename U>
 void PacBioOneGenome<T>::one_read(std::vector<U>& fastq_pools,
+                                  bool& finished,
                                   pcg64& eng) {
 
     U& fastq_pool(fastq_pools[0]);
@@ -141,8 +142,14 @@ void PacBioOneGenome<T>::one_read(std::vector<U>& fastq_pools,
     /*
     Sample read info, and set the chromosome space(s) required for these read(s).
     */
-    // Sample chromosome:
-    chrom_ind = chrom_sampler.sample(eng);
+    // Get chromosome:
+    chrom_ind = 0;
+    while (chrom_ind < chrom_reads.size() && chrom_reads[chrom_ind] == 0) chrom_ind++;
+    if (chrom_ind == chrom_reads.size()) {
+        finished = true;
+        return;
+    }
+
     uint64 chrom_len = (*chromosomes)[chrom_ind].size();
 
     // Sample read length:
@@ -180,11 +187,64 @@ void PacBioOneGenome<T>::one_read(std::vector<U>& fastq_pools,
     return;
 }
 
+// Overloaded for when we input a variant chromosome stored as string
+template <typename T>
+template <typename U>
+void PacBioOneGenome<T>::one_read(const std::string& chrom,
+                                  const uint64& chrom_i,
+                                  std::vector<U>& fastq_pools,
+                                  pcg64& eng) {
+
+    U& fastq_pool(fastq_pools[0]);
+
+    chrom_ind = chrom_i;
+
+    uint64 chrom_len = (*chromosomes)[chrom_ind].size();
+
+    // Sample read length:
+    read_length = len_sampler.sample(eng);
+    if (read_length >= chrom_len) read_length = chrom_len;
+
+    // Sample for # passes over read:
+    pass_sampler.sample(split_pos, passes_left, passes_right, eng, read_length);
+
+    // Sample for errors and qualities:
+    qe_sampler.sample(eng, qual_left, qual_right, insertions, deletions, substitutions,
+                      chrom_len, read_length, split_pos, passes_left, passes_right);
+
+    /*
+     The amount of space on the reference/variant chromosome needed to create this read.
+     I'm adding deletions because more deletions mean that I need
+     more chromosome bases to achieve the same read length.
+     Insertions means I need fewer.
+     */
+    read_chrom_space = read_length + deletions.size() - insertions.size();
+
+    // Sample read starting position:
+    if (read_chrom_space < chrom_len) {
+        double u = runif_01(eng);
+        read_start = static_cast<uint64>(u * (chrom_len - read_chrom_space + 1));
+    } else if (read_chrom_space == chrom_len) {
+        read_start = 0;
+    } else {
+        stop("read_chrom_space should never exceed the chromosome length.");
+    }
+
+    // Fill the reads and qualities
+    append_pool<U>(chrom, fastq_pool, eng);
+
+    return;
+}
+
+
+
+
 
 
 template <typename T>
 template <typename U>
 void PacBioOneGenome<T>::re_read(std::vector<U>& fastq_pools,
+                                 bool& finished,
                                  pcg64& eng) {
 
     U& fastq_pool(fastq_pools[0]);
@@ -227,6 +287,60 @@ void PacBioOneGenome<T>::re_read(std::vector<U>& fastq_pools,
 
     return;
 }
+
+
+
+
+template <typename T>
+template <typename U>
+void PacBioOneGenome<T>::re_read(const std::string& chrom,
+                                 const uint64& chrom_i,
+                                 std::vector<U>& fastq_pools,
+                                 pcg64& eng) {
+
+    U& fastq_pool(fastq_pools[0]);
+
+    chrom_ind = chrom_i;
+
+    /*
+     Use the same read info as before.
+     */
+    uint64 chrom_len = (*chromosomes)[chrom_ind].size();
+
+    // Sample for # passes over read:
+    pass_sampler.sample(split_pos, passes_left, passes_right, eng, read_length);
+
+    // Sample for errors and qualities:
+    qe_sampler.sample(eng, qual_left, qual_right, insertions, deletions, substitutions,
+                      chrom_len, read_length, split_pos, passes_left, passes_right);
+
+    /*
+     The amount of space on the reference/variant chromosome needed to create this read.
+     I'm adding deletions because more deletions mean that I need
+     more chromosome bases to achieve the same read length.
+     Insertions means I need fewer.
+     */
+    read_chrom_space = read_length + deletions.size() - insertions.size();
+
+    /*
+     In the very rare situation where a duplication occurs, then enough deletions
+     happen where the required chromosome space exceeds what's available, I'm going
+     to remove deletions until we have enough room.
+     */
+    while ((read_chrom_space + read_start) > chrom_len) {
+        if (deletions.empty()) break;
+        deletions.pop_back();
+        read_chrom_space--;
+    }
+    // If that still doesn't work, I give up on the duplicate.
+    if ((read_chrom_space + read_start) > chrom_len) return;
+
+    // Fill the reads and qualities
+    append_pool<U>(chrom, fastq_pool, eng);
+
+    return;
+}
+
 
 
 
@@ -298,6 +412,145 @@ void PacBioOneGenome<T>::append_pool(U& fastq_pool, pcg64& eng) {
 
     return;
 }
+
+
+template <typename T>
+template <typename U>
+void PacBioOneGenome<T>::append_pool(const std::string& chrom,
+                                     U& fastq_pool,
+                                     pcg64& eng) {
+
+    // Make sure it has enough memory reserved:
+    fastq_pool.reserve(fastq_pool.size() + read_length * 3 + 10);
+
+    // Boolean for whether we take the reverse side:
+    bool reverse = runif_01(eng) < 0.5;
+
+    // ID line:
+    fastq_pool.push_back('@');
+    for (const char& c : name) fastq_pool.push_back(c);
+    fastq_pool.push_back('-');
+    for (const char& c : (*chromosomes)[chrom_ind].name) fastq_pool.push_back(c);
+    fastq_pool.push_back('-');
+    for (const char& c : std::to_string(read_start)) fastq_pool.push_back(c);
+    fastq_pool.push_back('-');
+    if (reverse) {
+        fastq_pool.push_back('R');
+    } else fastq_pool.push_back('F');
+    fastq_pool.push_back('\n');
+
+    // Fill in read:
+    fill_read__(chrom, read, 0, read_start, read_chrom_space);
+
+    // Reverse complement if necessary:
+    if (reverse) rev_comp(read, read_chrom_space);
+
+    /*
+     Adding read with errors:
+     */
+    uint64 read_pos = 0;
+    uint64 current_length = 0;
+    uint64 rndi;
+    while (current_length < read_length) {
+        if (!insertions.empty() && read_pos == insertions.front()) {
+            rndi = static_cast<uint64>(runif_01(eng) * 4);
+            fastq_pool.push_back(read[read_pos]);
+            fastq_pool.push_back(jlp::bases[rndi]);
+            insertions.pop_front();
+            current_length += 2;
+        } else if (!deletions.empty() && read_pos == deletions.front()) {
+            deletions.pop_front();
+        } else if (!substitutions.empty() && read_pos == substitutions.front()) {
+            rndi = static_cast<uint64>(runif_01(eng) * 3);
+            fastq_pool.push_back(mm_nucleos[nt_map[read[read_pos]]][rndi]);
+            substitutions.pop_front();
+            current_length++;
+        } else {
+            fastq_pool.push_back(read[read_pos]);
+            current_length++;
+        }
+        read_pos++;
+    }
+
+    fastq_pool.push_back('\n');
+    fastq_pool.push_back('+');
+    fastq_pool.push_back('\n');
+
+    // Adding qualities:
+    for (uint64 i = 0; i < split_pos; i++) fastq_pool.push_back(qual_left);
+    for (uint64 i = split_pos; i < read_length; i++) fastq_pool.push_back(qual_right);
+    fastq_pool.push_back('\n');
+
+    return;
+}
+
+
+
+
+
+
+// `one_read` method
+template <typename U>
+void PacBioVariants::one_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng) {
+
+
+    if (var == variants->size()) {
+        finished = true;
+        return;
+    }
+
+    if (n_reads_vc[var][chr] == 0 || var_chrom_seq.empty()) {
+
+        uint64 new_var = var;
+        uint64 new_chr = chr;
+        for (; new_var < n_reads_vc.size(); new_var++) {
+            while (n_reads_vc[new_var][new_chr] == 0) {
+                new_chr++;
+                if (new_chr == n_reads_vc[new_var].size()) break;
+            }
+            if (new_chr < n_reads_vc[new_var].size()) {
+                break;
+            } else new_chr = 0;
+        }
+
+        var = new_var;
+        chr = new_chr;
+
+        if (var == variants->size())  {
+            finished = true;
+            return;
+        }
+
+        var_chrom_seq = (*variants)[var][chr].get_chrom_full();
+    }
+
+    read_makers[var].one_read<U>(var_chrom_seq, chr, fastq_pools, eng);
+
+    n_reads_vc[var][chr]--;
+
+    return;
+
+}
+
+
+// `re_read` method (for duplicates)
+template <typename U>
+void PacBioVariants::re_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng) {
+
+    if (var == variants->size()) {
+        finished = true;
+        return;
+    }
+
+    read_makers[var].re_read<U>(var_chrom_seq, chr, fastq_pools, eng);
+
+    if (n_reads_vc[var][chr] > 0) n_reads_vc[var][chr]--;
+
+    return;
+
+}
+
+
 
 
 

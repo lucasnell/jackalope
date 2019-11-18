@@ -295,8 +295,6 @@ class IlluminaOneGenome {
 public:
 
     /* __ Samplers __ */
-    // Samples index for which genome-chromosome to chromosome
-    AliasSampler chrom_sampler;
     // Samples Illumina qualities and errors, one `IlluminaQualityError` for each read
     std::vector<IlluminaQualityError> qual_errors;
     // Samples fragment lengths:
@@ -304,8 +302,9 @@ public:
 
 
     /* __ Info __ */
-    std::vector<uint64> chrom_lengths;    // genome-chromosome lengths
-    const T* chromosomes;                 // pointer to `const T`
+    std::vector<uint64> chrom_reads;    // # reads per chromosome
+    std::vector<uint64> chrom_lengths;  // genome-chromosome lengths
+    const T* chromosomes;               // pointer to `const T`
     uint64 read_length;                 // Length of reads
     bool paired;                        // Boolean for whether to do paired-end reads
     bool matepair;                      // Boolean for whether to do mate-pair reads
@@ -330,9 +329,9 @@ public:
                       const double& ins_prob2,
                       const double& del_prob2,
                       const std::string& barcode)
-        : chrom_sampler(),
-          qual_errors(),
+        : qual_errors(),
           frag_lengths(frag_len_shape, frag_len_scale),
+          chrom_reads(),
           chrom_lengths(chrom_object.chrom_sizes()),
           chromosomes(&chrom_object),
           read_length(qual_probs1[0].size()),
@@ -353,7 +352,6 @@ public:
               }
               qual_errors = {IlluminaQualityError(qual_probs1, quals1),
                                    IlluminaQualityError(qual_probs2, quals2)};
-              construct_chroms();
               ins_probs[0] = ins_prob1;
               ins_probs[1] = ins_prob2;
               del_probs[0] = del_prob1;
@@ -370,9 +368,9 @@ public:
                       const double& ins_prob,
                       const double& del_prob,
                       const std::string& barcode)
-        : chrom_sampler(),
-          qual_errors{IlluminaQualityError(qual_probs, quals)},
+        : qual_errors{IlluminaQualityError(qual_probs, quals)},
           frag_lengths(frag_len_shape, frag_len_scale),
+          chrom_reads(),
           chrom_lengths(chrom_object.chrom_sizes()),
           chromosomes(&chrom_object),
           read_length(qual_probs[0].size()),
@@ -386,15 +384,14 @@ public:
           frag_len_min(frag_len_min_),
           frag_len_max(frag_len_max_),
           constr_info(paired, read_length, barcode) {
-              construct_chroms();
               ins_probs[0] = ins_prob;
               del_probs[0] = del_prob;
           };
 
     IlluminaOneGenome(const IlluminaOneGenome& other)
-        : chrom_sampler(other.chrom_sampler),
-          qual_errors(other.qual_errors),
+        : qual_errors(other.qual_errors),
           frag_lengths(other.frag_lengths),
+          chrom_reads(other.chrom_reads),
           chrom_lengths(other.chrom_lengths),
           chromosomes(other.chromosomes),
           read_length(other.read_length),
@@ -410,25 +407,35 @@ public:
           constr_info(other.constr_info) {};
 
 
+    void add_n_reads(uint64 n_reads) {
+
+        std::vector<double> probs_(chrom_lengths.begin(), chrom_lengths.end());
+        if (paired) n_reads /= 2; // now it's pairs of reads
+        chrom_reads = reads_per_group(n_reads, probs_);
+        if (paired) for (uint64& r : chrom_reads) r *= 2;  // back to # reads
+
+        return;
+    }
+
 
     // Sample one set of read strings (each with 4 lines: ID, chromosome, "+", quality)
     // `U` should be a std::string or std::vector<char>
     template <typename U>
-    void one_read(std::vector<U>& fastq_pools, pcg64& eng);
+    void one_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
+    // Overloaded for when we input a variant chromosome stored as string
+    template <typename U>
+    void one_read(const std::string& chrom, const uint64& chrom_i,
+                  std::vector<U>& fastq_pools, pcg64& eng);
 
     /*
      Same as above, but for a duplicate. It's assumed that `one_read` has been
      run once before.
      */
     template <typename U>
-    void re_read(std::vector<U>& fastq_pools, pcg64& eng);
-
-    /*
-     Add information about a RefGenome or VarGenome object
-     This is used when making multiple samplers that share most info except for
-     that related to the chromosome object.
-     */
-    void add_chrom_info(const T& chrom_object, const std::string& barcode);
+    void re_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
+    template <typename U>
+    void re_read(const std::string& chrom, const uint64& chrom_i,
+                 std::vector<U>& fastq_pools, pcg64& eng);
 
 
 
@@ -443,10 +450,6 @@ protected:
     uint64 frag_len_max;
     // Info to construct reads:
     IlluminaReadConstrInfo constr_info;
-
-
-    // Construct chromosome-sampling probabilities:
-    void construct_chroms();
 
 
     // Sample for insertion and deletion positions
@@ -464,7 +467,15 @@ protected:
 
 
     /*
-     Same as above, but for duplicates.
+     Sample indels, fragment length, and starting position for the fragment.
+     Lastly, it sets the chromosome spaces required for these reads.
+     This is for when the chromosome is already set.
+     */
+    void indels_frag(pcg64& eng);
+
+
+    /*
+     Same as `chrom_indels_frag`, but for duplicates.
      This means skipping the chromosome and fragment info parts.
      */
     void just_indels(pcg64& eng);
@@ -479,6 +490,8 @@ protected:
      */
     template <typename U>
     void append_pools(std::vector<U>& fastq_pools, pcg64& eng);
+    template <typename U>
+    void append_pools(const std::string& chrom, std::vector<U>& fastq_pools, pcg64& eng);
 
 
 };
@@ -498,9 +511,11 @@ class IlluminaVariants {
 public:
 
     const VarSet* variants;                         // pointer to `const VarSet`
-    AliasSampler variant_sampler;                   // chooses which variant to use
+    std::vector<std::vector<uint64>> n_reads_vc;    // # reads per variant and chromosome
     std::vector<IlluminaOneVariant> read_makers;    // makes Illumina reads
     bool paired;                                    // Boolean for paired-end reads
+    std::vector<double> var_probs;                  // probs of sampling variants
+
 
     IlluminaVariants() : variants(nullptr) {}
 
@@ -524,29 +539,31 @@ public:
                      const double& del_prob2,
                      std::vector<std::string> barcodes)
         : variants(&var_set),
-          variant_sampler(variant_probs),
+          n_reads_vc(),
           read_makers(),
           paired(true),
-          var(0) {
+          var_probs(variant_probs),
+          var(0),
+          chr(0),
+          var_chrom_seq() {
 
         if (barcodes.size() < var_set.size()) barcodes.resize(var_set.size(), "");
+
+        uint64 n_vars = variants->size();
 
         /*
          Fill `read_makers` field:
          */
-        uint64 n_vars = var_set.size();
-        // Read maker for the first variant:
-        IlluminaOneVariant read_maker1(var_set[0], matepair_,
-                                       frag_len_shape, frag_len_scale,
-                                       frag_len_min_, frag_len_max_,
-                                       qual_probs1, quals1, ins_prob1, del_prob1,
-                                       qual_probs2, quals2, ins_prob2, del_prob2,
-                                       barcodes[0]);
         read_makers.reserve(n_vars);
-        read_makers.push_back(read_maker1);
-        for (uint64 i = 1; i < n_vars; i++) {
-            read_makers.push_back(read_maker1);
-            read_makers[i].add_chrom_info(var_set[i], barcodes[i]);
+        for (uint64 i = 0; i < n_vars; i++) {
+            read_makers.push_back(
+                IlluminaOneVariant(var_set[i], matepair_,
+                                   frag_len_shape, frag_len_scale,
+                                   frag_len_min_, frag_len_max_,
+                                   qual_probs1, quals1, ins_prob1, del_prob1,
+                                   qual_probs2, quals2, ins_prob2, del_prob2,
+                                   barcodes[i])
+            );
         }
 
     };
@@ -564,35 +581,67 @@ public:
                      const double& del_prob,
                      std::vector<std::string> barcodes)
         : variants(&var_set),
-          variant_sampler(variant_probs),
+          n_reads_vc(),
           read_makers(),
           paired(false),
-          var(0) {
+          var_probs(variant_probs),
+          var(0),
+          chr(0),
+          var_chrom_seq() {
 
         if (barcodes.size() < var_set.size()) barcodes.resize(var_set.size(), "");
+
+        uint64 n_vars = var_set.size();
 
         /*
          Fill `read_makers` field:
          */
-        uint64 n_vars = var_set.size();
-        // Read maker for the first variant:
-        IlluminaOneVariant read_maker1(var_set[0],
-                                       frag_len_shape, frag_len_scale,
-                                       frag_len_min_, frag_len_max_,
-                                       qual_probs, quals, ins_prob, del_prob,
-                                       barcodes[0]);
         read_makers.reserve(n_vars);
-        read_makers.push_back(read_maker1);
-        for (uint64 i = 1; i < n_vars; i++) {
-            read_makers.push_back(read_maker1);
-            read_makers[i].add_chrom_info(var_set[i], barcodes[i]);
+        for (uint64 i = 0; i < n_vars; i++) {
+            read_makers.push_back(
+                IlluminaOneVariant(var_set[i],
+                                   frag_len_shape, frag_len_scale,
+                                   frag_len_min_, frag_len_max_,
+                                   qual_probs, quals, ins_prob, del_prob,
+                                   barcodes[i])
+            );
         }
 
     };
 
     IlluminaVariants(const IlluminaVariants& other)
-        : variants(other.variants), variant_sampler(other.variant_sampler),
-          read_makers(other.read_makers), paired(other.paired), var(other.var) {};
+        : variants(other.variants), n_reads_vc(other.n_reads_vc),
+          read_makers(other.read_makers), paired(other.paired),
+          var_probs(other.var_probs),
+          var(other.var), chr(other.chr), var_chrom_seq(other.var_chrom_seq) {};
+
+
+    // Add info on # reads
+    void add_n_reads(uint64 n_reads) {
+
+        uint64 n_vars = variants->size();
+
+        // split # reads by variant
+        if (paired) n_reads /= 2; // now it's pairs of reads
+        std::vector<uint64> var_reads = reads_per_group(n_reads, var_probs);
+
+        // splitting by chromosome, too:
+        for (uint64 v = 0; v < n_vars; v++) {
+            std::vector<double> chrom_probs;
+            for (const VarChrom& vc : (*variants)[v].chromosomes) {
+                chrom_probs.push_back(vc.size());
+            }
+            n_reads_vc.push_back(reads_per_group(var_reads[v], chrom_probs));
+            if (paired) for (uint64& r : n_reads_vc.back()) r *= 2;  // back to # reads
+        }
+
+        // Fill `read_makers` field:
+        for (uint64 i = 0; i < n_vars; i++) {
+            read_makers[i].add_n_reads(var_reads[i]);
+        }
+
+        return;
+    }
 
 
     /*
@@ -602,28 +651,26 @@ public:
      */
     // If only providing rng and id info, sample for a variant, then make read(s):
     template <typename U>
-    void one_read(std::vector<U>& fastq_pools, pcg64& eng) {
-        var = variant_sampler.sample(eng);
-        read_makers[var].one_read<U>(fastq_pools, eng);
-        return;
-    }
+    void one_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
+
     /*
      -------------
      `re_read` methods (for duplicates)
      -------------
      */
     template <typename U>
-    void re_read(std::vector<U>& fastq_pools, pcg64& eng) {
-        read_makers[var].re_read<U>(fastq_pools, eng);
-        return;
-    }
+    void re_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
 
 
 
 private:
 
-    // Variant to sample from. It's saved in this class in case of duplicates.
+    // Variant to create read from.
     uint64 var;
+    // Chromosome to create read from.
+    uint64 chr;
+    // String for variant chromosome. It's saved to make things faster.
+    std::string var_chrom_seq;
 
 };
 
