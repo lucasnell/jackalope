@@ -206,7 +206,8 @@ is always \code{REF} for reference genomes (as opposed to variants).
 \examples{
 \donttest{
 rg <- create_genome(10, 100e3, 100)
-illumina(rg, "illumina_reads", n_reads = 100,
+dir <- tempdir(TRUE)
+illumina(rg, paste0(dir, "/illumina_reads"), n_reads = 100,
          read_length = 100, paired = FALSE)
 }
 

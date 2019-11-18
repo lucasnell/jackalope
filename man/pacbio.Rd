@@ -151,7 +151,8 @@ where \code{genome name} is always \code{REF} for reference genomes (as opposed 
 \examples{
 \donttest{
 rg <- create_genome(10, 100e3, 100)
-pacbio(rg, "pacbio_reads", n_reads = 100)
+dir <- tempdir(TRUE)
+pacbio(rg, paste0(dir, "/pacbio_reads"), n_reads = 100)
 }
 
 }
