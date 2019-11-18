@@ -624,7 +624,7 @@ public:
         // split # reads by variant
         if (paired) n_reads /= 2; // now it's pairs of reads
         std::vector<uint64> var_reads = reads_per_group(n_reads, var_probs);
-        if (paired) for (uint64& r : var_reads) r *= 2;  // back to # reads
+
         // splitting by chromosome, too:
         for (uint64 v = 0; v < n_vars; v++) {
             std::vector<double> chrom_probs;
@@ -632,6 +632,7 @@ public:
                 chrom_probs.push_back(vc.size());
             }
             n_reads_vc.push_back(reads_per_group(var_reads[v], chrom_probs));
+            if (paired) for (uint64& r : n_reads_vc.back()) r *= 2;  // back to # reads
         }
 
         // Fill `read_makers` field:

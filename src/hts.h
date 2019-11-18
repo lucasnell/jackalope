@@ -68,7 +68,14 @@ inline std::vector<uint64> reads_per_group(uint64 n_reads,
 
     std::binomial_distribution<uint64> distr(n_reads, 0.5);
 
-    for (uint64 i = 0; i < probs.size(); i++) {
+    for (uint64 i = 0; i < (probs.size() - 1); i++) {
+
+        if (probs[i] >= 1) {
+            out[i] = n_reads;
+            return out;
+        }
+
+        if (probs[i] == 0) continue;
 
         // Update distribution:
         distr.param(std::binomial_distribution<uint64>::param_type(
@@ -88,6 +95,8 @@ inline std::vector<uint64> reads_per_group(uint64 n_reads,
             probs[j] /= sum_probs;
         }
     }
+
+    out.back() = n_reads;
 
     return out;
 
@@ -345,7 +354,7 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
 
 
 #ifdef _OPENMP
-#pragma omp parallel num_threads(n_threads) shared(files) if (n_threads > 1)
+#pragma omp parallel num_threads(n_threads) default(shared) if (n_threads > 1)
 {
 #endif
 
