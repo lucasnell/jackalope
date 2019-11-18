@@ -4,11 +4,10 @@
 * macOS 10.15 (local), R 3.6.1
 * ubuntu 16.04 (on travis-ci), R-devel, R 3.6.1
 * macOS 10.3.3 (on travis-ci), R 3.6.1
-* Windows Server 2012 R2 x64 (on appveyor), R 3.6.1
 * Windows (win-builder), R-devel, R 3.6.1
 * Rhub
     - Oracle Solaris 10, R-patched, 32-bit
-    - Debian Linux, R-release, GCC (with valgrind)
+    - Fedora Linux, R-devel, clang (with valgrind)
 
 
 
@@ -21,10 +20,10 @@ There were no ERRORs or WARNINGs.
 There were 2 NOTEs:
 
 ```
-installed size is 22.0Mb
+installed size is 21.3Mb
   sub-directories of 1Mb or more:
     art_profiles   1.5Mb
-    libs          19.9Mb
+    libs          19.1Mb
 ```
 
 The package makes extensive use of compiled code to improve performance.
