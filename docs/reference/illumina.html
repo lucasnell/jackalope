@@ -110,6 +110,9 @@ this function." />
     </li>
   </ul>
 </li>
+<li>
+  <a href="../news/index.html">Changelog</a>
+</li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
@@ -313,6 +316,10 @@ There is no speed increase if you try to use multiple threads to create
 compressed output on the fly, so that option is not included.
 If you want to be conservative with disk space (by not having an uncompressed
 file present even temporarily), set <code>n_threads</code> to <code>1</code>.
+Threads are NOT spread across chromosomes or variants, so you don't need to
+think about these when choosing this argument's value.
+However, all threads write to the same file/files, so there are diminishing
+returns for providing many threads.
 This argument is ignored if the package was not compiled with OpenMP.
 Defaults to <code>1</code>.</p></td>
     </tr>
@@ -399,11 +406,10 @@ sequencing read simulator. <em>Bioinformatics</em> <strong>28</strong>:593–594
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \donttest{</span>
 <span class='no'>rg</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span>(<span class='fl'>10</span>, <span class='fl'>100e3</span>, <span class='fl'>100</span>)
-<span class='fu'>illumina</span>(<span class='no'>rg</span>, <span class='st'>"illumina_reads"</span>, <span class='kw'>n_reads</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-         <span class='kw'>read_length</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>paired</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</div><div class='output co'>#&gt; <span class='error'>Error: </span>
-#&gt; <span class='error'>File illumina_reads_R1.fq already exists.</span></div><div class='input'># }
-
-</div></pre>
+<span class='no'>dir</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span>(<span class='fl'>TRUE</span>)
+<span class='fu'>illumina</span>(<span class='no'>rg</span>, <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>dir</span>, <span class='st'>"/illumina_reads"</span>), <span class='kw'>n_reads</span> <span class='kw'>=</span> <span class='fl'>100</span>,
+         <span class='kw'>read_length</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>paired</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
+<span class='co'># }</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

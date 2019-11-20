@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Organize information to create variants using a VCF file — vars_vcf • jackalope</title>
+<title>Changelog • jackalope</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -42,9 +42,7 @@
 
 
 
-<meta property="og:title" content="Organize information to create variants using a VCF file — vars_vcf" />
-<meta property="og:description" content="This function organizes higher-level information for creating variants from
-Variant Call Format (VCF) files." />
+<meta property="og:title" content="Changelog" />
 <meta property="og:image" content="/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -65,7 +63,7 @@ Variant Call Format (VCF) files." />
   </head>
 
   <body>
-    <div class="container template-reference-topic">
+    <div class="container template-news">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -132,52 +130,34 @@ Variant Call Format (VCF) files." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Organize information to create variants using a VCF file</h1>
-    <small class="dont-index">Source: <a href='https://github.com/lucasnell/jackalope/blob/master/R/vars_functions.R'><code>R/vars_functions.R</code></a></small>
-    <div class="hidden name"><code>vars_vcf.Rd</code></div>
+      <h1>Changelog <small></small></h1>
+      <small>Source: <a href='https://github.com/lucasnell/jackalope/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div class="ref-description">
-    <p>This function organizes higher-level information for creating variants from
-Variant Call Format (VCF) files.</p>
-    </div>
-
-    <pre class="usage"><span class='fu'>vars_vcf</span>(<span class='no'>fn</span>, <span class='kw'>print_names</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
-
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>fn</th>
-      <td><p>A single string specifying the name of the VCF file</p></td>
-    </tr>
-    <tr>
-      <th>print_names</th>
-      <td><p>Logical for whether to print all unique chromosome names from
-the VCF file when VCF chromosome names don't match those from the reference genome.
-This printing doesn't happen until this object is passed to <code>create_variants</code>.
-This can be useful for troubleshooting.
-Defaults to <code>FALSE</code>.</p></td>
-    </tr>
-    </table>
-
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p>A <code>vars_vcf_info</code> object containing information used in <code>create_variants</code>
-to create haploid variants.
-This class is just a wrapper around a list containing the arguments to this
-function, which you can view (but not change) using the object's <code>fn()</code> and
-<code>print_names()</code> methods.</p>
-
+    <div id="jackalope-1-0-0" class="section level1">
+<h1 class="page-header">
+<a href="#jackalope-1-0-0" class="anchor"></a>jackalope 1.0.0<small> Unreleased </small>
+</h1>
+<ul>
+<li>
+<code>create_variants</code> performs better with high mutation rates</li>
+<li>Substitutions now use a random-site, discrete-Gamma model for among-site variability (optionally with invariant sites), rather than a fixed-sites model</li>
+<li>No longer depends on <code>vcfR</code> package, instead using <code>htslib</code> for reading VCF files</li>
+<li>Indel creation now uses “tau-leaping” approximation to the Doob-Gillespie algorithm</li>
+<li>Substitutions are added by calculating transition-probability matrices and sampling for substitutions at each site</li>
+</ul>
+</div>
   </div>
+
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <h2>Contents</h2>
-    <ul class="nav nav-pills nav-stacked">
-      <li><a href="#arguments">Arguments</a></li>
-      <li><a href="#value">Value</a></li>
-    </ul>
-
+    <div id="tocnav">
+      <h2>Contents</h2>
+      <ul class="nav nav-pills nav-stacked">
+        <li><a href="#jackalope-1-0-0">1.0.0</a></li>
+      </ul>
+    </div>
   </div>
+
 </div>
 
 
