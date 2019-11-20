@@ -93,10 +93,14 @@ in R should return `TRUE`.
 
 On macOS, it takes a few more steps to get things working. First, make
 sure the content above is in your `~/.R/Makevars` file. Next, go to
-<https://cran.r-project.org/bin/macosx/tools> and download (1) the
-newest version of the `clang` compiler (`clang8` at the time of this
-writing) and (2) the `gfortran-6.1.pkg` file. After this, add the
-following to your `~/.R/Makevars` file:
+<https://cran.r-project.org/bin/macosx/tools> and download the newest
+versions of (1) the `clang` compiler (version 8 at the time of writing)
+and (2) GNU Fortran (version 6.1 at the time of writing). The downloads
+will have the `.pkg` extension. Next, install `clang` and `gfortran` by
+opening these `.pkg` files and following the directions.
+
+After this, add the following to your `~/.R/Makevars` file (replacing
+`clang8` with your version of the clang compiler):
 
 ``` bash
 CLANG8=/usr/local/clang8/bin/clang
@@ -109,9 +113,8 @@ CXX1X=$(CLANG8)++
 LDFLAGS=-L/usr/local/clang8/lib
 ```
 
-Next, install `gfortran` 6.1 by opening the `gfortran-6.1.pkg` file. Now
-you should be able to install `jackalope` using the `install.packages`
-command above.
+Now you should be able to install `jackalope` by running
+`install.packages("jackalope", type = "source")` in R.
 
 For more information, please see
 <https://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x>.
@@ -127,24 +130,24 @@ reference <- create_genome(n_chroms = 10, len_mean = 1000)
 tr <- ape::rcoal(5)
 ref_variants <- create_variants(reference, vars_phylo(tr), sub_JC69(0.1))
 ref_variants
-#>                            << Variants object >>
+#>                               << Variants object >>
 #> # Variants: 5
-#> # Mutations: 17,480
+#> # Mutations: 16,870
 #> 
-#>                         << Reference genome info: >>
+#>                           << Reference genome info: >>
 #> < Set of 10 chromosomes >
 #> # Total size: 10,000 bp
-#>   name                          chromosome                           length
-#> chrom0     CTGGCATTGAATCATATGAGGTGGC...GTTGCACGATTGATTAAATTCCTGAA      1000
-#> chrom1     CACTCCGTCGCACACTAGGTTTCGA...GAGCTCGCGTACATGGAGCATTCTGT      1000
-#> chrom2     CTTAGCCGGAGCGACTCGGAGCAAC...GCGTAATATGCCAGGTCCCGCGTGGC      1000
-#> chrom3     CGCCTTCCATTTAGGACTTGTATTG...TAAACTCCATGTGACTGTAATGTCAG      1000
-#> chrom4     GGGTGATATGGTGTGCATGCTGAAT...AGTCTAGAGTCTCTGGGAGGTCAGGT      1000
-#> chrom5     TTCGTTGGTGGGTGTCCTATGCTAC...CCCGCCGGTTTGACTTACTCGATTGG      1000
-#> chrom6     GCATGGACAGATGTGATCTGAGTAT...GACCCCATAAGGCCTGGGACACTGTG      1000
-#> chrom7     TCGTTTCAACGTCCTTAAGTGTAGT...CTCGTTAGCTCTCCGAGGAGACGAGG      1000
-#> chrom8     CAGGTAAGTTATCAAAGAACCTTCC...GCATCACCTCGCAAGGAGACTCGTTA      1000
-#> chrom9     GGTAGTAATTAGGCTTAAAATAGCA...AACAAATGTTCGGCATACGATCTACG      1000
+#>   name                             chromosome                             length
+#> chrom0     CTGGCATTGAATCATATGAGGTGGCCAT...ACGTTGCACGATTGATTAAATTCCTGAA      1000
+#> chrom1     CACTCCGTCGCACACTAGGTTTCGAGAT...GTGAGCTCGCGTACATGGAGCATTCTGT      1000
+#> chrom2     CTTAGCCGGAGCGACTCGGAGCAACTGC...TGGCGTAATATGCCAGGTCCCGCGTGGC      1000
+#> chrom3     CGCCTTCCATTTAGGACTTGTATTGGTG...GCTAAACTCCATGTGACTGTAATGTCAG      1000
+#> chrom4     GGGTGATATGGTGTGCATGCTGAATTCG...AGAGTCTAGAGTCTCTGGGAGGTCAGGT      1000
+#> chrom5     TTCGTTGGTGGGTGTCCTATGCTACGAT...CGCCCGCCGGTTTGACTTACTCGATTGG      1000
+#> chrom6     GCATGGACAGATGTGATCTGAGTATACG...CAGACCCCATAAGGCCTGGGACACTGTG      1000
+#> chrom7     TCGTTTCAACGTCCTTAAGTGTAGTATC...GGCTCGTTAGCTCTCCGAGGAGACGAGG      1000
+#> chrom8     CAGGTAAGTTATCAAAGAACCTTCCTGG...ACGCATCACCTCGCAAGGAGACTCGTTA      1000
+#> chrom9     GGTAGTAATTAGGCTTAAAATAGCAGTG...ATAACAAATGTTCGGCATACGATCTACG      1000
 ```
 
 Below simulates 500 million paired-end, 100 bp reads from the variants:

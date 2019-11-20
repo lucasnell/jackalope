@@ -113,10 +113,17 @@ should return `TRUE`.
 On macOS, it takes a few more steps to get things working.
 First, make sure the content above is in your `~/.R/Makevars` file.
 Next, go to <https://cran.r-project.org/bin/macosx/tools> and download
-(1\) the newest version of the `clang` compiler (`clang8` at the time of this writing)
+the newest versions of
+(1\) the `clang` compiler (version 8 at the time of writing)
 and
-(2\) the `gfortran-6.1.pkg` file.
-After this, add the following to your `~/.R/Makevars` file:
+(2\) GNU Fortran (version 6.1 at the time of writing).
+The downloads will have the `.pkg` extension.
+Next, install `clang` and `gfortran` by opening these `.pkg` files 
+and following the directions.
+
+
+After this, add the following to your `~/.R/Makevars` file
+(replacing `clang8` with your version of the clang compiler):
 
 ```{bash clang-makevars}
 CLANG8=/usr/local/clang8/bin/clang
@@ -129,8 +136,9 @@ CXX1X=$(CLANG8)++
 LDFLAGS=-L/usr/local/clang8/lib
 ```
 
-Next, install `gfortran` 6.1 by opening the `gfortran-6.1.pkg` file.
-Now you should be able to install `jackalope` using the `install.packages` command above.
+
+Now you should be able to install `jackalope` by running
+`install.packages("jackalope", type = "source")` in R.
 
 For more information, please see
 <https://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x>.

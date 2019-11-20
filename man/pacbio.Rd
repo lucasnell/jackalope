@@ -117,6 +117,10 @@ There is no speed increase if you try to use multiple threads to create
 compressed output on the fly, so that option is not included.
 If you want to be conservative with disk space (by not having an uncompressed
 file present even temporarily), set \code{n_threads} to \code{1}.
+Threads are NOT spread across chromosomes or variants, so you don't need to
+think about these when choosing this argument's value.
+However, all threads write to the same file/files, so there are diminishing
+returns for providing many threads.
 This argument is ignored if the package was not compiled with OpenMP.
 Defaults to \code{1}.}
 
