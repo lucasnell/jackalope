@@ -1,3 +1,10 @@
+## Resubmission
+
+This is a resubmission. In this version, I have done the following:
+
+- Fixed valgrind memory-access errors.
+- Fixed the following NOTE on Solaris and macOS: `All declared Imports should be used.`
+
 
 ## Test environments
 
