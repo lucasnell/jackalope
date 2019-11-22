@@ -1,9 +1,9 @@
 
-context("Testing making of mevo (molecular evolution info) object")
-
 # library(jackalope)
 # library(testthat)
 
+
+context("Testing making of mevo (molecular evolution info) object")
 
 
 set.seed(4616515)
@@ -13,8 +13,8 @@ set.seed(4616515)
 pars <- new.env()
 with(pars, {
     # For reference genome:
-    n_seqs <- 10
-    seq_len <- 1000
+    n_chroms <- 10
+    chrom_len <- 1000
     # Molecular evolution:
     lambda = 0.1
     alpha = 0.25
@@ -30,35 +30,10 @@ with(pars, {
     M = c(8L, 10L)
     a = c(0.1, 0.5)
     rel_rates = list(1:10 * 0.1, 8:1 * 0.2)
-    # For site variability:
-    shape = 0.5
-    region_size = 10
-    ends = seq(region_size, seq_len, region_size)
-    mats = replicate(n_seqs,
-                     cbind(ends, rgamma(length(ends), shape = shape, rate = shape)),
-                     simplify = FALSE)
-    # Gamma matrices that should throw errors:
-    mats_err1 = replicate(n_seqs,
-                          cbind(ends, rgamma(length(ends), shape = shape, rate = shape)),
-                          simplify = TRUE)
-    mats_err2 = mats
-    mats_err2[[2]] = mats_err2[[2]][-nrow(mats_err2[[2]]),]
-    mats_err3 = mats
-    mats_err3[[3]][,1] = mats_err3[[3]][,1] + 0.1
-    mats_err4 = mats
-    mats_err4[[4]][1,1] = mats_err4[[4]][2,1]
 })
 
-# This will be used a lot
-create_mevo <- function(reference, sub,
-                        ins = NULL,
-                        del = NULL,
-                        gamma_mats = NULL) {
-    jackalope:::create_mevo(reference, sub, ins, del, gamma_mats, 10)
-}
-
 # Create reference genome
-ref <- with(pars, create_genome(n_seqs, seq_len))
+ref <- with(pars, create_genome(n_chroms, chrom_len))
 
 
 
@@ -68,74 +43,59 @@ ref <- with(pars, create_genome(n_seqs, seq_len))
 # ==============================*
 
 # *  JC69 ----
-M <- create_mevo(ref, sub = sub_JC69(pars$lambda))
-
-# These only need to be checked once:
-test_that("proper output common to all models with no site variability or indels", {
-
-    X <- lapply(ref$sizes(),
-                function(x) {
-                    z <- cbind(x, 1)
-                    colnames(z) <- NULL
-                    return(z)
-                })
-
-    expect_equal(M$gamma_mats, X, check.attributes = FALSE)
-    expect_equal(M$insertion_rates, numeric(0))
-    expect_equal(M$deletion_rates, numeric(0))
-})
+M <- sub_JC69(pars$lambda)
 
 test_that("proper output for JC69 model", {
     Q <- matrix(pars$lambda, 4, 4)
     diag(Q) <- 0
-    expect_equal(M$Q, Q)
-    expect_equal(M$pi_tcag, rep(0.25, 4))
-    expect_equal(M$q(), rowSums(Q))
+    diag(Q) <- -1 * rowSums(Q)
+    expect_equal(M$Q()[[1]], Q)
+    expect_equal(M$pi_tcag(), rep(0.25, 4))
 })
 
 # *  K80 ----
-M <- with(pars, {create_mevo(ref, sub = sub_K80(alpha = alpha, beta = beta))})
+M <- with(pars, {sub_K80(alpha = alpha, beta = beta)})
 
 test_that("proper output for K80 model", {
     Q <- matrix(pars$beta, 4, 4)
     Q[2,1] <- Q[1,2] <- Q[4,3] <- Q[3,4] <- pars$alpha
     diag(Q) <- 0
-    expect_equal(M$Q, Q)
-    expect_equal(M$pi_tcag, rep(0.25, 4))
-    expect_equal(M$q(), rowSums(Q))
+    diag(Q) <- -1 * rowSums(Q)
+    expect_equal(M$Q()[[1]], Q)
+    expect_equal(M$pi_tcag(), rep(0.25, 4))
 })
 
 
 # *  F81 ----
-M <- with(pars, {create_mevo(ref, sub_F81(pi_tcag = pi_tcag))})
+M <- with(pars, {sub_F81(pi_tcag = pi_tcag)})
 
 test_that("proper output for F81 model", {
     Q <- matrix(rep(pars$pi_tcag, each = 4), 4, 4)
     diag(Q) <- 0
-    expect_equal(M$Q, Q)
-    expect_equal(M$pi_tcag, pars$pi_tcag)
-    expect_equal(M$q(), rowSums(Q))
+    diag(Q) <- -1 * rowSums(Q)
+    expect_equal(M$Q()[[1]], Q)
+    expect_equal(M$pi_tcag(), pars$pi_tcag)
 })
 
 
 # *  HKY85 ----
-M <- with(pars, {create_mevo(ref, sub_HKY85(alpha = alpha, beta = beta,
-                                           pi_tcag = pi_tcag))})
+M <- with(pars, {sub_HKY85(alpha = alpha, beta = beta,
+                                           pi_tcag = pi_tcag)})
 
 test_that("proper output for HKY85 model", {
     Q <- matrix(pars$beta, 4, 4)
     Q[2,1] <- Q[1,2] <- Q[4,3] <- Q[3,4] <- pars$alpha
     for (i in 1:4) Q[,i] <- Q[,i] * pars$pi_tcag[i]
     diag(Q) <- 0
-    expect_equal(M$Q, Q)
-    expect_equal(M$pi_tcag, pars$pi_tcag)
-    expect_equal(M$q(), rowSums(Q))
+    diag(Q) <- -1 * rowSums(Q)
+    expect_equal(M$Q()[[1]], Q)
+    expect_equal(M$pi_tcag(), pars$pi_tcag)
 })
 
 # *  TN93 ----
-M <- with(pars, {create_mevo(ref, sub_TN93(alpha_1 = alpha_1,
+M <- with(pars, {sub_TN93(alpha_1 = alpha_1,
                                            alpha_2 = alpha_2, beta = beta,
-                                           pi_tcag = pi_tcag))})
+                                           pi_tcag = pi_tcag)})
 
 test_that("proper output for TN93 model", {
     Q <- matrix(pars$beta, 4, 4)
@@ -143,14 +103,14 @@ test_that("proper output for TN93 model", {
     Q[4,3] <- Q[3,4] <- pars$alpha_2
     for (i in 1:4) Q[,i] <- Q[,i] * pars$pi_tcag[i]
     diag(Q) <- 0
-    expect_equal(M$Q, Q)
-    expect_equal(M$pi_tcag, pars$pi_tcag)
-    expect_equal(M$q(), rowSums(Q))
+    diag(Q) <- -1 * rowSums(Q)
+    expect_equal(M$Q()[[1]], Q)
+    expect_equal(M$pi_tcag(), pars$pi_tcag)
 })
 
 # *  F84 ----
-M <- with(pars, {create_mevo(ref, sub_F84(beta = beta, kappa = kappa,
-                                           pi_tcag = pi_tcag))})
+M <- with(pars, {sub_F84(beta = beta, kappa = kappa,
+                                           pi_tcag = pi_tcag)})
 
 test_that("proper output for F84 model", {
     alpha_1 <- (1 + pars$kappa / sum(pars$pi_tcag[1:2])) * pars$beta
@@ -160,32 +120,35 @@ test_that("proper output for F84 model", {
     Q[4,3] <- Q[3,4] <- alpha_2
     for (i in 1:4) Q[,i] <- Q[,i] * pars$pi_tcag[i]
     diag(Q) <- 0
-    expect_equal(M$Q, Q)
-    expect_equal(M$pi_tcag, pars$pi_tcag)
-    expect_equal(M$q(), rowSums(Q))
+    diag(Q) <- -1 * rowSums(Q)
+    expect_equal(M$Q()[[1]], Q)
+    expect_equal(M$pi_tcag(), pars$pi_tcag)
 })
 
 # *  GTR ----
-M <- with(pars, {create_mevo(ref, sub_GTR(pi_tcag = pi_tcag,
-                                           abcdef = abcdef))})
+M <- with(pars, {sub_GTR(pi_tcag = pi_tcag, abcdef = abcdef)})
 
 test_that("proper output for GTR model", {
     Q <- matrix(0, 4, 4)
     Q[lower.tri(Q)] <- pars$abcdef
     Q <- Q + t(Q)
     for (i in 1:4) Q[,i] <- Q[,i] * pars$pi_tcag[i]
-    expect_equal(M$Q, Q)
-    expect_equal(M$pi_tcag, pars$pi_tcag)
-    expect_equal(M$q(), rowSums(Q))
+    diag(Q) <- -1 * rowSums(Q)
+    expect_equal(M$Q()[[1]], Q)
+    expect_equal(M$pi_tcag(), pars$pi_tcag)
+
+    # Special case when all are zeros:
+    Msp <- sub_GTR(pi_tcag = pars$pi_tcag, abcdef = pars$abcdef * 0)
+    expect_equal(Msp$Q()[[1]], matrix(0, 4, 4))
 })
 
 # *  UNREST ----
-M <- with(pars, {create_mevo(ref, sub_UNREST(Q = Q))})
+M <- with(pars, {sub_UNREST(Q = Q)})
 
 test_that("proper output for UNREST model", {
     Q <- pars$Q
-    diag(Q) <- 0  # <-- important for eigen step
-    diag(Q) <- -1 * rowSums(Q)  # <-- important for eigen step
+    diag(Q) <- 0
+    diag(Q) <- -1 * rowSums(Q)
     eig <- eigen(t(Q))
     eig_vals <- abs(eig$values)
     eig_vecs <- Re(eig$vectors)
@@ -193,11 +156,61 @@ test_that("proper output for UNREST model", {
     left_vec <- eig_vecs[,i]
     sumlv <- sum(left_vec)
     pi_tcag <- left_vec / sumlv
-    diag(Q) <- 0  # <-- change back to compare to M$Q
-    expect_equal(M$Q, Q)
-    expect_equal(M$pi_tcag, pi_tcag)
-    expect_equal(M$q(), rowSums(Q))
+    expect_equal(M$Q()[[1]], Q)
+    expect_equal(M$pi_tcag(), pi_tcag)
 })
+
+
+
+# * errors ----
+
+test_that("proper errors for sub models", {
+
+    # pi_tcag = NULL, alpha_1 = NULL, alpha_2 = NULL,
+    # beta = NULL, gamma_shape = NULL, gamma_k = NULL,
+    # invariant = NULL, lambda = NULL, alpha = NULL,
+    # kappa = NULL, abcdef = NULL, Q = NULL
+
+    expect_error(sub_JC69(lambda = "lambda"), "`lambda` must be a single number > 0")
+    expect_error(sub_K80(alpha = function(x) x, beta = pars$beta),
+                 "`alpha` must be a single number > 0")
+    expect_error(sub_TN93(alpha_1 = "alpha_1", alpha_2 = pars$alpha_2, beta = pars$beta,
+                          pi_tcag = pars$pi_tcag),
+                 "`alpha_1` must be a single number > 0")
+    expect_error(sub_TN93(alpha_1 = pars$alpha_1, alpha_2 = -1, beta = pars$beta,
+                          pi_tcag = pars$pi_tcag),
+                 "`alpha_2` must be a single number > 0")
+    expect_error(sub_TN93(alpha_1 = pars$alpha_1, alpha_2 = pars$alpha_2, beta = "beta",
+                          pi_tcag = pars$pi_tcag),
+                 "`beta` must be a single number > 0")
+    expect_error(sub_F84(beta = pars$beta, kappa = -1, pi_tcag = pars$pi_tcag),
+                 "`kappa` must be a single number > 0")
+
+    err <- paste("`pi_tcag` must be a length-4 numeric vector where at least one",
+                 "number is > 0 and all are >= 0")
+    expect_error(sub_TN93(alpha_1 = pars$alpha_1, alpha_2 = pars$alpha_2,
+                          beta = pars$beta, pi_tcag = pars$pi_tcag[1]), err)
+    expect_error(sub_TN93(alpha_1 = pars$alpha_1, alpha_2 = pars$alpha_2,
+                          beta = pars$beta, pi_tcag = pars$pi_tcag[1:3]), err)
+    expect_error(sub_TN93(alpha_1 = pars$alpha_1, alpha_2 = pars$alpha_2,
+                          beta = pars$beta, pi_tcag = pars$pi_tcag * -1), err)
+    expect_error(sub_TN93(alpha_1 = pars$alpha_1, alpha_2 = pars$alpha_2,
+                          beta = pars$beta, pi_tcag = pars$pi_tcag * 0), err)
+
+
+    err <- paste("`abcdef` must be a length-6 numeric vector where all numbers are >= 0")
+    expect_error(sub_GTR(pi_tcag = pars$pi_tcag, abcdef = pars$abcdef * -1), err)
+    expect_error(sub_GTR(pi_tcag = pars$pi_tcag, abcdef = pars$abcdef[1:3]), err)
+
+    err <- paste("`Q` must be a 4x4 numeric matrix where all non-diagonal elements",
+                 "are >= 0")
+    expect_error(sub_UNREST(Q = "pars$Q * -1"), err)
+    expect_error(sub_UNREST(Q = pars$Q * -1), err)
+    expect_error(sub_UNREST(Q = pars$Q[1:3,]), err)
+    expect_error(sub_UNREST(Q = pars$Q[2:4]), err)
+
+})
+
 
 
 # ==============================*
@@ -205,22 +218,19 @@ test_that("proper output for UNREST model", {
 # ==============================*
 
 # *  exp(-L) ----
-M <- with(pars, create_mevo(ref, sub_JC69(lambda = lambda),
-                          ins = indels(rate = rates[1], max_length = M[1]),
-                          del = indels(rate = rates[2], max_length = M[2])))
 test_that("proper indel rates with `rate` and `max_length` inputs", {
+    R <- with(pars, indels(rate = rates[1], max_length = M[1]))
     ins <- exp(-1 * 1:pars$M[1])
     ins <- (ins / sum(ins)) * pars$rates[1]
+    expect_equal(R$rates(), ins)
+
+    R <- with(pars, indels(rate = rates[2], max_length = M[2]))
     del <- exp(-1 * 1:pars$M[2])
     del <- (del / sum(del)) * pars$rates[2]
-    expect_equal(M$insertion_rates, ins)
-    expect_equal(M$deletion_rates, del)
+    expect_equal(R$rates(), del)
 })
 
 # *  Lavalette ----
-M <- with(pars, create_mevo(ref, sub_JC69(lambda = lambda),
-                          ins = indels(rate = rates[1], max_length = M[1], a = a[1]),
-                          del = indels(rate = rates[2], max_length = M[2], a = a[2])))
 test_that("proper indel rates with `rate`, `max_length`, and `a` inputs", {
     u <- 1:pars$M[1]
     M_ <- pars$M[1]
@@ -232,32 +242,24 @@ test_that("proper indel rates with `rate`, `max_length`, and `a` inputs", {
     a <- pars$a[2]
     del <- {(u * M_) / (M_ - u + 1)}^(-a)
     del <- (del / sum(del)) * pars$rates[2]
-    expect_equal(M$insertion_rates, ins)
-    expect_equal(M$deletion_rates, del)
+
+    R <- with(pars, indels(rate = rates[1], max_length = M[1], a = a[1]))
+    expect_equal(R$rates(), ins)
+    R <- with(pars, indels(rate = rates[2], max_length = M[2], a = a[2]))
+    expect_equal(R$rates(), del)
+
 })
 
 # * custom ----
-M <- with(pars, create_mevo(ref, sub_JC69(lambda = lambda),
-                          ins = indels(rate = rates[1], rel_rates = rel_rates[[1]]),
-                          del = indels(rate = rates[2], rel_rates = rel_rates[[2]])))
 test_that("proper indel rates with `rate` and `rel_rates` inputs", {
     ins <- pars$rel_rates[[1]]
     ins <- (ins / sum(ins)) * pars$rates[1]
     del <- pars$rel_rates[[2]]
     del <- (del / sum(del)) * pars$rates[2]
-    expect_equal(M$insertion_rates, ins)
-    expect_equal(M$deletion_rates, del)
-})
-
-
-
-test_that("proper output for JC69 model when indels are included", {
-    indel <- sum(pars$rates * 0.25)
-    Q <- matrix(pars$lambda, 4, 4)
-    diag(Q) <- 0
-    expect_equal(M$Q, Q)
-    expect_equal(M$pi_tcag, rep(0.25, 4))
-    expect_equal(M$q(), rowSums(Q) + indel)
+    R <- with(pars, indels(rate = rates[1], rel_rates = rel_rates[[1]]))
+    expect_equal(R$rates(), ins)
+    R <- with(pars, indels(rate = rates[2], rel_rates = rel_rates[[2]]))
+    expect_equal(R$rates(), del)
 })
 
 
@@ -267,70 +269,31 @@ test_that("proper output for JC69 model when indels are included", {
 # __site var.__ ----
 # ==============================*
 
-dir <- tempdir(check = TRUE)
 
-M <- site_var(ref, shape = pars$shape, region_size = pars$region_size,
-              out_prefix = paste0(dir, "/mevo"))
+M <- with(pars, {sub_TN93(alpha_1 = alpha_1,
+                          alpha_2 = alpha_2, beta = beta,
+                          pi_tcag = pi_tcag,
+                          gamma_shape = 1)})
 
-# *  generate ----
-test_that("proper gamma distance values with `shape` and `region_size` inputs", {
-    # Testing end points:
-    expect_equal(sapply(M, function(x) x[,1]),
-                 matrix(rep(seq(pars$region_size, pars$seq_len, pars$region_size),
-                            pars$n_seqs),
-                        ceiling(pars$seq_len / pars$region_size), pars$n_seqs))
-    # Testing mean:
-    expect_equal(mean(sapply(M, function(x) mean(x[,2]))), 1)
-    # Testing SD:
-    G <- do.call(c, lapply(M, function(x) x[,2]))
-    s <- sd(G)                 # observed SD
-    s0 <- sqrt(1 / pars$shape)      # expected SD
-    rel_diff <- abs((s - s0) / s0)
-    expect_lte(rel_diff, 0.25)  # was never >0.25 in 1000 sims
-})
+# *  rate matrices ----
+test_that("proper substitution rate matrices for discrete Gamma model", {
 
+    Q <- with(pars, sub_TN93(alpha_1 = alpha_1, alpha_2 = alpha_2,
+                             beta = beta, pi_tcag = pi_tcag))$Q()[[1]]
 
+    # Each in M$Q() should be simply result of multiplying Q by gamma category
+    gammas <- lapply(M$Q(), function(x) as.numeric(x / Q))
+    # Make sure they're all roughly the same within each matrix:
+    expect_lt(max(sapply(gammas, function(x) max(diff(abs(x))))), 1e-10)
 
-test_that("BED file of gamma values is correct", {
+    # Mean for each cell in matrices within M$Q() list should be equal to its cell in Q
+    expect_equal(Reduce(`+`, M$Q()) / length(M$Q()), Q)
 
-    bed_df <- utils::read.table(paste0(dir, "/mevo.bed"), sep = "\t")
+    # Default # categories:
+    expect_length(M$Q(), 5)
 
-    gmat_df <- do.call(rbind, lapply(1:length(M),
-                                     function(i) {
-                                         cbind(nm = ref$names()[i],
-                                               as.data.frame(M[[i]]))
-                                         }))
+    expect_equal(M$invariant(), 0.0)
 
-    expect_equal(bed_df[,1], gmat_df[,1])
-    expect_equal(bed_df[,3], gmat_df[,2])
-    expect_equal(bed_df[,5], gmat_df[,3])
-
-})
-
-
-# *  custom ----
-
-M <- site_var(ref, mats = pars$mats)
-
-test_that("proper gamma distance values with `mats` inputs", {
-    MM <- M
-    class(MM) <- "list"
-    expect_identical(MM, pars$mats)
-})
-
-
-# *  proper errors ----
-test_that("throws proper errors when inputting an incorrect `site_var$mats` input", {
-    expect_error(site_var(ref, mats = pars$mats_err1),
-                 regexp = "argument `mats` must be NULL or a list of matrices")
-    expect_error(site_var(ref, mats = pars$mats_err2),
-                 regexp = paste("all matrices need to have a maximum end point",
-                                "\\(in the first column\\) equal to the size of",
-                                "the associated sequence"))
-    expect_error(site_var(ref, mats = pars$mats_err3),
-                 regexp = "all matrices should contain only whole numbers as end points")
-    expect_error(site_var(ref, mats = pars$mats_err4),
-                 regexp = "all matrices should contain no duplicate end points")
 })
 
 
@@ -338,9 +301,32 @@ test_that("throws proper errors when inputting an incorrect `site_var$mats` inpu
 # *  invariants ----
 test_that("invariant sites are produced appropriately", {
     # Because `ref` is evenly sized we should get exact output:
-    M <- site_var(ref, shape = pars$shape, region_size = pars$region_size,
-                  invariant = 0.50)
-    expect_identical(sapply(M, function(x) mean(x[,2] == 0)),
-                     rep(0.5, length(M)))
-    expect_equal(mean(sapply(M, function(x) mean(x[,2]))), 1.0)
+    M <- sub_JC69(0.1, gamma_shape = 1, invariant = 0.5)
+    expect_equal(M$invariant(), 0.5)
 })
+
+
+
+
+# *  proper errors ----
+test_that("throws proper errors when inputting nonsensible gamma input", {
+
+    err <- "`gamma_shape` must be NULL or a single number > 0"
+    expect_error(sub_JC69(0.1, gamma_shape = 0), regexp = err)
+    expect_error(sub_JC69(0.1, gamma_shape = -1), regexp = err)
+    expect_error(sub_JC69(0.1, gamma_shape = c(1, 2)), regexp = err)
+    expect_error(sub_JC69(0.1, gamma_shape = "0"), regexp = err)
+
+    err <- "`gamma_k` must be a single integer in range \\[2, 255\\]"
+    expect_error(sub_JC69(0.1, gamma_shape = 1, gamma_k = "-1"), regexp = err)
+    expect_error(sub_JC69(0.1, gamma_shape = 1, gamma_k = -1), regexp = err)
+    expect_error(sub_JC69(0.1, gamma_shape = 1, gamma_k = 1), regexp = err)
+    expect_error(sub_JC69(0.1, gamma_shape = 1, gamma_k = 256), regexp = err)
+
+
+    err <- "`invariant` must be a single number >= 0 and < 1"
+    expect_error(sub_JC69(0.1, gamma_shape = 1, invariant = -1), regexp = err)
+    expect_error(sub_JC69(0.1, gamma_shape = 1, invariant = c(0.1, 0.5)), regexp = err)
+    expect_error(sub_JC69(0.1, gamma_shape = 1, invariant = 1), regexp = err)
+})
+

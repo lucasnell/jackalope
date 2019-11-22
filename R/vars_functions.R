@@ -13,17 +13,17 @@
 #'     \item{\code{\link{vars_theta}}}{Uses an estimate for theta, the population-scaled
 #'         mutation rate, and a desired number of variants.}
 #'     \item{\code{\link{vars_phylo}}}{Uses phylogenetic tree(s) from `phylo`
-#'         object(s) or NEWICK file(s), one tree per sequence or one for all sequences.}
+#'         object(s) or NEWICK file(s), one tree per chromosome or one for all
+#'         chromosomes.}
 #'     \item{\code{\link{vars_gtrees}}}{Uses gene trees, either in the form of
 #'         an object from the `scrm` or `coala` package or
 #'         a file containing output in the style of the `ms` program.}
 #'     \item{\code{\link{vars_ssites}}}{Uses matrices of segregating sites,
 #'         either in the form of
 #'         `scrm` or `coala` coalescent-simulator object(s), or
-#'         (2) a `ms`-style output file.}
+#'         a `ms`-style output file.}
 #'     \item{\code{\link{vars_vcf}}}{Uses a variant call format (VCF) file that
-#'         directly specifies variants.
-#'         This method does not work if the `vcfR` package isn't installed.}
+#'         directly specifies variants.}
 #' }
 #'
 #'
@@ -37,13 +37,6 @@ NULL
 
 
 
-# ====================================================================================`
-# ====================================================================================`
-
-# * MAIN * -----
-
-# ====================================================================================`
-# ====================================================================================`
 
 
 # -------------*
@@ -52,7 +45,41 @@ NULL
 
 #   __seg. sites -----
 
-#' Create necessary information to create variants using segregating sites matrices
+#' Process one segregating-sites matrix from a coalescent simulator with ms-style output.
+#'
+#' Used in `vars_ssites` below.
+#'
+#' @param mat The matrix to process.
+#'
+#' @noRd
+#'
+process_coal_obj_sites <- function(mat) {
+
+    err_msg_ <- paste("\nPositions in one or more segregating-sites matrices %s.",
+                      "They are derived from column names, so check those for nonsense.")
+
+    # Dealing with coala objects:
+    if (inherits(mat, "segsites")) mat <- mat$snps
+
+    pos <- as.numeric(colnames(mat))
+
+    if (any(is.na(pos))) {
+        stop(sprintf(err_msg_, "are producing NAs when trying to coerce them to numbers"),
+             call. = FALSE)
+    } else if (length(pos) != ncol(mat)) {
+        stop(sprintf(err_msg_, paste("are not the same length as the number of rows",
+                                     "in the matrix")), call. = FALSE)
+    }
+
+    new_mat <- cbind(pos, t(mat))
+    rownames(new_mat) <- colnames(new_mat) <- NULL
+
+    return(new_mat)
+}
+
+
+
+#' Organize information to create variants using segregating sites matrices
 #'
 #'
 #' This function organizes higher-level information for creating variants from
@@ -63,11 +90,14 @@ NULL
 #' `scrm` or `coala` package.
 #' (These packages are not required to be installed when installing
 #' `jackalope`.)
+#' If using either of these packages, I encourage you to cite them. For citation
+#' information, see output from `citation("scrm")` or `citation("coala")`.
+#'
 #'
 #' @param obj Object containing segregating sites information.
 #'     This can be one of the following:
 #'     (1) A single `list` with a `seg_sites` field inside. This field must
-#'     contain a matrix for segregating sites for each sequence.
+#'     contain a matrix for segregating sites for each chromosome.
 #'     The matrix itself should contain the haplotype information, coded
 #'     using 0s and 1s: 0s indicate the ancestral state and 1s indicate
 #'     mutant.
@@ -75,8 +105,8 @@ NULL
 #'     chromosome.
 #'     If positions are in the range `(0,1)`, they're assumed to come from an infinite-
 #'     sites model and are relative positions.
-#'     If positions are integers in the range `[0, sequence length - 1]`
-#'     or `[1, sequence length]`, they're assumed to come from an finite-sites
+#'     If positions are integers in the range `[0, chromosome length - 1]`
+#'     or `[1, chromosome length]`, they're assumed to come from an finite-sites
 #'     model and are absolute positions.
 #'     Defaults to `NULL`.
 #' @param fn A single string specifying the name of the file containing
@@ -86,7 +116,8 @@ NULL
 #'
 #' @return A `vars_ssites_info` object containing information used in `create_variants`
 #'     to create haploid variants.
-#'     This class is just a wrapper around a list of matrices of segregating site info.
+#'     This class is just a wrapper around a list of matrices of segregating site info,
+#'     which you can view (but not change) using the object's `mats()` method.
 #'
 #' @export
 #'
@@ -137,8 +168,7 @@ vars_ssites <- function(obj = NULL,
     }
 
 
-    out <- list(mats = sites_mats)
-    class(out) <- "vars_ssites_info"
+    out <- vars_ssites_info$new(mats = sites_mats)
 
     return(out)
 
@@ -151,112 +181,43 @@ vars_ssites <- function(obj = NULL,
 
 #   __vcf -----
 
-#' Create necessary information to create variants using a VCF file
+#' Organize information to create variants using a VCF file
 #'
 #' This function organizes higher-level information for creating variants from
 #' Variant Call Format (VCF) files.
 #'
-#' This function won't work if the package `vcfR` isn't installed.
 #'
 #' @param fn A single string specifying the name of the VCF file
-#' @param print_names Logical for whether to print all unique sequence names from
-#'     the VCF file when VCF sequence names don't match those from the reference genome.
+#' @param print_names Logical for whether to print all unique chromosome names from
+#'     the VCF file when VCF chromosome names don't match those from the reference genome.
 #'     This printing doesn't happen until this object is passed to `create_variants`.
 #'     This can be useful for troubleshooting.
 #'     Defaults to `FALSE`.
-#' @param ... Arguments to pass to `vcfR::read.vcfR`, excluding the `file` argument
-#'     that will be overridden with the `fn` argument to this function.
 #'
 #' @export
 #'
 #' @return A `vars_vcf_info` object containing information used in `create_variants`
 #'     to create haploid variants.
-#'     This class is just a wrapper around a list containing relevant output from
-#'     `vcfR::read.vcfR`:
-#'     haplotypes, reference sequences, positions, sequence names, and variant names.
+#'     This class is just a wrapper around a list containing the arguments to this
+#'     function, which you can view (but not change) using the object's `fn()` and
+#'     `print_names()` methods.
 #'
-vars_vcf <- function(fn, print_names = FALSE, ...) {
-
-    if (!requireNamespace("vcfR", quietly = TRUE)) {
-        stop("\nPackage \"vcfR\" is needed for reading VCF files. ",
-             "Please install it.",
-             call. = FALSE)
-    }
+vars_vcf <- function(fn, print_names = FALSE) {
 
     if (!is_type(fn, "character", 1)) {
         err_msg("vars_vcf", "fn", "a single string")
     }
-
-    read_args <- list(...)
-    if (is.null(read_args$verbose)) read_args$verbose <- FALSE
-    read_args$file <- fn
-
-    if (!all(names(read_args) %in% names(formals(vcfR::read.vcfR)))) {
-        bad_names <- names(read_args)[!names(read_args) %in%
-                                           names(formals(vcfR::read.vcfR))]
-        stop("\nIn function `vars_vcf` in jackalope, the following extra ",
-             "arguments provided don't match any arguments in `vcfR::read.vcfR`: ",
-             paste(bad_names, collapse = ", "), ".", call. = FALSE)
+    if (!is_type(print_names, "logical", 1)) {
+        err_msg("vars_vcf", "print_names", "a single logical")
     }
 
-    vcf <- do.call(vcfR::read.vcfR, read_args)
+    fn <- path.expand(fn)
 
-    chrom <- vcf@fix[,"CHROM"]
-    pos <- as.integer(vcf@fix[,"POS"]) - 1  # -1 is to convert to C++ indices
-    ref_seq <- vcf@fix[,"REF"]
-    alts <- strsplit(vcf@fix[,"ALT"], ",")
-
-    if (length(chrom) != length(pos) | length(chrom) != length(ref_seq)) {
-        stop("\nVCF not parsing correctly. ",
-             "Vectors of chromosomes, positions, and reference-sequences aren't ",
-             "all the same length.",
-             call. = FALSE)
+    if (!file.exists(fn)) {
+        stop("\nFile ", fn, " doesn't exist.", call. = FALSE)
     }
 
-    haps <- vcfR::extract.haps(vcf, unphased_as_NA = FALSE, verbose = FALSE)
-
-    if (length(chrom) != length(pos) | length(chrom) != length(ref_seq)) {
-        stop("\nVCF not parsing correctly. ",
-             "Vectors of chromosomes, positions, and reference-sequences aren't ",
-             "all the same length.",
-             call. = FALSE)
-    }
-    if (nrow(haps) != length(pos)) {
-        stop("\nVCF not parsing correctly. ",
-             "Number of haplotypes doesn't match with number of positions.",
-             call. = FALSE)
-    }
-
-
-    # I'm assuming NAs mean no mutation
-    haps[is.na(haps)] <- ""
-
-    var_names <- colnames(haps)
-    colnames(haps) <- NULL
-    rownames(haps) <- NULL
-
-    # Split into list for easier processing in `read_vcfr`
-    haps <- split(haps, row(haps))
-
-    # We treat things differently if vcfR has output numbers rather than nucleotides.
-    # (The below line should be TRUE when it outputs numbers.)
-    if (any(!is.na(suppressWarnings(as.integer(do.call(c, haps)))))) {
-        # Change string integers to actual genotypes:
-        haps <-
-            lapply(1:length(haps),
-                   function(i) {
-                       as.character(sapply(haps[[i]],
-                                           function(j) {
-                                               ifelse(j == "" | j == "0", "",
-                                                      alts[[i]][as.integer(j)])
-                                           }))
-                   })
-    }
-
-    out <- list(haps = haps, pos = pos, chrom = chrom, var_names = var_names,
-                ref_seq = ref_seq, print_names = print_names)
-
-    class(out) <- "vars_vcf_info"
+    out <- vars_vcf_info$new(fn = fn, print_names = print_names)
 
     return(out)
 
@@ -273,25 +234,31 @@ vars_vcf <- function(fn, print_names = FALSE, ...) {
 # __phylo -----
 
 
-#' Create necessary information to create variants using phylogenetic tree(s)
+#' Organize information to create variants using phylogenetic tree(s)
 #'
 #' This function organizes higher-level information for creating variants from
 #' phylogenetic tree(s) output as `phylo` or `multiPhylo` objects
 #' (both from the `ape` package) or NEWICK files.
+#' Note that all phylogenetic trees must be rooted and binary.
+#' If using this function, I encourage you to cite `ape`. For citation
+#' information, see output from `citation("ape")`.
+#'
+#' See `?ape::write.tree` for writing phylogenies to an output file.
+#'
 #'
 #' @param obj Object containing phylogenetic tree(s).
 #'     This can be (1) a single `phylo` object
-#'     that represents all sequences in the genome or
+#'     that represents all chromosomes in the genome or
 #'     (2) a `list` or `multiPhylo` object containing a `phylo` object for
-#'     each reference sequence.
-#'     In the latter case, phylogenies will be assigned to sequences in the
+#'     each reference chromosome.
+#'     In the latter case, phylogenies will be assigned to chromosomes in the
 #'     order provided.
 #'     Defaults to `NULL`.
 #' @param fn One or more string(s), each of which specifies the file name
 #'     of a NEWICK file containing a phylogeny.
-#'     If one name is provided, that phylogeny will be used for all sequences.
+#'     If one name is provided, that phylogeny will be used for all chromosomes.
 #'     If more than one is provided, there must be a phylogeny for each reference
-#'     genome sequence, and phylogenies will be assigned to sequences
+#'     genome chromosome, and phylogenies will be assigned to chromosomes
 #'     in the order provided.
 #'     Defaults to `NULL`.
 #'
@@ -299,7 +266,9 @@ vars_vcf <- function(fn, print_names = FALSE, ...) {
 #' @return A `vars_phylo_info` object containing information used in `create_variants`
 #'     to create haploid variants.
 #'     This class is just a wrapper around a list containing phylogenetic tree
-#'     information for each reference sequence.
+#'     information for each reference chromosome, which you can view (but not change)
+#'     using the object's `phylo()` method.
+#'
 #'
 #' @export
 #'
@@ -340,8 +309,7 @@ vars_phylo <- function(obj = NULL,
         phy <- lapply(fn, ape::read.tree)
     }
 
-    out <- list(phylo = phy)
-    class(out) <- "vars_phylo_info"
+    out <- vars_phylo_info$new(phylo = phy)
 
     return(out)
 
@@ -353,20 +321,21 @@ vars_phylo <- function(obj = NULL,
 
 # __theta -----
 
-#' Create necessary information to create variants using theta parameter
+#' Organize information to create variants using theta parameter
 #'
 #' This function organizes higher-level information for creating variants from
 #' the population-scaled mutation rate and a desired number of variants.
 #'
 #'
 #' @param theta Population-scaled mutation rate.
-#' @param n_vars Mumber of desired variants.
+#' @param n_vars Number of desired variants.
 #'
 #'
 #' @return A `vars_theta_info` object containing information used in `create_variants`
 #'     to create haploid variants.
 #'     This class is just a wrapper around a list containing the phylogenetic tree
-#'     and `theta` parameter.
+#'     and `theta` parameter, which you can view (but not change) using the object's
+#'     `phylo()` and `theta()` methods, respectively.
 #'
 #' @export
 #'
@@ -383,8 +352,7 @@ vars_theta <- function(theta, n_vars) {
     # Generate random coalescent tree:
     phy <- ape::rcoal(n_vars)
 
-    out <- list(phylo = phy, theta = theta)
-    class(out) <- "vars_theta_info"
+    out <- vars_theta_info$new(phylo = phy, theta = theta)
 
     return(out)
 
@@ -393,10 +361,11 @@ vars_theta <- function(theta, n_vars) {
 
 # __gtrees -----
 
-#' Create necessary information to create variants using gene trees
+#' Organize information to create variants using gene trees
 #'
 #' This function organizes higher-level information for creating variants from
 #' gene trees output from coalescent simulations.
+#' Note that all gene trees must be rooted and binary.
 #'
 #' Using the `obj` argument is designed after the `trees` fields in the output from
 #' the `scrm` and `coala` packages.
@@ -404,6 +373,8 @@ vars_theta <- function(theta, n_vars) {
 #' To get gene trees, make sure to add `+ sumstat_trees()`
 #' to the `coalmodel` for `coala`, or
 #' make sure that `"-T"` is present in `args` for `scrm`.
+#' If using either of these packages, I encourage you to cite them. For citation
+#' information, see output from `citation("scrm")` or `citation("coala")`.
 #'
 #' If using an output file from a command-line program like `ms`/`msms`,
 #' add the `-T` option.
@@ -412,10 +383,10 @@ vars_theta <- function(theta, n_vars) {
 #' @param obj Object containing gene trees.
 #'     This can be one of the following:
 #'     (1) A single `list` with a `trees` field inside. This field must
-#'     contain a set of gene trees for each sequence.
+#'     contain a set of gene trees for each chromosome.
 #'     (2) A list of lists, each sub-list containing a `trees` field of
 #'     length 1. The top-level list must be of the same length as the
-#'     number of sequences.
+#'     number of chromosomes.
 #'     Defaults to `NULL`.
 #' @param fn A single string specifying the name of the file containing
 #'     the `ms`-style coalescent output with gene trees.
@@ -425,7 +396,8 @@ vars_theta <- function(theta, n_vars) {
 #' @return A `vars_gtrees_info` object containing information used in `create_variants`
 #'     to create haploid variants.
 #'     This class is just a wrapper around a list of NEWICK tree strings, one for
-#'     each gene tree.
+#'     each gene tree, which you can view (but not change) using the object's
+#'     `trees()` method.
 #'
 #' @export
 #'
@@ -480,14 +452,13 @@ vars_gtrees <- function(obj = NULL,
         trees <- read_ms_trees_(fn)
 
         if (any(sapply(trees, length) == 0)) {
-            stop("\nIn ms-style output file, one or more sequences have no trees.",
+            stop("\nIn ms-style output file, one or more chromosomes have no trees.",
                  call. = FALSE)
         }
 
     }
 
-    out <- list(trees = trees)
-    class(out) <- "vars_gtrees_info"
+    out <- vars_gtrees_info$new(trees = trees)
 
     return(out)
 
@@ -495,573 +466,34 @@ vars_gtrees <- function(obj = NULL,
 
 
 
-# ====================================================================================`
-# ====================================================================================`
-
-# * HELPERS * -----
-
-# ====================================================================================`
-# ====================================================================================`
-
-
-# -------------*
-#  Non-phylogenomic -----
-# -------------*
-
-#   __seg. sites -----
-
-
-#' Process one segregating-sites matrix from a coalescent simulator with ms-style output.
+#' @describeIn vars_gtrees Write gene trees to ms-style output file.
 #'
-#' Used in `vars_ssites` below.
+#' @param gtrees A `vars_gtrees_info` object output from `vars_gtrees`.
+#' @param out_prefix Prefix for the output file of gene trees.
+#'     The extension will be `.trees`.
 #'
-#' @param mat The matrix to process.
-#'
-#' @noRd
-#'
-process_coal_obj_sites <- function(mat) {
-
-    err_msg_ <- paste("\nPositions in one or more segregating-sites matrices %s.",
-                      "They are derived from column names, so check those for nonsense.")
-
-    # Dealing with coala objects:
-    if (inherits(mat, "segsites")) mat <- mat$snps
-
-    pos <- as.numeric(colnames(mat))
-
-    if (any(is.na(pos))) {
-        stop(sprintf(err_msg_, "are producing NAs when trying to coerce them to numbers"),
-             call. = FALSE)
-    } else if (length(pos) != ncol(mat)) {
-        stop(sprintf(err_msg_, paste("are not the same length as the number of rows",
-                                     "in the matrix")), call. = FALSE)
-    }
-
-    new_mat <- cbind(pos, t(mat))
-    rownames(new_mat) <- colnames(new_mat) <- NULL
-
-    return(new_mat)
-}
-
-
-#' Check validity of position columns in segregating-sites matrices.
-#'
-#' Used in `to_var_set.vars_ssites_info` below.
-#'
-#' @noRd
-#'
-fill_coal_mat_pos <- function(sites_mats, seq_sizes) {
-
-    if (length(sites_mats) != length(seq_sizes)) {
-        stop("\nIn function `vars_ssites`, there must be exactly one segregating sites ",
-             "matrix for each reference genome sequence. ",
-             "It appears you need to re-run `vars_ssites` before attempting to ",
-             "run `create_variants` again.")
-    }
-
-    for (i in 1:length(sites_mats)) {
-        if (nrow(sites_mats[[i]]) == 0) next;
-        pos <- sites_mats[[i]][,1]
-        if (all(pos < 1 & pos > 0)) {
-            # Converting to integer positions (0-based):
-            pos  <- as.integer(pos * seq_sizes[i]);
-        } else {
-            all_ints <- all(pos %% 1 == 0)
-            if (all_ints && all(pos < seq_sizes[i] & pos >= 0)) {
-                # Keeping them in 0-based indices:
-                pos = as.integer(pos);
-            } else if (all_ints && all(pos <= seq_sizes[i] & pos >= 1)) {
-                # Converting to 0-based indices:
-                pos = as.integer(pos) - 1;
-            } else {
-                stop("\nPositions in one or more segregating-sites matrices ",
-                     "are not obviously from either a finite- or infinite-sites model. ",
-                     "The former should have integer positions in the range ",
-                     "[0, sequence length - 1] or [1, sequence length], ",
-                     "the latter numeric in (0,1).",
-                     "It appears you need to re-run `vars_ssites` before attempting to ",
-                     "run `create_variants` again.")
-            }
-        }
-        sites_mats[[i]][,1] <- pos
-
-    }
-
-    return(sites_mats)
-
-}
-
-
-
-
-# -------------*
-#  Phylogenomic -----
-# -------------*
-
-
-# These first two are helpers for multiple phylogenomic methods
-
-
-#' Go from pointer to trees info to a pointer to a VarSet object
-#'
-#' Used below in `to_var_set` methods
-#'
-#' @noRd
-#'
-trees_to_var_set <- function(phylo_info_ptr, reference, mevo_obj, n_threads,
-                             show_progress) {
-
-    # Make sampler_base_ptr
-    sampler_base_ptr <- mevo_obj_to_ptr(mevo_obj)
-
-    # Make variants pointer:
-    variants_ptr <- evolve_seqs(reference$genome,
-                                sampler_base_ptr,
-                                phylo_info_ptr,
-                                mevo_obj$gamma_mats,
-                                n_threads,
-                                show_progress)
-
-    return(variants_ptr)
-
-}
-
-
-
-
-#' Read info from a `phylo` object.
-#'
-#' @return An external pointer to the phylogenetic info needed to do the sequence
-#'     simulations.
-#'
-#' @noRd
-#'
-phylo_to_ptr <- function(phy, n_seqs) {
-
-    if ((!inherits(phy, "phylo") && !inherits(phy, "multiPhylo") &&
-         !inherits(phy, "list")) ||
-        (inherits(phy, "list") && !all(sapply(phy, inherits, what = "phylo")))) {
-        stop("\nThe `phy` argument to the internal function `phylo_to_ptr` should ",
-             "only ever be an object of class \"phylo\", \"multiPhylo\", or a ",
-             "list of \"phylo\" objects.")
-    }
-
-    if ((inherits(phy, "multiPhylo") || inherits(phy, "list")) &&
-        length(phy) != n_seqs) {
-        stop("\nThe `phy` argument to the internal function `phylo_to_ptr` should ",
-             "have a length of 1 or equal to the number of sequences if it's of class",
-             "\"multiPhylo\" or list.")
-    }
-    # So all inputs are lists of the proper length:
-    if (inherits(phy, "phylo")) phy <- rep(list(phy), n_seqs)
-    if (inherits(phy, "multiPhylo")) class(phy) <- "list"
-
-    phylo_info <- lapply(phy,
-                         function(p) {
-                             p <- ape::reorder.phylo(p, order = "cladewise")
-                             labels <- paste(p$tip.label)# <-- making sure they're strings
-                             branch_lens <- p$edge.length
-                             edges <- p$edge
-                             phy_info <- list(branch_lens = branch_lens, edges = edges,
-                                              labels = labels, start = 0, end = 0)
-                             return(list(phy_info))
-                         })
-
-    trees_ptr <- phylo_info_to_trees(phylo_info)
-
-    return(trees_ptr)
-}
-
-
-
-# __gtrees -----
-
-
-#' Process one gene-tree string from a coalescent simulator with ms-style output.
-#'
-#' Used in `gtrees_to_ptr`.
-#'
-#' @param str The string to process.
-#' @param seq_size The number of bp in the sequence associated with the input string.
-#'
-#' @noRd
-#'
-process_coal_tree_string <- function(str, seq_size) {
-
-    if (length(str) > 1) {
-        if (!all(grepl("^\\[", str))) {
-            stop("\nA coalescent string appears to include ",
-                 "recombination but does not include sizes for each region.",
-                 call. = FALSE)
-        }
-        sizes_ <- as.numeric(sapply(str, function(x) strsplit(x, "\\[|\\]")[[1]][2]))
-        # If they're <= 1, then they're not # bp, they're proportion of sequence
-        if (all(sizes_ <= 1) & seq_size > 1) {
-            sizes_ <- sizes_ / sum(sizes_)
-            sizes_ <- round(sizes_ * seq_size, 0)
-            # Remove any zero sizes:
-            sizes_ <- sizes_[sizes_ > 0]
-            # If there's nothing left, just make it of length 1:
-            if (length(sizes_) == 0) {
-                sizes_ <- seq_size
-                # If it doesn't round quite right, then randomly add/subtract:
-            } else if (sum(sizes_) != seq_size) {
-                inds <- sample.int(length(sizes_), abs(seq_size - sum(sizes_)))
-                sizes_[inds] <- sizes_[inds] + sign(seq_size - sum(sizes_))
-            }
-        } else if (sum(sizes_) != seq_size) {
-            stop("\nA coalescent string appears to include ",
-                 "recombination but the combined sizes of all regions don't match ",
-                 "the size of the sequence.", call. = FALSE)
-        }
-    } else {
-        sizes_ <- 1
-    }
-    ends <- cumsum(sizes_) - 1
-    starts <- c(0, utils::head(ends, -1) + 1)
-
-    phylo_ <- ape::read.tree(text = str)
-    # If no recombination (so only one phylo per sequence),
-    # then we need to make sure that it has the same nestedness as if there were
-    # >1 phylo objects:
-    if (inherits(phylo_, "phylo")) {
-        phylo_ <- list(phylo_)
-    }
-
-    out <- rep(list(NA), length(phylo_))
-
-    for (i in 1:length(phylo_)) {
-        phy <- ape::reorder.phylo(phylo_[[i]], order = "cladewise")
-        labels <- paste(phy$tip.label) # used paste to make sure they're characters
-        branch_lens <- phy$edge.length
-        edges <- phy$edge
-        out[[i]] <- list(branch_lens = branch_lens, edges = edges, labels = labels,
-                         start = starts[i], end = ends[i])
-    }
-
-    return(out)
-}
-
-
-#' Create pointer to trees C++ class from gene-tree info.
-#'
-#' Used in `to_var_set.vars_gtrees_info`.
-#'
-#' @return An XPtr to the info needed from the gene trees to do the sequence
-#'     simulations.
-#'
-#' @noRd
-#'
-#'
-gtrees_to_ptr <- function(trees, reference) {
-
-    seq_sizes <- reference$sizes()
-
-    if (length(trees) != length(seq_sizes)) {
-        stop("\nIn function `vars_gtrees`, there must be a set of gene trees ",
-             "for each reference genome sequence. ",
-             "It appears you need to re-run `vars_gtrees` before attempting to ",
-             "run `create_variants` again.")
-    }
-
-    phylo_info <- mapply(process_coal_tree_string, trees, seq_sizes,
-                         SIMPLIFY = FALSE, USE.NAMES = FALSE)
-
-    unq_n_tips <- lapply(phylo_info,
-                         function(x) sapply(x, function(xx) length(xx$labels)))
-    unq_n_tips <- unique(do.call(c, unq_n_tips))
-    if (length(unq_n_tips) > 1) {
-        stop("\nIn function `vars_gtrees`, all gene trees must have the same ",
-             "number of tips. ",
-             "It appears you need to re-run `vars_gtrees` before attempting to ",
-             "run `create_variants` again.")
-    }
-    unq_tips_names <- sapply(phylo_info,
-                             function(x) {
-                                 tips_ <- do.call(c, lapply(x, function(xx) xx$labels))
-                                 paste(sort(unique(tips_)), collapse = "___")
-                             })
-    if (length(unique(unq_tips_names)) > 1) {
-        stop("\nIn function `vars_gtrees`, all gene trees must have the same ",
-             "tip names. ",
-             "It appears you need to re-run `vars_gtrees` before attempting to ",
-             "run `create_variants` again.")
-    }
-
-    # Making sure all labels are the same
-    label_mat <- do.call(rbind,
-                         lapply(phylo_info, function(x) {
-                             t(sapply(x, function(xx) xx$labels))
-                         }))
-    label_mat <- t(apply(label_mat, 1, sort))
-    for (i in 2:nrow(label_mat)) {
-        if (any(label_mat[1,] != label_mat[i,])) {
-            stop("\nIn function `vars_gtrees`, all gene trees must have the same ",
-                 "tip names. ",
-                 "It appears you need to re-run `vars_gtrees` before attempting to ",
-                 "run `create_variants` again.")
-        }
-    }
-
-    trees_ptr <- phylo_info_to_trees(phylo_info)
-
-    return(trees_ptr)
-}
-
-
-
-
-
-
-# ====================================================================================`
-# ====================================================================================`
-
-# * PRINT * -----
-
-# ====================================================================================`
-# ====================================================================================`
-
-#' Print output from `vars_ssites`
-#'
-#' @noRd
 #' @export
 #'
-print.vars_ssites_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
+write_gtrees <- function(gtrees, out_prefix) {
 
-    cat("< Seg. site variant-creation info >\n")
-    cat(sprintf("  * Number of variants: %i\n", ncol(x$mats[[1]]) - 1))
-    cat(sprintf("  * Number of sites: %s\n", format(as.integer(sum(sapply(x$mats, nrow))),
-                                                    big.mark = ",")))
+    if (!inherits(gtrees, "vars_gtrees_info")) {
+        err_msg("write_gtrees", "gtrees", "a `vars_gtrees_info` object")
+    }
+    if (!is_type(out_prefix, "character", 1L)) {
+        err_msg("write_gtrees", "out_prefix", "a single string")
+    }
+
+    out_fn <- paste0(path.expand(out_prefix), ".trees")
+
+    # Trees separated by empty line, then one with just "//"
+    # This is to emulate ms-style output
+    out_str <- paste0("//\n", paste(lapply(gtrees$trees(), paste, collapse = "\n"),
+                                    collapse = "\n\n//\n"))
+
+    write(out_str, out_fn)
+
     invisible(NULL)
 
 }
 
 
-#' Print output from `vars_vcf`
-#'
-#'
-#' @noRd
-#' @export
-#'
-print.vars_vcf_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-    cat("< VCF variant-creation info >\n")
-    cat(sprintf("  * Number of variants: %i\n", ncol(x$haps[[1]])))
-    cat(sprintf("  * Number of sequences: %i\n", length(unique(x$chrom))))
-    cat(sprintf("  * Number of sites: %s\n", format(as.integer(length(x$pos)),
-                                                    big.mark = ",")))
-    invisible(NULL)
-}
-
-
-#' Print output from `vars_phylo`
-#'
-#'
-#' @noRd
-#' @export
-#'
-print.vars_phylo_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-
-    cat("< Phylo variant-creation info >\n")
-    cat(sprintf("  * Number of variants: %i\n", length(x$phylo[[1]]$tip.label)))
-    cat(sprintf("  * Number of trees: %i\n", length(x$phylo)))
-    invisible(NULL)
-
-}
-
-
-#' Print output from `vars_theta`
-#'
-#'
-#' @noRd
-#' @export
-#'
-print.vars_theta_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-
-    cat("< Theta variant-creation info >\n")
-    cat(sprintf("  * Theta: %.3g\n", x$theta))
-    cat("# Phylogenetic tree:\n")
-    print(x$phylo)
-    invisible(NULL)
-
-}
-
-
-#' Print output from `vars_gtrees`
-#'
-#'
-#'
-#' @noRd
-#' @export
-#'
-print.vars_gtrees_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-
-    cat("< Gene trees variant-creation info >\n")
-    cat(sprintf("  * Number of sequences: %i\n", length(x$trees)))
-    invisible(NULL)
-
-}
-
-
-
-
-
-
-
-# ====================================================================================`
-# ====================================================================================`
-
-# * TO_VAR_SET * -----
-
-# ====================================================================================`
-# ====================================================================================`
-
-#' Used to convert info to VarSet pointer.
-#'
-#' @noRd
-#'
-to_var_set <- function (x, reference, mevo_obj, n_threads, show_progress) {
-    UseMethod("to_var_set", x)
-}
-
-#' Create variants from segregating-site info from coalescent simulations.
-#'
-#'
-#' @noRd
-#'
-to_var_set.vars_ssites_info <- function(x, reference, mevo_obj,
-                                        n_threads, show_progress, ...) {
-
-
-    seq_sizes <- reference$sizes()
-
-    # Fill and check the position column in `x$mats`
-    x$mats <- fill_coal_mat_pos(x$mats, seq_sizes)
-
-    variants_ptr <- add_ssites_cpp(reference$genome,
-                                   x$mats,
-                                   mevo_obj$Q,
-                                   mevo_obj$pi_tcag,
-                                   mevo_obj$insertion_rates,
-                                   mevo_obj$deletion_rates,
-                                   n_threads,
-                                   show_progress)
-
-    return(variants_ptr)
-
-}
-
-
-#' Create variants from VCF file
-#'
-#'
-#' @noRd
-#'
-to_var_set.vars_vcf_info <- function(x, reference, mevo_obj, n_threads, show_progress) {
-
-    seq_names <- view_ref_genome_seq_names(reference$genome)
-    unq_chrom <- unique(x$chrom)
-
-    if (!all(unq_chrom %in% seq_names)) {
-        if (x$print_names) print(unq_chrom)
-        stop("\nSequence name(s) in VCF file don't match those in the ",
-             "`ref_genome` object. ",
-             "It's probably easiest to manually change the `ref_genome` object ",
-             "(using `$set_names()` method) to have the same names as the VCF file. ",
-             "Re-run `vars_vcf` with `print_names = TRUE` to see the VCF-file names.",
-             call. = FALSE)
-    }
-
-    # Converts items in `chrom` to 0-based indices of sequences in ref. genome
-    chrom_inds <- match(x$chrom, seq_names) - 1
-
-
-    variants_ptr <- read_vcfr(reference$genome, x$var_names,
-                              x$haps, chrom_inds, x$pos, x$ref_seq)
-
-    return(variants_ptr)
-
-}
-
-
-#' Create variants from phylogenetic tree(s).
-#'
-#'
-#' @noRd
-#'
-to_var_set.vars_phylo_info <- function(x, reference, mevo_obj,
-                                       n_threads, show_progress) {
-
-    phy <- x$phylo
-    class(phy) <- "list"
-
-    n_vars <- length(phy$tip.label)
-    n_seqs <- as.integer(reference$n_seqs())
-
-    if (!length(phy) %in% c(1L, n_seqs)) {
-        stop("\nIn function `vars_phylo`, you must provide information for 1 tree ",
-             "or a tree for each reference genome sequence. ",
-             "It appears you need to re-run `vars_phylo` before attempting to ",
-             "run `create_variants` again.")
-    }
-
-    if (length(phy) == 1) phy <- rep(phy, n_seqs)
-
-    trees_ptr <- phylo_to_ptr(phy, n_seqs)
-
-    var_set_ptr <- trees_to_var_set(trees_ptr, reference, mevo_obj, n_threads,
-                                    show_progress)
-
-    return(var_set_ptr)
-
-}
-
-
-#' Create variants from theta parameter.
-#'
-#'
-#' @noRd
-#'
-to_var_set.vars_theta_info <- function(x, reference, mevo_obj,
-                                       n_threads, show_progress) {
-
-    phy <- x$phylo
-    theta <- x$theta
-
-    n_vars <- length(phy$tip.label)
-    n_seqs <- reference$n_seqs()
-
-    # Calculating L from theta:
-    # E(L) = 4 * N * a; a = sum(1 / (1:(n_seqs-1)))
-    a <- sum(1 / (1:(n_vars-1)))
-    # theta = 4 * N * mu
-    # So if we know theta and mu, then...
-    L <- theta * a / mevo_obj$mu()
-    # Now rescale to have total tree length of `L`:
-    phy$edge.length <- phy$edge.length / max(ape::node.depth.edgelength(phy)) * L
-
-    trees_ptr <- phylo_to_ptr(phy, n_seqs)
-
-    var_set_ptr <- trees_to_var_set(trees_ptr, reference, mevo_obj, n_threads,
-                                    show_progress)
-
-    return(var_set_ptr)
-
-}
-
-
-#' Create variants from gene trees.
-#'
-#'
-#' @noRd
-#'
-to_var_set.vars_gtrees_info <- function(x, reference, mevo_obj,
-                                        n_threads, show_progress) {
-
-    trees_ptr <- gtrees_to_ptr(x$trees, reference)
-
-    var_set_ptr <- trees_to_var_set(trees_ptr, reference, mevo_obj, n_threads,
-                                    show_progress)
-
-    return(var_set_ptr)
-
-}

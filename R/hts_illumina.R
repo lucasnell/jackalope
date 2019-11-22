@@ -274,7 +274,7 @@ read_profile <- function(profile_fn, seq_sys, read_length, read) {
 #'
 #' @noRd
 #'
-check_illumina_args <- function(seq_object, n_reads,
+check_illumina_args <- function(obj, n_reads,
                                 read_length, paired,
                                 frag_mean, frag_sd,
                                 matepair,
@@ -289,7 +289,7 @@ check_illumina_args <- function(seq_object, n_reads,
 
     # Checking types:
 
-    if (!inherits(seq_object, c("ref_genome", "variants"))) {
+    if (!inherits(obj, c("ref_genome", "variants"))) {
         stop("\nWhen providing info for the Illumina sequencer, ",
              "the object providing the sequence information should be ",
              "of class \"ref_genome\" or \"variants\".", call. = FALSE)
@@ -357,32 +357,32 @@ check_illumina_args <- function(seq_object, n_reads,
     }
 
     # Checking proper variant_probs
-    if (!is.null(variant_probs) && !inherits(seq_object, "variants")) {
+    if (!is.null(variant_probs) && !inherits(obj, "variants")) {
         stop("\nFor Illumina sequencing, it makes no sense to provide ",
              "a vector of probabilities of sequencing each variant if the ",
-             "`seq_object` argument is of class \"ref_genome\". ",
+             "`obj` argument is of class \"ref_genome\". ",
              "Terminating here in case this was a mistake.", call. = FALSE)
     }
-    if (!is.null(variant_probs) && inherits(seq_object, "variants") &&
-        length(variant_probs) != seq_object$n_vars()) {
+    if (!is.null(variant_probs) && inherits(obj, "variants") &&
+        length(variant_probs) != obj$n_vars()) {
         err_msg("illumina", "variant_probs",
                 "a vector of the same length as the number of variants in the",
-                "`seq_object` argument, if `seq_object` is of class \"variants\".",
-                "Use `seq_object$n_vars()` to see the number of variants")
+                "`obj` argument, if `obj` is of class \"variants\".",
+                "Use `obj$n_vars()` to see the number of variants")
     }
     # Similar checks for barcodes
     if (!is.null(barcodes)) {
-        if (!inherits(seq_object, "variants") && length(barcodes) != 1) {
+        if (!inherits(obj, "variants") && length(barcodes) != 1) {
             stop("\nFor Illumina sequencing, it makes no sense to provide ",
-                 "a vector of multiple barcodes if the `seq_object` argument is ",
+                 "a vector of multiple barcodes if the `obj` argument is ",
                  "of class \"ref_genome\". ",
                  "Terminating here in case this was a mistake.", call. = FALSE)
         }
-        if (inherits(seq_object, "variants") && length(barcodes) != seq_object$n_vars()) {
+        if (inherits(obj, "variants") && length(barcodes) != obj$n_vars()) {
             err_msg("illumina", "barcodes",
                     "a vector of the same length as the number of variants in the",
-                    "`seq_object` argument, if `seq_object` is of class \"variants\".",
-                    "Use `seq_object$n_vars()` to see the number of variants")
+                    "`obj` argument, if `obj` is of class \"variants\".",
+                    "Use `obj$n_vars()` to see the number of variants")
         }
         n_weirdo_chars <- sapply(strsplit(barcodes, ""),
                                  function(x) sum(!x %in% c("T", "C", "A", "G")))
@@ -457,14 +457,14 @@ check_illumina_args <- function(seq_object, n_reads,
 #' @section ID lines:
 #' The ID lines for FASTQ files are formatted as such:
 #'
-#' `@<genome name>-<sequence name>-<starting position>-<strand>[/<read#>]`
+#' `@<genome name>-<chromosome name>-<starting position>-<strand>[/<read#>]`
 #'
 #' where the part in `[]` is only for paired-end Illumina reads, and where `genome name`
 #' is always `REF` for reference genomes (as opposed to variants).
 #'
 #'
 #'
-#' @param seq_object Sequencing object of class `ref_genome` or `variants`.
+#' @param obj Sequencing object of class `ref_genome` or `variants`.
 #' @param out_prefix Prefix for the output file(s), including entire path except
 #'     for the file extension.
 #' @param n_reads Number of reads you want to create.
@@ -510,7 +510,7 @@ check_illumina_args <- function(seq_object, n_reads,
 #' @param prob_dup A single number indicating the probability of duplicates.
 #'     Defaults to `0.02`.
 #' @param sep_files Logical indicating whether to make separate files for each variant.
-#'     This argument is coerced to `FALSE` if the `seq_object` argument is not
+#'     This argument is coerced to `FALSE` if the `obj` argument is not
 #'     a `variants` object.
 #'     Defaults to `FALSE`.
 #' @param compress Logical specifying whether or not to compress output file, or
@@ -532,6 +532,10 @@ check_illumina_args <- function(seq_object, n_reads,
 #'     compressed output on the fly, so that option is not included.
 #'     If you want to be conservative with disk space (by not having an uncompressed
 #'     file present even temporarily), set `n_threads` to `1`.
+#'     Threads are NOT spread across chromosomes or variants, so you don't need to
+#'     think about these when choosing this argument's value.
+#'     However, all threads write to the same file/files, so there are diminishing
+#'     returns for providing many threads.
 #'     This argument is ignored if the package was not compiled with OpenMP.
 #'     Defaults to `1`.
 #' @param read_pool_size The number of reads to store before writing to disk.
@@ -546,6 +550,34 @@ check_illumina_args <- function(seq_object, n_reads,
 #'
 #' @export
 #'
+#' @usage illumina(obj,
+#'          out_prefix,
+#'          n_reads,
+#'          read_length,
+#'          paired,
+#'          frag_mean = 400,
+#'          frag_sd = 100,
+#'          matepair = FALSE,
+#'          seq_sys = NULL,
+#'          profile1 = NULL,
+#'          profile2 = NULL,
+#'          ins_prob1 = 0.00009,
+#'          del_prob1 = 0.00011,
+#'          ins_prob2 = 0.00015,
+#'          del_prob2 = 0.00023,
+#'          frag_len_min = NULL,
+#'          frag_len_max = NULL,
+#'          variant_probs = NULL,
+#'          barcodes = NULL,
+#'          prob_dup = 0.02,
+#'          sep_files = FALSE,
+#'          compress = FALSE,
+#'          comp_method = "bgzip",
+#'          n_threads = 1L,
+#'          read_pool_size = 1000L,
+#'          show_progress = FALSE,
+#'          overwrite = FALSE)
+#'
 #' @references
 #' Huang, W., L. Li, J. R. Myers, and G. T. Marth. 2012. ART: a next-generation
 #' sequencing read simulator. \emph{Bioinformatics} \strong{28}:593–594.
@@ -553,11 +585,12 @@ check_illumina_args <- function(seq_object, n_reads,
 #' @examples
 #' \donttest{
 #' rg <- create_genome(10, 100e3, 100)
-#' illumina(rg, "illumina_reads", n_reads = 100,
+#' dir <- tempdir(TRUE)
+#' illumina(rg, paste0(dir, "/illumina_reads"), n_reads = 100,
 #'          read_length = 100, paired = FALSE)
 #' }
 #'
-illumina <- function(seq_object,
+illumina <- function(obj,
                      out_prefix,
                      n_reads,
                      read_length,
@@ -591,7 +624,7 @@ illumina <- function(seq_object,
     if (matepair) paired <- TRUE
 
     # Check for improper argument types:
-    check_illumina_args(seq_object, n_reads, read_length, paired,
+    check_illumina_args(obj, n_reads, read_length, paired,
                         frag_mean, frag_sd, matepair, seq_sys, profile1, profile2,
                         ins_prob1, del_prob1, ins_prob2, del_prob2,
                         frag_len_min, frag_len_max, variant_probs, barcodes, prob_dup,
@@ -601,11 +634,11 @@ illumina <- function(seq_object,
     out_prefix <- path.expand(out_prefix)
     fns <- NULL
     # Doesn't make sense to have separate files for reference genome:
-    if (inherits(seq_object, "ref_genome")) sep_files <- FALSE
+    if (inherits(obj, "ref_genome")) sep_files <- FALSE
     if (!sep_files) {
         fns <- paste0(out_prefix, "_R", 1:ifelse(paired, 2, 1), ".fq")
     } else {
-        fns <- lapply(seq_object$var_names(),
+        fns <- lapply(obj$var_names(),
                       function(x) sprintf("%s_%s_R%i.fq", out_prefix, x,
                                           1:ifelse(paired, 2, 1)))
         fns <- c(fns, recursive = TRUE)
@@ -635,11 +668,11 @@ illumina <- function(seq_object,
              "and if `frag_len_min` is not provided, it's automatically changed ",
              "to the read length.", call. = FALSE)
     }
-    if (is.null(variant_probs) && inherits(seq_object, "variants")) {
-        variant_probs <- rep(1, seq_object$n_vars())
+    if (is.null(variant_probs) && inherits(obj, "variants")) {
+        variant_probs <- rep(1, obj$n_vars())
     }
-    if (is.null(barcodes) && inherits(seq_object, "variants")) {
-        barcodes <- rep("", seq_object$n_vars())
+    if (is.null(barcodes) && inherits(obj, "variants")) {
+        barcodes <- rep("", obj$n_vars())
     } else if (is.null(barcodes)) barcodes <- ""
 
     prof_info1 <- read_profile(profile1, seq_sys, read_length, 1)
@@ -683,16 +716,16 @@ illumina <- function(seq_object,
                  barcodes = barcodes,
                  show_progress = show_progress)
 
-    if (inherits(seq_object, "ref_genome")) {
-        args <- c(args, list(ref_genome_ptr = seq_object$genome))
+    if (inherits(obj, "ref_genome")) {
+        args <- c(args, list(ref_genome_ptr = obj$ptr()))
         args$sep_files <- NULL
         do.call(illumina_ref_cpp, args)
-    } else if (inherits(seq_object, "variants")) {
-        args <- c(args, list(var_set_ptr = seq_object$genomes,
+    } else if (inherits(obj, "variants")) {
+        args <- c(args, list(var_set_ptr = obj$ptr(),
                              variant_probs = variant_probs))
         do.call(illumina_var_cpp, args)
     } else {
-        err_msg("illumina", "`seq_object`", "a \"ref_genome\" or \"variants\" object")
+        err_msg("illumina", "`obj`", "a \"ref_genome\" or \"variants\" object")
     }
 
     invisible(NULL)

@@ -81,7 +81,7 @@ will use molecular evolution information when passed to create_variants." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">jackalope</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -110,6 +110,9 @@ will use molecular evolution information when passed to create_variants." />
       <a href="../articles/sub-models.html">Models of nucleotide substitution</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -154,17 +157,17 @@ will use molecular evolution information when passed to <code>create_variants</c
 <dt><code><a href='vars_theta.html'>vars_theta</a></code></dt><dd><p>Uses an estimate for theta, the population-scaled
 mutation rate, and a desired number of variants.</p></dd>
 <dt><code><a href='vars_phylo.html'>vars_phylo</a></code></dt><dd><p>Uses phylogenetic tree(s) from <code>phylo</code>
-object(s) or NEWICK file(s), one tree per sequence or one for all sequences.</p></dd>
+object(s) or NEWICK file(s), one tree per chromosome or one for all
+chromosomes.</p></dd>
 <dt><code><a href='vars_gtrees.html'>vars_gtrees</a></code></dt><dd><p>Uses gene trees, either in the form of
 an object from the <code>scrm</code> or <code>coala</code> package or
 a file containing output in the style of the <code>ms</code> program.</p></dd>
 <dt><code><a href='vars_ssites.html'>vars_ssites</a></code></dt><dd><p>Uses matrices of segregating sites,
 either in the form of
 <code>scrm</code> or <code>coala</code> coalescent-simulator object(s), or
-(2) a <code>ms</code>-style output file.</p></dd>
+a <code>ms</code>-style output file.</p></dd>
 <dt><code><a href='vars_vcf.html'>vars_vcf</a></code></dt><dd><p>Uses a variant call format (VCF) file that
-directly specifies variants.
-This method does not work if the <code>vcfR</code> package isn't installed.</p></dd>
+directly specifies variants.</p></dd>
 
 </dl>
 

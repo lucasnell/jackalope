@@ -4,19 +4,35 @@
 \alias{pacbio}
 \title{Create and write PacBio reads to FASTQ file(s).}
 \usage{
-pacbio(seq_object, out_prefix, n_reads, chi2_params_s = c(0.01214, -5.12,
-  675, 48303.0732881, 1.46910512123303), chi2_params_n = c(0.00189237136,
-  2.5394497, 5500), max_passes = 40, sqrt_params = c(0.5, 0.2247),
-  norm_params = c(0, 0.2), prob_thresh = 0.2, ins_prob = 0.11,
-  del_prob = 0.04, sub_prob = 0.01, min_read_length = 50,
-  lognorm_read_length = c(0.200110276521, -10075.4363813, 17922.611306),
-  custom_read_lengths = NULL, prob_dup = 0, variant_probs = NULL,
-  sep_files = FALSE, compress = FALSE, comp_method = "bgzip",
-  n_threads = 1L, read_pool_size = 100L, show_progress = FALSE,
-  overwrite = FALSE)
+pacbio(obj,
+       out_prefix,
+       n_reads,
+       chi2_params_s = c(0.01214, -5.12, 675, 48303.0732881,
+                         1.4691051212330266),
+       chi2_params_n = c(0.00189237136, 2.53944970, 5500),
+       max_passes = 40,
+       sqrt_params = c(0.5, 0.2247),
+       norm_params = c(0, 0.2),
+       prob_thresh = 0.2,
+       ins_prob = 0.11,
+       del_prob = 0.04,
+       sub_prob = 0.01,
+       min_read_length = 50,
+       lognorm_read_length = c(0.200110276521, -10075.4363813,
+                               17922.611306),
+       custom_read_lengths = NULL,
+       prob_dup = 0.0,
+       variant_probs = NULL,
+       sep_files = FALSE,
+       compress = FALSE,
+       comp_method = "bgzip",
+       n_threads = 1L,
+       read_pool_size = 100L,
+       show_progress = FALSE,
+       overwrite = FALSE)
 }
 \arguments{
-\item{seq_object}{Sequencing object of class \code{ref_genome} or \code{variants}.}
+\item{obj}{Sequencing object of class \code{ref_genome} or \code{variants}.}
 
 \item{out_prefix}{Prefix for the output file(s), including entire path except
 for the file extension.}
@@ -76,7 +92,7 @@ This is ignored if sequencing a reference genome.
 Defaults to \code{NULL}.}
 
 \item{sep_files}{Logical indicating whether to make separate files for each variant.
-This argument is coerced to \code{FALSE} if the \code{seq_object} argument is not
+This argument is coerced to \code{FALSE} if the \code{obj} argument is not
 a \code{variants} object.
 Defaults to \code{FALSE}.}
 
@@ -101,6 +117,10 @@ There is no speed increase if you try to use multiple threads to create
 compressed output on the fly, so that option is not included.
 If you want to be conservative with disk space (by not having an uncompressed
 file present even temporarily), set \code{n_threads} to \code{1}.
+Threads are NOT spread across chromosomes or variants, so you don't need to
+think about these when choosing this argument's value.
+However, all threads write to the same file/files, so there are diminishing
+returns for providing many threads.
 This argument is ignored if the package was not compiled with OpenMP.
 Defaults to \code{1}.}
 
@@ -127,7 +147,7 @@ this function.
 
 The ID lines for FASTQ files are formatted as such:
 
-\code{@<genome name>-<sequence name>-<starting position>-<strand>}
+\code{@<genome name>-<chromosome name>-<starting position>-<strand>}
 
 where \code{genome name} is always \code{REF} for reference genomes (as opposed to variants).
 }
@@ -135,7 +155,8 @@ where \code{genome name} is always \code{REF} for reference genomes (as opposed 
 \examples{
 \donttest{
 rg <- create_genome(10, 100e3, 100)
-pacbio(rg, "pacbio_reads", n_reads = 100)
+dir <- tempdir(TRUE)
+pacbio(rg, paste0(dir, "/pacbio_reads"), n_reads = 100)
 }
 
 }

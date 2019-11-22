@@ -1,5 +1,7 @@
-#ifndef __JACKAL_VCF_IO_H
-#define __JACKAL_VCF_IO_H
+#ifndef __JACKALOPE_VCF_IO_H
+#define __JACKALOPE_VCF_IO_H
+
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <vector>               // vector class
@@ -11,8 +13,8 @@
 #include "htslib/bgzf.h"  // BGZF
 
 #include "jackalope_types.h"  // integer types
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
+#include "ref_classes.h"  // Ref* classes
+#include "var_classes.h"  // Var* classes
 #include "io.h"  // File* classes
 
 
@@ -22,6 +24,43 @@ using namespace Rcpp;
 
 // Maximum uint64 value:
 #define MAX_INT 18446744073709551615ULL
+
+
+
+/*
+ This function produces a vector of indices that map the VCF indices onto the
+ original chromosome names from the `ref_genome` object.
+ This is in case the chromosomes are in a different order in the VCF file.
+ */
+inline std::vector<uint64> match_chrom_names(const std::vector<std::string>& from_ref,
+                                             const std::vector<std::string>& from_vcf,
+                                             const bool& print_names) {
+
+    std::vector<uint64> order_(from_ref.size());
+
+    for (uint64 i = 0; i < order_.size(); i++) {
+        auto iter = std::find(from_vcf.begin(), from_vcf.end(),
+                              from_ref[i]);
+        if (iter == from_vcf.end()) {
+            std::vector<std::string> err_msg;
+            if (print_names) {
+                for (const std::string& s : from_vcf) err_msg.push_back(s + '\n');
+            }
+            err_msg.push_back("\nChromosome name(s) in VCF file don't match those in ");
+            err_msg.push_back("the `ref_genome` object. It's probably easiest ");
+            err_msg.push_back("to manually change the `ref_genome` object ");
+            err_msg.push_back("(using `$set_names()` method) to have the same names ");
+            err_msg.push_back("as the VCF file.");
+            str_stop(err_msg);
+        }
+        order_[i] = iter - from_vcf.begin();
+    }
+
+    return order_;
+}
+
+
+
 
 
 
@@ -43,8 +82,8 @@ inline std::string vcf_date() {
 
 
 
-// Info for one sequence on one variant
-class OneVarSeqVCF {
+// Info for one chromosome on one variant
+class OneVarChromVCF {
 
 public:
 
@@ -58,16 +97,16 @@ public:
      */
     uint64 gt_index = 0;
     // Starting/ending indices on mutations vector:
-    std::pair<uint64, uint64> ind = std::make_pair(0, 0);
-    // Starting/ending position on ref. sequence:
-    std::pair<uint64, uint64> pos;
+    std::pair<uint64, uint64> mut_ind = std::make_pair(0, 0);
+    // Starting/ending position on ref. chromosome:
+    std::pair<uint64, uint64> ref_pos;
 
-    OneVarSeqVCF() : var_seq(nullptr) {};
+    OneVarChromVCF() : var_chrom(nullptr) {};
 
 
     /*
      Determine whether this variant should be included in a VCF line for given
-     sequence starting and ending positions.
+     chromosome starting and ending positions.
      If this variant has a deletion at the input position, this method updates that
      and the boolean for whether the line is still expanding (changes it to true).
      */
@@ -87,11 +126,11 @@ public:
               const std::string& ref_str);
 
 
-    // Reset to new variant sequence
-    void set_var(const VarSequence& var_seq_) {
-        var_seq = &var_seq_;
+    // Reset to new variant chromosome
+    void set_var(const VarChrom& var_chrom_) {
+        var_chrom = &var_chrom_;
         gt_index = 0;
-        ind = std::make_pair(0, 0);
+        mut_ind = std::make_pair(0, 0);
         reset_pos();
         return;
     }
@@ -100,93 +139,97 @@ public:
                      uint64& pos_end) const {
 
         // If this is the new nearest mutation, override both positions:
-        if (pos.first < pos_start) {
-            pos_start = pos.first;
-            pos_end = pos.second;
+        if (ref_pos.first < pos_start) {
+            pos_start = ref_pos.first;
+            pos_end = ref_pos.second;
         }
         /*
          If this one ties with a previous mutation
          and the ending position of this one is further along than the original,
          then we override that.
          */
-        if (pos.first == pos_start && pos.second > pos_end) {
-            pos_end = pos.second;
+        if (ref_pos.first == pos_start && ref_pos.second > pos_end) {
+            pos_end = ref_pos.second;
         }
 
         return;
 
     }
+
 
 
 
 private:
 
-    const VarSequence* var_seq;
+    const VarChrom* var_chrom;
 
     // Set positions when indices are the same (when initializing, iterating, new variant)
     void reset_pos() {
-        if (ind.first >= var_seq->mutations.size()) {
-            pos = std::make_pair(MAX_INT, MAX_INT); // max uint64 values
+
+        if (mut_ind.first >= var_chrom->mutations.size()) {
+            ref_pos = std::make_pair(MAX_INT, MAX_INT); // max uint64 values
         } else {
-            const Mutation* mut(&(var_seq->mutations[ind.first]));
-            set_first_pos(*mut);
+            uint64 index = mut_ind.first;
+            set_first_pos(mut_ind.first);
             /*
              Checking for a deletion right after the current mutation:
              (the second part of this statement is added because contiguous deletions
              are prevented elsewhere)
              */
-            if (ind.second < (var_seq->mutations.size() - 1) &&
-                mut->size_modifier >= 0) {
-                const Mutation& next_mut(var_seq->mutations[ind.second + 1]);
-                if (next_mut.size_modifier < 0 &&
-                    next_mut.old_pos == (mut->old_pos + 1)) {
-                    ind.second++;
-                    mut = &(var_seq->mutations[ind.second]);
+            if (mut_ind.second < (var_chrom->mutations.size()-1) &&
+                var_chrom->size_modifier(mut_ind.first) >= 0) {
+                if (var_chrom->size_modifier(mut_ind.second + 1) < 0 &&
+                    var_chrom->mutations.old_pos[mut_ind.second + 1] ==
+                    (var_chrom->mutations.old_pos[mut_ind.first] + 1)) {
+                    mut_ind.second++;
+                    index = mut_ind.second;
                 }
             }
-            set_second_pos(*mut);
+            set_second_pos(index);
         }
         return;
     }
 
     /*
-     Gets first ref. sequence position for a mutation, compensating for the fact
+     Gets first ref. chromosome position for a mutation, compensating for the fact
      that deletions have to be treated differently
      */
-    inline void set_first_pos(const Mutation& mut) {
-        pos.first = mut.old_pos;
-        if (mut.size_modifier < 0 && mut.old_pos > 0) pos.first--;
+    inline void set_first_pos(const uint64& index) {
+        ref_pos.first = var_chrom->mutations.old_pos[index];
+        if (var_chrom->size_modifier(index) < 0 &&
+            var_chrom->mutations.old_pos[index] > 0) ref_pos.first--;
         return;
     }
     // Same as above, but returns the integer rather than setting it
-    inline uint64 get_first_pos(const Mutation& mut) {
-        uint64 pos_first = mut.old_pos;
-        if (mut.size_modifier < 0 && mut.old_pos > 0) pos_first--;
+    inline uint64 get_first_pos(const uint64& index) {
+        uint64 pos_first = var_chrom->mutations.old_pos[index];
+        if (var_chrom->size_modifier(index) < 0 &&
+            var_chrom->mutations.old_pos[index] > 0) pos_first--;
         return pos_first;
     }
     /*
-     Gets last ref. sequence position for a mutation, compensating for the fact
+     Gets last ref. chromosome position for a mutation, compensating for the fact
      that deletions have to be treated differently
      */
-    inline void set_second_pos(const Mutation& mut) {
-        pos.second = mut.old_pos;
-        if (mut.size_modifier < 0) {
-            if (mut.old_pos > 0) {
-                pos.second -= (1 + mut.size_modifier);
+    inline void set_second_pos(const uint64& index) {
+        ref_pos.second = var_chrom->mutations.old_pos[index];
+        if (var_chrom->size_modifier(index) < 0) {
+            if (var_chrom->mutations.old_pos[index] > 0) {
+                ref_pos.second -= (1 + var_chrom->size_modifier(index));
             } else {
-                pos.second -= mut.size_modifier;
+                ref_pos.second -= var_chrom->size_modifier(index);
             }
         }
         return;
     }
     // Same as above, but returns the integer rather than setting it
-    inline uint64 get_second_pos(const Mutation& mut) {
-        uint64 pos_second = mut.old_pos;
-        if (mut.size_modifier < 0) {
-            if (mut.old_pos > 0) {
-                pos_second -= (1 + mut.size_modifier);
+    inline uint64 get_second_pos(const uint64& index) {
+        uint64 pos_second = var_chrom->mutations.old_pos[index];
+        if (var_chrom->size_modifier(index) < 0) {
+            if (var_chrom->mutations.old_pos[index] > 0) {
+                pos_second -= (1 + var_chrom->size_modifier(index));
             } else {
-                pos_second -= mut.size_modifier;
+                pos_second -= var_chrom->size_modifier(index);
             }
         }
         return pos_second;
@@ -197,17 +240,17 @@ private:
 
 
 
-// Map mutations among all variants for one sequence
+// Map mutations among all variants for one chromosome
 class WriterVCF {
 
 public:
 
     const VarSet* var_set;
-    uint64 seq_ind;
+    uint64 chrom_ind;
     const std::string* ref_nts;
 
-    std::vector<OneVarSeqVCF> var_infos;
-    // Starting/ending positions on reference sequence for overall nearest mutation:
+    std::vector<OneVarChromVCF> var_infos;
+    // Starting/ending positions on reference chromosome for overall nearest mutation:
     std::pair<uint64,uint64> mut_pos = std::make_pair(MAX_INT, MAX_INT);
     // Strings for all unique alt. strings among  variants. Grouping is not relevant here.
     std::vector<std::string> unq_alts;
@@ -217,20 +260,20 @@ public:
     std::vector<std::string> sample_names;
 
     WriterVCF(const VarSet& var_set_,
-              const uint64& seq_ind_,
+              const uint64& chrom_ind_,
               const IntegerMatrix& sample_groups_)
         : var_set(&var_set_),
-          seq_ind(seq_ind_),
+          chrom_ind(chrom_ind_),
           ref_nts(),
           var_infos(var_set_.size()),
           unq_alts(),
           sample_groups(as<arma::umat>(sample_groups_) - 1),
           gt_indexes(var_set_.size()) {
 
-        // Now checking sequence index:
-        if (seq_ind >= var_set->reference->size()) {
-            str_stop({"\nWhen specifying a sequence index for VCF output, ",
-                     "you must provide an integer < the number of sequences."});
+        // Now checking chromosome index:
+        if (chrom_ind >= var_set->reference->size()) {
+            str_stop({"\nWhen specifying a chromosome index for VCF output, ",
+                     "you must provide an integer < the number of chromosomes."});
         }
 
         unq_alts.reserve(var_set_.size());
@@ -241,11 +284,11 @@ public:
 
 
     /*
-     Set the strings for the sequence position (`POS`), reference sequence (`REF`),
+     Set the strings for the chromosome position (`POS`), reference chromosome (`REF`),
      alternative alleles (`ALT`), and genotype information (`GT` format field)
      to add to a new line in the VCF file.
      Returns false if you shouldn't write to file for this iteration (if all mutations
-     by chance have been cancelled out result in the reference sequence).
+     by chance have been cancelled out result in the reference chromosome).
      Returns true otherwise.
      */
     bool iterate(std::string& pos_str,
@@ -254,9 +297,9 @@ public:
                  std::vector<std::string>& gt_strs);
 
 
-    // Change the sequence this object refers to
-    void new_seq(const uint64& seq_ind_) {
-        seq_ind = seq_ind_;
+    // Change the chromosome this object refers to
+    void new_chrom(const uint64& chrom_ind_) {
+        chrom_ind = chrom_ind_;
         construct();
         return;
     }
@@ -269,7 +312,7 @@ public:
         pool += '\n';
         pool += "##source=jackalope\n";
         for (uint64 i = 0; i < var_set->reference->size(); i++) {
-            const RefSequence& rs(var_set->reference->operator[](i));
+            const RefChrom& rs(var_set->reference->operator[](i));
             pool += "##contig=<ID=" + rs.name + ',';
             pool += "length=" + std::to_string(rs.size()) + ">\n";
         }
@@ -294,14 +337,14 @@ private:
 
     void construct() {
 
-        ref_nts = &(var_set->reference->sequences[seq_ind].nucleos);
+        ref_nts = &(var_set->reference->chromosomes[chrom_ind].nucleos);
 
         /*
-         Set pointer for the focal sequence in each variant
+         Set pointer for the focal chromosome in each variant
          and set positions in `mut_pos` field
          */
         for (uint64 i = 0; i < var_infos.size(); i++) {
-            var_infos[i].set_var((*var_set)[i][seq_ind]);
+            var_infos[i].set_var((*var_set)[i][chrom_ind]);
             var_infos[i].compare_pos(mut_pos.first, mut_pos.second);
         }
 
@@ -346,7 +389,7 @@ inline void write_vcf_(XPtr<VarSet> var_set,
     // (only needed as string):
     std::string max_qual = "441453";
 
-    uint64 n_seqs = var_set->reference->size();
+    uint64 n_chroms = var_set->reference->size();
     uint64 n_samples = writer.sample_groups.n_rows;
 
     // String of text to append to, then to insert into output:
@@ -368,8 +411,8 @@ inline void write_vcf_(XPtr<VarSet> var_set,
     std::string alt_str = "";
     std::vector<std::string> gt_strs(n_samples, "");
 
-    for (uint64 seq = 0; seq < n_seqs; seq++) {
-        writer.new_seq(seq);
+    for (uint64 chrom = 0; chrom < n_chroms; chrom++) {
+        writer.new_chrom(chrom);
         while (writer.mut_pos.first < MAX_INT) {
             Rcpp::checkUserInterrupt();
             /*
@@ -379,7 +422,7 @@ inline void write_vcf_(XPtr<VarSet> var_set,
              */
             if (writer.iterate(pos_str, ref_str, alt_str, gt_strs)) {
                 // CHROM
-                pool = var_set->reference->operator[](writer.seq_ind).name;
+                pool = var_set->reference->operator[](writer.chrom_ind).name;
                 // POS
                 pool += '\t' + pos_str;
                 // ID

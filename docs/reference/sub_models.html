@@ -77,7 +77,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">jackalope</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -107,6 +107,9 @@
     </li>
   </ul>
 </li>
+<li>
+  <a href="../news/index.html">Changelog</a>
+</li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
@@ -129,7 +132,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Construct necessary information for substitution models.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/lucasnell/jackalope/blob/master/R/RcppExports.R'><code>R/RcppExports.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/lucasnell/jackalope/blob/master/R/mevo.R'><code>R/mevo.R</code></a></small>
     <div class="hidden name"><code>sub_models.Rd</code></div>
     </div>
 
@@ -137,30 +140,70 @@
     <p>For a more detailed explanation, see <code><a href='../articles/sub-models.html'>vignette("sub-models")</a></code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>sub_TN93</span>(<span class='no'>pi_tcag</span>, <span class='no'>alpha_1</span>, <span class='no'>alpha_2</span>, <span class='no'>beta</span>)
+    <pre class="usage"><span class='fu'>sub_JC69</span>(<span class='no'>lambda</span>, <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>)
 
-<span class='fu'>sub_JC69</span>(<span class='no'>lambda</span>)
+<span class='fu'>sub_K80</span>(<span class='no'>alpha</span>, <span class='no'>beta</span>, <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>)
 
-<span class='fu'>sub_K80</span>(<span class='no'>alpha</span>, <span class='no'>beta</span>)
+<span class='fu'>sub_F81</span>(<span class='no'>pi_tcag</span>, <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>)
 
-<span class='fu'>sub_F81</span>(<span class='no'>pi_tcag</span>)
+<span class='fu'>sub_HKY85</span>(<span class='no'>pi_tcag</span>, <span class='no'>alpha</span>, <span class='no'>beta</span>, <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>,
+  <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>)
 
-<span class='fu'>sub_HKY85</span>(<span class='no'>pi_tcag</span>, <span class='no'>alpha</span>, <span class='no'>beta</span>)
+<span class='fu'>sub_F84</span>(<span class='no'>pi_tcag</span>, <span class='no'>beta</span>, <span class='no'>kappa</span>, <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>,
+  <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>)
 
-<span class='fu'>sub_F84</span>(<span class='no'>pi_tcag</span>, <span class='no'>beta</span>, <span class='no'>kappa</span>)
+<span class='fu'>sub_TN93</span>(<span class='no'>pi_tcag</span>, <span class='no'>alpha_1</span>, <span class='no'>alpha_2</span>, <span class='no'>beta</span>, <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>)
 
-<span class='fu'>sub_GTR</span>(<span class='no'>pi_tcag</span>, <span class='no'>abcdef</span>)
+<span class='fu'>sub_GTR</span>(<span class='no'>pi_tcag</span>, <span class='no'>abcdef</span>, <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>,
+  <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>)
 
-<span class='fu'>sub_UNREST</span>(<span class='no'>Q</span>)</pre>
+<span class='fu'>sub_UNREST</span>(<span class='no'>Q</span>, <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
+      <th>lambda</th>
+      <td><p>Substitution rate for all possible substitutions.</p></td>
+    </tr>
+    <tr>
+      <th>gamma_shape</th>
+      <td><p>Numeric shape parameter for discrete Gamma distribution used for
+among-site variability. Values must be greater than zero.
+If this parameter is <code>NULL</code>, among-site variability is not included.
+Defaults to <code>NULL</code>.</p></td>
+    </tr>
+    <tr>
+      <th>gamma_k</th>
+      <td><p>The number of categories to split the discrete Gamma distribution
+into. Values must be an integer in the range <code>[2,255]</code>.
+This argument is ignored if <code>gamma_shape</code> is <code>NA</code>.
+Defaults to <code>5</code>.</p></td>
+    </tr>
+    <tr>
+      <th>invariant</th>
+      <td><p>Proportion of sites that are invariant.
+Values must be in the range <code>[0,1)</code>.
+Defaults to <code>0</code>.</p></td>
+    </tr>
+    <tr>
+      <th>alpha</th>
+      <td><p>Substitution rate for transitions.</p></td>
+    </tr>
+    <tr>
+      <th>beta</th>
+      <td><p>Substitution rate for transversions.</p></td>
+    </tr>
+    <tr>
       <th>pi_tcag</th>
       <td><p>Vector of length 4 indicating the equilibrium distributions of
 T, C, A, and G respectively. Values must be &gt;= 0, and
 they are forced to sum to 1.</p></td>
+    </tr>
+    <tr>
+      <th>kappa</th>
+      <td><p>The transition/transversion rate ratio.</p></td>
     </tr>
     <tr>
       <th>alpha_1</th>
@@ -169,22 +212,6 @@ they are forced to sum to 1.</p></td>
     <tr>
       <th>alpha_2</th>
       <td><p>Substitution rate for A &lt;-&gt; G transition.</p></td>
-    </tr>
-    <tr>
-      <th>beta</th>
-      <td><p>Substitution rate for transversions.</p></td>
-    </tr>
-    <tr>
-      <th>lambda</th>
-      <td><p>Substitution rate for all possible substitutions.</p></td>
-    </tr>
-    <tr>
-      <th>alpha</th>
-      <td><p>Substitution rate for transitions.</p></td>
-    </tr>
-    <tr>
-      <th>kappa</th>
-      <td><p>The transition/transversion rate ratio.</p></td>
     </tr>
     <tr>
       <th>abcdef</th>
@@ -203,21 +230,39 @@ Values on the diagonal are calculated inside the function so are ignored.</p></t
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A <code>sub_model_info</code> object, which is just a wrapper around a list with
-fields <code>Q</code> and <code>pi_tcag</code>. The former has the rate matrix, and the latter
-has the equilibrium nucleotide densities for "T", "C", "A", and "G", respectively.
-Access the rate matrix for a <code>sub_model_info</code> object named <code>x</code> via <code>x$Q</code> and
-densities via <code>x$pi_tcag</code>.</p>
+    <p>A <code>sub_info</code> object, which is an R6 class that wraps the info needed for
+the <code>create_variants</code> function.
+It does not allow the user to directly manipulate the info inside, as that
+should be done using the <code>sub_models</code> functions.
+You can use the following methods from the class to view information:</p><dl class='dl-horizontal'>
+<dt><code>Q()</code></dt><dd><p>View a list of substitution rate matrices,
+one for each Gamma category.</p></dd>
+<dt><code>pi_tcag()</code></dt><dd><p>View the equilibrium nucleotide frequencies.</p></dd>
+<dt><code>gammas()</code></dt><dd><p>View the discrete Gamma-class values.</p></dd>
+<dt><code>invariant()</code></dt><dd><p>View the proportion of invariant sites.</p></dd>
+<dt><code>model()</code></dt><dd><p>View the substitution model.</p></dd>
+<dt><code>U()</code></dt><dd><p>View list of the <code>U</code> matrices (one matrix per Gamma category)
+used for calculating transition-probability matrices.
+This is empty for UNREST models.</p></dd>
+<dt><code>Ui()</code></dt><dd><p>View list of the <code>U^-1</code> matrices (one matrix per Gamma category)
+used for calculating transition-probability matrices.
+This is empty for UNREST models.</p></dd>
+<dt><code>L()</code></dt><dd><p>View list of the lambda vectors (one vector per Gamma category)
+used for calculating transition-probability matrices.
+This is empty for UNREST models.</p></dd>
+
+</dl>
+
     <h2 class="hasAnchor" id="functions"><a class="anchor" href="#functions"></a>Functions</h2>
 
     
 <ul>
-<li><p><code>sub_TN93</code>: TN93 model.</p></li>
 <li><p><code>sub_JC69</code>: JC69 model.</p></li>
 <li><p><code>sub_K80</code>: K80 model.</p></li>
 <li><p><code>sub_F81</code>: F81 model.</p></li>
 <li><p><code>sub_HKY85</code>: HKY85 model.</p></li>
 <li><p><code>sub_F84</code>: F84 model.</p></li>
+<li><p><code>sub_TN93</code>: TN93 model.</p></li>
 <li><p><code>sub_GTR</code>: GTR model.</p></li>
 <li><p><code>sub_UNREST</code>: UNREST model.</p></li>
 </ul>
@@ -227,25 +272,22 @@ densities via <code>x$pi_tcag</code>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># Same substitution rate for all types:</span>
-<span class='no'>Q_JC69</span> <span class='kw'>&lt;-</span> <span class='fu'>sub_JC69</span>(<span class='kw'>lambda</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)
+<span class='no'>obj_JC69</span> <span class='kw'>&lt;-</span> <span class='fu'>sub_JC69</span>(<span class='kw'>lambda</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)
 
 <span class='co'># Transitions 2x more likely than transversions:</span>
-<span class='no'>Q_K80</span> <span class='kw'>&lt;-</span> <span class='fu'>sub_K80</span>(<span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.2</span>, <span class='kw'>beta</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)
+<span class='no'>obj_K80</span> <span class='kw'>&lt;-</span> <span class='fu'>sub_K80</span>(<span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.2</span>, <span class='kw'>beta</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)
 
-<span class='co'># Same as above, but incorporating equilibrium frequencies</span>
-<span class='fu'>sub_HKY85</span>(<span class='kw'>pi_tcag</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.1</span>, <span class='fl'>0.2</span>, <span class='fl'>0.3</span>, <span class='fl'>0.4</span>),
-          <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.2</span>, <span class='kw'>beta</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)</div><div class='output co'>#&gt; &lt; Substitution information &gt;
-#&gt; # Equilibrium densities:
-#&gt;    0.1000 0.2000 0.3000 0.4000 
-#&gt; # Substitution rate matrix:
-#&gt;         T    C    A    G
-#&gt;    T 0.00 0.04 0.03 0.04
-#&gt;    C 0.02 0.00 0.03 0.04
-#&gt;    A 0.01 0.02 0.00 0.08
-#&gt;    G 0.01 0.02 0.06 0.00
-#&gt; (View rate matrix in the "Q" field)
-#&gt; (View equil. densities in the "pi_tcag" field)</div><div class='input'>
-</div></pre>
+<span class='co'># Incorporating equilibrium frequencies:</span>
+<span class='no'>obj_HKY85</span> <span class='kw'>&lt;-</span> <span class='fu'>sub_HKY85</span>(<span class='kw'>pi_tcag</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.1</span>, <span class='fl'>0.2</span>, <span class='fl'>0.3</span>, <span class='fl'>0.4</span>),
+                       <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.2</span>, <span class='kw'>beta</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)
+
+<span class='co'># 10-category Gamma distribution for among-site variability:</span>
+<span class='no'>obj_K80</span> <span class='kw'>&lt;-</span> <span class='fu'>sub_K80</span>(<span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.2</span>, <span class='kw'>beta</span> <span class='kw'>=</span> <span class='fl'>0.1</span>,
+                   <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>10</span>)
+
+<span class='co'># Invariant sites:</span>
+<span class='no'>obj_K80</span> <span class='kw'>&lt;-</span> <span class='fu'>sub_K80</span>(<span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.2</span>, <span class='kw'>beta</span> <span class='kw'>=</span> <span class='fl'>0.1</span>,
+                   <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0.25</span>)</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

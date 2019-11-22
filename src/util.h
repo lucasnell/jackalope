@@ -1,5 +1,5 @@
-# ifndef __JACKAL_UTIL_H
-# define __JACKAL_UTIL_H
+# ifndef __JACKALOPE_UTIL_H
+# define __JACKALOPE_UTIL_H
 
 
 /*
@@ -11,11 +11,13 @@
  */
 
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <vector>
 #include <string>
 #include <pcg/pcg_random.hpp> // pcg prng
+#include <progress.hpp>  // for the progress bar
 
 #ifdef _OPENMP
 #include <omp.h>  // omp
@@ -72,40 +74,56 @@ void clear_memory(U& x) {
 }
 
 
+/*
+ Shuffles a vector or deque more quickly than the default std::shuffle
+ */
+template <typename T>
+void jlp_shuffle(T& input, pcg64& eng) {
+    for (uint32 i = input.size(); i > 1; i--) {
+        uint32 j = runif_01(eng) * i;
+        std::swap(input[i-1], input[j]);
+    }
+    return;
+}
+
+
+
+
+
 
 //' GC proportion for a single string.
 //'
 //'
-//' @param sequence String for a single sequence.
-//' @param start Position in sequence at which to begin the calculation.
-//' @param stop Position in sequence at which to end the calculation.
+//' @param chromosome String for a single chromosome.
+//' @param start Position in chromosome at which to begin the calculation.
+//' @param stop Position in chromosome at which to end the calculation.
 //'
-//' @return Proportion of sequence that's a `'G'` or `'C'`.
+//' @return Proportion of chromosome that's a `'G'` or `'C'`.
 //'
 //' @noRd
 //'
-inline double gc_prop(const std::string& sequence) {
-    double total_seq = sequence.size();
+inline double gc_prop(const std::string& chromosome) {
+    double total_chrom = chromosome.size();
     double total_gc = 0;
-    for (uint64 i = 0; i < total_seq; i++) {
-        if (sequence[i] == 'G' || sequence[i] == 'C') {
+    for (uint64 i = 0; i < total_chrom; i++) {
+        if (chromosome[i] == 'G' || chromosome[i] == 'C') {
             total_gc += 1;
         }
     }
-    double gc_prop = total_gc / total_seq;
+    double gc_prop = total_gc / total_chrom;
     return gc_prop;
 }
-inline double gc_prop(const std::string& sequence,
+inline double gc_prop(const std::string& chromosome,
                       const uint64& start,
                       const uint64& stop) {
-    double total_seq = stop - start + 1;
+    double total_chrom = stop - start + 1;
     double total_gc = 0;
     for (uint64 i = start; i <= stop; i++) {
-        if (sequence[i] == 'G' || sequence[i] == 'C') {
+        if (chromosome[i] == 'G' || chromosome[i] == 'C') {
             total_gc += 1;
         }
     }
-    double gc_prop = total_gc / total_seq;
+    double gc_prop = total_gc / total_chrom;
     return gc_prop;
 }
 
@@ -116,31 +134,31 @@ inline double gc_prop(const std::string& sequence,
 //' @inheritParams gc_prop
 //' @param nt Character to count for the proportion.
 //'
-//' @return Proportion of sequence that's a `nt`.
+//' @return Proportion of chromosome that's a `nt`.
 //'
 //' @noRd
 //'
-inline double nt_prop(const std::string& sequence,
+inline double nt_prop(const std::string& chromosome,
                       const char& nt) {
-    double total_seq = sequence.size();
+    double total_chrom = chromosome.size();
     double total_nt = 0;
-    for (uint64 i = 0; i < total_seq; i++) {
-        if (sequence[i] == nt) total_nt += 1;
+    for (uint64 i = 0; i < total_chrom; i++) {
+        if (chromosome[i] == nt) total_nt += 1;
     }
-    double nt_prop = total_nt / total_seq;
+    double nt_prop = total_nt / total_chrom;
     return nt_prop;
 }
-// Overloaded for part of a sequence
-inline double nt_prop(const std::string& sequence,
+// Overloaded for part of a chromosome
+inline double nt_prop(const std::string& chromosome,
                       const char& nt,
                       const uint64& start,
                       const uint64& stop) {
-    double total_seq = stop - start + 1;
+    double total_chrom = stop - start + 1;
     double total_nt = 0;
     for (uint64 i = start; i <= stop; i++) {
-        if (sequence[i] == nt) total_nt += 1;
+        if (chromosome[i] == nt) total_nt += 1;
     }
-    double nt_prop = total_nt / total_seq;
+    double nt_prop = total_nt / total_chrom;
     return nt_prop;
 }
 
@@ -189,8 +207,32 @@ inline void thread_check(uint64& n_threads) {
     n_threads = 1;
 #endif
 
+#ifdef __JACKALOPE_DIAGNOSTICS
+    if (n_threads > 1) {
+        n_threads = 1;
+        Rcpp::warning("\nCannot do diagnostics with n_threads > 1, so changing it to 1.");
+    }
+#endif
+
     return;
 }
+
+
+
+// For checking for user interrupts every N iterations:
+inline bool interrupt_check(uint32& iters,
+                            Progress& prog_bar,
+                            const uint32& N = 1000) {
+    ++iters;
+    if (iters > N) {
+        if (prog_bar.is_aborted() || prog_bar.check_abort()) return true;
+        iters = 0;
+    }
+    return false;
+}
+
+
+
 
 
 

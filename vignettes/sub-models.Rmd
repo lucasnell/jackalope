@@ -34,9 +34,9 @@ $$
 the rate from $C$ to $T$.)
 Diagonals are determined based on all rows having to sum to zero (Yang 2006).
 
-Under each rate matrix are listed the parameters in `create_mevo` required for that model.
+Under each rate matrix are listed the parameters in the function required for that model.
 
-Below is a key of the parameters required in `create_mevo` for the models below,
+Below is a key of the parameters required in the functions for the models below,
 in order of their appearance:
 
 * `lambda`: $\lambda$
@@ -49,6 +49,9 @@ in order of their appearance:
 * `abcdef` vector of $a$, $b$, $c$, $d$, $e$, then $f$
 * `Q`: matrix of all parameters, where diagonals are ignored
 
+
+Functions in `jackalope` that employ each model take the form `sub_X` for model `X`
+(e.g., `sub_JC69` for JC69 model).
 
 
 

@@ -15,10 +15,11 @@
 
 
 
-context("Testing creating variants from coalescent simulations")
 
 # library(jackalope)
 # library(testthat)
+
+context("Testing creating variants from coalescent simulations")
 
 # necessary objects -----
 
@@ -44,7 +45,7 @@ arg_list <- list(reference = create_genome(3, 100), sub = sub_JC69(0.1),
 #' Check for proper output and errors when creating variants from coalescent objects
 #'
 #' coal_obj must be a coalescent object from scrm or coala.
-
+#'
 
 coal_obj_run_trees <- function(coal_obj, pkg) {
 
@@ -109,7 +110,7 @@ coal_obj_err_miss_tree_tip <- function(coal_obj, pkg) {
 
     expect_error(
         do.call(create_variants, arg_list_),
-        regexp = "all gene trees must have the same number of tips.",
+        regexp = "One or more trees have differing tip labels.",
         info = paste("returns error when improper gene trees provided -", pkg))
     invisible(NULL)
 }
@@ -213,7 +214,7 @@ test_that("variant creation works with ms-style file output", {
 
     expect_error(
         vars_gtrees(fn = .p("ms_out_err1")),
-        regexp = "one or more sequences have no trees",
+        regexp = "one or more chromosomes have no trees",
         info = "returns error when no gene trees provided - ms-file")
 
     expect_error(
@@ -245,7 +246,7 @@ test_that("variant creation works with ms-style file output", {
         arg_list_ <- c(list(vars_info = vars_gtrees(fn = .p("ms_out_err2"))), arg_list)
         do.call(create_variants, arg_list_)
     },
-    regexp = "all gene trees must have the same number of tips.",
+    regexp = "One or more trees have differing tip labels.",
     info = "returns error when improper gene trees provided - ms-file")
 
 
@@ -276,7 +277,7 @@ test_that("variant creation works with ms-style file output", {
     },
     regexp = paste("A coalescent string appears to include recombination",
                    "but the combined sizes of all regions don't match the",
-                   "size of the sequence"))
+                   "size of the chromosome"))
 
 })
 
@@ -305,7 +306,7 @@ test_that("seg. sites produces the correct number of mutations", {
     msf <- msf[grepl("^0|^1", msf)]
     msf <- do.call(c, strsplit(msf, ""))
     n_muts_by_var <-
-        sapply(0:4, function(i) nrow(jackalope:::view_mutations(vars$genomes, i)))
+        sapply(0:4, function(i) nrow(jackalope:::view_mutations(vars$ptr(), i)))
     expect_equal(sum(as.integer(msf)), sum(n_muts_by_var))
 })
 
@@ -349,3 +350,40 @@ test_that("errors occur when nonsense is input to vars_ssites", {
                  regexp = "argument `fn` must be NULL or a single string")
 
 })
+
+
+
+
+
+
+# ==============================================================================`
+# ==============================================================================`
+
+# Writing gene trees -----
+
+# ==============================================================================`
+# ==============================================================================`
+
+
+test_that("gene trees written properly by write_gtrees", {
+
+    out_prefix <- paste0(tempdir(TRUE), "/trees")
+
+    # Write gene trees to file based on known ms-style file:
+    write_gtrees(vars_gtrees(fn = test_path("files/ms_out.txt")), out_prefix)
+
+    # Newly written gene tree strings:
+    wr_str <- strsplit(paste(readLines(paste0(out_prefix, ".trees")),
+                             collapse = ""), "//")[[1]]
+    wr_str <- wr_str[grepl("^\\[", wr_str)]
+
+    # original file, split by chromosome:
+    og_str <- strsplit(strsplit(paste(readLines(test_path("files/ms_out.txt"))[-1:-2],
+                                      collapse = "\n"), "//\n")[[1]], "\n")[-1]
+    # Now get just the gene trees:
+    og_str <- sapply(og_str, function(x) paste(x[grepl("^\\[", x)], collapse = ""))
+
+    expect_identical(wr_str, og_str)
+
+})
+

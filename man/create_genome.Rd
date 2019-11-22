@@ -4,16 +4,16 @@
 \alias{create_genome}
 \title{Create a reference genome.}
 \usage{
-create_genome(n_seqs, len_mean, len_sd = 0, pi_tcag = rep(0.25, 4),
+create_genome(n_chroms, len_mean, len_sd = 0, pi_tcag = rep(0.25, 4),
   n_threads = 1)
 }
 \arguments{
-\item{n_seqs}{Number of sequences.}
+\item{n_chroms}{Number of chromosomes.}
 
-\item{len_mean}{Mean for the gamma distribution of sequence sizes.}
+\item{len_mean}{Mean for the gamma distribution of chromosome sizes.}
 
-\item{len_sd}{Standard deviation for the gamma distribution of sequence sizes.
-If set to \code{<= 0}, all sequences will be the same length. Defaults to \code{0}.}
+\item{len_sd}{Standard deviation for the gamma distribution of chromosome sizes.
+If set to \code{<= 0}, all chromosomes will be the same length. Defaults to \code{0}.}
 
 \item{pi_tcag}{Vector of length 4 containing the nucleotide equilibrium frequencies
 for "T", "C", "A", and "G", respectively. Defaults to \code{rep(0.25, 4)}.}
@@ -25,8 +25,8 @@ ignored if OpenMP is not enabled. Defaults to \code{1}.}
 A \code{\link{ref_genome}} object.
 }
 \description{
-Random sequences are generated to create a new \code{ref_genome} object.
-Note that this function will never generate empty sequences.
+Random chromosomes are generated to create a new \code{ref_genome} object.
+Note that this function will never generate empty chromosomes.
 }
 \examples{
 

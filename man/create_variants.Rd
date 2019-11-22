@@ -4,9 +4,8 @@
 \alias{create_variants}
 \title{Create variants from a reference genome.}
 \usage{
-create_variants(reference, vars_info, sub, ins = NULL, del = NULL,
-  gamma_mats = NULL, region_size = 100, n_threads = 1,
-  show_progress = FALSE)
+create_variants(reference, vars_info, sub = NULL, ins = NULL,
+  del = NULL, epsilon = 0.03, n_threads = 1, show_progress = FALSE)
 }
 \arguments{
 \item{reference}{A \code{ref_genome} object from which to generate variants.
@@ -18,49 +17,49 @@ See \code{\link{vars_functions}} for brief descriptions and links to each method
 If this argument is \code{NULL}, all arguments other than \code{reference} are ignored,
 and an empty \code{variants} object with no variants is returned.
 This is designed for use when you'd like to add mutations manually.
-If you create a blank \code{variants} object, you can= use its \code{add_vars} method
+If you create a blank \code{variants} object, you can use its \code{add_vars} method
 to add variants manually.}
 
 \item{sub}{Output from one of the \code{\link{sub_models}} functions that organizes
 information for the substitution models.
 See \code{\link{sub_models}} for more information on these models and
 their required parameters.
-This argument is only allowed to be missing if you are using a VCF file to create
-variants.
+This argument is ignored if you are using a VCF file to create variants.
+Passing \code{NULL} to this argument results in no substitutions.
 Defaults to \code{NULL}.}
 
 \item{ins}{Output from the \code{\link{indels}} function that specifies rates
 of insertions by length.
+This argument is ignored if you are using a VCF file to create variants.
 Passing \code{NULL} to this argument results in no insertions.
 Defaults to \code{NULL}.}
 
 \item{del}{Output from the \code{\link{indels}} function that specifies rates
 of deletions by length.
+This argument is ignored if you are using a VCF file to create variants.
 Passing \code{NULL} to this argument results in no deletions.
 Defaults to \code{NULL}.}
 
-\item{gamma_mats}{Output from the \code{\link{site_var}} function that specifies
-variability in mutation rates among sites (for both substitutions and indels).
-Passing \code{NULL} to this argument results in no variability among sites.
-Defaults to \code{NULL}.}
-
-\item{region_size}{Size of regions to break genome into for sampling mutation
-locations.
-This causes Gamma regions to be split into smaller sections (obviously the
-Gamma values themselves are not changed).
-Doing this splitting is useful because sampling within a region is more
-computationally costly than sampling among regions.
-Higher numbers will result in lower memory usage but slower speed.
-Defaults to \code{100}.}
+\item{epsilon}{Error control parameter for the "tau-leaping" approximation to
+the Doob–Gillespie algorithm, as used for the indel portion of the simulations.
+Smaller values result in a closer approximation.
+Larger values are less exact but faster.
+Values must be \code{> 0} and \code{< 1}.
+For more information, see Cao et al. (2006) and Wieder et al. (2011),
+listed below.
+Defaults to \code{0.03}.}
 
 \item{n_threads}{Number of threads to use for parallel processing.
 This argument is ignored if OpenMP is not enabled.
-Threads are spread across sequences, so it
-doesn't make sense to supply more threads than sequences in the reference genome.
+Threads are spread across chromosomes, so it
+doesn't make sense to supply more threads than chromosomes in the reference genome.
 Defaults to \code{1}.}
 
 \item{show_progress}{Boolean for whether to show a progress bar during processing.
 Defaults to \code{FALSE}.}
+}
+\value{
+A \code{\link{variants}} object.
 }
 \description{
 Uses one of multiple methods to create haploid variants from a reference genome.
@@ -71,4 +70,20 @@ r <- create_genome(10, 1000)
 v_phylo <- create_variants(r, vars_phylo(ape::rcoal(5)), sub_JC69(0.1))
 v_theta <- create_variants(r, vars_theta(0.001, 5), sub_K80(0.1, 0.2))
 
+}
+\references{
+Cao, Y., D. T. Gillespie, and L. R. Petzold. 2006. Efficient step size
+selection for the tau-leaping simulation method.
+\emph{The Journal of Chemical Physics} \strong{124}(4): 044109.
+
+Doob, J. L. 1942. Topics in the theory of markoff chains.
+\emph{Transactions of the American Mathematical Society} \strong{52}(1): 37–64.
+
+Gillespie, D. T. 1976. A general method for numerically simulating the stochastic time
+evolution of coupled chemical reactions. \emph{Journal of Computational Physics}
+\strong{22}(4): 403–434.
+
+Wieder, N., R. H. Fink, and F. von Wegner. 2011. Exact and approximate stochastic
+simulation of intracellular calcium dynamics.
+\emph{Journal of Biomedicine and Biotechnology} \strong{2011}: 572492.
 }

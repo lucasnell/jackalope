@@ -20,20 +20,21 @@ If provided, all arguments other than \code{rate} are ignored.
 Defaults to \code{NULL}.}
 }
 \value{
-An \code{indel_rates} object, which is just a wrapper around a numeric vector.
-You can access the rates vector for \code{indel_rates} object \code{x} by running
-\code{as.numeric(x)}.
+An \code{indel_info} object, which is an R6 class that wraps the info needed for
+the \code{create_variants} function.
+It does not allow the user to directly manipulate the info inside, as that
+should be done using this function.
+You can use the \code{rates()} method to view the indel rates by size.
 }
 \description{
 Construct necessary information for insertions and deletions (indels) that will
 be used in \code{create_variants}.
 }
 \details{
-Both insertions and deletions require the \code{rate} parameter, which specifies
-the overall insertion/deletion rate among all lengths.
+All indels require the \code{rate} parameter, which specifies
+the overall indels rate among all lengths.
 The \code{rate} parameter is ultimately combined with a vector of relative rates among
-the different lengths of insertions/deletions from 1 to the maximum
-possible length.
+the different lengths of indels from 1 to the maximum possible length.
 There are three different ways to specify/generate relative-rate values.
 \enumerate{
 \item Assume that rates are proportional to \code{exp(-L)} for indel length

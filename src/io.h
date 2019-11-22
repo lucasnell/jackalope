@@ -1,9 +1,11 @@
-#ifndef __JACKAL_READ_WRITE_H
-#define __JACKAL_READ_WRITE_H
+#ifndef __JACKALOPE_INPUT_OUTPUT_H
+#define __JACKALOPE_INPUT_OUTPUT_H
 
 /*
  Functions common to reading/writing to multiple file types.
  */
+
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <vector>               // vector class
@@ -16,8 +18,8 @@
 #include "htslib/bgzf.h"  // BGZF
 
 #include "jackalope_types.h"  // integer types
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
+#include "ref_classes.h"  // Ref* classes
+#include "var_classes.h"  // Var* classes
 
 
 

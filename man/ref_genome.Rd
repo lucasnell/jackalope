@@ -12,56 +12,50 @@ ref_genome
 An object of class \code{ref_genome}.
 }
 \description{
-\emph{Note:} This class wraps a pointer to a C++ object, so
-do NOT change fields in this class directly.
-It will cause your R session to do bad things.
-(Ever seen the bomb popup on RStudio? Manually mess with these fields and you
-surely will.)
-For safe ways of manipulating the reference genome, see the "Methods" section.
+This class should NEVER be created using \code{ref_genome$new}.
+Only use \code{read_fasta} or \code{create_genome}.
+This class wraps a pointer to a C++ object, which is why
+there are no fields to manipulate directly.
+All manipulations are done through this class's methods.
 }
-\section{Fields}{
-
-\describe{
-\item{\code{genome}}{An \code{externalptr} to a C++ object storing the sequences
-representing the genome.}
-}}
-
 \section{Methods}{
 
 \strong{Viewing information:}
 \describe{
-\item{\code{n_seqs()}}{View the number of sequences.}
-\item{\code{sizes()}}{View vector of sequence sizes.}
-\item{\code{names()}}{View vector of sequence names.}
-\item{\code{sequence(seq_ind)}}{View a sequence string based on an index,
-\code{seq_ind}.}
-\item{\code{gc_prop(seq_ind, start, end)}}{View the GC proportion for a range within a
-reference sequence.}
-\item{\code{nt_prop(nt, seq_ind, start, end)}}{View the proportion of a range within a
-reference sequence that is of nucleotide \code{nt}.}
+\item{\code{ptr()}}{View the pointer to the reference chromosome information.
+This is used internally by \code{jackalope} and shouldn't be of much use to users.}
+\item{\code{n_chroms()}}{View the number of chromosomes.}
+\item{\code{sizes()}}{View vector of chromosome sizes.}
+\item{\code{chrom_names()}}{View vector of chromosome names.}
+\item{\code{chrom(chrom_ind)}}{View a chromosome sequence string based on an index,
+\code{chrom_ind}.}
+\item{\code{gc_prop(chrom_ind, start, end)}}{View the GC proportion for a range within a
+reference chromosome.}
+\item{\code{nt_prop(nt, chrom_ind, start, end)}}{View the proportion of a range within a
+reference chromosome that is of nucleotide \code{nt}.}
 }
 \strong{Editing information:}
 \describe{
-\item{\code{set_names(new_names)}}{Set names for all sequences.
+\item{\code{set_names(new_names)}}{Set names for all chromosomes.
 \code{new_names} is a character vector of what to change names to, and it must
-be the same length as the # sequences.}
-\item{\code{clean_names()}}{Clean sequence names, converting \code{" :;=\%,\\|/\"\'"}
+be the same length as the # chromosomes.}
+\item{\code{clean_names()}}{Clean chromosome names, converting \code{" :;=\%,\\|/\"\'"}
 to \code{"_"}.}
-\item{\code{add_seqs(new_seqs, new_names = NULL)}}{Add one or more sequences
+\item{\code{add_chroms(new_chroms, new_names = NULL)}}{Add one or more chromosomes
 directly. They can optionally be named (using \code{new_names}).
 Otherwise, their names are auto-generated.}
-\item{\code{rm_seqs(seq_names)}}{Remove one or more sequences based on names in
-the \code{seq_names} vector.}
-\item{\code{merge_seqs()}}{Merge all sequences into one after first shuffling
+\item{\code{rm_chroms(chrom_names)}}{Remove one or more chromosomes based on names in
+the \code{chrom_names} vector.}
+\item{\code{merge_chroms()}}{Merge all chromosomes into one after first shuffling
 their order.}
-\item{\code{filter_seqs(threshold, method)}}{Filter sequences by size
+\item{\code{filter_chroms(threshold, method)}}{Filter chromosomes by size
 (\code{method = "size"}) or for a proportion of total bases (\code{method = "prop"}).
-For the latter, sequences are first size-sorted, then the largest \code{N}
-sequences are retained that allow at least
-\code{threshold * sum(<all sequence sizes>)} base pairs remaining after
+For the latter, chromosomes are first size-sorted, then the largest \code{N}
+chromosomes are retained that allow at least
+\code{threshold * sum(<all chromosome sizes>)} base pairs remaining after
 filtering.}
 \item{\code{replace_Ns(pi_tcag, n_threads = 1, show_progress = FALSE)}}{Replace
-\code{N}s in reference sequence with nucleotides sampled with probabilities
+\code{N}s in reference chromosome with nucleotides sampled with probabilities
 given in \code{pi_tcag}.
 You can optionally use multiple threads (\code{n_threads} argument) and/or
 show a progress bar (\code{show_progress}).}

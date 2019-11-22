@@ -1,17 +1,17 @@
 
-context("Testing FASTA file input/output")
 
 # library(jackalope)
 # library(testthat)
 
+context("Testing FASTA file input/output")
 
 dir <- tempdir(check = TRUE)
 
 
 
-seqs <- jackalope:::rando_seqs(10, 100)
+chroms <- jackalope:::rando_chroms(10, 100)
 
-ref <- ref_genome$new(jackalope:::make_ref_genome(seqs))
+ref <- ref_genome$new(jackalope:::make_ref_genome(chroms))
 
 
 
@@ -26,7 +26,7 @@ test_that("Read/writing FASTA files produces errors when nonsense is input", {
     fa_fn <- sprintf("%s/%s.fa", dir, "test")
 
     expect_error(write_fasta("ref", fa_fn),
-                 regexp = "argument `seq_obj` must be a \"ref_genome\" or \"variants\"")
+                 regexp = "argument `obj` must be a \"ref_genome\" or \"variants\"")
 
     expect_error(write_fasta(ref, 3),
                  regexp = "argument `out_prefix` must be a single string")
@@ -83,10 +83,10 @@ test_that("Read/writing single non-indexed FASTA files works with uncompressed o
     fa_fn <- sprintf("%s/%s.fa", dir, "test")
     new_ref <- read_fasta(fa_fn)
 
-    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+    expect_identical(ref$n_chroms(), new_ref$n_chroms())
 
-    for (i in 1:ref$n_seqs()) {
-        expect_identical(ref$sequence(i), ref$sequence(i))
+    for (i in 1:ref$n_chroms()) {
+        expect_identical(ref$chrom(i), ref$chrom(i))
     }
 
 })
@@ -101,10 +101,10 @@ test_that("Read/writing single non-indexed FASTA files works with gzipped output
     fa_fn <- sprintf("%s/%s.fa.gz", dir, "test")
     new_ref <- read_fasta(fa_fn)
 
-    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+    expect_identical(ref$n_chroms(), new_ref$n_chroms())
 
-    for (i in 1:ref$n_seqs()) {
-        expect_identical(ref$sequence(i), ref$sequence(i))
+    for (i in 1:ref$n_chroms()) {
+        expect_identical(ref$chrom(i), ref$chrom(i))
     }
 
 })
@@ -119,10 +119,10 @@ test_that("Read/writing single non-indexed FASTA files works with bgzipped outpu
     fa_fn <- sprintf("%s/%s.fa.gz", dir, "test")
     new_ref <- read_fasta(fa_fn)
 
-    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+    expect_identical(ref$n_chroms(), new_ref$n_chroms())
 
-    for (i in 1:ref$n_seqs()) {
-        expect_identical(ref$sequence(i), ref$sequence(i))
+    for (i in 1:ref$n_chroms()) {
+        expect_identical(ref$chrom(i), ref$chrom(i))
     }
 
 })
@@ -135,8 +135,8 @@ test_that("Read/writing single non-indexed FASTA files works with bgzipped outpu
 # ----------*
 
 
-ref1 <- ref_genome$new(jackalope:::make_ref_genome(seqs[1:5]))
-ref2 <- ref_genome$new(jackalope:::make_ref_genome(seqs[6:10]))
+ref1 <- ref_genome$new(jackalope:::make_ref_genome(chroms[1:5]))
+ref2 <- ref_genome$new(jackalope:::make_ref_genome(chroms[6:10]))
 
 
 test_that("Read/writing multiple non-indexed FASTA files works with uncompressed output", {
@@ -149,10 +149,10 @@ test_that("Read/writing multiple non-indexed FASTA files works with uncompressed
     fa_fns <- sprintf("%s/%s%i.fa", dir, "test", 1:2)
     new_ref <- read_fasta(fa_fns)
 
-    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+    expect_identical(ref$n_chroms(), new_ref$n_chroms())
 
-    for (i in 1:ref$n_seqs()) {
-        expect_identical(ref$sequence(i), ref$sequence(i))
+    for (i in 1:ref$n_chroms()) {
+        expect_identical(ref$chrom(i), ref$chrom(i))
     }
 
 })
@@ -168,10 +168,10 @@ test_that("Read/writing multiple non-indexed FASTA files works with gzipped outp
     fa_fns <- sprintf("%s/%s%i.fa.gz", dir, "test", 1:2)
     new_ref <- read_fasta(fa_fns)
 
-    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+    expect_identical(ref$n_chroms(), new_ref$n_chroms())
 
-    for (i in 1:ref$n_seqs()) {
-        expect_identical(ref$sequence(i), ref$sequence(i))
+    for (i in 1:ref$n_chroms()) {
+        expect_identical(ref$chrom(i), ref$chrom(i))
     }
 
 })
@@ -186,10 +186,10 @@ test_that("Read/writing multiple non-indexed FASTA files works with bgzipped out
     fa_fns <- sprintf("%s/%s%i.fa.gz", dir, "test", 1:2)
     new_ref <- read_fasta(fa_fns)
 
-    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+    expect_identical(ref$n_chroms(), new_ref$n_chroms())
 
-    for (i in 1:ref$n_seqs()) {
-        expect_identical(ref$sequence(i), ref$sequence(i))
+    for (i in 1:ref$n_chroms()) {
+        expect_identical(ref$chrom(i), ref$chrom(i))
     }
 
 })
@@ -219,10 +219,10 @@ test_that("Read/writing multiple non-indexed FASTA files works with bgzipped out
 
 # Making my own fasta index file:
 fa_index_df <-
-    data.frame(name = ref$names(),
+    data.frame(name = ref$chrom_names(),
                nbases = ref$sizes(),
-               byte_index = cumsum(c(nchar(ref$names()[1]) + 2,
-                                     nchar(ref$names()[-1]) + 2 +
+               byte_index = cumsum(c(nchar(ref$chrom_names()[1]) + 2,
+                                     nchar(ref$chrom_names()[-1]) + 2 +
                                          utils::head(ref$sizes(), -1) +
                                          ceiling(utils::head(ref$sizes(), -1) /
                                                      formals(write_fasta)$text_width))),
@@ -244,10 +244,10 @@ test_that("Read/writing single indexed FASTA files works with uncompressed outpu
     fa_fn <- sprintf("%s/%s.fa", dir, "test")
     new_ref <- read_fasta(fa_fn, fai_fn)
 
-    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+    expect_identical(ref$n_chroms(), new_ref$n_chroms())
 
-    for (i in 1:ref$n_seqs()) {
-        expect_identical(ref$sequence(i), ref$sequence(i))
+    for (i in 1:ref$n_chroms()) {
+        expect_identical(ref$chrom(i), ref$chrom(i))
     }
 
 })
@@ -263,10 +263,10 @@ test_that("Read/writing single indexed FASTA files works with gzipped output", {
     fa_fn <- sprintf("%s/%s.fa.gz", dir, "test")
     new_ref <- read_fasta(fa_fn, fai_fn)
 
-    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+    expect_identical(ref$n_chroms(), new_ref$n_chroms())
 
-    for (i in 1:ref$n_seqs()) {
-        expect_identical(ref$sequence(i), ref$sequence(i))
+    for (i in 1:ref$n_chroms()) {
+        expect_identical(ref$chrom(i), ref$chrom(i))
     }
 
 })
@@ -282,10 +282,10 @@ test_that("Read/writing single indexed FASTA files works with bgzipped output", 
     fa_fn <- sprintf("%s/%s.fa.gz", dir, "test")
     new_ref <- read_fasta(fa_fn, fai_fn)
 
-    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+    expect_identical(ref$n_chroms(), new_ref$n_chroms())
 
-    for (i in 1:ref$n_seqs()) {
-        expect_identical(ref$sequence(i), ref$sequence(i))
+    for (i in 1:ref$n_chroms()) {
+        expect_identical(ref$chrom(i), ref$chrom(i))
     }
 
 })
@@ -300,12 +300,12 @@ test_that("Read/writing single indexed FASTA files works with bgzipped output", 
 # Making my own fasta index file:
 fa_index_df1 <- fa_index_df[1:5,]
 fa_index_df2 <- fa_index_df[6:10,]
-fa_index_df2$byte_index <- fa_index_df2$byte_index + ((nchar(ref$names()[1]) + 2) -
+fa_index_df2$byte_index <- fa_index_df2$byte_index + ((nchar(ref$chrom_names()[1]) + 2) -
                                                           fa_index_df2$byte_index[1])
 
 
-ref1 <- ref_genome$new(jackalope:::make_ref_genome(seqs[1:5]))
-ref2 <- ref_genome$new(jackalope:::make_ref_genome(seqs[6:10]))
+ref1 <- ref_genome$new(jackalope:::make_ref_genome(chroms[1:5]))
+ref2 <- ref_genome$new(jackalope:::make_ref_genome(chroms[6:10]))
 
 utils::write.table(fa_index_df1, sprintf("%s/%s1.fa.fai", dir, "test"),
                    quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
@@ -324,10 +324,10 @@ test_that("Read/writing multiple indexed FASTA files works with uncompressed out
     fa_fns <- sprintf("%s/%s%i.fa", dir, "test", 1:2)
     new_ref <- read_fasta(fa_fns, fai_fns)
 
-    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+    expect_identical(ref$n_chroms(), new_ref$n_chroms())
 
-    for (i in 1:ref$n_seqs()) {
-        expect_identical(ref$sequence(i), ref$sequence(i))
+    for (i in 1:ref$n_chroms()) {
+        expect_identical(ref$chrom(i), ref$chrom(i))
     }
 
 })
@@ -344,10 +344,10 @@ test_that("Read/writing multiple indexed FASTA files works with gzipped output",
     fa_fns <- sprintf("%s/%s%i.fa.gz", dir, "test", 1:2)
     new_ref <- read_fasta(fa_fns, fai_fns)
 
-    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+    expect_identical(ref$n_chroms(), new_ref$n_chroms())
 
-    for (i in 1:ref$n_seqs()) {
-        expect_identical(ref$sequence(i), ref$sequence(i))
+    for (i in 1:ref$n_chroms()) {
+        expect_identical(ref$chrom(i), ref$chrom(i))
     }
 
 })
@@ -365,10 +365,10 @@ test_that("Read/writing multiple indexed FASTA files works with bgzipped output"
     fa_fns <- sprintf("%s/%s%i.fa.gz", dir, "test", 1:2)
     new_ref <- read_fasta(fa_fns, fai_fns)
 
-    expect_identical(ref$n_seqs(), new_ref$n_seqs())
+    expect_identical(ref$n_chroms(), new_ref$n_chroms())
 
-    for (i in 1:ref$n_seqs()) {
-        expect_identical(ref$sequence(i), ref$sequence(i))
+    for (i in 1:ref$n_chroms()) {
+        expect_identical(ref$chrom(i), ref$chrom(i))
     }
 
 })
@@ -392,13 +392,13 @@ test_that("Writing FASTA files with variants", {
     new_ref1 <- read_fasta(fa_fn[1])
     new_ref2 <- read_fasta(fa_fn[2])
 
-    expect_identical(vars$n_seqs(), new_ref1$n_seqs())
-    expect_identical(vars$n_seqs(), new_ref2$n_seqs())
+    expect_identical(vars$n_chroms(), new_ref1$n_chroms())
+    expect_identical(vars$n_chroms(), new_ref2$n_chroms())
 
-    expect_identical(sapply(1:vars$n_seqs(), function(i) vars$sequence(1, i)),
-                     sapply(1:vars$n_seqs(), function(i) new_ref1$sequence(i)))
-    expect_identical(sapply(1:vars$n_seqs(), function(i) vars$sequence(2, i)),
-                     sapply(1:vars$n_seqs(), function(i) new_ref2$sequence(i)))
+    expect_identical(sapply(1:vars$n_chroms(), function(i) vars$chrom(1, i)),
+                     sapply(1:vars$n_chroms(), function(i) new_ref1$chrom(i)))
+    expect_identical(sapply(1:vars$n_chroms(), function(i) vars$chrom(2, i)),
+                     sapply(1:vars$n_chroms(), function(i) new_ref2$chrom(i)))
 
 })
 

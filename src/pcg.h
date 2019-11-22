@@ -1,6 +1,7 @@
-#ifndef __JACKAL_PCG_H
-#define __JACKAL_PCG_H
+#ifndef __JACKALOPE_PCG_H
+#define __JACKALOPE_PCG_H
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <vector>

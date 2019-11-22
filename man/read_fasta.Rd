@@ -15,7 +15,7 @@ If this argument is provided, it must be the same length as the \code{fasta_file
 argument.
 Defaults to \code{NULL}, which indicates the fasta file(s) is/are not indexed.}
 
-\item{cut_names}{Boolean for whether to cut sequence names at the first space.
+\item{cut_names}{Boolean for whether to cut chromosome names at the first space.
 This argument is ignored if \code{fai_file} is not \code{NULL}.
 Defaults to \code{FALSE}.}
 }

@@ -90,14 +90,14 @@ write.table(profile_df, file = sprintf("%s/%s", dir, "test_prof.txt"), sep = "\t
 
 test_that("proper pairs created with Illumina paired-end reads on ref. genome", {
 
-    # 1 sequence of length 200
-    seq <- paste(c(rep('C', 25), rep('N', 150), rep('T', 25)), collapse = "")
+    # 1 chromosome of length 200
+    chrom <- paste(c(rep('C', 25), rep('N', 150), rep('T', 25)), collapse = "")
 
     poss_pairs <- c(paste(c(rep('C', 25), rep('N', 75)), collapse = ""),
                     paste(c(rep('A', 25), rep('N', 75)), collapse = ""))
 
-    # Make ref_genome object from a pointer to a RefGenome object based on `seq`
-    rg <- ref_genome$new(jackalope:::make_ref_genome(seq))
+    # Make ref_genome object from a pointer to a RefGenome object based on `chrom`
+    rg <- ref_genome$new(jackalope:::make_ref_genome(chrom))
 
     illumina(rg, out_prefix = paste0(dir, "/test"),
              n_reads = 10e3, read_length = 100,
@@ -127,14 +127,14 @@ test_that("proper pairs created with Illumina paired-end reads on ref. genome", 
 
 test_that("proper pairs created with Illumina mate-pair reads on ref. genome", {
 
-    # 1 sequence of length 200
-    seq <- paste(c(rep('C', 25), rep('N', 150), rep('T', 25)), collapse = "")
+    # 1 chromosome of length 200
+    chrom <- paste(c(rep('C', 25), rep('N', 150), rep('T', 25)), collapse = "")
 
     poss_pairs <- c(paste(c(rep('N', 75), rep('T', 25)), collapse = ""),
                     paste(c(rep('N', 75), rep('G', 25)), collapse = ""))
 
-    # Make ref_genome object from a pointer to a RefGenome object based on `seq`
-    rg <- ref_genome$new(jackalope:::make_ref_genome(seq))
+    # Make ref_genome object from a pointer to a RefGenome object based on `chrom`
+    rg <- ref_genome$new(jackalope:::make_ref_genome(chrom))
 
     illumina(rg, out_prefix = paste0(dir, "/test"),
              n_reads = 10e3, read_length = 100,

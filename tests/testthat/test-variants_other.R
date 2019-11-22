@@ -1,16 +1,15 @@
 
 
-context("Testing basics of creating variants")
-
 # library(jackalope)
 # library(testthat)
 
+context("Testing basics of creating variants")
+
 
 arg_list <- list(reference = create_genome(3, 100),
-                 sub = sub_JC69(0.1))
+                 sub = sub_JC69(0.1, gamma_shape = 1))
 arg_list$ins <- indels(rate = 0.1, max_length = 10)
 arg_list$del <- indels(rate = 0.1, max_length = 10)
-arg_list$gamma_mats <- site_var(arg_list$reference, shape = 2, region_size = 10)
 
 
 cv <- function(vars_info, al = arg_list) {
@@ -19,27 +18,31 @@ cv <- function(vars_info, al = arg_list) {
     return(vars)
 }
 
-test_that("missing `sub` arg throws error", {
+test_that("nonsense `sub` arg throws error", {
     al2 <- arg_list
-    al2$sub <- NULL
+    al2$sub <- "sub"
     expect_error(cv(vars_theta(0.1, n_vars = 4), al2),
-                 regexp = paste("argument `sub` must be provided if you want to create",
-                                "variants using any method other than a VCF file"))
+                 regexp = "argument `sub` must be NULL or a \"sub_info\" object")
 })
+
 
 
 # vars_theta -----
 test_that("basics of vars_theta work", {
 
-    vars <- cv(vars_theta(0.1, n_vars = 4))
+    vi <- vars_theta(0.1, n_vars = 4)
+    vars <- cv(vi)
 
-    expect_identical(vars$n_seqs(), arg_list$reference$n_seqs())
+    expect_identical(vars$n_chroms(), arg_list$reference$n_chroms())
     expect_identical(vars$n_vars(), 4L)
 
     vars2 <- cv(vars_theta(4, n_vars = 4))
 
-    expect_gt(nrow(jackalope:::view_mutations(vars2$genomes, 0)),
-              nrow(jackalope:::view_mutations(vars$genomes, 0)))
+    muts <- jackalope:::view_mutations(vars$ptr(), 0)
+    muts2 <- jackalope:::view_mutations(vars2$ptr(), 0)
+
+    expect_gt(sum(abs(muts2$size_mod)) + sum(muts2$size_mod == 0),
+              sum(abs(muts$size_mod)) + sum(muts$size_mod == 0))
 
     expect_error(vars_theta("0.1", n_vars = 4),
                  regexp = "argument `theta` must be a single number >= 0.")
@@ -57,15 +60,15 @@ test_that("basics of vars_phylo with object work", {
 
     vars <- cv(vars_phylo(tr))
 
-    expect_identical(vars$n_seqs(), arg_list$reference$n_seqs())
+    expect_identical(vars$n_chroms(), arg_list$reference$n_chroms())
     expect_identical(vars$n_vars(), 4L)
 
     tr$edge.length <- tr$edge.length * 100
 
     vars2 <- cv(vars_phylo(tr))
 
-    expect_gt(nrow(jackalope:::view_mutations(vars2$genomes, 0)),
-              nrow(jackalope:::view_mutations(vars$genomes, 0)))
+    expect_gt(nrow(jackalope:::view_mutations(vars2$ptr(), 0)),
+              nrow(jackalope:::view_mutations(vars$ptr(), 0)))
 
     expect_error(vars_phylo("tr"),
                  regexp = paste("argument `obj` must be NULL or of class \"phylo\",",
@@ -85,7 +88,7 @@ test_that("basics of vars_phylo with file work", {
 
     vars <- cv(vars_phylo(fn = tr_file))
 
-    expect_identical(vars$n_seqs(), arg_list$reference$n_seqs())
+    expect_identical(vars$n_chroms(), arg_list$reference$n_chroms())
     expect_identical(vars$n_vars(), 4L)
 
     expect_error(vars_phylo(fn = tr),
@@ -101,12 +104,11 @@ test_that("basic diagnostic functions work for variants", {
 
     vars <- cv(vars_theta(theta = 0.1, n_vars = 4))
 
-    Z <- jackalope:::examine_mutations(var_set_ptr = vars$genomes,
-                                       var_ind = 0, seq_ind = 0)
+    Z <- jackalope:::examine_mutations(var_set_ptr = vars$ptr(),
+                                       var_ind = 0, chrom_ind = 0)
 
     expect_identical(length(Z$pos), as.integer(sum(sapply(c("sub", "ins", "del"),
                                                           function(x) sum(Z[[x]])))))
-    expect_identical(jackalope:::table_gammas(seq(9, 99, 10), 0:99), rep(10, 10))
 
 })
 

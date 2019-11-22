@@ -12,59 +12,59 @@ variants
 An object of class \code{variants}.
 }
 \description{
-\emph{Note:} This class wraps a pointer to a C++ object, so
-do NOT change fields in this class directly.
-It will cause your R session to do bad things.
-(Ever seen the bomb popup on RStudio? Manually mess with these fields and you
-surely will.)
-For safe ways of manipulating the variants' information, see the "Methods" section.
+This class should NEVER be created using \code{variants$new}.
+Only use \code{create_variants}.
+This class wraps a pointer to a C++ object, which is why
+there are no fields to manipulate directly.
+All manipulations are done through this class's methods.
 }
-\section{Fields}{
+\section{Connections to \code{ref_genome} objects}{
 
-\describe{
-\item{\code{genome}}{An \code{externalptr} to a C++ object storing the sequences
-representing the genome.}
+Regarding the \code{ref_genome} object you use to create a \code{variants} object, you should
+note the following:
 
-\item{\code{reference}}{An \code{externalptr} to a C++ object storing the sequences
-representing the genome.
-This field is private, so you can't view it, but I'm listing it here
-so that I can provide a few extra notes about it:
 \itemize{
 \item \strong{This point is the most important.}
-Since it's a pointer, if you make any changes to the reference genome
-that it points to, those changes will also show up in the \code{variants}
-object. For example, if you make a \code{variants} object named \code{V}
+Both the \code{ref_genome} and \code{variants} objects use the same underlying
+C++ object to store reference genome information.
+Thus, if you make any changes to the \code{ref_genome} object, those changes will
+also show up in the \code{variants} object.
+For example, if you make a \code{variants} object named \code{V}
 based on an existing \code{ref_genome} object named \code{R},
-then you merge sequences in \code{R},
-\code{V} will now have merged sequences.
+then you merge chromosomes in \code{R},
+\code{V} will now have merged chromosomes.
 If you've already started adding mutations to \code{V},
 then all the indexes used to store those mutations will be inaccurate.
 So when you do anything with \code{V} later, your R session will crash
 or have errors.
+\strong{The lesson here is that you shouldn't edit the reference
+genome after using it to create variants.}
 \item If a \code{ref_genome} object is used to create a \code{variants}
 object, deleting the \code{ref_genome} object won't cause issues with
 the \code{variants} object.
 However, the \code{variants} class doesn't provide methods to edit
-sequences, so only remove the \code{ref_genome} object when you're done
+chromosomes, so only remove the \code{ref_genome} object when you're done
 editing the reference genome.
-}}
-}}
+}
+}
 
 \section{Methods}{
 
 \strong{Viewing information:}
 \describe{
-\item{\code{n_seqs()}}{View the number of sequences.}
+\item{\code{ptr()}}{View the pointer to the variant information.
+This is used internally by \code{jackalope} and shouldn't be of much use to users.}
+\item{\code{n_chroms()}}{View the number of chromosomes.}
 \item{\code{n_vars()}}{View the number of variants.}
-\item{\code{sizes(var_ind)}}{View vector of sequence sizes for a given variant.}
-\item{\code{seq_names()}}{View vector of sequence names.}
+\item{\code{sizes(var_ind)}}{View vector of chromosome sizes for a given variant.}
+\item{\code{chrom_names()}}{View vector of chromosome names.}
 \item{\code{var_names()}}{View vector of variant names.}
-\item{\code{sequence(var_ind, seq_ind)}}{View a sequence string based on
-indices for the sequence (\code{seq_ind}) and variant (\code{var_ind}).}
-\item{\code{gc_prop(var_ind, seq_ind, start, end)}}{View the GC proportion for a range
-within a variant sequence.}
-\item{\code{nt_prop(nt, var_ind, seq_ind, start, end)}}{View the proportion of a range
-within a variant sequence that is of nucleotide \code{nt}.}
+\item{\code{chrom(var_ind, chrom_ind)}}{View a chromosome sequence string based on
+indices for the chromosome (\code{chrom_ind}) and variant (\code{var_ind}).}
+\item{\code{gc_prop(var_ind, chrom_ind, start, end)}}{View the GC proportion for a range
+within a variant chromosome.}
+\item{\code{nt_prop(nt, var_ind, chrom_ind, start, end)}}{View the proportion of a range
+within a variant chromosome that is of nucleotide \code{nt}.}
 }
 \strong{Editing information:}
 \describe{
@@ -81,18 +81,18 @@ on their name(s). You can optionally specify the names of the duplicates
 Otherwise, their names are auto-generated.}
 \item{\code{rm_vars(var_names)}}{Remove one or more variants based on names in
 the \code{var_names} vector.}
-\item{\code{add_sub(var_ind, seq_ind, pos, nt)}}{Manually add a substitution
-for a given variant (\code{var_ind}), sequence (\code{seq_ind}), and position (\code{pos}).
+\item{\code{add_sub(var_ind, chrom_ind, pos, nt)}}{Manually add a substitution
+for a given variant (\code{var_ind}), chromosome (\code{chrom_ind}), and position (\code{pos}).
 The reference nucleotide will be changed to \code{nt}, which should be a single
 character.}
-\item{\code{add_ins(var_ind, seq_ind, pos, nts)}}{Manually add an insertion
-for a given variant (\code{var_ind}), sequence (\code{seq_ind}), and position (\code{pos}).
+\item{\code{add_ins(var_ind, chrom_ind, pos, nts)}}{Manually add an insertion
+for a given variant (\code{var_ind}), chromosome (\code{chrom_ind}), and position (\code{pos}).
 The nucleotide(s) \code{nts} will be inserted after the designated position.}
-\item{\code{add_del(var_ind, seq_ind, pos, n_nts)}}{Manually add a deletion
-for a given variant (\code{var_ind}), sequence (\code{seq_ind}), and position (\code{pos}).
+\item{\code{add_del(var_ind, chrom_ind, pos, n_nts)}}{Manually add a deletion
+for a given variant (\code{var_ind}), chromosome (\code{chrom_ind}), and position (\code{pos}).
 The designated number of nucleotides to delete (\code{n_nts}) will be deleted
-starting at \code{pos}, unless \code{pos} is near the sequence end and doesn't have
-\code{n_nts} nucleotides to remove; it simply stops at the sequence end in
+starting at \code{pos}, unless \code{pos} is near the chromosome end and doesn't have
+\code{n_nts} nucleotides to remove; it simply stops at the chromosome end in
 this case.}
 }
 }

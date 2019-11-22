@@ -2,6 +2,8 @@
  Read info from ms-style output files
  */
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 #include <RcppArmadillo.h>
 
 #include <fstream>
@@ -16,8 +18,8 @@
 
 
 #include "jackalope_types.h"  // integer types
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
+#include "ref_classes.h"  // Ref* classes
+#include "var_classes.h"  // Var* classes
 #include "str_manip.h"  // filter_nucleos
 #include "util.h"  // str_stop, thread_check
 #include "io.h"
@@ -45,6 +47,10 @@ void ms_parse_tree_line(std::string& line,
         return;
     }
     if (line[0] == '[' || line[0] == '(') {
+        if (newick_strings.empty()) {
+            str_stop({"\nIn the input ms-style output file containing gene trees, ",
+                     "the first gene tree is not preceded with a line containing \"//\"."});
+        }
         newick_strings.back().push_back(line);
     }
     return;
@@ -124,19 +130,19 @@ std::vector<std::vector<std::string>> read_ms_trees_(std::string ms_file) {
  Parse from segregating sites in ms-style output
  */
 
-// For organizing info from each sequence
+// For organizing info from each chromosome
 struct MS_SitesInfo {
     uint64 n_sites;
     std::vector<double> positions;
     std::vector<std::vector<bool>> segr_bools;
 
-    arma::mat to_mat(const uint64& seq) {
+    arma::mat to_mat(const uint64& chrom_i) {
 
         // Now create and fill the output matrix
         arma::mat M(n_sites, segr_bools.size() + 1);
         if (positions.size() != n_sites) {
             str_stop({"\nIn creation of segregation-sites info ",
-                     "for sequence number ", std::to_string(seq + 1),
+                     "for chromosome number ", std::to_string(chrom_i + 1),
                      ", the listed positions for each site (line starting with ",
                      "'positions:') does not have a length that's the same "
                      "as the # sites as given by the line starting with 'segsites:'."});
@@ -145,7 +151,7 @@ struct MS_SitesInfo {
         for (uint64 i = 0; i < segr_bools.size(); i++) {
             if (segr_bools[i].size() != n_sites) {
                 str_stop({"\nIn creation of segregation-sites info ",
-                         "for sequence number ", std::to_string(seq + 1),
+                         "for chromosome number ", std::to_string(chrom_i + 1),
                          ", the listed number of sites (line starting with ",
                          "'segsites:') does not agree with the number of "
                          "items in the ", std::to_string(i + 1), "th line ",

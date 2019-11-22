@@ -2,47 +2,583 @@
 #' ========================================================================`
 #'
 #' This file stores functions for molecular-evolution info.
-#' This includes those for substitutions, indels,
-#' among-site variability in mutation rates, and
-#' creating `mevo` objects that organize molecular-evolution info.
+#' This includes those for substitutions and indels.
 #'
 #' ========================================================================`
 
 
-# substitutions -----
+# SUBSTITUTIONS -----
 
 
-#' Print method for `sub_model_info` objects, output from `sub_models` functions.
+# ... sub_info class -------
+
+
+
+#' An R6 class representing information for a substitution model.
 #'
-#' I added this mostly to make users less likely to edit it manually and to
-#' give context to the output.
+#'
+#' This class should NEVER be created using `sub_info$new`.
+#' Only use one of the functions in `?sub_models`.
+#' That's why I'm not exporting it.
 #'
 #' @noRd
-#' @export
 #'
-print.sub_model_info <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-    cat("< Substitution information >\n")
-    fmt <- paste0("%.", digits, "f")
+#'
+#' @importFrom R6 R6Class
+#'
+sub_info <- R6Class(
 
-    cat("# Equilibrium densities:\n")
-    cat("  ", sprintf(fmt, x$pi_tcag), "\n")
+    "sub_info",
 
-    cat("# Substitution rate matrix:\n")
-    prmatrix(x$Q, digits = digits,
-             rowlab = paste("  ", c("T", "C", "A", "G")),
-             collab = c("T", "C", "A", "G"))
+    public = list(
 
-    cat("(View rate matrix in the \"Q\" field)\n")
-    cat("(View equil. densities in the \"pi_tcag\" field)")
+        initialize = function(info_list) {
+
+            extra_msg <- paste(" Please only create these objects using one of the",
+                               "functions in ?sub_models, NOT using sub_info$new().")
+            if (!inherits(info_list, "list")) {
+                stop("\nWhen initializing a sub_info object, you need to use ",
+                     "a list.", extra_msg, call. = FALSE)
+            }
+
+            for (x in c("Q", "pi_tcag", "U", "Ui", "L", "gammas",
+                        "invariant", "model")) {
+                if (is.null(info_list[[x]])) {
+                    stop("\nWhen initializing a sub_info object, the input list ",
+                         "must contain the field ", x, ".", extra_msg, call. = FALSE)
+                }
+            }
+
+            private$r_Q <- info_list$Q
+            private$r_pi_tcag <- info_list$pi_tcag
+            private$r_U <- info_list$U
+            private$r_Ui <- info_list$Ui
+            private$r_L <- info_list$L
+            private$r_gammas <- info_list$gammas
+            private$r_invariant <- info_list$invariant
+            private$r_model <- info_list$model
+
+            # Revert these back to list (from arma::field which adds dims):
+            dim(private$r_Q) <- NULL
+            dim(private$r_U) <- NULL
+            dim(private$r_Ui) <- NULL
+            dim(private$r_L) <- NULL
+        },
+
+        print = function(...) {
+
+            digits <- max(3, getOption("digits") - 3)
+
+            cat(sprintf("< Substitution model %s >\n", private$r_model))
+            fmt <- paste0("%.", digits, "f")
+
+            cat("# Equilibrium densities:\n")
+            cat("  ", sprintf(fmt, private$r_pi_tcag), "\n")
+
+            cat("# Substitution rate matrix:\n")
+            prmatrix(private$r_Q[[1]] / private$r_gammas[1], digits = digits,
+                     rowlab = paste("  ", c("T", "C", "A", "G")),
+                     collab = c("T", "C", "A", "G"))
+
+            if (length(private$r_gammas) == 1 & private$r_invariant == 0) {
+                cat("# No among-site variability\n")
+            } else {
+                if (length(private$r_gammas) > 1) {
+                    cat(sprintf("# Discrete Gamma classes: %i\n", length(private$r_gammas)))
+                } else {
+                    cat("# No continuous variability among sites\n")
+                }
+                if (private$r_invariant > 0) {
+                    cat(sprintf(paste("# Proportion of invariant sites:", fmt, "\n"),
+                                private$r_invariant))
+                } else {
+                    cat("# No invariant sites\n")
+                }
+            }
+
+            invisible(self)
+
+        },
+
+        Q = function() return(private$r_Q),
+        pi_tcag = function() return(private$r_pi_tcag),
+        U = function() return(private$r_U),
+        Ui = function() return(private$r_Ui),
+        L = function() return(private$r_L),
+        gammas = function() return(private$r_gammas),
+        invariant = function() return(private$r_invariant),
+        model = function() return(private$r_model)
+
+
+
+    ),
+
+    private = list(
+
+        r_Q = NULL,
+        r_pi_tcag = NULL,
+        r_U = NULL,
+        r_Ui = NULL,
+        r_L = NULL,
+        r_gammas = NULL,
+        r_invariant = NULL,
+        r_model = NULL
+
+    ),
+
+    lock_class = TRUE
+
+)
+
+
+
+
+
+
+
+
+
+# .... partial functions -------
+
+
+#' Check sub_* function arguments for validity.
+#'
+#' @noRd
+#'
+sub_arg_checks <- function(mod_name,
+                           pi_tcag = NULL, alpha_1 = NULL, alpha_2 = NULL,
+                           beta = NULL, gamma_shape = NULL, gamma_k = NULL,
+                           invariant = NULL, lambda = NULL, alpha = NULL,
+                           kappa = NULL, abcdef = NULL, Q = NULL) {
+
+    # Vector parameters:
+    if (!is.null(pi_tcag) && !(is_type(pi_tcag, c("integer", "numeric"), 4) &&
+                               all(pi_tcag >= 0) && any(pi_tcag > 0))) {
+        err_msg(paste0("sub_", mod_name), "pi_tcag",
+                "a length-4 numeric vector where at least one number is > 0 and all",
+                "are >= 0")
+    }
+    if (!is.null(abcdef) && !(is_type(abcdef, c("integer", "numeric"), 6) &&
+                              all(abcdef >= 0))) {
+        err_msg(paste0("sub_", mod_name), "abcdef",
+                "a length-6 numeric vector where all numbers are >= 0")
+    }
+
+    # UNREST matrix:
+    if (!is.null(Q) && !(is_type(Q, "matrix") && nrow(Q) == 4 && ncol(Q) == 4 &&
+                         is.numeric(Q) &&
+                         all(c(Q[lower.tri(Q)], Q[upper.tri(Q)]) >= 0))) {
+        err_msg(paste0("sub_", mod_name), "Q",
+                "a 4x4 numeric matrix where all non-diagonal elements are >= 0")
+    }
+
+    # Single-number parameters:
+    if (!is.null(alpha_1) && !single_number(alpha_1, 0)) {
+        err_msg(paste0("sub_", mod_name), "alpha_1", "a single number > 0")
+    }
+    if (!is.null(alpha_2) && !single_number(alpha_2, 0)) {
+        err_msg(paste0("sub_", mod_name), "alpha_2", "a single number > 0")
+    }
+    if (!is.null(beta) && !single_number(beta, 0)) {
+        err_msg(paste0("sub_", mod_name), "beta", "a single number > 0")
+    }
+    if (!is.null(lambda) && !single_number(lambda, 0)) {
+        err_msg(paste0("sub_", mod_name), "lambda", "a single number > 0")
+    }
+    if (!is.null(alpha) && !single_number(alpha, 0)) {
+        err_msg(paste0("sub_", mod_name), "alpha", "a single number > 0")
+    }
+    if (!is.null(kappa) && !single_number(kappa, 0)) {
+        err_msg(paste0("sub_", mod_name), "kappa", "a single number > 0")
+    }
+
+
+    # Site-heterogeneity parameters:
+    if (!is.null(gamma_shape) && !(single_number(gamma_shape) && gamma_shape > 0)) {
+        err_msg(paste0("sub_", mod_name), "gamma_shape",
+                "NULL or a single number > 0")
+    }
+    if (!single_integer(gamma_k, 2, 255)) {
+        err_msg(paste0("sub_", mod_name), "gamma_k",
+                "a single integer in range [2, 255]")
+    }
+    if (!single_number(invariant, 0) || invariant >= 1) {
+        err_msg(paste0("sub_", mod_name), "invariant",
+                "a single number >= 0 and < 1")
+    }
+
 
     invisible(NULL)
+
+
+}
+
+
+# ... sub_models docs -----
+#' Construct necessary information for substitution models.
+#'
+#' For a more detailed explanation, see `vignette("sub-models")`.
+#'
+#'
+#' @name sub_models
+#'
+#' @seealso \code{\link{create_variants}}
+#'
+#' @return A `sub_info` object, which is an R6 class that wraps the info needed for
+#' the `create_variants` function.
+#' It does not allow the user to directly manipulate the info inside, as that
+#' should be done using the `sub_models` functions.
+#' You can use the following methods from the class to view information:
+#' \describe{
+#'     \item{`Q()`}{View a list of substitution rate matrices,
+#'         one for each Gamma category.}
+#'     \item{`pi_tcag()`}{View the equilibrium nucleotide frequencies.}
+#'     \item{`gammas()`}{View the discrete Gamma-class values.}
+#'     \item{`invariant()`}{View the proportion of invariant sites.}
+#'     \item{`model()`}{View the substitution model.}
+#'     \item{`U()`}{View list of the `U` matrices (one matrix per Gamma category)
+#'         used for calculating transition-probability matrices.
+#'         This is empty for UNREST models.}
+#'     \item{`Ui()`}{View list of the `U^-1` matrices (one matrix per Gamma category)
+#'         used for calculating transition-probability matrices.
+#'         This is empty for UNREST models.}
+#'     \item{`L()`}{View list of the lambda vectors (one vector per Gamma category)
+#'         used for calculating transition-probability matrices.
+#'         This is empty for UNREST models.}
+#' }
+#'
+#'
+#'
+#' @examples
+#' # Same substitution rate for all types:
+#' obj_JC69 <- sub_JC69(lambda = 0.1)
+#'
+#' # Transitions 2x more likely than transversions:
+#' obj_K80 <- sub_K80(alpha = 0.2, beta = 0.1)
+#'
+#' # Incorporating equilibrium frequencies:
+#' obj_HKY85 <- sub_HKY85(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
+#'                        alpha = 0.2, beta = 0.1)
+#'
+#' # 10-category Gamma distribution for among-site variability:
+#' obj_K80 <- sub_K80(alpha = 0.2, beta = 0.1,
+#'                    gamma_shape = 1, gamma_k = 10)
+#'
+#' # Invariant sites:
+#' obj_K80 <- sub_K80(alpha = 0.2, beta = 0.1,
+#'                    invariant = 0.25)
+#'
+NULL
+
+
+
+
+#' @describeIn sub_models JC69 model.
+#'
+#' @param lambda Substitution rate for all possible substitutions.
+#' @inheritParams sub_TN93
+#'
+#' @export
+#'
+#'
+sub_JC69 <- function(lambda, gamma_shape = NULL, gamma_k = 5, invariant = 0) {
+
+    sub_arg_checks("JC69", lambda = lambda,
+                   gamma_shape = gamma_shape, gamma_k = gamma_k, invariant = invariant)
+
+    pi_tcag <- rep(0.25, 4)
+    lambda <- lambda * 4;  # bc it's being multiplied by pi_tcag
+
+    out <- sub_TN93__(pi_tcag, lambda, lambda, lambda,
+                    gamma_shape, gamma_k, invariant, "JC69")
+
+    return(out)
+
+}
+
+#' @describeIn sub_models K80 model.
+#'
+#' @param alpha Substitution rate for transitions.
+#' @inheritParams sub_TN93
+#'
+#' @export
+#'
+sub_K80 <- function(alpha, beta, gamma_shape = NULL, gamma_k = 5, invariant = 0) {
+
+    sub_arg_checks("K80", alpha = alpha, beta = beta,
+                   gamma_shape = gamma_shape, gamma_k = gamma_k, invariant = invariant)
+
+    pi_tcag <- rep(0.25, 4)
+    alpha <- alpha * 4;  # bc they're being multiplied by pi_tcag
+    beta <- beta * 4;  # bc they're being multiplied by pi_tcag
+
+    out <- sub_TN93__(pi_tcag, alpha, alpha, beta,
+                    gamma_shape, gamma_k, invariant, "K80")
+
+    return(out)
+
+}
+
+#' @describeIn sub_models F81 model.
+#'
+#' @inheritParams sub_TN93
+#'
+#' @export
+#'
+sub_F81 <- function(pi_tcag, gamma_shape = NULL, gamma_k = 5, invariant = 0) {
+
+    sub_arg_checks("F81", pi_tcag = pi_tcag,
+                   gamma_shape = gamma_shape, gamma_k = gamma_k, invariant = invariant)
+
+    out <- sub_TN93__(pi_tcag, 1, 1, 1,
+                    gamma_shape, gamma_k, invariant, "F81")
+
+    return(out)
+
+}
+
+#' @describeIn sub_models HKY85 model.
+#'
+#'
+#' @inheritParams sub_TN93
+#' @inheritParams sub_K80
+#'
+#' @export
+#'
+sub_HKY85 <- function(pi_tcag, alpha, beta,
+                      gamma_shape = NULL, gamma_k = 5, invariant = 0) {
+
+    sub_arg_checks("HKY85", pi_tcag = pi_tcag, alpha = alpha, beta = beta,
+                   gamma_shape = gamma_shape, gamma_k = gamma_k, invariant = invariant)
+
+    out <- sub_TN93__(pi_tcag, alpha, alpha, beta,
+                    gamma_shape, gamma_k, invariant, "HKY85")
+
+    return(out)
+
+}
+
+#' @describeIn sub_models F84 model.
+#'
+#'
+#' @inheritParams sub_TN93
+#' @inheritParams sub_K80
+#' @param kappa The transition/transversion rate ratio.
+#'
+#' @export
+#'
+sub_F84 <- function(pi_tcag, beta, kappa,
+                    gamma_shape = NULL, gamma_k = 5, invariant = 0) {
+
+
+    sub_arg_checks("F84", pi_tcag = pi_tcag, beta = beta, kappa = kappa,
+                   gamma_shape = gamma_shape, gamma_k = gamma_k, invariant = invariant)
+
+    pi_y = pi_tcag[1] + pi_tcag[2]
+    pi_r = pi_tcag[3] + pi_tcag[4]
+
+    alpha_1 = (1 + kappa / pi_y) * beta
+    alpha_2 = (1 + kappa / pi_r) * beta
+
+    out <- sub_TN93__(pi_tcag, alpha_1, alpha_2, beta,
+                    gamma_shape, gamma_k, invariant, "F84")
+
+    return(out)
+
+}
+
+
+
+#' @describeIn sub_models TN93 model.
+#'
+#' @param pi_tcag Vector of length 4 indicating the equilibrium distributions of
+#'     T, C, A, and G respectively. Values must be >= 0, and
+#'     they are forced to sum to 1.
+#' @param alpha_1 Substitution rate for T <-> C transition.
+#' @param alpha_2 Substitution rate for A <-> G transition.
+#' @param beta Substitution rate for transversions.
+#' @param gamma_shape Numeric shape parameter for discrete Gamma distribution used for
+#'     among-site variability. Values must be greater than zero.
+#'     If this parameter is `NULL`, among-site variability is not included.
+#'     Defaults to `NULL`.
+#' @param gamma_k The number of categories to split the discrete Gamma distribution
+#'     into. Values must be an integer in the range `[2,255]`.
+#'     This argument is ignored if `gamma_shape` is `NA`.
+#'     Defaults to `5`.
+#' @param invariant Proportion of sites that are invariant.
+#'     Values must be in the range `[0,1)`.
+#'     Defaults to `0`.
+#'
+#' @export
+#'
+sub_TN93 <- function(pi_tcag, alpha_1, alpha_2, beta,
+                     gamma_shape = NULL, gamma_k = 5, invariant = 0) {
+
+    out <- sub_TN93__(pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k,
+                            invariant, "TN93")
+
+    return(out)
+
+}
+
+
+
+# .... full functions -----
+# (The above functions are simply special cases of `sub_TN93` and use that
+#  function internally.)
+
+
+
+#' Inner function that does most of the work for TN93 and its special cases
+#'
+#' @noRd
+#'
+sub_TN93__ <- function(pi_tcag, alpha_1, alpha_2, beta,
+                       gamma_shape, gamma_k, invariant, model) {
+
+    sub_arg_checks("TN93", pi_tcag = pi_tcag,
+                   alpha_1 = alpha_1, alpha_2 = alpha_2, beta = beta,
+                   gamma_shape = gamma_shape, gamma_k = gamma_k, invariant = invariant)
+    if (is.null(gamma_shape)) gamma_shape <- 0
+
+    if (!is_type(model, "character", 1L)) {
+        stop("\nINNER ERROR: arg `model` to sub_TN93__ is not a single string.")
+    }
+
+    info_list <- sub_TN93_cpp(pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k,
+                              invariant)
+    info_list[["model"]] <- model
+
+    out <- sub_info$new(info_list)
+
+    return(out)
+
+}
+
+
+
+#' @describeIn sub_models GTR model.
+#'
+#' @inheritParams sub_TN93
+#' @param abcdef A vector of length 6 that contains the off-diagonal elements
+#'     for the substitution rate matrix.
+#'     See `vignette("sub-models")` for how the values are ordered in the matrix.
+#'
+#' @export
+#'
+sub_GTR <- function(pi_tcag, abcdef, gamma_shape = NULL, gamma_k = 5, invariant = 0) {
+
+    sub_arg_checks("GTR", pi_tcag = pi_tcag, abcdef = abcdef,
+                   gamma_shape = gamma_shape, gamma_k = gamma_k, invariant = invariant)
+    if (is.null(gamma_shape)) gamma_shape <- 0
+
+    info_list <- sub_GTR_cpp(pi_tcag, abcdef, gamma_shape, gamma_k, invariant)
+
+    out <- sub_info$new(info_list)
+
+    return(out)
+
+}
+
+#' @describeIn sub_models UNREST model.
+#'
+#'
+#' @param Q Matrix of substitution rates for "T", "C", "A", and "G", respectively.
+#'     Item `Q[i,j]` is the rate of substitution from nucleotide `i` to nucleotide `j`.
+#'     Do not include indel rates here!
+#'     Values on the diagonal are calculated inside the function so are ignored.
+#' @inheritParams sub_TN93
+#'
+#' @export
+#'
+#'
+sub_UNREST <- function(Q, gamma_shape = NULL, gamma_k = 5, invariant = 0) {
+
+    sub_arg_checks("UNREST", Q = Q,
+                   gamma_shape = gamma_shape, gamma_k = gamma_k, invariant = invariant)
+    if (is.null(gamma_shape)) gamma_shape <- 0
+
+    info_list <- sub_UNREST_cpp(Q, gamma_shape, gamma_k, invariant)
+
+    out <- sub_info$new(info_list)
+
+    return(out)
+
 }
 
 
 
 
 
-# indels -----
+
+# INDELS -----
+
+
+# ... indel_info class -------
+
+
+
+#' An R6 class representing information for indel rates.
+#'
+#'
+#' This class should NEVER be created using `indel_info$new`.
+#' Only use function `indels`.
+#' That's why I'm not exporting it.
+#'
+#' @noRd
+#'
+#'
+#' @importFrom R6 R6Class
+#'
+indel_info <- R6Class(
+
+    "indel_info",
+
+    public = list(
+
+        initialize = function(rates) {
+
+            extra_msg <- paste(" Please only create these objects using the indels",
+                               "function, NOT using indel_info$new().")
+            if (!inherits(rates, "numeric") || any(rates < 0)) {
+                stop("\nWhen initializing an indel_info object, you need to use ",
+                     "a numeric vector of values >= 0.", extra_msg, call. = FALSE)
+            }
+
+            private$r_rates <- rates
+        },
+
+        print = function(...) {
+
+            digits <- max(3, getOption("digits") - 3)
+
+            cat("< Indel rates >\n")
+            cat(sprintf(sprintf("# Total rate = %%.%ig\n", digits), sum(private$r_rates)))
+            cat(sprintf("# Max length = %i\n", length(private$r_rates)))
+
+            invisible(self)
+
+        },
+
+        rates = function() return(private$r_rates)
+
+    ),
+
+    private = list(
+
+        r_rates = NULL
+
+    ),
+
+    lock_class = TRUE
+
+)
+
+
+
+
+
+# ... main function -----
 
 
 #' Insertions and deletions (indels) specification
@@ -50,11 +586,10 @@ print.sub_model_info <- function(x, digits = max(3, getOption("digits") - 3), ..
 #' Construct necessary information for insertions and deletions (indels) that will
 #' be used in `create_variants`.
 #'
-#' Both insertions and deletions require the `rate` parameter, which specifies
-#' the overall insertion/deletion rate among all lengths.
+#' All indels require the `rate` parameter, which specifies
+#' the overall indels rate among all lengths.
 #' The `rate` parameter is ultimately combined with a vector of relative rates among
-#' the different lengths of insertions/deletions from 1 to the maximum
-#' possible length.
+#' the different lengths of indels from 1 to the maximum possible length.
 #' There are three different ways to specify/generate relative-rate values.
 #' \enumerate{
 #'     \item Assume that rates are proportional to `exp(-L)` for indel length
@@ -101,9 +636,11 @@ print.sub_model_info <- function(x, digits = max(3, getOption("digits") - 3), ..
 #'
 #' @export
 #'
-#' @return An `indel_rates` object, which is just a wrapper around a numeric vector.
-#' You can access the rates vector for `indel_rates` object `x` by running
-#' `as.numeric(x)`.
+#' @return An `indel_info` object, which is an R6 class that wraps the info needed for
+#' the `create_variants` function.
+#' It does not allow the user to directly manipulate the info inside, as that
+#' should be done using this function.
+#' You can use the `rates()` method to view the indel rates by size.
 #'
 #' @examples
 #' # relative rates are proportional to `exp(-L)` for indel
@@ -155,320 +692,8 @@ indels <- function(rate,
     # Absolute rates:
     rates <- rel_rates * rate
 
-    class(rates) <- "indel_rates"
+    rates_obj <- indel_info$new(rates)
 
-    return(rates)
+    return(rates_obj)
 }
-
-#' Print method for indel_rates objects.
-#'
-#' I added this mostly to make sure a giant vector doesn't ever print.
-#'
-#' @noRd
-#' @export
-#'
-print.indel_rates <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-    cat("< Indel rates vector >\n")
-    cat(sprintf("  * Total rate = %.3g\n", sum(x)))
-    cat(sprintf("  * Max length = %i\n", length(x)))
-    cat("(View raw data using `as.numeric`)\n")
-    invisible(NULL)
-}
-
-
-
-# among-site var. -----
-
-
-#' Specify variation in mutation rates among sites
-#'
-#' Construct necessary information for among-site variation in mutation rates that will
-#' be used in `create_variants`.
-#'
-#'
-#' A site's deviance from the average mutation rate is determined by its
-#' "gamma distance".
-#' A site's overall mutation rate is the mutation rate for that nucleotide
-#' (substitution + indel) multiplied by the site's gamma distance.
-#' There are two options for specifying gamma distances:
-#' \enumerate{
-#'     \item Generate gamma distances from a Gamma distribution.
-#'         This method will be used if the `shape` and `region_size` arguments
-#'         are provided.
-#'         If the `mats` argument is also provided, this method will NOT be used.
-#'         See argument descriptions for more info.
-#'     \item Manually input matrices that specify the gamma distance and end points
-#'         for regions each gamma distance refers to.
-#'         This method will be used if the `mats` argument is provided.
-#'         See argument descriptions for more info.
-#' }
-#'
-#' @param reference A \code{ref_genome} object from which you will eventually
-#'     generate variants.
-#' @param shape Shape parameter for the Gamma distribution that generates gamma distances,
-#'     The variance of the distribution is `1 / shape`, and its mean is fixed to 1.
-#'     Values `<= 0` are not allowed.
-#'     Defaults to `NULL`.
-#' @param region_size Size of regions to break the genome into,
-#'     where all sites within a region have the same gamma distance.
-#'     Defaults to `NULL`.
-#' @param invariant Proportion of regions that are invariant.
-#'     Must be in range `[0,1)`.
-#'     Defaults to `0`.
-#' @param mats List of matrices, one for each sequence in the genome.
-#'     Each matrix should have two columns.
-#'     The first should contain the end points for each region.
-#'     The second should contain the gamma distances for each region.
-#'     Note that if gamma distances don't have a mean (weighted by
-#'     sequence length for each gamma-distance value) equal to 1,
-#'     you're essentially changing the overall mutation rate.
-#'     If this argument is provided, `shape` and `region_size` are ignored.
-#'     Defaults to `NULL`.
-#' @param out_prefix String specifying the file name prefix for an output BED file that
-#'     will be generated by this function and that will specify the
-#'     gamma distances for each region.
-#'     If `NULL`, no output file is produced.
-#'     Defaults to `NULL`.
-#' @inheritParams write_fasta
-#'
-#'
-#' @export
-#'
-#' @return A `site_var_mats` object, which is a wrapper around a list of matrices,
-#' one for each sequence in the reference genome.
-#' Although the print method is different, you can otherwise treat these objects
-#' the same as you would a list (e.g., `x[[1]]`, `x[1:2]`, `length(x)`).
-#'
-#'
-#' @examples
-#' ref <- create_genome(3, 100)
-#' # generating from Gamma distribution
-#' gamma_mats <- site_var(ref, shape = 0.5,
-#'                        region_size = 5)
-#' # with custom matrices
-#' gamma_mats <- site_var(ref,
-#'                        mats = replicate(3,
-#'                            cbind(seq(10, 100, 10),
-#'                            rgamma(10, 0.9)),
-#'                            simplify = FALSE))
-#'
-site_var <- function(reference,
-                     shape = NULL,
-                     region_size = NULL,
-                     invariant = 0,
-                     mats = NULL,
-                     out_prefix = NULL,
-                     compress = FALSE,
-                     comp_method = "bgzip") {
-
-    # ---------*
-    # Checking types:
-    # ---------*
-    if (!inherits(reference, "ref_genome")) {
-        err_msg("site_var", "reference", "a \"ref_genome\" object")
-    }
-    if (!is.null(shape) && (!single_number(shape) || shape <= 0)) {
-        err_msg("site_var", "shape", "NULL or a single number > 0")
-    }
-    if (!is.null(region_size) && !single_integer(region_size, 1)) {
-        err_msg("site_var", "region_size", "NULL or a single integer >= 1")
-    }
-    if (!is.null(invariant) && (!single_number(invariant, 0) || invariant >= 1)) {
-        err_msg("site_var", "invariant", "NULL or a single number in range [0,1)")
-    }
-    if (!is.null(mats) && (!is_type(mats, "list") ||
-                           !all(sapply(mats, inherits, what = "matrix")))) {
-        err_msg("site_var", "mats", "NULL or a list of matrices")
-    }
-    if (!is.null(out_prefix) && !is_type(out_prefix, "character", 1)) {
-        err_msg("site_var", "out_prefix", "NULL or a single string")
-    }
-    if (!is_type(compress, "logical", 1) && !single_integer(compress, 1, 9)) {
-        err_msg("site_var", "compress", "a single logical or integer from 1 to 9")
-    }
-    if (is_type(compress, "logical", 1) && compress) compress <- 6 # default compression
-    if (is_type(compress, "logical", 1) && !compress) compress <- 0 # no compression
-    if (!is_type(comp_method, "character", 1) || !comp_method %in% c("gzip", "bgzip")) {
-        err_msg("site_var", "comp_method", "\"gzip\" or \"bgzip\"")
-    }
-
-    # Checking for other nonsense:
-    if ((is.null(shape) && !is.null(region_size)) ||
-        (!is.null(shape) && is.null(region_size))) {
-        stop("\nIn the `site_var` function, if you provide an input to the ",
-             "`region_size` argument, you must also provide one to the `shape` ",
-             "argument, and vice versa.", call. = FALSE)
-    }
-
-    # ---------*
-    # Making the matrices:
-    # ---------*
-    seq_sizes <- reference$sizes()
-    if (!is.null(mats)) {
-        if (length(mats) != length(seq_sizes)) {
-            err_msg("site_var", "mats", "NULL or a list of matrices the same length",
-                    "as the number of sequences in the reference genome.")
-        }
-    } else {
-        if (is.null(shape) || is.null(region_size)) {
-            stop("\nIn function `site_var`, if you don't provide a `mats` argument, ",
-                 "you need to provide both the `shape` and `region_size` arguments.",
-                 call. = FALSE)
-        }
-        mats <- make_gamma_mats(seq_sizes,
-                                region_size_ = region_size,
-                                shape = shape,
-                                invariant = invariant)
-        dim(mats) <- NULL # so it's just a list now
-    }
-
-    # Check matrices for proper end points and # columns:
-    check_gamma_mats(mats, seq_sizes)
-
-    # ---------*
-    # Writing to BED file if desired:
-    # ---------*
-    if (!is.null(out_prefix)) {
-        seq_names <- reference$names()
-        write_bed(out_prefix, mats, seq_names, compress, comp_method)
-    }
-
-    class(mats) <- "site_var_mats"
-
-    return(mats)
-}
-
-
-#' Print output from `site_var`
-#'
-#' I added this mostly to make sure a giant list doesn't print.
-#'
-#' @noRd
-#' @export
-#'
-print.site_var_mats <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-    cat("< Site variability matrices >\n")
-    cat(sprintf("  * Number of sequences = %i\n", length(x)))
-    cat(sprintf("  * Number of regions = %i\n", sum(sapply(x, nrow))))
-    cat("(View raw data the same as you would a list)\n")
-    invisible(NULL)
-}
-
-
-
-
-# mevo objects -----
-
-
-#' Make a `mevo` object to store information needed for molecular evolution simulation.
-#'
-#'
-#'
-#' @param reference A \code{ref_genome} object from which you will generate variants.
-#' @param sub Output from one of the \code{\link{sub_models}} functions that organizes
-#'     information for the substitution models.
-#'     See `?sub_models` for more information on these models and
-#'     their required parameters.
-#' @param ins Output from the \code{\link{indels}} function that specifies rates
-#'     of insertions by length.
-#'     Passing `NULL` to this argument results in no insertions.
-#'     Defaults to `NULL`.
-#' @param del Output from the \code{\link{indels}} function that specifies rates
-#'     of deletions by length.
-#'     Passing `NULL` to this argument results in no deletions.
-#'     Defaults to `NULL`.
-#' @param gamma_mats Output from the \code{\link{site_var}} function that specifies
-#'     variability in mutation rates among sites (for both substitutions and indels).
-#'     Passing `NULL` to this argument results in no variability among sites.
-#'     Defaults to `NULL`.
-#'
-#' @return An object of class \code{\link{mevo}}.
-#'
-#' @noRd
-#'
-create_mevo <- function(reference,
-                        sub,
-                        ins,
-                        del,
-                        gamma_mats,
-                        region_size) {
-
-    if (!inherits(reference, "ref_genome")) {
-        err_msg("create_variants", "reference", "a \"ref_genome\" object")
-    }
-    if (!is.null(sub) && !is_type(sub, "sub_model_info")) {
-        err_msg("create_variants", "sub", "NULL or a \"sub_model_info\" object")
-    }
-    if (!is.null(ins) && !is_type(ins, "indel_rates")) {
-        err_msg("create_variants", "ins", "NULL or a \"indel_rates\" object")
-    }
-    if (!is.null(del) && !is_type(del, "indel_rates")) {
-        err_msg("create_variants", "del", "NULL or a \"indel_rates\" object")
-    }
-    if (!is.null(gamma_mats) && !is_type(gamma_mats, "site_var_mats")) {
-        err_msg("create_variants", "gamma_mats", "NULL or a \"site_var_mats\" object")
-    }
-    if (!single_integer(region_size, 1)) {
-        err_msg("create_variants", "region_size", "a single integer >= 1")
-    }
-
-    # `sub` must be provided if others are:
-    if (is.null(sub) && (!is.null(ins) ||
-                         !is.null(del) ||
-                         !is.null(gamma_mats))) {
-        stop("\nIn `create_variants`, if you want insertions, deletions, ",
-             "or among-site variability, you must also provide substituion information ",
-             "via one of the `sub_models` functions.", call. = FALSE)
-    }
-
-    # If no molecular evolution is provided, return NULL (only happens for VCF method)
-    if (is.null(sub)) return(NULL)
-
-    # Below will turn `NULL` into `numeric(0)` and
-    # indel_rates object into simple numeric:
-    ins <- as.numeric(ins)
-    del <- as.numeric(del)
-
-
-    # This results in no variability among sites and 1 Gamma region per sequence
-    # (they'll get split later if desired):
-    if (is.null(gamma_mats)) {
-        seq_sizes <- reference$sizes()
-        gamma_mats <- make_gamma_mats(seq_sizes, region_size_ = max(seq_sizes),
-                                      shape = 0, invariant = 0)
-        dim(gamma_mats) <- NULL # so it's just a list now
-    }
-
-    # -------+
-    # Make final output object
-    # -------+
-    out <- mevo$new(sub,
-                    ins,
-                    del,
-                    gamma_mats,
-                    region_size)
-
-    return(out)
-}
-
-
-
-
-
-#' Convert to a XPtr<MutationSampler> object
-#'
-#' @noRd
-#'
-mevo_obj_to_ptr <- function(mevo_obj) {
-
-    sampler_ptr <- make_mutation_sampler_base(mevo_obj$Q,
-                                              mevo_obj$pi_tcag,
-                                              mevo_obj$insertion_rates,
-                                              mevo_obj$deletion_rates,
-                                              mevo_obj$region_size)
-
-    return(sampler_ptr)
-}
-
-
 

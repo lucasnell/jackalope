@@ -3,6 +3,8 @@
  Functions to read and write to/from FASTA files
  */
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
+
 #include <RcppArmadillo.h>
 
 #include <fstream>
@@ -17,8 +19,8 @@
 
 
 #include "jackalope_types.h"  // integer types
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
+#include "ref_classes.h"  // Ref* classes
+#include "var_classes.h"  // Var* classes
 #include "str_manip.h"  // filter_nucleos
 #include "util.h"  // str_stop, thread_check
 #include "io.h"   // expand_path, File* classes, `LENGTH`
@@ -54,10 +56,10 @@ void parse_fasta_line(const std::string& line, const bool& cut_names,
         } else {
             name_i = line.substr(1, line.size());
         }
-        RefSequence seq(name_i, "");
-        ref.sequences.push_back(seq);
+        RefChrom chrom(name_i, "");
+        ref.chromosomes.push_back(chrom);
     } else {
-        ref.sequences.back().nucleos += line;
+        ref.chromosomes.back().nucleos += line;
         ref.total_size += line.size();
     }
     return;
@@ -129,7 +131,7 @@ void append_ref_noind(RefGenome& ref,
 
     // Remove weird characters and remove soft masking if desired:
     for (uint64 i = 0; i < ref.size(); i++) {
-        filter_nucleos(ref.sequences[i].nucleos, remove_soft_mask);
+        filter_nucleos(ref.chromosomes[i].nucleos, remove_soft_mask);
     }
 
     return;
@@ -141,10 +143,10 @@ void append_ref_noind(RefGenome& ref,
 //' Read a non-indexed fasta file to a \code{RefGenome} object.
 //'
 //' @param file_names File names of the fasta file(s).
-//' @param cut_names Boolean for whether to cut sequence names at the first space.
+//' @param cut_names Boolean for whether to cut chromosome names at the first space.
 //'     Defaults to \code{TRUE}.
 //' @param remove_soft_mask Boolean for whether to remove soft-masking by making
-//'    sequences all uppercase. Defaults to \code{TRUE}.
+//'    chromosomes all uppercase. Defaults to \code{TRUE}.
 //'
 //' @return Nothing.
 //'
@@ -303,19 +305,19 @@ void append_ref_ind(RefGenome& ref,
         Rcpp::stop(e);
     }
 
-    const uint64 n_seqs0 = ref.size(); // starting # sequences
-    uint64 n_new_seqs = offsets.size();
+    const uint64 n_chroms0 = ref.size(); // starting # chromosomes
+    uint64 n_new_chroms = offsets.size();
     uint64 LIMIT = 4194304;
-    ref.sequences.resize(n_seqs0 + n_new_seqs, RefSequence());
+    ref.chromosomes.resize(n_chroms0 + n_new_chroms, RefChrom());
 
-    for (uint64 i = 0; i < n_new_seqs; i++) {
+    for (uint64 i = 0; i < n_new_chroms; i++) {
 
         Rcpp::checkUserInterrupt();
 
-        RefSequence& rs(ref.sequences[i+n_seqs0]);
+        RefChrom& rs(ref.chromosomes[i+n_chroms0]);
         rs.name = names[i];
 
-        // Length of the whole sequence including newlines
+        // Length of the whole chromosome including newlines
         uint64 len = lengths[i] + lengths[i] / line_lens[i] + 1;
 
         sint64 bytes_read;
@@ -329,17 +331,17 @@ void append_ref_ind(RefGenome& ref,
             buffer[bytes_read] = '\0';
 
             // Recast buffer as a std::string:
-            std::string seq_str(buffer);
+            std::string chrom_str(buffer);
 
             // Remove newlines
-            seq_str.erase(remove(seq_str.begin(), seq_str.end(), '\n'),
-                          seq_str.end());
+            chrom_str.erase(remove(chrom_str.begin(), chrom_str.end(), '\n'),
+                          chrom_str.end());
 
             // Filter out weird characters and remove soft masking if requested
-            filter_nucleos(seq_str, remove_soft_mask);
+            filter_nucleos(chrom_str, remove_soft_mask);
 
-            rs.nucleos += seq_str;
-            ref.total_size += seq_str.size();
+            rs.nucleos += chrom_str;
+            ref.total_size += chrom_str.size();
 
             // Check for errors.
             if (bytes_read < static_cast<sint64>(partial_len)) {
@@ -373,11 +375,11 @@ void append_ref_ind(RefGenome& ref,
 //'
 //' @param file_name File name of the fasta file.
 //' @param remove_soft_mask Boolean for whether to remove soft-masking by making
-//'    sequences all uppercase. Defaults to \code{TRUE}.
-//' @param offsets Vector of sequence offsets from the fasta index file.
-//' @param names Vector of sequence names from the fasta index file.
-//' @param lengths Vector of sequence lengths from the fasta index file.
-//' @param line_lens Vector of sequence line lengths from the fasta index file.
+//'    chromosomes all uppercase. Defaults to \code{TRUE}.
+//' @param offsets Vector of chromosome offsets from the fasta index file.
+//' @param names Vector of chromosome names from the fasta index file.
+//' @param lengths Vector of chromosome lengths from the fasta index file.
+//' @param line_lens Vector of chromosome line lengths from the fasta index file.
 //'
 //' @return Nothing.
 //'
@@ -446,8 +448,8 @@ inline void write_ref_fasta__(const std::string& file_name,
         std::string name = '>' + ref[i].name + '\n';
         file.write(name);
 
-        const std::string& seq_str(ref[i].nucleos);
-        uint64 num_rows = seq_str.length() / text_width;
+        const std::string& chrom_str(ref[i].nucleos);
+        uint64 num_rows = chrom_str.length() / text_width;
         uint64 n_chars = 0;
 
         for (uint64 i = 0; i < num_rows; i++) {
@@ -456,7 +458,7 @@ inline void write_ref_fasta__(const std::string& file_name,
                 if (prog_bar.check_abort()) break;
                 n_chars = 0;
             }
-            one_line = seq_str.substr(i * text_width, text_width);
+            one_line = chrom_str.substr(i * text_width, text_width);
             one_line += '\n';
             file.write(one_line);
             n_chars += text_width;
@@ -465,13 +467,13 @@ inline void write_ref_fasta__(const std::string& file_name,
         if (prog_bar.is_aborted() || prog_bar.check_abort()) break;
 
         // If there are leftover characters, create a shorter item at the end.
-        if (seq_str.length() % text_width != 0) {
-            one_line = seq_str.substr(text_width * num_rows);
+        if (chrom_str.length() % text_width != 0) {
+            one_line = chrom_str.substr(text_width * num_rows);
             one_line += '\n';
             file.write(one_line);
         }
 
-        prog_bar.increment(seq_str.size());
+        prog_bar.increment(chrom_str.size());
 
     }
 
@@ -569,18 +571,18 @@ void write_vars_fasta__(const std::string& out_prefix,
             name += '\n';
             out_file.write(name);
 
-            const VarSequence& var_seq(var_set[v][s]);
+            const VarChrom& var_chrom(var_set[v][s]);
             uint64 mut_i = 0;
             uint64 line_start = 0;
             uint64 n_chars = 0;
 
-            while (line_start < var_seq.seq_size) {
+            while (line_start < var_chrom.chrom_size) {
                 // Check every 10,000 characters for user interrupt:
                 if (n_chars > 10000) {
                     if (prog_bar.check_abort()) break;
                     n_chars = 0;
                 }
-                var_seq.set_seq_chunk(line, line_start,
+                var_chrom.set_chrom_chunk(line, line_start,
                                       text_width, mut_i);
                 line += '\n';
                 out_file.write(line);

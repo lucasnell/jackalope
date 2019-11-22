@@ -78,7 +78,7 @@ See vars_functions for the methods available." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">jackalope</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -107,6 +107,9 @@ See vars_functions for the methods available." />
       <a href="../articles/sub-models.html">Models of nucleotide substitution</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -139,9 +142,8 @@ See vars_functions for the methods available." />
 See <code><a href='vars_functions.html'>vars_functions</a></code> for the methods available.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>create_variants</span>(<span class='no'>reference</span>, <span class='no'>vars_info</span>, <span class='no'>sub</span>, <span class='kw'>ins</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>del</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>gamma_mats</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>region_size</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>n_threads</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>show_progress</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>create_variants</span>(<span class='no'>reference</span>, <span class='no'>vars_info</span>, <span class='kw'>sub</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ins</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>del</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>epsilon</span> <span class='kw'>=</span> <span class='fl'>0.03</span>, <span class='kw'>n_threads</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>show_progress</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -159,7 +161,7 @@ See <code><a href='vars_functions.html'>vars_functions</a></code> for brief desc
 If this argument is <code>NULL</code>, all arguments other than <code>reference</code> are ignored,
 and an empty <code>variants</code> object with no variants is returned.
 This is designed for use when you'd like to add mutations manually.
-If you create a blank <code>variants</code> object, you can= use its <code>add_vars</code> method
+If you create a blank <code>variants</code> object, you can use its <code>add_vars</code> method
 to add variants manually.</p></td>
     </tr>
     <tr>
@@ -168,14 +170,15 @@ to add variants manually.</p></td>
 information for the substitution models.
 See <code><a href='sub_models.html'>sub_models</a></code> for more information on these models and
 their required parameters.
-This argument is only allowed to be missing if you are using a VCF file to create
-variants.
+This argument is ignored if you are using a VCF file to create variants.
+Passing <code>NULL</code> to this argument results in no substitutions.
 Defaults to <code>NULL</code>.</p></td>
     </tr>
     <tr>
       <th>ins</th>
       <td><p>Output from the <code><a href='indels.html'>indels</a></code> function that specifies rates
 of insertions by length.
+This argument is ignored if you are using a VCF file to create variants.
 Passing <code>NULL</code> to this argument results in no insertions.
 Defaults to <code>NULL</code>.</p></td>
     </tr>
@@ -183,33 +186,27 @@ Defaults to <code>NULL</code>.</p></td>
       <th>del</th>
       <td><p>Output from the <code><a href='indels.html'>indels</a></code> function that specifies rates
 of deletions by length.
+This argument is ignored if you are using a VCF file to create variants.
 Passing <code>NULL</code> to this argument results in no deletions.
 Defaults to <code>NULL</code>.</p></td>
     </tr>
     <tr>
-      <th>gamma_mats</th>
-      <td><p>Output from the <code><a href='site_var.html'>site_var</a></code> function that specifies
-variability in mutation rates among sites (for both substitutions and indels).
-Passing <code>NULL</code> to this argument results in no variability among sites.
-Defaults to <code>NULL</code>.</p></td>
-    </tr>
-    <tr>
-      <th>region_size</th>
-      <td><p>Size of regions to break genome into for sampling mutation
-locations.
-This causes Gamma regions to be split into smaller sections (obviously the
-Gamma values themselves are not changed).
-Doing this splitting is useful because sampling within a region is more
-computationally costly than sampling among regions.
-Higher numbers will result in lower memory usage but slower speed.
-Defaults to <code>100</code>.</p></td>
+      <th>epsilon</th>
+      <td><p>Error control parameter for the "tau-leaping" approximation to
+the Doob–Gillespie algorithm, as used for the indel portion of the simulations.
+Smaller values result in a closer approximation.
+Larger values are less exact but faster.
+Values must be <code>&gt; 0</code> and <code>&lt; 1</code>.
+For more information, see Cao et al. (2006) and Wieder et al. (2011),
+listed below.
+Defaults to <code>0.03</code>.</p></td>
     </tr>
     <tr>
       <th>n_threads</th>
       <td><p>Number of threads to use for parallel processing.
 This argument is ignored if OpenMP is not enabled.
-Threads are spread across sequences, so it
-doesn't make sense to supply more threads than sequences in the reference genome.
+Threads are spread across chromosomes, so it
+doesn't make sense to supply more threads than chromosomes in the reference genome.
 Defaults to <code>1</code>.</p></td>
     </tr>
     <tr>
@@ -219,6 +216,22 @@ Defaults to <code>FALSE</code>.</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>A <code><a href='variants.html'>variants</a></code> object.</p>
+    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
+
+    <p>Cao, Y., D. T. Gillespie, and L. R. Petzold. 2006. Efficient step size
+selection for the tau-leaping simulation method.
+<em>The Journal of Chemical Physics</em> <strong>124</strong>(4): 044109.</p>
+<p>Doob, J. L. 1942. Topics in the theory of markoff chains.
+<em>Transactions of the American Mathematical Society</em> <strong>52</strong>(1): 37–64.</p>
+<p>Gillespie, D. T. 1976. A general method for numerically simulating the stochastic time
+evolution of coupled chemical reactions. <em>Journal of Computational Physics</em>
+<strong>22</strong>(4): 403–434.</p>
+<p>Wieder, N., R. H. Fink, and F. von Wegner. 2011. Exact and approximate stochastic
+simulation of intracellular calcium dynamics.
+<em>Journal of Biomedicine and Biotechnology</em> <strong>2011</strong>: 572492.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='no'>r</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span>(<span class='fl'>10</span>, <span class='fl'>1000</span>)
@@ -229,6 +242,8 @@ Defaults to <code>FALSE</code>.</p></td>
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#value">Value</a></li>
+      <li><a href="#references">References</a></li>
       <li><a href="#examples">Examples</a></li>
     </ul>
 

@@ -1,7 +1,8 @@
-#ifndef __JACKAL_SEQUENCER_H
-#define __JACKAL_SEQUENCER_H
+#ifndef __JACKALOPE_SEQUENCER_H
+#define __JACKALOPE_SEQUENCER_H
 
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <vector>  // vector class
@@ -45,6 +46,90 @@ const std::vector<uint8> nt_map = {
 const std::vector<std::string> mm_nucleos = {"CAG", "TAG", "TCG", "TCA", "NNN"};
 
 }
+
+
+
+/*
+ Samples for # reads per group (e.g., per variant, per chromosome).
+ It uses binomial distribution for a `n_reads` that decreases each iteration and a
+ `probs` vector whose values go up.
+ This is ~600x faster than doing separate samples (via AliasSampler) for every read.
+ */
+inline std::vector<uint64> reads_per_group(uint64 n_reads,
+                                           std::vector<double> probs) {
+
+    std::vector<uint64> out(probs.size(), 0.0);
+    if (n_reads == 0 || probs.size() == 0) return out;
+
+    pcg64 eng = seeded_pcg();
+
+    double sum_probs = std::accumulate(probs.begin(), probs.end(), 0.0);
+    for (double& p : probs) p /= sum_probs;
+
+    std::binomial_distribution<uint64> distr(n_reads, 0.5);
+
+    for (uint64 i = 0; i < (probs.size() - 1); i++) {
+
+        if (probs[i] >= 1) {
+            out[i] = n_reads;
+            return out;
+        }
+
+        if (probs[i] == 0) continue;
+
+        // Update distribution:
+        distr.param(std::binomial_distribution<uint64>::param_type(
+                n_reads, probs[i]));
+
+        // Sample from binomial distribution:
+        out[i] = distr(eng);
+
+        // Decrease `n_reads` based on # sampled:
+        n_reads -= out[i];
+        // If `n_reads` is zero, we can stop now:
+        if (n_reads == 0) break;
+
+        // Increase probabilities:
+        sum_probs = 1 - probs[i];
+        for (uint64 j = (i+1); j < probs.size(); j++) {
+            probs[j] /= sum_probs;
+        }
+    }
+
+    out.back() = n_reads;
+
+    return out;
+
+}
+
+
+
+// Fill read from string rather than variant chromosome
+
+inline void fill_read__(const std::string& chrom,
+                        std::string& read,
+                        const uint64& read_start,
+                        const uint64& chrom_start,
+                        uint64 n_to_add) {
+
+    uint64 chrom_end = chrom_start + n_to_add - 1;
+    // Making sure chrom_end doesn't go beyond the chromosome bounds
+    if (chrom_end >= chrom.size()) {
+        chrom_end = chrom.size() - 1;
+        n_to_add = chrom.size() - chrom_start;
+    }
+
+    // Make sure the read is long enough (this fxn should never shorten it):
+    if (read.size() < n_to_add + read_start) read.resize(n_to_add + read_start, 'N');
+
+    for (uint64 i = 0; i < n_to_add; i++) {
+        read[(read_start + i)] = chrom[(chrom_start + i)];
+    }
+    return;
+
+}
+
+
 
 
 
@@ -110,7 +195,7 @@ class ReadWriterOneThread {
 
 public:
 
-    T read_filler;
+    T* read_filler;
     const uint64 n_reads;           // # reads to create
     const uint64 read_pool_size;    // reads per pool
     uint64 reads_made;              // Number of reads already made
@@ -120,12 +205,12 @@ public:
     const uint64 n_read_ends;       // (1 for SE Illumina or PacBio, 2 for PE Illumina)
     std::vector<std::vector<char>> fastq_pools;
 
-    ReadWriterOneThread(const T& read_filler_base,
+    ReadWriterOneThread(T& read_filler_,
                         const uint64& n_reads_,
                         const uint64& read_pool_size_,
                         const double& prob_dup_,
                         const uint64& n_read_ends_)
-        : read_filler(read_filler_base),
+        : read_filler(&read_filler_),
           n_reads(n_reads_),
           read_pool_size(read_pool_size_),
           reads_made(0),
@@ -167,13 +252,25 @@ public:
      write to file
      */
     void create_reads(pcg64& eng) {
-        read_filler.template one_read<std::vector<char>>(fastq_pools, eng);
+        bool finished  = false;
+        read_filler->template one_read<std::vector<char>>(fastq_pools, finished, eng);
+        // This is if something happens inside `one_read` to make sequencing finished
+        if (finished) {
+            reads_made = n_reads;
+            do_write = true;
+            return;
+        }
         reads_made += n_read_ends;
         reads_in_pool += n_read_ends;
         double dup = runif_01(eng);
         while (dup < prob_dup && reads_made < n_reads &&
                reads_in_pool < read_pool_size) {
-            read_filler.template re_read<std::vector<char>>(fastq_pools, eng);
+            read_filler->template re_read<std::vector<char>>(fastq_pools, finished, eng);
+            if (finished) {
+                reads_made = n_reads;
+                do_write = true;
+                return;
+            }
             reads_made += n_read_ends;
             reads_in_pool += n_read_ends;
             dup = runif_01(eng);
@@ -213,18 +310,20 @@ public:
 
 
 /*
- For one file type and read filler type, make Illumina reads and write them to file(s).
+ For one file type and read filler type, make sequencing reads and write them to file(s).
  Does most of the work of `write_reads_cpp_` below.
  This should only be called inside that function.
 
  `T` should be `[Illumina|PacBio]Reference` or `[Illumina|PacBio]Variants`.
+ `T` should have an `add_n_reads` method.
+
  `F` should be `FileUncomp`, `FileGZ`, or `FileBGZF`.
 
  */
 template <typename T, typename F>
 inline void write_reads_one_filetype_(const T& read_filler_base,
                                       const std::string& out_prefix,
-                                      const uint64& n_reads,
+                                      uint64 n_reads,
                                       const double& prob_dup,
                                       const uint64& read_pool_size,
                                       const uint64& n_read_ends,
@@ -232,7 +331,9 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
                                       const int& compress,
                                       Progress& prog_bar) {
 
-    const std::vector<uint64> reads_per_thread = split_int(n_reads, n_threads);
+    n_reads /= n_read_ends;
+    std::vector<uint64> reads_per_thread = split_int(n_reads, n_threads);
+    for (uint64& i : reads_per_thread) i *= n_read_ends;
 
     // Generate seeds for random number generators (1 RNG per thread)
     const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
@@ -240,13 +341,20 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
     // Create and open files:
     std::vector<F> files(n_read_ends);
     for (uint64 i = 0; i < n_read_ends; i++) {
-        std::string file_name = out_prefix + "_R" + std::to_string(i+1)+ ".fq";
+        std::string file_name = out_prefix + "_R" + std::to_string(i+1) + ".fq";
         files[i].set(file_name, compress);
+    }
+
+    // Create read filler for each thread:
+    std::vector<T> read_fillers;
+    for (uint64 i = 0; i < n_threads; i++) {
+        read_fillers.push_back(read_filler_base);
+        read_fillers.back().add_n_reads(reads_per_thread[i]);
     }
 
 
 #ifdef _OPENMP
-#pragma omp parallel num_threads(n_threads) shared(files) if (n_threads > 1)
+#pragma omp parallel num_threads(n_threads) default(shared) if (n_threads > 1)
 {
 #endif
 
@@ -264,7 +372,7 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
 
     uint64 reads_this_thread = reads_per_thread[active_thread];
 
-    ReadWriterOneThread<T,F> writer(read_filler_base, reads_this_thread,
+    ReadWriterOneThread<T,F> writer(read_fillers[active_thread], reads_this_thread,
                                     read_pool_size, prob_dup, n_read_ends);
 
     uint64 reads_written;
@@ -387,69 +495,24 @@ inline void write_reads_cpp_(const T& read_filler_base,
                 read_pool_size, n_read_ends, n_threads, compress, prog_bar);
     }
 
-
-}
-
-
-
-/*
- Samples for # reads per variant.
- It uses binomial distribution for a `n_reads` that decreases each iteration and a
- `variant_probs` vector whose values go up.
- This is ~600x faster than doing separate samples (via AliasSampler) for every read.
- */
-inline std::vector<uint64> read_per_var(uint64 n_reads,
-                                        std::vector<double> variant_probs) {
-
-    pcg64 eng = seeded_pcg();
-
-    double sum_probs = std::accumulate(variant_probs.begin(), variant_probs.end(), 0.0);
-    for (double& p : variant_probs) p /= sum_probs;
-
-    std::vector<uint64> out;
-    out.reserve(variant_probs.size());
-
-    std::binomial_distribution<uint64> distr(n_reads, 0.5);
-
-    for (uint64 i = 0; i < variant_probs.size(); i++) {
-
-        // Update distribution:
-        distr.param(std::binomial_distribution<uint64>::param_type(
-                n_reads, variant_probs[i]));
-
-        // Sample from binomial distribution:
-        out.push_back(distr(eng));
-
-        // Decrease `n_reads` based on # sampled:
-        n_reads -= out.back();
-        // If `n_reads` is zero, we can resize `out` and stop now:
-        if (n_reads == 0) {
-            out.resize(variant_probs.size(), 0ULL);
-            break;
-        }
-
-        // Increase probabilities:
-        sum_probs = 1 - variant_probs[i];
-        for (uint64 j = (i+1); j < variant_probs.size(); j++) {
-            variant_probs[j] /= sum_probs;
-        }
-    }
-
-    return out;
+    return;
 
 }
 
 
 
 
+
 /*
- Same as above, but for when you want a separate file per variant
+ Same as above, but for when you want a separate file per variant.
+
+ So `T` should be `[Illumina|PacBio]Variants`.
  */
 
 template <typename T>
 inline void write_reads_cpp_sep_files_(const VarSet& var_set,
                                        const std::vector<double>& variant_probs,
-                                       T& read_filler_base,
+                                       T read_filler_base,
                                        const std::string& out_prefix,
                                        const uint64& n_reads,
                                        const double& prob_dup,
@@ -461,8 +524,8 @@ inline void write_reads_cpp_sep_files_(const VarSet& var_set,
                                        Progress& prog_bar) {
 
     // Sample for reads per file:
-    std::vector<uint64> reads_per_file = read_per_var(n_reads / n_read_ends,
-                                                      variant_probs);
+    std::vector<uint64> reads_per_file = reads_per_group(n_reads / n_read_ends,
+                                                         variant_probs);
     if (n_read_ends > 1) for (uint64& rpf : reads_per_file) rpf *= n_read_ends;
 
     // Now do each variant as separate file:
@@ -473,7 +536,7 @@ inline void write_reads_cpp_sep_files_(const VarSet& var_set,
         if (prog_bar.check_abort()) break;
 
         var_probs_[i] = 1;
-        read_filler_base.variant_sampler = AliasSampler(var_probs_);
+        read_filler_base.var_probs = var_probs_;
 
         std::string out_prefix_ = out_prefix + '_' + var_set[i].name;
 

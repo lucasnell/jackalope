@@ -2,12 +2,13 @@
 /*
  ********************************************************
 
- Functions to create new sequences.
+ Functions to create new chromosomes.
 
  ********************************************************
  */
 
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <vector>
@@ -20,7 +21,7 @@
 #endif
 
 #include "jackalope_types.h"  // integer types
-#include "seq_classes_ref.h"  // Ref* classes
+#include "ref_classes.h"  // Ref* classes
 #include "alias_sampler.h" // alias sampling
 #include "pcg.h" // pcg::max, mt_seeds, seeded_pcg
 #include "util.h" // thread_check
@@ -39,7 +40,7 @@ using namespace Rcpp;
  ========================================================================================
  ========================================================================================
 
- Random sequences
+ Random chromosomes
 
  ========================================================================================
  ========================================================================================
@@ -48,15 +49,15 @@ using namespace Rcpp;
 
 
 /*
- Template that does most of the work for creating new sequences for the following two
+ Template that does most of the work for creating new chromosomes for the following two
  functions when `len_sd > 0`.
  Classes `OuterClass` and `InnerClass` can be `std::vector<std::string>` and
- `std::string` or `RefGenome` and `RefSequence`.
+ `std::string` or `RefGenome` and `RefChrom`.
  No other combinations are guaranteed to work.
  */
 
 template <typename OuterClass, typename InnerClass>
-OuterClass create_sequences_(const uint64& n_seqs,
+OuterClass create_chromosomes_(const uint64& n_chroms,
                              const double& len_mean,
                              const double& len_sd,
                              const std::vector<double>& pi_tcag,
@@ -68,13 +69,13 @@ OuterClass create_sequences_(const uint64& n_seqs,
     // Generate seeds for random number generators (1 RNG per thread)
     const std::vector<std::vector<uint64>> seeds = mt_seeds(n_threads);
 
-    Progress prog_bar(n_seqs, false); // just use as way to check for abort
+    Progress prog_bar(n_chroms, false); // just use as way to check for abort
 
     // Alias-sampling object
     const AliasSampler sampler(pi_tcag);
 
     // Creating output object
-    OuterClass seqs_out(n_seqs);
+    OuterClass chroms_out(n_chroms);
 
     // parameters for creating the gamma distribution
     const double gamma_shape = (len_mean * len_mean) / (len_sd * len_sd);
@@ -103,29 +104,29 @@ OuterClass create_sequences_(const uint64& n_seqs,
         distr = std::gamma_distribution<double>(gamma_shape, gamma_scale);
     }
 
-    std::string bases_ = alias_sampler::bases;
+    std::string bases_ = jlp::bases;
 
     // Parallelize the Loop
     #ifdef _OPENMP
     #pragma omp for schedule(static)
     #endif
-    for (uint64 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_chroms; i++) {
 
         if (prog_bar.is_aborted() || prog_bar.check_abort()) continue;
 
-        InnerClass& seq(seqs_out[i]);
+        InnerClass& chrom(chroms_out[i]);
 
-        // Get length of output sequence:
+        // Get length of output chromosome:
         uint64 len;
         if (len_sd > 0) {
             len = static_cast<uint64>(distr(engine));
             if (len < 1) len = 1;
         } else len = len_mean;
-        // Sample sequence:
-        seq.reserve(len);
+        // Sample chromosome:
+        chrom.reserve(len);
         for (uint64 j = 0; j < len; j++) {
             uint64 k = sampler.sample(engine);
-            seq.push_back(bases_[k]);
+            chrom.push_back(bases_[k]);
         }
     }
 
@@ -133,7 +134,7 @@ OuterClass create_sequences_(const uint64& n_seqs,
     }
     #endif
 
-    return seqs_out;
+    return chroms_out;
 }
 
 
@@ -142,14 +143,14 @@ OuterClass create_sequences_(const uint64& n_seqs,
 
 //' Create `RefGenome` pointer based on nucleotide equilibrium frequencies.
 //'
-//' Function to create random sequences for a new reference genome object.
+//' Function to create random chromosomes for a new reference genome object.
 //'
-//' Note that this function will never return empty sequences.
+//' Note that this function will never return empty chromosomes.
 //'
-//' @param n_seqs Number of sequences.
-//' @param len_mean Mean for the gamma distribution for sequence sizes.
-//' @param len_sd Standard deviation for the gamma distribution for sequence sizes.
-//'     If set to `<= 0`, all sequences will be the same length.
+//' @param n_chroms Number of chromosomes.
+//' @param len_mean Mean for the gamma distribution for chromosome sizes.
+//' @param len_sd Standard deviation for the gamma distribution for chromosome sizes.
+//'     If set to `<= 0`, all chromosomes will be the same length.
 //' @param pi_tcag Vector of nucleotide equilibrium frequencies for
 //'     "T", "C", "A", and "G", respectively.
 //' @param n_threads Number of threads to use via OpenMP.
@@ -163,7 +164,7 @@ OuterClass create_sequences_(const uint64& n_seqs,
 //'
 //'
 //[[Rcpp::export]]
-SEXP create_genome_cpp(const uint64& n_seqs,
+SEXP create_genome_cpp(const uint64& n_chroms,
                        const double& len_mean,
                        const double& len_sd,
                        std::vector<double> pi_tcag,
@@ -172,12 +173,12 @@ SEXP create_genome_cpp(const uint64& n_seqs,
     XPtr<RefGenome> ref_xptr(new RefGenome(), true);
     RefGenome& ref(*ref_xptr);
 
-    ref = create_sequences_<RefGenome, RefSequence>(
-        n_seqs, len_mean, len_sd, pi_tcag, n_threads);
+    ref = create_chromosomes_<RefGenome, RefChrom>(
+        n_chroms, len_mean, len_sd, pi_tcag, n_threads);
 
-    for (uint64 i = 0; i < n_seqs; i++) {
+    for (uint64 i = 0; i < n_chroms; i++) {
         ref.total_size += ref[i].size();
-        ref[i].name = "seq" + std::to_string(i);
+        ref[i].name = "chrom" + std::to_string(i);
     }
 
     return ref_xptr;
@@ -186,20 +187,20 @@ SEXP create_genome_cpp(const uint64& n_seqs,
 
 
 
-//' Create random sequences as a character vector.
+//' Create random chromosomes as a character vector.
 //'
 //' This function is used internally for testing.
 //'
 //'
 //' @inheritParams create_genome
 //'
-//' @return Character vector of sequence strings.
+//' @return Character vector of chromosome strings.
 //'
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
-std::vector<std::string> rando_seqs(const uint64& n_seqs,
+std::vector<std::string> rando_chroms(const uint64& n_chroms,
                                     const double& len_mean,
                                     const double& len_sd = 0,
                                     NumericVector pi_tcag = NumericVector(0),
@@ -208,8 +209,8 @@ std::vector<std::string> rando_seqs(const uint64& n_seqs,
     std::vector<double> pi_tcag_ = as<std::vector<double>>(pi_tcag);
     if (pi_tcag_.size() == 0) pi_tcag_ = std::vector<double>(4, 0.25);
 
-    std::vector<std::string> ref = create_sequences_<std::vector<std::string>,
-                std::string>(n_seqs, len_mean, len_sd, pi_tcag_, n_threads);
+    std::vector<std::string> ref = create_chromosomes_<std::vector<std::string>,
+                std::string>(n_chroms, len_mean, len_sd, pi_tcag_, n_threads);
 
     return ref;
 }

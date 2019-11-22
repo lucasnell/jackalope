@@ -1,6 +1,8 @@
-# ifndef __JACKAL_STR_MANIP_H
-# define __JACKAL_STR_MANIP_H
+# ifndef __JACKALOPE_STR_MANIP_H
+# define __JACKALOPE_STR_MANIP_H
 
+
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <iostream>
@@ -173,43 +175,74 @@ inline std::vector<std::string> cpp_str_split_newline(const std::string& in_stri
 }
 
 
+
+
+// Split a main string by a string delimeter:
+inline std::vector<std::string> cpp_str_split_delim_str(const std::string& in_string,
+                                                        const std::string& split) {
+    std::vector<std::string> splitted;
+    size_t last = 0;
+    size_t next = 0;
+    while ((next = in_string.find(split, last)) != std::string::npos) {
+        splitted.push_back(in_string.substr(last, next-last));
+        last = next + split.size();
+    }
+    splitted.push_back(in_string.substr(last));
+    return splitted;
+}
+
+
+
+// Count a substring in a main string:
+inline uint32 count_substr(const std::string& in_string, const std::string& substr) {
+    uint32 occurrences = 0;
+    std::string::size_type pos = 0;
+    while ((pos = in_string.find(substr, pos)) != std::string::npos) {
+        ++ occurrences;
+        pos += substr.length();
+    }
+    return occurrences;
+}
+
+
+
 /*
- Reverse complement of a DNA sequence.
+ Reverse complement of a DNA chromosome.
 
- Make sure that `seq` contains only T, C, A, or G!
+ Make sure that `chrom` contains only T, C, A, or G!
  */
-inline void rev_comp(std::string& seq) {
+inline void rev_comp(std::string& chrom) {
 
-    uint64 n = seq.size();
+    uint64 n = chrom.size();
     uint64 half_n = n / 2;
     char tmp;
 
     for (uint64 j = 0; j < half_n; j++) {
-        tmp = str_manip::cmp_map[seq[j]]; // goes to `n-j-1`
-        seq[j] = str_manip::cmp_map[seq[(n-j-1)]];
-        seq[(n-j-1)] = tmp;
+        tmp = str_manip::cmp_map[chrom[j]]; // goes to `n-j-1`
+        chrom[j] = str_manip::cmp_map[chrom[(n-j-1)]];
+        chrom[(n-j-1)] = tmp;
     }
 
-    if ((n & 1ULL) == 1ULL) seq[half_n] = str_manip::cmp_map[seq[half_n]];
+    if ((n & 1ULL) == 1ULL) chrom[half_n] = str_manip::cmp_map[chrom[half_n]];
 
     return;
 }
 
 /*
- Same thing, except that it only does it for the first `n` characters in `seq`
+ Same thing, except that it only does it for the first `n` characters in `chrom`
  */
-inline void rev_comp(std::string& seq, const uint64& n) {
+inline void rev_comp(std::string& chrom, const uint64& n) {
 
     uint64 half_n = n / 2;
     char tmp;
 
     for (uint64 j = 0; j < half_n; j++) {
-        tmp = str_manip::cmp_map[seq[j]]; // goes to `n-j-1`
-        seq[j] = str_manip::cmp_map[seq[(n-j-1)]];
-        seq[(n-j-1)] = tmp;
+        tmp = str_manip::cmp_map[chrom[j]]; // goes to `n-j-1`
+        chrom[j] = str_manip::cmp_map[chrom[(n-j-1)]];
+        chrom[(n-j-1)] = tmp;
     }
 
-    if ((n & 1ULL) == 1ULL) seq[half_n] = str_manip::cmp_map[seq[half_n]];
+    if ((n & 1ULL) == 1ULL) chrom[half_n] = str_manip::cmp_map[chrom[half_n]];
 
     return;
 }

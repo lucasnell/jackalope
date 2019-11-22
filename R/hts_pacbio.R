@@ -5,7 +5,7 @@
 #'
 #' @noRd
 #'
-check_pacbio_args <- function(seq_object,
+check_pacbio_args <- function(obj,
                               n_reads,
                               variant_probs,
                               sep_files,
@@ -28,7 +28,7 @@ check_pacbio_args <- function(seq_object,
                               prob_dup,
                               show_progress) {
 
-    if (!inherits(seq_object, c("ref_genome", "variants"))) {
+    if (!inherits(obj, c("ref_genome", "variants"))) {
         stop("\nWhen providing info for the PacBio sequencer, ",
              "the object providing the sequence information should be ",
              "of class \"ref_genome\" or \"variants\".", call. = FALSE)
@@ -99,18 +99,18 @@ check_pacbio_args <- function(seq_object,
         err_msg("pacbio", "sep_files", "a single logical")
     }
     # Checking proper variant_probs
-    if (!is.null(variant_probs) && !inherits(seq_object, "variants")) {
+    if (!is.null(variant_probs) && !inherits(obj, "variants")) {
         stop("\nFor PacBio sequencing, it makes no sense to provide ",
              "a vector of probabilities of sequencing each variant if the ",
-             "`seq_object` argument is of class \"ref_genome\". ",
+             "`obj` argument is of class \"ref_genome\". ",
              "Terminating here in case this was a mistake.", call. = FALSE)
     }
-    if (!is.null(variant_probs) && inherits(seq_object, "variants") &&
-        length(variant_probs) != seq_object$n_vars()) {
+    if (!is.null(variant_probs) && inherits(obj, "variants") &&
+        length(variant_probs) != obj$n_vars()) {
         err_msg("pacbio", "variant_probs",
                 "a vector of the same length as the number of variants in the",
-                "`seq_object` argument, if `seq_object` is of class \"variants\".",
-                "Use `seq_object$n_vars()` to see the number of variants")
+                "`obj` argument, if `obj` is of class \"variants\".",
+                "Use `obj$n_vars()` to see the number of variants")
     }
 
     if (lognorm_read_length[1] < 0 || lognorm_read_length[3] < 0) {
@@ -140,7 +140,7 @@ check_pacbio_args <- function(seq_object,
 #' @section ID lines:
 #' The ID lines for FASTQ files are formatted as such:
 #'
-#' `@<genome name>-<sequence name>-<starting position>-<strand>`
+#' `@<genome name>-<chromosome name>-<starting position>-<strand>`
 #'
 #' where `genome name` is always `REF` for reference genomes (as opposed to variants).
 #'
@@ -189,6 +189,35 @@ check_pacbio_args <- function(seq_object,
 #'
 #' @export
 #'
+#'
+#' @usage pacbio(obj,
+#'        out_prefix,
+#'        n_reads,
+#'        chi2_params_s = c(0.01214, -5.12, 675, 48303.0732881,
+#'                          1.4691051212330266),
+#'        chi2_params_n = c(0.00189237136, 2.53944970, 5500),
+#'        max_passes = 40,
+#'        sqrt_params = c(0.5, 0.2247),
+#'        norm_params = c(0, 0.2),
+#'        prob_thresh = 0.2,
+#'        ins_prob = 0.11,
+#'        del_prob = 0.04,
+#'        sub_prob = 0.01,
+#'        min_read_length = 50,
+#'        lognorm_read_length = c(0.200110276521, -10075.4363813,
+#'                                17922.611306),
+#'        custom_read_lengths = NULL,
+#'        prob_dup = 0.0,
+#'        variant_probs = NULL,
+#'        sep_files = FALSE,
+#'        compress = FALSE,
+#'        comp_method = "bgzip",
+#'        n_threads = 1L,
+#'        read_pool_size = 100L,
+#'        show_progress = FALSE,
+#'        overwrite = FALSE)
+#'
+#'
 #' @references
 #' Stöcker, B. K., J. Köster, and S. Rahmann. 2016. SimLoRD: simulation of long
 #' read data. \emph{Bioinformatics} \strong{32}:2704–2706.
@@ -196,10 +225,11 @@ check_pacbio_args <- function(seq_object,
 #' @examples
 #' \donttest{
 #' rg <- create_genome(10, 100e3, 100)
-#' pacbio(rg, "pacbio_reads", n_reads = 100)
+#' dir <- tempdir(TRUE)
+#' pacbio(rg, paste0(dir, "/pacbio_reads"), n_reads = 100)
 #' }
 #'
-pacbio <- function(seq_object,
+pacbio <- function(obj,
                    out_prefix,
                    n_reads,
                    chi2_params_s = c(0.01214, -5.12, 675, 48303.0732881,
@@ -227,7 +257,7 @@ pacbio <- function(seq_object,
 
 
     # Check for improper argument types:
-    check_pacbio_args(seq_object, n_reads, variant_probs, sep_files,
+    check_pacbio_args(obj, n_reads, variant_probs, sep_files,
                       compress, comp_method, n_threads, read_pool_size,
                       chi2_params_s, chi2_params_n, max_passes,
                       sqrt_params, norm_params,
@@ -238,11 +268,11 @@ pacbio <- function(seq_object,
     out_prefix <- path.expand(out_prefix)
     fns <- NULL
     # Doesn't make sense to have separate files for reference genome:
-    if (inherits(seq_object, "ref_genome")) sep_files <- FALSE
+    if (inherits(obj, "ref_genome")) sep_files <- FALSE
     if (!sep_files) {
         fns <- paste0(out_prefix, "_R1.fq")
     } else {
-        fns <- lapply(seq_object$var_names(),
+        fns <- lapply(obj$var_names(),
                       function(x) sprintf("%s_%s_R1.fq", out_prefix, x))
         fns <- c(fns, recursive = TRUE)
     }
@@ -270,8 +300,8 @@ pacbio <- function(seq_object,
         read_probs <- numeric(0)
     }
 
-    if (is.null(variant_probs) && inherits(seq_object, "variants")) {
-        variant_probs <- rep(1, seq_object$n_vars())
+    if (is.null(variant_probs) && inherits(obj, "variants")) {
+        variant_probs <- rep(1, obj$n_vars())
     }
 
     # Assembling list of arguments for inner cpp function:
@@ -301,16 +331,16 @@ pacbio <- function(seq_object,
                  show_progress = show_progress)
 
 
-    if (inherits(seq_object, "ref_genome")) {
-        args <- c(args, list(ref_genome_ptr = seq_object$genome))
+    if (inherits(obj, "ref_genome")) {
+        args <- c(args, list(ref_genome_ptr = obj$ptr()))
         args$sep_files <- NULL
         do.call(pacbio_ref_cpp, args)
-    } else if (inherits(seq_object, "variants")) {
-        args <- c(args, list(var_set_ptr = seq_object$genomes,
+    } else if (inherits(obj, "variants")) {
+        args <- c(args, list(var_set_ptr = obj$ptr(),
                              variant_probs = variant_probs))
         do.call(pacbio_var_cpp, args)
     } else {
-        stop(paste("\nTrying to pass a `seq_object` argument to `pacbio` that's",
+        stop(paste("\nTrying to pass a `obj` argument to `pacbio` that's",
                    "not a \"ref_genome\" or \"variants\" class."), call. = FALSE)
     }
 

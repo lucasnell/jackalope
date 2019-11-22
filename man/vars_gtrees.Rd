@@ -2,33 +2,43 @@
 % Please edit documentation in R/vars_functions.R
 \name{vars_gtrees}
 \alias{vars_gtrees}
-\title{Create necessary information to create variants using gene trees}
+\alias{write_gtrees}
+\title{Organize information to create variants using gene trees}
 \usage{
 vars_gtrees(obj = NULL, fn = NULL)
+
+write_gtrees(gtrees, out_prefix)
 }
 \arguments{
 \item{obj}{Object containing gene trees.
 This can be one of the following:
 (1) A single \code{list} with a \code{trees} field inside. This field must
-contain a set of gene trees for each sequence.
+contain a set of gene trees for each chromosome.
 (2) A list of lists, each sub-list containing a \code{trees} field of
 length 1. The top-level list must be of the same length as the
-number of sequences.
+number of chromosomes.
 Defaults to \code{NULL}.}
 
 \item{fn}{A single string specifying the name of the file containing
 the \code{ms}-style coalescent output with gene trees.
 Defaults to \code{NULL}.}
+
+\item{gtrees}{A \code{vars_gtrees_info} object output from \code{vars_gtrees}.}
+
+\item{out_prefix}{Prefix for the output file of gene trees.
+The extension will be \code{.trees}.}
 }
 \value{
 A \code{vars_gtrees_info} object containing information used in \code{create_variants}
 to create haploid variants.
 This class is just a wrapper around a list of NEWICK tree strings, one for
-each gene tree.
+each gene tree, which you can view (but not change) using the object's
+\code{trees()} method.
 }
 \description{
 This function organizes higher-level information for creating variants from
 gene trees output from coalescent simulations.
+Note that all gene trees must be rooted and binary.
 }
 \details{
 Using the \code{obj} argument is designed after the \code{trees} fields in the output from
@@ -37,7 +47,14 @@ the \code{scrm} and \code{coala} packages.
 To get gene trees, make sure to add \code{+ sumstat_trees()}
 to the \code{coalmodel} for \code{coala}, or
 make sure that \code{"-T"} is present in \code{args} for \code{scrm}.
+If using either of these packages, I encourage you to cite them. For citation
+information, see output from \code{citation("scrm")} or \code{citation("coala")}.
 
 If using an output file from a command-line program like \code{ms}/\code{msms},
 add the \code{-T} option.
 }
+\section{Functions}{
+\itemize{
+\item \code{write_gtrees}: Write gene trees to ms-style output file.
+}}
+

@@ -43,12 +43,11 @@
 
 
 <meta property="og:title" content="An R6 class representing a reference genome. — ref_genome" />
-<meta property="og:description" content="Note: This class wraps a pointer to a C++ object, so
-do NOT change fields in this class directly.
-It will cause your R session to do bad things.
-(Ever seen the bomb popup on RStudio? Manually mess with these fields and you
-surely will.)
-For safe ways of manipulating the reference genome, see the &quot;Methods&quot; section." />
+<meta property="og:description" content="This class should NEVER be created using ref_genome$new.
+Only use read_fasta or create_genome.
+This class wraps a pointer to a C++ object, which is why
+there are no fields to manipulate directly.
+All manipulations are done through this class's methods." />
 <meta property="og:image" content="/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -82,7 +81,7 @@ For safe ways of manipulating the reference genome, see the &quot;Methods&quot; 
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">jackalope</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
       </span>
     </div>
 
@@ -112,6 +111,9 @@ For safe ways of manipulating the reference genome, see the &quot;Methods&quot; 
     </li>
   </ul>
 </li>
+<li>
+  <a href="../news/index.html">Changelog</a>
+</li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
@@ -139,12 +141,11 @@ For safe ways of manipulating the reference genome, see the &quot;Methods&quot; 
     </div>
 
     <div class="ref-description">
-    <p><em>Note:</em> This class wraps a pointer to a C++ object, so
-do NOT change fields in this class directly.
-It will cause your R session to do bad things.
-(Ever seen the bomb popup on RStudio? Manually mess with these fields and you
-surely will.)
-For safe ways of manipulating the reference genome, see the "Methods" section.</p>
+    <p>This class should NEVER be created using <code>ref_genome$new</code>.
+Only use <code>read_fasta</code> or <code>create_genome</code>.
+This class wraps a pointer to a C++ object, which is why
+there are no fields to manipulate directly.
+All manipulations are done through this class's methods.</p>
     </div>
 
     <pre class="usage"><span class='no'>ref_genome</span></pre>
@@ -156,51 +157,44 @@ For safe ways of manipulating the reference genome, see the "Methods" section.</
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>An object of class <code>ref_genome</code>.</p>
-    <h2 class="hasAnchor" id="fields"><a class="anchor" href="#fields"></a>Fields</h2>
-
-    
-
-<dl class='dl-horizontal'>
-<dt><code>genome</code></dt><dd><p>An <code>externalptr</code> to a C++ object storing the sequences
-representing the genome.</p></dd>
-
-</dl>
     <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
 
     
 
 <p><strong>Viewing information:</strong></p><dl class='dl-horizontal'>
-<dt><code>n_seqs()</code></dt><dd><p>View the number of sequences.</p></dd>
-<dt><code>sizes()</code></dt><dd><p>View vector of sequence sizes.</p></dd>
-<dt><code><a href='https://rdrr.io/r/base/names.html'>names()</a></code></dt><dd><p>View vector of sequence names.</p></dd>
-<dt><code><a href='https://rdrr.io/r/base/sequence.html'>sequence(seq_ind)</a></code></dt><dd><p>View a sequence string based on an index,
-<code>seq_ind</code>.</p></dd>
-<dt><code>gc_prop(seq_ind, start, end)</code></dt><dd><p>View the GC proportion for a range within a
-reference sequence.</p></dd>
-<dt><code>nt_prop(nt, seq_ind, start, end)</code></dt><dd><p>View the proportion of a range within a
-reference sequence that is of nucleotide <code>nt</code>.</p></dd>
+<dt><code>ptr()</code></dt><dd><p>View the pointer to the reference chromosome information.
+This is used internally by <code>jackalope</code> and shouldn't be of much use to users.</p></dd>
+<dt><code>n_chroms()</code></dt><dd><p>View the number of chromosomes.</p></dd>
+<dt><code>sizes()</code></dt><dd><p>View vector of chromosome sizes.</p></dd>
+<dt><code>chrom_names()</code></dt><dd><p>View vector of chromosome names.</p></dd>
+<dt><code>chrom(chrom_ind)</code></dt><dd><p>View a chromosome sequence string based on an index,
+<code>chrom_ind</code>.</p></dd>
+<dt><code>gc_prop(chrom_ind, start, end)</code></dt><dd><p>View the GC proportion for a range within a
+reference chromosome.</p></dd>
+<dt><code>nt_prop(nt, chrom_ind, start, end)</code></dt><dd><p>View the proportion of a range within a
+reference chromosome that is of nucleotide <code>nt</code>.</p></dd>
 
 </dl><p><strong>Editing information:</strong></p><dl class='dl-horizontal'>
-<dt><code>set_names(new_names)</code></dt><dd><p>Set names for all sequences.
+<dt><code>set_names(new_names)</code></dt><dd><p>Set names for all chromosomes.
 <code>new_names</code> is a character vector of what to change names to, and it must
-be the same length as the # sequences.</p></dd>
-<dt><code>clean_names()</code></dt><dd><p>Clean sequence names, converting <code>" :;=%,\|/\"\'"</code>
+be the same length as the # chromosomes.</p></dd>
+<dt><code>clean_names()</code></dt><dd><p>Clean chromosome names, converting <code>" :;=%,\|/\"\'"</code>
 to <code>"_"</code>.</p></dd>
-<dt><code>add_seqs(new_seqs, new_names = NULL)</code></dt><dd><p>Add one or more sequences
+<dt><code>add_chroms(new_chroms, new_names = NULL)</code></dt><dd><p>Add one or more chromosomes
 directly. They can optionally be named (using <code>new_names</code>).
 Otherwise, their names are auto-generated.</p></dd>
-<dt><code>rm_seqs(seq_names)</code></dt><dd><p>Remove one or more sequences based on names in
-the <code>seq_names</code> vector.</p></dd>
-<dt><code>merge_seqs()</code></dt><dd><p>Merge all sequences into one after first shuffling
+<dt><code>rm_chroms(chrom_names)</code></dt><dd><p>Remove one or more chromosomes based on names in
+the <code>chrom_names</code> vector.</p></dd>
+<dt><code>merge_chroms()</code></dt><dd><p>Merge all chromosomes into one after first shuffling
 their order.</p></dd>
-<dt><code>filter_seqs(threshold, method)</code></dt><dd><p>Filter sequences by size
+<dt><code>filter_chroms(threshold, method)</code></dt><dd><p>Filter chromosomes by size
 (<code>method = "size"</code>) or for a proportion of total bases (<code>method = "prop"</code>).
-For the latter, sequences are first size-sorted, then the largest <code>N</code>
-sequences are retained that allow at least
-<code>threshold * sum(&lt;all sequence sizes&gt;)</code> base pairs remaining after
+For the latter, chromosomes are first size-sorted, then the largest <code>N</code>
+chromosomes are retained that allow at least
+<code>threshold * sum(&lt;all chromosome sizes&gt;)</code> base pairs remaining after
 filtering.</p></dd>
 <dt><code>replace_Ns(pi_tcag, n_threads = 1, show_progress = FALSE)</code></dt><dd><p>Replace
-<code>N</code>s in reference sequence with nucleotides sampled with probabilities
+<code>N</code>s in reference chromosome with nucleotides sampled with probabilities
 given in <code>pi_tcag</code>.
 You can optionally use multiple threads (<code>n_threads</code> argument) and/or
 show a progress bar (<code>show_progress</code>).</p></dd>
@@ -217,7 +211,6 @@ show a progress bar (<code>show_progress</code>).</p></dd>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#format">Format</a></li>
       <li><a href="#value">Value</a></li>
-      <li><a href="#fields">Fields</a></li>
       <li><a href="#methods">Methods</a></li>
       <li><a href="#see-also">See also</a></li>
     </ul>

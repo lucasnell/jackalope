@@ -2,7 +2,7 @@
 % Please edit documentation in R/vars_functions.R
 \name{vars_ssites}
 \alias{vars_ssites}
-\title{Create necessary information to create variants using segregating sites matrices}
+\title{Organize information to create variants using segregating sites matrices}
 \usage{
 vars_ssites(obj = NULL, fn = NULL)
 }
@@ -10,7 +10,7 @@ vars_ssites(obj = NULL, fn = NULL)
 \item{obj}{Object containing segregating sites information.
 This can be one of the following:
 (1) A single \code{list} with a \code{seg_sites} field inside. This field must
-contain a matrix for segregating sites for each sequence.
+contain a matrix for segregating sites for each chromosome.
 The matrix itself should contain the haplotype information, coded
 using 0s and 1s: 0s indicate the ancestral state and 1s indicate
 mutant.
@@ -18,8 +18,8 @@ The matrix column names should indicate the positions of the polymorphisms on th
 chromosome.
 If positions are in the range \code{(0,1)}, they're assumed to come from an infinite-
 sites model and are relative positions.
-If positions are integers in the range \code{[0, sequence length - 1]}
-or \code{[1, sequence length]}, they're assumed to come from an finite-sites
+If positions are integers in the range \code{[0, chromosome length - 1]}
+or \code{[1, chromosome length]}, they're assumed to come from an finite-sites
 model and are absolute positions.
 Defaults to \code{NULL}.}
 
@@ -30,7 +30,8 @@ Defaults to \code{NULL}.}
 \value{
 A \code{vars_ssites_info} object containing information used in \code{create_variants}
 to create haploid variants.
-This class is just a wrapper around a list of matrices of segregating site info.
+This class is just a wrapper around a list of matrices of segregating site info,
+which you can view (but not change) using the object's \code{mats()} method.
 }
 \description{
 This function organizes higher-level information for creating variants from
@@ -41,4 +42,6 @@ For what the \code{seg_sites} field should look like in a list, see output from 
 \code{scrm} or \code{coala} package.
 (These packages are not required to be installed when installing
 \code{jackalope}.)
+If using either of these packages, I encourage you to cite them. For citation
+information, see output from \code{citation("scrm")} or \code{citation("coala")}.
 }

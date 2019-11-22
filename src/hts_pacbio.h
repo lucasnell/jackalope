@@ -1,8 +1,9 @@
-#ifndef __JACKAL_PACBIO_H
-#define __JACKAL_PACBIO_H
+#ifndef __JACKALOPE_PACBIO_H
+#define __JACKALOPE_PACBIO_H
 
 
 
+#include "jackalope_config.h" // controls debugging and diagnostics output
 
 #include <RcppArmadillo.h>
 #include <cmath>
@@ -18,8 +19,8 @@
 #endif
 
 #include "jackalope_types.h"  // uint64
-#include "seq_classes_ref.h"  // Ref* classes
-#include "seq_classes_var.h"  // Var* classes
+#include "ref_classes.h"  // Ref* classes
+#include "var_classes.h"  // Var* classes
 #include "pcg.h"  // runif_01
 #include "alias_sampler.h"  // AliasSampler
 #include "util.h"  // clear_memory
@@ -268,7 +269,7 @@ public:
                 std::deque<uint64>& insertions,
                 std::deque<uint64>& deletions,
                 std::deque<uint64>& substitutions,
-                const uint64& seq_len,
+                const uint64& chrom_len,
                 const uint64& read_length,
                 const uint64& split_pos,
                 const double& passes_left,
@@ -282,9 +283,9 @@ public:
         fill_quals(qual_left, qual_right);
         // Now iterate through and update insertions, deletions, and substitutions:
         uint64 current_length = 0;
-        uint64 seq_pos = 0; // position on the read where events occur
-        // Amount of extra (i.e., non-read) sequence remaining:
-        uint64 extra_space = seq_len - read_length;
+        uint64 chrom_pos = 0; // position on the read where events occur
+        // Amount of extra (i.e., non-read) chromosome remaining:
+        uint64 extra_space = chrom_len - read_length;
         double u;
         std::vector<double>* cum_probs = &cum_probs_left;
         while (current_length < read_length) {
@@ -295,7 +296,7 @@ public:
             } else if (u < cum_probs->at(0)) { // ----- insertion
                 // Don't add insertion if it would change read length
                 if (current_length < (read_length - 1)) {
-                    insertions.push_back(seq_pos);
+                    insertions.push_back(chrom_pos);
                     current_length++;
                     extra_space++;
                     if (current_length == split_pos) cum_probs = &cum_probs_right;
@@ -303,14 +304,14 @@ public:
                 current_length++;
             } else if (u < cum_probs->at(1)) { // ----- deletion
                 if (extra_space > 0) {
-                    deletions.push_back(seq_pos);
+                    deletions.push_back(chrom_pos);
                     extra_space--;
                 }
             } else { // ------------------------------- substitution
-                substitutions.push_back(seq_pos);
+                substitutions.push_back(chrom_pos);
                 current_length++;
             }
-            seq_pos++;
+            chrom_pos++;
         }
         return;
     }
@@ -410,7 +411,7 @@ private:
 
 /*
  Template class to combine everything for PacBio sequencing of a single genome.
- (We will need multiple of these objects to sequence a `VarSet` class.
+ (We will need multiple of these objects to chromosome a `VarSet` class.
  See `PacBioVariants` class below.)
 
  `T` should be `VarGenome` or `RefGenome`
@@ -421,8 +422,6 @@ class PacBioOneGenome {
 public:
 
     /* __ Samplers __ */
-    // Samples index for which genome-sequence to sequence
-    AliasSampler seq_sampler;
     // Samples read lengths:
     PacBioReadLenSampler len_sampler;
     // Samples numbers of passes over read:
@@ -432,14 +431,15 @@ public:
 
 
     /* __ Info __ */
-    std::vector<uint64> seq_lengths;    // genome-sequence lengths
-    const T* sequences;                 // pointer to `const T`
+    std::vector<uint64> chrom_reads;      // # reads per chromosome
+    std::vector<uint64> chrom_lengths;    // genome-chromosome lengths
+    const T* chromosomes;                 // pointer to `const T`
     std::string name;
 
 
-    PacBioOneGenome() : sequences(nullptr) {};
+    PacBioOneGenome() : chromosomes(nullptr) {};
     // Using lognormal distribution for read sizes:
-    PacBioOneGenome(const T& seq_object,
+    PacBioOneGenome(const T& chrom_object,
                     const double& scale_,
                     const double& sigma_,
                     const double& loc_,
@@ -453,18 +453,17 @@ public:
                     const double& prob_ins_,
                     const double& prob_del_,
                     const double& prob_subst_)
-        : seq_sampler(),
-          len_sampler(scale_, sigma_, loc_, min_read_len_),
+        : len_sampler(scale_, sigma_, loc_, min_read_len_),
           pass_sampler(max_passes_, chi2_params_n_, chi2_params_s_),
           qe_sampler(sqrt_params_, norm_params_, prob_thresh_, prob_ins_,
           prob_del_, prob_subst_),
-          seq_lengths(seq_object.seq_sizes()),
-          sequences(&seq_object),
-          name(seq_object.name) {
-        construct_seqs();
-    };
+          chrom_reads(),
+          chrom_lengths(chrom_object.chrom_sizes()),
+          chromosomes(&chrom_object),
+          name(chrom_object.name) {};
+
     // Using vectors of read lengths and sampling weight for read lengths:
-    PacBioOneGenome(const T& seq_object,
+    PacBioOneGenome(const T& chrom_object,
                     const std::vector<double>& read_probs_,
                     const std::vector<uint64>& read_lens_,
                     const uint64& max_passes_,
@@ -476,50 +475,51 @@ public:
                     const double& prob_ins_,
                     const double& prob_del_,
                     const double& prob_subst_)
-        : seq_sampler(),
-          len_sampler(read_probs_, read_lens_),
+        : len_sampler(read_probs_, read_lens_),
           pass_sampler(max_passes_, chi2_params_n_, chi2_params_s_),
           qe_sampler(sqrt_params_, norm_params_, prob_thresh_, prob_ins_,
           prob_del_, prob_subst_),
-          seq_lengths(seq_object.seq_sizes()),
-          sequences(&seq_object),
-          name(seq_object.name) {
-        construct_seqs();
-    };
+          chrom_reads(),
+          chrom_lengths(chrom_object.chrom_sizes()),
+          chromosomes(&chrom_object),
+          name(chrom_object.name) {};
 
     PacBioOneGenome(const PacBioOneGenome& other)
-        : seq_sampler(other.seq_sampler),
-          len_sampler(other.len_sampler),
+        : len_sampler(other.len_sampler),
           pass_sampler(other.pass_sampler),
           qe_sampler(other.qe_sampler),
-          seq_lengths(other.seq_lengths),
-          sequences(other.sequences),
+          chrom_reads(other.chrom_reads),
+          chrom_lengths(other.chrom_lengths),
+          chromosomes(other.chromosomes),
           name(other.name) {};
 
 
-    // Add one read string (with 4 lines: ID, sequence, "+", quality) to a FASTQ pool
+
+    void add_n_reads(const uint64& n_reads) {
+
+        std::vector<double> probs_(chrom_lengths.begin(), chrom_lengths.end());
+        chrom_reads = reads_per_group(n_reads, probs_);
+
+        return;
+    }
+
+    // Add one read string (with 4 lines: ID, chromosome, "+", quality) to a FASTQ pool
     // `U` should be a std::string or std::vector<char>
     template <typename U>
-    void one_read(std::vector<U>& fastq_pools, pcg64& eng);
+    void one_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
+    // Overloaded for when we input a variant chromosome stored as string
+    template <typename U>
+    void one_read(const std::string& chrom, const uint64& chrom_i,
+                  std::vector<U>& fastq_pools, pcg64& eng);
     /*
      Same as above, but for a duplicate. It's assumed that `one_read` has been
      run once before.
      */
     template <typename U>
-    void re_read(std::vector<U>& fastq_pools, pcg64& eng);
-
-
-    /*
-     Add information about a RefGenome or VarGenome object
-     This is used when making multiple samplers that share most info except for
-     that related to the sequence object.
-     */
-    void add_seq_info(const T& seq_object) {
-        seq_lengths = seq_object.seq_sizes();
-        sequences = &seq_object;
-        name = seq_object.name;
-        construct_seqs();
-    }
+    void re_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
+    template <typename U>
+    void re_read(const std::string& chrom, const uint64& chrom_i,
+                 std::vector<U>& fastq_pools, pcg64& eng);
 
 
 private:
@@ -529,7 +529,7 @@ private:
     double passes_right = 0;
     char qual_left = '!';
     char qual_right = '!';
-    uint64 read_seq_space = 1;
+    uint64 read_chrom_space = 1;
     std::string read = std::string(1000, 'N');
     // Maps nucleotide char to integer from 0 to 3
     std::vector<uint8> nt_map = sequencer::nt_map;
@@ -542,23 +542,15 @@ private:
     std::deque<uint64> insertions = std::deque<uint64>(0);
     std::deque<uint64> deletions = std::deque<uint64>(0);
     std::deque<uint64> substitutions = std::deque<uint64>(0);
-    uint64 seq_ind = 0;
+    uint64 chrom_ind = 0;
     uint64 read_length = 0;
     uint64 read_start = 0;
-
-    // Construct sequence-sampling probabilities:
-    void construct_seqs() {
-        std::vector<double> probs_;
-        probs_.reserve(seq_lengths.size());
-        for (uint64 i = 0; i < seq_lengths.size(); i++) {
-            probs_.push_back(static_cast<double>(seq_lengths[i]));
-        }
-        seq_sampler = AliasSampler(probs_);
-    }
 
     // Append quality and read to fastq pool
     template <typename U>
     void append_pool(U& fastq_pool, pcg64& eng);
+    template <typename U>
+    void append_pool(const std::string& chrom, U& fastq_pool, pcg64& eng);
 
 
 };
@@ -579,8 +571,9 @@ class PacBioVariants {
 public:
 
     const VarSet* variants;                         // pointer to `const VarSet`
-    AliasSampler variant_sampler;                   // chooses which variant to use
+    std::vector<std::vector<uint64>> n_reads_vc;    // # reads per variant and chromosome
     std::vector<PacBioOneVariant> read_makers;      // makes PacBio reads
+    std::vector<double> var_probs;                  // probs of sampling variants
 
     /* Initializers */
     PacBioVariants() : variants(nullptr) {};
@@ -601,13 +594,28 @@ public:
                    const double& prob_del_,
                    const double& prob_subst_)
         : variants(&var_set),
-          variant_sampler(variant_probs),
-          read_makers(1, PacBioOneVariant(var_set[0],
-                                          scale_, sigma_, loc_, min_read_len_,
-                                          max_passes_, chi2_params_n_, chi2_params_s_,
-                                          sqrt_params_, norm_params_, prob_thresh_,
-                                          prob_ins_, prob_del_, prob_subst_)) {
-        construct_makers();
+          n_reads_vc(),
+          read_makers(),
+          var_probs(variant_probs),
+          var(0),
+          chr(0),
+          var_chrom_seq() {
+
+        /*
+         Fill `read_makers` field:
+         */
+        uint64 n_vars = variants->size();
+        read_makers.reserve(n_vars);
+        for (uint64 i = 0; i < n_vars; i++) {
+            read_makers.push_back(
+                PacBioOneVariant(var_set[i],
+                                 scale_, sigma_, loc_, min_read_len_,
+                                 max_passes_, chi2_params_n_, chi2_params_s_,
+                                 sqrt_params_, norm_params_, prob_thresh_,
+                                 prob_ins_, prob_del_, prob_subst_)
+            );
+        }
+
     };
     // Using vectors of read lengths and sampling weight for read lengths:
     PacBioVariants(const VarSet& var_set,
@@ -624,62 +632,85 @@ public:
                    const double& prob_del_,
                    const double& prob_subst_)
         : variants(&var_set),
-          variant_sampler(variant_probs),
-          read_makers(1, PacBioOneVariant(var_set[0],
-                                          read_probs_, read_lens_,
-                                          max_passes_, chi2_params_n_, chi2_params_s_,
-                                          sqrt_params_, norm_params_, prob_thresh_,
-                                          prob_ins_, prob_del_, prob_subst_)) {
-        construct_makers();
+          n_reads_vc(),
+          read_makers(),
+          var_probs(variant_probs),
+          var(0),
+          chr(0),
+          var_chrom_seq() {
+
+        /*
+         Fill `read_makers` field:
+         */
+        uint64 n_vars = variants->size();
+        read_makers.reserve(n_vars);
+        for (uint64 i = 0; i < n_vars; i++) {
+            read_makers.push_back(
+                PacBioOneVariant(var_set[i],
+                                 read_probs_, read_lens_,
+                                 max_passes_, chi2_params_n_, chi2_params_s_,
+                                 sqrt_params_, norm_params_, prob_thresh_,
+                                 prob_ins_, prob_del_, prob_subst_)
+            );
+        }
+
     };
+
     // Copy constructor
     PacBioVariants(const PacBioVariants& other)
         : variants(other.variants),
-          variant_sampler(other.variant_sampler),
-          read_makers(other.read_makers) {};
+          n_reads_vc(other.n_reads_vc),
+          read_makers(other.read_makers),
+          var_probs(other.var_probs),
+          var(other.var),
+          chr(other.chr),
+          var_chrom_seq(other.var_chrom_seq) {};
 
 
-    /*
-     -------------
-     `one_read` methods
-     -------------
-     */
-    // If only providing rng and id info, sample for a variant, then make read(s):
-    template <typename U>
-    void one_read(std::vector<U>& fastq_pools, pcg64& eng) {
-        var = variant_sampler.sample(eng);
-        read_makers[var].one_read<U>(fastq_pools, eng);
+    // Add info on # reads
+    void add_n_reads(const uint64& n_reads) {
+
+        uint64 n_vars = variants->size();
+
+        // split # reads by variant
+        std::vector<uint64> var_reads = reads_per_group(n_reads, var_probs);
+        // splitting by chromosome, too:
+        for (uint64 v = 0; v < n_vars; v++) {
+            std::vector<double> chrom_probs;
+            for (const VarChrom& vc : (*variants)[v].chromosomes) {
+                chrom_probs.push_back(vc.size());
+            }
+            n_reads_vc.push_back(reads_per_group(var_reads[v], chrom_probs));
+        }
+
+        // Fill `read_makers` field:
+        for (uint64 i = 0; i < n_vars; i++) {
+            read_makers[i].add_n_reads(var_reads[i]);
+        }
+
         return;
     }
-    /*
-     -------------
-     `re_read` methods (for duplicates)
-    -------------
-    */
+
+
+
+    // `one_read` method
     template <typename U>
-    void re_read(std::vector<U>& fastq_pools, pcg64& eng) {
-        read_makers[var].re_read<U>(fastq_pools, eng);
-        return;
-    }
+    void one_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
+    // `re_read` method (for duplicates)
+    template <typename U>
+    void re_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
 
 
 
 private:
 
-    // Variant to sample from. It's saved in this class in case of duplicates.
+    // Variant to create read from.
     uint64 var;
+    // Chromosome to create read from.
+    uint64 chr;
+    // String for variant chromosome. It's saved to make things faster.
+    std::string var_chrom_seq;
 
-    // Construct read_makers field if the first item in that vector has been filled out
-    void construct_makers() {
-        uint64 n_vars = variants->size();
-        read_makers.reserve(n_vars);
-        for (uint64 i = 1; i < n_vars; i++) {
-            // Add read maker for the first variant:
-            read_makers.push_back(read_makers[0]);
-            // Now update it for the correct VarGenome info:
-            read_makers[i].add_seq_info((*variants)[i]);
-        }
-    }
 
 };
 
