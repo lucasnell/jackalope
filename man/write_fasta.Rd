@@ -4,9 +4,16 @@
 \alias{write_fasta}
 \title{Write a \code{ref_genome} or \code{variants} object to a FASTA file.}
 \usage{
-write_fasta(obj, out_prefix, compress = FALSE, comp_method = "bgzip",
-  text_width = 80, show_progress = FALSE, n_threads = 1,
-  overwrite = FALSE)
+write_fasta(
+  obj,
+  out_prefix,
+  compress = FALSE,
+  comp_method = "bgzip",
+  text_width = 80,
+  show_progress = FALSE,
+  n_threads = 1,
+  overwrite = FALSE
+)
 }
 \arguments{
 \item{obj}{A \code{ref_genome} or \code{variants} object.}

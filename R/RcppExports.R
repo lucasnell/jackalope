@@ -480,93 +480,14 @@ add_deletion <- function(var_set_ptr, var_ind, chrom_ind, size_, new_pos_) {
     invisible(.Call(`_jackalope_add_deletion`, var_set_ptr, var_ind, chrom_ind, size_, new_pos_))
 }
 
-#' Incomplete Gamma function
-#'
-#' @noRd
-#'
-NULL
-
-#' Mean of truncated Gamma distribution
-#'
-#' From http://dx.doi.org/10.12988/astp.2013.310125.
-#' As in that paper, b > 0 is the scale and c > 0 is the shape.
-#'
-#' @noRd
-#'
-NULL
-
-#' Create a vector of Gamma values for a discrete Gamma distribution.
-#'
-#'
-#' @noRd
-#'
-NULL
-
-#' Info to calculate P(t) for TN93 model and its special cases
-#'
-#'
-#' @noRd
-#'
-NULL
-
-#' Info to calculate P(t) for GTR model
-#'
-#'
-#' @noRd
-#'
-NULL
-
-#' @describeIn sub_models TN93 model.
-#'
-#' @param pi_tcag Vector of length 4 indicating the equilibrium distributions of
-#'     T, C, A, and G respectively. Values must be >= 0, and
-#'     they are forced to sum to 1.
-#' @param alpha_1 Substitution rate for T <-> C transition.
-#' @param alpha_2 Substitution rate for A <-> G transition.
-#' @param beta Substitution rate for transversions.
-#' @param gamma_shape Numeric shape parameter for discrete Gamma distribution used for
-#'     among-site variability. Values must be greater than zero.
-#'     If this parameter is `NA`, among-site variability is not included.
-#'     Defaults to `NA`.
-#' @param gamma_k The number of categories to split the discrete Gamma distribution
-#'     into. Values must be an integer in the range `[1,255]`.
-#'     This argument is ignored if `gamma_shape` is `NA`.
-#'     Defaults to `5`.
-#' @param invariant Proportion of sites that are invariant.
-#'     Values must be in the range `[0,1)`.
-#'     Defaults to `0`.
-#'
-#' @noRd
-#'
 sub_TN93_cpp <- function(pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant) {
     .Call(`_jackalope_sub_TN93_cpp`, pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant)
 }
 
-#' @describeIn sub_models GTR model.
-#'
-#' @inheritParams sub_TN93
-#' @param abcdef A vector of length 6 that contains the off-diagonal elements
-#'     for the substitution rate matrix.
-#'     See `vignette("sub-models")` for how the values are ordered in the matrix.
-#'
-#' @noRd
-#'
 sub_GTR_cpp <- function(pi_tcag, abcdef, gamma_shape, gamma_k, invariant) {
     .Call(`_jackalope_sub_GTR_cpp`, pi_tcag, abcdef, gamma_shape, gamma_k, invariant)
 }
 
-#' @describeIn sub_models UNREST model.
-#'
-#'
-#' @param Q Matrix of substitution rates for "T", "C", "A", and "G", respectively.
-#'     Item `Q[i,j]` is the rate of substitution from nucleotide `i` to nucleotide `j`.
-#'     Do not include indel rates here!
-#'     Values on the diagonal are calculated inside the function so are ignored.
-#' @inheritParams sub_TN93
-#'
-#' @noRd
-#'
-#'
 sub_UNREST_cpp <- function(Q, gamma_shape, gamma_k, invariant) {
     .Call(`_jackalope_sub_UNREST_cpp`, Q, gamma_shape, gamma_k, invariant)
 }

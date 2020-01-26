@@ -18,17 +18,21 @@ sub_K80(alpha, beta, gamma_shape = NULL, gamma_k = 5, invariant = 0)
 
 sub_F81(pi_tcag, gamma_shape = NULL, gamma_k = 5, invariant = 0)
 
-sub_HKY85(pi_tcag, alpha, beta, gamma_shape = NULL, gamma_k = 5,
-  invariant = 0)
+sub_HKY85(pi_tcag, alpha, beta, gamma_shape = NULL, gamma_k = 5, invariant = 0)
 
-sub_F84(pi_tcag, beta, kappa, gamma_shape = NULL, gamma_k = 5,
-  invariant = 0)
+sub_F84(pi_tcag, beta, kappa, gamma_shape = NULL, gamma_k = 5, invariant = 0)
 
-sub_TN93(pi_tcag, alpha_1, alpha_2, beta, gamma_shape = NULL,
-  gamma_k = 5, invariant = 0)
+sub_TN93(
+  pi_tcag,
+  alpha_1,
+  alpha_2,
+  beta,
+  gamma_shape = NULL,
+  gamma_k = 5,
+  invariant = 0
+)
 
-sub_GTR(pi_tcag, abcdef, gamma_shape = NULL, gamma_k = 5,
-  invariant = 0)
+sub_GTR(pi_tcag, abcdef, gamma_shape = NULL, gamma_k = 5, invariant = 0)
 
 sub_UNREST(Q, gamma_shape = NULL, gamma_k = 5, invariant = 0)
 }
@@ -41,12 +45,12 @@ If this parameter is \code{NULL}, among-site variability is not included.
 Defaults to \code{NULL}.}
 
 \item{gamma_k}{The number of categories to split the discrete Gamma distribution
-into. Values must be an integer in the range \code{[2,255]}.
+into. Values must be an integer in the range \verb{[2,255]}.
 This argument is ignored if \code{gamma_shape} is \code{NA}.
 Defaults to \code{5}.}
 
 \item{invariant}{Proportion of sites that are invariant.
-Values must be in the range \code{[0,1)}.
+Values must be in the range \verb{[0,1)}.
 Defaults to \code{0}.}
 
 \item{alpha}{Substitution rate for transitions.}

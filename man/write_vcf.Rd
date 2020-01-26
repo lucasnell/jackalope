@@ -4,8 +4,14 @@
 \alias{write_vcf}
 \title{Write variant info from a \code{variants} object to a VCF file.}
 \usage{
-write_vcf(vars, out_prefix, compress = FALSE, sample_matrix = NULL,
-  show_progress = FALSE, overwrite = FALSE)
+write_vcf(
+  vars,
+  out_prefix,
+  compress = FALSE,
+  sample_matrix = NULL,
+  show_progress = FALSE,
+  overwrite = FALSE
+)
 }
 \arguments{
 \item{vars}{A \code{variants} object.}

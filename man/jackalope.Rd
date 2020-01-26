@@ -3,7 +3,6 @@
 \docType{package}
 \name{jackalope}
 \alias{jackalope}
-\alias{jackalope-package}
 \title{jackalope: An efficient, flexible molecular evolution and sequencing simulator.}
 \description{
 \code{jackalope} simply and efficiently

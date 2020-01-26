@@ -39,7 +39,7 @@ LinkingTo:
     Rhtslib,
     zlibbioc
 SystemRequirements: GNU make, C++11
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 Roxygen: list(markdown = TRUE)
 Suggests:
     coala,

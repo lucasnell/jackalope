@@ -16,10 +16,10 @@ using 0s and 1s: 0s indicate the ancestral state and 1s indicate
 mutant.
 The matrix column names should indicate the positions of the polymorphisms on the
 chromosome.
-If positions are in the range \code{(0,1)}, they're assumed to come from an infinite-
+If positions are in the range \verb{(0,1)}, they're assumed to come from an infinite-
 sites model and are relative positions.
-If positions are integers in the range \code{[0, chromosome length - 1]}
-or \code{[1, chromosome length]}, they're assumed to come from an finite-sites
+If positions are integers in the range \verb{[0, chromosome length - 1]}
+or \verb{[1, chromosome length]}, they're assumed to come from an finite-sites
 model and are absolute positions.
 Defaults to \code{NULL}.}
 

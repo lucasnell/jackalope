@@ -109,7 +109,7 @@ do gzip compression in parallel).
 Defaults to \code{"bgzip"}.}
 
 \item{n_threads}{The number of threads to use in processing.
-If \code{compress} is \code{TRUE} or \code{> 0} (indicating compressed output),
+If \code{compress} is \code{TRUE} or \verb{> 0} (indicating compressed output),
 setting \code{n_threads} to \code{2} or more makes this function first create an
 uncompressed file/files using \code{n_threads} threads, then compress that/those
 file/files also using \code{n_threads} threads.
@@ -147,9 +147,9 @@ this function.
 
 The ID lines for FASTQ files are formatted as such:
 
-\code{@<genome name>-<chromosome name>-<starting position>-<strand>}
+\verb{@<genome name>-<chromosome name>-<starting position>-<strand>}
 
-where \code{genome name} is always \code{REF} for reference genomes (as opposed to variants).
+where \verb{genome name} is always \code{REF} for reference genomes (as opposed to variants).
 }
 
 \examples{
