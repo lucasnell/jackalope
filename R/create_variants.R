@@ -448,8 +448,12 @@ to_var_set__vars_theta_info <- function(x,
     n_vars <- length(phy$tip.label)
     n_chroms <- reference$n_chroms()
 
+    # From here:
+    # https://ocw.mit.edu/courses/health-sciences-and-technology/hst-508-quantitative-
+    # genomics-fall-2005/study-materials/hstnotes.pdf
+
     # Calculating L from theta:
-    # E(L) = 4 * N * a; a = sum(1 / (1:(n_chroms-1)))
+    # E(L) = 4 * N * a; a = sum(1 / (1:(n_tips-1)))
     a <- sum(1 / (1:(n_vars-1)))
     # theta = 4 * N * mu
     # ------------*
@@ -462,11 +466,12 @@ to_var_set__vars_theta_info <- function(x,
     # Average mutation rate among all nucleotides:
     mu <- sum({avg_subs + indel} * sub$pi_tcag())
     # ------------*
-    # So if we know theta and mu, then...
+    # So if we know theta and mu (and since theta = 4 * N * mu), then...
     # ------------*
-    L <- theta * a / mu
-    # Now rescale to have total tree length of `L`:
-    phy$edge.length <- phy$edge.length / max(ape::node.depth.edgelength(phy)) * L
+    L <- theta / mu * a
+    # Now rescale to have total branch length of `L`:
+    phy$edge.length <- phy$edge.length / sum(phy$edge.length) * L
+
 
     phy <- rep(list(phy), n_chroms)
 
