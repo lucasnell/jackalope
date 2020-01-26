@@ -1,3 +1,10 @@
+
+# jackalope 1.0.1
+
+* Fixed bug when scaling tree with `vars_theta`.
+* Updated `R6` class documentation for new `roxygen2` methods.
+
+
 # jackalope 1.0.0
 
 * `create_variants` performs better with high mutation rates
