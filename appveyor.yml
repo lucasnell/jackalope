@@ -22,10 +22,10 @@ environment:
   global:
     WARNINGS_ARE_ERRORS: 1
     USE_RTOOLS: true
-    BIOC_USE_DEVEL: "FALSE"
+    BIOC_USE_DEVEL: "TRUE"
 
   matrix:
-  - R_VERSION: release
+  - R_VERSION: devel
     R_ARCH: x64
     GCC_PATH: mingw_64
 
