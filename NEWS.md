@@ -1,7 +1,8 @@
 
 # jackalope 1.0.1
 
-* Fixed bug when scaling tree with `vars_theta`.
+* Fixed bug when scaling tree using theta parameter.
+* Using "haplotypes" instead of "variants" throughout.
 * Updated `R6` class documentation for new `roxygen2` methods.
 
 

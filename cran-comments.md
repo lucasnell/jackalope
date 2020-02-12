@@ -2,8 +2,9 @@
 
 This is a resubmission. In this version, I have done the following:
 
-- Fixed a bug related to scaling phylogenetic trees in the `vars_theta` function.
-- Updated `R6` class documentation for new `roxygen2` methods.
+- Fixed a bug related to scaling phylogenetic trees in the `haps_theta` function
+- Changed documentation and code to use "haplotypes" instead of "variants" throughout
+- Updated `R6` class documentation for new `roxygen2` methods
 
 
 ## Test environments
