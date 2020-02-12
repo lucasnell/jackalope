@@ -78,7 +78,7 @@ Values on the diagonal are calculated inside the function so are ignored.}
 }
 \value{
 A \code{sub_info} object, which is an R6 class that wraps the info needed for
-the \code{create_variants} function.
+the \code{create_haplotypes} function.
 It does not allow the user to directly manipulate the info inside, as that
 should be done using the \code{sub_models} functions.
 You can use the following methods from the class to view information:
@@ -143,5 +143,5 @@ obj_K80 <- sub_K80(alpha = 0.2, beta = 0.1,
 
 }
 \seealso{
-\code{\link{create_variants}}
+\code{\link{create_haplotypes}}
 }

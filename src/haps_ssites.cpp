@@ -24,10 +24,9 @@ using namespace Rcpp;
 
 
 
-//' Used below to directly make a MutationTypeSampler
-//'
-//' @noRd
-//'
+/*
+ Used below to directly make a MutationTypeSampler
+*/
 MutationTypeSampler make_type_sampler(const arma::mat& Q,
                                       const std::vector<double>& pi_tcag,
                                       const std::vector<double>& insertion_rates,
@@ -55,11 +54,9 @@ MutationTypeSampler make_type_sampler(const arma::mat& Q,
 
 
 
-
-//' Add mutations at segregating sites for one chromosome from coalescent simulation output.
-//'
-//' @noRd
-//'
+/*
+ Add mutations at segregating sites for one chromosome from coalescent simulation output.
+*/
 void add_one_chrom_ssites(HapSet& hap_set,
                         const RefGenome& ref_genome,
                         const uint64& chrom_i,
@@ -115,11 +112,9 @@ void add_one_chrom_ssites(HapSet& hap_set,
 
 
 
-
-//' Add mutations at segregating sites from coalescent simulation output.
-//'
-//' @noRd
-//'
+/*
+ Add mutations at segregating sites from coalescent simulation output.
+*/
 //[[Rcpp::export]]
 SEXP add_ssites_cpp(SEXP& ref_genome_ptr,
                     const std::vector<arma::mat>& seg_sites,

@@ -141,8 +141,8 @@ test_that("haplotypes class starts with the correct fields", {
 
 test_that("haplotypes print appears about right", {
     expect_output(print(haps),
-                  paste0("<< Variants object >>\n",
-                         "\\# Variants: ", n_haps, "\n",
+                  paste0("<< haplotypes object >>\n",
+                         "\\# Haplotypes: ", n_haps, "\n",
                          "\\# Mutations: "))
 })
 
