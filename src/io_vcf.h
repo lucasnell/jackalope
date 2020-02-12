@@ -14,7 +14,7 @@
 
 #include "jackalope_types.h"  // integer types
 #include "ref_classes.h"  // Ref* classes
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "io.h"  // File* classes
 
 
@@ -82,13 +82,13 @@ inline std::string vcf_date() {
 
 
 
-// Info for one chromosome on one variant
-class OneVarChromVCF {
+// Info for one chromosome on one haplotype
+class OneHapChromVCF {
 
 public:
 
     /*
-     Integer indicating whether to include this variant in the current line of VCF file,
+     Integer indicating whether to include this haplotype in the current line of VCF file,
      and, if so, which alternate string to use.
      0 indicates not to include it at all.
      After running `check` but before `dump`, it's set ambiguously to 1 if it should
@@ -101,13 +101,13 @@ public:
     // Starting/ending position on ref. chromosome:
     std::pair<uint64, uint64> ref_pos;
 
-    OneVarChromVCF() : var_chrom(nullptr) {};
+    OneHapChromVCF() : hap_chrom(nullptr) {};
 
 
     /*
-     Determine whether this variant should be included in a VCF line for given
+     Determine whether this haplotype should be included in a VCF line for given
      chromosome starting and ending positions.
-     If this variant has a deletion at the input position, this method updates that
+     If this haplotype has a deletion at the input position, this method updates that
      and the boolean for whether the line is still expanding (changes it to true).
      */
     void check(const uint64& pos_start,
@@ -126,9 +126,9 @@ public:
               const std::string& ref_str);
 
 
-    // Reset to new variant chromosome
-    void set_var(const VarChrom& var_chrom_) {
-        var_chrom = &var_chrom_;
+    // Reset to new haplotype chromosome
+    void set_hap(const HapChrom& hap_chrom_) {
+        hap_chrom = &hap_chrom_;
         gt_index = 0;
         mut_ind = std::make_pair(0, 0);
         reset_pos();
@@ -161,12 +161,12 @@ public:
 
 private:
 
-    const VarChrom* var_chrom;
+    const HapChrom* hap_chrom;
 
-    // Set positions when indices are the same (when initializing, iterating, new variant)
+    // Set positions when indices are the same (when initializing, iterating, new haplotype)
     void reset_pos() {
 
-        if (mut_ind.first >= var_chrom->mutations.size()) {
+        if (mut_ind.first >= hap_chrom->mutations.size()) {
             ref_pos = std::make_pair(MAX_INT, MAX_INT); // max uint64 values
         } else {
             uint64 index = mut_ind.first;
@@ -176,11 +176,11 @@ private:
              (the second part of this statement is added because contiguous deletions
              are prevented elsewhere)
              */
-            if (mut_ind.second < (var_chrom->mutations.size()-1) &&
-                var_chrom->size_modifier(mut_ind.first) >= 0) {
-                if (var_chrom->size_modifier(mut_ind.second + 1) < 0 &&
-                    var_chrom->mutations.old_pos[mut_ind.second + 1] ==
-                    (var_chrom->mutations.old_pos[mut_ind.first] + 1)) {
+            if (mut_ind.second < (hap_chrom->mutations.size()-1) &&
+                hap_chrom->size_modifier(mut_ind.first) >= 0) {
+                if (hap_chrom->size_modifier(mut_ind.second + 1) < 0 &&
+                    hap_chrom->mutations.old_pos[mut_ind.second + 1] ==
+                    (hap_chrom->mutations.old_pos[mut_ind.first] + 1)) {
                     mut_ind.second++;
                     index = mut_ind.second;
                 }
@@ -195,16 +195,16 @@ private:
      that deletions have to be treated differently
      */
     inline void set_first_pos(const uint64& index) {
-        ref_pos.first = var_chrom->mutations.old_pos[index];
-        if (var_chrom->size_modifier(index) < 0 &&
-            var_chrom->mutations.old_pos[index] > 0) ref_pos.first--;
+        ref_pos.first = hap_chrom->mutations.old_pos[index];
+        if (hap_chrom->size_modifier(index) < 0 &&
+            hap_chrom->mutations.old_pos[index] > 0) ref_pos.first--;
         return;
     }
     // Same as above, but returns the integer rather than setting it
     inline uint64 get_first_pos(const uint64& index) {
-        uint64 pos_first = var_chrom->mutations.old_pos[index];
-        if (var_chrom->size_modifier(index) < 0 &&
-            var_chrom->mutations.old_pos[index] > 0) pos_first--;
+        uint64 pos_first = hap_chrom->mutations.old_pos[index];
+        if (hap_chrom->size_modifier(index) < 0 &&
+            hap_chrom->mutations.old_pos[index] > 0) pos_first--;
         return pos_first;
     }
     /*
@@ -212,24 +212,24 @@ private:
      that deletions have to be treated differently
      */
     inline void set_second_pos(const uint64& index) {
-        ref_pos.second = var_chrom->mutations.old_pos[index];
-        if (var_chrom->size_modifier(index) < 0) {
-            if (var_chrom->mutations.old_pos[index] > 0) {
-                ref_pos.second -= (1 + var_chrom->size_modifier(index));
+        ref_pos.second = hap_chrom->mutations.old_pos[index];
+        if (hap_chrom->size_modifier(index) < 0) {
+            if (hap_chrom->mutations.old_pos[index] > 0) {
+                ref_pos.second -= (1 + hap_chrom->size_modifier(index));
             } else {
-                ref_pos.second -= var_chrom->size_modifier(index);
+                ref_pos.second -= hap_chrom->size_modifier(index);
             }
         }
         return;
     }
     // Same as above, but returns the integer rather than setting it
     inline uint64 get_second_pos(const uint64& index) {
-        uint64 pos_second = var_chrom->mutations.old_pos[index];
-        if (var_chrom->size_modifier(index) < 0) {
-            if (var_chrom->mutations.old_pos[index] > 0) {
-                pos_second -= (1 + var_chrom->size_modifier(index));
+        uint64 pos_second = hap_chrom->mutations.old_pos[index];
+        if (hap_chrom->size_modifier(index) < 0) {
+            if (hap_chrom->mutations.old_pos[index] > 0) {
+                pos_second -= (1 + hap_chrom->size_modifier(index));
             } else {
-                pos_second -= var_chrom->size_modifier(index);
+                pos_second -= hap_chrom->size_modifier(index);
             }
         }
         return pos_second;
@@ -240,43 +240,43 @@ private:
 
 
 
-// Map mutations among all variants for one chromosome
+// Map mutations among all haplotypes for one chromosome
 class WriterVCF {
 
 public:
 
-    const VarSet* var_set;
+    const HapSet* hap_set;
     uint64 chrom_ind;
     const std::string* ref_nts;
 
-    std::vector<OneVarChromVCF> var_infos;
+    std::vector<OneHapChromVCF> hap_infos;
     // Starting/ending positions on reference chromosome for overall nearest mutation:
     std::pair<uint64,uint64> mut_pos = std::make_pair(MAX_INT, MAX_INT);
-    // Strings for all unique alt. strings among  variants. Grouping is not relevant here.
+    // Strings for all unique alt. strings among  haplotypes. Grouping is not relevant here.
     std::vector<std::string> unq_alts;
-    // Indices for how to group each variant's genotype information:
+    // Indices for how to group each haplotype's genotype information:
     arma::umat sample_groups;
     // Names for each sample:
     std::vector<std::string> sample_names;
 
-    WriterVCF(const VarSet& var_set_,
+    WriterVCF(const HapSet& hap_set_,
               const uint64& chrom_ind_,
               const IntegerMatrix& sample_groups_)
-        : var_set(&var_set_),
+        : hap_set(&hap_set_),
           chrom_ind(chrom_ind_),
           ref_nts(),
-          var_infos(var_set_.size()),
+          hap_infos(hap_set_.size()),
           unq_alts(),
           sample_groups(as<arma::umat>(sample_groups_) - 1),
-          gt_indexes(var_set_.size()) {
+          gt_indexes(hap_set_.size()) {
 
         // Now checking chromosome index:
-        if (chrom_ind >= var_set->reference->size()) {
+        if (chrom_ind >= hap_set->reference->size()) {
             str_stop({"\nWhen specifying a chromosome index for VCF output, ",
                      "you must provide an integer < the number of chromosomes."});
         }
 
-        unq_alts.reserve(var_set_.size());
+        unq_alts.reserve(hap_set_.size());
         construct();
         make_names();
 
@@ -311,8 +311,8 @@ public:
         pool += vcf_date();
         pool += '\n';
         pool += "##source=jackalope\n";
-        for (uint64 i = 0; i < var_set->reference->size(); i++) {
-            const RefChrom& rs(var_set->reference->operator[](i));
+        for (uint64 i = 0; i < hap_set->reference->size(); i++) {
+            const RefChrom& rs(hap_set->reference->operator[](i));
             pool += "##contig=<ID=" + rs.name + ',';
             pool += "length=" + std::to_string(rs.size()) + ">\n";
         }
@@ -337,15 +337,15 @@ private:
 
     void construct() {
 
-        ref_nts = &(var_set->reference->chromosomes[chrom_ind].nucleos);
+        ref_nts = &(hap_set->reference->chromosomes[chrom_ind].nucleos);
 
         /*
-         Set pointer for the focal chromosome in each variant
+         Set pointer for the focal chromosome in each haplotype
          and set positions in `mut_pos` field
          */
-        for (uint64 i = 0; i < var_infos.size(); i++) {
-            var_infos[i].set_var((*var_set)[i][chrom_ind]);
-            var_infos[i].compare_pos(mut_pos.first, mut_pos.second);
+        for (uint64 i = 0; i < hap_infos.size(); i++) {
+            hap_infos[i].set_hap((*hap_set)[i][chrom_ind]);
+            hap_infos[i].compare_pos(mut_pos.first, mut_pos.second);
         }
 
         return;
@@ -357,10 +357,10 @@ private:
         sample_names = std::vector<std::string>(n_samples, "");
         for (uint64 i = 0; i < n_samples; i++) {
             std::string& sn(sample_names[i]);
-            sn = var_set->operator[](sample_groups(i,0)).name;
+            sn = hap_set->operator[](sample_groups(i,0)).name;
             for (uint64 j = 1; j < sample_groups.n_cols; j++) {
                 sn += "__";
-                sn += var_set->operator[](sample_groups(i,j)).name;
+                sn += hap_set->operator[](sample_groups(i,j)).name;
             }
         }
         return;
@@ -378,7 +378,7 @@ private:
 //' @noRd
 //'
 template <typename T>
-inline void write_vcf_(XPtr<VarSet> var_set,
+inline void write_vcf_(XPtr<HapSet> hap_set,
                        const std::string& file_name,
                        const int& compress,
                        WriterVCF writer) {
@@ -389,7 +389,7 @@ inline void write_vcf_(XPtr<VarSet> var_set,
     // (only needed as string):
     std::string max_qual = "441453";
 
-    uint64 n_chroms = var_set->reference->size();
+    uint64 n_chroms = hap_set->reference->size();
     uint64 n_samples = writer.sample_groups.n_rows;
 
     // String of text to append to, then to insert into output:
@@ -422,7 +422,7 @@ inline void write_vcf_(XPtr<VarSet> var_set,
              */
             if (writer.iterate(pos_str, ref_str, alt_str, gt_strs)) {
                 // CHROM
-                pool = var_set->reference->operator[](writer.chrom_ind).name;
+                pool = hap_set->reference->operator[](writer.chrom_ind).name;
                 // POS
                 pool += '\t' + pos_str;
                 // ID

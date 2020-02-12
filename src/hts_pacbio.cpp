@@ -12,7 +12,7 @@
 
 #include "jackalope_types.h"  // uint64
 #include "ref_classes.h"  // Ref* classes
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "pcg.h"  // runif_01
 #include "alias_sampler.h"  // AliasSampler
 #include "util.h"  // clear_memory
@@ -164,7 +164,7 @@ void PacBioOneGenome<T>::one_read(std::vector<U>& fastq_pools,
                       chrom_len, read_length, split_pos, passes_left, passes_right);
 
     /*
-     The amount of space on the reference/variant chromosome needed to create this read.
+     The amount of space on the reference/haplotype chromosome needed to create this read.
      I'm adding deletions because more deletions mean that I need
      more chromosome bases to achieve the same read length.
      Insertions means I need fewer.
@@ -187,7 +187,7 @@ void PacBioOneGenome<T>::one_read(std::vector<U>& fastq_pools,
     return;
 }
 
-// Overloaded for when we input a variant chromosome stored as string
+// Overloaded for when we input a haplotype chromosome stored as string
 template <typename T>
 template <typename U>
 void PacBioOneGenome<T>::one_read(const std::string& chrom,
@@ -213,7 +213,7 @@ void PacBioOneGenome<T>::one_read(const std::string& chrom,
                       chrom_len, read_length, split_pos, passes_left, passes_right);
 
     /*
-     The amount of space on the reference/variant chromosome needed to create this read.
+     The amount of space on the reference/haplotype chromosome needed to create this read.
      I'm adding deletions because more deletions mean that I need
      more chromosome bases to achieve the same read length.
      Insertions means I need fewer.
@@ -262,7 +262,7 @@ void PacBioOneGenome<T>::re_read(std::vector<U>& fastq_pools,
                       chrom_len, read_length, split_pos, passes_left, passes_right);
 
     /*
-     The amount of space on the reference/variant chromosome needed to create this read.
+     The amount of space on the reference/haplotype chromosome needed to create this read.
      I'm adding deletions because more deletions mean that I need
      more chromosome bases to achieve the same read length.
      Insertions means I need fewer.
@@ -315,7 +315,7 @@ void PacBioOneGenome<T>::re_read(const std::string& chrom,
                       chrom_len, read_length, split_pos, passes_left, passes_right);
 
     /*
-     The amount of space on the reference/variant chromosome needed to create this read.
+     The amount of space on the reference/haplotype chromosome needed to create this read.
      I'm adding deletions because more deletions mean that I need
      more chromosome bases to achieve the same read length.
      Insertions means I need fewer.
@@ -491,42 +491,42 @@ void PacBioOneGenome<T>::append_pool(const std::string& chrom,
 
 // `one_read` method
 template <typename U>
-void PacBioVariants::one_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng) {
+void PacBioHaplotypes::one_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng) {
 
 
-    if (var == variants->size()) {
+    if (hap == haplotypes->size()) {
         finished = true;
         return;
     }
 
-    if (n_reads_vc[var][chr] == 0 || var_chrom_seq.empty()) {
+    if (n_reads_vc[hap][chr] == 0 || hap_chrom_seq.empty()) {
 
-        uint64 new_var = var;
+        uint64 new_hap = hap;
         uint64 new_chr = chr;
-        for (; new_var < n_reads_vc.size(); new_var++) {
-            while (n_reads_vc[new_var][new_chr] == 0) {
+        for (; new_hap < n_reads_vc.size(); new_hap++) {
+            while (n_reads_vc[new_hap][new_chr] == 0) {
                 new_chr++;
-                if (new_chr == n_reads_vc[new_var].size()) break;
+                if (new_chr == n_reads_vc[new_hap].size()) break;
             }
-            if (new_chr < n_reads_vc[new_var].size()) {
+            if (new_chr < n_reads_vc[new_hap].size()) {
                 break;
             } else new_chr = 0;
         }
 
-        var = new_var;
+        hap = new_hap;
         chr = new_chr;
 
-        if (var == variants->size())  {
+        if (hap == haplotypes->size())  {
             finished = true;
             return;
         }
 
-        var_chrom_seq = (*variants)[var][chr].get_chrom_full();
+        hap_chrom_seq = (*haplotypes)[hap][chr].get_chrom_full();
     }
 
-    read_makers[var].one_read<U>(var_chrom_seq, chr, fastq_pools, eng);
+    read_makers[hap].one_read<U>(hap_chrom_seq, chr, fastq_pools, eng);
 
-    n_reads_vc[var][chr]--;
+    n_reads_vc[hap][chr]--;
 
     return;
 
@@ -535,16 +535,16 @@ void PacBioVariants::one_read(std::vector<U>& fastq_pools, bool& finished, pcg64
 
 // `re_read` method (for duplicates)
 template <typename U>
-void PacBioVariants::re_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng) {
+void PacBioHaplotypes::re_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng) {
 
-    if (var == variants->size()) {
+    if (hap == haplotypes->size()) {
         finished = true;
         return;
     }
 
-    read_makers[var].re_read<U>(var_chrom_seq, chr, fastq_pools, eng);
+    read_makers[hap].re_read<U>(hap_chrom_seq, chr, fastq_pools, eng);
 
-    if (n_reads_vc[var][chr] > 0) n_reads_vc[var][chr]--;
+    if (n_reads_vc[hap][chr] > 0) n_reads_vc[hap][chr]--;
 
     return;
 
@@ -643,7 +643,7 @@ void pacbio_ref_cpp(SEXP ref_genome_ptr,
 //' @noRd
 //'
 //[[Rcpp::export]]
-void pacbio_var_cpp(SEXP var_set_ptr,
+void pacbio_hap_cpp(SEXP hap_set_ptr,
                     const std::string& out_prefix,
                     const bool& sep_files,
                     const int& compress,
@@ -652,7 +652,7 @@ void pacbio_var_cpp(SEXP var_set_ptr,
                     const uint64& n_threads,
                     const bool& show_progress,
                     const uint64& read_pool_size,
-                    const std::vector<double>& variant_probs,
+                    const std::vector<double>& haplotype_probs,
                     const double& prob_dup,
                     const double& scale,
                     const double& sigma,
@@ -670,19 +670,19 @@ void pacbio_var_cpp(SEXP var_set_ptr,
                     const double& prob_del,
                     const double& prob_subst) {
 
-    XPtr<VarSet> var_set(var_set_ptr);
-    PacBioVariants read_filler_base;
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    PacBioHaplotypes read_filler_base;
 
     if (read_probs.size() == 0) {
         read_filler_base =
-            PacBioVariants(*var_set, variant_probs,
+            PacBioHaplotypes(*hap_set, haplotype_probs,
                            scale, sigma, loc, min_read_len,
                            max_passes, chi2_params_n, chi2_params_s,
                            sqrt_params, norm_params, prob_thresh,
                            prob_ins, prob_del, prob_subst);
     } else {
         read_filler_base =
-            PacBioVariants(*var_set, variant_probs,
+            PacBioHaplotypes(*hap_set, haplotype_probs,
                            read_probs, read_lens,
                            max_passes, chi2_params_n, chi2_params_s,
                            sqrt_params, norm_params, prob_thresh,
@@ -697,14 +697,14 @@ void pacbio_var_cpp(SEXP var_set_ptr,
 
     if (sep_files) {
 
-        write_reads_cpp_sep_files_<PacBioVariants>(
-            *var_set, variant_probs,
+        write_reads_cpp_sep_files_<PacBioHaplotypes>(
+            *hap_set, haplotype_probs,
             read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size, 1,
             n_threads, compress, comp_method, prog_bar);
 
     } else {
 
-        write_reads_cpp_<PacBioVariants>(
+        write_reads_cpp_<PacBioHaplotypes>(
             read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size, 1,
             n_threads, compress, comp_method, prog_bar);
 

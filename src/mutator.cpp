@@ -15,7 +15,7 @@
 
 
 #include "jackalope_types.h" // integer types
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling
 #include "mutator.h"   // TreeMutator
@@ -36,7 +36,7 @@ using namespace Rcpp;
  (`end == begin` when chromosome region is of size zero bc `end` is non-inclusive)
  */
 int TreeMutator::mutate(const double& b_len,
-                        VarChrom& var_chrom,
+                        HapChrom& hap_chrom,
                         pcg64& eng,
                         Progress& prog_bar,
                         const uint64& begin,
@@ -50,11 +50,11 @@ int TreeMutator::mutate(const double& b_len,
 
     int status;
 
-    status = indels.add_indels(b_len, begin, end, rate_inds, subs, var_chrom,
+    status = indels.add_indels(b_len, begin, end, rate_inds, subs, hap_chrom,
                                eng, prog_bar);
     if (status < 0) return status;
 
-    status = subs.add_subs(b_len, begin, end, rate_inds, var_chrom, eng, prog_bar);
+    status = subs.add_subs(b_len, begin, end, rate_inds, hap_chrom, eng, prog_bar);
 
     return status;
 }

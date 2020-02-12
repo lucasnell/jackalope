@@ -19,7 +19,7 @@
 
 #include "jackalope_types.h"  // integer types
 #include "ref_classes.h"  // Ref* classes
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "str_manip.h"  // filter_nucleos
 #include "util.h"  // str_stop, thread_check
 #include "io.h"

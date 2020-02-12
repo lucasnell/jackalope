@@ -5,7 +5,7 @@
 /*
  ********************************************************
 
- Classes to store variant chromosome info.
+ Classes to store haplotype chromosome info.
 
  ********************************************************
  */
@@ -44,7 +44,7 @@ using namespace Rcpp;
 //     sint64 size_modifier;
 //     // Position on the old (i.e., reference) chromosome:
 //     uint64 old_pos;
-//     // Position on the new, variant chromosome:
+//     // Position on the new, haplotype chromosome:
 //     uint64 new_pos;
 //     // Nucleotides associated with this mutation:
 //     std::string nucleos;
@@ -68,7 +68,7 @@ using namespace Rcpp;
 //      These operators compare Mutation objects.
 //      If there is any overlap between the two mutations, then neither > nor <
 //      will return true.
-//      They are used to determine how and whether to merge VarChrom objects.
+//      They are used to determine how and whether to merge HapChrom objects.
 //     */
 //     bool operator<(const Mutation& other) const {
 //         // Check for a deletion spanning the distance between the two:
@@ -268,23 +268,23 @@ private:
  ========================================================================================
  ========================================================================================
 
- Variant genomes
+ Single haplotypes
 
  ========================================================================================
  ========================================================================================
  */
 
-// (These classes will later need access to private members of VarChrom.)
+// (These classes will later need access to private members of HapChrom.)
 class SubMutator;
 
 
 /*
  =========================================
- One chromosome from one variant haploid genome
+ One chromosome from one haplotype haploid genome
  =========================================
  */
 
-class VarChrom {
+class HapChrom {
 
     friend SubMutator;
 
@@ -296,8 +296,8 @@ public:
     std::string name;
 
     // Constructors
-    VarChrom() : ref_chrom(nullptr) {};
-    VarChrom(const RefChrom& ref)
+    HapChrom() : ref_chrom(nullptr) {};
+    HapChrom(const RefChrom& ref)
         : ref_chrom(&ref),
           mutations(),
           chrom_size(ref.size()),
@@ -332,9 +332,9 @@ public:
         return size_mod;
 }
 
-    // Add existing mutation information in another `VarChrom` to this one,
+    // Add existing mutation information in another `HapChrom` to this one,
     // adding to the back of `mutations`, with a starting mutation index
-    sint64 add_to_back(const VarChrom& other, const uint64& mut_i);
+    sint64 add_to_back(const HapChrom& other, const uint64& mut_i);
 
 
     /*
@@ -358,7 +358,7 @@ public:
     /*
      ------------------
      Retrieve all nucleotides (i.e., the full chromosome; std::string type) from
-     the variant chromosome
+     the haplotype chromosome
      ------------------
      */
     std::string get_chrom_full() const;
@@ -367,7 +367,7 @@ public:
 
     /*
      ------------------
-     Set a string object to a chunk of a chromosome from the variant chromosome.
+     Set a string object to a chunk of a chromosome from the haplotype chromosome.
      ------------------
      */
     void set_chrom_chunk(std::string& chunk_str,
@@ -430,7 +430,7 @@ private:
     /*
      ------------------
      Internal function for finding character of either mutation or reference
-     given an index (in the "new", variant chromosome) and an index for a
+     given an index (in the "new", haplotype chromosome) and an index for a
      single Mutation object.
      This only works if you've already narrowed it down to the Mutation object
      that is directly previous to the index position.
@@ -460,7 +460,7 @@ private:
     /*
      ------------------
      Inner function to return an iterator to the Mutation object nearest to
-     (without being past) an input position on the "new", variant chromosome.
+     (without being past) an input position on the "new", haplotype chromosome.
      ------------------
      */
     uint64 get_mut_(const uint64& new_pos) const;
@@ -471,43 +471,43 @@ private:
 
 /*
  =========================================
- One variant haploid genome
+ One haplotype haploid genome
  =========================================
  */
 
-class VarGenome {
+class HapGenome {
 public:
 
     // Fields
     std::string name;
-    std::vector<VarChrom> chromosomes;
+    std::vector<HapChrom> chromosomes;
 
     // Constructors
-    VarGenome() {};
-    VarGenome(const RefGenome& ref) {
+    HapGenome() {};
+    HapGenome(const RefGenome& ref) {
         name = "";
         for (uint64 i = 0; i < ref.size(); i++) {
-            VarChrom var_chrom(ref[i]);
-            chromosomes.push_back(var_chrom);
+            HapChrom hap_chrom(ref[i]);
+            chromosomes.push_back(hap_chrom);
         }
     };
-    VarGenome(const std::string& name_, const RefGenome& ref) {
+    HapGenome(const std::string& name_, const RefGenome& ref) {
         name = name_;
         for (uint64 i = 0; i < ref.size(); i++) {
-            VarChrom var_chrom(ref[i]);
-            chromosomes.push_back(var_chrom);
+            HapChrom hap_chrom(ref[i]);
+            chromosomes.push_back(hap_chrom);
         }
     };
 
-    // For easily outputting a reference to a VarChrom
-    VarChrom& operator[](const uint64& idx) {
-        VarChrom& var_chrom(chromosomes[idx]);
-        return var_chrom;
+    // For easily outputting a reference to a HapChrom
+    HapChrom& operator[](const uint64& idx) {
+        HapChrom& hap_chrom(chromosomes[idx]);
+        return hap_chrom;
     }
     // const version
-    const VarChrom& operator[](const uint64& idx) const {
-        const VarChrom& var_chrom(chromosomes[idx]);
-        return var_chrom;
+    const HapChrom& operator[](const uint64& idx) const {
+        const HapChrom& hap_chrom(chromosomes[idx]);
+        return hap_chrom;
     }
     // To return the number of chromosomes
     uint64 size() const noexcept {
@@ -530,77 +530,77 @@ private:
 
 /*
  =========================================
- Multiple variant haploid genomes (based on the same reference)
+ Multiple haplotype haploid genomes (based on the same reference)
  =========================================
  */
 
-class VarSet {
+class HapSet {
 public:
-    std::vector<VarGenome> variants;
+    std::vector<HapGenome> haplotypes;
     const RefGenome* reference;  // pointer to const RefGenome
 
     /*
      Constructors:
      */
-    VarSet(const RefGenome& ref) : variants(), reference(&ref) {};
-    VarSet(const RefGenome& ref, const uint64& n_vars)
-        : variants(n_vars, VarGenome(ref)),
+    HapSet(const RefGenome& ref) : haplotypes(), reference(&ref) {};
+    HapSet(const RefGenome& ref, const uint64& n_haps)
+        : haplotypes(n_haps, HapGenome(ref)),
           reference(&ref) {
-        for (uint64 i = 0; i < n_vars; i++) variants[i].name = "var" + std::to_string(i);
+        for (uint64 i = 0; i < n_haps; i++) haplotypes[i].name = "hap" + std::to_string(i);
     };
     // If you already have the names:
-    VarSet(const RefGenome& ref, const std::vector<std::string>& names_)
-        : variants(names_.size(), VarGenome(ref)),
+    HapSet(const RefGenome& ref, const std::vector<std::string>& names_)
+        : haplotypes(names_.size(), HapGenome(ref)),
           reference(&ref) {
-        for (uint64 i = 0; i < names_.size(); i++) variants[i].name = names_[i];
+        for (uint64 i = 0; i < names_.size(); i++) haplotypes[i].name = names_[i];
     };
 
-    // For easily outputting a reference to a VarGenome
-    VarGenome& operator[](const uint64& idx) {
+    // For easily outputting a reference to a HapGenome
+    HapGenome& operator[](const uint64& idx) {
 #ifdef __JACKALOPE_DEBUG
-        if (idx >= variants.size()) {
-            stop("trying to access a VarGenome that doesn't exist");
+        if (idx >= haplotypes.size()) {
+            stop("trying to access a HapGenome that doesn't exist");
         }
 #endif
-        VarGenome& vg(variants[idx]);
+        HapGenome& vg(haplotypes[idx]);
         return vg;
     }
     // const version of above
-    const VarGenome& operator[](const uint64& idx) const {
+    const HapGenome& operator[](const uint64& idx) const {
 #ifdef __JACKALOPE_DEBUG
-        if (idx >= variants.size()) {
-            stop("trying to access a VarGenome that doesn't exist");
+        if (idx >= haplotypes.size()) {
+            stop("trying to access a HapGenome that doesn't exist");
         }
 #endif
-        const VarGenome& vg(variants[idx]);
+        const HapGenome& vg(haplotypes[idx]);
         return vg;
     }
-    // To return the number of variants
+    // To return the number of haplotypes
     uint64 size() const noexcept {
-        return variants.size();
+        return haplotypes.size();
     }
     // To return the minimum size of a given chromosome
     uint64 min_size(const uint64& i) const {
-        uint64 ms = variants[0][i].size();
-        for (const VarGenome vg : variants) {
+        uint64 ms = haplotypes[0][i].size();
+        for (const HapGenome vg : haplotypes) {
             if (vg[i].size() < ms) ms = vg[i].size();
         }
         return ms;
     }
 
     /*
-     Fill VarGenome objects after the reference has been filled
+     Fill HapGenome objects after the reference has been filled
      */
-    void fill_vars(const uint64& n_vars) {
-        VarGenome vg(*reference);
-        for (uint64 i = 0; i < n_vars; i++) variants.push_back(vg);
+    void fill_haps(const uint64& n_haps) {
+        HapGenome vg(*reference);
+        for (uint64 i = 0; i < n_haps; i++) haplotypes.push_back(vg);
         return;
     }
     // Overloaded for if you want to provide names
-    void fill_vars(const std::vector<std::string>& names) {
+    void fill_haps(const std::vector<std::string>& names) {
         for (uint64 i = 0; i < names.size(); i++) {
-            VarGenome vg(names[i], *reference);
-            variants.push_back(vg);
+            HapGenome vg(names[i], *reference);
+            haplotypes.push_back(vg);
         }
         return;
     }

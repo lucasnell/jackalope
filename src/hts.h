@@ -50,7 +50,7 @@ const std::vector<std::string> mm_nucleos = {"CAG", "TAG", "TCG", "TCA", "NNN"};
 
 
 /*
- Samples for # reads per group (e.g., per variant, per chromosome).
+ Samples for # reads per group (e.g., per haplotype, per chromosome).
  It uses binomial distribution for a `n_reads` that decreases each iteration and a
  `probs` vector whose values go up.
  This is ~600x faster than doing separate samples (via AliasSampler) for every read.
@@ -104,7 +104,7 @@ inline std::vector<uint64> reads_per_group(uint64 n_reads,
 
 
 
-// Fill read from string rather than variant chromosome
+// Fill read from string rather than haplotype chromosome
 
 inline void fill_read__(const std::string& chrom,
                         std::string& read,
@@ -186,7 +186,7 @@ inline int bgzip_file(const std::string& file_name,
 
 Info for making reads and writing them, for one thread.
 
-`T` can be `[Illumina/PacBio]Reference` or `[Illumina/PacBio]Variants`.
+`T` can be `[Illumina/PacBio]Reference` or `[Illumina/PacBio]Haplotypes`.
  `F` should be `FileUncomp`, `FileGZ`, or `FileBGZF`.
 */
 
@@ -314,7 +314,7 @@ public:
  Does most of the work of `write_reads_cpp_` below.
  This should only be called inside that function.
 
- `T` should be `[Illumina|PacBio]Reference` or `[Illumina|PacBio]Variants`.
+ `T` should be `[Illumina|PacBio]Reference` or `[Illumina|PacBio]Haplotypes`.
  `T` should have an `add_n_reads` method.
 
  `F` should be `FileUncomp`, `FileGZ`, or `FileBGZF`.
@@ -434,7 +434,7 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
 /*
  For one sequencing-filler type, make reads and write them to file(s).
 
- `T` should be `[Illumina|PacBio]Reference` or `[Illumina|PacBio]Variants`.
+ `T` should be `[Illumina|PacBio]Reference` or `[Illumina|PacBio]Haplotypes`.
 
  */
 
@@ -504,14 +504,14 @@ inline void write_reads_cpp_(const T& read_filler_base,
 
 
 /*
- Same as above, but for when you want a separate file per variant.
+ Same as above, but for when you want a separate file per haplotype.
 
- So `T` should be `[Illumina|PacBio]Variants`.
+ So `T` should be `[Illumina|PacBio]Haplotypes`.
  */
 
 template <typename T>
-inline void write_reads_cpp_sep_files_(const VarSet& var_set,
-                                       const std::vector<double>& variant_probs,
+inline void write_reads_cpp_sep_files_(const HapSet& hap_set,
+                                       const std::vector<double>& haplotype_probs,
                                        T read_filler_base,
                                        const std::string& out_prefix,
                                        const uint64& n_reads,
@@ -525,27 +525,27 @@ inline void write_reads_cpp_sep_files_(const VarSet& var_set,
 
     // Sample for reads per file:
     std::vector<uint64> reads_per_file = reads_per_group(n_reads / n_read_ends,
-                                                         variant_probs);
+                                                         haplotype_probs);
     if (n_read_ends > 1) for (uint64& rpf : reads_per_file) rpf *= n_read_ends;
 
-    // Now do each variant as separate file:
-    std::vector<double> var_probs_(var_set.size(), 0.0);
+    // Now do each haplotype as separate file:
+    std::vector<double> hap_probs_(hap_set.size(), 0.0);
 
-    for (uint64 i = 0; i < var_set.size(); i++) {
+    for (uint64 i = 0; i < hap_set.size(); i++) {
 
         if (prog_bar.check_abort()) break;
 
-        var_probs_[i] = 1;
-        read_filler_base.var_probs = var_probs_;
+        hap_probs_[i] = 1;
+        read_filler_base.hap_probs = hap_probs_;
 
-        std::string out_prefix_ = out_prefix + '_' + var_set[i].name;
+        std::string out_prefix_ = out_prefix + '_' + hap_set[i].name;
 
         write_reads_cpp_<T>(
             read_filler_base, out_prefix_, reads_per_file[i], prob_dup,
             read_pool_size, n_read_ends, n_threads, compress, comp_method,
             prog_bar);
 
-        var_probs_[i] = 0;
+        hap_probs_[i] = 0;
     }
 
     return;

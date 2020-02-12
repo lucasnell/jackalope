@@ -18,7 +18,7 @@
 
 
 #include "jackalope_types.h" // integer types
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling
 #include "util.h"  // str_stop
@@ -96,7 +96,7 @@ public:
                    uint64& end,
                    std::deque<uint8>& rate_inds,
                    SubMutator& subs,
-                   VarChrom& var_chrom,
+                   HapChrom& hap_chrom,
                    pcg64& eng,
                    Progress& prog_bar);
 
@@ -104,7 +104,7 @@ public:
 private:
 
 
-    void calc_tau(double& b_len, VarChrom& var_chrom);
+    void calc_tau(double& b_len, HapChrom& hap_chrom);
 
     // For generating # events per time period:
     std::poisson_distribution<uint32> distr = std::poisson_distribution<uint32>(1);

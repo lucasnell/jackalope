@@ -15,7 +15,7 @@
 
 #include "jackalope_types.h"  // integer types
 #include "ref_classes.h"  // Ref* classes
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "hts.h"  // generic sequencing classes
 #include "hts_illumina.h"  // Illumina-specific classes
 #include "str_manip.h"  // rev_comp
@@ -52,7 +52,7 @@ void IlluminaOneGenome<T>::one_read(std::vector<U>& fastq_pools,
     return;
 }
 
-// Overloaded for when we input a variant chromosome stored as string
+// Overloaded for when we input a haplotype chromosome stored as string
 template <typename T>
 template <typename U>
 void IlluminaOneGenome<T>::one_read(const std::string& chrom,
@@ -408,7 +408,7 @@ void IlluminaOneGenome<T>::append_pools(std::vector<U>& fastq_pools,
     return;
 }
 
-// Overloaded for when a variant chromosome sequence is provided
+// Overloaded for when a haplotype chromosome sequence is provided
 template <typename T>
 template <typename U>
 void IlluminaOneGenome<T>::append_pools(const std::string& chrom,
@@ -491,46 +491,46 @@ void IlluminaOneGenome<T>::append_pools(const std::string& chrom,
 
 
 
-// If only providing rng and id info, sample for a variant, then make read(s):
+// If only providing rng and id info, sample for a haplotype, then make read(s):
 template <typename U>
-void IlluminaVariants::one_read(std::vector<U>& fastq_pools,
+void IlluminaHaplotypes::one_read(std::vector<U>& fastq_pools,
                                 bool& finished,
                                 pcg64& eng) {
 
-    if (var == variants->size()) {
+    if (hap == haplotypes->size()) {
         finished = true;
         return;
     }
 
-    if (n_reads_vc[var][chr] == 0 || var_chrom_seq.empty()) {
+    if (n_reads_vc[hap][chr] == 0 || hap_chrom_seq.empty()) {
 
-        uint64 new_var = var;
+        uint64 new_hap = hap;
         uint64 new_chr = chr;
-        for (; new_var < n_reads_vc.size(); new_var++) {
-            while (n_reads_vc[new_var][new_chr] == 0) {
+        for (; new_hap < n_reads_vc.size(); new_hap++) {
+            while (n_reads_vc[new_hap][new_chr] == 0) {
                 new_chr++;
-                if (new_chr == n_reads_vc[new_var].size()) break;
+                if (new_chr == n_reads_vc[new_hap].size()) break;
             }
-            if (new_chr < n_reads_vc[new_var].size()) {
+            if (new_chr < n_reads_vc[new_hap].size()) {
                 break;
             } else new_chr = 0;
         }
 
-        var = new_var;
+        hap = new_hap;
         chr = new_chr;
 
-        if (var == variants->size())  {
+        if (hap == haplotypes->size())  {
             finished = true;
             return;
         }
 
-        var_chrom_seq = (*variants)[var][chr].get_chrom_full();
+        hap_chrom_seq = (*haplotypes)[hap][chr].get_chrom_full();
     }
 
-    read_makers[var].one_read<U>(var_chrom_seq, chr, fastq_pools, eng);
+    read_makers[hap].one_read<U>(hap_chrom_seq, chr, fastq_pools, eng);
 
-    n_reads_vc[var][chr]--;
-    if (paired && n_reads_vc[var][chr] > 0) n_reads_vc[var][chr]--;
+    n_reads_vc[hap][chr]--;
+    if (paired && n_reads_vc[hap][chr] > 0) n_reads_vc[hap][chr]--;
 
     return;
 }
@@ -540,19 +540,19 @@ void IlluminaVariants::one_read(std::vector<U>& fastq_pools,
  -------------
  */
 template <typename U>
-void IlluminaVariants::re_read(std::vector<U>& fastq_pools,
+void IlluminaHaplotypes::re_read(std::vector<U>& fastq_pools,
                                bool& finished,
                                pcg64& eng) {
 
-    if (var == variants->size()) {
+    if (hap == haplotypes->size()) {
         finished = true;
         return;
     }
 
-    read_makers[var].re_read<U>(var_chrom_seq, chr, fastq_pools, eng);
+    read_makers[hap].re_read<U>(hap_chrom_seq, chr, fastq_pools, eng);
 
-    if (n_reads_vc[var][chr] > 0) n_reads_vc[var][chr]--;
-    if (paired && n_reads_vc[var][chr] > 0) n_reads_vc[var][chr]--;
+    if (n_reads_vc[hap][chr] > 0) n_reads_vc[hap][chr]--;
+    if (paired && n_reads_vc[hap][chr] > 0) n_reads_vc[hap][chr]--;
 
     return;
 }
@@ -659,7 +659,7 @@ void illumina_ref_cpp(SEXP ref_genome_ptr,
 //' @noRd
 //'
 //[[Rcpp::export]]
-void illumina_var_cpp(SEXP var_set_ptr,
+void illumina_hap_cpp(SEXP hap_set_ptr,
                       const bool& paired,
                       const bool& matepair,
                       const std::string& out_prefix,
@@ -671,7 +671,7 @@ void illumina_var_cpp(SEXP var_set_ptr,
                       const uint64& n_threads,
                       const bool& show_progress,
                       const uint64& read_pool_size,
-                      const std::vector<double>& variant_probs,
+                      const std::vector<double>& haplotype_probs,
                       const double& frag_len_shape,
                       const double& frag_len_scale,
                       const uint64& frag_len_min,
@@ -686,15 +686,15 @@ void illumina_var_cpp(SEXP var_set_ptr,
                       const double& del_prob2,
                       const std::vector<std::string>& barcodes) {
 
-    XPtr<VarSet> var_set(var_set_ptr);
-    IlluminaVariants read_filler_base;
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    IlluminaHaplotypes read_filler_base;
 
     uint64 n_read_ends;
 
     if (paired) {
 
         n_read_ends = 2;
-        read_filler_base = IlluminaVariants(*var_set, variant_probs,
+        read_filler_base = IlluminaHaplotypes(*hap_set, haplotype_probs,
                                             matepair,
                                             frag_len_shape, frag_len_scale,
                                             frag_len_min, frag_len_max,
@@ -705,7 +705,7 @@ void illumina_var_cpp(SEXP var_set_ptr,
     } else {
 
         n_read_ends = 1;
-        read_filler_base = IlluminaVariants(*var_set, variant_probs,
+        read_filler_base = IlluminaHaplotypes(*hap_set, haplotype_probs,
                                             frag_len_shape, frag_len_scale,
                                             frag_len_min, frag_len_max,
                                             qual_probs1, quals1, ins_prob1, del_prob1,
@@ -721,15 +721,15 @@ void illumina_var_cpp(SEXP var_set_ptr,
 
     if (sep_files) {
 
-        write_reads_cpp_sep_files_<IlluminaVariants>(
-            *var_set, variant_probs,
+        write_reads_cpp_sep_files_<IlluminaHaplotypes>(
+            *hap_set, haplotype_probs,
             read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size,
             n_read_ends, n_threads, compress, comp_method, prog_bar);
 
 
     } else {
 
-        write_reads_cpp_<IlluminaVariants>(
+        write_reads_cpp_<IlluminaHaplotypes>(
             read_filler_base, out_prefix, n_reads, prob_dup, read_pool_size,
             n_read_ends, n_threads, compress, comp_method, prog_bar);
 

@@ -20,7 +20,7 @@
 
 #include "jackalope_types.h"  // integer types
 #include "ref_classes.h"  // Ref* classes
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "util.h"  // get_width
 
 
@@ -33,16 +33,16 @@ using namespace Rcpp;
 
 
 // `start` is inclusive
-// this `VarChrom` must be empty after `mut_i`
+// this `HapChrom` must be empty after `mut_i`
 // return `sint64` is the size modifier for mutations added
-sint64 VarChrom::add_to_back(const VarChrom& other, const uint64& mut_i) {
+sint64 HapChrom::add_to_back(const HapChrom& other, const uint64& mut_i) {
 
     if (other.mutations.size() <= mut_i) return 0;
 
     if (!mutations.empty() &&
         mutations.old_pos.back() >= other.mutations.old_pos[mut_i]) {
-        str_stop({"\nOverlapping VarChrom.mutations in VarChrom::add_to_back. ",
-                 "Note that when combining VarChrom objects using `add_to_back`, you ",
+        str_stop({"\nOverlapping HapChrom.mutations in HapChrom::add_to_back. ",
+                 "Note that when combining HapChrom objects using `add_to_back`, you ",
                  "must do it sequentially, from the back ONLY."});
     }
 
@@ -73,11 +73,11 @@ sint64 VarChrom::add_to_back(const VarChrom& other, const uint64& mut_i) {
 /*
  ------------------
  Retrieve all nucleotides (i.e., the full chromosome; std::string type) from
- the variant chromosome
+ the haplotype chromosome
  ------------------
  */
 
-std::string VarChrom::get_chrom_full() const {
+std::string HapChrom::get_chrom_full() const {
 
     if (mutations.empty()) return ref_chrom->nucleos;
 
@@ -121,7 +121,7 @@ std::string VarChrom::get_chrom_full() const {
 
 /*
  ------------------
- Set an input string object to any chunk of a chromosome from the variant chromosome.
+ Set an input string object to any chunk of a chromosome from the haplotype chromosome.
  Before anything, this function moves `mut` to the location right before this chunk's
  starting position. I keep this index around so I don't have to iterate through
  the entire mutation deque multiple times.
@@ -131,7 +131,7 @@ std::string VarChrom::get_chrom_full() const {
  `mutations.end()` and clears `chunk_str`.
  ------------------
  */
-void VarChrom::set_chrom_chunk(std::string& chunk_str,
+void HapChrom::set_chrom_chunk(std::string& chunk_str,
                                 const uint64& start,
                                 const uint64& chunk_size,
                                 uint64& mut_i) const {
@@ -211,7 +211,7 @@ void VarChrom::set_chrom_chunk(std::string& chunk_str,
  read, since I don't want to muck with the barcodes.
  */
 
-void VarChrom::fill_read(std::string& read,
+void HapChrom::fill_read(std::string& read,
                             const uint64& read_start,
                             const uint64& chrom_start,
                             uint64 n_to_add) const {
@@ -295,7 +295,7 @@ void VarChrom::fill_read(std::string& read,
  Add a deletion somewhere in the deque
  ------------------
  */
-void VarChrom::add_deletion(const uint64& size_, const uint64& new_pos_) {
+void HapChrom::add_deletion(const uint64& size_, const uint64& new_pos_) {
 
     if (size_ == 0 || new_pos_ >= chrom_size) return;
 
@@ -412,7 +412,7 @@ void VarChrom::add_deletion(const uint64& size_, const uint64& new_pos_) {
  Add an insertion somewhere in the deque
  ------------------
  */
-void VarChrom::add_insertion(const std::string& nucleos_, const uint64& new_pos_) {
+void HapChrom::add_insertion(const std::string& nucleos_, const uint64& new_pos_) {
 
     sint64 size_mod = nucleos_.size();
 
@@ -474,7 +474,7 @@ void VarChrom::add_insertion(const std::string& nucleos_, const uint64& new_pos_
  Add a substitution somewhere in the deque
  ------------------
  */
-void VarChrom::add_substitution(const char& nucleo, const uint64& new_pos_) {
+void HapChrom::add_substitution(const char& nucleo, const uint64& new_pos_) {
 
     uint64 mut_i = get_mut_(new_pos_);
 
@@ -518,7 +518,7 @@ void VarChrom::add_substitution(const char& nucleo, const uint64& new_pos_) {
  Inner function to get old position for deletion.
  -------------------
  */
-uint64 VarChrom::deletion_old_pos_(const uint64& deletion_start,
+uint64 HapChrom::deletion_old_pos_(const uint64& deletion_start,
                                     const uint64& deletion_end,
                                     const uint64& mut_i) const {
 
@@ -580,7 +580,7 @@ uint64 VarChrom::deletion_old_pos_(const uint64& deletion_start,
  (4) adjusts `new_size_mod` to inform whether it's been absorbed by insertion(s).
  -------------------
  */
-void VarChrom::deletion_one_mut_(const uint64& mut_i,
+void HapChrom::deletion_one_mut_(const uint64& mut_i,
                                  const uint64& deletion_start,
                                  const uint64& deletion_end,
                                  const sint64& full_size_mod,
@@ -719,13 +719,13 @@ void VarChrom::deletion_one_mut_(const uint64& mut_i,
 /*
  ------------------
  Inner function to return an index to the Mutation object nearest to
- (without being past) an input position on the "new", variant chromosome.
+ (without being past) an input position on the "new", haplotype chromosome.
  If the input position is before the first Mutation object or if `mutations` is empty,
  this function returns `mutations.end()`.
  ------------------
  */
 
-uint64 VarChrom::get_mut_(const uint64& new_pos) const {
+uint64 HapChrom::get_mut_(const uint64& new_pos) const {
 
     uint64 mut_i = 0;
 
@@ -777,11 +777,11 @@ uint64 VarChrom::get_mut_(const uint64& new_pos) const {
 
 
 
-void VarSet::print() const noexcept {
+void HapSet::print() const noexcept {
 
     uint64 total_muts = 0;
-    for (const VarGenome& vg : variants) {
-        for (const VarChrom& vc : vg.chromosomes) {
+    for (const HapGenome& vg : haplotypes) {
+        for (const HapChrom& vc : vg.chromosomes) {
             total_muts += vc.mutations.size();
         }
     }
@@ -793,9 +793,9 @@ void VarSet::print() const noexcept {
     );
 
     for (int i = 0; i < n_spaces; i++) Rcout << ' ';
-    Rcout << "<< Variants object >>" << std::endl;
+    Rcout << "<< haplotypes object >>" << std::endl;
 
-    Rcout << "# Variants: " << big_int_format<uint64>(size()) << std::endl;
+    Rcout << "# Haplotypes: " << big_int_format<uint64>(size()) << std::endl;
     Rcout << "# Mutations: " << big_int_format<uint64>(total_muts) << std::endl;
     Rcout << std::endl;
 

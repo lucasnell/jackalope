@@ -10,7 +10,7 @@
 
 
 #include "mutator_subs.h" // SubMutator
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "pcg.h"  // runif_01
 #include "util.h"  // interrupt_check
 #include "alias_sampler.h"  // alias method of sampling
@@ -157,10 +157,10 @@ inline void SubMutator::subs_before_muts__(const uint64& pos,
                                            uint64& mut_i,
                                            const std::string& bases,
                                            const uint8& rate_i,
-                                           VarChrom& var_chrom,
+                                           HapChrom& hap_chrom,
                                            pcg64& eng) {
 
-    const uint8& c_i(char_map[var_chrom.ref_chrom->nucleos[pos]]);
+    const uint8& c_i(char_map[hap_chrom.ref_chrom->nucleos[pos]]);
     if (c_i > 3) return; // only changing T, C, A, or G
     AliasSampler& samp(samplers[rate_i][c_i]);
     uint8 nt_i = samp.sample(eng);
@@ -170,7 +170,7 @@ inline void SubMutator::subs_before_muts__(const uint64& pos,
         Rcout << "__ " << pos << ' ' << static_cast<unsigned>(rate_i) << ' ' <<
             bases[c_i] << '-' << bases[nt_i] << std::endl;
 #endif
-        var_chrom.mutations.push_front(pos, pos, bases[nt_i]);
+        hap_chrom.mutations.push_front(pos, pos, bases[nt_i]);
         mut_i++;
     }
 
@@ -188,7 +188,7 @@ inline int SubMutator::subs_before_muts(const uint64& begin,
                                         const uint8& max_gamma,
                                         const std::string& bases,
                                         const std::deque<uint8>& rate_inds,
-                                        VarChrom& var_chrom,
+                                        HapChrom& hap_chrom,
                                         pcg64& eng,
                                         Progress& prog_bar,
                                         uint32& iters) {
@@ -215,7 +215,7 @@ inline int SubMutator::subs_before_muts(const uint64& begin,
             const uint8& rate_i(rate_inds[(pos-begin)]);
             if (rate_i > max_gamma) continue; // this is an invariant region
 
-            subs_before_muts__(pos, mut_i, bases, rate_i, var_chrom, eng);
+            subs_before_muts__(pos, mut_i, bases, rate_i, hap_chrom, eng);
 
             if (interrupt_check(iters, prog_bar)) return -1;
 
@@ -230,7 +230,7 @@ inline int SubMutator::subs_before_muts(const uint64& begin,
 
             pos = end - i;
 
-            subs_before_muts__(pos, mut_i, bases, rate_i, var_chrom, eng);
+            subs_before_muts__(pos, mut_i, bases, rate_i, hap_chrom, eng);
 
             if (interrupt_check(iters, prog_bar)) return -1;
 
@@ -251,14 +251,14 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
                                           uint64& mut_i,
                                           const std::string& bases,
                                           const uint8& rate_i,
-                                          VarChrom& var_chrom,
+                                          HapChrom& hap_chrom,
                                           pcg64& eng) {
 
 
-    AllMutations& mutations(var_chrom.mutations);
-    const std::string& reference(var_chrom.ref_chrom->nucleos);
+    AllMutations& mutations(hap_chrom.mutations);
+    const std::string& reference(hap_chrom.ref_chrom->nucleos);
 
-    const uint8& c_i(char_map[var_chrom.get_char_(pos, mut_i)]);
+    const uint8& c_i(char_map[hap_chrom.get_char_(pos, mut_i)]);
     if (c_i > 3) return; // only changing T, C, A, or G
 
     AliasSampler& samp(samplers[rate_i][c_i]);
@@ -270,7 +270,7 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
         sint64 ind = pos - mutations.new_pos[mut_i]; // <-- should always be >= 0
 
         // If `pos` is within the mutation chromosome:
-        if (ind <= var_chrom.size_modifier(mut_i)) {
+        if (ind <= hap_chrom.size_modifier(mut_i)) {
 
 #ifdef __JACKALOPE_DIAGNOSTICS
             // __ <new pos> <rate index> <old nucleotide>-<new nucleotide>
@@ -285,7 +285,7 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
              When `mut_i == 0`, doing this would make `mut_i` become negative,
              so I just keep the mutation if `mut_i == 0`.
              */
-            if ((var_chrom.size_modifier(mut_i) == 0) &&
+            if ((hap_chrom.size_modifier(mut_i) == 0) &&
                 (reference[mutations.old_pos[mut_i]] == nucleo) &&
                 mut_i > 0) {
                 mutations.erase(mut_i);
@@ -295,7 +295,7 @@ inline void SubMutator::subs_after_muts__(const uint64& pos,
         } else {
             // If `pos` is in the reference chromosome following the mutation:
             uint64 old_pos_ = ind + (mutations.old_pos[mut_i] -
-                var_chrom.size_modifier(mut_i));
+                hap_chrom.size_modifier(mut_i));
 #ifdef __JACKALOPE_DIAGNOSTICS
             // __ <new pos> <rate index> <old nucleotide>-<new nucleotide>
             Rcout << "__ " << pos << ' ' << static_cast<unsigned>(rate_i) << ' ' <<
@@ -323,7 +323,7 @@ inline int SubMutator::subs_after_muts(uint64& pos,
                                        const uint8& max_gamma,
                                        const std::string& bases,
                                        const std::deque<uint8>& rate_inds,
-                                       VarChrom& var_chrom,
+                                       HapChrom& hap_chrom,
                                        pcg64& eng,
                                        Progress& prog_bar,
                                        uint32& iters) {
@@ -340,7 +340,7 @@ inline int SubMutator::subs_after_muts(uint64& pos,
                 continue; // this is an invariant region
             }
 
-            subs_after_muts__(pos, mut_i, bases, rate_i, var_chrom, eng);
+            subs_after_muts__(pos, mut_i, bases, rate_i, hap_chrom, eng);
             ++pos;
             if (interrupt_check(iters, prog_bar)) return -1;
 
@@ -352,7 +352,7 @@ inline int SubMutator::subs_after_muts(uint64& pos,
 
         while (pos < end) {
 
-            subs_after_muts__(pos, mut_i, bases, rate_i, var_chrom, eng);
+            subs_after_muts__(pos, mut_i, bases, rate_i, hap_chrom, eng);
             ++pos;
             if (interrupt_check(iters, prog_bar)) return -1;
 
@@ -373,7 +373,7 @@ inline int SubMutator::subs_after_muts(uint64& pos,
 
 //' Add substitutions for a whole chromosome or just part of one.
 //'
-//' Here, `end` is NOT inclusive, so can be == var_chrom.size()
+//' Here, `end` is NOT inclusive, so can be == hap_chrom.size()
 //'
 //' @noRd
 //'
@@ -381,7 +381,7 @@ int SubMutator::add_subs(const double& b_len,
                          const uint64& begin,
                          const uint64& end,
                          const std::deque<uint8>& rate_inds,
-                         VarChrom& var_chrom,
+                         HapChrom& hap_chrom,
                          pcg64& eng,
                          Progress& prog_bar) {
 
@@ -392,13 +392,13 @@ int SubMutator::add_subs(const double& b_len,
         Rcout << std::endl << b_len << std::endl;
         stop("b_len < 0 in add_subs");
     }
-    if (begin >= var_chrom.size()) {
-        Rcout << std::endl << begin << ' ' << var_chrom.size() << std::endl;
-        stop("begin >= var_chrom.size() in add_subs");
+    if (begin >= hap_chrom.size()) {
+        Rcout << std::endl << begin << ' ' << hap_chrom.size() << std::endl;
+        stop("begin >= hap_chrom.size() in add_subs");
     }
-    if (end > var_chrom.size()) {
-        Rcout << std::endl << end << ' ' << var_chrom.size() << std::endl;
-        stop("end > var_chrom.size() in add_subs");
+    if (end > hap_chrom.size()) {
+        Rcout << std::endl << end << ' ' << hap_chrom.size() << std::endl;
+        stop("end > hap_chrom.size() in add_subs");
     }
 #endif
 
@@ -411,7 +411,7 @@ int SubMutator::add_subs(const double& b_len,
     std::string bases = "TCAG";
 
     // To make code less clunky:
-    AllMutations& mutations(var_chrom.mutations);
+    AllMutations& mutations(hap_chrom.mutations);
 
     int status = 0;
     uint32 iters = 0;
@@ -427,7 +427,7 @@ int SubMutator::add_subs(const double& b_len,
     if (mutations.empty() || ((end-1) < mutations.new_pos.front())) {
 
         status = subs_before_muts(begin, end, mut_i, max_gamma, bases, rate_inds,
-                                  var_chrom, eng, prog_bar, iters);
+                                  hap_chrom, eng, prog_bar, iters);
         return status;
 
     }
@@ -435,9 +435,9 @@ int SubMutator::add_subs(const double& b_len,
 
     /*
      Index to the Mutation object nearest to (without being past) an input position
-     on the variant chromosome.
+     on the haplotype chromosome.
      */
-    mut_i = var_chrom.get_mut_(begin);
+    mut_i = hap_chrom.get_mut_(begin);
 
     /*
      If `begin` is before the first mutation (resulting in `mut_i == mutations.size()`),
@@ -449,7 +449,7 @@ int SubMutator::add_subs(const double& b_len,
         // This is the end for now, but will be `pos` below:
         pos = mutations.new_pos[mut_i];
         status = subs_before_muts(begin, pos, mut_i, max_gamma, bases,
-                                  rate_inds, var_chrom, eng, prog_bar, iters);
+                                  rate_inds, hap_chrom, eng, prog_bar, iters);
 
         if (status < 0) return status;
 
@@ -464,7 +464,7 @@ int SubMutator::add_subs(const double& b_len,
     while (pos < end && next_mut_i < mutations.size()) {
 
         status = subs_after_muts(pos, begin, end, mutations.new_pos[next_mut_i], mut_i,
-                                 max_gamma, bases, rate_inds, var_chrom, eng, prog_bar,
+                                 max_gamma, bases, rate_inds, hap_chrom, eng, prog_bar,
                                  iters);
 
         if (status < 0) return status;
@@ -474,8 +474,8 @@ int SubMutator::add_subs(const double& b_len,
     }
 
     // Now taking care of nucleotides after the last Mutation
-    status = subs_after_muts(pos, begin, end, var_chrom.chrom_size, mut_i,
-                             max_gamma, bases, rate_inds, var_chrom, eng, prog_bar,
+    status = subs_after_muts(pos, begin, end, hap_chrom.chrom_size, mut_i,
+                             max_gamma, bases, rate_inds, hap_chrom, eng, prog_bar,
                              iters);
 
     return status;

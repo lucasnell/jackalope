@@ -17,7 +17,7 @@
 
 
 #include "jackalope_types.h" // integer types
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling
 #include "util.h"  // str_stop
@@ -103,7 +103,7 @@ public:
                  const uint64& begin,
                  const uint64& end,
                  const std::deque<uint8>& rate_inds,
-                 VarChrom& var_chrom,
+                 HapChrom& hap_chrom,
                  pcg64& eng,
                  Progress& prog_bar);
 
@@ -124,7 +124,7 @@ private:
                                    uint64& mut_i,
                                    const std::string& bases,
                                    const uint8& rate_i,
-                                   VarChrom& var_chrom,
+                                   HapChrom& hap_chrom,
                                    pcg64& eng);
     inline int subs_before_muts(const uint64& begin,
                                 const uint64& end,
@@ -132,7 +132,7 @@ private:
                                 const uint8& max_gamma,
                                 const std::string& bases,
                                 const std::deque<uint8>& rate_inds,
-                                VarChrom& var_chrom,
+                                HapChrom& hap_chrom,
                                 pcg64& eng,
                                 Progress& prog_bar,
                                 uint32& iters);
@@ -141,7 +141,7 @@ private:
                                   uint64& mut_i,
                                   const std::string& bases,
                                   const uint8& rate_i,
-                                  VarChrom& var_chrom,
+                                  HapChrom& hap_chrom,
                                   pcg64& eng);
     inline int subs_after_muts(uint64& pos,
                                const uint64& begin,
@@ -151,7 +151,7 @@ private:
                                const uint8& max_gamma,
                                const std::string& bases,
                                const std::deque<uint8>& rate_inds,
-                               VarChrom& var_chrom,
+                               HapChrom& hap_chrom,
                                pcg64& eng,
                                Progress& prog_bar,
                                uint32& iters);

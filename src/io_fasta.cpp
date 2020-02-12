@@ -20,7 +20,7 @@
 
 #include "jackalope_types.h"  // integer types
 #include "ref_classes.h"  // Ref* classes
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "str_manip.h"  // filter_nucleos
 #include "util.h"  // str_stop, thread_check
 #include "io.h"   // expand_path, File* classes, `LENGTH`
@@ -533,14 +533,14 @@ void write_ref_fasta(const std::string& out_prefix,
 
 
 template <typename T>
-void write_vars_fasta__(const std::string& out_prefix,
-                        const VarSet& var_set,
+void write_haps_fasta__(const std::string& out_prefix,
+                        const HapSet& hap_set,
                         const uint64& text_width,
                         const int& compress,
                         const uint64& n_threads,
                         const bool& show_progress) {
 
-    Progress prog_bar(var_set.reference->size() * var_set.size(), show_progress);
+    Progress prog_bar(hap_set.reference->size() * hap_set.size(), show_progress);
 
 #ifdef _OPENMP
 #pragma omp parallel num_threads(n_threads) if (n_threads > 1)
@@ -555,34 +555,34 @@ void write_vars_fasta__(const std::string& out_prefix,
 #ifdef _OPENMP
 #pragma omp for schedule(static)
 #endif
-    for (uint64 v = 0; v < var_set.size(); v++) {
+    for (uint64 v = 0; v < hap_set.size(); v++) {
 
         if (prog_bar.is_aborted() || prog_bar.check_abort()) continue;
 
-        std::string file_name = out_prefix + "__" + var_set[v].name + ".fa";
+        std::string file_name = out_prefix + "__" + hap_set[v].name + ".fa";
         T out_file(file_name, compress);
 
-        for (uint64 s = 0; s < var_set.reference->size(); s++) {
+        for (uint64 s = 0; s < hap_set.reference->size(); s++) {
 
             if (prog_bar.is_aborted() || prog_bar.check_abort()) break;
 
             name = '>';
-            name += (*var_set.reference)[s].name;
+            name += (*hap_set.reference)[s].name;
             name += '\n';
             out_file.write(name);
 
-            const VarChrom& var_chrom(var_set[v][s]);
+            const HapChrom& hap_chrom(hap_set[v][s]);
             uint64 mut_i = 0;
             uint64 line_start = 0;
             uint64 n_chars = 0;
 
-            while (line_start < var_chrom.chrom_size) {
+            while (line_start < hap_chrom.chrom_size) {
                 // Check every 10,000 characters for user interrupt:
                 if (n_chars > 10000) {
                     if (prog_bar.check_abort()) break;
                     n_chars = 0;
                 }
-                var_chrom.set_chrom_chunk(line, line_start,
+                hap_chrom.set_chrom_chunk(line, line_start,
                                       text_width, mut_i);
                 line += '\n';
                 out_file.write(line);
@@ -590,7 +590,7 @@ void write_vars_fasta__(const std::string& out_prefix,
                 n_chars += text_width;
             }
 
-            prog_bar.increment(var_set.reference->operator[](s).size());
+            prog_bar.increment(hap_set.reference->operator[](s).size());
 
         }
 
@@ -606,10 +606,10 @@ void write_vars_fasta__(const std::string& out_prefix,
 
 
 
-//' Write \code{VarSet} to an uncompressed fasta file.
+//' Write \code{HapSet} to an uncompressed fasta file.
 //'
 //' @param out_prefix Prefix to file name of output fasta file.
-//' @param var_set_ptr An external pointer to a \code{VarSet} C++ object.
+//' @param hap_set_ptr An external pointer to a \code{HapSet} C++ object.
 //' @param text_width The number of characters per line in the output fasta file.
 //' @param compress Boolean for whether to compress output.
 //'
@@ -619,16 +619,16 @@ void write_vars_fasta__(const std::string& out_prefix,
 //'
 //'
 //[[Rcpp::export]]
-void write_vars_fasta(std::string out_prefix,
-                      SEXP var_set_ptr,
+void write_haps_fasta(std::string out_prefix,
+                      SEXP hap_set_ptr,
                       const uint64& text_width,
                       const int& compress,
                       const std::string& comp_method,
                       uint64 n_threads,
                       const bool& show_progress) {
 
-    XPtr<VarSet> vars_xptr(var_set_ptr);
-    VarSet& var_set(*vars_xptr);
+    XPtr<HapSet> haps_xptr(hap_set_ptr);
+    HapSet& hap_set(*haps_xptr);
 
     // Check that # threads isn't too high and change to 1 if not using OpenMP
     thread_check(n_threads);
@@ -638,16 +638,16 @@ void write_vars_fasta(std::string out_prefix,
     if (compress > 0) {
 
         if (comp_method == "gzip") {
-            write_vars_fasta__<FileGZ>(out_prefix, var_set, text_width, compress,
+            write_haps_fasta__<FileGZ>(out_prefix, hap_set, text_width, compress,
                                        n_threads, show_progress);
         } else if (comp_method == "bgzip") {
-            write_vars_fasta__<FileBGZF>(out_prefix, var_set, text_width, compress,
+            write_haps_fasta__<FileBGZF>(out_prefix, hap_set, text_width, compress,
                                          n_threads, show_progress);
         } else stop("\nUnrecognized compression method.");
 
     } else {
 
-        write_vars_fasta__<FileUncomp>(out_prefix, var_set, text_width, compress,
+        write_haps_fasta__<FileUncomp>(out_prefix, hap_set, text_width, compress,
                                        n_threads, show_progress);
 
     }

@@ -20,7 +20,7 @@
 
 #include "jackalope_types.h"  // integer types
 #include "ref_classes.h"  // Ref* classes
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "str_manip.h"  // filter_nucleos, cpp_str_split_delim_str, count_substr
 #include "util.h"  // str_stop, thread_check
 #include "io.h"
@@ -43,12 +43,12 @@ using namespace Rcpp;
 
 
 /*
- Determine whether this variant should be included in a VCF line for given
+ Determine whether this haplotype should be included in a VCF line for given
  chromosome starting and ending positions.
- If this variant has a deletion at the input position, this method updates that
+ If this haplotype has a deletion at the input position, this method updates that
  and the boolean for whether the line is still expanding (changes it to true).
  */
-void OneVarChromVCF::check(const uint64& pos_start,
+void OneHapChromVCF::check(const uint64& pos_start,
                          uint64& pos_end,
                          bool& still_growing) {
 
@@ -56,15 +56,15 @@ void OneVarChromVCF::check(const uint64& pos_start,
 
         gt_index = 1;
 
-        while (mut_ind.second < var_chrom->mutations.size() &&
+        while (mut_ind.second < hap_chrom->mutations.size() &&
                get_first_pos(mut_ind.second) < pos_end) {
 
             mut_ind.second++;
 
         }
 
-        if (mut_ind.second >= var_chrom->mutations.size() ||
-            (mut_ind.second < var_chrom->mutations.size() &&
+        if (mut_ind.second >= hap_chrom->mutations.size() ||
+            (mut_ind.second < hap_chrom->mutations.size() &&
             get_first_pos(mut_ind.second) > pos_end)) {
 
             mut_ind.second--;
@@ -76,11 +76,11 @@ void OneVarChromVCF::check(const uint64& pos_start,
          (the second part of this statement is added because contiguous deletions
          are prevented)
          */
-        if (mut_ind.second < (var_chrom->mutations.size() - 1) &&
-            var_chrom->size_modifier(mut_ind.second) >= 0) {
-            if (var_chrom->size_modifier(mut_ind.second + 1) < 0 &&
-                var_chrom->mutations.old_pos[mut_ind.second + 1] ==
-                (var_chrom->mutations.old_pos[mut_ind.second] + 1)) {
+        if (mut_ind.second < (hap_chrom->mutations.size() - 1) &&
+            hap_chrom->size_modifier(mut_ind.second) >= 0) {
+            if (hap_chrom->size_modifier(mut_ind.second + 1) < 0 &&
+                hap_chrom->mutations.old_pos[mut_ind.second + 1] ==
+                (hap_chrom->mutations.old_pos[mut_ind.second] + 1)) {
                 mut_ind.second++;
             }
         }
@@ -106,13 +106,13 @@ void OneVarChromVCF::check(const uint64& pos_start,
  This "dumps" the necessary haploid information for the VCF's `ALT` string,
  then iterates to the next mutation information
  */
-void OneVarChromVCF::dump(std::vector<std::string>& unq_alts,
+void OneHapChromVCF::dump(std::vector<std::string>& unq_alts,
                           uint64& gt_tmp,
                           const uint64& pos_start,
                           const uint64& pos_end,
                           const std::string& ref_str) {
 
-    const AllMutations& mutations(var_chrom->mutations);
+    const AllMutations& mutations(hap_chrom->mutations);
 
     if (gt_index > 0) {
 
@@ -134,9 +134,9 @@ void OneVarChromVCF::dump(std::vector<std::string>& unq_alts,
                     std::string("alt. string length of ") +
                     std::to_string(alt_str.size()));
             }
-            if (var_chrom->size_modifier(index) == 0) { // substitution
+            if (hap_chrom->size_modifier(index) == 0) { // substitution
                 alt_str[pos] = mutations.nucleos[index][0];
-            } else if (var_chrom->size_modifier(index) > 0) { // insertion
+            } else if (hap_chrom->size_modifier(index) > 0) { // insertion
                 // Copy so we can remove last nucleotide before inserting:
                 std::string nts(mutations.nucleos[index]);
                 alt_str[pos] = nts.back();
@@ -144,7 +144,7 @@ void OneVarChromVCF::dump(std::vector<std::string>& unq_alts,
                 alt_str.insert(pos, nts);  // inserts before `pos`
             } else {  // deletion
                 alt_str.erase(pos, static_cast<size_t>(
-                        std::abs(var_chrom->size_modifier(index))));
+                        std::abs(hap_chrom->size_modifier(index))));
             }
         }
 
@@ -220,8 +220,8 @@ bool WriterVCF::iterate(std::string& pos_str,
      */
     while (still_growing) {
         still_growing = false;
-        for (uint64 i = 0; i < var_infos.size(); i++) {
-            var_infos[i].check(mut_pos.first, mut_pos.second, still_growing);
+        for (uint64 i = 0; i < hap_infos.size(); i++) {
+            hap_infos[i].check(mut_pos.first, mut_pos.second, still_growing);
         }
     }
 
@@ -241,13 +241,13 @@ bool WriterVCF::iterate(std::string& pos_str,
     }
 
     /*
-     Go back through and collect information for each variant that's
+     Go back through and collect information for each haplotype that's
      getting included:
      */
     pos_str = std::to_string(mut_pos.first + 1);  //bc it's 1-based indexing
     unq_alts.clear();
-    for (uint64 i = 0; i < var_infos.size(); i++) {
-        var_infos[i].dump(unq_alts, gt_indexes[i], mut_pos.first, mut_pos.second,
+    for (uint64 i = 0; i < hap_infos.size(); i++) {
+        hap_infos[i].dump(unq_alts, gt_indexes[i], mut_pos.first, mut_pos.second,
                           ref_str);
     }
 
@@ -293,8 +293,8 @@ bool WriterVCF::iterate(std::string& pos_str,
      Otherwise, we'll be stuck in an infinite loop.
      */
     mut_pos = std::make_pair(MAX_INT, MAX_INT);
-    for (uint64 i = 0; i < var_infos.size(); i++) {
-        var_infos[i].compare_pos(mut_pos.first, mut_pos.second);
+    for (uint64 i = 0; i < hap_infos.size(); i++) {
+        hap_infos[i].compare_pos(mut_pos.first, mut_pos.second);
     }
 
     return do_write;
@@ -314,19 +314,19 @@ bool WriterVCF::iterate(std::string& pos_str,
 
 
 /*
- Make variant names from vector of sample names and ploidy info.
+ Make haplotype names from vector of sample names and ploidy info.
  */
-void make_var_names(std::vector<std::string>& var_names,
+void make_hap_names(std::vector<std::string>& hap_names,
                     const std::vector<std::string>& samp_names,
                     const int& ploidy) {
 
     if (ploidy == 1) {
 
-        var_names = samp_names;
+        hap_names = samp_names;
 
     } else {
 
-        var_names.reserve(samp_names.size() * ploidy);
+        hap_names.reserve(samp_names.size() * ploidy);
 
         /*
          Check for whether they're output from jackalope.
@@ -355,14 +355,14 @@ void make_var_names(std::vector<std::string>& var_names,
 
             for (const std::string& samp : samp_names) {
                 std::vector<std::string> sub_samps = cpp_str_split_delim_str(samp, "__");
-                for (const std::string& s : sub_samps) var_names.push_back(s);
+                for (const std::string& s : sub_samps) hap_names.push_back(s);
             }
 
         } else {
 
             for (const std::string& samp : samp_names) {
                 for (int j = 0; j < ploidy; j++) {
-                    var_names.push_back(samp + '_' + std::to_string(j + 1));
+                    hap_names.push_back(samp + '_' + std::to_string(j + 1));
                 }
             }
 
@@ -389,7 +389,7 @@ void make_var_names(std::vector<std::string>& var_names,
 
 int fill_vcf_info(const std::string& fn,
                   std::vector<std::string>& chrom_names,
-                  std::vector<std::string>& var_names,
+                  std::vector<std::string>& hap_names,
                   std::vector<std::vector<std::string>>& alts_list,
                   std::vector<uint64>& chrom_inds,
                   std::vector<uint64>& positions,
@@ -412,7 +412,7 @@ int fill_vcf_info(const std::string& fn,
     bcf_hdr_t *hdr = bcf_hdr_read(inf);
     int n_samps = bcf_hdr_nsamples(hdr);
 
-    // Read sample names, to be used later for `var_names`
+    // Read sample names, to be used later for `hap_names`
     std::vector<std::string> samp_names;
     samp_names.reserve(n_samps);
     for (int k = 0; k < n_samps; k++) {
@@ -501,8 +501,8 @@ int fill_vcf_info(const std::string& fn,
     bcf_close(inf);
     bcf_destroy(rec);
 
-    // Create list of variant names:
-    make_var_names(var_names, samp_names, ploidy);
+    // Create list of haplotype names:
+    make_hap_names(hap_names, samp_names, ploidy);
 
 
     return EXIT_SUCCESS;
@@ -512,10 +512,10 @@ int fill_vcf_info(const std::string& fn,
 
 
 /*
- Add mutations to a VarSet object based on VCF-file info vectors.
+ Add mutations to a HapSet object based on VCF-file info vectors.
  */
 
-void add_vcf_mutations(VarSet& var_set,
+void add_vcf_mutations(HapSet& hap_set,
                        const std::vector<std::vector<std::string>>& alts_list,
                        const std::vector<uint64>& chrom_inds,
                        const std::vector<uint64>& positions,
@@ -523,9 +523,9 @@ void add_vcf_mutations(VarSet& var_set,
                        const std::vector<uint64>& ind_map) {
 
     uint64 n_muts = alts_list.size();
-    uint64 n_vars = var_set.size();
+    uint64 n_haps = hap_set.size();
 
-    arma::Mat<sint64> size_mods(n_vars, var_set.reference->size(), arma::fill::zeros);
+    arma::Mat<sint64> size_mods(n_haps, hap_set.reference->size(), arma::fill::zeros);
 
     sint64 size_mod_i; // used temporarily for each deletion and insertion
 
@@ -537,17 +537,17 @@ void add_vcf_mutations(VarSet& var_set,
         const std::vector<std::string>& alts(alts_list[mut_i]);
         const uint64& chrom_i(ind_map[chrom_inds[mut_i]]);
 
-        for (uint64 var_i = 0; var_i < n_vars; var_i++) {
+        for (uint64 hap_i = 0; hap_i < n_haps; hap_i++) {
 
-            const std::string& alt(alts[var_i]);
+            const std::string& alt(alts[hap_i]);
 
             // If it's blank or if it's the same as the reference, move on:
             if (alt.size() == 0 || alt == ref) continue;
 
             // Else, mutate accordingly:
-            VarChrom& var_chrom(var_set[var_i][chrom_i]);
-            AllMutations& mutations(var_chrom.mutations);
-            sint64& size_mod(size_mods(var_i, chrom_i));
+            HapChrom& hap_chrom(hap_set[hap_i][chrom_i]);
+            AllMutations& mutations(hap_chrom.mutations);
+            sint64& size_mod(size_mods(hap_i, chrom_i));
 
             // Make sure that positions are never before any existing mutations
             if (!mutations.empty() && mutations.old_pos.back() >= positions[mut_i]) {
@@ -600,7 +600,7 @@ void add_vcf_mutations(VarSet& var_set,
                 mutations.push_back(positions[mut_i] + i, new_pos,
                                     alt_copy.c_str());
                 size_mod += size_mod_i;
-                var_chrom.chrom_size += size_mod_i;
+                hap_chrom.chrom_size += size_mod_i;
 
             } else {
                 /*
@@ -628,7 +628,7 @@ void add_vcf_mutations(VarSet& var_set,
                 new_pos = positions[mut_i] + i + size_mod;
                 mutations.push_back(positions[mut_i] + i, new_pos, nullptr);
                 size_mod += size_mod_i;
-                var_chrom.chrom_size += size_mod_i;
+                hap_chrom.chrom_size += size_mod_i;
 
             }
 
@@ -656,7 +656,7 @@ SEXP read_vcf_cpp(SEXP reference_ptr,
      */
 
     std::vector<std::string> chrom_names;
-    std::vector<std::string> var_names;
+    std::vector<std::string> hap_names;
     std::vector<std::vector<std::string>> alts_list;
     std::vector<uint64> chrom_inds;
     std::vector<uint64> positions;
@@ -679,7 +679,7 @@ SEXP read_vcf_cpp(SEXP reference_ptr,
     positions.reserve(n_lines);
     ref_chrom.reserve(n_lines);
 
-    int status = fill_vcf_info(fn, chrom_names, var_names, alts_list, chrom_inds,
+    int status = fill_vcf_info(fn, chrom_names, hap_names, alts_list, chrom_inds,
                                positions, ref_chrom);
 
     if (status != EXIT_SUCCESS) {
@@ -689,7 +689,7 @@ SEXP read_vcf_cpp(SEXP reference_ptr,
 
     /*
      ------------
-     Now add VCF info to a new VarSet object
+     Now add VCF info to a new HapSet object
      ------------
      */
     XPtr<RefGenome> reference(reference_ptr);
@@ -708,12 +708,12 @@ SEXP read_vcf_cpp(SEXP reference_ptr,
     // `reference->chromosomes`:
     std::vector<uint64> ind_map = match_chrom_names(ref_names, chrom_names, print_names);
 
-    // Finally create VarSet
-    XPtr<VarSet> var_set(new VarSet(*reference, var_names));
+    // Finally create HapSet
+    XPtr<HapSet> hap_set(new HapSet(*reference, hap_names));
     // ...and add mutations:
-    add_vcf_mutations(*var_set, alts_list, chrom_inds, positions, ref_chrom, ind_map);
+    add_vcf_mutations(*hap_set, alts_list, chrom_inds, positions, ref_chrom, ind_map);
 
-    return var_set;
+    return hap_set;
 
 }
 
@@ -737,7 +737,7 @@ SEXP read_vcf_cpp(SEXP reference_ptr,
 
 
 
-//' Write `variants` to VCF file.
+//' Write `haplotypes` to VCF file.
 //'
 //'
 //' @noRd
@@ -745,42 +745,42 @@ SEXP read_vcf_cpp(SEXP reference_ptr,
 //[[Rcpp::export]]
 void write_vcf_cpp(std::string out_prefix,
                    const int& compress,
-                   SEXP var_set_ptr,
+                   SEXP hap_set_ptr,
                    const IntegerMatrix& sample_matrix,
                    const bool& show_progress) {
 
-    XPtr<VarSet> var_set(var_set_ptr);
+    XPtr<HapSet> hap_set(hap_set_ptr);
 
     expand_path(out_prefix);
 
     if (any(sample_matrix < 1).is_true()) {
         str_stop({"\nIn the input matrix specifying which samples each ",
-                 "variant belongs to, there are values < 1."});
+                 "haplotype belongs to, there are values < 1."});
     }
-    if (any(sample_matrix > var_set->size()).is_true()) {
+    if (any(sample_matrix > hap_set->size()).is_true()) {
         str_stop({"\nIn the input matrix specifying which samples each ",
-                 "variant belongs to, there are values > the number of variants."});
+                 "haplotype belongs to, there are values > the number of haplotypes."});
     }
     if (any(is_na(sample_matrix)).is_true()) {
         str_stop({"\nIn the input matrix specifying which samples each ",
-                 "variant belongs to, there are missing values."});
+                 "haplotype belongs to, there are missing values."});
     }
 
 
     // Start the `WriterVCF` object
-    WriterVCF writer(*var_set, 0, sample_matrix);
+    WriterVCF writer(*hap_set, 0, sample_matrix);
 
     std::string file_name = out_prefix + ".vcf";
 
     if (compress > 0) {
 
         // Use wrapper of `BGZF` to write to compressed VCF file
-        write_vcf_<FileBGZF>(var_set, file_name, compress, writer);
+        write_vcf_<FileBGZF>(hap_set, file_name, compress, writer);
 
     } else {
 
         // Use wrapper of `std::ofstream` to write to uncompressed VCF file
-        write_vcf_<FileUncomp>(var_set, file_name, compress, writer);
+        write_vcf_<FileUncomp>(hap_set, file_name, compress, writer);
 
     }
 

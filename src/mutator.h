@@ -18,7 +18,7 @@
 
 
 #include "jackalope_types.h" // integer types
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling
 #include "mutator_subs.h"   // SubMutator
@@ -75,7 +75,7 @@ struct TreeMutator {
      (`end == begin` when chromosome region is of size zero bc `end` is non-inclusive)
      */
     int mutate(const double& b_len,
-               VarChrom& var_chrom,
+               HapChrom& hap_chrom,
                pcg64& eng,
                Progress& prog_bar,
                const uint64& begin,
