@@ -7,7 +7,7 @@
 #'
 check_pacbio_args <- function(obj,
                               n_reads,
-                              variant_probs,
+                              haplotype_probs,
                               sep_files,
                               compress,
                               comp_method,
@@ -28,10 +28,10 @@ check_pacbio_args <- function(obj,
                               prob_dup,
                               show_progress) {
 
-    if (!inherits(obj, c("ref_genome", "variants"))) {
+    if (!inherits(obj, c("ref_genome", "haplotypes"))) {
         stop("\nWhen providing info for the PacBio sequencer, ",
              "the object providing the sequence information should be ",
-             "of class \"ref_genome\" or \"variants\".", call. = FALSE)
+             "of class \"ref_genome\" or \"haplotypes\".", call. = FALSE)
     }
 
     for (x in c("n_reads", "n_threads", "read_pool_size",
@@ -79,11 +79,11 @@ check_pacbio_args <- function(obj,
         }
     }
 
-    if (!is.null(variant_probs) &&
-        (!is_type(variant_probs, c("numeric", "integer")) ||
-         any(variant_probs < 0) ||
-         all(variant_probs == 0))) {
-        err_msg("pacbio", "variant_probs", "NULL or a numeric/integer vector",
+    if (!is.null(haplotype_probs) &&
+        (!is_type(haplotype_probs, c("numeric", "integer")) ||
+         any(haplotype_probs < 0) ||
+         all(haplotype_probs == 0))) {
+        err_msg("pacbio", "haplotype_probs", "NULL or a numeric/integer vector",
                 "with no values < 0 and at least one value > 0")
     }
     if (!is_type(compress, "logical", 1) && !single_integer(compress, 1, 9)) {
@@ -98,19 +98,19 @@ check_pacbio_args <- function(obj,
     if (!is_type(sep_files, "logical", 1)) {
         err_msg("pacbio", "sep_files", "a single logical")
     }
-    # Checking proper variant_probs
-    if (!is.null(variant_probs) && !inherits(obj, "variants")) {
+    # Checking proper haplotype_probs
+    if (!is.null(haplotype_probs) && !inherits(obj, "haplotypes")) {
         stop("\nFor PacBio sequencing, it makes no sense to provide ",
-             "a vector of probabilities of sequencing each variant if the ",
+             "a vector of probabilities of sequencing each haplotype if the ",
              "`obj` argument is of class \"ref_genome\". ",
              "Terminating here in case this was a mistake.", call. = FALSE)
     }
-    if (!is.null(variant_probs) && inherits(obj, "variants") &&
-        length(variant_probs) != obj$n_vars()) {
-        err_msg("pacbio", "variant_probs",
-                "a vector of the same length as the number of variants in the",
-                "`obj` argument, if `obj` is of class \"variants\".",
-                "Use `obj$n_vars()` to see the number of variants")
+    if (!is.null(haplotype_probs) && inherits(obj, "haplotypes") &&
+        length(haplotype_probs) != obj$n_haps()) {
+        err_msg("pacbio", "haplotype_probs",
+                "a vector of the same length as the number of haplotypes in the",
+                "`obj` argument, if `obj` is of class \"haplotypes\".",
+                "Use `obj$n_haps()` to see the number of haplotypes")
     }
 
     if (lognorm_read_length[1] < 0 || lognorm_read_length[3] < 0) {
@@ -131,7 +131,7 @@ check_pacbio_args <- function(obj,
 #' Create and write PacBio reads to FASTQ file(s).
 #'
 #'
-#' From either a reference genome or set of haploid variants, create PacBio reads
+#' From either a reference genome or set of variant haplotypes, create PacBio reads
 #' and write them to FASTQ output file(s).
 #' I encourage you to cite the reference below in addition to `jackalope` if you use
 #' this function.
@@ -142,7 +142,7 @@ check_pacbio_args <- function(obj,
 #'
 #' `@<genome name>-<chromosome name>-<starting position>-<strand>`
 #'
-#' where `genome name` is always `REF` for reference genomes (as opposed to variants).
+#' where `genome name` is always `REF` for reference genomes (as opposed to haplotypes).
 #'
 #'
 #'
@@ -208,7 +208,7 @@ check_pacbio_args <- function(obj,
 #'                                17922.611306),
 #'        custom_read_lengths = NULL,
 #'        prob_dup = 0.0,
-#'        variant_probs = NULL,
+#'        haplotype_probs = NULL,
 #'        sep_files = FALSE,
 #'        compress = FALSE,
 #'        comp_method = "bgzip",
@@ -246,7 +246,7 @@ pacbio <- function(obj,
                    lognorm_read_length = c(0.200110276521, -10075.4363813, 17922.611306),
                    custom_read_lengths = NULL,
                    prob_dup = 0.0,
-                   variant_probs = NULL,
+                   haplotype_probs = NULL,
                    sep_files = FALSE,
                    compress = FALSE,
                    comp_method = "bgzip",
@@ -257,7 +257,7 @@ pacbio <- function(obj,
 
 
     # Check for improper argument types:
-    check_pacbio_args(obj, n_reads, variant_probs, sep_files,
+    check_pacbio_args(obj, n_reads, haplotype_probs, sep_files,
                       compress, comp_method, n_threads, read_pool_size,
                       chi2_params_s, chi2_params_n, max_passes,
                       sqrt_params, norm_params,
@@ -272,7 +272,7 @@ pacbio <- function(obj,
     if (!sep_files) {
         fns <- paste0(out_prefix, "_R1.fq")
     } else {
-        fns <- lapply(obj$var_names(),
+        fns <- lapply(obj$hap_names(),
                       function(x) sprintf("%s_%s_R1.fq", out_prefix, x))
         fns <- c(fns, recursive = TRUE)
     }
@@ -300,8 +300,8 @@ pacbio <- function(obj,
         read_probs <- numeric(0)
     }
 
-    if (is.null(variant_probs) && inherits(obj, "variants")) {
-        variant_probs <- rep(1, obj$n_vars())
+    if (is.null(haplotype_probs) && inherits(obj, "haplotypes")) {
+        haplotype_probs <- rep(1, obj$n_haps())
     }
 
     # Assembling list of arguments for inner cpp function:
@@ -335,13 +335,13 @@ pacbio <- function(obj,
         args <- c(args, list(ref_genome_ptr = obj$ptr()))
         args$sep_files <- NULL
         do.call(pacbio_ref_cpp, args)
-    } else if (inherits(obj, "variants")) {
-        args <- c(args, list(var_set_ptr = obj$ptr(),
-                             variant_probs = variant_probs))
-        do.call(pacbio_var_cpp, args)
+    } else if (inherits(obj, "haplotypes")) {
+        args <- c(args, list(hap_set_ptr = obj$ptr(),
+                             haplotype_probs = haplotype_probs))
+        do.call(pacbio_hap_cpp, args)
     } else {
         stop(paste("\nTrying to pass a `obj` argument to `pacbio` that's",
-                   "not a \"ref_genome\" or \"variants\" class."), call. = FALSE)
+                   "not a \"ref_genome\" or \"haplotypes\" class."), call. = FALSE)
     }
 
     invisible(NULL)

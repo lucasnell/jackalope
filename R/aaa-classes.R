@@ -411,31 +411,31 @@ ref_genome <- R6Class(
 
 
 
-# >> CLASS variants----
+# >> CLASS haplotypes----
 #' An R6 Class Representing Haploid Variants
 #'
 #' @description
 #' Interactive wrapper for a pointer to a C++ object that stores information about
-#' haploid variants from a single reference genome.
+#' variant haplotypes from a single reference genome.
 #'
 #' @details
-#' This class should NEVER be created using `variants$new`.
-#' Only use `create_variants`.
+#' This class should NEVER be created using `haplotypes$new`.
+#' Only use `create_haplotypes`.
 #' Because this class wraps a pointer to a C++ object, there are no fields to
 #' manipulate directly.
 #' All manipulations are done through this class's methods.
 #'
 #' @section Connections to `ref_genome` objects:
-#' Regarding the `ref_genome` object you use to create a `variants` object, you should
+#' Regarding the `ref_genome` object you use to create a `haplotypes` object, you should
 #' note the following:
 #'
 #' \itemize{
 #'     \item \strong{This point is the most important.}
-#'         Both the `ref_genome` and `variants` objects use the same underlying
+#'         Both the `ref_genome` and `haplotypes` objects use the same underlying
 #'         C++ object to store reference genome information.
 #'         Thus, if you make any changes to the `ref_genome` object, those changes will
-#'         also show up in the `variants` object.
-#'         For example, if you make a `variants` object named `V`
+#'         also show up in the `haplotypes` object.
+#'         For example, if you make a `haplotypes` object named `V`
 #'         based on an existing `ref_genome` object named `R`,
 #'         then you merge chromosomes in `R`,
 #'         `V` will now have merged chromosomes.
@@ -444,23 +444,23 @@ ref_genome <- R6Class(
 #'         So when you do anything with `V` later, your R session will crash
 #'         or have errors.
 #'         \strong{The lesson here is that you shouldn't edit the reference
-#'         genome after using it to create variants.}
-#'     \item If a `ref_genome` object is used to create a `variants`
+#'         genome after using it to create haplotypes.}
+#'     \item If a `ref_genome` object is used to create a `haplotypes`
 #'         object, deleting the `ref_genome` object won't cause issues with
-#'         the `variants` object.
-#'         However, the `variants` class doesn't provide methods to edit
+#'         the `haplotypes` object.
+#'         However, the `haplotypes` class doesn't provide methods to edit
 #'         chromosomes, so only remove the `ref_genome` object when you're done
 #'         editing the reference genome.
 #' }
 #'
 #'
-#' @seealso \code{\link{create_variants}}
+#' @seealso \code{\link{create_haplotypes}}
 #'
 #' @export
 #'
 #'
 #' @param chrom_ind Index for the focal chromosome.
-#' @param var_ind Index for the focal variant.
+#' @param hap_ind Index for the focal haplotype.
 #' @param start Point on the chromosome at which to start the calculation
 #'     (inclusive).
 #' @param end Point on the chromosome at which to end the calculation
@@ -471,28 +471,28 @@ ref_genome <- R6Class(
 #' @importFrom R6 R6Class
 #'
 #'
-variants <- R6Class(
+haplotypes <- R6Class(
 
-    "variants",
+    "haplotypes",
 
     public = list(
 
 
         #' @description
-        #' Do NOT use this; only use `create_variants` to make new `variants`.
+        #' Do NOT use this; only use `create_haplotypes` to make new `haplotypes`.
         #'
         #' @param genomes_ptr An `externalptr` object pointing to a C++ object that
-        #'     stores the information about the variants.
+        #'     stores the information about the haplotypes.
         #' @param reference_ptr An `externalptr` object pointing to a C++ object that
         #'     stores the information about the reference genome.
         #'
         initialize = function(genomes_ptr, reference_ptr) {
             if (!inherits(genomes_ptr, "externalptr")) {
-                stop("\nWhen initializing a variants object, you need to use ",
+                stop("\nWhen initializing a haplotypes object, you need to use ",
                      "an externalptr object.", call. = FALSE)
             }
             if (!inherits(reference_ptr, "externalptr")) {
-                stop("\nWhen initializing a variants object, you need to use ",
+                stop("\nWhen initializing a haplotypes object, you need to use ",
                      "an externalptr object.", call. = FALSE)
             }
             private$genomes <- genomes_ptr
@@ -500,10 +500,10 @@ variants <- R6Class(
         },
 
         #' @description
-        #' Print a `variants` object.
+        #' Print a `haplotypes` object.
         print = function() {
             private$check_ptr()
-            print_var_set(private$genomes)
+            print_hap_set(private$genomes)
             invisible(self)
         },
 
@@ -529,29 +529,29 @@ variants <- R6Class(
         #'
         n_chroms = function() {
             private$check_ptr()
-            return(view_var_set_nchroms(private$genomes))
+            return(view_hap_set_nchroms(private$genomes))
         },
 
         #' @description
-        #' View number of variants.
+        #' View number of haplotypes.
         #'
-        #' @return Integer number of variants.
+        #' @return Integer number of haplotypes.
         #'
-        n_vars = function() {
+        n_haps = function() {
             private$check_ptr()
-            return(view_var_set_nvars(private$genomes))
+            return(view_hap_set_nhaps(private$genomes))
         },
 
 
         #' @description
-        #' View chromosome sizes for one variant.
+        #' View chromosome sizes for one haplotype.
         #'
-        #' @return Integer vector of chromosome sizes for focal variant.
+        #' @return Integer vector of chromosome sizes for focal haplotype.
         #'
-        sizes = function(var_ind) {
+        sizes = function(hap_ind) {
             private$check_ptr()
-            private$check_var_ind(var_ind, "sizes")
-            return(view_var_genome_chrom_sizes(private$genomes, var_ind - 1))
+            private$check_hap_ind(hap_ind, "sizes")
+            return(view_hap_genome_chrom_sizes(private$genomes, hap_ind - 1))
         },
 
         #' @description
@@ -565,46 +565,46 @@ variants <- R6Class(
         },
 
         #' @description
-        #' View variant names.
+        #' View haplotype names.
         #'
-        #' @return Character vector of variant names.
+        #' @return Character vector of haplotype names.
         #'
-        var_names = function() {
+        hap_names = function() {
             private$check_ptr()
-            return(view_var_set_var_names(private$genomes))
+            return(view_hap_set_hap_names(private$genomes))
         },
 
         #' @description
-        #' View one variant chromosome.
+        #' View one haplotype chromosome.
         #'
-        #' @return A single string representing the chosen variant chromosome's DNA
+        #' @return A single string representing the chosen haplotype chromosome's DNA
         #' sequence.
         #'
-        chrom = function(var_ind, chrom_ind) {
+        chrom = function(hap_ind, chrom_ind) {
             private$check_ptr()
-            private$check_var_ind(var_ind, "chrom")
+            private$check_hap_ind(hap_ind, "chrom")
             private$check_chrom_ind(chrom_ind, "chrom")
-            return(view_var_genome_chrom(private$genomes, var_ind - 1, chrom_ind - 1))
+            return(view_hap_genome_chrom(private$genomes, hap_ind - 1, chrom_ind - 1))
         },
 
 
         #' @description
-        #' View GC proportion for part of one variant chromosome.
+        #' View GC proportion for part of one haplotype chromosome.
         #'
         #' @return A double in the range `[0,1]` representing the proportion of DNA
         #' sequence that is either `G` or `C`.
         #'
-        gc_prop = function(var_ind, chrom_ind, start, end) {
-            private$check_pos(var_ind, chrom_ind, start, "gc_prop", "start")
-            private$check_pos(var_ind, chrom_ind, end, "gc_prop", "end")
+        gc_prop = function(hap_ind, chrom_ind, start, end) {
+            private$check_pos(hap_ind, chrom_ind, start, "gc_prop", "start")
+            private$check_pos(hap_ind, chrom_ind, end, "gc_prop", "end")
             if (end < start) err_msg("gc_prop", "end", ">= `start` arg")
-            gcp <- view_var_set_gc_content(private$genomes, chrom_ind - 1, var_ind - 1,
+            gcp <- view_hap_set_gc_content(private$genomes, chrom_ind - 1, hap_ind - 1,
                                            start - 1, end - 1)
             return(gcp)
         },
 
         #' @description
-        #' View nucleotide content for part of one variant chromosome
+        #' View nucleotide content for part of one haplotype chromosome
         #'
         #' @param nt Which nucleotide to calculate the proportion that the DNA
         #'     sequence is made of. Must be one of `T`, `C`, `A`, `G`, or `N`.
@@ -612,9 +612,9 @@ variants <- R6Class(
         #' @return A double in the range `[0,1]` representing the proportion of DNA
         #' sequence that is `nt`.
         #'
-        nt_prop = function(nt, var_ind, chrom_ind, start, end) {
-            private$check_pos(var_ind, chrom_ind, start, "nt_prop", "start")
-            private$check_pos(var_ind, chrom_ind, end, "nt_prop", "end")
+        nt_prop = function(nt, hap_ind, chrom_ind, start, end) {
+            private$check_pos(hap_ind, chrom_ind, start, "nt_prop", "start")
+            private$check_pos(hap_ind, chrom_ind, end, "nt_prop", "end")
             if (end < start) err_msg("nt_prop", "end", ">= `start` arg")
             if (!is_type(nt, "character", 1) || nchar(nt) != 1) {
                 err_msg("nt_prop", "nt", "a single character")
@@ -622,7 +622,7 @@ variants <- R6Class(
             if (!nt %in% c("T", "C", "A", "G", "N")) {
                 err_msg("nt_prop", "nt", 'either "T", "C", "A", "G", or "N"')
             }
-            ntp <- view_var_set_nt_content(private$genomes, nt, chrom_ind - 1, var_ind - 1,
+            ntp <- view_hap_set_nt_content(private$genomes, nt, chrom_ind - 1, hap_ind - 1,
                                            start - 1, end - 1)
             return(ntp)
         },
@@ -633,7 +633,7 @@ variants <- R6Class(
         # ----------*
 
         #' @description
-        #' Change variant names.
+        #' Change haplotype names.
         #'
         #' @param new_names Vector of new names to use. This must be the same length as
         #'     the number of current names.
@@ -642,112 +642,112 @@ variants <- R6Class(
         #'
         set_names = function(new_names) {
             private$check_ptr()
-            if (!is_type(new_names, "character", self$n_vars())) {
-                err_msg("set_names", "new_names", "the same length as # variants")
+            if (!is_type(new_names, "character", self$n_haps())) {
+                err_msg("set_names", "new_names", "the same length as # haplotypes")
             }
-            var_inds <- 0:(length(new_names) - 1)
-            set_var_set_var_names(private$genomes, var_inds, new_names)
+            hap_inds <- 0:(length(new_names) - 1)
+            set_hap_set_hap_names(private$genomes, hap_inds, new_names)
             invisible(self)
         },
 
         #' @description
-        #' Add one or more blank, named variants
+        #' Add one or more blank, named haplotypes
         #'
-        #' @param new_names Vector of name(s) for the new variant(s).
+        #' @param new_names Vector of name(s) for the new haplotype(s).
         #'
         #' @return This `R6` object, invisibly.
         #'
-        add_vars = function(new_names) {
+        add_haps = function(new_names) {
 
             private$check_ptr()
 
             if (!is_type(new_names, "character")) {
-                err_msg("add_vars", "new_names", "a character vector")
+                err_msg("add_haps", "new_names", "a character vector")
             }
             if (anyDuplicated(new_names) != 0) {
-                err_msg("add_vars", "new_names", "a vector with no duplicates")
+                err_msg("add_haps", "new_names", "a vector with no duplicates")
             }
-            if (any(new_names %in% self$var_names())) {
-                err_msg("add_vars", "new_names", "a vector containing no names",
-                        "already present as variants names in the object being added to")
+            if (any(new_names %in% self$hap_names())) {
+                err_msg("add_haps", "new_names", "a vector containing no names",
+                        "already present as haplotypes names in the object being added to")
             }
 
-            add_var_set_vars(private$genomes, new_names)
+            add_hap_set_haps(private$genomes, new_names)
 
             invisible(self)
         },
 
 
         #' @description
-        #' Duplicate one or more variants by name.
+        #' Duplicate one or more haplotypes by name.
         #'
-        #' @param var_names Vector of existing variant name(s) that you want to
+        #' @param hap_names Vector of existing haplotype name(s) that you want to
         #'     duplicate.
         #' @param new_names Optional vector specifying the names of the duplicates.
         #'     If `NULL`, their names are auto-generated. Defaults to `NULL`.
         #'
         #' @return This `R6` object, invisibly.
         #'
-        dup_vars = function(var_names, new_names = NULL) {
+        dup_haps = function(hap_names, new_names = NULL) {
             private$check_ptr()
-            self_names <- self$var_names()
-            if (!is_type(var_names, "character")) {
-                err_msg("dup_vars", "var_names", "a character vector")
+            self_names <- self$hap_names()
+            if (!is_type(hap_names, "character")) {
+                err_msg("dup_haps", "hap_names", "a character vector")
             }
-            if (!all(var_names %in% self_names)) {
-                err_msg("dup_vars", "var_names", "a character vector containing only",
-                        "variant names present in the `variants` object.")
+            if (!all(hap_names %in% self_names)) {
+                err_msg("dup_haps", "hap_names", "a character vector containing only",
+                        "haplotype names present in the `haplotypes` object.")
             }
-            var_inds <- match(var_names, self_names) - 1
+            hap_inds <- match(hap_names, self_names) - 1
 
             if (!is.null(new_names) && !is_type(new_names, "character")) {
-                err_msg("dup_vars", "new_names", "NULL or a character vector")
+                err_msg("dup_haps", "new_names", "NULL or a character vector")
             }
             if (is.null(new_names)) {
-                dup_n <- numeric(length(unique(var_names))) + 1
-                names(dup_n) <- unique(var_names)
-                new_names <- var_names
+                dup_n <- numeric(length(unique(hap_names))) + 1
+                names(dup_n) <- unique(hap_names)
+                new_names <- hap_names
                 for (i in 1:length(new_names)) {
-                    new_names[i] <- paste0(var_names[i], "_dup", dup_n[[var_names[i]]])
-                    dup_n[var_names[i]] <- dup_n[[var_names[i]]] + 1
+                    new_names[i] <- paste0(hap_names[i], "_dup", dup_n[[hap_names[i]]])
+                    dup_n[hap_names[i]] <- dup_n[[hap_names[i]]] + 1
                 }
             }
 
-            if (length(new_names) != length(var_names)) {
-                err_msg("dup_vars", "new_names", "the same length as `var_names`")
+            if (length(new_names) != length(hap_names)) {
+                err_msg("dup_haps", "new_names", "the same length as `hap_names`")
             }
             if (any(new_names %in% self_names)) {
-                err_msg("dup_vars", "new_names", "a vector containing no elements",
-                        "already present as a variant name in the variants object")
+                err_msg("dup_haps", "new_names", "a vector containing no elements",
+                        "already present as a haplotype name in the haplotypes object")
             }
 
-            dup_var_set_vars(private$genomes, var_inds, new_names)
+            dup_hap_set_haps(private$genomes, hap_inds, new_names)
 
             invisible(self)
         },
 
         #' @description
-        #' Remove one or more variants by name.
+        #' Remove one or more haplotypes by name.
         #'
-        #' @param var_names Vector of existing variant name(s) that you want to remove.
+        #' @param hap_names Vector of existing haplotype name(s) that you want to remove.
         #'
         #' @return This `R6` object, invisibly.
         #'
-        rm_vars = function(var_names) {
+        rm_haps = function(hap_names) {
             private$check_ptr()
-            self_names <- self$var_names()
-            if (!is_type(var_names, "character")) {
-                err_msg("rm_vars", "var_names", "a character vector")
+            self_names <- self$hap_names()
+            if (!is_type(hap_names, "character")) {
+                err_msg("rm_haps", "hap_names", "a character vector")
             }
-            if (!all(var_names %in% self_names)) {
-                err_msg("rm_vars", "var_names", "a vector of only names that are",
-                        "present in the variants object")
+            if (!all(hap_names %in% self_names)) {
+                err_msg("rm_haps", "hap_names", "a vector of only names that are",
+                        "present in the haplotypes object")
             }
-            if (anyDuplicated(var_names) != 0) {
-                err_msg("rm_vars", "var_names", "a vector of non-duplicate names")
+            if (anyDuplicated(hap_names) != 0) {
+                err_msg("rm_haps", "hap_names", "a vector of non-duplicate names")
             }
-            var_inds <- match(var_names, self_names) - 1
-            remove_var_set_vars(private$genomes, var_inds)
+            hap_inds <- match(hap_names, self_names) - 1
+            remove_hap_set_haps(private$genomes, hap_inds)
             invisible(self)
         },
 
@@ -759,15 +759,15 @@ variants <- R6Class(
         #'
         #' @return This `R6` object, invisibly.
         #'
-        add_sub = function(var_ind, chrom_ind, pos, nt) {
-            private$check_pos(var_ind, chrom_ind, pos, "add_sub", "pos")
+        add_sub = function(hap_ind, chrom_ind, pos, nt) {
+            private$check_pos(hap_ind, chrom_ind, pos, "add_sub", "pos")
             if (!is_type(nt, "character", 1) || nchar(nt) != 1) {
                 err_msg("add_sub", "nt", "a single character")
             }
             if (! nt %in% c("T", "C", "A", "G", "N")) {
                 err_msg("add_sub", "nt", "one of \"T\", \"C\", \"A\", \"G\", or \"N\"")
             }
-            add_substitution(private$genomes, var_ind - 1, chrom_ind - 1, nt, pos - 1)
+            add_substitution(private$genomes, hap_ind - 1, chrom_ind - 1, nt, pos - 1)
             invisible(self)
         },
 
@@ -779,8 +779,8 @@ variants <- R6Class(
         #'
         #' @return This `R6` object, invisibly.
         #'
-        add_ins = function(var_ind, chrom_ind, pos, nts) {
-            private$check_pos(var_ind, chrom_ind, pos, "add_ins", "pos")
+        add_ins = function(hap_ind, chrom_ind, pos, nts) {
+            private$check_pos(hap_ind, chrom_ind, pos, "add_ins", "pos")
             if (!is_type(nts, "character", 1)) {
                 err_msg("add_ins", "nts", "a single string")
             }
@@ -788,13 +788,13 @@ variants <- R6Class(
                 err_msg("add_ins", "nts", "string containing only \"T\", \"C\", \"A\",",
                         "\"G\", or \"N\"")
             }
-            add_insertion(private$genomes, var_ind - 1, chrom_ind - 1, nts, pos - 1)
+            add_insertion(private$genomes, hap_ind - 1, chrom_ind - 1, nts, pos - 1)
             invisible(self)
         },
 
 
-#'     \item{`add_del(var_ind, chrom_ind, pos, n_nts)`}{Manually add a deletion
-#'         for a given variant (`var_ind`), chromosome (`chrom_ind`), and position (`pos`).
+#'     \item{`add_del(hap_ind, chrom_ind, pos, n_nts)`}{Manually add a deletion
+#'         for a given haplotype (`hap_ind`), chromosome (`chrom_ind`), and position (`pos`).
 #'         The designated number of nucleotides to delete (`n_nts`) will be deleted
 #'         starting at `pos`, unless `pos` is near the chromosome end and doesn't have
 #'         `n_nts` nucleotides to remove; it simply stops at the chromosome end in
@@ -811,12 +811,12 @@ variants <- R6Class(
         #'
         #' @return This `R6` object, invisibly.
         #'
-        add_del = function(var_ind, chrom_ind, pos, n_nts) {
-            private$check_pos(var_ind, chrom_ind, pos, "add_del", "pos")
+        add_del = function(hap_ind, chrom_ind, pos, n_nts) {
+            private$check_pos(hap_ind, chrom_ind, pos, "add_del", "pos")
             if (!single_integer(n_nts, 1)) {
                 err_msg("add_del", "n_nts", "a single integer >= 1")
             }
-            add_deletion(private$genomes, var_ind - 1, chrom_ind - 1, n_nts, pos - 1)
+            add_deletion(private$genomes, hap_ind - 1, chrom_ind - 1, n_nts, pos - 1)
             invisible(self)
         }
 
@@ -835,10 +835,10 @@ variants <- R6Class(
         check_ptr = function() {
             if (!inherits(private$genomes, "externalptr")) {
                 stop("\nSomehow the pointer to the underlying C++ object for this ",
-                     "`variants` object has been converted to something other than ",
+                     "`haplotypes` object has been converted to something other than ",
                      "an `externalptr` object---or was never set as one. ",
-                     "You should re-make this `variants` object using ",
-                     "`create_variants`.", call. = FALSE)
+                     "You should re-make this `haplotypes` object using ",
+                     "`create_haplotypes`.", call. = FALSE)
             }
         },
 
@@ -848,17 +848,17 @@ variants <- R6Class(
                 err_msg(.fun_name, "chrom_ind", "integer in range [1, <# chromosomes>]")
             }
         },
-        check_var_ind = function(var_ind, .fun_name) {
+        check_hap_ind = function(hap_ind, .fun_name) {
             private$check_ptr()
-            if (!single_integer(var_ind, 1, self$n_vars())) {
-                err_msg(.fun_name, "var_ind", "integer in range [1, <# variants>]")
+            if (!single_integer(hap_ind, 1, self$n_haps())) {
+                err_msg(.fun_name, "hap_ind", "integer in range [1, <# haplotypes>]")
             }
         },
-        check_pos = function(var_ind, chrom_ind, pos, .fun_name, .pos_name) {
+        check_pos = function(hap_ind, chrom_ind, pos, .fun_name, .pos_name) {
             private$check_ptr()
             private$check_chrom_ind(chrom_ind, .fun_name)
-            private$check_var_ind(var_ind, .fun_name)
-            if (!single_integer(pos, 1, self$sizes(var_ind)[chrom_ind])) {
+            private$check_hap_ind(hap_ind, .fun_name)
+            if (!single_integer(pos, 1, self$sizes(hap_ind)[chrom_ind])) {
                 err_msg(.fun_name, .pos_name, "integer in range [1, <chromosome size>]")
             }
         }

@@ -222,10 +222,10 @@ sub_arg_checks <- function(mod_name,
 #'
 #' @name sub_models
 #'
-#' @seealso \code{\link{create_variants}}
+#' @seealso \code{\link{create_haplotypes}}
 #'
 #' @return A `sub_info` object, which is an R6 class that wraps the info needed for
-#' the `create_variants` function.
+#' the `create_haplotypes` function.
 #' It does not allow the user to directly manipulate the info inside, as that
 #' should be done using the `sub_models` functions.
 #' You can use the following methods from the class to view information:
@@ -575,7 +575,7 @@ indel_info <- R6Class(
 #' Insertions and deletions (indels) specification
 #'
 #' Construct necessary information for insertions and deletions (indels) that will
-#' be used in `create_variants`.
+#' be used in `create_haplotypes`.
 #'
 #' All indels require the `rate` parameter, which specifies
 #' the overall indels rate among all lengths.
@@ -628,7 +628,7 @@ indel_info <- R6Class(
 #' @export
 #'
 #' @return An `indel_info` object, which is an R6 class that wraps the info needed for
-#' the `create_variants` function.
+#' the `create_haplotypes` function.
 #' It does not allow the user to directly manipulate the info inside, as that
 #' should be done using this function.
 #' You can use the `rates()` method to view the indel rates by size.

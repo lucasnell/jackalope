@@ -1,35 +1,35 @@
 
 
-#' Organize higher-level information for creating variants.
+#' Organize higher-level information for creating haplotypes.
 #'
 #'
-#' The following functions organize information that gets passed to `create_variants`
-#' to generate variants from a reference genome.
-#' Each function represents a method of generation and starts with `"vars_"`.
-#' The first three are phylogenomic methods, and all functions but `vars_vcf`
-#' will use molecular evolution information when passed to `create_variants`.
+#' The following functions organize information that gets passed to `create_haplotypes`
+#' to generate haplotypes from a reference genome.
+#' Each function represents a method of generation and starts with `"haps_"`.
+#' The first three are phylogenomic methods, and all functions but `haps_vcf`
+#' will use molecular evolution information when passed to `create_haplotypes`.
 #'
 #' \describe{
-#'     \item{\code{\link{vars_theta}}}{Uses an estimate for theta, the population-scaled
-#'         mutation rate, and a desired number of variants.}
-#'     \item{\code{\link{vars_phylo}}}{Uses phylogenetic tree(s) from `phylo`
+#'     \item{\code{\link{haps_theta}}}{Uses an estimate for theta, the population-scaled
+#'         mutation rate, and a desired number of haplotypes.}
+#'     \item{\code{\link{haps_phylo}}}{Uses phylogenetic tree(s) from `phylo`
 #'         object(s) or NEWICK file(s), one tree per chromosome or one for all
 #'         chromosomes.}
-#'     \item{\code{\link{vars_gtrees}}}{Uses gene trees, either in the form of
+#'     \item{\code{\link{haps_gtrees}}}{Uses gene trees, either in the form of
 #'         an object from the `scrm` or `coala` package or
 #'         a file containing output in the style of the `ms` program.}
-#'     \item{\code{\link{vars_ssites}}}{Uses matrices of segregating sites,
+#'     \item{\code{\link{haps_ssites}}}{Uses matrices of segregating sites,
 #'         either in the form of
 #'         `scrm` or `coala` coalescent-simulator object(s), or
 #'         a `ms`-style output file.}
-#'     \item{\code{\link{vars_vcf}}}{Uses a variant call format (VCF) file that
-#'         directly specifies variants.}
+#'     \item{\code{\link{haps_vcf}}}{Uses a haplotype call format (VCF) file that
+#'         directly specifies haplotypes.}
 #' }
 #'
 #'
-#' @seealso \code{\link{create_variants}}
+#' @seealso \code{\link{create_haplotypes}}
 #'
-#' @name vars_functions
+#' @name haps_functions
 #'
 NULL
 
@@ -47,7 +47,7 @@ NULL
 
 #' Process one segregating-sites matrix from a coalescent simulator with ms-style output.
 #'
-#' Used in `vars_ssites` below.
+#' Used in `haps_ssites` below.
 #'
 #' @param mat The matrix to process.
 #'
@@ -79,10 +79,10 @@ process_coal_obj_sites <- function(mat) {
 
 
 
-#' Organize information to create variants using segregating sites matrices
+#' Organize information to create haplotypes using segregating sites matrices
 #'
 #'
-#' This function organizes higher-level information for creating variants from
+#' This function organizes higher-level information for creating haplotypes from
 #' matrices of segregating sites output from coalescent simulations.
 #'
 #'
@@ -114,22 +114,22 @@ process_coal_obj_sites <- function(mat) {
 #'     Defaults to `NULL`.
 #'
 #'
-#' @return A `vars_ssites_info` object containing information used in `create_variants`
-#'     to create haploid variants.
+#' @return A `haps_ssites_info` object containing information used in `create_haplotypes`
+#'     to create variant haplotypes.
 #'     This class is just a wrapper around a list of matrices of segregating site info,
 #'     which you can view (but not change) using the object's `mats()` method.
 #'
 #' @export
 #'
-vars_ssites <- function(obj = NULL,
+haps_ssites <- function(obj = NULL,
                         fn = NULL) {
 
     if (is.null(obj) && is.null(fn)) {
-        stop("\nIn function `vars_ssites`, either argument `obj` or `fn` ",
+        stop("\nIn function `haps_ssites`, either argument `obj` or `fn` ",
              "must be provided.", call. = FALSE)
     }
     if (!is.null(obj) && !is.null(fn)) {
-        stop("\nIn function `vars_ssites`, only one argument (`obj` or `fn`) ",
+        stop("\nIn function `haps_ssites`, only one argument (`obj` or `fn`) ",
              "should be provided.", call. = FALSE)
     }
 
@@ -138,7 +138,7 @@ vars_ssites <- function(obj = NULL,
 
         # Check for coal_obj being a list and having a `seg_sites` field
         if (!inherits(obj, "list") || is.null(obj$seg_sites)) {
-            err_msg("vars_ssites", "obj", "NULL or a list with a `seg_sites`",
+            err_msg("haps_ssites", "obj", "NULL or a list with a `seg_sites`",
                     "field present")
         }
 
@@ -147,7 +147,7 @@ vars_ssites <- function(obj = NULL,
     } else {
 
         if (!is_type(fn, "character", 1)) {
-            err_msg("vars_ssites", "fn", "NULL or a single string")
+            err_msg("haps_ssites", "fn", "NULL or a single string")
         }
 
         sites_mats <- coal_file_sites(fn)
@@ -156,19 +156,19 @@ vars_ssites <- function(obj = NULL,
         n_cols <- sapply(sites_mats, ncol)
         if (any(n_cols < 2)) {
             stop("\nOne or more seg. sites matrices from a ms-style file output ",
-                 "have no variant information specified.",
+                 "have no haplotype information specified.",
                  call. = FALSE)
         }
 
     }
 
     if (length(unique(sapply(sites_mats, ncol))) != 1) {
-        stop("\nIn function `vars_ssites`, one or more of the segregating sites ",
+        stop("\nIn function `haps_ssites`, one or more of the segregating sites ",
              "matrices has a number of rows that differs from the rest.")
     }
 
 
-    out <- vars_ssites_info$new(mats = sites_mats)
+    out <- haps_ssites_info$new(mats = sites_mats)
 
     return(out)
 
@@ -181,34 +181,34 @@ vars_ssites <- function(obj = NULL,
 
 #   __vcf -----
 
-#' Organize information to create variants using a VCF file
+#' Organize information to create haplotypes using a VCF file
 #'
-#' This function organizes higher-level information for creating variants from
+#' This function organizes higher-level information for creating haplotypes from
 #' Variant Call Format (VCF) files.
 #'
 #'
 #' @param fn A single string specifying the name of the VCF file
 #' @param print_names Logical for whether to print all unique chromosome names from
 #'     the VCF file when VCF chromosome names don't match those from the reference genome.
-#'     This printing doesn't happen until this object is passed to `create_variants`.
+#'     This printing doesn't happen until this object is passed to `create_haplotypes`.
 #'     This can be useful for troubleshooting.
 #'     Defaults to `FALSE`.
 #'
 #' @export
 #'
-#' @return A `vars_vcf_info` object containing information used in `create_variants`
-#'     to create haploid variants.
+#' @return A `haps_vcf_info` object containing information used in `create_haplotypes`
+#'     to create variant haplotypes.
 #'     This class is just a wrapper around a list containing the arguments to this
 #'     function, which you can view (but not change) using the object's `fn()` and
 #'     `print_names()` methods.
 #'
-vars_vcf <- function(fn, print_names = FALSE) {
+haps_vcf <- function(fn, print_names = FALSE) {
 
     if (!is_type(fn, "character", 1)) {
-        err_msg("vars_vcf", "fn", "a single string")
+        err_msg("haps_vcf", "fn", "a single string")
     }
     if (!is_type(print_names, "logical", 1)) {
-        err_msg("vars_vcf", "print_names", "a single logical")
+        err_msg("haps_vcf", "print_names", "a single logical")
     }
 
     fn <- path.expand(fn)
@@ -217,7 +217,7 @@ vars_vcf <- function(fn, print_names = FALSE) {
         stop("\nFile ", fn, " doesn't exist.", call. = FALSE)
     }
 
-    out <- vars_vcf_info$new(fn = fn, print_names = print_names)
+    out <- haps_vcf_info$new(fn = fn, print_names = print_names)
 
     return(out)
 
@@ -234,9 +234,9 @@ vars_vcf <- function(fn, print_names = FALSE) {
 # __phylo -----
 
 
-#' Organize information to create variants using phylogenetic tree(s)
+#' Organize information to create haplotypes using phylogenetic tree(s)
 #'
-#' This function organizes higher-level information for creating variants from
+#' This function organizes higher-level information for creating haplotypes from
 #' phylogenetic tree(s) output as `phylo` or `multiPhylo` objects
 #' (both from the `ape` package) or NEWICK files.
 #' Note that all phylogenetic trees must be rooted and binary.
@@ -263,8 +263,8 @@ vars_vcf <- function(fn, print_names = FALSE) {
 #'     Defaults to `NULL`.
 #'
 #'
-#' @return A `vars_phylo_info` object containing information used in `create_variants`
-#'     to create haploid variants.
+#' @return A `haps_phylo_info` object containing information used in `create_haplotypes`
+#'     to create variant haplotypes.
 #'     This class is just a wrapper around a list containing phylogenetic tree
 #'     information for each reference chromosome, which you can view (but not change)
 #'     using the object's `phylo()` method.
@@ -272,15 +272,15 @@ vars_vcf <- function(fn, print_names = FALSE) {
 #'
 #' @export
 #'
-vars_phylo <- function(obj = NULL,
+haps_phylo <- function(obj = NULL,
                        fn = NULL) {
 
     if (is.null(obj) && is.null(fn)) {
-        stop("\nIn function `vars_phylo`, either argument `obj` or `fn` ",
+        stop("\nIn function `haps_phylo`, either argument `obj` or `fn` ",
              "must be provided.", call. = FALSE)
     }
     if (!is.null(obj) && !is.null(fn)) {
-        stop("\nIn function `vars_phylo`, only one argument (`obj` or `fn`) ",
+        stop("\nIn function `haps_phylo`, only one argument (`obj` or `fn`) ",
              "should be provided.", call. = FALSE)
     }
 
@@ -291,7 +291,7 @@ vars_phylo <- function(obj = NULL,
              !inherits(obj, "list")) ||
             (inherits(obj, "list") && !all(sapply(obj, inherits,
                                                   what = "phylo")))) {
-            err_msg("vars_phylo", "obj",
+            err_msg("haps_phylo", "obj",
                     "NULL or of class \"phylo\", \"multiPhylo\", or a list of",
                     "\"phylo\" objects")
         }
@@ -304,12 +304,12 @@ vars_phylo <- function(obj = NULL,
     }
     if (!is.null(fn)) {
         if (!is_type(fn, "character")) {
-            err_msg("vars_phylo", "fn", "NULL or a character vector")
+            err_msg("haps_phylo", "fn", "NULL or a character vector")
         }
         phy <- lapply(fn, ape::read.tree)
     }
 
-    out <- vars_phylo_info$new(phylo = phy)
+    out <- haps_phylo_info$new(phylo = phy)
 
     return(out)
 
@@ -321,38 +321,38 @@ vars_phylo <- function(obj = NULL,
 
 # __theta -----
 
-#' Organize information to create variants using theta parameter
+#' Organize information to create haplotypes using theta parameter
 #'
-#' This function organizes higher-level information for creating variants from
-#' the population-scaled mutation rate and a desired number of variants.
+#' This function organizes higher-level information for creating haplotypes from
+#' the population-scaled mutation rate and a desired number of haplotypes.
 #'
 #'
 #' @param theta Population-scaled mutation rate.
-#' @param n_vars Number of desired variants.
+#' @param n_haps Number of desired haplotypes.
 #'
 #'
-#' @return A `vars_theta_info` object containing information used in `create_variants`
-#'     to create haploid variants.
+#' @return A `haps_theta_info` object containing information used in `create_haplotypes`
+#'     to create variant haplotypes.
 #'     This class is just a wrapper around a list containing the phylogenetic tree
 #'     and `theta` parameter, which you can view (but not change) using the object's
 #'     `phylo()` and `theta()` methods, respectively.
 #'
 #' @export
 #'
-vars_theta <- function(theta, n_vars) {
+haps_theta <- function(theta, n_haps) {
 
     if (!single_number(theta, 0)) {
-        err_msg("vars_theta", "theta", "a single number >= 0")
+        err_msg("haps_theta", "theta", "a single number >= 0")
     }
-    if (!single_integer(n_vars, 2)) {
-        err_msg("vars_theta", "n_vars", "a single integer >= 2")
+    if (!single_integer(n_haps, 2)) {
+        err_msg("haps_theta", "n_haps", "a single integer >= 2")
     }
 
 
     # Generate random coalescent tree:
-    phy <- ape::rcoal(n_vars)
+    phy <- ape::rcoal(n_haps)
 
-    out <- vars_theta_info$new(phylo = phy, theta = theta)
+    out <- haps_theta_info$new(phylo = phy, theta = theta)
 
     return(out)
 
@@ -361,9 +361,9 @@ vars_theta <- function(theta, n_vars) {
 
 # __gtrees -----
 
-#' Organize information to create variants using gene trees
+#' Organize information to create haplotypes using gene trees
 #'
-#' This function organizes higher-level information for creating variants from
+#' This function organizes higher-level information for creating haplotypes from
 #' gene trees output from coalescent simulations.
 #' Note that all gene trees must be rooted and binary.
 #'
@@ -393,23 +393,23 @@ vars_theta <- function(theta, n_vars) {
 #'     Defaults to `NULL`.
 #'
 #'
-#' @return A `vars_gtrees_info` object containing information used in `create_variants`
-#'     to create haploid variants.
+#' @return A `haps_gtrees_info` object containing information used in `create_haplotypes`
+#'     to create variant haplotypes.
 #'     This class is just a wrapper around a list of NEWICK tree strings, one for
 #'     each gene tree, which you can view (but not change) using the object's
 #'     `trees()` method.
 #'
 #' @export
 #'
-vars_gtrees <- function(obj = NULL,
+haps_gtrees <- function(obj = NULL,
                         fn = NULL) {
 
     if (is.null(obj) && is.null(fn)) {
-        stop("\nIn function `vars_gtrees`, either argument `obj` or `fn` ",
+        stop("\nIn function `haps_gtrees`, either argument `obj` or `fn` ",
              "must be provided.", call. = FALSE)
     }
     if (!is.null(obj) && !is.null(fn)) {
-        stop("\nIn function `vars_gtrees`, only one argument (`obj` or `fn`) ",
+        stop("\nIn function `haps_gtrees`, only one argument (`obj` or `fn`) ",
              "should be provided.", call. = FALSE)
     }
 
@@ -433,7 +433,7 @@ vars_gtrees <- function(obj = NULL,
             }
         }
         if (err) {
-            err_msg("vars_gtrees", "obj",
+            err_msg("haps_gtrees", "obj",
                     "(1) a list with a `trees` field present or",
                     "(2) a list of lists, each sub-list containing a `trees`",
                     "field of length 1")
@@ -446,7 +446,7 @@ vars_gtrees <- function(obj = NULL,
     } else {
 
         if (!is_type(fn, "character", 1)) {
-            err_msg("vars_gtrees", "fn", "NULL or a single string")
+            err_msg("haps_gtrees", "fn", "NULL or a single string")
         }
 
         trees <- read_ms_trees_(fn)
@@ -458,7 +458,7 @@ vars_gtrees <- function(obj = NULL,
 
     }
 
-    out <- vars_gtrees_info$new(trees = trees)
+    out <- haps_gtrees_info$new(trees = trees)
 
     return(out)
 
@@ -466,9 +466,9 @@ vars_gtrees <- function(obj = NULL,
 
 
 
-#' @describeIn vars_gtrees Write gene trees to ms-style output file.
+#' @describeIn haps_gtrees Write gene trees to ms-style output file.
 #'
-#' @param gtrees A `vars_gtrees_info` object output from `vars_gtrees`.
+#' @param gtrees A `haps_gtrees_info` object output from `haps_gtrees`.
 #' @param out_prefix Prefix for the output file of gene trees.
 #'     The extension will be `.trees`.
 #'
@@ -476,8 +476,8 @@ vars_gtrees <- function(obj = NULL,
 #'
 write_gtrees <- function(gtrees, out_prefix) {
 
-    if (!inherits(gtrees, "vars_gtrees_info")) {
-        err_msg("write_gtrees", "gtrees", "a `vars_gtrees_info` object")
+    if (!inherits(gtrees, "haps_gtrees_info")) {
+        err_msg("write_gtrees", "gtrees", "a `haps_gtrees_info` object")
     }
     if (!is_type(out_prefix, "character", 1L)) {
         err_msg("write_gtrees", "out_prefix", "a single string")

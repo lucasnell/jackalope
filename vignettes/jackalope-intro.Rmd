@@ -103,9 +103,9 @@ illumina(ref, out_prefix = "ill_mp", seq_sys = "MSv3",
 Here, I will demonstrate how to generate population-genomic data of a type that might
 be used to estimate the divergence between two populations.
 I first use the `scrm` package to conduct 
-coalescent simulations that will generate segregating sites for 10 haploid variants
+coalescent simulations that will generate segregating sites for 10 variant haplotypes
 from the reference genome.
-Five of the variants are from one population, five from another.
+Five of the haplotypes are from one population, five from another.
 The symmetrical migration rate is 100 individuals per generation.
 I set the population-scaled mutation rate
 ($\theta = 4 N_0 \mu$) to `10` for this example.
@@ -116,32 +116,32 @@ ssites <- scrm(paste("10", ref$n_chroms(), "-t 10 -I 2 5 5 100"))
 ```
 
 Using the previously created objects for molecular evolution information (`sub`,
-`ins`, and `del`), I create variants from the reference genome:
+`ins`, and `del`), I create haplotypes from the reference genome:
 
 ```{r examples-divergence-create, eval = FALSE}
-vars <- create_variants(ref, vars_ssites(ssites), sub, ins, del)
+haps <- create_haplotypes(ref, haps_ssites(ssites), sub, ins, del)
 ```
 ```{r examples-divergence-create-do, echo = FALSE}
-# For the purposes of the vignette, I'm just going to use `vars_theta` so I
+# For the purposes of the vignette, I'm just going to use `haps_theta` so I
 # don't have to (1) load scrm to build the vignette or (2) keep a relatively
 # large internal data file to store the scrm output
 # theta of 0.05 gives the same # mutations as using `ssites`
 set.seed(7809534)
-vars <- create_variants(ref, vars_theta(theta = 0.05, n_vars = 10), sub, ins, del)
+haps <- create_haplotypes(ref, haps_theta(theta = 0.05, n_haps = 10), sub, ins, del)
 ```
 
-This results in the following set of variants:
+This results in the following set of haplotypes:
 
 ```{r examples-divergence-create-print, echo = FALSE}
-print(vars)
+print(haps)
 ```
 
 
 For a file of true divergences from the reference genome, the `write_vcf` function
-writes the `variants` object to a VCF file:
+writes the `haplotypes` object to a VCF file:
 
 ```{r examples-divergence-write-vcf, eval = FALSE}
-write_vcf(vars, "variants")
+write_vcf(haps, "haplotypes")
 ```
 
 
@@ -150,17 +150,17 @@ In this case, individuals within a population are pooled, and the population
 sequences are derived from are identified by barcodes.
 
 ```{r examples-divergence-illumina-pool, eval = FALSE}
-illumina(vars, out_prefix = "vars_illumina", n_reads = 500e6, paired = TRUE,
+illumina(haps, out_prefix = "haps_illumina", n_reads = 500e6, paired = TRUE,
          read_length = 100, barcodes = c(rep("AACCGCGG", 20), 
                                          rep("GGTTATAA", 20)))
 ```
 
 
-The below example instead has each individual variant's reads output to separate
+The below example instead has each individual haplotype's reads output to separate
 FASTQ files:
 
 ```{r examples-divergence-illumina-individual, eval = FALSE}
-illumina(vars, out_prefix = "vars_illumina", n_reads = 500e6, paired = TRUE,
+illumina(haps, out_prefix = "haps_illumina", n_reads = 500e6, paired = TRUE,
          read_length = 100, sep_files = TRUE)
 ```
 
@@ -170,26 +170,26 @@ illumina(vars, out_prefix = "vars_illumina", n_reads = 500e6, paired = TRUE,
 
 ### From one phylogenetic tree
 
-This section shows how `jackalope` can generate variants from a phylogeny, then
-simulate sequencing data from those variants to test phylogeny reconstruction methods.
+This section shows how `jackalope` can generate haplotypes from a phylogeny, then
+simulate sequencing data from those haplotypes to test phylogeny reconstruction methods.
 First, I generated a random coalescent tree of 10 species using the  `ape` package.
 
 ```{r examples-phylogeny-tree}
 tree <- rcoal(10)
 ```
 
-Then I input that to the `create_variants` function alongside the molecular evolution
+Then I input that to the `create_haplotypes` function alongside the molecular evolution
 information.
 
 ```{r examples-phylogeny-tree-create-for-show}
-vars <- create_variants(ref, vars_phylo(tree), sub, ins, del)
+haps <- create_haplotypes(ref, haps_phylo(tree), sub, ins, del)
 ```
 
 
-This results in the following `variants` object:
+This results in the following `haplotypes` object:
 
-```{r examples-phylogeny-tree-variants-print, echo = FALSE}
-print(vars)
+```{r examples-phylogeny-tree-haplotypes-print, echo = FALSE}
+print(haps)
 ```
 
 
@@ -197,7 +197,7 @@ Now I can generate data for 1 flow cell of $2 \times 250$bp sequencing
 on an Illumina MiSeq v3.
 
 ```{r examples-phylogeny-tree-illumina, eval = FALSE}
-illumina(vars, out_prefix = "phylo_tree", seq_sys = "MSv3",
+illumina(haps, out_prefix = "phylo_tree", seq_sys = "MSv3",
          read_length = 250, n_reads = 50e6)
 ```
 
@@ -241,35 +241,35 @@ one_chrom <- function(size) {
 gtrees <- list(trees = lapply(ref$sizes(), one_chrom))
 ```
 
-```{r examples-phylogeny-gtrees-create-variants, eval = FALSE}
-vars <- create_variants(ref, vars_gtrees(gtrees),
+```{r examples-phylogeny-gtrees-create-haplotypes, eval = FALSE}
+haps <- create_haplotypes(ref, haps_gtrees(gtrees),
                         sub, ins, del)
 ```
 ```{r examples-phylogeny-gtrees-create-do, echo = FALSE}
-# For the purposes of the vignette, I'm just going to use `vars_theta` so I
+# For the purposes of the vignette, I'm just going to use `haps_theta` so I
 # don't have to (1) load scrm to build the vignette or (2) keep a relatively
 # large internal data file to store the scrm output
 # theta of 0.05 gives the same # mutations as using `ssites`
 set.seed(7809534)
-vars <- create_variants(ref, vars_theta(theta = 0.005, n_vars = 24), sub, ins, del)
+haps <- create_haplotypes(ref, haps_theta(theta = 0.005, n_haps = 24), sub, ins, del)
 ```
 
 
-This results in the following `variants` object:
+This results in the following `haplotypes` object:
 
-```{r examples-phylogeny-gtrees-variants-print, echo = FALSE}
-print(vars)
+```{r examples-phylogeny-gtrees-haplotypes-print, echo = FALSE}
+print(haps)
 ```
 
 
 To store mutation information by diploid sample, the `write_vcf` function writes
-the `variants` object to a VCF file.
+the `haplotypes` object to a VCF file.
 It assigns haplotypes to diploid samples using a matrix for the
 `sample_matrix` argument:
 
 ```{r examples-phylogeny-write-vcf, eval = FALSE}
-write_vcf(vars, out_prefix = "var_gtrees",
-          sample_matrix = matrix(1:vars$n_vars(), ncol = 2, byrow = TRUE))
+write_vcf(haps, out_prefix = "hap_gtrees",
+          sample_matrix = matrix(1:haps$n_haps(), ncol = 2, byrow = TRUE))
 ```
 
 
