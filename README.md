@@ -24,17 +24,17 @@ species, having a tool that can simulate realistic patterns of molecular
 evolution and generate HTS data from those simulations would be quite
 useful.
 
-`jackalope` simply and efficiently simulates (i) variants from reference
-genomes and (ii) reads from both Illumina and Pacific Biosciences
-(PacBio) platforms. It can either read reference genomes from FASTA
-files or simulate new ones. Genomic variants can be simulated using
-summary statistics, phylogenies, Variant Call Format (VCF) files, and
-coalescent simulations—the latter of which can include selection,
-recombination, and demographic fluctuations. `jackalope` can simulate
-single, paired-end, or mate-pair Illumina reads, as well as reads from
-Pacific Biosciences These simulations include sequencing errors, mapping
-qualities, multiplexing, and optical/PCR duplicates. All outputs can be
-written to standard file formats.
+`jackalope` simply and efficiently simulates (i) haplotypes from
+reference genomes and (ii) reads from both Illumina and Pacific
+Biosciences (PacBio) platforms. It can either read reference genomes
+from FASTA files or simulate new ones. Variant haplotypes can be
+simulated using summary statistics, phylogenies, Variant Call Format
+(VCF) files, and coalescent simulations—the latter of which can include
+selection, recombination, and demographic fluctuations. `jackalope` can
+simulate single, paired-end, or mate-pair Illumina reads, as well as
+reads from Pacific Biosciences These simulations include sequencing
+errors, mapping qualities, multiplexing, and optical/PCR duplicates. All
+outputs can be written to standard file formats.
 
 ## Installation
 
@@ -121,17 +121,17 @@ For more information, please see
 
 ## Usage
 
-Below shows how to simulate a 10kb genome, then create variants from
+Below shows how to simulate a 10kb genome, then create haplotypes from
 that genome using a phylogenetic tree:
 
 ``` r
 library(jackalope)
 reference <- create_genome(n_chroms = 10, len_mean = 1000)
 tr <- ape::rcoal(5)
-ref_variants <- create_variants(reference, vars_phylo(tr), sub_JC69(0.1))
-ref_variants
-#>                               << Variants object >>
-#> # Variants: 5
+ref_haplotypes <- create_haplotypes(reference, haps_phylo(tr), sub_JC69(0.1))
+ref_haplotypes
+#>                               << haplotypes object >>
+#> # Haplotypes: 5
 #> # Mutations: 16,870
 #> 
 #>                           << Reference genome info: >>
@@ -150,10 +150,11 @@ ref_variants
 #> chrom9     GGTAGTAATTAGGCTTAAAATAGCAGTG...ATAACAAATGTTCGGCATACGATCTACG      1000
 ```
 
-Below simulates 500 million paired-end, 100 bp reads from the variants:
+Below simulates 500 million paired-end, 100 bp reads from the
+haplotypes:
 
 ``` r
-illumina(ref_variants, out_prefix = "illumina", n_reads = 500e6,
+illumina(ref_haplotypes, out_prefix = "illumina", n_reads = 500e6,
          paired = TRUE, read_length = 100)
 ```
 

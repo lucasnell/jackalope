@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Write a <code>ref_genome</code> or <code>variants</code> object to a FASTA file. — write_fasta • jackalope</title>
+<title>Write a <code>ref_genome</code> or <code>haplotypes</code> object to a FASTA file. — write_fasta • jackalope</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -42,9 +42,9 @@
 
 
 
-<meta property="og:title" content="Write a <code>ref_genome</code> or <code>variants</code> object to a FASTA file. — write_fasta" />
+<meta property="og:title" content="Write a <code>ref_genome</code> or <code>haplotypes</code> object to a FASTA file. — write_fasta" />
 <meta property="og:description" content="This file produces 1 FASTA file for a ref_genome object and one file
-for each variant in a variants object." />
+for each haplotype in a haplotypes object." />
 <meta property="og:image" content="/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -132,14 +132,14 @@ for each variant in a variants object." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Write a <code>ref_genome</code> or <code>variants</code> object to a FASTA file.</h1>
+    <h1>Write a <code>ref_genome</code> or <code>haplotypes</code> object to a FASTA file.</h1>
     <small class="dont-index">Source: <a href='https://github.com/lucasnell/jackalope/blob/master/R/read_write.R'><code>R/read_write.R</code></a></small>
     <div class="hidden name"><code>write_fasta.Rd</code></div>
     </div>
 
     <div class="ref-description">
     <p>This file produces 1 FASTA file for a <code>ref_genome</code> object and one file
-for each variant in a <code>variants</code> object.</p>
+for each haplotype in a <code>haplotypes</code> object.</p>
     </div>
 
     <pre class="usage"><span class='fu'>write_fasta</span>(
@@ -158,7 +158,7 @@ for each variant in a <code>variants</code> object.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>obj</th>
-      <td><p>A <code>ref_genome</code> or <code>variants</code> object.</p></td>
+      <td><p>A <code>ref_genome</code> or <code>haplotypes</code> object.</p></td>
     </tr>
     <tr>
       <th>out_prefix</th>
@@ -189,9 +189,9 @@ Defaults to <code>FALSE</code>.</p></td>
     </tr>
     <tr>
       <th>n_threads</th>
-      <td><p>Number of threads to use if writing from a <code>variants</code> object.
-Threads are split among variants, so it's not useful to provide more threads
-than variants.
+      <td><p>Number of threads to use if writing from a <code>haplotypes</code> object.
+Threads are split among haplotypes, so it's not useful to provide more threads
+than haplotypes.
 This argument is ignored if <code>obj</code> is a <code>ref_genome</code> object, or if
 OpenMP is not enabled.
 Defaults to <code>1</code>.</p></td>

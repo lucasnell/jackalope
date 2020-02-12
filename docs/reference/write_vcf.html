@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Write variant info from a <code>variants</code> object to a VCF file. — write_vcf • jackalope</title>
+<title>Write haplotype info from a <code>haplotypes</code> object to a VCF file. — write_vcf • jackalope</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -42,7 +42,7 @@
 
 
 
-<meta property="og:title" content="Write variant info from a <code>variants</code> object to a VCF file. — write_vcf" />
+<meta property="og:title" content="Write haplotype info from a <code>haplotypes</code> object to a VCF file. — write_vcf" />
 <meta property="og:description" content="Compression in this function always uses &quot;bgzip&quot; for compatibility with &quot;tabix&quot;." />
 <meta property="og:image" content="/logo.png" />
 <meta name="twitter:card" content="summary" />
@@ -131,7 +131,7 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Write variant info from a <code>variants</code> object to a VCF file.</h1>
+    <h1>Write haplotype info from a <code>haplotypes</code> object to a VCF file.</h1>
     <small class="dont-index">Source: <a href='https://github.com/lucasnell/jackalope/blob/master/R/read_write.R'><code>R/read_write.R</code></a></small>
     <div class="hidden name"><code>write_vcf.Rd</code></div>
     </div>
@@ -141,7 +141,7 @@
     </div>
 
     <pre class="usage"><span class='fu'>write_vcf</span>(
-  <span class='no'>vars</span>,
+  <span class='no'>haps</span>,
   <span class='no'>out_prefix</span>,
   <span class='kw'>compress</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>sample_matrix</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
@@ -153,8 +153,8 @@
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>vars</th>
-      <td><p>A <code>variants</code> object.</p></td>
+      <th>haps</th>
+      <td><p>A <code>haplotypes</code> object.</p></td>
     </tr>
     <tr>
       <th>out_prefix</th>
@@ -169,16 +169,16 @@ Defaults to <code>FALSE</code>.</p></td>
     </tr>
     <tr>
       <th>sample_matrix</th>
-      <td><p>Matrix to specify how haploid variants are grouped into samples
+      <td><p>Matrix to specify how haplotypes are grouped into samples
 if samples are not haploid. There should be one row for each sample, and
-each row should contain indices or names for the variants present in that sample.
-Indices/names for variants cannot be repeated.
-Instead of repeating indices here, you should use the <code>dup_vars</code>
-method of the <code>variants</code> class to duplicate the necessary variant(s).
+each row should contain indices or names for the haplotypes present in that sample.
+Indices/names for haplotypes cannot be repeated.
+Instead of repeating indices here, you should use the <code>dup_haps</code>
+method of the <code>haplotypes</code> class to duplicate the necessary haplotype(s).
 The number of columns indicates the ploidy level: 2 columns for diploid,
 3 for triploid, 4 for tetraploid, and so on;
 there is no limit to the ploidy level.
-If this argument is <code>NULL</code>, it's assumed that each variant is its own
+If this argument is <code>NULL</code>, it's assumed that each haplotype is its own
 separate sample.
 Defaults to <code>NULL</code>.</p></td>
     </tr>

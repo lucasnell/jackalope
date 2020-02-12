@@ -43,7 +43,7 @@
 
 
 <meta property="og:title" content="Create and write Illumina reads to FASTQ file(s). — illumina" />
-<meta property="og:description" content="From either a reference genome or set of haploid variants, create Illumina reads
+<meta property="og:description" content="From either a reference genome or set of variant haplotypes, create Illumina reads
 from error profiles and write them to FASTQ output file(s).
 I encourage you to cite the reference below in addition to jackalope if you use
 this function." />
@@ -140,7 +140,7 @@ this function." />
     </div>
 
     <div class="ref-description">
-    <p>From either a reference genome or set of haploid variants, create Illumina reads
+    <p>From either a reference genome or set of variant haplotypes, create Illumina reads
 from error profiles and write them to FASTQ output file(s).
 I encourage you to cite the reference below in addition to <code>jackalope</code> if you use
 this function.</p>
@@ -163,7 +163,7 @@ this function.</p>
          <span class='kw'>del_prob2</span> <span class='kw'>=</span> <span class='fl'>0.00023</span>,
          <span class='kw'>frag_len_min</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
          <span class='kw'>frag_len_max</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-         <span class='kw'>variant_probs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+         <span class='kw'>haplotype_probs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
          <span class='kw'>barcodes</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
          <span class='kw'>prob_dup</span> <span class='kw'>=</span> <span class='fl'>0.02</span>,
          <span class='kw'>sep_files</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
@@ -179,7 +179,7 @@ this function.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>obj</th>
-      <td><p>Sequencing object of class <code>ref_genome</code> or <code>variants</code>.</p></td>
+      <td><p>Sequencing object of class <code>ref_genome</code> or <code>haplotypes</code>.</p></td>
     </tr>
     <tr>
       <th>out_prefix</th>
@@ -265,15 +265,15 @@ A <code>NULL</code> value results in <code>2^32-1</code>, the maximum allowed va
 Defaults to <code>NULL</code></p></td>
     </tr>
     <tr>
-      <th>variant_probs</th>
-      <td><p>Relative probability of sampling each variant.
+      <th>haplotype_probs</th>
+      <td><p>Relative probability of sampling each haplotype.
 This is ignored if sequencing a reference genome.
 <code>NULL</code> results in all having the same probability.
 Defaults to <code>NULL</code>.</p></td>
     </tr>
     <tr>
       <th>barcodes</th>
-      <td><p>Character vector of barcodes for each variant, or a single barcode
+      <td><p>Character vector of barcodes for each haplotype, or a single barcode
 if sequencing a reference genome. <code>NULL</code> results in no barcodes.
 Defaults to <code>NULL</code>.</p></td>
     </tr>
@@ -284,9 +284,9 @@ Defaults to <code>0.02</code>.</p></td>
     </tr>
     <tr>
       <th>sep_files</th>
-      <td><p>Logical indicating whether to make separate files for each variant.
+      <td><p>Logical indicating whether to make separate files for each haplotype.
 This argument is coerced to <code>FALSE</code> if the <code>obj</code> argument is not
-a <code>variants</code> object.
+a <code>haplotypes</code> object.
 Defaults to <code>FALSE</code>.</p></td>
     </tr>
     <tr>
@@ -316,7 +316,7 @@ There is no speed increase if you try to use multiple threads to create
 compressed output on the fly, so that option is not included.
 If you want to be conservative with disk space (by not having an uncompressed
 file present even temporarily), set <code>n_threads</code> to <code>1</code>.
-Threads are NOT spread across chromosomes or variants, so you don't need to
+Threads are NOT spread across chromosomes or haplotypes, so you don't need to
 think about these when choosing this argument's value.
 However, all threads write to the same file/files, so there are diminishing
 returns for providing many threads.
@@ -397,7 +397,7 @@ and
 <p>The ID lines for FASTQ files are formatted as such:</p>
 <p><code>@&lt;genome name&gt;-&lt;chromosome name&gt;-&lt;starting position&gt;-&lt;strand&gt;[/&lt;read#&gt;]</code></p>
 <p>where the part in <code>[]</code> is only for paired-end Illumina reads, and where <code>genome name</code>
-is always <code>REF</code> for reference genomes (as opposed to variants).</p>
+is always <code>REF</code> for reference genomes (as opposed to haplotypes).</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>Huang, W., L. Li, J. R. Myers, and G. T. Marth. 2012. ART: a next-generation

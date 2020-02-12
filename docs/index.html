@@ -117,7 +117,7 @@
 <h2 class="hasAnchor">
 <a href="#overview" class="anchor"></a>Overview</h2>
 <p>For studies using high-throughput sequencing (HTS) data, simulations can be vital for planning sampling design and testing bioinformatic tools. However, most HTS sequencing tools provide only very simple ways of adding deviations from a reference genome. For HTS studies that focus on patterns of genomic variation among individuals, populations, or species, having a tool that can simulate realistic patterns of molecular evolution and generate HTS data from those simulations would be quite useful.</p>
-<p><code>jackalope</code> simply and efficiently simulates (i) variants from reference genomes and (ii) reads from both Illumina and Pacific Biosciences (PacBio) platforms. It can either read reference genomes from FASTA files or simulate new ones. Genomic variants can be simulated using summary statistics, phylogenies, Variant Call Format (VCF) files, and coalescent simulations—the latter of which can include selection, recombination, and demographic fluctuations. <code>jackalope</code> can simulate single, paired-end, or mate-pair Illumina reads, as well as reads from Pacific Biosciences These simulations include sequencing errors, mapping qualities, multiplexing, and optical/PCR duplicates. All outputs can be written to standard file formats.</p>
+<p><code>jackalope</code> simply and efficiently simulates (i) haplotypes from reference genomes and (ii) reads from both Illumina and Pacific Biosciences (PacBio) platforms. It can either read reference genomes from FASTA files or simulate new ones. Variant haplotypes can be simulated using summary statistics, phylogenies, Variant Call Format (VCF) files, and coalescent simulations—the latter of which can include selection, recombination, and demographic fluctuations. <code>jackalope</code> can simulate single, paired-end, or mate-pair Illumina reads, as well as reads from Pacific Biosciences These simulations include sequencing errors, mapping qualities, multiplexing, and optical/PCR duplicates. All outputs can be written to standard file formats.</p>
 </div>
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
@@ -173,14 +173,14 @@
 <div id="usage" class="section level2">
 <h2 class="hasAnchor">
 <a href="#usage" class="anchor"></a>Usage</h2>
-<p>Below shows how to simulate a 10kb genome, then create variants from that genome using a phylogenetic tree:</p>
+<p>Below shows how to simulate a 10kb genome, then create haplotypes from that genome using a phylogenetic tree:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(jackalope)</a>
 <a class="sourceLine" id="cb7-2" data-line-number="2">reference &lt;-<span class="st"> </span><span class="kw"><a href="reference/create_genome.html">create_genome</a></span>(<span class="dt">n_chroms =</span> <span class="dv">10</span>, <span class="dt">len_mean =</span> <span class="dv">1000</span>)</a>
 <a class="sourceLine" id="cb7-3" data-line-number="3">tr &lt;-<span class="st"> </span>ape<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/ape/man/rtree.html">rcoal</a></span>(<span class="dv">5</span>)</a>
-<a class="sourceLine" id="cb7-4" data-line-number="4">ref_variants &lt;-<span class="st"> </span><span class="kw"><a href="reference/create_variants.html">create_variants</a></span>(reference, <span class="kw"><a href="reference/vars_phylo.html">vars_phylo</a></span>(tr), <span class="kw"><a href="reference/sub_models.html">sub_JC69</a></span>(<span class="fl">0.1</span>))</a>
-<a class="sourceLine" id="cb7-5" data-line-number="5">ref_variants</a>
-<a class="sourceLine" id="cb7-6" data-line-number="6"><span class="co">#&gt;                               &lt;&lt; Variants object &gt;&gt;</span></a>
-<a class="sourceLine" id="cb7-7" data-line-number="7"><span class="co">#&gt; # Variants: 5</span></a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">ref_haplotypes &lt;-<span class="st"> </span><span class="kw"><a href="reference/create_haplotypes.html">create_haplotypes</a></span>(reference, <span class="kw"><a href="reference/haps_phylo.html">haps_phylo</a></span>(tr), <span class="kw"><a href="reference/sub_models.html">sub_JC69</a></span>(<span class="fl">0.1</span>))</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">ref_haplotypes</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6"><span class="co">#&gt;                               &lt;&lt; haplotypes object &gt;&gt;</span></a>
+<a class="sourceLine" id="cb7-7" data-line-number="7"><span class="co">#&gt; # Haplotypes: 5</span></a>
 <a class="sourceLine" id="cb7-8" data-line-number="8"><span class="co">#&gt; # Mutations: 16,870</span></a>
 <a class="sourceLine" id="cb7-9" data-line-number="9"><span class="co">#&gt; </span></a>
 <a class="sourceLine" id="cb7-10" data-line-number="10"><span class="co">#&gt;                           &lt;&lt; Reference genome info: &gt;&gt;</span></a>
@@ -197,8 +197,8 @@
 <a class="sourceLine" id="cb7-21" data-line-number="21"><span class="co">#&gt; chrom7     TCGTTTCAACGTCCTTAAGTGTAGTATC...GGCTCGTTAGCTCTCCGAGGAGACGAGG      1000</span></a>
 <a class="sourceLine" id="cb7-22" data-line-number="22"><span class="co">#&gt; chrom8     CAGGTAAGTTATCAAAGAACCTTCCTGG...ACGCATCACCTCGCAAGGAGACTCGTTA      1000</span></a>
 <a class="sourceLine" id="cb7-23" data-line-number="23"><span class="co">#&gt; chrom9     GGTAGTAATTAGGCTTAAAATAGCAGTG...ATAACAAATGTTCGGCATACGATCTACG      1000</span></a></code></pre></div>
-<p>Below simulates 500 million paired-end, 100 bp reads from the variants:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw"><a href="reference/illumina.html">illumina</a></span>(ref_variants, <span class="dt">out_prefix =</span> <span class="st">"illumina"</span>, <span class="dt">n_reads =</span> <span class="fl">500e6</span>,</a>
+<p>Below simulates 500 million paired-end, 100 bp reads from the haplotypes:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw"><a href="reference/illumina.html">illumina</a></span>(ref_haplotypes, <span class="dt">out_prefix =</span> <span class="st">"illumina"</span>, <span class="dt">n_reads =</span> <span class="fl">500e6</span>,</a>
 <a class="sourceLine" id="cb8-2" data-line-number="2">         <span class="dt">paired =</span> <span class="ot">TRUE</span>, <span class="dt">read_length =</span> <span class="dv">100</span>)</a></code></pre></div>
 <p>Below simulates 500 thousand PacBio reads from the reference genome:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw"><a href="reference/pacbio.html">pacbio</a></span>(ref, <span class="dt">out_prefix =</span> <span class="st">"pacbio"</span>, <span class="dt">n_reads =</span> <span class="fl">500e3</span>)</a></code></pre></div>

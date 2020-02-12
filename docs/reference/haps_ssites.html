@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Insertions and deletions (indels) specification — indels • jackalope</title>
+<title>Organize information to create haplotypes using segregating sites matrices — haps_ssites • jackalope</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -42,9 +42,9 @@
 
 
 
-<meta property="og:title" content="Insertions and deletions (indels) specification — indels" />
-<meta property="og:description" content="Construct necessary information for insertions and deletions (indels) that will
-be used in create_haplotypes." />
+<meta property="og:title" content="Organize information to create haplotypes using segregating sites matrices — haps_ssites" />
+<meta property="og:description" content="This function organizes higher-level information for creating haplotypes from
+matrices of segregating sites output from coalescent simulations." />
 <meta property="og:image" content="/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -132,97 +132,62 @@ be used in create_haplotypes." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Insertions and deletions (indels) specification</h1>
-    <small class="dont-index">Source: <a href='https://github.com/lucasnell/jackalope/blob/master/R/mevo.R'><code>R/mevo.R</code></a></small>
-    <div class="hidden name"><code>indels.Rd</code></div>
+    <h1>Organize information to create haplotypes using segregating sites matrices</h1>
+    <small class="dont-index">Source: <a href='https://github.com/lucasnell/jackalope/blob/master/R/haps_functions.R'><code>R/haps_functions.R</code></a></small>
+    <div class="hidden name"><code>haps_ssites.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Construct necessary information for insertions and deletions (indels) that will
-be used in <code>create_haplotypes</code>.</p>
+    <p>This function organizes higher-level information for creating haplotypes from
+matrices of segregating sites output from coalescent simulations.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>indels</span>(<span class='no'>rate</span>, <span class='kw'>max_length</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>a</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>rel_rates</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>haps_ssites</span>(<span class='kw'>obj</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>fn</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>rate</th>
-      <td><p>Single number specifying the overall indel rate among all lengths.</p></td>
+      <th>obj</th>
+      <td><p>Object containing segregating sites information.
+This can be one of the following:
+(1) A single <code>list</code> with a <code>seg_sites</code> field inside. This field must
+contain a matrix for segregating sites for each chromosome.
+The matrix itself should contain the haplotype information, coded
+using 0s and 1s: 0s indicate the ancestral state and 1s indicate
+mutant.
+The matrix column names should indicate the positions of the polymorphisms on the
+chromosome.
+If positions are in the range <code>(0,1)</code>, they're assumed to come from an infinite-
+sites model and are relative positions.
+If positions are integers in the range <code>[0, chromosome length - 1]</code>
+or <code>[1, chromosome length]</code>, they're assumed to come from an finite-sites
+model and are absolute positions.
+Defaults to <code>NULL</code>.</p></td>
     </tr>
     <tr>
-      <th>max_length</th>
-      <td><p>Maximum length of indels. Defaults to <code>10</code>.</p></td>
-    </tr>
-    <tr>
-      <th>a</th>
-      <td><p>Extra parameter necessary for generating rates from a Lavalette distribution.
-See Details for more info. Defaults to <code>NULL</code>.</p></td>
-    </tr>
-    <tr>
-      <th>rel_rates</th>
-      <td><p>A numeric vector of relative rates for each indel length
-from 1 to the maximum length.
-If provided, all arguments other than <code>rate</code> are ignored.
+      <th>fn</th>
+      <td><p>A single string specifying the name of the file containing
+the <code>ms</code>-style coalescent output with segregating site info.
 Defaults to <code>NULL</code>.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An <code>indel_info</code> object, which is an R6 class that wraps the info needed for
-the <code>create_haplotypes</code> function.
-It does not allow the user to directly manipulate the info inside, as that
-should be done using this function.
-You can use the <code>rates()</code> method to view the indel rates by size.</p>
+    <p>A <code>haps_ssites_info</code> object containing information used in <code>create_haplotypes</code>
+to create variant haplotypes.
+This class is just a wrapper around a list of matrices of segregating site info,
+which you can view (but not change) using the object's <code>mats()</code> method.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>All indels require the <code>rate</code> parameter, which specifies
-the overall indels rate among all lengths.
-The <code>rate</code> parameter is ultimately combined with a vector of relative rates among
-the different lengths of indels from 1 to the maximum possible length.
-There are three different ways to specify/generate relative-rate values.</p><ol>
-<li><p>Assume that rates are proportional to <code><a href='https://rdrr.io/r/base/Log.html'>exp(-L)</a></code> for indel length
-<code>L</code> from 1 to the maximum length (Albers et al. 2011).
-This method will be used if the following arguments are provided:</p><ul>
-<li><p><code>rate</code></p></li>
-<li><p><code>max_length</code></p></li>
-</ul></li>
-<li><p>Generate relative rates from a Lavalette distribution
-(Fletcher and Yang 2009), where the rate for length <code>L</code> is proportional to
-<code>{L * max_length / (max_length - L + 1)}^(-a)</code>.
-This method will be used if the following arguments are provided:</p><ul>
-<li><p><code>rate</code></p></li>
-<li><p><code>max_length</code></p></li>
-<li><p><code>a</code></p></li>
-</ul></li>
-<li><p>Directly specify values by providing a numeric vector of relative
-rates for each insertion/deletion length from 1 to the maximum length.
-This method will be used if the following arguments are provided:</p><ul>
-<li><p><code>rate</code></p></li>
-<li><p><code>rel_rates</code></p></li>
-</ul></li>
-</ol>
+    <p>For what the <code>seg_sites</code> field should look like in a list, see output from the
+<code>scrm</code> or <code>coala</code> package.
+(These packages are not required to be installed when installing
+<code>jackalope</code>.)
+If using either of these packages, I encourage you to cite them. For citation
+information, see output from <code><a href='https://rdrr.io/r/utils/citation.html'>citation("scrm")</a></code> or <code><a href='https://rdrr.io/r/utils/citation.html'>citation("coala")</a></code>.</p>
 
-    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
-
-    <p>Albers, C. A., G. Lunter, D. G. MacArthur, G. McVean, W. H. Ouwehand, and R. Durbin.
-2011. Dindel: accurate indel calls from short-read data. Genome Research 21:961–973.</p>
-<p>Fletcher, W., and Z. Yang. 2009. INDELible: a flexible simulator of
-biological sequence evolution. Molecular Biology and Evolution 26:1879–1888.</p>
-
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'># relative rates are proportional to `exp(-L)` for indel</span>
-<span class='co'># length `L` from 1 to 5:</span>
-<span class='no'>indel_rates1</span> <span class='kw'>&lt;-</span> <span class='fu'>indels</span>(<span class='fl'>0.1</span>, <span class='kw'>max_length</span> <span class='kw'>=</span> <span class='fl'>5</span>)
-
-<span class='co'># relative rates are proportional to Lavalette distribution</span>
-<span class='co'># for length from 1 to 10:</span>
-<span class='no'>indel_rates2</span> <span class='kw'>&lt;-</span> <span class='fu'>indels</span>(<span class='fl'>0.2</span>, <span class='kw'>max_length</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>a</span> <span class='kw'>=</span> <span class='fl'>1.1</span>)
-
-<span class='co'># relative rates are all the same for lengths from 1 to 100:</span>
-<span class='no'>indel_rates3</span> <span class='kw'>&lt;-</span> <span class='fu'>indels</span>(<span class='fl'>0.2</span>, <span class='kw'>rel_rates</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fl'>1</span>, <span class='fl'>100</span>))</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -230,8 +195,6 @@ biological sequence evolution. Molecular Biology and Evolution 26:1879–1888.</
       <li><a href="#arguments">Arguments</a></li>
       <li><a href="#value">Value</a></li>
       <li><a href="#details">Details</a></li>
-      <li><a href="#references">References</a></li>
-      <li><a href="#examples">Examples</a></li>
     </ul>
 
   </div>
