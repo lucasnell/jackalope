@@ -51,6 +51,30 @@ test_that("basics of haps_theta work", {
 })
 
 
+# haps_theta -----
+test_that("basics of haps_theta work - with exact indel simulation", {
+
+    vi <- haps_theta(0.1, n_haps = 4)
+    haps <- cv(vi, c(list(epsilon = 0), arg_list))
+
+    expect_identical(haps$n_chroms(), arg_list$reference$n_chroms())
+    expect_identical(haps$n_haps(), 4L)
+
+    haps2 <- cv(haps_theta(4, n_haps = 4), c(list(epsilon = 0), arg_list))
+
+    muts <- jackalope:::view_mutations(haps$ptr(), 0)
+    muts2 <- jackalope:::view_mutations(haps2$ptr(), 0)
+
+    expect_gt(sum(abs(muts2$size_mod)) + sum(muts2$size_mod == 0),
+              sum(abs(muts$size_mod)) + sum(muts$size_mod == 0))
+
+    expect_error(haps_theta("0.1", n_haps = 4),
+                 regexp = "argument `theta` must be a single number >= 0.")
+    expect_error(haps_theta(0.1, n_haps = 1),
+                 regexp = "argument `n_haps` must be a single integer >= 2.")
+})
+
+
 
 # haps_phylo w obj -----
 test_that("basics of haps_phylo with object work", {

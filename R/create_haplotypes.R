@@ -552,9 +552,10 @@ to_hap_set__haps_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
 #'     the Doob–Gillespie algorithm, as used for the indel portion of the simulations.
 #'     Smaller values result in a closer approximation.
 #'     Larger values are less exact but faster.
-#'     Values must be `> 0` and `< 1`.
-#'     For more information, see Cao et al. (2006) and Wieder et al. (2011),
-#'     listed below.
+#'     Values must be `>= 0` and `< 1`.
+#'     For more information on the approximation, see Cao et al. (2006) and
+#'     Wieder et al. (2011), listed below.
+#'     If `epsilon` is `0`, then it reverts to the exact Doob–Gillespie algorithm.
 #'     Defaults to `0.03`.
 #' @param n_threads Number of threads to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
@@ -655,8 +656,8 @@ create_haplotypes <- function(reference,
     if (!is.null(del) && !inherits(del, "indel_info")) {
         err_msg("create_haplotypes", "del", "NULL or a \"indel_info\" object")
     }
-    if (!single_number(epsilon) || epsilon <= 0 || epsilon >= 1) {
-        err_msg("create_haplotypes", "epsilon", "a single number > 0 and < 1")
+    if (!single_number(epsilon, 0) || epsilon >= 1) {
+        err_msg("create_haplotypes", "epsilon", "a single number >= 0 and < 1")
     }
     # If sub is NULL and it's not a vcf file method, convert sub to rate-0 matrix:
     if (is.null(sub) && !vcf) sub <- sub_JC69(0)
