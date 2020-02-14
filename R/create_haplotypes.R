@@ -15,17 +15,17 @@
 
 #' Check validity of position columns in segregating-sites matrices.
 #'
-#' Used in `to_var_set` for the ssites method.
+#' Used in `to_hap_set` for the ssites method.
 #'
 #' @noRd
 #'
 fill_coal_mat_pos <- function(sites_mats, chrom_sizes) {
 
     if (length(sites_mats) != length(chrom_sizes)) {
-        stop("\nIn function `vars_ssites`, there must be exactly one segregating sites ",
+        stop("\nIn function `haps_ssites`, there must be exactly one segregating sites ",
              "matrix for each reference genome chromosome. ",
-             "It appears you need to re-run `vars_ssites` before attempting to ",
-             "run `create_variants` again.")
+             "It appears you need to re-run `haps_ssites` before attempting to ",
+             "run `create_haplotypes` again.")
     }
 
     for (i in 1:length(sites_mats)) {
@@ -48,8 +48,8 @@ fill_coal_mat_pos <- function(sites_mats, chrom_sizes) {
                      "The former should have integer positions in the range ",
                      "[0, chromosome length - 1] or [1, chromosome length], ",
                      "the latter numeric in (0,1).",
-                     "It appears you need to re-run `vars_ssites` before attempting to ",
-                     "run `create_variants` again.")
+                     "It appears you need to re-run `haps_ssites` before attempting to ",
+                     "run `create_haplotypes` again.")
             }
         }
         sites_mats[[i]][,1] <- pos
@@ -73,14 +73,14 @@ fill_coal_mat_pos <- function(sites_mats, chrom_sizes) {
 
 #' Go from pointer to trees info to a pointer to a VarSet object
 #'
-#' Used below in theta, phylo, and gtrees `to_var_set` methods
+#' Used below in theta, phylo, and gtrees `to_hap_set` methods
 #'
 #' @noRd
 #'
-trees_to_var_set <- function(trees_info, reference, sub, ins, del, epsilon,
+trees_to_hap_set <- function(trees_info, reference, sub, ins, del, epsilon,
                              n_threads, show_progress) {
 
-    variants_ptr <- evolve_across_trees(reference$ptr(),
+    haplotypes_ptr <- evolve_across_trees(reference$ptr(),
                                         trees_info,
                                         sub$Q(),
                                         sub$U(),
@@ -94,7 +94,7 @@ trees_to_var_set <- function(trees_info, reference, sub, ins, del, epsilon,
                                         n_threads,
                                         show_progress)
 
-    return(variants_ptr)
+    return(haplotypes_ptr)
 
 }
 
@@ -189,7 +189,7 @@ process_phy <- function(phy, ordered_tip_labels) {
 
 #' Organize info into list to later create C++ tree class from phylo info.
 #'
-#' Used in `to_var_set` for phylo and theta methods.
+#' Used in `to_hap_set` for phylo and theta methods.
 #'
 #' @return An external pointer to the phylogenetic info needed to do the simulations.
 #'
@@ -282,7 +282,7 @@ process_coal_tree_string <- function(str, chrom_size, ordered_tip_labels) {
 
 #' Organize info into list to later create C++ tree class from gene-tree info.
 #'
-#' Used in `to_var_set` for gtrees method.
+#' Used in `to_hap_set` for gtrees method.
 #'
 #' @return An XPtr to the info needed from the gene trees to do the simulations.
 #'
@@ -294,10 +294,10 @@ gtrees_to_info_list <- function(trees, reference) {
     chrom_sizes <- reference$sizes()
 
     if (length(trees) != length(chrom_sizes)) {
-        stop("\nFor the gene-trees method of variant creation, there must be a set ",
+        stop("\nFor the gene-trees method of haplotype creation, there must be a set ",
              "of gene trees for each reference genome chromosome. ",
-             "It appears you need to re-run `vars_gtrees` before attempting to ",
-             "run `create_variants` again.")
+             "It appears you need to re-run `haps_gtrees` before attempting to ",
+             "run `create_haplotypes` again.")
     }
 
     otl <- paste(ape::read.tree(text = trees[[1]][1])[["tip.label"]])
@@ -329,36 +329,36 @@ gtrees_to_info_list <- function(trees, reference) {
 #'
 #' @noRd
 #'
-to_var_set <- function(x, reference, sub, ins, del, epsilon, n_threads, show_progress) {
+to_hap_set <- function(x, reference, sub, ins, del, epsilon, n_threads, show_progress) {
 
     fun <- NULL
 
-    if (inherits(x, "vars_vcf_info")) {
-        fun <- to_var_set__vars_vcf_info
-    } else if (inherits(x, "vars_ssites_info")) {
-        fun <- to_var_set__vars_ssites_info
-    } else if (inherits(x, "vars_theta_info")) {
-        fun <- to_var_set__vars_theta_info
-    } else if (inherits(x, "vars_phylo_info")) {
-        fun <- to_var_set__vars_phylo_info
-    } else if (inherits(x, "vars_gtrees_info")) {
-        fun <- to_var_set__vars_gtrees_info
-    } else stop("Unknown input to `vars_info` arg in `create_variants`")
+    if (inherits(x, "haps_vcf_info")) {
+        fun <- to_hap_set__haps_vcf_info
+    } else if (inherits(x, "haps_ssites_info")) {
+        fun <- to_hap_set__haps_ssites_info
+    } else if (inherits(x, "haps_theta_info")) {
+        fun <- to_hap_set__haps_theta_info
+    } else if (inherits(x, "haps_phylo_info")) {
+        fun <- to_hap_set__haps_phylo_info
+    } else if (inherits(x, "haps_gtrees_info")) {
+        fun <- to_hap_set__haps_gtrees_info
+    } else stop("Unknown input to `haps_info` arg in `create_haplotypes`")
 
-    variants_ptr <- fun(x = x, reference = reference,
+    haplotypes_ptr <- fun(x = x, reference = reference,
                         sub = sub, ins = ins, del = del, epsilon = epsilon,
                         n_threads = n_threads, show_progress = show_progress)
 
-    return(variants_ptr)
+    return(haplotypes_ptr)
 
 }
 
-#' Create variants from segregating-site info from coalescent simulations.
+#' Create haplotypes from segregating-site info from coalescent simulations.
 #'
 #'
 #' @noRd
 #'
-to_var_set__vars_ssites_info <- function(x, reference, sub, ins, del, epsilon,
+to_hap_set__haps_ssites_info <- function(x, reference, sub, ins, del, epsilon,
                                         n_threads, show_progress) {
 
 
@@ -372,7 +372,7 @@ to_var_set__vars_ssites_info <- function(x, reference, sub, ins, del, epsilon,
     # Fill and check the position column in `x$mats()`
     mats <- fill_coal_mat_pos(x$mats(), chrom_sizes)
 
-    variants_ptr <- add_ssites_cpp(reference$ptr(),
+    haplotypes_ptr <- add_ssites_cpp(reference$ptr(),
                                    mats,
                                    Q,
                                    sub$pi_tcag(),
@@ -381,32 +381,32 @@ to_var_set__vars_ssites_info <- function(x, reference, sub, ins, del, epsilon,
                                    n_threads,
                                    show_progress)
 
-    return(variants_ptr)
+    return(haplotypes_ptr)
 
 }
 
 
-#' Create variants from VCF file
+#' Create haplotypes from VCF file
 #'
 #'
 #' @noRd
 #'
-to_var_set__vars_vcf_info <- function(x, reference, sub, ins, del, epsilon,
+to_hap_set__haps_vcf_info <- function(x, reference, sub, ins, del, epsilon,
                                      n_threads, show_progress) {
 
-    variants_ptr <- read_vcf_cpp(reference$ptr(), x$fn(), x$print_names())
+    haplotypes_ptr <- read_vcf_cpp(reference$ptr(), x$fn(), x$print_names())
 
-    return(variants_ptr)
+    return(haplotypes_ptr)
 
 }
 
 
-#' Create variants from phylogenetic tree(s).
+#' Create haplotypes from phylogenetic tree(s).
 #'
 #'
 #' @noRd
 #'
-to_var_set__vars_phylo_info <- function(x, reference, sub, ins, del, epsilon,
+to_hap_set__haps_phylo_info <- function(x, reference, sub, ins, del, epsilon,
                                        n_threads, show_progress) {
 
     phy <- x$phylo()
@@ -416,28 +416,28 @@ to_var_set__vars_phylo_info <- function(x, reference, sub, ins, del, epsilon,
     if (length(phy) == 1 && n_chroms != 1) phy <- rep(phy, n_chroms)
 
     if (length(phy) !=  n_chroms) {
-        stop("\nIn function `vars_phylo`, you must provide information for 1 tree ",
+        stop("\nIn function `haps_phylo`, you must provide information for 1 tree ",
              "or a tree for each reference genome chromosome. ",
-             "It appears you need to re-run `vars_phylo` before attempting to ",
-             "run `create_variants` again.")
+             "It appears you need to re-run `haps_phylo` before attempting to ",
+             "run `create_haplotypes` again.")
     }
 
     trees_info <- phylo_to_info_list(phy, reference)
 
-    var_set_ptr <- trees_to_var_set(trees_info, reference, sub, ins, del, epsilon,
+    hap_set_ptr <- trees_to_hap_set(trees_info, reference, sub, ins, del, epsilon,
                                     n_threads, show_progress)
 
-    return(var_set_ptr)
+    return(hap_set_ptr)
 
 }
 
 
-#' Create variants from theta parameter.
+#' Create haplotypes from theta parameter.
 #'
 #'
 #' @noRd
 #'
-to_var_set__vars_theta_info <- function(x,
+to_hap_set__haps_theta_info <- function(x,
                                        reference,
                                        sub, ins, del, epsilon,
                                        n_threads, show_progress) {
@@ -445,12 +445,16 @@ to_var_set__vars_theta_info <- function(x,
     phy <- x$phylo()
     theta <- x$theta()
 
-    n_vars <- length(phy$tip.label)
+    n_haps <- length(phy$tip.label)
     n_chroms <- reference$n_chroms()
 
+    # From here:
+    # https://ocw.mit.edu/courses/health-sciences-and-technology/hst-508-quantitative-
+    # genomics-fall-2005/study-materials/hstnotes.pdf
+
     # Calculating L from theta:
-    # E(L) = 4 * N * a; a = sum(1 / (1:(n_chroms-1)))
-    a <- sum(1 / (1:(n_vars-1)))
+    # E(L) = 4 * N * a; a = sum(1 / (1:(n_tips-1)))
+    a <- sum(1 / (1:(n_haps-1)))
     # theta = 4 * N * mu
     # ------------*
     # Calculating mu:
@@ -462,38 +466,39 @@ to_var_set__vars_theta_info <- function(x,
     # Average mutation rate among all nucleotides:
     mu <- sum({avg_subs + indel} * sub$pi_tcag())
     # ------------*
-    # So if we know theta and mu, then...
+    # So if we know theta and mu (and since theta = 4 * N * mu), then...
     # ------------*
-    L <- theta * a / mu
-    # Now rescale to have total tree length of `L`:
-    phy$edge.length <- phy$edge.length / max(ape::node.depth.edgelength(phy)) * L
+    L <- theta / mu * a
+    # Now rescale to have total branch length of `L`:
+    phy$edge.length <- phy$edge.length / sum(phy$edge.length) * L
+
 
     phy <- rep(list(phy), n_chroms)
 
     trees_info <- phylo_to_info_list(phy, reference)
 
-    var_set_ptr <- trees_to_var_set(trees_info, reference, sub, ins, del, epsilon,
+    hap_set_ptr <- trees_to_hap_set(trees_info, reference, sub, ins, del, epsilon,
                                     n_threads, show_progress)
 
-    return(var_set_ptr)
+    return(hap_set_ptr)
 
 }
 
 
-#' Create variants from gene trees.
+#' Create haplotypes from gene trees.
 #'
 #'
 #' @noRd
 #'
-to_var_set__vars_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
+to_hap_set__haps_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
                                         n_threads, show_progress) {
 
     trees_info <- gtrees_to_info_list(x$trees(), reference)
 
-    var_set_ptr <- trees_to_var_set(trees_info, reference, sub, ins, del, epsilon,
+    hap_set_ptr <- trees_to_hap_set(trees_info, reference, sub, ins, del, epsilon,
                                     n_threads, show_progress)
 
-    return(var_set_ptr)
+    return(hap_set_ptr)
 
 }
 
@@ -508,39 +513,39 @@ to_var_set__vars_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
 # ====================================================================================`
 
 # doc start ----
-#' Create variants from a reference genome.
+#' Create haplotypes from a reference genome.
 #'
-#' Uses one of multiple methods to create haploid variants from a reference genome.
-#' See \code{\link{vars_functions}} for the methods available.
-#'
-#'
+#' Uses one of multiple methods to create variant haplotypes from a reference genome.
+#' See \code{\link{haps_functions}} for the methods available.
 #'
 #'
-#' @param reference A \code{ref_genome} object from which to generate variants.
+#'
+#'
+#' @param reference A \code{ref_genome} object from which to generate haplotypes.
 #'     This argument is required.
-#' @param vars_info Output from one of the \code{\link{vars_functions}}.
+#' @param haps_info Output from one of the \code{\link{haps_functions}}.
 #'     These functions organize higher-level information for use here.
-#'     See \code{\link{vars_functions}} for brief descriptions and links to each method.
+#'     See \code{\link{haps_functions}} for brief descriptions and links to each method.
 #'     If this argument is `NULL`, all arguments other than `reference` are ignored,
-#'     and an empty `variants` object with no variants is returned.
+#'     and an empty `haplotypes` object with no haplotypes is returned.
 #'     This is designed for use when you'd like to add mutations manually.
-#'     If you create a blank `variants` object, you can use its `add_vars` method
-#'     to add variants manually.
+#'     If you create a blank `haplotypes` object, you can use its `add_haps` method
+#'     to add haplotypes manually.
 #' @param sub Output from one of the \code{\link{sub_models}} functions that organizes
 #'     information for the substitution models.
 #'     See \code{\link{sub_models}} for more information on these models and
 #'     their required parameters.
-#'     This argument is ignored if you are using a VCF file to create variants.
+#'     This argument is ignored if you are using a VCF file to create haplotypes.
 #'     Passing `NULL` to this argument results in no substitutions.
 #'     Defaults to `NULL`.
 #' @param ins Output from the \code{\link{indels}} function that specifies rates
 #'     of insertions by length.
-#'     This argument is ignored if you are using a VCF file to create variants.
+#'     This argument is ignored if you are using a VCF file to create haplotypes.
 #'     Passing `NULL` to this argument results in no insertions.
 #'     Defaults to `NULL`.
 #' @param del Output from the \code{\link{indels}} function that specifies rates
 #'     of deletions by length.
-#'     This argument is ignored if you are using a VCF file to create variants.
+#'     This argument is ignored if you are using a VCF file to create haplotypes.
 #'     Passing `NULL` to this argument results in no deletions.
 #'     Defaults to `NULL`.
 #' @param epsilon Error control parameter for the "tau-leaping" approximation to
@@ -562,7 +567,7 @@ to_var_set__vars_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
 #'
 #' @export
 #'
-#' @return A \code{\link{variants}} object.
+#' @return A \code{\link{haplotypes}} object.
 #'
 #'
 #' @references
@@ -585,12 +590,12 @@ to_var_set__vars_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
 #'
 #' @examples
 #' r <- create_genome(10, 1000)
-#' v_phylo <- create_variants(r, vars_phylo(ape::rcoal(5)), sub_JC69(0.1))
-#' v_theta <- create_variants(r, vars_theta(0.001, 5), sub_K80(0.1, 0.2))
+#' v_phylo <- create_haplotypes(r, haps_phylo(ape::rcoal(5)), sub_JC69(0.1))
+#' v_theta <- create_haplotypes(r, haps_theta(0.001, 5), sub_K80(0.1, 0.2))
 #'
 # doc end ----
-create_variants <- function(reference,
-                            vars_info,
+create_haplotypes <- function(reference,
+                            haps_info,
                             sub = NULL,
                             ins = NULL,
                             del = NULL,
@@ -598,41 +603,41 @@ create_variants <- function(reference,
                             n_threads = 1,
                             show_progress = FALSE) {
 
-    # `vars_info` classes:
+    # `haps_info` classes:
     vic <- list(phylo = c("phylo", "gtrees", "theta"),
                               non = c("ssites", "vcf"))
-    vic <- lapply(vic, function(x) paste0("vars_", x, "_info"))
+    vic <- lapply(vic, function(x) paste0("haps_", x, "_info"))
 
     # ---------*
     # --- check types ----
     # ---------*
 
     if (!inherits(reference, "ref_genome")) {
-        err_msg("create_variants", "reference", "a \"ref_genome\" object")
+        err_msg("create_haplotypes", "reference", "a \"ref_genome\" object")
     }
 
-    # Make empty `variants` object, ignoring everything other than `reference` argument:
-    if (is.null(vars_info)) {
-        variants_ptr <- make_var_set(reference$ptr(), 0)
-        var_obj <- variants$new(variants_ptr, reference$ptr())
-        return(var_obj)
+    # Make empty `haplotypes` object, ignoring everything other than `reference` argument:
+    if (is.null(haps_info)) {
+        haplotypes_ptr <- make_hap_set(reference$ptr(), 0)
+        hap_obj <- haplotypes$new(haplotypes_ptr, reference$ptr())
+        return(hap_obj)
     }
 
 
     if (!inherits(reference$ptr(), "externalptr")) {
-        err_msg("create_variants", "reference", "a \"ref_genome\" object with a `ptr`",
+        err_msg("create_haplotypes", "reference", "a \"ref_genome\" object with a `ptr`",
                 "method that returns an object of class \"externalptr\".",
                 "Restart by reading a FASTA file or by simulating a genome.")
     }
-    if (!inherits(vars_info, do.call(c, vic))) {
-        err_msg("create_variants", "vars_info", "NULL or one of the following classes:",
+    if (!inherits(haps_info, do.call(c, vic))) {
+        err_msg("create_haplotypes", "haps_info", "NULL or one of the following classes:",
                 paste(sprintf("\"%s\"", do.call(c, vic)), collapse = ", "))
     }
     # Check that sub, ins, or del info was passed if a non-VCF method is desired:
-    vcf <- inherits(vars_info, vic$non[grepl("vcf", vic$non)])
+    vcf <- inherits(haps_info, vic$non[grepl("vcf", vic$non)])
     if (!vcf && is.null(sub) && is.null(ins) && is.null(del)) {
-        stop("\nFor the `create_variants` function in jackalope, ",
-             "if you are using a variant-creation method other than a VCF file, ",
+        stop("\nFor the `create_haplotypes` function in jackalope, ",
+             "if you are using a haplotype-creation method other than a VCF file, ",
              "you must provide input to the `sub`, `ins`, or `del` argument.",
              call. = FALSE)
     }
@@ -642,16 +647,16 @@ create_variants <- function(reference,
     # (or `NULL` if `sub` was not provided):
     # -----------------*
     if (!is.null(sub) && !inherits(sub, "sub_info")) {
-        err_msg("create_variants", "sub", "NULL or a \"sub_info\" object")
+        err_msg("create_haplotypes", "sub", "NULL or a \"sub_info\" object")
     }
     if (!is.null(ins) && !inherits(ins, "indel_info")) {
-        err_msg("create_variants", "ins", "NULL or a \"indel_info\" object")
+        err_msg("create_haplotypes", "ins", "NULL or a \"indel_info\" object")
     }
     if (!is.null(del) && !inherits(del, "indel_info")) {
-        err_msg("create_variants", "del", "NULL or a \"indel_info\" object")
+        err_msg("create_haplotypes", "del", "NULL or a \"indel_info\" object")
     }
     if (!single_number(epsilon) || epsilon <= 0 || epsilon >= 1) {
-        err_msg("create_variants", "epsilon", "a single number > 0 and < 1")
+        err_msg("create_haplotypes", "epsilon", "a single number > 0 and < 1")
     }
     # If sub is NULL and it's not a vcf file method, convert sub to rate-0 matrix:
     if (is.null(sub) && !vcf) sub <- sub_JC69(0)
@@ -662,14 +667,14 @@ create_variants <- function(reference,
 
 
     if (!single_integer(n_threads, .min = 1)) {
-        err_msg("create_variants", "n_threads", "a single integer >= 1")
+        err_msg("create_haplotypes", "n_threads", "a single integer >= 1")
     }
     if (!is_type(show_progress, "logical", 1)) {
-        err_msg("create_variants", "show_progress", "a single logical")
+        err_msg("create_haplotypes", "show_progress", "a single logical")
     }
 
-    # `to_var_set` is a method defined for each class of input for `vars_info`
-    variants_ptr <- to_var_set(x = vars_info,
+    # `to_hap_set` is a method defined for each class of input for `haps_info`
+    haplotypes_ptr <- to_hap_set(x = haps_info,
                                reference = reference,
                                sub = sub,
                                ins = ins,
@@ -678,9 +683,9 @@ create_variants <- function(reference,
                                n_threads = n_threads,
                                show_progress = show_progress)
 
-    var_obj <- variants$new(variants_ptr, reference$ptr())
+    hap_obj <- haplotypes$new(haplotypes_ptr, reference$ptr())
 
-    return(var_obj)
+    return(hap_obj)
 
 }
 

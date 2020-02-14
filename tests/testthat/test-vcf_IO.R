@@ -14,60 +14,60 @@ dir <- tempdir(check = TRUE)
 
 chroms <- rep("TCAGTCAGTC", 2)
 ref <- ref_genome$new(jackalope:::make_ref_genome(chroms))
-vars <- variants$new(jackalope:::make_var_set(ref$ptr(), 4), ref$ptr())
+haps <- haplotypes$new(jackalope:::make_hap_set(ref$ptr(), 4), ref$ptr())
 
 # First chromosome combines deletions and substitutions
 {
     chrom <- 1
 
-    vars$add_sub(1, chrom, 6, "T")
-    vars$add_sub(2, chrom, 6, "A")
-    vars$add_sub(3, chrom, 6, "A")
-    vars$add_sub(3, chrom, 7, "T")
-    vars$add_sub(4, chrom, 6, "G")
-    vars$add_sub(4, chrom, 8, "T")
+    haps$add_sub(1, chrom, 6, "T")
+    haps$add_sub(2, chrom, 6, "A")
+    haps$add_sub(3, chrom, 6, "A")
+    haps$add_sub(3, chrom, 7, "T")
+    haps$add_sub(4, chrom, 6, "G")
+    haps$add_sub(4, chrom, 8, "T")
 
-    vars$add_del(1, chrom, 7, 1)
-    vars$add_del(2, chrom, 7, 2)
-    vars$add_del(4, chrom, 9, 1)
+    haps$add_del(1, chrom, 7, 1)
+    haps$add_del(2, chrom, 7, 2)
+    haps$add_del(4, chrom, 9, 1)
 
-    vars$add_del(1, chrom, 1, 3)
-    vars$add_del(2, chrom, 2, 3)
-    vars$add_del(3, chrom, 1, 3)
-    vars$add_del(4, chrom, 3, 2)
+    haps$add_del(1, chrom, 1, 3)
+    haps$add_del(2, chrom, 2, 3)
+    haps$add_del(3, chrom, 1, 3)
+    haps$add_del(4, chrom, 3, 2)
 
 }
 # Second chromosome combines insertions, deletions, and substitutions
 {
     chrom <- 2
 
-    vars$add_del(1, chrom, 9, 1)
+    haps$add_del(1, chrom, 9, 1)
 
-    vars$add_ins(1, chrom, 8, "A")
+    haps$add_ins(1, chrom, 8, "A")
 
-    vars$add_sub(1, chrom, 6, "A")
-    vars$add_sub(2, chrom, 6, "A")
-    vars$add_sub(3, chrom, 6, "T")
-    vars$add_del(4, chrom, 6, 1)
+    haps$add_sub(1, chrom, 6, "A")
+    haps$add_sub(2, chrom, 6, "A")
+    haps$add_sub(3, chrom, 6, "T")
+    haps$add_del(4, chrom, 6, 1)
 
-    vars$add_ins(1, chrom, 5, "TT")
-    vars$add_ins(2, chrom, 5, "TT")
-    vars$add_ins(3, chrom, 5, "T")
-    vars$add_ins(4, chrom, 5, "C")
+    haps$add_ins(1, chrom, 5, "TT")
+    haps$add_ins(2, chrom, 5, "TT")
+    haps$add_ins(3, chrom, 5, "T")
+    haps$add_ins(4, chrom, 5, "C")
 
-    vars$add_sub(4, chrom, 3, "T")
+    haps$add_sub(4, chrom, 3, "T")
 
-    vars$add_ins(2, chrom, 2, "AG")
-    vars$add_del(3, chrom, 2, 2)
-    vars$add_ins(4, chrom, 2, "AG")
+    haps$add_ins(2, chrom, 2, "AG")
+    haps$add_del(3, chrom, 2, 2)
+    haps$add_ins(4, chrom, 2, "AG")
 
-    vars$add_del(1, chrom, 1, 1)
+    haps$add_del(1, chrom, 1, 1)
 
 }
 
 
 # From these mutations, I know what the ref and alt strings should be, as well as the
-# genotypes for each variant:
+# genotypes for each haplotype:
 vcf_info <-
     rbind(data.frame(chrom = ref$chrom_names()[1],
                      pos = c(1, 6),
@@ -99,15 +99,15 @@ vcf_info <-
 
 # ------------------------*
 # Haploid version -----
-# (i.e., each variant is a separate sample)
+# (i.e., each haplotype is a separate sample)
 # ------------------------*
 
-write_vcf(vars, paste0(dir, "/test"), overwrite = TRUE)
+write_vcf(haps, paste0(dir, "/test"), overwrite = TRUE)
 vcf <- readLines(paste0(dir, "/test.vcf"))
 
 
 test_that("VCF writing produces error when attempting to overwrite files", {
-    expect_error(write_vcf(vars, paste0(dir, "/test")), "test.vcf already exists")
+    expect_error(write_vcf(haps, paste0(dir, "/test")), "test.vcf already exists")
 })
 
 
@@ -128,7 +128,7 @@ test_that("VCF file header is accurate for haploid samples", {
           "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
           "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"GenotypeQuality\">",
           paste0("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t",
-                 paste(vars$var_names(), collapse = "\t")))
+                 paste(haps$hap_names(), collapse = "\t")))
 
     expect_identical(vcf[1:length(header)], header)
 
@@ -169,7 +169,7 @@ test_that("VCF file data lines are accurate for haploid samples", {
 # Haploid compressed -----
 
 
-write_vcf(vars, paste0(dir, "/test"), compress = TRUE, overwrite = TRUE)
+write_vcf(haps, paste0(dir, "/test"), compress = TRUE, overwrite = TRUE)
 vcf_gz <- gzfile(paste0(dir, "/test.vcf.gz"), "rt")
 vcf <- readLines(vcf_gz)
 close(vcf_gz)
@@ -188,7 +188,7 @@ test_that("VCF file header is accurate for haploid samples", {
           "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
           "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"GenotypeQuality\">",
           paste0("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t",
-                 paste(vars$var_names(), collapse = "\t")))
+                 paste(haps$hap_names(), collapse = "\t")))
 
     expect_identical(vcf[1:length(header)], header)
 
@@ -227,35 +227,35 @@ test_that("VCF file data lines are accurate for haploid samples", {
 
 # ------------------------*
 # Diploid version -----
-# (i.e., 2 variants represent one sample)
+# (i.e., 2 haplotypes represent one sample)
 # ------------------------*
 
 
 
-sample_mat <- matrix(1:vars$n_vars(), ncol = 2, byrow = TRUE)
+sample_mat <- matrix(1:haps$n_haps(), ncol = 2, byrow = TRUE)
 
-write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat, overwrite = TRUE)
+write_vcf(haps, paste0(dir, "/test"), sample_matrix = sample_mat, overwrite = TRUE)
 vcf <- readLines(paste0(dir, "/test.vcf"))
 
 
 
 test_that("VCF writing produces error with nonsense sample matrix", {
 
-    expect_error(write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat * -1,
+    expect_error(write_vcf(haps, paste0(dir, "/test"), sample_matrix = sample_mat * -1,
                            overwrite = TRUE),
                  "there are values < 1.")
 
     sample_mat2 <- sample_mat
-    sample_mat2[nrow(sample_mat2),ncol(sample_mat2)] <- vars$n_vars() + 1
+    sample_mat2[nrow(sample_mat2),ncol(sample_mat2)] <- haps$n_haps() + 1
 
-    expect_error(write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat2,
+    expect_error(write_vcf(haps, paste0(dir, "/test"), sample_matrix = sample_mat2,
                            overwrite = TRUE),
-                 "there are values > the number of variants")
+                 "there are values > the number of haplotypes")
 
     sample_mat2 <- sample_mat
     sample_mat2[nrow(sample_mat2),ncol(sample_mat2)] <- 1
 
-    expect_error(write_vcf(vars, paste0(dir, "/test"), sample_matrix = sample_mat2,
+    expect_error(write_vcf(haps, paste0(dir, "/test"), sample_matrix = sample_mat2,
                            overwrite = TRUE),
                  "contained duplicates")
 
@@ -265,7 +265,7 @@ test_that("VCF writing produces error with nonsense sample matrix", {
 
 test_that("VCF file header is accurate for diploid samples", {
 
-    sample_names <- apply(sample_mat, 1, function(x) paste(vars$var_names()[x],
+    sample_names <- apply(sample_mat, 1, function(x) paste(haps$hap_names()[x],
                                                            collapse = "__"))
 
     header <-
@@ -343,71 +343,71 @@ test_that("VCF file data lines are accurate for diploid samples", {
 
 
 
-test_that("reading haploid variant info from VCF produces proper output", {
+test_that("reading haploid haplotype info from VCF produces proper output", {
 
-    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"), overwrite = TRUE)
+    write_vcf(haps, out_prefix = sprintf("%s/%s", dir, "test"), overwrite = TRUE)
 
-    vars2 <- create_variants(ref, vars_info = vars_vcf(sprintf("%s/%s.vcf", dir, "test")))
+    haps2 <- create_haplotypes(ref, haps_info = haps_vcf(sprintf("%s/%s.vcf", dir, "test")))
 
 
-    expect_identical(vars$n_vars(), vars2$n_vars())
+    expect_identical(haps$n_haps(), haps2$n_haps())
 
-    for (i in 1:vars$n_vars()) {
-        expect_identical(sapply(1:ref$n_chroms(), function(j) vars$chrom(i, j)),
-                         sapply(1:ref$n_chroms(), function(j) vars2$chrom(i, j)))
+    for (i in 1:haps$n_haps()) {
+        expect_identical(sapply(1:ref$n_chroms(), function(j) haps$chrom(i, j)),
+                         sapply(1:ref$n_chroms(), function(j) haps2$chrom(i, j)))
     }
 
 
 })
 
 
-test_that("reading diploid variant info from VCF produces proper output", {
+test_that("reading diploid haplotype info from VCF produces proper output", {
 
     sample_mat <- matrix(1:4, 2, 2, byrow = TRUE)
 
-    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"),
+    write_vcf(haps, out_prefix = sprintf("%s/%s", dir, "test"),
               sample_matrix = sample_mat, overwrite = TRUE)
 
-    vars2 <- create_variants(ref, vars_info = vars_vcf(sprintf("%s/%s.vcf", dir, "test")))
+    haps2 <- create_haplotypes(ref, haps_info = haps_vcf(sprintf("%s/%s.vcf", dir, "test")))
 
-    expect_identical(vars$n_vars(), vars2$n_vars())
+    expect_identical(haps$n_haps(), haps2$n_haps())
 
-    for (i in 1:vars$n_vars()) {
-        expect_identical(sapply(1:ref$n_chroms(), function(j) vars$chrom(i, j)),
-                         sapply(1:ref$n_chroms(), function(j) vars2$chrom(i, j)))
+    for (i in 1:haps$n_haps()) {
+        expect_identical(sapply(1:ref$n_chroms(), function(j) haps$chrom(i, j)),
+                         sapply(1:ref$n_chroms(), function(j) haps2$chrom(i, j)))
     }
 
 })
 
 
 
-test_that("reading variant info from VCF produces proper output when chromosomes mixed", {
+test_that("reading haplotype info from VCF produces proper output when chromosomes mixed", {
 
     # --------------*
     # Haploid version:
     # --------------*
 
-    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"), overwrite = TRUE)
+    write_vcf(haps, out_prefix = sprintf("%s/%s", dir, "test"), overwrite = TRUE)
 
     vcf_fn <- sprintf("%s/%s.vcf", dir, "test")
 
     # Mix up the first two chromosomes in the VCF file:
     vcf <- readLines(vcf_fn)
-    c0 <- vcf[grepl(paste0("^", vars$chrom_names()[1]), vcf)]
-    c1 <- vcf[grepl(paste0("^", vars$chrom_names()[2]), vcf)]
-    vcf <- c(vcf[!grepl(paste0("^", vars$chrom_names()[1]), vcf) &
-                     !grepl(paste0("^", vars$chrom_names()[2]), vcf)],
+    c0 <- vcf[grepl(paste0("^", haps$chrom_names()[1]), vcf)]
+    c1 <- vcf[grepl(paste0("^", haps$chrom_names()[2]), vcf)]
+    vcf <- c(vcf[!grepl(paste0("^", haps$chrom_names()[1]), vcf) &
+                     !grepl(paste0("^", haps$chrom_names()[2]), vcf)],
              c1, c0)
     writeLines(paste(vcf, collapse = "\n"), vcf_fn)
 
-    # Now create variants and check output
-    vars2 <- create_variants(ref, vars_info = vars_vcf(vcf_fn))
+    # Now create haplotypes and check output
+    haps2 <- create_haplotypes(ref, haps_info = haps_vcf(vcf_fn))
 
-    expect_identical(vars$n_vars(), vars2$n_vars())
+    expect_identical(haps$n_haps(), haps2$n_haps())
 
-    for (i in 1:vars$n_vars()) {
-        expect_identical(sapply(1:ref$n_chroms(), function(j) vars$chrom(i, j)),
-                         sapply(1:ref$n_chroms(), function(j) vars2$chrom(i, j)))
+    for (i in 1:haps$n_haps()) {
+        expect_identical(sapply(1:ref$n_chroms(), function(j) haps$chrom(i, j)),
+                         sapply(1:ref$n_chroms(), function(j) haps2$chrom(i, j)))
     }
 
 
@@ -417,25 +417,25 @@ test_that("reading variant info from VCF produces proper output when chromosomes
 
     sample_mat <- matrix(1:4, 2, 2, byrow = TRUE)
 
-    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"),
+    write_vcf(haps, out_prefix = sprintf("%s/%s", dir, "test"),
               sample_matrix = sample_mat, overwrite = TRUE)
 
     # Mix up the first two chromosomes in the VCF file:
     vcf <- readLines(vcf_fn)
-    c0 <- vcf[grepl(paste0("^", vars$chrom_names()[1]), vcf)]
-    c1 <- vcf[grepl(paste0("^", vars$chrom_names()[2]), vcf)]
-    vcf <- c(vcf[!grepl(paste0("^", vars$chrom_names()[1]), vcf) &
-                     !grepl(paste0("^", vars$chrom_names()[2]), vcf)],
+    c0 <- vcf[grepl(paste0("^", haps$chrom_names()[1]), vcf)]
+    c1 <- vcf[grepl(paste0("^", haps$chrom_names()[2]), vcf)]
+    vcf <- c(vcf[!grepl(paste0("^", haps$chrom_names()[1]), vcf) &
+                     !grepl(paste0("^", haps$chrom_names()[2]), vcf)],
              c1, c0)
     writeLines(paste(vcf, collapse = "\n"), vcf_fn)
 
-    vars2 <- create_variants(ref, vars_info = vars_vcf(vcf_fn))
+    haps2 <- create_haplotypes(ref, haps_info = haps_vcf(vcf_fn))
 
-    expect_identical(vars$n_vars(), vars2$n_vars())
+    expect_identical(haps$n_haps(), haps2$n_haps())
 
-    for (i in 1:vars$n_vars()) {
-        expect_identical(sapply(1:ref$n_chroms(), function(j) vars$chrom(i, j)),
-                         sapply(1:ref$n_chroms(), function(j) vars2$chrom(i, j)))
+    for (i in 1:haps$n_haps()) {
+        expect_identical(sapply(1:ref$n_chroms(), function(j) haps$chrom(i, j)),
+                         sapply(1:ref$n_chroms(), function(j) haps2$chrom(i, j)))
     }
 
 
@@ -447,23 +447,23 @@ test_that("reading variant info from VCF produces proper output when chromosomes
 
 test_that("out-of-order VCF file returns error", {
 
-    write_vcf(vars, out_prefix = sprintf("%s/%s", dir, "test"), overwrite = TRUE)
+    write_vcf(haps, out_prefix = sprintf("%s/%s", dir, "test"), overwrite = TRUE)
 
     vcf_fn <- sprintf("%s/%s.vcf", dir, "test")
 
     # Reverse lines for first two chromosomes in the VCF file:
     vcf <- readLines(vcf_fn)
-    c0 <- vcf[grepl(paste0("^", vars$chrom_names()[1]), vcf)]
-    c1 <- vcf[grepl(paste0("^", vars$chrom_names()[2]), vcf)]
+    c0 <- vcf[grepl(paste0("^", haps$chrom_names()[1]), vcf)]
+    c1 <- vcf[grepl(paste0("^", haps$chrom_names()[2]), vcf)]
     c0 <- rev(c0)
     c1 <- rev(c1)
-    vcf <- c(vcf[!grepl(paste0("^", vars$chrom_names()[1]), vcf) &
-                     !grepl(paste0("^", vars$chrom_names()[2]), vcf)],
+    vcf <- c(vcf[!grepl(paste0("^", haps$chrom_names()[1]), vcf) &
+                     !grepl(paste0("^", haps$chrom_names()[2]), vcf)],
              c1, c0)
     writeLines(paste(vcf, collapse = "\n"), vcf_fn)
 
-    # Now attempt to create variants and check output
-    expect_error(create_variants(ref, vars_info = vars_vcf(vcf_fn)),
+    # Now attempt to create haplotypes and check output
+    expect_error(create_haplotypes(ref, haps_info = haps_vcf(vcf_fn)),
                  regexp = paste("Positions are sorted numerically, in",
                                 "increasing order, within each reference",
                                 "sequence CHROM"))

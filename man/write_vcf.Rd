@@ -2,13 +2,19 @@
 % Please edit documentation in R/read_write.R
 \name{write_vcf}
 \alias{write_vcf}
-\title{Write variant info from a \code{variants} object to a VCF file.}
+\title{Write haplotype info from a \code{haplotypes} object to a VCF file.}
 \usage{
-write_vcf(vars, out_prefix, compress = FALSE, sample_matrix = NULL,
-  show_progress = FALSE, overwrite = FALSE)
+write_vcf(
+  haps,
+  out_prefix,
+  compress = FALSE,
+  sample_matrix = NULL,
+  show_progress = FALSE,
+  overwrite = FALSE
+)
 }
 \arguments{
-\item{vars}{A \code{variants} object.}
+\item{haps}{A \code{haplotypes} object.}
 
 \item{out_prefix}{Prefix for the output file.}
 
@@ -17,16 +23,16 @@ an integer specifying the level of compression, from 1 to 9.
 If \code{TRUE}, a compression level of \code{6} is used.
 Defaults to \code{FALSE}.}
 
-\item{sample_matrix}{Matrix to specify how haploid variants are grouped into samples
+\item{sample_matrix}{Matrix to specify how haplotypes are grouped into samples
 if samples are not haploid. There should be one row for each sample, and
-each row should contain indices or names for the variants present in that sample.
-Indices/names for variants cannot be repeated.
-Instead of repeating indices here, you should use the \code{dup_vars}
-method of the \code{variants} class to duplicate the necessary variant(s).
+each row should contain indices or names for the haplotypes present in that sample.
+Indices/names for haplotypes cannot be repeated.
+Instead of repeating indices here, you should use the \code{dup_haps}
+method of the \code{haplotypes} class to duplicate the necessary haplotype(s).
 The number of columns indicates the ploidy level: 2 columns for diploid,
 3 for triploid, 4 for tetraploid, and so on;
 there is no limit to the ploidy level.
-If this argument is \code{NULL}, it's assumed that each variant is its own
+If this argument is \code{NULL}, it's assumed that each haplotype is its own
 separate sample.
 Defaults to \code{NULL}.}
 

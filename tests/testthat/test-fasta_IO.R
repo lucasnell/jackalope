@@ -26,7 +26,7 @@ test_that("Read/writing FASTA files produces errors when nonsense is input", {
     fa_fn <- sprintf("%s/%s.fa", dir, "test")
 
     expect_error(write_fasta("ref", fa_fn),
-                 regexp = "argument `obj` must be a \"ref_genome\" or \"variants\"")
+                 regexp = "argument `obj` must be a \"ref_genome\" or \"haplotypes\"")
 
     expect_error(write_fasta(ref, 3),
                  regexp = "argument `out_prefix` must be a single string")
@@ -378,27 +378,27 @@ test_that("Read/writing multiple indexed FASTA files works with bgzipped output"
 
 
 
-# ___ Writing variants -----
+# ___ Writing haplotypes -----
 
-vars <- create_variants(ref, vars_theta(0.1, 2), sub_JC69(0.001))
+haps <- create_haplotypes(ref, haps_theta(0.1, 2), sub_JC69(0.001))
 
-test_that("Writing FASTA files with variants", {
+test_that("Writing FASTA files with haplotypes", {
 
     fa_fn <- sprintf("%s/%s", dir, "test")
 
-    write_fasta(vars, fa_fn, compress = FALSE, overwrite = TRUE)
+    write_fasta(haps, fa_fn, compress = FALSE, overwrite = TRUE)
 
-    fa_fn <- sprintf("%s/%s__%s.fa", dir, "test", vars$var_names())
+    fa_fn <- sprintf("%s/%s__%s.fa", dir, "test", haps$hap_names())
     new_ref1 <- read_fasta(fa_fn[1])
     new_ref2 <- read_fasta(fa_fn[2])
 
-    expect_identical(vars$n_chroms(), new_ref1$n_chroms())
-    expect_identical(vars$n_chroms(), new_ref2$n_chroms())
+    expect_identical(haps$n_chroms(), new_ref1$n_chroms())
+    expect_identical(haps$n_chroms(), new_ref2$n_chroms())
 
-    expect_identical(sapply(1:vars$n_chroms(), function(i) vars$chrom(1, i)),
-                     sapply(1:vars$n_chroms(), function(i) new_ref1$chrom(i)))
-    expect_identical(sapply(1:vars$n_chroms(), function(i) vars$chrom(2, i)),
-                     sapply(1:vars$n_chroms(), function(i) new_ref2$chrom(i)))
+    expect_identical(sapply(1:haps$n_chroms(), function(i) haps$chrom(1, i)),
+                     sapply(1:haps$n_chroms(), function(i) new_ref1$chrom(i)))
+    expect_identical(sapply(1:haps$n_chroms(), function(i) haps$chrom(2, i)),
+                     sapply(1:haps$n_chroms(), function(i) new_ref2$chrom(i)))
 
 })
 

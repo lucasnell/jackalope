@@ -222,10 +222,10 @@ sub_arg_checks <- function(mod_name,
 #'
 #' @name sub_models
 #'
-#' @seealso \code{\link{create_variants}}
+#' @seealso \code{\link{create_haplotypes}}
 #'
 #' @return A `sub_info` object, which is an R6 class that wraps the info needed for
-#' the `create_variants` function.
+#' the `create_haplotypes` function.
 #' It does not allow the user to directly manipulate the info inside, as that
 #' should be done using the `sub_models` functions.
 #' You can use the following methods from the class to view information:
@@ -276,7 +276,6 @@ NULL
 #' @describeIn sub_models JC69 model.
 #'
 #' @param lambda Substitution rate for all possible substitutions.
-#' @inheritParams sub_TN93
 #'
 #' @export
 #'
@@ -299,7 +298,6 @@ sub_JC69 <- function(lambda, gamma_shape = NULL, gamma_k = 5, invariant = 0) {
 #' @describeIn sub_models K80 model.
 #'
 #' @param alpha Substitution rate for transitions.
-#' @inheritParams sub_TN93
 #'
 #' @export
 #'
@@ -321,7 +319,6 @@ sub_K80 <- function(alpha, beta, gamma_shape = NULL, gamma_k = 5, invariant = 0)
 
 #' @describeIn sub_models F81 model.
 #'
-#' @inheritParams sub_TN93
 #'
 #' @export
 #'
@@ -340,8 +337,6 @@ sub_F81 <- function(pi_tcag, gamma_shape = NULL, gamma_k = 5, invariant = 0) {
 #' @describeIn sub_models HKY85 model.
 #'
 #'
-#' @inheritParams sub_TN93
-#' @inheritParams sub_K80
 #'
 #' @export
 #'
@@ -361,8 +356,6 @@ sub_HKY85 <- function(pi_tcag, alpha, beta,
 #' @describeIn sub_models F84 model.
 #'
 #'
-#' @inheritParams sub_TN93
-#' @inheritParams sub_K80
 #' @param kappa The transition/transversion rate ratio.
 #'
 #' @export
@@ -459,7 +452,6 @@ sub_TN93__ <- function(pi_tcag, alpha_1, alpha_2, beta,
 
 #' @describeIn sub_models GTR model.
 #'
-#' @inheritParams sub_TN93
 #' @param abcdef A vector of length 6 that contains the off-diagonal elements
 #'     for the substitution rate matrix.
 #'     See `vignette("sub-models")` for how the values are ordered in the matrix.
@@ -487,7 +479,6 @@ sub_GTR <- function(pi_tcag, abcdef, gamma_shape = NULL, gamma_k = 5, invariant 
 #'     Item `Q[i,j]` is the rate of substitution from nucleotide `i` to nucleotide `j`.
 #'     Do not include indel rates here!
 #'     Values on the diagonal are calculated inside the function so are ignored.
-#' @inheritParams sub_TN93
 #'
 #' @export
 #'
@@ -584,7 +575,7 @@ indel_info <- R6Class(
 #' Insertions and deletions (indels) specification
 #'
 #' Construct necessary information for insertions and deletions (indels) that will
-#' be used in `create_variants`.
+#' be used in `create_haplotypes`.
 #'
 #' All indels require the `rate` parameter, which specifies
 #' the overall indels rate among all lengths.
@@ -637,7 +628,7 @@ indel_info <- R6Class(
 #' @export
 #'
 #' @return An `indel_info` object, which is an R6 class that wraps the info needed for
-#' the `create_variants` function.
+#' the `create_haplotypes` function.
 #' It does not allow the user to directly manipulate the info inside, as that
 #' should be done using this function.
 #' You can use the `rates()` method to view the indel rates by size.

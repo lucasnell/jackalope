@@ -3,14 +3,13 @@
 \docType{package}
 \name{jackalope}
 \alias{jackalope}
-\alias{jackalope-package}
 \title{jackalope: An efficient, flexible molecular evolution and sequencing simulator.}
 \description{
 \code{jackalope} simply and efficiently
-simulates (i) variants from reference genomes and (ii) reads from both Illumina
+simulates (i) haplotypes from reference genomes and (ii) reads from both Illumina
 and Pacific Biosciences (PacBio) platforms.
 It can either read reference genomes from FASTA files or simulate new ones.
-Genomic variants can be simulated using summary statistics, phylogenies,
+Variant haplotypes can be simulated using summary statistics, phylogenies,
 Variant Call Format (VCF) files, and coalescent simulations—the latter of which
 can include selection, recombination, and demographic fluctuations.
 \code{jackalope} can simulate single, paired-end, or mate-pair Illumina reads,

@@ -20,7 +20,7 @@
 
 #include "jackalope_types.h"  // uint64
 #include "ref_classes.h"  // Ref* classes
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "pcg.h"  // runif_01
 #include "alias_sampler.h"  // AliasSampler
 #include "util.h"  // clear_memory
@@ -411,10 +411,10 @@ private:
 
 /*
  Template class to combine everything for PacBio sequencing of a single genome.
- (We will need multiple of these objects to chromosome a `VarSet` class.
- See `PacBioVariants` class below.)
+ (We will need multiple of these objects to chromosome a `HapSet` class.
+ See `PacBioHaplotypes` class below.)
 
- `T` should be `VarGenome` or `RefGenome`
+ `T` should be `HapGenome` or `RefGenome`
 
  */
 template <typename T>
@@ -507,7 +507,7 @@ public:
     // `U` should be a std::string or std::vector<char>
     template <typename U>
     void one_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
-    // Overloaded for when we input a variant chromosome stored as string
+    // Overloaded for when we input a haplotype chromosome stored as string
     template <typename U>
     void one_read(const std::string& chrom, const uint64& chrom_i,
                   std::vector<U>& fastq_pools, pcg64& eng);
@@ -557,29 +557,29 @@ private:
 
 
 typedef PacBioOneGenome<RefGenome> PacBioReference;
-typedef PacBioOneGenome<VarGenome> PacBioOneVariant;
+typedef PacBioOneGenome<HapGenome> PacBioOneHaplotype;
 
 
 
 
 /*
- To process a `VarSet` object, I need to wrap PacBioOneVariant inside
+ To process a `HapSet` object, I need to wrap PacBioOneHaplotype inside
  another class.
  */
-class PacBioVariants {
+class PacBioHaplotypes {
 
 public:
 
-    const VarSet* variants;                         // pointer to `const VarSet`
-    std::vector<std::vector<uint64>> n_reads_vc;    // # reads per variant and chromosome
-    std::vector<PacBioOneVariant> read_makers;      // makes PacBio reads
-    std::vector<double> var_probs;                  // probs of sampling variants
+    const HapSet* haplotypes;                         // pointer to `const HapSet`
+    std::vector<std::vector<uint64>> n_reads_vc;    // # reads per haplotype and chromosome
+    std::vector<PacBioOneHaplotype> read_makers;      // makes PacBio reads
+    std::vector<double> hap_probs;                  // probs of sampling haplotypes
 
     /* Initializers */
-    PacBioVariants() : variants(nullptr) {};
+    PacBioHaplotypes() : haplotypes(nullptr) {};
     // Using lognormal distribution for read sizes:
-    PacBioVariants(const VarSet& var_set,
-                   const std::vector<double>& variant_probs,
+    PacBioHaplotypes(const HapSet& hap_set,
+                   const std::vector<double>& haplotype_probs,
                    const double& scale_,
                    const double& sigma_,
                    const double& loc_,
@@ -593,22 +593,22 @@ public:
                    const double& prob_ins_,
                    const double& prob_del_,
                    const double& prob_subst_)
-        : variants(&var_set),
+        : haplotypes(&hap_set),
           n_reads_vc(),
           read_makers(),
-          var_probs(variant_probs),
-          var(0),
+          hap_probs(haplotype_probs),
+          hap(0),
           chr(0),
-          var_chrom_seq() {
+          hap_chrom_seq() {
 
         /*
          Fill `read_makers` field:
          */
-        uint64 n_vars = variants->size();
-        read_makers.reserve(n_vars);
-        for (uint64 i = 0; i < n_vars; i++) {
+        uint64 n_haps = haplotypes->size();
+        read_makers.reserve(n_haps);
+        for (uint64 i = 0; i < n_haps; i++) {
             read_makers.push_back(
-                PacBioOneVariant(var_set[i],
+                PacBioOneHaplotype(hap_set[i],
                                  scale_, sigma_, loc_, min_read_len_,
                                  max_passes_, chi2_params_n_, chi2_params_s_,
                                  sqrt_params_, norm_params_, prob_thresh_,
@@ -618,8 +618,8 @@ public:
 
     };
     // Using vectors of read lengths and sampling weight for read lengths:
-    PacBioVariants(const VarSet& var_set,
-                   const std::vector<double>& variant_probs,
+    PacBioHaplotypes(const HapSet& hap_set,
+                   const std::vector<double>& haplotype_probs,
                    const std::vector<double>& read_probs_,
                    const std::vector<uint64>& read_lens_,
                    const uint64& max_passes_,
@@ -631,22 +631,22 @@ public:
                    const double& prob_ins_,
                    const double& prob_del_,
                    const double& prob_subst_)
-        : variants(&var_set),
+        : haplotypes(&hap_set),
           n_reads_vc(),
           read_makers(),
-          var_probs(variant_probs),
-          var(0),
+          hap_probs(haplotype_probs),
+          hap(0),
           chr(0),
-          var_chrom_seq() {
+          hap_chrom_seq() {
 
         /*
          Fill `read_makers` field:
          */
-        uint64 n_vars = variants->size();
-        read_makers.reserve(n_vars);
-        for (uint64 i = 0; i < n_vars; i++) {
+        uint64 n_haps = haplotypes->size();
+        read_makers.reserve(n_haps);
+        for (uint64 i = 0; i < n_haps; i++) {
             read_makers.push_back(
-                PacBioOneVariant(var_set[i],
+                PacBioOneHaplotype(hap_set[i],
                                  read_probs_, read_lens_,
                                  max_passes_, chi2_params_n_, chi2_params_s_,
                                  sqrt_params_, norm_params_, prob_thresh_,
@@ -657,35 +657,35 @@ public:
     };
 
     // Copy constructor
-    PacBioVariants(const PacBioVariants& other)
-        : variants(other.variants),
+    PacBioHaplotypes(const PacBioHaplotypes& other)
+        : haplotypes(other.haplotypes),
           n_reads_vc(other.n_reads_vc),
           read_makers(other.read_makers),
-          var_probs(other.var_probs),
-          var(other.var),
+          hap_probs(other.hap_probs),
+          hap(other.hap),
           chr(other.chr),
-          var_chrom_seq(other.var_chrom_seq) {};
+          hap_chrom_seq(other.hap_chrom_seq) {};
 
 
     // Add info on # reads
     void add_n_reads(const uint64& n_reads) {
 
-        uint64 n_vars = variants->size();
+        uint64 n_haps = haplotypes->size();
 
-        // split # reads by variant
-        std::vector<uint64> var_reads = reads_per_group(n_reads, var_probs);
+        // split # reads by haplotype
+        std::vector<uint64> hap_reads = reads_per_group(n_reads, hap_probs);
         // splitting by chromosome, too:
-        for (uint64 v = 0; v < n_vars; v++) {
+        for (uint64 v = 0; v < n_haps; v++) {
             std::vector<double> chrom_probs;
-            for (const VarChrom& vc : (*variants)[v].chromosomes) {
+            for (const HapChrom& vc : (*haplotypes)[v].chromosomes) {
                 chrom_probs.push_back(vc.size());
             }
-            n_reads_vc.push_back(reads_per_group(var_reads[v], chrom_probs));
+            n_reads_vc.push_back(reads_per_group(hap_reads[v], chrom_probs));
         }
 
         // Fill `read_makers` field:
-        for (uint64 i = 0; i < n_vars; i++) {
-            read_makers[i].add_n_reads(var_reads[i]);
+        for (uint64 i = 0; i < n_haps; i++) {
+            read_makers[i].add_n_reads(hap_reads[i]);
         }
 
         return;
@@ -704,12 +704,12 @@ public:
 
 private:
 
-    // Variant to create read from.
-    uint64 var;
+    // Haplotype to create read from.
+    uint64 hap;
     // Chromosome to create read from.
     uint64 chr;
-    // String for variant chromosome. It's saved to make things faster.
-    std::string var_chrom_seq;
+    // String for haplotype chromosome. It's saved to make things faster.
+    std::string hap_chrom_seq;
 
 
 };

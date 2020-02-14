@@ -6,7 +6,7 @@
 #' - `ms_out_err1.txt`: no sites and no trees
 #' - `ms_out_err2.txt`: a position is removed in the seg. sites
 #'   (`"error bad site pos"`),
-#'   a variant is removed in a tree (`"error missing tree tip"`).
+#'   a haplotype is removed in a tree (`"error missing tree tip"`).
 #' - `ms_out_err3.txt`: a position is removed in a tree (`"error missing tree pos"`),
 #'   a site is removed in seg. sites
 #'
@@ -19,7 +19,7 @@
 # library(jackalope)
 # library(testthat)
 
-context("Testing creating variants from coalescent simulations")
+context("Testing creating haplotypes from coalescent simulations")
 
 # necessary objects -----
 
@@ -42,30 +42,30 @@ arg_list <- list(reference = create_genome(3, 100), sub = sub_JC69(0.1),
 
 
 
-#' Check for proper output and errors when creating variants from coalescent objects
+#' Check for proper output and errors when creating haplotypes from coalescent objects
 #'
 #' coal_obj must be a coalescent object from scrm or coala.
 #'
 
 coal_obj_run_trees <- function(coal_obj, pkg) {
 
-    arg_list_ <- c(list(vars_info = vars_gtrees(obj = coal_obj)), arg_list)
-    vars <- do.call(create_variants, arg_list_)
-    expect_equal(vars$n_vars(), 5, info = paste("works with gene trees -", pkg))
+    arg_list_ <- c(list(haps_info = haps_gtrees(obj = coal_obj)), arg_list)
+    haps <- do.call(create_haplotypes, arg_list_)
+    expect_equal(haps$n_haps(), 5, info = paste("works with gene trees -", pkg))
 
     invisible(NULL)
 }
 
 coal_obj_run_sites <- function(coal_obj, pkg) {
-    arg_list_ <- c(list(vars_info = vars_ssites(obj = coal_obj)), arg_list)
-    vars <- do.call(create_variants, arg_list_)
-    expect_equal(vars$n_vars(), 5, info = paste("works with seg. sites -", pkg))
+    arg_list_ <- c(list(haps_info = haps_ssites(obj = coal_obj)), arg_list)
+    haps <- do.call(create_haplotypes, arg_list_)
+    expect_equal(haps$n_haps(), 5, info = paste("works with seg. sites -", pkg))
     invisible(NULL)
 }
 coal_obj_err_no_trees <- function(coal_obj, pkg) {
     coal_obj$trees <- NULL
     expect_error(
-        vars_gtrees(obj = coal_obj),
+        haps_gtrees(obj = coal_obj),
         regexp = paste("`obj` must be \\(1\\) a list with a",
                        "`trees` field present or \\(2\\) a list of",
                        "lists, each sub-list containing a `trees`",
@@ -76,7 +76,7 @@ coal_obj_err_no_trees <- function(coal_obj, pkg) {
 coal_obj_err_no_sites <- function(coal_obj, pkg) {
     coal_obj$seg_sites <- NULL
     expect_error(
-        vars_ssites(obj = coal_obj),
+        haps_ssites(obj = coal_obj),
         regexp = paste("argument `obj` must be NULL or a list with a `seg_sites`",
                        "field present."),
         info = paste("returns error when no seg. sites provided -", pkg))
@@ -88,10 +88,10 @@ coal_obj_err_missing_tree_pos <- function(coal_obj, pkg) {
                                      regexpr("\\]", coal_obj$trees[[i]][1])[[1]]+1,
                                      9999)
 
-    arg_list_ <- c(list(vars_info = vars_gtrees(obj = coal_obj)), arg_list)
+    arg_list_ <- c(list(haps_info = haps_gtrees(obj = coal_obj)), arg_list)
 
     expect_error(
-        do.call(create_variants, arg_list_),
+        do.call(create_haplotypes, arg_list_),
         regexp = paste("A coalescent string appears to include",
                        "recombination but does not include sizes for each region."),
         info = paste("returns error when improper gene trees provided -", pkg))
@@ -106,10 +106,10 @@ coal_obj_err_miss_tree_tip <- function(coal_obj, pkg) {
     class(tr) <- "multiPhylo"
     coal_obj$trees[[i]] <- sprintf("[%i]%s", pos, ape::write.tree(tr))
 
-    arg_list_ <- c(list(vars_info = vars_gtrees(obj = coal_obj)), arg_list)
+    arg_list_ <- c(list(haps_info = haps_gtrees(obj = coal_obj)), arg_list)
 
     expect_error(
-        do.call(create_variants, arg_list_),
+        do.call(create_haplotypes, arg_list_),
         regexp = "One or more trees have differing tip labels.",
         info = paste("returns error when improper gene trees provided -", pkg))
     invisible(NULL)
@@ -122,7 +122,7 @@ coal_obj_err_bad_site_pos <- function(coal_obj, pkg) {
     coal_obj$seg_sites[[i]] <- mat
     expect_error(
         suppressWarnings({
-            vars_ssites(obj = coal_obj)
+            haps_ssites(obj = coal_obj)
         }),
         regexp = paste("Positions in one or more segregating-sites matrices",
                        "are producing NAs"),
@@ -137,7 +137,7 @@ coal_obj_err_bad_site_pos <- function(coal_obj, pkg) {
 
 # scrm checks -----
 
-test_that("variant creation works with scrm coalescent object", {
+test_that("haplotype creation works with scrm coalescent object", {
 
     skip_if_not_installed("scrm")
     library(scrm)
@@ -157,7 +157,7 @@ test_that("variant creation works with scrm coalescent object", {
 
 # coala checks -----
 
-test_that("variant creation works with coala coalescent object", {
+test_that("haplotype creation works with coala coalescent object", {
 
     skip_if_not_installed("coala")
     library(coala)
@@ -195,38 +195,38 @@ test_that("variant creation works with coala coalescent object", {
 
 
 
-test_that("variant creation works with ms-style file output", {
+test_that("haplotype creation works with ms-style file output", {
 
 
     .p <- function(x) test_path(sprintf("files/%s.txt", x))
 
     expect_equal({
-        arg_list_ <- c(list(vars_info = vars_gtrees(fn = .p("ms_out"))), arg_list)
-        vars <- do.call(create_variants, arg_list_)
-        vars$n_vars()
+        arg_list_ <- c(list(haps_info = haps_gtrees(fn = .p("ms_out"))), arg_list)
+        haps <- do.call(create_haplotypes, arg_list_)
+        haps$n_haps()
     }, 5, info = paste("works with gene trees - ms-file"))
 
     expect_equal({
-        arg_list_ <- c(list(vars_info = vars_gtrees(fn = .p("ms_out"))), arg_list)
-        vars <- do.call(create_variants, arg_list_)
-        vars$n_vars()
+        arg_list_ <- c(list(haps_info = haps_gtrees(fn = .p("ms_out"))), arg_list)
+        haps <- do.call(create_haplotypes, arg_list_)
+        haps$n_haps()
     }, 5, info = "works with seg. sites - ms-file")
 
     expect_error(
-        vars_gtrees(fn = .p("ms_out_err1")),
+        haps_gtrees(fn = .p("ms_out_err1")),
         regexp = "one or more chromosomes have no trees",
         info = "returns error when no gene trees provided - ms-file")
 
     expect_error(
-        vars_ssites(fn = .p("ms_out_err1")),
+        haps_ssites(fn = .p("ms_out_err1")),
         regexp = paste("One or more seg. sites matrices from a ms-style",
-                       "file output have no variant information specified."),
+                       "file output have no haplotype information specified."),
         info = "returns error when no seg. sites provided - ms-file")
 
 
     expect_error({
-        arg_list_ <- c(list(vars_info = vars_gtrees(fn = .p("ms_out_err3"))), arg_list)
-        do.call(create_variants, arg_list_)
+        arg_list_ <- c(list(haps_info = haps_gtrees(fn = .p("ms_out_err3"))), arg_list)
+        do.call(create_haplotypes, arg_list_)
     },
     regexp = paste("A coalescent string appears to include",
                    "recombination but does not include sizes for each region."),
@@ -234,8 +234,8 @@ test_that("variant creation works with ms-style file output", {
 
 
     expect_error({
-        arg_list_ <- c(list(vars_info = vars_gtrees(fn = .p("ms_out_err3"))), arg_list)
-        do.call(create_variants, arg_list_)
+        arg_list_ <- c(list(haps_info = haps_gtrees(fn = .p("ms_out_err3"))), arg_list)
+        do.call(create_haplotypes, arg_list_)
     },
     regexp = paste("A coalescent string appears to include",
                    "recombination but does not include sizes for each region."),
@@ -243,15 +243,15 @@ test_that("variant creation works with ms-style file output", {
 
 
     expect_error({
-        arg_list_ <- c(list(vars_info = vars_gtrees(fn = .p("ms_out_err2"))), arg_list)
-        do.call(create_variants, arg_list_)
+        arg_list_ <- c(list(haps_info = haps_gtrees(fn = .p("ms_out_err2"))), arg_list)
+        do.call(create_haplotypes, arg_list_)
     },
     regexp = "One or more trees have differing tip labels.",
     info = "returns error when improper gene trees provided - ms-file")
 
 
     expect_error(
-        vars_ssites(fn = test_path(paste0("files/", "ms_out_err2.txt"))),
+        haps_ssites(fn = test_path(paste0("files/", "ms_out_err2.txt"))),
         regexp = paste("the listed positions for each site \\(line starting",
                        "with 'positions:'\\) does not have a length that's",
                        "the same as the \\# sites as given by the line",
@@ -260,7 +260,7 @@ test_that("variant creation works with ms-style file output", {
 
 
     expect_error(
-        vars_ssites(fn = test_path("files/ms_out_err3.txt")),
+        haps_ssites(fn = test_path("files/ms_out_err3.txt")),
         regexp = paste("the listed number of sites \\(line starting with",
                        "'segsites:'\\) does not agree with the number of",
                        "items in the 3th line of segregating sites",
@@ -271,9 +271,9 @@ test_that("variant creation works with ms-style file output", {
     reference2 <- create_genome(3, 1000)
 
     expect_error({
-        arg_list_ <- c(list(vars_info = vars_gtrees(fn = .p("ms_out"))), arg_list)
+        arg_list_ <- c(list(haps_info = haps_gtrees(fn = .p("ms_out"))), arg_list)
         arg_list_$reference <- reference2
-        do.call(create_variants, arg_list_)
+        do.call(create_haplotypes, arg_list_)
     },
     regexp = paste("A coalescent string appears to include recombination",
                    "but the combined sizes of all regions don't match the",
@@ -283,14 +283,14 @@ test_that("variant creation works with ms-style file output", {
 
 
 
-test_that("variant creation returns error with improper ref_genome input", {
+test_that("haplotype creation returns error with improper ref_genome input", {
     .p <- function(x) test_path(sprintf("files/%s.txt", x))
     expect_error({
-        arg_list_ <- c(list(vars_info = vars_gtrees(fn = .p("ms_out"))), arg_list)
+        arg_list_ <- c(list(haps_info = haps_gtrees(fn = .p("ms_out"))), arg_list)
         arg_list_$reference <- list(1, 2)
-        do.call(create_variants, arg_list_)
+        do.call(create_haplotypes, arg_list_)
     },
-    regexp = paste("For the `create_variants` function in jackalope,",
+    regexp = paste("For the `create_haplotypes` function in jackalope,",
                    "argument `reference` must be a \"ref_genome\" object."))
 })
 
@@ -298,16 +298,16 @@ test_that("seg. sites produces the correct number of mutations", {
     ms_file <- test_path("files/ms_out.txt")
     # Have to make bigger ref. genome to make sure site positions don't overlap.
     reference2 <- create_genome(3, 100e3)
-    arg_list_ <- c(list(vars_info = vars_ssites(fn = ms_file)), arg_list)
+    arg_list_ <- c(list(haps_info = haps_ssites(fn = ms_file)), arg_list)
     arg_list_$reference <- reference2
-    vars <- do.call(create_variants, arg_list_)
+    haps <- do.call(create_haplotypes, arg_list_)
 
     msf <- readLines(ms_file)[-1:-2]
     msf <- msf[grepl("^0|^1", msf)]
     msf <- do.call(c, strsplit(msf, ""))
-    n_muts_by_var <-
-        sapply(0:4, function(i) nrow(jackalope:::view_mutations(vars$ptr(), i)))
-    expect_equal(sum(as.integer(msf)), sum(n_muts_by_var))
+    n_muts_by_hap <-
+        sapply(0:4, function(i) nrow(jackalope:::view_mutations(haps$ptr(), i)))
+    expect_equal(sum(as.integer(msf)), sum(n_muts_by_hap))
 })
 
 
@@ -323,30 +323,30 @@ test_that("seg. sites produces the correct number of mutations", {
 # ==============================================================================`
 
 
-test_that("errors occur when nonsense is input to vars_gtrees", {
+test_that("errors occur when nonsense is input to haps_gtrees", {
 
-    expect_error(vars_gtrees(NULL, NULL),
+    expect_error(haps_gtrees(NULL, NULL),
                  regexp = "either argument `obj` or `fn` must be provided")
-    expect_error(vars_gtrees(1, 1),
+    expect_error(haps_gtrees(1, 1),
                  regexp = "only one argument \\(`obj` or `fn`\\) should be provided")
-    expect_error(vars_gtrees(1, NULL),
+    expect_error(haps_gtrees(1, NULL),
                  regexp = paste("argument `obj` must be \\(1\\) a list with a",
                                 "`trees` field present or \\(2\\) a list of lists,",
                                 "each sub-list containing a `trees` field of length 1"))
-    expect_error(vars_gtrees(NULL, 1),
+    expect_error(haps_gtrees(NULL, 1),
                  regexp = "argument `fn` must be NULL or a single string")
 
 })
-test_that("errors occur when nonsense is input to vars_ssites", {
+test_that("errors occur when nonsense is input to haps_ssites", {
 
-    expect_error(vars_ssites(NULL, NULL),
+    expect_error(haps_ssites(NULL, NULL),
                  regexp = "either argument `obj` or `fn` must be provided")
-    expect_error(vars_ssites(1, 1),
+    expect_error(haps_ssites(1, 1),
                  regexp = "only one argument \\(`obj` or `fn`\\) should be provided")
-    expect_error(vars_ssites(1, NULL),
+    expect_error(haps_ssites(1, NULL),
                  regexp = paste("argument `obj` must be NULL or a list with a",
                                 "`seg_sites` field present"))
-    expect_error(vars_ssites(NULL, 1),
+    expect_error(haps_ssites(NULL, 1),
                  regexp = "argument `fn` must be NULL or a single string")
 
 })
@@ -370,7 +370,7 @@ test_that("gene trees written properly by write_gtrees", {
     out_prefix <- paste0(tempdir(TRUE), "/trees")
 
     # Write gene trees to file based on known ms-style file:
-    write_gtrees(vars_gtrees(fn = test_path("files/ms_out.txt")), out_prefix)
+    write_gtrees(haps_gtrees(fn = test_path("files/ms_out.txt")), out_prefix)
 
     # Newly written gene tree strings:
     wr_str <- strsplit(paste(readLines(paste0(out_prefix, ".trees")),

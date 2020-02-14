@@ -20,7 +20,7 @@
 
 
 #include "jackalope_types.h" // integer types
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling
 #include "util.h"  // str_stop

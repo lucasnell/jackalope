@@ -2,14 +2,21 @@
 % Please edit documentation in R/read_write.R
 \name{write_fasta}
 \alias{write_fasta}
-\title{Write a \code{ref_genome} or \code{variants} object to a FASTA file.}
+\title{Write a \code{ref_genome} or \code{haplotypes} object to a FASTA file.}
 \usage{
-write_fasta(obj, out_prefix, compress = FALSE, comp_method = "bgzip",
-  text_width = 80, show_progress = FALSE, n_threads = 1,
-  overwrite = FALSE)
+write_fasta(
+  obj,
+  out_prefix,
+  compress = FALSE,
+  comp_method = "bgzip",
+  text_width = 80,
+  show_progress = FALSE,
+  n_threads = 1,
+  overwrite = FALSE
+)
 }
 \arguments{
-\item{obj}{A \code{ref_genome} or \code{variants} object.}
+\item{obj}{A \code{ref_genome} or \code{haplotypes} object.}
 
 \item{out_prefix}{Prefix for the output file.}
 
@@ -28,9 +35,9 @@ Defaults to \code{80}.}
 \item{show_progress}{Logical for whether to show a progress bar.
 Defaults to \code{FALSE}.}
 
-\item{n_threads}{Number of threads to use if writing from a \code{variants} object.
-Threads are split among variants, so it's not useful to provide more threads
-than variants.
+\item{n_threads}{Number of threads to use if writing from a \code{haplotypes} object.
+Threads are split among haplotypes, so it's not useful to provide more threads
+than haplotypes.
 This argument is ignored if \code{obj} is a \code{ref_genome} object, or if
 OpenMP is not enabled.
 Defaults to \code{1}.}
@@ -43,5 +50,5 @@ same name, if they exist. Defaults to \code{FALSE}.}
 }
 \description{
 This file produces 1 FASTA file for a \code{ref_genome} object and one file
-for each variant in a \code{variants} object.
+for each haplotype in a \code{haplotypes} object.
 }

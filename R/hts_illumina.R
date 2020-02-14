@@ -282,17 +282,17 @@ check_illumina_args <- function(obj, n_reads,
                                 ins_prob1, del_prob1,
                                 ins_prob2, del_prob2,
                                 frag_len_min, frag_len_max,
-                                variant_probs, barcodes, prob_dup,
+                                haplotype_probs, barcodes, prob_dup,
                                 sep_files,
                                 compress, comp_method, n_threads, read_pool_size,
                                 show_progress) {
 
     # Checking types:
 
-    if (!inherits(obj, c("ref_genome", "variants"))) {
+    if (!inherits(obj, c("ref_genome", "haplotypes"))) {
         stop("\nWhen providing info for the Illumina sequencer, ",
              "the object providing the sequence information should be ",
-             "of class \"ref_genome\" or \"variants\".", call. = FALSE)
+             "of class \"ref_genome\" or \"haplotypes\".", call. = FALSE)
     }
 
     for (x in c("read_length", "n_reads", "n_threads", "read_pool_size")) {
@@ -330,11 +330,11 @@ check_illumina_args <- function(obj, n_reads,
             err_msg("illumina", x, "NULL or a single integer >= 1")
         }
     }
-    if (!is.null(variant_probs) &&
-        (!is_type(variant_probs, c("numeric", "integer")) ||
-         any(variant_probs < 0) ||
-         all(variant_probs == 0))) {
-        err_msg("illumina", "variant_probs", "NULL or a numeric/integer vector",
+    if (!is.null(haplotype_probs) &&
+        (!is_type(haplotype_probs, c("numeric", "integer")) ||
+         any(haplotype_probs < 0) ||
+         all(haplotype_probs == 0))) {
+        err_msg("illumina", "haplotype_probs", "NULL or a numeric/integer vector",
                 "with no values < 0 and at least one value > 0")
     }
     if (!is.null(barcodes) && !is_type(barcodes, "character")) {
@@ -356,33 +356,33 @@ check_illumina_args <- function(obj, n_reads,
              "Terminating here in case this was a mistake.", call. = FALSE)
     }
 
-    # Checking proper variant_probs
-    if (!is.null(variant_probs) && !inherits(obj, "variants")) {
+    # Checking proper haplotype_probs
+    if (!is.null(haplotype_probs) && !inherits(obj, "haplotypes")) {
         stop("\nFor Illumina sequencing, it makes no sense to provide ",
-             "a vector of probabilities of sequencing each variant if the ",
+             "a vector of probabilities of sequencing each haplotype if the ",
              "`obj` argument is of class \"ref_genome\". ",
              "Terminating here in case this was a mistake.", call. = FALSE)
     }
-    if (!is.null(variant_probs) && inherits(obj, "variants") &&
-        length(variant_probs) != obj$n_vars()) {
-        err_msg("illumina", "variant_probs",
-                "a vector of the same length as the number of variants in the",
-                "`obj` argument, if `obj` is of class \"variants\".",
-                "Use `obj$n_vars()` to see the number of variants")
+    if (!is.null(haplotype_probs) && inherits(obj, "haplotypes") &&
+        length(haplotype_probs) != obj$n_haps()) {
+        err_msg("illumina", "haplotype_probs",
+                "a vector of the same length as the number of haplotypes in the",
+                "`obj` argument, if `obj` is of class \"haplotypes\".",
+                "Use `obj$n_haps()` to see the number of haplotypes")
     }
     # Similar checks for barcodes
     if (!is.null(barcodes)) {
-        if (!inherits(obj, "variants") && length(barcodes) != 1) {
+        if (!inherits(obj, "haplotypes") && length(barcodes) != 1) {
             stop("\nFor Illumina sequencing, it makes no sense to provide ",
                  "a vector of multiple barcodes if the `obj` argument is ",
                  "of class \"ref_genome\". ",
                  "Terminating here in case this was a mistake.", call. = FALSE)
         }
-        if (inherits(obj, "variants") && length(barcodes) != obj$n_vars()) {
+        if (inherits(obj, "haplotypes") && length(barcodes) != obj$n_haps()) {
             err_msg("illumina", "barcodes",
-                    "a vector of the same length as the number of variants in the",
-                    "`obj` argument, if `obj` is of class \"variants\".",
-                    "Use `obj$n_vars()` to see the number of variants")
+                    "a vector of the same length as the number of haplotypes in the",
+                    "`obj` argument, if `obj` is of class \"haplotypes\".",
+                    "Use `obj$n_haps()` to see the number of haplotypes")
         }
         n_weirdo_chars <- sapply(strsplit(barcodes, ""),
                                  function(x) sum(!x %in% c("T", "C", "A", "G")))
@@ -406,7 +406,7 @@ check_illumina_args <- function(obj, n_reads,
 #' Create and write Illumina reads to FASTQ file(s).
 #'
 #'
-#' From either a reference genome or set of haploid variants, create Illumina reads
+#' From either a reference genome or set of variant haplotypes, create Illumina reads
 #' from error profiles and write them to FASTQ output file(s).
 #' I encourage you to cite the reference below in addition to `jackalope` if you use
 #' this function.
@@ -460,11 +460,11 @@ check_illumina_args <- function(obj, n_reads,
 #' `@<genome name>-<chromosome name>-<starting position>-<strand>[/<read#>]`
 #'
 #' where the part in `[]` is only for paired-end Illumina reads, and where `genome name`
-#' is always `REF` for reference genomes (as opposed to variants).
+#' is always `REF` for reference genomes (as opposed to haplotypes).
 #'
 #'
 #'
-#' @param obj Sequencing object of class `ref_genome` or `variants`.
+#' @param obj Sequencing object of class `ref_genome` or `haplotypes`.
 #' @param out_prefix Prefix for the output file(s), including entire path except
 #'     for the file extension.
 #' @param n_reads Number of reads you want to create.
@@ -500,18 +500,18 @@ check_illumina_args <- function(obj, n_reads,
 #' @param frag_len_max Maximum fragment size.
 #'     A `NULL` value results in `2^32-1`, the maximum allowed value.
 #'     Defaults to `NULL`
-#' @param variant_probs Relative probability of sampling each variant.
+#' @param haplotype_probs Relative probability of sampling each haplotype.
 #'     This is ignored if sequencing a reference genome.
 #'     `NULL` results in all having the same probability.
 #'     Defaults to `NULL`.
-#' @param barcodes Character vector of barcodes for each variant, or a single barcode
+#' @param barcodes Character vector of barcodes for each haplotype, or a single barcode
 #'     if sequencing a reference genome. `NULL` results in no barcodes.
 #'     Defaults to `NULL`.
 #' @param prob_dup A single number indicating the probability of duplicates.
 #'     Defaults to `0.02`.
-#' @param sep_files Logical indicating whether to make separate files for each variant.
+#' @param sep_files Logical indicating whether to make separate files for each haplotype.
 #'     This argument is coerced to `FALSE` if the `obj` argument is not
-#'     a `variants` object.
+#'     a `haplotypes` object.
 #'     Defaults to `FALSE`.
 #' @param compress Logical specifying whether or not to compress output file, or
 #'     an integer specifying the level of compression, from 1 to 9.
@@ -532,7 +532,7 @@ check_illumina_args <- function(obj, n_reads,
 #'     compressed output on the fly, so that option is not included.
 #'     If you want to be conservative with disk space (by not having an uncompressed
 #'     file present even temporarily), set `n_threads` to `1`.
-#'     Threads are NOT spread across chromosomes or variants, so you don't need to
+#'     Threads are NOT spread across chromosomes or haplotypes, so you don't need to
 #'     think about these when choosing this argument's value.
 #'     However, all threads write to the same file/files, so there are diminishing
 #'     returns for providing many threads.
@@ -567,7 +567,7 @@ check_illumina_args <- function(obj, n_reads,
 #'          del_prob2 = 0.00023,
 #'          frag_len_min = NULL,
 #'          frag_len_max = NULL,
-#'          variant_probs = NULL,
+#'          haplotype_probs = NULL,
 #'          barcodes = NULL,
 #'          prob_dup = 0.02,
 #'          sep_files = FALSE,
@@ -607,7 +607,7 @@ illumina <- function(obj,
                      del_prob2 = 0.00023,
                      frag_len_min = NULL,
                      frag_len_max = NULL,
-                     variant_probs = NULL,
+                     haplotype_probs = NULL,
                      barcodes = NULL,
                      prob_dup = 0.02,
                      sep_files = FALSE,
@@ -627,7 +627,7 @@ illumina <- function(obj,
     check_illumina_args(obj, n_reads, read_length, paired,
                         frag_mean, frag_sd, matepair, seq_sys, profile1, profile2,
                         ins_prob1, del_prob1, ins_prob2, del_prob2,
-                        frag_len_min, frag_len_max, variant_probs, barcodes, prob_dup,
+                        frag_len_min, frag_len_max, haplotype_probs, barcodes, prob_dup,
                         sep_files,
                         compress, comp_method, n_threads, read_pool_size, show_progress)
 
@@ -638,7 +638,7 @@ illumina <- function(obj,
     if (!sep_files) {
         fns <- paste0(out_prefix, "_R", 1:ifelse(paired, 2, 1), ".fq")
     } else {
-        fns <- lapply(obj$var_names(),
+        fns <- lapply(obj$hap_names(),
                       function(x) sprintf("%s_%s_R%i.fq", out_prefix, x,
                                           1:ifelse(paired, 2, 1)))
         fns <- c(fns, recursive = TRUE)
@@ -668,11 +668,11 @@ illumina <- function(obj,
              "and if `frag_len_min` is not provided, it's automatically changed ",
              "to the read length.", call. = FALSE)
     }
-    if (is.null(variant_probs) && inherits(obj, "variants")) {
-        variant_probs <- rep(1, obj$n_vars())
+    if (is.null(haplotype_probs) && inherits(obj, "haplotypes")) {
+        haplotype_probs <- rep(1, obj$n_haps())
     }
-    if (is.null(barcodes) && inherits(obj, "variants")) {
-        barcodes <- rep("", obj$n_vars())
+    if (is.null(barcodes) && inherits(obj, "haplotypes")) {
+        barcodes <- rep("", obj$n_haps())
     } else if (is.null(barcodes)) barcodes <- ""
 
     prof_info1 <- read_profile(profile1, seq_sys, read_length, 1)
@@ -720,12 +720,12 @@ illumina <- function(obj,
         args <- c(args, list(ref_genome_ptr = obj$ptr()))
         args$sep_files <- NULL
         do.call(illumina_ref_cpp, args)
-    } else if (inherits(obj, "variants")) {
-        args <- c(args, list(var_set_ptr = obj$ptr(),
-                             variant_probs = variant_probs))
-        do.call(illumina_var_cpp, args)
+    } else if (inherits(obj, "haplotypes")) {
+        args <- c(args, list(hap_set_ptr = obj$ptr(),
+                             haplotype_probs = haplotype_probs))
+        do.call(illumina_hap_cpp, args)
     } else {
-        err_msg("illumina", "`obj`", "a \"ref_genome\" or \"variants\" object")
+        err_msg("illumina", "`obj`", "a \"ref_genome\" or \"haplotypes\" object")
     }
 
     invisible(NULL)

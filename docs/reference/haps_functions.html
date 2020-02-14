@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Organize information to create variants using theta parameter — vars_theta • jackalope</title>
+<title>Organize higher-level information for creating haplotypes. — haps_functions • jackalope</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -42,9 +42,12 @@
 
 
 
-<meta property="og:title" content="Organize information to create variants using theta parameter — vars_theta" />
-<meta property="og:description" content="This function organizes higher-level information for creating variants from
-the population-scaled mutation rate and a desired number of variants." />
+<meta property="og:title" content="Organize higher-level information for creating haplotypes. — haps_functions" />
+<meta property="og:description" content="The following functions organize information that gets passed to create_haplotypes
+to generate haplotypes from a reference genome.
+Each function represents a method of generation and starts with &quot;haps_&quot;.
+The first three are phylogenomic methods, and all functions but haps_vcf
+will use molecular evolution information when passed to create_haplotypes." />
 <meta property="og:image" content="/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -132,45 +135,52 @@ the population-scaled mutation rate and a desired number of variants." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Organize information to create variants using theta parameter</h1>
-    <small class="dont-index">Source: <a href='https://github.com/lucasnell/jackalope/blob/master/R/vars_functions.R'><code>R/vars_functions.R</code></a></small>
-    <div class="hidden name"><code>vars_theta.Rd</code></div>
+    <h1>Organize higher-level information for creating haplotypes.</h1>
+    <small class="dont-index">Source: <a href='https://github.com/lucasnell/jackalope/blob/master/R/haps_functions.R'><code>R/haps_functions.R</code></a></small>
+    <div class="hidden name"><code>haps_functions.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function organizes higher-level information for creating variants from
-the population-scaled mutation rate and a desired number of variants.</p>
+    <p>The following functions organize information that gets passed to <code>create_haplotypes</code>
+to generate haplotypes from a reference genome.
+Each function represents a method of generation and starts with <code>"haps_"</code>.
+The first three are phylogenomic methods, and all functions but <code>haps_vcf</code>
+will use molecular evolution information when passed to <code>create_haplotypes</code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>vars_theta</span>(<span class='no'>theta</span>, <span class='no'>n_vars</span>)</pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>theta</th>
-      <td><p>Population-scaled mutation rate.</p></td>
-    </tr>
-    <tr>
-      <th>n_vars</th>
-      <td><p>Number of desired variants.</p></td>
-    </tr>
-    </table>
 
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>A <code>vars_theta_info</code> object containing information used in <code>create_variants</code>
-to create haploid variants.
-This class is just a wrapper around a list containing the phylogenetic tree
-and <code>theta</code> parameter, which you can view (but not change) using the object's
-<code>phylo()</code> and <code>theta()</code> methods, respectively.</p>
+    
+<dl class='dl-horizontal'>
+<dt><code><a href='haps_theta.html'>haps_theta</a></code></dt><dd><p>Uses an estimate for theta, the population-scaled
+mutation rate, and a desired number of haplotypes.</p></dd>
+<dt><code><a href='haps_phylo.html'>haps_phylo</a></code></dt><dd><p>Uses phylogenetic tree(s) from <code>phylo</code>
+object(s) or NEWICK file(s), one tree per chromosome or one for all
+chromosomes.</p></dd>
+<dt><code><a href='haps_gtrees.html'>haps_gtrees</a></code></dt><dd><p>Uses gene trees, either in the form of
+an object from the <code>scrm</code> or <code>coala</code> package or
+a file containing output in the style of the <code>ms</code> program.</p></dd>
+<dt><code><a href='haps_ssites.html'>haps_ssites</a></code></dt><dd><p>Uses matrices of segregating sites,
+either in the form of
+<code>scrm</code> or <code>coala</code> coalescent-simulator object(s), or
+a <code>ms</code>-style output file.</p></dd>
+<dt><code><a href='haps_vcf.html'>haps_vcf</a></code></dt><dd><p>Uses a haplotype call format (VCF) file that
+directly specifies haplotypes.</p></dd>
+
+</dl>
+
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p><code><a href='create_haplotypes.html'>create_haplotypes</a></code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#arguments">Arguments</a></li>
-      <li><a href="#value">Value</a></li>
+      <li><a href="#details">Details</a></li>
+      <li><a href="#see-also">See also</a></li>
     </ul>
 
   </div>

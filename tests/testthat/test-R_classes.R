@@ -6,7 +6,7 @@ context("Testing R class methods and info")
 
 
 n_chroms <- 10L
-n_vars <- 5L
+n_haps <- 5L
 n_muts <- 100L
 len <- 100L
 len_sd <- 10.0
@@ -123,59 +123,59 @@ ref <- ref_genome$new(jackalope:::make_ref_genome(chroms))
 # ============================================================`
 # ============================================================`
 
-# variants basics -----
+# haplotypes basics -----
 
 # ============================================================`
 # ============================================================`
 
 
 
-# Create variants:
-phy <- ape::rcoal(n_vars)
-vars <- create_variants(ref, vars_phylo(phy), sub = sub_JC69(0.01))
+# Create haplotypes:
+phy <- ape::rcoal(n_haps)
+haps <- create_haplotypes(ref, haps_phylo(phy), sub = sub_JC69(0.01))
 
-test_that("variants class starts with the correct fields", {
-    expect_is(vars$ptr(), "externalptr")
+test_that("haplotypes class starts with the correct fields", {
+    expect_is(haps$ptr(), "externalptr")
 })
 
 
-test_that("variants print appears about right", {
-    expect_output(print(vars),
-                  paste0("<< Variants object >>\n",
-                         "\\# Variants: ", n_vars, "\n",
+test_that("haplotypes print appears about right", {
+    expect_output(print(haps),
+                  paste0("<< haplotypes object >>\n",
+                         "\\# Haplotypes: ", n_haps, "\n",
                          "\\# Mutations: "))
 })
 
 
 
-test_that("variants class methods", {
+test_that("haplotypes class methods", {
 
-    expect_equal(vars$n_chroms(), length(chroms))
+    expect_equal(haps$n_chroms(), length(chroms))
 
-    expect_equal(vars$n_vars(), n_vars)
+    expect_equal(haps$n_haps(), n_haps)
 
     # No indels, so these should be true:
-    for (i in 1:n_vars) expect_equal(vars$sizes(i), nchar(chroms))
+    for (i in 1:n_haps) expect_equal(haps$sizes(i), nchar(chroms))
 
-    expect_identical(vars$chrom_names(), paste0("chrom", 1:length(chroms)-1))
+    expect_identical(haps$chrom_names(), paste0("chrom", 1:length(chroms)-1))
 
-    expect_identical(vars$var_names(), phy$tip.label)
+    expect_identical(haps$hap_names(), phy$tip.label)
 
     # Variant chromosomes:
-    var_chroms <- lapply(1:n_vars,
+    hap_chroms <- lapply(1:n_haps,
                        function(v) {
-                           jackalope:::view_var_genome(vars$ptr(), v-1)
+                           jackalope:::view_hap_genome(haps$ptr(), v-1)
                        })
-    vs0 <- lapply(1:n_vars, function(v) sapply(1:length(chroms),
-                                               function(s) vars$chrom(v, s)))
-    expect_identical(var_chroms, vs0)
+    vs0 <- lapply(1:n_haps, function(v) sapply(1:length(chroms),
+                                               function(s) haps$chrom(v, s)))
+    expect_identical(hap_chroms, vs0)
 
-    nv <- paste0("__VARS_", 1:n_vars)
-    vars$set_names(nv)
-    expect_identical(vars$var_names(), nv)
+    nv <- paste0("__VARS_", 1:n_haps)
+    haps$set_names(nv)
+    expect_identical(haps$hap_names(), nv)
 
-    vars$rm_vars(nv[1:2])
-    expect_identical(vars$var_names(), nv[-1:-2])
+    haps$rm_haps(nv[1:2])
+    expect_identical(haps$hap_names(), nv[-1:-2])
 })
 
 
@@ -191,30 +191,30 @@ test_that("variants class methods", {
 # ============================================================`
 
 
-# Make empty var_set to compare mutations
-vars <- variants$new(jackalope:::make_var_set(ref$ptr(), n_vars), ref$ptr())
-vars_R <- replicate(n_vars, chroms, simplify = FALSE)
+# Make empty hap_set to compare mutations
+haps <- haplotypes$new(jackalope:::make_hap_set(ref$ptr(), n_haps), ref$ptr())
+haps_R <- replicate(n_haps, chroms, simplify = FALSE)
 
 
-for (v in 1:n_vars) {
-    ts <- vars_R[[v]]
+for (v in 1:n_haps) {
+    ts <- haps_R[[v]]
     for (s in 1:length(chroms)) {
         m = 0;
-        max_size = vars$sizes(v)[s]
+        max_size = haps$sizes(v)[s]
         while (m < n_muts && max_size > 0) {
             pos = as.integer(runif(1) * max_size) + 1
             rnd = runif(1);
             if (rnd < 0.5) {
                 str = jackalope:::rando_chroms(1, 1)
                 if (nchar(str) != 1) stop("Improper size in sub")
-                vars$add_sub(v, s, pos, str)
+                haps$add_sub(v, s, pos, str)
                 substr(ts[s], pos, pos) <- str
             } else if (rnd < 0.75) {
                 size = as.integer(rexp(1, 2.0) + 1.0)
                 if (size > 10) size = 10
                 str = jackalope:::rando_chroms(1, size)
                 if (nchar(str) != size) stop("Improper size in insertion")
-                vars$add_ins(v, s, pos, str)
+                haps$add_ins(v, s, pos, str)
                 ts[s] <- paste0(substr(ts[s], 1, pos), str,
                                 substr(ts[s], pos + 1, nchar(ts[s])))
                 max_size <- max_size + size
@@ -222,7 +222,7 @@ for (v in 1:n_vars) {
                 size = as.integer(rexp(1, 2.0) + 1.0)
                 if (size > 10) size = 10
                 if ((pos + size - 1) > max_size) size = max_size - pos + 1;
-                vars$add_del(v, s, pos, size)
+                haps$add_del(v, s, pos, size)
                 ts[s] <- paste0(substr(ts[s], 1, pos - 1),
                                 substr(ts[s], pos + size, nchar(ts[s])))
                 max_size <- max_size - size
@@ -231,14 +231,14 @@ for (v in 1:n_vars) {
             prev_rnd <- rnd
         }
     }
-    vars_R[[v]] <- ts
+    haps_R[[v]] <- ts
 }
 
-# Converting to list like vars_R:
-vars_cpp <- lapply(1:n_vars, function(v) sapply(1:n_chroms, function(s) vars$chrom(v, s)))
+# Converting to list like haps_R:
+haps_cpp <- lapply(1:n_haps, function(v) sapply(1:n_chroms, function(s) haps$chrom(v, s)))
 
 test_that("Mutations produced are accurate", {
-    expect_identical(vars_R, vars_cpp)
+    expect_identical(haps_R, haps_cpp)
 })
 
 
@@ -301,41 +301,41 @@ test_that("gc_prop and nt_prob work for ref_genome as predicted", {
 
 
 
-vars <- variants$new(jackalope:::make_var_set(ref$ptr(), 2), ref$ptr())
+haps <- haplotypes$new(jackalope:::make_hap_set(ref$ptr(), 2), ref$ptr())
 
-test_that("gc_prop and nt_prob work for variants as predicted", {
+test_that("gc_prop and nt_prob work for haplotypes as predicted", {
 
-    expect_equal(vars$gc_prop(1, 1, 1, 200), 100 / 200)
-    expect_equal(vars$gc_prop(1, 2, 1, 200), 75 / 200)
-    expect_equal(vars$gc_prop(1, 3, 1, 200), 125 / 200)
-    expect_equal(vars$gc_prop(1, 4, 1, 200), 75 / 200)
+    expect_equal(haps$gc_prop(1, 1, 1, 200), 100 / 200)
+    expect_equal(haps$gc_prop(1, 2, 1, 200), 75 / 200)
+    expect_equal(haps$gc_prop(1, 3, 1, 200), 125 / 200)
+    expect_equal(haps$gc_prop(1, 4, 1, 200), 75 / 200)
 
-    expect_equal(vars$gc_prop(1, 1, 1, 100), 50 / 100)
-    expect_equal(vars$gc_prop(1, 2, 1, 100), 0 / 100)
-    expect_equal(vars$gc_prop(1, 3, 1, 100), 25 / 100)
-    expect_equal(vars$gc_prop(1, 4, 1, 100), 25 / 100)
+    expect_equal(haps$gc_prop(1, 1, 1, 100), 50 / 100)
+    expect_equal(haps$gc_prop(1, 2, 1, 100), 0 / 100)
+    expect_equal(haps$gc_prop(1, 3, 1, 100), 25 / 100)
+    expect_equal(haps$gc_prop(1, 4, 1, 100), 25 / 100)
 
 
-    expect_equal(vars$nt_prop('T', 1, 1, 1, 200), 50 / 200)
-    expect_equal(vars$nt_prop('T', 1, 2, 1, 200), 100 / 200)
-    expect_equal(vars$nt_prop('T', 1, 3, 1, 200), 50 / 200)
-    expect_equal(vars$nt_prop('T', 1, 4, 1, 200), 25 / 200)
+    expect_equal(haps$nt_prop('T', 1, 1, 1, 200), 50 / 200)
+    expect_equal(haps$nt_prop('T', 1, 2, 1, 200), 100 / 200)
+    expect_equal(haps$nt_prop('T', 1, 3, 1, 200), 50 / 200)
+    expect_equal(haps$nt_prop('T', 1, 4, 1, 200), 25 / 200)
 
-    expect_equal(vars$nt_prop('T', 1, 1, 1, 100), 50 / 100)
-    expect_equal(vars$nt_prop('T', 1, 2, 1, 100), 100 / 100)
-    expect_equal(vars$nt_prop('T', 1, 3, 1, 100), 50 / 100)
-    expect_equal(vars$nt_prop('T', 1, 4, 1, 100), 25 / 100)
+    expect_equal(haps$nt_prop('T', 1, 1, 1, 100), 50 / 100)
+    expect_equal(haps$nt_prop('T', 1, 2, 1, 100), 100 / 100)
+    expect_equal(haps$nt_prop('T', 1, 3, 1, 100), 50 / 100)
+    expect_equal(haps$nt_prop('T', 1, 4, 1, 100), 25 / 100)
 
     # Adding some substitutions
-    for (i in 1:100) vars$add_sub(2, 1, i, 'C')
-    for (i in 101:200) vars$add_sub(2, 1, i, 'T')
+    for (i in 1:100) haps$add_sub(2, 1, i, 'C')
+    for (i in 101:200) haps$add_sub(2, 1, i, 'T')
 
-    expect_equal(vars$gc_prop(2, 1, 1, 200), 100 / 200)
-    expect_equal(vars$gc_prop(2, 1, 1, 100), 100 / 100)
-    expect_equal(vars$gc_prop(2, 1, 101, 200), 0 / 100)
+    expect_equal(haps$gc_prop(2, 1, 1, 200), 100 / 200)
+    expect_equal(haps$gc_prop(2, 1, 1, 100), 100 / 100)
+    expect_equal(haps$gc_prop(2, 1, 101, 200), 0 / 100)
 
-    expect_equal(vars$nt_prop('C', 2, 1, 1, 100), 100 / 100)
-    expect_equal(vars$nt_prop('T', 2, 1, 101, 200), 100 / 100)
+    expect_equal(haps$nt_prop('C', 2, 1, 1, 100), 100 / 100)
+    expect_equal(haps$nt_prop('T', 2, 1, 101, 200), 100 / 100)
 
 })
 
@@ -348,30 +348,30 @@ test_that("gc_prop and nt_prob work for variants as predicted", {
 # ============================================================`
 # ============================================================`
 
-# +/- variants -----
+# +/- haplotypes -----
 
 # ============================================================`
 # ============================================================`
 
 ref <- ref_genome$new(jackalope:::make_ref_genome(chroms))
 
-test_that("adding/removing/duplicating variants works as predicted", {
+test_that("adding/removing/duplicating haplotypes works as predicted", {
 
-    vars0 <- create_variants(ref, NULL)
-    expect_identical(vars0$n_vars(), 0L)
+    haps0 <- create_haplotypes(ref, NULL)
+    expect_identical(haps0$n_haps(), 0L)
 
-    vars0$add_vars("var0")
-    expect_identical(vars0$n_vars(), 1L)
-    expect_identical(sapply(1:ref$n_chroms(), function(i) vars0$chrom(1, i)),
+    haps0$add_haps("hap0")
+    expect_identical(haps0$n_haps(), 1L)
+    expect_identical(sapply(1:ref$n_chroms(), function(i) haps0$chrom(1, i)),
                      sapply(1:ref$n_chroms(), function(i) ref$chrom(i)))
 
-    vars1 <- create_variants(ref, vars_theta(0.1, 4), sub_JC69(0.001))
-    vars1$dup_vars(vars1$var_names()[1:2])
-    expect_identical(vars1$n_vars(), 6L)
-    expect_identical(sapply(1:ref$n_chroms(), function(i) vars1$chrom(1, i)),
-                     sapply(1:ref$n_chroms(), function(i) vars1$chrom(5, i)))
-    expect_identical(sapply(1:ref$n_chroms(), function(i) vars1$chrom(2, i)),
-                     sapply(1:ref$n_chroms(), function(i) vars1$chrom(6, i)))
+    haps1 <- create_haplotypes(ref, haps_theta(0.1, 4), sub_JC69(0.001))
+    haps1$dup_haps(haps1$hap_names()[1:2])
+    expect_identical(haps1$n_haps(), 6L)
+    expect_identical(sapply(1:ref$n_chroms(), function(i) haps1$chrom(1, i)),
+                     sapply(1:ref$n_chroms(), function(i) haps1$chrom(5, i)))
+    expect_identical(sapply(1:ref$n_chroms(), function(i) haps1$chrom(2, i)),
+                     sapply(1:ref$n_chroms(), function(i) haps1$chrom(6, i)))
 
 })
 

@@ -1,26 +1,26 @@
 
 
-# vars_ssites_info ----
+# haps_ssites_info ----
 #' An R6 class representing information for ssites method.
 #'
 #' @noRd
 #'
 #' @importFrom R6 R6Class
 #'
-vars_ssites_info <- R6Class(
+haps_ssites_info <- R6Class(
 
-    "vars_ssites_info",
+    "haps_ssites_info",
 
     public = list(
 
         initialize = function(mats) {
 
-            extra_msg <- paste(" Please only create these objects using the vars_ssites",
-                               "function, NOT using vars_ssites_info$new().")
+            extra_msg <- paste(" Please only create these objects using the haps_ssites",
+                               "function, NOT using haps_ssites_info$new().")
             if (!inherits(mats, "list") || !all(sapply(mats, is.numeric)) ||
                 !all(sapply(mats, inherits, what = "matrix")) ||
                 any(sapply(mats, function(x) any(x < 0)))) {
-                stop("\nWhen initializing a vars_ssites_info object, you need to use ",
+                stop("\nWhen initializing a haps_ssites_info object, you need to use ",
                      "a list of numeric matrices of values >= 0.", extra_msg,
                      call. = FALSE)
             }
@@ -30,8 +30,8 @@ vars_ssites_info <- R6Class(
 
         print = function(...) {
 
-            cat("< Seg. site variant-creation info >\n")
-            cat(sprintf("# Number of variants = %i\n", ncol(private$r_mats[[1]]) - 1))
+            cat("< Seg. site haplotype-creation info >\n")
+            cat(sprintf("# Number of haplotypes = %i\n", ncol(private$r_mats[[1]]) - 1))
             cat(sprintf("# Number of sites = %s\n", format(as.integer(sum(sapply(
                 private$r_mats, nrow))), big.mark = ",")))
             invisible(self)
@@ -55,16 +55,16 @@ vars_ssites_info <- R6Class(
 
 
 
-# vars_vcf_info ----
+# haps_vcf_info ----
 #' An R6 class representing information for VCF method.
 #'
 #' @noRd
 #'
 #' @importFrom R6 R6Class
 #'
-vars_vcf_info <- R6Class(
+haps_vcf_info <- R6Class(
 
-    "vars_vcf_info",
+    "haps_vcf_info",
 
     public = list(
 
@@ -72,10 +72,10 @@ vars_vcf_info <- R6Class(
                               print_names) {
 
             err <- function(a, b) {
-                msg <- paste0("\nWhen initializing a vars_vcf_info object, the ",
+                msg <- paste0("\nWhen initializing a haps_vcf_info object, the ",
                               "argument `", a, "` should be ", b, ". ",
-                              "Please only create these objects using the vars_vcf ",
-                              "function, NOT using vars_vcf_info$new().")
+                              "Please only create these objects using the haps_vcf ",
+                              "function, NOT using haps_vcf_info$new().")
                 stop(msg, call. = FALSE)
             }
 
@@ -94,7 +94,7 @@ vars_vcf_info <- R6Class(
 
             digits <- max(3, getOption("digits") - 3)
 
-            cat("< VCF variant-creation info >\n")
+            cat("< VCF haplotype-creation info >\n")
             cat(sprintf("# File name: %s\n", fn))
 
             invisible(self)
@@ -120,26 +120,26 @@ vars_vcf_info <- R6Class(
 
 
 
-# vars_phylo_info ----
+# haps_phylo_info ----
 #' An R6 class representing information for phylo method.
 #'
 #' @noRd
 #'
 #' @importFrom R6 R6Class
 #'
-vars_phylo_info <- R6Class(
+haps_phylo_info <- R6Class(
 
-    "vars_phylo_info",
+    "haps_phylo_info",
 
     public = list(
 
         initialize = function(phylo) {
 
-            extra_msg <- paste(" Please only create these objects using the vars_phylo",
-                               "function, NOT using vars_phylo_info$new().")
+            extra_msg <- paste(" Please only create these objects using the haps_phylo",
+                               "function, NOT using haps_phylo_info$new().")
             if (!inherits(phylo, "list") ||
                 !all(sapply(phylo, inherits, what = "phylo"))) {
-                stop("\nWhen initializing a vars_phylo_info object, you need to use",
+                stop("\nWhen initializing a haps_phylo_info object, you need to use",
                      "a list of `phylo` object(s).", extra_msg, call. = FALSE)
             }
 
@@ -148,8 +148,8 @@ vars_phylo_info <- R6Class(
 
         print = function(...) {
 
-            cat("< Phylo variant-creation info >\n")
-            cat(sprintf("# Number of variants = %i\n",
+            cat("< Phylo haplotype-creation info >\n")
+            cat(sprintf("# Number of haplotypes = %i\n",
                         length(private$r_phylo[[1]]$tip.label)))
             cat(sprintf("# Number of trees = %i\n", length(private$r_phylo)))
 
@@ -176,25 +176,25 @@ vars_phylo_info <- R6Class(
 
 
 
-# vars_theta_info ----
+# haps_theta_info ----
 #' An R6 class representing information for theta method.
 #'
 #' @noRd
 #'
 #' @importFrom R6 R6Class
 #'
-vars_theta_info <- R6Class(
+haps_theta_info <- R6Class(
 
-    "vars_theta_info",
+    "haps_theta_info",
 
     public = list(
 
         initialize = function(phylo, theta) {
 
-            extra_msg <- paste(" Please only create these objects using the vars_theta",
-                               "function, NOT using vars_theta_info$new().")
+            extra_msg <- paste(" Please only create these objects using the haps_theta",
+                               "function, NOT using haps_theta_info$new().")
             if (!inherits(phylo, "phylo") || !single_number(theta) || theta < 0) {
-                stop("\nWhen initializing a vars_theta_info object, you need to use",
+                stop("\nWhen initializing a haps_theta_info object, you need to use",
                      "a `phylo` object and a single number >= 0.", extra_msg,
                      call. = FALSE)
             }
@@ -207,7 +207,7 @@ vars_theta_info <- R6Class(
 
             digits <- max(3, getOption("digits") - 3)
 
-            cat("< Theta variant-creation info >\n")
+            cat("< Theta haplotype-creation info >\n")
             cat(sprintf(sprintf("# Theta: %%.%ig\n", digits), private$r_theta))
             cat("# Phylogenetic tree:\n")
             print(private$r_phylo)
@@ -235,26 +235,26 @@ vars_theta_info <- R6Class(
 
 
 
-# vars_gtrees_info ----
+# haps_gtrees_info ----
 #' An R6 class representing information for gtrees method.
 #'
 #' @noRd
 #'
 #' @importFrom R6 R6Class
 #'
-vars_gtrees_info <- R6Class(
+haps_gtrees_info <- R6Class(
 
-    "vars_gtrees_info",
+    "haps_gtrees_info",
 
     public = list(
 
         initialize = function(trees) {
 
-            extra_msg <- paste(" Please only create these objects using the vars_gtrees",
-                               "function, NOT using vars_gtrees_info$new().")
+            extra_msg <- paste(" Please only create these objects using the haps_gtrees",
+                               "function, NOT using haps_gtrees_info$new().")
             if (!inherits(trees, "list") ||
                 !all(sapply(trees, inherits, what = "character"))) {
-                stop("\nWhen initializing a vars_gtrees_info object, you need to use",
+                stop("\nWhen initializing a haps_gtrees_info object, you need to use",
                      "a list of character vectors.", extra_msg, call. = FALSE)
             }
 
@@ -265,9 +265,9 @@ vars_gtrees_info <- R6Class(
 
             digits <- max(3, getOption("digits") - 3)
 
-            cat("< Gene trees variant-creation info >\n")
+            cat("< Gene trees haplotype-creation info >\n")
             cat(sprintf("# Number of chromosomes: %i\n", length(private$r_trees)))
-            cat(sprintf("# Number of variants: %i\n",
+            cat(sprintf("# Number of haplotypes: %i\n",
                         length(ape::read.tree(text = private$r_trees[[1]][1])$tip.label)))
             cat(sprintf("# Total trees: %i\n", sum(sapply(private$r_trees, length))))
 

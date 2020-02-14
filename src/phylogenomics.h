@@ -25,7 +25,7 @@
 #endif
 
 #include "jackalope_types.h"  // integer types
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "mutator.h"  // TreeMutator
 #include "alias_sampler.h" // alias sampling
 #include "pcg.h" // pcg sampler types
@@ -54,9 +54,9 @@ struct PhyloTree {
     uint64 end;
     std::vector<uint64> starts;  // (inclusive) `start` values for each tree tip
     std::vector<uint64> ends;  // (non-inclusive) `end` values for each tree tip
-    // Indices (non-inclusive) for end of this tree's mutations in `VarChrom::mutations`:
+    // Indices (non-inclusive) for end of this tree's mutations in `HapChrom::mutations`:
     std::vector<uint64> mut_ends;
-    uint64 n_tips;             // # tips = # variants
+    uint64 n_tips;             // # tips = # haplotypes
     uint64 n_edges;            // # edges = # connections between nodes/tips
 
     PhyloTree() {}
@@ -119,15 +119,15 @@ class PhyloOneChrom {
 
 public:
     std::vector<PhyloTree> trees;
-    std::vector<VarChrom*> tip_chroms;      // pointers to final VarChrom objects
+    std::vector<HapChrom*> tip_chroms;      // pointers to final HapChrom objects
     std::vector<std::deque<uint8>> rates;   // rate indices (Gammas + invariants) for tree
     TreeMutator mutator;                    // to do the mutation additions across tree
-    uint64 n_tips;                          // number of tips (i.e., variants)
+    uint64 n_tips;                          // number of tips (i.e., haplotypes)
 
 
     PhyloOneChrom() {}
     /*
-     Construct just tree and mutator info, when no VarSet info yet available.
+     Construct just tree and mutator info, when no HapSet info yet available.
      Used in `fill_tree_mutator` method below.
      */
     PhyloOneChrom(
@@ -168,17 +168,17 @@ public:
     }
 
     /*
-     Set variant info:
+     Set haplotype info:
      */
-    void set_var_info(VarSet& var_set, const uint64& chrom_ind) {
+    void set_hap_info(HapSet& hap_set, const uint64& chrom_ind) {
 
-        uint64 n_vars = var_set.size();
+        uint64 n_haps = hap_set.size();
 
         // Filling in pointers:
         tip_chroms.clear();
-        tip_chroms.reserve(n_vars);
-        for (uint64 i = 0; i < n_vars; i++) {
-            tip_chroms.push_back(&var_set[i][chrom_ind]);
+        tip_chroms.reserve(n_haps);
+        for (uint64 i = 0; i < n_haps; i++) {
+            tip_chroms.push_back(&hap_set[i][chrom_ind]);
         }
 
         return;
@@ -241,7 +241,7 @@ public:
     PhyloInfo(const List& genome_phylo_info,
               const TreeMutator& mutator_base);
 
-    XPtr<VarSet> evolve_chroms(SEXP& ref_genome_ptr,
+    XPtr<HapSet> evolve_chroms(SEXP& ref_genome_ptr,
                                const uint64& n_threads,
                                const bool& show_progress);
 

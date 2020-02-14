@@ -51,12 +51,12 @@ read_fasta <- function(fasta_files, fai_files = NULL,
 }
 
 
-#' Write a `ref_genome` or `variants` object to a FASTA file.
+#' Write a `ref_genome` or `haplotypes` object to a FASTA file.
 #'
 #' This file produces 1 FASTA file for a `ref_genome` object and one file
-#' for each variant in a `variants` object.
+#' for each haplotype in a `haplotypes` object.
 #'
-#' @param obj A `ref_genome` or `variants` object.
+#' @param obj A `ref_genome` or `haplotypes` object.
 #' @param out_prefix Prefix for the output file.
 #' @param compress Logical specifying whether or not to compress output file, or
 #'     an integer specifying the level of compression, from 1 to 9.
@@ -69,9 +69,9 @@ read_fasta <- function(fasta_files, fai_files = NULL,
 #'     Defaults to `80`.
 #' @param show_progress Logical for whether to show a progress bar.
 #'     Defaults to `FALSE`.
-#' @param n_threads Number of threads to use if writing from a `variants` object.
-#'     Threads are split among variants, so it's not useful to provide more threads
-#'     than variants.
+#' @param n_threads Number of threads to use if writing from a `haplotypes` object.
+#'     Threads are split among haplotypes, so it's not useful to provide more threads
+#'     than haplotypes.
 #'     This argument is ignored if `obj` is a `ref_genome` object, or if
 #'     OpenMP is not enabled.
 #'     Defaults to `1`.
@@ -90,8 +90,8 @@ write_fasta <- function(obj, out_prefix,
                         n_threads = 1,
                         overwrite = FALSE) {
 
-    if (!inherits(obj, c("ref_genome", "variants"))) {
-        err_msg("write_fasta", "obj", "a \"ref_genome\" or \"variants\" object")
+    if (!inherits(obj, c("ref_genome", "haplotypes"))) {
+        err_msg("write_fasta", "obj", "a \"ref_genome\" or \"haplotypes\" object")
     }
     if (!is_type(out_prefix, "character", 1)) {
         err_msg("write_fasta", "out_prefix", "a single string")
@@ -130,12 +130,12 @@ write_fasta <- function(obj, out_prefix,
         if (!inherits(obj$ptr(), "externalptr")) {
             stop("\nThe `ptr` method in the `obj` argument supplied to ",
                  "`write_fasta` should return an external pointer when the `obj` ",
-                 "argument is of class \"variants\".",
+                 "argument is of class \"haplotypes\".",
                  call. = TRUE)
         }
-        check_file_existence(paste0(out_prefix, "__", obj$var_names(), ".fa"),
+        check_file_existence(paste0(out_prefix, "__", obj$hap_names(), ".fa"),
                              compress, overwrite)
-        invisible(write_vars_fasta(out_prefix, obj$ptr(), text_width,
+        invisible(write_haps_fasta(out_prefix, obj$ptr(), text_width,
                                    compress, comp_method, n_threads, show_progress))
     }
     return(invisible(NULL))
@@ -152,22 +152,22 @@ write_fasta <- function(obj, out_prefix,
 
 
 
-#' Write variant info from a \code{variants} object to a VCF file.
+#' Write haplotype info from a \code{haplotypes} object to a VCF file.
 #'
 #' Compression in this function always uses `"bgzip"` for compatibility with `"tabix"`.
 #'
-#' @param vars A \code{variants} object.
+#' @param haps A \code{haplotypes} object.
 #' @inheritParams write_fasta
-#' @param sample_matrix Matrix to specify how haploid variants are grouped into samples
+#' @param sample_matrix Matrix to specify how haplotypes are grouped into samples
 #'     if samples are not haploid. There should be one row for each sample, and
-#'     each row should contain indices or names for the variants present in that sample.
-#'     Indices/names for variants cannot be repeated.
-#'     Instead of repeating indices here, you should use the `dup_vars`
-#'     method of the `variants` class to duplicate the necessary variant(s).
+#'     each row should contain indices or names for the haplotypes present in that sample.
+#'     Indices/names for haplotypes cannot be repeated.
+#'     Instead of repeating indices here, you should use the `dup_haps`
+#'     method of the `haplotypes` class to duplicate the necessary haplotype(s).
 #'     The number of columns indicates the ploidy level: 2 columns for diploid,
 #'     3 for triploid, 4 for tetraploid, and so on;
 #'     there is no limit to the ploidy level.
-#'     If this argument is `NULL`, it's assumed that each variant is its own
+#'     If this argument is `NULL`, it's assumed that each haplotype is its own
 #'     separate sample.
 #'     Defaults to `NULL`.
 #'
@@ -175,15 +175,15 @@ write_fasta <- function(obj, out_prefix,
 #'
 #' @export
 #'
-write_vcf <- function(vars,
+write_vcf <- function(haps,
                       out_prefix,
                       compress = FALSE,
                       sample_matrix = NULL,
                       show_progress = FALSE,
                       overwrite = FALSE) {
 
-    if (!inherits(vars, "variants")) {
-        err_msg("write_vcf", "vars", "a \"variants\" object")
+    if (!inherits(haps, "haplotypes")) {
+        err_msg("write_vcf", "haps", "a \"haplotypes\" object")
     }
     if (!is_type(out_prefix, "character", 1)) {
         err_msg("write_vcf", "out_prefix", "a single string")
@@ -193,8 +193,8 @@ write_vcf <- function(vars,
     }
     if (is_type(compress, "logical", 1) && compress) compress <- 6 # default compression
     if (is_type(compress, "logical", 1) && !compress) compress <- 0 # no compression
-    if (!inherits(vars$ptr(), "externalptr")) {
-        stop("\nThe `ptr` method in the `vars` argument supplied to ",
+    if (!inherits(haps$ptr(), "externalptr")) {
+        stop("\nThe `ptr` method in the `haps` argument supplied to ",
              "`write_vcf` should return an external pointer.",
              call. = TRUE)
     }
@@ -202,20 +202,20 @@ write_vcf <- function(vars,
         err_msg("write_vcf", "sample_matrix", "NULL or a matrix")
     }
     if (is.null(sample_matrix)) {
-        sample_matrix <- cbind(1:vars$n_vars())
+        sample_matrix <- cbind(1:haps$n_haps())
     }
     # If they provided names rather than indices:
     if (inherits(sample_matrix[1,1], "character")) {
-        var_names <- vars$var_names()
-        not_found <- !unique(as.character(sample_matrix)) %in% var_names
+        hap_names <- haps$hap_names()
+        not_found <- !unique(as.character(sample_matrix)) %in% hap_names
         if (sum(not_found) > 0) {
             stop("\nThe `sample_matrix` argument to the `write_vcf` function had ",
-                 "the following variant name(s) that weren't found in the ",
-                 "input variants object: ",
+                 "the following haplotype name(s) that weren't found in the ",
+                 "input haplotypes object: ",
                  paste(unique(as.character(sample_matrix))[not_found], collapse = ", "),
                  call. = FALSE)
         }
-        sample_matrix <- apply(sample_matrix, 1:2, function(nm) which(var_names == nm))
+        sample_matrix <- apply(sample_matrix, 1:2, function(nm) which(hap_names == nm))
     } else if (!inherits(sample_matrix[1,1], c("numeric", "integer"))) {
         err_msg("write_vcf", "sample_matrix", "NULL or a character, numeric, or",
                 "integer matrix.")
@@ -234,7 +234,7 @@ write_vcf <- function(vars,
 
     check_file_existence(paste0(out_prefix, ".vcf"), compress, overwrite)
 
-    write_vcf_cpp(out_prefix, compress, vars$ptr(), sample_matrix, show_progress)
+    write_vcf_cpp(out_prefix, compress, haps$ptr(), sample_matrix, show_progress)
 
     return(invisible(NULL))
 }

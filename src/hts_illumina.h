@@ -17,7 +17,7 @@
 
 #include "jackalope_types.h"  // integer types
 #include "ref_classes.h"  // Ref* classes
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "pcg.h"  // runif_01
 #include "alias_sampler.h"  // AliasSampler
 #include "hts.h"  // generic sequencing class
@@ -284,10 +284,10 @@ private:
 
 /*
  Template class to combine everything for Illumina sequencing of a single genome.
- (We will need multiple of these objects to chromosome a `VarSet` class.
-  See `IlluminaVariants` class below.)
+ (We will need multiple of these objects to chromosome a `HapSet` class.
+  See `IlluminaHaplotypes` class below.)
 
- `T` should be `VarGenome` or `RefGenome`
+ `T` should be `HapGenome` or `RefGenome`
 
  */
 template <typename T>
@@ -422,7 +422,7 @@ public:
     // `U` should be a std::string or std::vector<char>
     template <typename U>
     void one_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
-    // Overloaded for when we input a variant chromosome stored as string
+    // Overloaded for when we input a haplotype chromosome stored as string
     template <typename U>
     void one_read(const std::string& chrom, const uint64& chrom_i,
                   std::vector<U>& fastq_pools, pcg64& eng);
@@ -498,32 +498,32 @@ protected:
 
 
 typedef IlluminaOneGenome<RefGenome> IlluminaReference;
-typedef IlluminaOneGenome<VarGenome> IlluminaOneVariant;
+typedef IlluminaOneGenome<HapGenome> IlluminaOneHaplotype;
 
 
 
 /*
- To process a `VarSet` object, I need to wrap IlluminaOneVariant inside
+ To process a `HapSet` object, I need to wrap IlluminaOneHaplotype inside
  another class.
  */
-class IlluminaVariants {
+class IlluminaHaplotypes {
 
 public:
 
-    const VarSet* variants;                         // pointer to `const VarSet`
-    std::vector<std::vector<uint64>> n_reads_vc;    // # reads per variant and chromosome
-    std::vector<IlluminaOneVariant> read_makers;    // makes Illumina reads
+    const HapSet* haplotypes;                         // pointer to `const HapSet`
+    std::vector<std::vector<uint64>> n_reads_vc;    // # reads per haplotype and chromosome
+    std::vector<IlluminaOneHaplotype> read_makers;    // makes Illumina reads
     bool paired;                                    // Boolean for paired-end reads
-    std::vector<double> var_probs;                  // probs of sampling variants
+    std::vector<double> hap_probs;                  // probs of sampling haplotypes
 
 
-    IlluminaVariants() : variants(nullptr) {}
+    IlluminaHaplotypes() : haplotypes(nullptr) {}
 
     /* Initializers */
 
     // For paired-end reads:
-    IlluminaVariants(const VarSet& var_set,
-                     const std::vector<double>& variant_probs,
+    IlluminaHaplotypes(const HapSet& hap_set,
+                     const std::vector<double>& haplotype_probs,
                      const bool& matepair_,
                      const double& frag_len_shape,
                      const double& frag_len_scale,
@@ -538,26 +538,26 @@ public:
                      const double& ins_prob2,
                      const double& del_prob2,
                      std::vector<std::string> barcodes)
-        : variants(&var_set),
+        : haplotypes(&hap_set),
           n_reads_vc(),
           read_makers(),
           paired(true),
-          var_probs(variant_probs),
-          var(0),
+          hap_probs(haplotype_probs),
+          hap(0),
           chr(0),
-          var_chrom_seq() {
+          hap_chrom_seq() {
 
-        if (barcodes.size() < var_set.size()) barcodes.resize(var_set.size(), "");
+        if (barcodes.size() < hap_set.size()) barcodes.resize(hap_set.size(), "");
 
-        uint64 n_vars = variants->size();
+        uint64 n_haps = haplotypes->size();
 
         /*
          Fill `read_makers` field:
          */
-        read_makers.reserve(n_vars);
-        for (uint64 i = 0; i < n_vars; i++) {
+        read_makers.reserve(n_haps);
+        for (uint64 i = 0; i < n_haps; i++) {
             read_makers.push_back(
-                IlluminaOneVariant(var_set[i], matepair_,
+                IlluminaOneHaplotype(hap_set[i], matepair_,
                                    frag_len_shape, frag_len_scale,
                                    frag_len_min_, frag_len_max_,
                                    qual_probs1, quals1, ins_prob1, del_prob1,
@@ -569,8 +569,8 @@ public:
     };
 
     // Single-end reads
-    IlluminaVariants(const VarSet& var_set,
-                     const std::vector<double>& variant_probs,
+    IlluminaHaplotypes(const HapSet& hap_set,
+                     const std::vector<double>& haplotype_probs,
                      const double& frag_len_shape,
                      const double& frag_len_scale,
                      const uint64& frag_len_min_,
@@ -580,26 +580,26 @@ public:
                      const double& ins_prob,
                      const double& del_prob,
                      std::vector<std::string> barcodes)
-        : variants(&var_set),
+        : haplotypes(&hap_set),
           n_reads_vc(),
           read_makers(),
           paired(false),
-          var_probs(variant_probs),
-          var(0),
+          hap_probs(haplotype_probs),
+          hap(0),
           chr(0),
-          var_chrom_seq() {
+          hap_chrom_seq() {
 
-        if (barcodes.size() < var_set.size()) barcodes.resize(var_set.size(), "");
+        if (barcodes.size() < hap_set.size()) barcodes.resize(hap_set.size(), "");
 
-        uint64 n_vars = var_set.size();
+        uint64 n_haps = hap_set.size();
 
         /*
          Fill `read_makers` field:
          */
-        read_makers.reserve(n_vars);
-        for (uint64 i = 0; i < n_vars; i++) {
+        read_makers.reserve(n_haps);
+        for (uint64 i = 0; i < n_haps; i++) {
             read_makers.push_back(
-                IlluminaOneVariant(var_set[i],
+                IlluminaOneHaplotype(hap_set[i],
                                    frag_len_shape, frag_len_scale,
                                    frag_len_min_, frag_len_max_,
                                    qual_probs, quals, ins_prob, del_prob,
@@ -609,35 +609,35 @@ public:
 
     };
 
-    IlluminaVariants(const IlluminaVariants& other)
-        : variants(other.variants), n_reads_vc(other.n_reads_vc),
+    IlluminaHaplotypes(const IlluminaHaplotypes& other)
+        : haplotypes(other.haplotypes), n_reads_vc(other.n_reads_vc),
           read_makers(other.read_makers), paired(other.paired),
-          var_probs(other.var_probs),
-          var(other.var), chr(other.chr), var_chrom_seq(other.var_chrom_seq) {};
+          hap_probs(other.hap_probs),
+          hap(other.hap), chr(other.chr), hap_chrom_seq(other.hap_chrom_seq) {};
 
 
     // Add info on # reads
     void add_n_reads(uint64 n_reads) {
 
-        uint64 n_vars = variants->size();
+        uint64 n_haps = haplotypes->size();
 
-        // split # reads by variant
+        // split # reads by haplotype
         if (paired) n_reads /= 2; // now it's pairs of reads
-        std::vector<uint64> var_reads = reads_per_group(n_reads, var_probs);
+        std::vector<uint64> hap_reads = reads_per_group(n_reads, hap_probs);
 
         // splitting by chromosome, too:
-        for (uint64 v = 0; v < n_vars; v++) {
+        for (uint64 v = 0; v < n_haps; v++) {
             std::vector<double> chrom_probs;
-            for (const VarChrom& vc : (*variants)[v].chromosomes) {
+            for (const HapChrom& vc : (*haplotypes)[v].chromosomes) {
                 chrom_probs.push_back(vc.size());
             }
-            n_reads_vc.push_back(reads_per_group(var_reads[v], chrom_probs));
+            n_reads_vc.push_back(reads_per_group(hap_reads[v], chrom_probs));
             if (paired) for (uint64& r : n_reads_vc.back()) r *= 2;  // back to # reads
         }
 
         // Fill `read_makers` field:
-        for (uint64 i = 0; i < n_vars; i++) {
-            read_makers[i].add_n_reads(var_reads[i]);
+        for (uint64 i = 0; i < n_haps; i++) {
+            read_makers[i].add_n_reads(hap_reads[i]);
         }
 
         return;
@@ -649,7 +649,7 @@ public:
      `one_read` methods
      -------------
      */
-    // If only providing rng and id info, sample for a variant, then make read(s):
+    // If only providing rng and id info, sample for a haplotype, then make read(s):
     template <typename U>
     void one_read(std::vector<U>& fastq_pools, bool& finished, pcg64& eng);
 
@@ -665,12 +665,12 @@ public:
 
 private:
 
-    // Variant to create read from.
-    uint64 var;
+    // Haplotype to create read from.
+    uint64 hap;
     // Chromosome to create read from.
     uint64 chr;
-    // String for variant chromosome. It's saved to make things faster.
-    std::string var_chrom_seq;
+    // String for haplotype chromosome. It's saved to make things faster.
+    std::string hap_chrom_seq;
 
 };
 

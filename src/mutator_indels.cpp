@@ -17,7 +17,7 @@
 
 
 #include "mutator_indels.h"  // IndelMutator
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "pcg.h"  // runif_01()
 #include "util.h"  // interrupt_check
 
@@ -32,9 +32,9 @@ using namespace Rcpp;
  - rates over the whole chromosome and `tau` time units (`rates_tau`)
  - new branch length after progressing `tau` time units (`b_len`)
  */
-void IndelMutator::calc_tau(double& b_len, VarChrom& var_chrom) {
+void IndelMutator::calc_tau(double& b_len, HapChrom& hap_chrom) {
 
-    const double chrom_size(var_chrom.chrom_size);
+    const double chrom_size(hap_chrom.chrom_size);
 
     // Now rates are in units of "indels per unit time" (NOT yet over `tau` time units):
     rates_tau = rates * chrom_size;
@@ -67,7 +67,7 @@ int IndelMutator::add_indels(double b_len,
                              uint64& end,
                              std::deque<uint8>& rate_inds,
                              SubMutator& subs,
-                             VarChrom& var_chrom,
+                             HapChrom& hap_chrom,
                              pcg64& eng,
                              Progress& prog_bar) {
 
@@ -76,13 +76,13 @@ int IndelMutator::add_indels(double b_len,
         Rcout << std::endl << b_len << std::endl;
         stop("b_len < 0 in add_indels");
     }
-    if (begin >= var_chrom.size()) {
-        Rcout << std::endl << begin << ' ' << var_chrom.size() << std::endl;
-        stop("begin >= var_chrom.size() in add_indels");
+    if (begin >= hap_chrom.size()) {
+        Rcout << std::endl << begin << ' ' << hap_chrom.size() << std::endl;
+        stop("begin >= hap_chrom.size() in add_indels");
     }
-    if (end > var_chrom.size()) {
-        Rcout << std::endl << end << ' ' << var_chrom.size() << std::endl;
-        stop("end > var_chrom.size() in add_indels");
+    if (end > hap_chrom.size()) {
+        Rcout << std::endl << end << ' ' << hap_chrom.size() << std::endl;
+        stop("end > hap_chrom.size() in add_indels");
     }
 #endif
 
@@ -110,10 +110,10 @@ int IndelMutator::add_indels(double b_len,
          ----------------
          */
 
-        calc_tau(b_len, var_chrom);
+        calc_tau(b_len, hap_chrom);
 
 #ifdef __JACKALOPE_DIAGNOSTICS
-        csize = var_chrom.size();
+        csize = hap_chrom.size();
         n_muts.zeros(rates_tau.n_elem);
 #endif
 
@@ -164,7 +164,7 @@ int IndelMutator::add_indels(double b_len,
                 uint64 pos = static_cast<uint64>(runif_01(eng) * (end - begin) + begin);
                 insert_str.clear();
                 for (uint32 j = 0; j < size; j++) insert_str += insert.sample(eng);
-                var_chrom.add_insertion(insert_str, pos);
+                hap_chrom.add_insertion(insert_str, pos);
                 subs.insertion_adjust(size, pos, begin, rate_inds, eng);
                 end += size;
             } else {
@@ -172,7 +172,7 @@ int IndelMutator::add_indels(double b_len,
                                        end - begin);
                 uint64 pos = static_cast<uint64>(runif_01(eng) *
                     (end - begin - size + 1) + begin);
-                var_chrom.add_deletion(size, pos);
+                hap_chrom.add_deletion(size, pos);
                 subs.deletion_adjust(size, pos, begin, rate_inds);
                 end -= size;
                 if (end == begin) return 0;

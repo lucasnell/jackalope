@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>An R6 Class Representing Haploid Variants — variants • jackalope</title>
+<title>An R6 Class Representing Haploid Variants — haplotypes • jackalope</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -42,9 +42,9 @@
 
 
 
-<meta property="og:title" content="An R6 Class Representing Haploid Variants — variants" />
+<meta property="og:title" content="An R6 Class Representing Haploid Variants — haplotypes" />
 <meta property="og:description" content="Interactive wrapper for a pointer to a C++ object that stores information about
-haploid variants from a single reference genome." />
+variant haplotypes from a single reference genome." />
 <meta property="og:image" content="/logo.png" />
 <meta name="twitter:card" content="summary" />
 
@@ -134,20 +134,20 @@ haploid variants from a single reference genome." />
     <div class="page-header">
     <h1>An R6 Class Representing Haploid Variants</h1>
     <small class="dont-index">Source: <a href='https://github.com/lucasnell/jackalope/blob/master/R/aaa-classes.R'><code>R/aaa-classes.R</code></a></small>
-    <div class="hidden name"><code>variants.Rd</code></div>
+    <div class="hidden name"><code>haplotypes.Rd</code></div>
     </div>
 
     <div class="ref-description">
     <p>Interactive wrapper for a pointer to a C++ object that stores information about
-haploid variants from a single reference genome.</p>
+variant haplotypes from a single reference genome.</p>
     </div>
 
 
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>This class should NEVER be created using <code>variants$new</code>.
-Only use <code>create_variants</code>.
+    <p>This class should NEVER be created using <code>haplotypes$new</code>.
+Only use <code>create_haplotypes</code>.
 Because this class wraps a pointer to a C++ object, there are no fields to
 manipulate directly.
 All manipulations are done through this class's methods.</p>
@@ -155,15 +155,15 @@ All manipulations are done through this class's methods.</p>
 
     
 
-<p>Regarding the <code>ref_genome</code> object you use to create a <code>variants</code> object, you should
+<p>Regarding the <code>ref_genome</code> object you use to create a <code>haplotypes</code> object, you should
 note the following:</p>
 <ul>
 <li><p><strong>This point is the most important.</strong>
-Both the <code>ref_genome</code> and <code>variants</code> objects use the same underlying
+Both the <code>ref_genome</code> and <code>haplotypes</code> objects use the same underlying
 C++ object to store reference genome information.
 Thus, if you make any changes to the <code>ref_genome</code> object, those changes will
-also show up in the <code>variants</code> object.
-For example, if you make a <code>variants</code> object named <code>V</code>
+also show up in the <code>haplotypes</code> object.
+For example, if you make a <code>haplotypes</code> object named <code>V</code>
 based on an existing <code>ref_genome</code> object named <code>R</code>,
 then you merge chromosomes in <code>R</code>,
 <code>V</code> will now have merged chromosomes.
@@ -172,52 +172,52 @@ then all the indexes used to store those mutations will be inaccurate.
 So when you do anything with <code>V</code> later, your R session will crash
 or have errors.
 <strong>The lesson here is that you shouldn't edit the reference
-genome after using it to create variants.</strong></p></li>
-<li><p>If a <code>ref_genome</code> object is used to create a <code>variants</code>
+genome after using it to create haplotypes.</strong></p></li>
+<li><p>If a <code>ref_genome</code> object is used to create a <code>haplotypes</code>
 object, deleting the <code>ref_genome</code> object won't cause issues with
-the <code>variants</code> object.
-However, the <code>variants</code> class doesn't provide methods to edit
+the <code>haplotypes</code> object.
+However, the <code>haplotypes</code> class doesn't provide methods to edit
 chromosomes, so only remove the <code>ref_genome</code> object when you're done
 editing the reference genome.</p></li>
 </ul>
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='create_variants.html'>create_variants</a></code></p></div>
+    <div class='dont-index'><p><code><a href='create_haplotypes.html'>create_haplotypes</a></code></p></div>
     <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
 
     
 <h3>Public methods</h3>
 
 <ul>
-<li><p><a href='#method-new'><code>variants$new()</code></a></p></li>
-<li><p><a href='#method-print'><code>variants$print()</code></a></p></li>
-<li><p><a href='#method-ptr'><code>variants$ptr()</code></a></p></li>
-<li><p><a href='#method-n_chroms'><code>variants$n_chroms()</code></a></p></li>
-<li><p><a href='#method-n_vars'><code>variants$n_vars()</code></a></p></li>
-<li><p><a href='#method-sizes'><code>variants$sizes()</code></a></p></li>
-<li><p><a href='#method-chrom_names'><code>variants$chrom_names()</code></a></p></li>
-<li><p><a href='#method-var_names'><code>variants$var_names()</code></a></p></li>
-<li><p><a href='#method-chrom'><code>variants$chrom()</code></a></p></li>
-<li><p><a href='#method-gc_prop'><code>variants$gc_prop()</code></a></p></li>
-<li><p><a href='#method-nt_prop'><code>variants$nt_prop()</code></a></p></li>
-<li><p><a href='#method-set_names'><code>variants$set_names()</code></a></p></li>
-<li><p><a href='#method-add_vars'><code>variants$add_vars()</code></a></p></li>
-<li><p><a href='#method-dup_vars'><code>variants$dup_vars()</code></a></p></li>
-<li><p><a href='#method-rm_vars'><code>variants$rm_vars()</code></a></p></li>
-<li><p><a href='#method-add_sub'><code>variants$add_sub()</code></a></p></li>
-<li><p><a href='#method-add_ins'><code>variants$add_ins()</code></a></p></li>
-<li><p><a href='#method-add_del'><code>variants$add_del()</code></a></p></li>
+<li><p><a href='#method-new'><code>haplotypes$new()</code></a></p></li>
+<li><p><a href='#method-print'><code>haplotypes$print()</code></a></p></li>
+<li><p><a href='#method-ptr'><code>haplotypes$ptr()</code></a></p></li>
+<li><p><a href='#method-n_chroms'><code>haplotypes$n_chroms()</code></a></p></li>
+<li><p><a href='#method-n_haps'><code>haplotypes$n_haps()</code></a></p></li>
+<li><p><a href='#method-sizes'><code>haplotypes$sizes()</code></a></p></li>
+<li><p><a href='#method-chrom_names'><code>haplotypes$chrom_names()</code></a></p></li>
+<li><p><a href='#method-hap_names'><code>haplotypes$hap_names()</code></a></p></li>
+<li><p><a href='#method-chrom'><code>haplotypes$chrom()</code></a></p></li>
+<li><p><a href='#method-gc_prop'><code>haplotypes$gc_prop()</code></a></p></li>
+<li><p><a href='#method-nt_prop'><code>haplotypes$nt_prop()</code></a></p></li>
+<li><p><a href='#method-set_names'><code>haplotypes$set_names()</code></a></p></li>
+<li><p><a href='#method-add_haps'><code>haplotypes$add_haps()</code></a></p></li>
+<li><p><a href='#method-dup_haps'><code>haplotypes$dup_haps()</code></a></p></li>
+<li><p><a href='#method-rm_haps'><code>haplotypes$rm_haps()</code></a></p></li>
+<li><p><a href='#method-add_sub'><code>haplotypes$add_sub()</code></a></p></li>
+<li><p><a href='#method-add_ins'><code>haplotypes$add_ins()</code></a></p></li>
+<li><p><a href='#method-add_del'><code>haplotypes$add_del()</code></a></p></li>
 </ul>
 <p><hr>
 <a id="method-new"></a></p><h3>Method <code>new()</code></h3>
-<p>Do NOT use this; only use <code>create_variants</code> to make new <code>variants</code>.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$new(genomes_ptr, reference_ptr)</pre><p></div></p>
+<p>Do NOT use this; only use <code>create_haplotypes</code> to make new <code>haplotypes</code>.</p><h3>Usage</h3>
+<p><div class="r"></p><pre>haplotypes$new(genomes_ptr, reference_ptr)</pre><p></div></p>
 
 <h3>Arguments</h3>
 <p><div class="arguments"></p><dl class='dl-horizontal'>
 <dt><code>genomes_ptr</code></dt><dd><p>An <code>externalptr</code> object pointing to a C++ object that
-stores the information about the variants.</p></dd>
+stores the information about the haplotypes.</p></dd>
 
 <dt><code>reference_ptr</code></dt><dd><p>An <code>externalptr</code> object pointing to a C++ object that
 stores the information about the reference genome.</p></dd>
@@ -225,79 +225,79 @@ stores the information about the reference genome.</p></dd>
 </dl><p></div></p>
 <p><hr>
 <a id="method-print"></a></p><h3>Method <code><a href='https://rdrr.io/r/base/print.html'>print()</a></code></h3>
-<p>Print a <code>variants</code> object.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$print()</pre><p></div></p>
+<p>Print a <code>haplotypes</code> object.</p><h3>Usage</h3>
+<p><div class="r"></p><pre>haplotypes$print()</pre><p></div></p>
 
 <p><hr>
 <a id="method-ptr"></a></p><h3>Method <code>ptr()</code></h3>
 <p>View pointer to underlying C++ object (this is not useful to end users).</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$ptr()</pre><p></div></p>
+<p><div class="r"></p><pre>haplotypes$ptr()</pre><p></div></p>
 
 <h3>Returns</h3>
 <p>An <code>externalptr</code> object.</p>
 <p><hr>
 <a id="method-n_chroms"></a></p><h3>Method <code>n_chroms()</code></h3>
 <p>View number of chromosomes.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$n_chroms()</pre><p></div></p>
+<p><div class="r"></p><pre>haplotypes$n_chroms()</pre><p></div></p>
 
 <h3>Returns</h3>
 <p>Integer number of chromosomes.</p>
 <p><hr>
-<a id="method-n_vars"></a></p><h3>Method <code>n_vars()</code></h3>
-<p>View number of variants.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$n_vars()</pre><p></div></p>
+<a id="method-n_haps"></a></p><h3>Method <code>n_haps()</code></h3>
+<p>View number of haplotypes.</p><h3>Usage</h3>
+<p><div class="r"></p><pre>haplotypes$n_haps()</pre><p></div></p>
 
 <h3>Returns</h3>
-<p>Integer number of variants.</p>
+<p>Integer number of haplotypes.</p>
 <p><hr>
 <a id="method-sizes"></a></p><h3>Method <code>sizes()</code></h3>
-<p>View chromosome sizes for one variant.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$sizes(var_ind)</pre><p></div></p>
+<p>View chromosome sizes for one haplotype.</p><h3>Usage</h3>
+<p><div class="r"></p><pre>haplotypes$sizes(hap_ind)</pre><p></div></p>
 
 <h3>Arguments</h3>
 <p><div class="arguments"></p><dl class='dl-horizontal'>
-<dt><code>var_ind</code></dt><dd><p>Index for the focal variant.</p></dd>
+<dt><code>hap_ind</code></dt><dd><p>Index for the focal haplotype.</p></dd>
 
 </dl><p></div></p>
 <h3>Returns</h3>
-<p>Integer vector of chromosome sizes for focal variant.</p>
+<p>Integer vector of chromosome sizes for focal haplotype.</p>
 <p><hr>
 <a id="method-chrom_names"></a></p><h3>Method <code>chrom_names()</code></h3>
 <p>View chromosome names.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$chrom_names()</pre><p></div></p>
+<p><div class="r"></p><pre>haplotypes$chrom_names()</pre><p></div></p>
 
 <h3>Returns</h3>
 <p>Character vector of chromosome names.</p>
 <p><hr>
-<a id="method-var_names"></a></p><h3>Method <code>var_names()</code></h3>
-<p>View variant names.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$var_names()</pre><p></div></p>
+<a id="method-hap_names"></a></p><h3>Method <code>hap_names()</code></h3>
+<p>View haplotype names.</p><h3>Usage</h3>
+<p><div class="r"></p><pre>haplotypes$hap_names()</pre><p></div></p>
 
 <h3>Returns</h3>
-<p>Character vector of variant names.</p>
+<p>Character vector of haplotype names.</p>
 <p><hr>
 <a id="method-chrom"></a></p><h3>Method <code>chrom()</code></h3>
-<p>View one variant chromosome.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$chrom(var_ind, chrom_ind)</pre><p></div></p>
+<p>View one haplotype chromosome.</p><h3>Usage</h3>
+<p><div class="r"></p><pre>haplotypes$chrom(hap_ind, chrom_ind)</pre><p></div></p>
 
 <h3>Arguments</h3>
 <p><div class="arguments"></p><dl class='dl-horizontal'>
-<dt><code>var_ind</code></dt><dd><p>Index for the focal variant.</p></dd>
+<dt><code>hap_ind</code></dt><dd><p>Index for the focal haplotype.</p></dd>
 
 <dt><code>chrom_ind</code></dt><dd><p>Index for the focal chromosome.</p></dd>
 
 </dl><p></div></p>
 <h3>Returns</h3>
-<p>A single string representing the chosen variant chromosome's DNA
+<p>A single string representing the chosen haplotype chromosome's DNA
 sequence.</p>
 <p><hr>
 <a id="method-gc_prop"></a></p><h3>Method <code>gc_prop()</code></h3>
-<p>View GC proportion for part of one variant chromosome.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$gc_prop(var_ind, chrom_ind, start, end)</pre><p></div></p>
+<p>View GC proportion for part of one haplotype chromosome.</p><h3>Usage</h3>
+<p><div class="r"></p><pre>haplotypes$gc_prop(hap_ind, chrom_ind, start, end)</pre><p></div></p>
 
 <h3>Arguments</h3>
 <p><div class="arguments"></p><dl class='dl-horizontal'>
-<dt><code>var_ind</code></dt><dd><p>Index for the focal variant.</p></dd>
+<dt><code>hap_ind</code></dt><dd><p>Index for the focal haplotype.</p></dd>
 
 <dt><code>chrom_ind</code></dt><dd><p>Index for the focal chromosome.</p></dd>
 
@@ -313,15 +313,15 @@ sequence.</p>
 sequence that is either <code>G</code> or <code>C</code>.</p>
 <p><hr>
 <a id="method-nt_prop"></a></p><h3>Method <code>nt_prop()</code></h3>
-<p>View nucleotide content for part of one variant chromosome</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$nt_prop(nt, var_ind, chrom_ind, start, end)</pre><p></div></p>
+<p>View nucleotide content for part of one haplotype chromosome</p><h3>Usage</h3>
+<p><div class="r"></p><pre>haplotypes$nt_prop(nt, hap_ind, chrom_ind, start, end)</pre><p></div></p>
 
 <h3>Arguments</h3>
 <p><div class="arguments"></p><dl class='dl-horizontal'>
 <dt><code>nt</code></dt><dd><p>Which nucleotide to calculate the proportion that the DNA
 sequence is made of. Must be one of <code>T</code>, <code>C</code>, <code>A</code>, <code>G</code>, or <code>N</code>.</p></dd>
 
-<dt><code>var_ind</code></dt><dd><p>Index for the focal variant.</p></dd>
+<dt><code>hap_ind</code></dt><dd><p>Index for the focal haplotype.</p></dd>
 
 <dt><code>chrom_ind</code></dt><dd><p>Index for the focal chromosome.</p></dd>
 
@@ -337,8 +337,8 @@ sequence is made of. Must be one of <code>T</code>, <code>C</code>, <code>A</cod
 sequence that is <code>nt</code>.</p>
 <p><hr>
 <a id="method-set_names"></a></p><h3>Method <code>set_names()</code></h3>
-<p>Change variant names.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$set_names(new_names)</pre><p></div></p>
+<p>Change haplotype names.</p><h3>Usage</h3>
+<p><div class="r"></p><pre>haplotypes$set_names(new_names)</pre><p></div></p>
 
 <h3>Arguments</h3>
 <p><div class="arguments"></p><dl class='dl-horizontal'>
@@ -349,25 +349,25 @@ the number of current names.</p></dd>
 <h3>Returns</h3>
 <p>This <code>R6</code> object, invisibly.</p>
 <p><hr>
-<a id="method-add_vars"></a></p><h3>Method <code>add_vars()</code></h3>
-<p>Add one or more blank, named variants</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$add_vars(new_names)</pre><p></div></p>
+<a id="method-add_haps"></a></p><h3>Method <code>add_haps()</code></h3>
+<p>Add one or more blank, named haplotypes</p><h3>Usage</h3>
+<p><div class="r"></p><pre>haplotypes$add_haps(new_names)</pre><p></div></p>
 
 <h3>Arguments</h3>
 <p><div class="arguments"></p><dl class='dl-horizontal'>
-<dt><code>new_names</code></dt><dd><p>Vector of name(s) for the new variant(s).</p></dd>
+<dt><code>new_names</code></dt><dd><p>Vector of name(s) for the new haplotype(s).</p></dd>
 
 </dl><p></div></p>
 <h3>Returns</h3>
 <p>This <code>R6</code> object, invisibly.</p>
 <p><hr>
-<a id="method-dup_vars"></a></p><h3>Method <code>dup_vars()</code></h3>
-<p>Duplicate one or more variants by name.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$dup_vars(var_names, new_names = NULL)</pre><p></div></p>
+<a id="method-dup_haps"></a></p><h3>Method <code>dup_haps()</code></h3>
+<p>Duplicate one or more haplotypes by name.</p><h3>Usage</h3>
+<p><div class="r"></p><pre>haplotypes$dup_haps(hap_names, new_names = NULL)</pre><p></div></p>
 
 <h3>Arguments</h3>
 <p><div class="arguments"></p><dl class='dl-horizontal'>
-<dt><code>var_names</code></dt><dd><p>Vector of existing variant name(s) that you want to
+<dt><code>hap_names</code></dt><dd><p>Vector of existing haplotype name(s) that you want to
 duplicate.</p></dd>
 
 <dt><code>new_names</code></dt><dd><p>Optional vector specifying the names of the duplicates.
@@ -377,13 +377,13 @@ If <code>NULL</code>, their names are auto-generated. Defaults to <code>NULL</co
 <h3>Returns</h3>
 <p>This <code>R6</code> object, invisibly.</p>
 <p><hr>
-<a id="method-rm_vars"></a></p><h3>Method <code>rm_vars()</code></h3>
-<p>Remove one or more variants by name.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$rm_vars(var_names)</pre><p></div></p>
+<a id="method-rm_haps"></a></p><h3>Method <code>rm_haps()</code></h3>
+<p>Remove one or more haplotypes by name.</p><h3>Usage</h3>
+<p><div class="r"></p><pre>haplotypes$rm_haps(hap_names)</pre><p></div></p>
 
 <h3>Arguments</h3>
 <p><div class="arguments"></p><dl class='dl-horizontal'>
-<dt><code>var_names</code></dt><dd><p>Vector of existing variant name(s) that you want to remove.</p></dd>
+<dt><code>hap_names</code></dt><dd><p>Vector of existing haplotype name(s) that you want to remove.</p></dd>
 
 </dl><p></div></p>
 <h3>Returns</h3>
@@ -391,11 +391,11 @@ If <code>NULL</code>, their names are auto-generated. Defaults to <code>NULL</co
 <p><hr>
 <a id="method-add_sub"></a></p><h3>Method <code>add_sub()</code></h3>
 <p>Manually add a substitution.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$add_sub(var_ind, chrom_ind, pos, nt)</pre><p></div></p>
+<p><div class="r"></p><pre>haplotypes$add_sub(hap_ind, chrom_ind, pos, nt)</pre><p></div></p>
 
 <h3>Arguments</h3>
 <p><div class="arguments"></p><dl class='dl-horizontal'>
-<dt><code>var_ind</code></dt><dd><p>Index for the focal variant.</p></dd>
+<dt><code>hap_ind</code></dt><dd><p>Index for the focal haplotype.</p></dd>
 
 <dt><code>chrom_ind</code></dt><dd><p>Index for the focal chromosome.</p></dd>
 
@@ -410,11 +410,11 @@ current one to.</p></dd>
 <p><hr>
 <a id="method-add_ins"></a></p><h3>Method <code>add_ins()</code></h3>
 <p>Manually add an insertion.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$add_ins(var_ind, chrom_ind, pos, nts)</pre><p></div></p>
+<p><div class="r"></p><pre>haplotypes$add_ins(hap_ind, chrom_ind, pos, nts)</pre><p></div></p>
 
 <h3>Arguments</h3>
 <p><div class="arguments"></p><dl class='dl-horizontal'>
-<dt><code>var_ind</code></dt><dd><p>Index for the focal variant.</p></dd>
+<dt><code>hap_ind</code></dt><dd><p>Index for the focal haplotype.</p></dd>
 
 <dt><code>chrom_ind</code></dt><dd><p>Index for the focal chromosome.</p></dd>
 
@@ -425,8 +425,8 @@ the designated position.</p></dd>
 
 </dl><p></div></p>
 <h3>Returns</h3>
-<p>This <code>R6</code> object, invisibly.</p><pre>\item{`add_del(var_ind, chrom_ind, pos, n_nts)`}{Manually add a deletion
-    for a given variant (`var_ind`), chromosome (`chrom_ind`), and position (`pos`).
+<p>This <code>R6</code> object, invisibly.</p><pre>\item{`add_del(hap_ind, chrom_ind, pos, n_nts)`}{Manually add a deletion
+    for a given haplotype (`hap_ind`), chromosome (`chrom_ind`), and position (`pos`).
     The designated number of nucleotides to delete (`n_nts`) will be deleted
     starting at `pos`, unless `pos` is near the chromosome end and doesn't have
     `n_nts` nucleotides to remove; it simply stops at the chromosome end in
@@ -436,11 +436,11 @@ the designated position.</p></dd>
 <p><hr>
 <a id="method-add_del"></a></p><h3>Method <code>add_del()</code></h3>
 <p>Manually add a deletion.</p><h3>Usage</h3>
-<p><div class="r"></p><pre>variants$add_del(var_ind, chrom_ind, pos, n_nts)</pre><p></div></p>
+<p><div class="r"></p><pre>haplotypes$add_del(hap_ind, chrom_ind, pos, n_nts)</pre><p></div></p>
 
 <h3>Arguments</h3>
 <p><div class="arguments"></p><dl class='dl-horizontal'>
-<dt><code>var_ind</code></dt><dd><p>Index for the focal variant.</p></dd>
+<dt><code>hap_ind</code></dt><dd><p>Index for the focal haplotype.</p></dd>
 
 <dt><code>chrom_ind</code></dt><dd><p>Index for the focal chromosome.</p></dd>
 

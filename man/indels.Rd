@@ -21,14 +21,14 @@ Defaults to \code{NULL}.}
 }
 \value{
 An \code{indel_info} object, which is an R6 class that wraps the info needed for
-the \code{create_variants} function.
+the \code{create_haplotypes} function.
 It does not allow the user to directly manipulate the info inside, as that
 should be done using this function.
 You can use the \code{rates()} method to view the indel rates by size.
 }
 \description{
 Construct necessary information for insertions and deletions (indels) that will
-be used in \code{create_variants}.
+be used in \code{create_haplotypes}.
 }
 \details{
 All indels require the \code{rate} parameter, which specifies

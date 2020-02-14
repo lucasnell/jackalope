@@ -4,8 +4,13 @@
 \alias{create_genome}
 \title{Create a reference genome.}
 \usage{
-create_genome(n_chroms, len_mean, len_sd = 0, pi_tcag = rep(0.25, 4),
-  n_threads = 1)
+create_genome(
+  n_chroms,
+  len_mean,
+  len_sd = 0,
+  pi_tcag = rep(0.25, 4),
+  n_threads = 1
+)
 }
 \arguments{
 \item{n_chroms}{Number of chromosomes.}

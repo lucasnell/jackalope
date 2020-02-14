@@ -2,7 +2,7 @@
 /*
  ********************************************************
 
- Retrieving and printing info from Ref* and Var* classes, from R environment.
+ Retrieving and printing info from Ref* and Hap* classes, from R environment.
  Many of these functions are used for testing.
 
  ********************************************************
@@ -22,7 +22,7 @@
 
 #include "jackalope_types.h"  // integer types
 #include "ref_classes.h"  // Ref* classes
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "pcg.h"  // pcg seeding
 #include "phylogenomics.h"  // match_ and template functions
 
@@ -59,16 +59,16 @@ void print_ref_genome(SEXP ref_genome_ptr) {
 
 
 
-//' Function to print info on a VarSet.
+//' Function to print info on a HapSet.
 //'
-//' Access `VarSet` class's print method from R.
+//' Access `HapSet` class's print method from R.
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
-void print_var_set(SEXP var_set_ptr) {
-    XPtr<VarSet> var_set(var_set_ptr);
-    var_set->print();
+void print_hap_set(SEXP hap_set_ptr) {
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    hap_set->print();
     return;
 }
 
@@ -116,7 +116,7 @@ SEXP make_ref_genome(const std::vector<std::string>& chroms) {
 }
 
 
-//' Make a VarSet object from a RefGenome pointer and # variants.
+//' Make a HapSet object from a RefGenome pointer and # haplotypes.
 //'
 //' Used for testing.
 //'
@@ -124,11 +124,11 @@ SEXP make_ref_genome(const std::vector<std::string>& chroms) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-SEXP make_var_set(SEXP ref_genome_ptr, const uint64& n_vars) {
+SEXP make_hap_set(SEXP ref_genome_ptr, const uint64& n_haps) {
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
-    // FYI, `n_vars` can be zero:
-    XPtr<VarSet> var_set(new VarSet(*ref_genome, n_vars), true);
-    return var_set;
+    // FYI, `n_haps` can be zero:
+    XPtr<HapSet> hap_set(new HapSet(*ref_genome, n_haps), true);
+    return hap_set;
 }
 
 
@@ -138,7 +138,7 @@ SEXP make_var_set(SEXP ref_genome_ptr, const uint64& n_vars) {
  ========================================================================================
  ========================================================================================
 
- Viewing numbers of chromosomes/variants
+ Viewing numbers of chromosomes/haplotypes
 
  ========================================================================================
  ========================================================================================
@@ -156,19 +156,19 @@ IntegerVector view_ref_genome_nchroms(SEXP ref_genome_ptr) {
 
 // Number of chromosomes
 //[[Rcpp::export]]
-IntegerVector view_var_set_nchroms(SEXP var_set_ptr) {
-    XPtr<VarSet> var_set(var_set_ptr);
+IntegerVector view_hap_set_nchroms(SEXP hap_set_ptr) {
+    XPtr<HapSet> hap_set(hap_set_ptr);
     IntegerVector out(1);
-    out[0] = var_set->reference->size();
+    out[0] = hap_set->reference->size();
     return out;
 }
 
-// Number of variants
+// Number of haplotypes
 //[[Rcpp::export]]
-IntegerVector view_var_set_nvars(SEXP var_set_ptr) {
-    XPtr<VarSet> var_set(var_set_ptr);
+IntegerVector view_hap_set_nhaps(SEXP hap_set_ptr) {
+    XPtr<HapSet> hap_set(hap_set_ptr);
     IntegerVector out(1);
-    out[0] = var_set->size();
+    out[0] = hap_set->size();
     return out;
 }
 
@@ -194,21 +194,21 @@ IntegerVector view_ref_genome_chrom_sizes(SEXP ref_genome_ptr) {
 }
 
 
-//' See all chromosome sizes in a VarGenome object within a VarSet.
+//' See all chromosome sizes in a HapGenome object within a HapSet.
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
-IntegerVector view_var_genome_chrom_sizes(SEXP var_set_ptr,
-                                        const uint64& var_ind) {
+IntegerVector view_hap_genome_chrom_sizes(SEXP hap_set_ptr,
+                                        const uint64& hap_ind) {
 
-    XPtr<VarSet> var_set(var_set_ptr);
-    const VarGenome& var_genome((*var_set)[var_ind]);
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    const HapGenome& hap_genome((*hap_set)[hap_ind]);
 
-    IntegerVector out(var_genome.size());
-    for (uint64 i = 0; i < var_genome.size(); i++) {
-        const VarChrom& var_chrom(var_genome.chromosomes[i]);
-        out[i] = var_chrom.chrom_size;
+    IntegerVector out(hap_genome.size());
+    for (uint64 i = 0; i < hap_genome.size(); i++) {
+        const HapChrom& hap_chrom(hap_genome.chromosomes[i]);
+        out[i] = hap_chrom.chrom_size;
     }
     return out;
 }
@@ -239,18 +239,18 @@ std::string view_ref_genome_chrom(SEXP ref_genome_ptr, const uint64& chrom_ind) 
 }
 
 
-//' Function to piece together the strings for one chromosome in a VarGenome.
+//' Function to piece together the strings for one chromosome in a HapGenome.
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
-std::string view_var_genome_chrom(SEXP var_set_ptr,
-                               const uint64& var_ind,
+std::string view_hap_genome_chrom(SEXP hap_set_ptr,
+                               const uint64& hap_ind,
                                const uint64& chrom_ind) {
 
-    XPtr<VarSet> var_set(var_set_ptr);
-    const VarChrom& var_chrom((*var_set)[var_ind][chrom_ind]);
-    std::string out = var_chrom.get_chrom_full();
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    const HapChrom& hap_chrom((*hap_set)[hap_ind][chrom_ind]);
+    std::string out = hap_chrom.get_chrom_full();
     return out;
 }
 
@@ -279,21 +279,21 @@ std::vector<std::string> view_ref_genome(SEXP ref_genome_ptr) {
     return out;
 }
 
-//' Function to piece together the strings for all chromosomes in a VarGenome.
+//' Function to piece together the strings for all chromosomes in a HapGenome.
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
-std::vector<std::string> view_var_genome(SEXP var_set_ptr,
-                                        const uint64& var_ind) {
+std::vector<std::string> view_hap_genome(SEXP hap_set_ptr,
+                                        const uint64& hap_ind) {
 
-    XPtr<VarSet> var_set(var_set_ptr);
-    const VarGenome& var_genome((*var_set)[var_ind]);
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    const HapGenome& hap_genome((*hap_set)[hap_ind]);
 
-    std::vector<std::string> out(var_genome.size(), "");
-    for (uint64 i = 0; i < var_genome.size(); i++) {
-        const VarChrom& var_chrom(var_genome[i]);
-        out[i] = var_chrom.get_chrom_full();
+    std::vector<std::string> out(hap_genome.size(), "");
+    for (uint64 i = 0; i < hap_genome.size(); i++) {
+        const HapChrom& hap_chrom(hap_genome[i]);
+        out[i] = hap_chrom.get_chrom_full();
     }
     return out;
 }
@@ -322,16 +322,16 @@ std::vector<std::string> view_ref_genome_chrom_names(SEXP ref_genome_ptr) {
     return out;
 }
 
-//' See all variant-genome names in a VarSet object.
+//' See all haplotype-genome names in a HapSet object.
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
-std::vector<std::string> view_var_set_var_names(SEXP var_set_ptr) {
-    XPtr<VarSet> var_set(var_set_ptr);
+std::vector<std::string> view_hap_set_hap_names(SEXP hap_set_ptr) {
+    XPtr<HapSet> hap_set(hap_set_ptr);
     std::vector<std::string> out;
-    out.reserve(var_set->size());
-    for (const VarGenome& vg : var_set->variants) out.push_back(vg.name);
+    out.reserve(hap_set->size());
+    for (const HapGenome& vg : hap_set->haplotypes) out.push_back(vg.name);
     return out;
 }
 
@@ -363,21 +363,21 @@ double view_ref_genome_gc_content(SEXP ref_genome_ptr,
     return gc;
 }
 
-//' See GC content in a VarSet object.
+//' See GC content in a HapSet object.
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
-double view_var_set_gc_content(SEXP var_set_ptr,
+double view_hap_set_gc_content(SEXP hap_set_ptr,
                                const uint64& chrom_ind,
-                               const uint64& var_ind,
+                               const uint64& hap_ind,
                                const uint64& start,
                                const uint64& end) {
-    XPtr<VarSet> var_set(var_set_ptr);
-    const VarChrom& var_chrom((*var_set)[var_ind][chrom_ind]);
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    const HapChrom& hap_chrom((*hap_set)[hap_ind][chrom_ind]);
     std::string chrom;
     uint64 mut_i = 0;
-    var_chrom.set_chrom_chunk(chrom, start, end - start + 1, mut_i);
+    hap_chrom.set_chrom_chunk(chrom, start, end - start + 1, mut_i);
     double gc = gc_prop(chrom);
     return gc;
 }
@@ -399,22 +399,22 @@ double view_ref_genome_nt_content(SEXP ref_genome_ptr,
     return ntp;
 }
 
-//' See any nucleotide's content in a VarSet object.
+//' See any nucleotide's content in a HapSet object.
 //'
 //' @noRd
 //'
 //[[Rcpp::export]]
-double view_var_set_nt_content(SEXP var_set_ptr,
+double view_hap_set_nt_content(SEXP hap_set_ptr,
                                const char& nt,
                                const uint64& chrom_ind,
-                               const uint64& var_ind,
+                               const uint64& hap_ind,
                                const uint64& start,
                                const uint64& end) {
-    XPtr<VarSet> var_set(var_set_ptr);
-    const VarChrom& var_chrom((*var_set)[var_ind][chrom_ind]);
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    const HapChrom& hap_chrom((*hap_set)[hap_ind][chrom_ind]);
     std::string chrom;
     uint64 mut_i = 0;
-    var_chrom.set_chrom_chunk(chrom, start, end - start + 1, mut_i);
+    hap_chrom.set_chrom_chunk(chrom, start, end - start + 1, mut_i);
     double ntp = nt_prop(chrom, nt);
     return ntp;
 }
@@ -472,17 +472,17 @@ void clean_ref_genome_chrom_names(SEXP ref_genome_ptr) {
 
 
 //[[Rcpp::export]]
-void set_var_set_var_names(
-        SEXP var_set_ptr,
-        const std::vector<uint64>& var_inds,
+void set_hap_set_hap_names(
+        SEXP hap_set_ptr,
+        const std::vector<uint64>& hap_inds,
         const std::vector<std::string>& names) {
-    XPtr<VarSet> var_set(var_set_ptr);
-    if (names.size() != var_inds.size()) stop("names and var_inds aren't the same size");
-    if (*std::max_element(var_inds.begin(), var_inds.end()) >= var_set->size()) {
-        stop("at least one value in var_inds is too large");
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    if (names.size() != hap_inds.size()) stop("names and hap_inds aren't the same size");
+    if (*std::max_element(hap_inds.begin(), hap_inds.end()) >= hap_set->size()) {
+        stop("at least one value in hap_inds is too large");
     }
-    for (uint64 i = 0; i < var_inds.size(); i++) {
-        (*var_set)[var_inds[i]].name = names[i];
+    for (uint64 i = 0; i < hap_inds.size(); i++) {
+        (*hap_set)[hap_inds[i]].name = names[i];
     }
     return;
 }
@@ -534,25 +534,25 @@ void remove_ref_genome_chroms(
 
 
 //[[Rcpp::export]]
-void remove_var_set_vars(
-        SEXP var_set_ptr,
-        std::vector<uint64> var_inds) {
+void remove_hap_set_haps(
+        SEXP hap_set_ptr,
+        std::vector<uint64> hap_inds) {
 
-    XPtr<VarSet> var_set(var_set_ptr);
-    std::vector<VarGenome>& variants(var_set->variants);
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    std::vector<HapGenome>& haplotypes(hap_set->haplotypes);
 
     // Checking for duplicates:
-    std::sort(var_inds.begin(), var_inds.end());
-    if (adjacent_find(var_inds.begin(), var_inds.end()) != var_inds.end()) {
-        stop("duplicates detected in var_inds");
+    std::sort(hap_inds.begin(), hap_inds.end());
+    if (adjacent_find(hap_inds.begin(), hap_inds.end()) != hap_inds.end()) {
+        stop("duplicates detected in hap_inds");
     }
 
-    for (uint64 i = 1; i <= var_inds.size(); i++) {
+    for (uint64 i = 1; i <= hap_inds.size(); i++) {
         // Going backward so I don't have to update later ones each time:
-        uint64 j = var_inds[(var_inds.size() - i)];
-        variants.erase(variants.begin() + j);
+        uint64 j = hap_inds[(hap_inds.size() - i)];
+        haplotypes.erase(haplotypes.begin() + j);
     }
-    clear_memory<std::vector<VarGenome>>(variants);
+    clear_memory<std::vector<HapGenome>>(haplotypes);
     return;
 }
 
@@ -595,49 +595,49 @@ void add_ref_genome_chroms(
 }
 
 
-// Add blank, named variants
+// Add blank, named haplotypes
 //[[Rcpp::export]]
-void add_var_set_vars(
-        SEXP var_set_ptr,
+void add_hap_set_haps(
+        SEXP hap_set_ptr,
         const std::vector<std::string>& new_names) {
 
-    XPtr<VarSet> var_set(var_set_ptr);
-    std::vector<VarGenome>& variants(var_set->variants);
-    const RefGenome& ref(*(var_set->reference));
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    std::vector<HapGenome>& haplotypes(hap_set->haplotypes);
+    const RefGenome& ref(*(hap_set->reference));
 
     for (uint64 i = 0; i < new_names.size(); i++) {
-        variants.push_back(VarGenome(new_names[i], ref));
+        haplotypes.push_back(HapGenome(new_names[i], ref));
     }
 
     return;
 }
-// Duplicate existing variant(s):
+// Duplicate existing haplotype(s):
 //[[Rcpp::export]]
-void dup_var_set_vars(
-        SEXP var_set_ptr,
-        const std::vector<uint64>& var_inds,
+void dup_hap_set_haps(
+        SEXP hap_set_ptr,
+        const std::vector<uint64>& hap_inds,
         const std::vector<std::string>& new_names) {
 
-    XPtr<VarSet> var_set(var_set_ptr);
-    std::vector<VarGenome>& variants(var_set->variants);
-    const RefGenome& ref(*(var_set->reference));
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    std::vector<HapGenome>& haplotypes(hap_set->haplotypes);
+    const RefGenome& ref(*(hap_set->reference));
 
-    if (var_inds.size() != new_names.size()) {
-        stop("In `dup_var_set_vars`, `var_inds` must be the same size as `new_names`");
+    if (hap_inds.size() != new_names.size()) {
+        stop("In `dup_hap_set_haps`, `hap_inds` must be the same size as `new_names`");
     }
-    if (*std::max_element(var_inds.begin(), var_inds.end()) >= variants.size()) {
-        stop("In `dup_var_set_vars`, one or more `var_inds` is too large");
+    if (*std::max_element(hap_inds.begin(), hap_inds.end()) >= haplotypes.size()) {
+        stop("In `dup_hap_set_haps`, one or more `hap_inds` is too large");
     }
 
     for (uint64 i = 0; i < new_names.size(); i++) {
-        // Add blank variant:
-        variants.push_back(VarGenome(new_names[i], ref));
+        // Add blank haplotype:
+        haplotypes.push_back(HapGenome(new_names[i], ref));
         // Add mutation information:
-        VarGenome& new_vg(variants.back());
-        const VarGenome& old_vg(variants[var_inds[i]]);
+        HapGenome& new_vg(haplotypes.back());
+        const HapGenome& old_vg(haplotypes[hap_inds[i]]);
         for (uint64 j = 0; j < new_vg.chromosomes.size(); j++) {
-            VarChrom& new_vs(new_vg.chromosomes[j]);
-            const VarChrom& old_vs(old_vg.chromosomes[j]);
+            HapChrom& new_vs(new_vg.chromosomes[j]);
+            const HapChrom& old_vs(old_vg.chromosomes[j]);
             new_vs.mutations = old_vs.mutations;
             new_vs.chrom_size = old_vs.chrom_size;
         }
@@ -662,7 +662,7 @@ void dup_var_set_vars(
 
 
 
-//' Turns a VarGenome's mutations into a list of data frames.
+//' Turns a HapGenome's mutations into a list of data frames.
 //'
 //' Internal function for testing.
 //'
@@ -670,13 +670,13 @@ void dup_var_set_vars(
 //' @noRd
 //'
 //[[Rcpp::export]]
-DataFrame view_mutations(SEXP var_set_ptr, const uint64& var_ind) {
+DataFrame view_mutations(SEXP hap_set_ptr, const uint64& hap_ind) {
 
-    XPtr<VarSet> var_set(var_set_ptr);
-    const VarGenome& var_genome((*var_set)[var_ind]);
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    const HapGenome& hap_genome((*hap_set)[hap_ind]);
 
     uint64 n_muts = 0;
-    for (const VarChrom& vs : var_genome.chromosomes) n_muts += vs.mutations.size();
+    for (const HapChrom& vs : hap_genome.chromosomes) n_muts += vs.mutations.size();
 
     std::vector<sint64> size_mod;
     size_mod.reserve(n_muts);
@@ -686,27 +686,27 @@ DataFrame view_mutations(SEXP var_set_ptr, const uint64& var_ind) {
     new_pos.reserve(n_muts);
     std::vector<std::string> nucleos;
     nucleos.reserve(n_muts);
-    std::vector<uint64> vars(n_muts, var_ind);
+    std::vector<uint64> haps(n_muts, hap_ind);
     std::vector<uint64> chroms;
     chroms.reserve(n_muts);
 
-    for (uint64 i = 0; i < var_genome.size(); i++) {
-        const VarChrom& var_chrom(var_genome.chromosomes[i]);
-        uint64 n_muts_i = var_chrom.mutations.size();
+    for (uint64 i = 0; i < hap_genome.size(); i++) {
+        const HapChrom& hap_chrom(hap_genome.chromosomes[i]);
+        uint64 n_muts_i = hap_chrom.mutations.size();
         for (uint64 j = 0; j < n_muts_i; ++j) {
-            size_mod.push_back(var_chrom.size_modifier(j));
-            old_pos.push_back(var_chrom.mutations.old_pos[j]);
-            new_pos.push_back(var_chrom.mutations.new_pos[j]);
+            size_mod.push_back(hap_chrom.size_modifier(j));
+            old_pos.push_back(hap_chrom.mutations.old_pos[j]);
+            new_pos.push_back(hap_chrom.mutations.new_pos[j]);
             nucleos.push_back("");
-            if (var_chrom.mutations.nucleos[j] != nullptr) {
-                nucleos.back() = std::string(var_chrom.mutations.nucleos[j]);
+            if (hap_chrom.mutations.nucleos[j] != nullptr) {
+                nucleos.back() = std::string(hap_chrom.mutations.nucleos[j]);
             }
             chroms.push_back(i);
         }
     }
 
     DataFrame out = DataFrame::create(
-        _["var"] = vars,
+        _["hap"] = haps,
         _["chrom"] = chroms,
         _["size_mod"] = size_mod,
         _["old_pos"] = old_pos,
@@ -717,7 +717,7 @@ DataFrame view_mutations(SEXP var_set_ptr, const uint64& var_ind) {
 }
 
 
-//' Turns a VarGenome's mutations into a list of data frames.
+//' Turns a HapGenome's mutations into a list of data frames.
 //'
 //' Internal function for testing.
 //'
@@ -725,12 +725,12 @@ DataFrame view_mutations(SEXP var_set_ptr, const uint64& var_ind) {
 //' @noRd
 //'
 //[[Rcpp::export]]
-List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& chrom_ind) {
+List examine_mutations(SEXP hap_set_ptr, const uint64& hap_ind, const uint64& chrom_ind) {
 
-    XPtr<VarSet> var_set_xptr(var_set_ptr);
-    const VarGenome& var_genome((*var_set_xptr)[var_ind]);
-    const VarChrom& var_chrom(var_genome[chrom_ind]);
-    const AllMutations& muts(var_chrom.mutations);
+    XPtr<HapSet> hap_set_xptr(hap_set_ptr);
+    const HapGenome& hap_genome((*hap_set_xptr)[hap_ind]);
+    const HapChrom& hap_chrom(hap_genome[chrom_ind]);
+    const AllMutations& muts(hap_chrom.mutations);
 
     std::string bases = "TCAG";
     std::vector<uint64> base_inds(85);
@@ -740,12 +740,12 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& ch
         j++;
     }
 
-    uint64 n_muts = var_chrom.mutations.size();
+    uint64 n_muts = hap_chrom.mutations.size();
     arma::mat sub_mat(4, 4, arma::fill::zeros);
     uint64 max_ins = 0;
     uint64 max_del = 0;
     for (uint64 i = 0; i < n_muts; i++) {
-        sint64 mi = var_chrom.size_modifier(i);
+        sint64 mi = hap_chrom.size_modifier(i);
         if (mi == 0) continue;
         if (mi > 0) {
             if (mi > static_cast<sint64>(max_ins)) max_ins = mi;
@@ -760,9 +760,9 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& ch
 
     for (uint64 mut_i = 0; mut_i < n_muts; mut_i++) {
 
-        char c = (*(var_chrom.ref_chrom))[muts.old_pos[mut_i]];
+        char c = (*(hap_chrom.ref_chrom))[muts.old_pos[mut_i]];
         uint64 i = base_inds[static_cast<uint64>(c)];
-        sint64 smod = var_chrom.size_modifier(mut_i);
+        sint64 smod = hap_chrom.size_modifier(mut_i);
         if (smod == 0) {
             uint64 j = base_inds[static_cast<uint64>(muts.nucleos[mut_i][0])];
             sub_mat(i, j)++;
@@ -774,7 +774,7 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& ch
             del_mat(i, j)++;
         }
 
-        pos_vec[mut_i] = var_chrom.mutations.old_pos[mut_i];
+        pos_vec[mut_i] = hap_chrom.mutations.old_pos[mut_i];
     }
 
     List out = List::create(
@@ -796,8 +796,8 @@ List examine_mutations(SEXP var_set_ptr, const uint64& var_ind, const uint64& ch
 //' Note that all indices are in 0-based C++ indexing. This means that the first
 //' item is indexed by `0`, and so forth.
 //'
-//' @param var_set_ptr External pointer to a C++ `VarSet` object
-//' @param var_ind Integer index to the desired variant. Uses 0-based indexing!
+//' @param hap_set_ptr External pointer to a C++ `HapSet` object
+//' @param hap_ind Integer index to the desired haplotype. Uses 0-based indexing!
 //' @param chrom_ind Integer index to the desired chromosome. Uses 0-based indexing!
 //' @param new_pos_ Integer index to the desired subsitution location.
 //'     Uses 0-based indexing!
@@ -813,14 +813,14 @@ NULL_ENTRY;
 //' @noRd
 //'
 //[[Rcpp::export]]
-void add_substitution(SEXP var_set_ptr, const uint64& var_ind,
+void add_substitution(SEXP hap_set_ptr, const uint64& hap_ind,
                       const uint64& chrom_ind,
                       const char& nucleo_,
                       const uint64& new_pos_) {
-    XPtr<VarSet> var_set(var_set_ptr);
-    VarGenome& var_genome((*var_set)[var_ind]);
-    VarChrom& var_chrom(var_genome[chrom_ind]);
-    var_chrom.add_substitution(nucleo_, new_pos_);
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    HapGenome& hap_genome((*hap_set)[hap_ind]);
+    HapChrom& hap_chrom(hap_genome[chrom_ind]);
+    hap_chrom.add_substitution(nucleo_, new_pos_);
     return;
 }
 //' @describeIn add_mutations Add an insertion.
@@ -832,14 +832,14 @@ void add_substitution(SEXP var_set_ptr, const uint64& var_ind,
 //' @noRd
 //'
 //[[Rcpp::export]]
-void add_insertion(SEXP var_set_ptr, const uint64& var_ind,
+void add_insertion(SEXP hap_set_ptr, const uint64& hap_ind,
                    const uint64& chrom_ind,
                    const std::string& nucleos_,
                    const uint64& new_pos_) {
-    XPtr<VarSet> var_set(var_set_ptr);
-    VarGenome& var_genome((*var_set)[var_ind]);
-    VarChrom& var_chrom(var_genome[chrom_ind]);
-    var_chrom.add_insertion(nucleos_, new_pos_);
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    HapGenome& hap_genome((*hap_set)[hap_ind]);
+    HapChrom& hap_chrom(hap_genome[chrom_ind]);
+    hap_chrom.add_insertion(nucleos_, new_pos_);
     return;
 }
 //' @describeIn add_mutations Add a deletion.
@@ -851,15 +851,15 @@ void add_insertion(SEXP var_set_ptr, const uint64& var_ind,
 //' @noRd
 //'
 //[[Rcpp::export]]
-void add_deletion(SEXP var_set_ptr,
-                  const uint64& var_ind,
+void add_deletion(SEXP hap_set_ptr,
+                  const uint64& hap_ind,
                   const uint64& chrom_ind,
                   const uint64& size_,
                   const uint64& new_pos_) {
-    XPtr<VarSet> var_set(var_set_ptr);
-    VarGenome& var_genome((*var_set)[var_ind]);
-    VarChrom& var_chrom(var_genome[chrom_ind]);
-    var_chrom.add_deletion(size_, new_pos_);
+    XPtr<HapSet> hap_set(hap_set_ptr);
+    HapGenome& hap_genome((*hap_set)[hap_ind]);
+    HapChrom& hap_chrom(hap_genome[chrom_ind]);
+    hap_chrom.add_deletion(size_, new_pos_);
     return;
 }
 

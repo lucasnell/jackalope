@@ -1,7 +1,7 @@
 Package: jackalope
 Type: Package
 Title: A Swift, Versatile Phylogenomic and High-Throughput Sequencing Simulator
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: person(c("Lucas", "A."), "Nell", email = "lucas@lucasnell.com", 
                     role = c("cph", "aut", "cre"),
                     comment = c(ORCID = "0000-0003-3209-0517"))
@@ -39,7 +39,7 @@ LinkingTo:
     Rhtslib,
     zlibbioc
 SystemRequirements: GNU make, C++11
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 Roxygen: list(markdown = TRUE)
 Suggests:
     coala,

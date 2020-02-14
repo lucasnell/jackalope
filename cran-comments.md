@@ -2,16 +2,17 @@
 
 This is a resubmission. In this version, I have done the following:
 
-- Fixed valgrind memory-access errors.
-- Fixed the following NOTE on Solaris and macOS: `All declared Imports should be used.`
+- Fixed a bug related to scaling phylogenetic trees in the `haps_theta` function
+- Changed documentation and code to use "haplotypes" instead of "variants" throughout
+- Updated `R6` class documentation for new `roxygen2` methods
 
 
 ## Test environments
 
-* macOS 10.15 (local), R 3.6.1
-* ubuntu 16.04 (on travis-ci), R-devel, R 3.6.1
-* macOS 10.3.3 (on travis-ci), R 3.6.1
-* Windows (win-builder), R-devel, R 3.6.1
+* macOS 10.15.2 (local), R 3.6.2
+* ubuntu 16.04 (on travis-ci), R-devel, R 3.6.2
+* macOS 10.3.6 (on travis-ci), R 3.6.2
+* Windows (win-builder), R-devel with Rtools40
 * Rhub
     - Oracle Solaris 10, R-patched, 32-bit
     - Fedora Linux, R-devel, clang (with valgrind)

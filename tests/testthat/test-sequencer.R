@@ -11,7 +11,7 @@ dir <- tempdir(check = TRUE)
 
 ref <- create_genome(5, 100)
 tr <- ape::rcoal(4)
-vars <- create_variants(ref, vars_phylo(tr), sub = sub_JC69(0.1))
+haps <- create_haplotypes(ref, haps_phylo(tr), sub = sub_JC69(0.1))
 
 
 # ================================================================================`
@@ -169,9 +169,9 @@ test_that("proper pairs created with Illumina mate-pair reads on ref. genome", {
 
 # single ----
 
-test_that("no weirdness with Illumina single-end reads on variants", {
+test_that("no weirdness with Illumina single-end reads on haplotypes", {
 
-    illumina(vars, out_prefix = sprintf("%s/%s", dir, "test"),
+    illumina(haps, out_prefix = sprintf("%s/%s", dir, "test"),
              n_reads = 100, read_length = 100, paired = FALSE,
              overwrite = TRUE)
 
@@ -188,13 +188,13 @@ test_that("no weirdness with Illumina single-end reads on variants", {
 })
 
 
-test_that("no weirdness with Illumina single-end reads on variants w/ sep. files", {
+test_that("no weirdness with Illumina single-end reads on haplotypes w/ sep. files", {
 
-    illumina(vars, out_prefix = sprintf("%s/%s", dir, "test"),
+    illumina(haps, out_prefix = sprintf("%s/%s", dir, "test"),
              n_reads = 100, read_length = 100, paired = FALSE,
              overwrite = TRUE, sep_files = TRUE)
 
-    fns <- sprintf("%s_%s_R1.fq", "test", vars$var_names())
+    fns <- sprintf("%s_%s_R1.fq", "test", haps$hap_names())
 
     expect_true(all(fns %in% list.files(dir)))
 
@@ -215,9 +215,9 @@ test_that("no weirdness with Illumina single-end reads on variants w/ sep. files
 
 # paired ----
 
-test_that("no weirdness with Illumina paired-end reads on variants", {
+test_that("no weirdness with Illumina paired-end reads on haplotypes", {
 
-    illumina(vars, out_prefix = sprintf("%s/%s", dir, "test"),
+    illumina(haps, out_prefix = sprintf("%s/%s", dir, "test"),
              n_reads = 100, read_length = 100, paired = TRUE,
              overwrite = TRUE)
 
@@ -242,13 +242,13 @@ test_that("no weirdness with Illumina paired-end reads on variants", {
 
 
 
-test_that("no weirdness with Illumina paired-end reads on variants w/ sep. files", {
+test_that("no weirdness with Illumina paired-end reads on haplotypes w/ sep. files", {
 
-    illumina(vars, out_prefix = sprintf("%s/%s", dir, "test"),
+    illumina(haps, out_prefix = sprintf("%s/%s", dir, "test"),
              n_reads = 100, read_length = 100, paired = TRUE,
              overwrite = TRUE, sep_files = TRUE)
 
-    fns <- lapply(vars$var_names(),
+    fns <- lapply(haps$hap_names(),
                   function(x) sprintf("%s_%s_R%i.fq", "test", x, 1:2))
 
     expect_true(all(unlist(fns) %in% list.files(dir)))
@@ -301,9 +301,9 @@ test_that("no weirdness with PacBio reads on ref. genome", {
 
 
 
-test_that("no weirdness with PacBio reads on variants", {
+test_that("no weirdness with PacBio reads on haplotypes", {
 
-    pacbio(vars, out_prefix = sprintf("%s/%s", dir, "test"),
+    pacbio(haps, out_prefix = sprintf("%s/%s", dir, "test"),
            n_reads = 100, overwrite = TRUE)
 
     expect_true(sprintf("%s_R1.fq", "test") %in% list.files(dir))

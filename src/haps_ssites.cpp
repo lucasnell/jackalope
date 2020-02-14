@@ -14,7 +14,7 @@
 
 #include "jackalope_types.h"
 #include "mutator_type.h"
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "pcg.h"  // pcg seeding
 #include "alias_sampler.h"  // alias method of sampling
 #include "util.h"  // thread_check
@@ -24,10 +24,9 @@ using namespace Rcpp;
 
 
 
-//' Used below to directly make a MutationTypeSampler
-//'
-//' @noRd
-//'
+/*
+ Used below to directly make a MutationTypeSampler
+*/
 MutationTypeSampler make_type_sampler(const arma::mat& Q,
                                       const std::vector<double>& pi_tcag,
                                       const std::vector<double>& insertion_rates,
@@ -55,12 +54,10 @@ MutationTypeSampler make_type_sampler(const arma::mat& Q,
 
 
 
-
-//' Add mutations at segregating sites for one chromosome from coalescent simulation output.
-//'
-//' @noRd
-//'
-void add_one_chrom_ssites(VarSet& var_set,
+/*
+ Add mutations at segregating sites for one chromosome from coalescent simulation output.
+*/
+void add_one_chrom_ssites(HapSet& hap_set,
                         const RefGenome& ref_genome,
                         const uint64& chrom_i,
                         const arma::mat& ss_i,
@@ -83,7 +80,7 @@ void add_one_chrom_ssites(VarSet& var_set,
         if (mut.length == 0) {
             for (uint64 j = 1; j < ss_i.n_cols; j++) {
                 if (ss_i(i,j) == 1) {
-                    var_set[j-1][chrom_i].add_substitution(mut.nucleo, pos);
+                    hap_set[j-1][chrom_i].add_substitution(mut.nucleo, pos);
                 }
             }
         } else if (mut.length > 0) {
@@ -91,19 +88,19 @@ void add_one_chrom_ssites(VarSet& var_set,
             insert_sampler.sample(nts, eng);  // fill w/ random nucleotides
             for (uint64 j = 1; j < ss_i.n_cols; j++) {
                 if (ss_i(i,j) == 1) {
-                    var_set[j-1][chrom_i].add_insertion(nts, pos);
+                    hap_set[j-1][chrom_i].add_insertion(nts, pos);
                 }
             }
         } else {
             sint64 pos_ = static_cast<sint64>(pos);
-            sint64 size_ = static_cast<sint64>(var_set.min_size(chrom_i));
+            sint64 size_ = static_cast<sint64>(hap_set.min_size(chrom_i));
             if (pos_ - mut.length > size_) {
                 mut.length = static_cast<sint64>(pos_-size_);
             }
             uint64 del_size = std::abs(mut.length);
             for (uint64 j = 1; j < ss_i.n_cols; j++) {
                 if (ss_i(i,j) == 1) {
-                    var_set[j-1][chrom_i].add_deletion(del_size, pos);
+                    hap_set[j-1][chrom_i].add_deletion(del_size, pos);
                 }
             }
         }
@@ -115,11 +112,9 @@ void add_one_chrom_ssites(VarSet& var_set,
 
 
 
-
-//' Add mutations at segregating sites from coalescent simulation output.
-//'
-//' @noRd
-//'
+/*
+ Add mutations at segregating sites from coalescent simulation output.
+*/
 //[[Rcpp::export]]
 SEXP add_ssites_cpp(SEXP& ref_genome_ptr,
                     const std::vector<arma::mat>& seg_sites,
@@ -132,10 +127,10 @@ SEXP add_ssites_cpp(SEXP& ref_genome_ptr,
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
 
-    const uint64 n_vars = seg_sites[0].n_cols - 1;
+    const uint64 n_haps = seg_sites[0].n_cols - 1;
 
-    // Initialize new VarSet object
-    XPtr<VarSet> var_set(new VarSet(*ref_genome, n_vars), true);
+    // Initialize new HapSet object
+    XPtr<HapSet> hap_set(new HapSet(*ref_genome, n_haps), true);
 
     // Check that # threads isn't too high and change to 1 if not using OpenMP:
     thread_check(n_threads);
@@ -181,7 +176,7 @@ SEXP add_ssites_cpp(SEXP& ref_genome_ptr,
         if (prog_bar.is_aborted() || prog_bar.check_abort()) status_code = -1;
         if (status_code != 0) continue;
 
-        add_one_chrom_ssites(*var_set, *ref_genome, i, seg_sites[i], type, insert, eng);
+        add_one_chrom_ssites(*hap_set, *ref_genome, i, seg_sites[i], type, insert, eng);
 
         prog_bar.increment((*ref_genome)[i].size());
 
@@ -194,13 +189,13 @@ SEXP add_ssites_cpp(SEXP& ref_genome_ptr,
     for (const int& status_code : status_codes) {
         if (status_code == -1) {
             std::string warn_msg = "\nThe user interrupted phylogenetic evolution. ";
-            warn_msg += "Note that changes occur in place, so your variants have ";
-            warn_msg += "already been partially added.";
+            warn_msg += "Note that changes occur in place, so some mutations have ";
+            warn_msg += "already been added.";
             Rcpp::warning(warn_msg.c_str());
             break;
         }
     }
 
-    return var_set;
+    return hap_set;
 
 }

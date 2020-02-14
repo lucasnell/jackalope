@@ -22,7 +22,7 @@ pacbio(obj,
                                17922.611306),
        custom_read_lengths = NULL,
        prob_dup = 0.0,
-       variant_probs = NULL,
+       haplotype_probs = NULL,
        sep_files = FALSE,
        compress = FALSE,
        comp_method = "bgzip",
@@ -32,7 +32,7 @@ pacbio(obj,
        overwrite = FALSE)
 }
 \arguments{
-\item{obj}{Sequencing object of class \code{ref_genome} or \code{variants}.}
+\item{obj}{Sequencing object of class \code{ref_genome} or \code{haplotypes}.}
 
 \item{out_prefix}{Prefix for the output file(s), including entire path except
 for the file extension.}
@@ -86,14 +86,14 @@ Defaults to \code{NULL}.}
 \item{prob_dup}{A single number indicating the probability of duplicates.
 Defaults to \code{0.0}.}
 
-\item{variant_probs}{Relative probability of sampling each variant.
+\item{haplotype_probs}{Relative probability of sampling each haplotype.
 This is ignored if sequencing a reference genome.
 \code{NULL} results in all having the same probability.
 Defaults to \code{NULL}.}
 
-\item{sep_files}{Logical indicating whether to make separate files for each variant.
+\item{sep_files}{Logical indicating whether to make separate files for each haplotype.
 This argument is coerced to \code{FALSE} if the \code{obj} argument is not
-a \code{variants} object.
+a \code{haplotypes} object.
 Defaults to \code{FALSE}.}
 
 \item{compress}{Logical specifying whether or not to compress output file, or
@@ -109,7 +109,7 @@ do gzip compression in parallel).
 Defaults to \code{"bgzip"}.}
 
 \item{n_threads}{The number of threads to use in processing.
-If \code{compress} is \code{TRUE} or \code{> 0} (indicating compressed output),
+If \code{compress} is \code{TRUE} or \verb{> 0} (indicating compressed output),
 setting \code{n_threads} to \code{2} or more makes this function first create an
 uncompressed file/files using \code{n_threads} threads, then compress that/those
 file/files also using \code{n_threads} threads.
@@ -117,7 +117,7 @@ There is no speed increase if you try to use multiple threads to create
 compressed output on the fly, so that option is not included.
 If you want to be conservative with disk space (by not having an uncompressed
 file present even temporarily), set \code{n_threads} to \code{1}.
-Threads are NOT spread across chromosomes or variants, so you don't need to
+Threads are NOT spread across chromosomes or haplotypes, so you don't need to
 think about these when choosing this argument's value.
 However, all threads write to the same file/files, so there are diminishing
 returns for providing many threads.
@@ -138,7 +138,7 @@ same name, if they exist.}
 Nothing is returned.
 }
 \description{
-From either a reference genome or set of haploid variants, create PacBio reads
+From either a reference genome or set of variant haplotypes, create PacBio reads
 and write them to FASTQ output file(s).
 I encourage you to cite the reference below in addition to \code{jackalope} if you use
 this function.
@@ -147,9 +147,9 @@ this function.
 
 The ID lines for FASTQ files are formatted as such:
 
-\code{@<genome name>-<chromosome name>-<starting position>-<strand>}
+\verb{@<genome name>-<chromosome name>-<starting position>-<strand>}
 
-where \code{genome name} is always \code{REF} for reference genomes (as opposed to variants).
+where \verb{genome name} is always \code{REF} for reference genomes (as opposed to haplotypes).
 }
 
 \examples{

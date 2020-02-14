@@ -21,7 +21,7 @@
 #endif
 
 #include "jackalope_types.h"  // integer types
-#include "var_classes.h"  // Var* classes
+#include "hap_classes.h"  // Hap* classes
 #include "mutator.h"  // TreeMutator
 #include "pcg.h" // pcg sampler types
 #include "phylogenomics.h"
@@ -39,7 +39,7 @@ using namespace Rcpp;
 /*
  Process one phylogenetic tree for a single chromosome with no recombination.
 
- Note that this function should be changed if any of these VarChroms differ from
+ Note that this function should be changed if any of these HapChroms differ from
  each other (within the range specified if recombination = true).
  They can already have mutations, but to start out, they must all be the same.
  */
@@ -75,18 +75,18 @@ int PhyloOneChrom::one_tree(const uint64& idx,
         b1 = tree.edges(i,0);
         b2 = tree.edges(i,1);
 
-        // VarChrom we're changing:
-        VarChrom& chrom2(*(tip_chroms[b2]));
+        // HapChrom we're changing:
+        HapChrom& chrom2(*(tip_chroms[b2]));
 
         if (b1 != b2) {
-            // VarChrom object that parent node refers to:
-            VarChrom& chrom1(*(tip_chroms[b1]));
+            // HapChrom object that parent node refers to:
+            HapChrom& chrom1(*(tip_chroms[b1]));
 
             // Update rate indices:
             rates[b2] = rates[b1];
 
             /*
-             Update VarChrom objects for this branch.
+             Update HapChrom objects for this branch.
              */
             if (idx > 0) mut_i = trees[idx - 1].mut_ends[b1];
             size_mod = chrom2.add_to_back(chrom1, mut_i);
@@ -114,7 +114,7 @@ int PhyloOneChrom::one_tree(const uint64& idx,
     }
 
     // Update indices (non-inclusive) for end of this tree's mutations in
-    // `VarChrom::mutations`:
+    // `HapChrom::mutations`:
     for (uint64 i = 0; i < tree.n_tips; i++) {
         tree.mut_ends[i] = tip_chroms[i]->mutations.size();
     }
@@ -262,7 +262,7 @@ PhyloInfo::PhyloInfo(const List& genome_phylo_info, const TreeMutator& mutator_b
 
     phylo_one_chroms = std::vector<PhyloOneChrom>(n_chroms);
 
-    // Fill tree and mutator info (i.e., everything but variant info):
+    // Fill tree and mutator info (i.e., everything but haplotype info):
     for (uint64 i = 0; i < n_chroms; i++) {
         phylo_one_chroms[i].fill_tree_mutator(genome_phylo_info, i, mutator_base);
     }
@@ -277,7 +277,7 @@ PhyloInfo::PhyloInfo(const List& genome_phylo_info, const TreeMutator& mutator_b
 /*
  Evolve all chromosomes along trees.
 */
-XPtr<VarSet> PhyloInfo::evolve_chroms(
+XPtr<HapSet> PhyloInfo::evolve_chroms(
         SEXP& ref_genome_ptr,
         const uint64& n_threads,
         const bool& show_progress) {
@@ -285,8 +285,8 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
 
     // (I'm simply extracting tip labels from the first tree, as they should all be
-    // the same due to the process_phy function in R/create_variants.R)
-    XPtr<VarSet> var_set(new VarSet(*ref_genome, phylo_one_chroms[0].trees[0].tip_labels),
+    // the same due to the process_phy function in R/create_haplotypes.R)
+    XPtr<HapSet> hap_set(new HapSet(*ref_genome, phylo_one_chroms[0].trees[0].tip_labels),
                          true);
 
     uint64 n_chroms = ref_genome->size();
@@ -337,8 +337,8 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
 
         PhyloOneChrom& chrom_phylo(phylo_one_chroms[i]);
 
-        // Set values for variant info:
-        chrom_phylo.set_var_info(*var_set, i);
+        // Set values for haplotype info:
+        chrom_phylo.set_hap_info(*hap_set, i);
 
         // Evolve the chromosome using the chrom_phylo object:
         status_code = chrom_phylo.evolve(eng, prog_bar);
@@ -353,14 +353,14 @@ XPtr<VarSet> PhyloInfo::evolve_chroms(
         if (status_code == -1) {
             prog_bar.cleanup();
             std::string warn_msg = "\nThe user interrupted phylogenetic evolution. ";
-            warn_msg += "Note that changes occur in place, so your variants have ";
+            warn_msg += "Note that changes occur in place, so your haplotypes have ";
             warn_msg += "already been partially added.";
             Rcpp::warning(warn_msg.c_str());
             break;
         }
     }
 
-    return var_set;
+    return hap_set;
 
 }
 
@@ -407,14 +407,14 @@ SEXP evolve_across_trees(
     PhyloInfo phylo_info(genome_phylo_info, mutator);
 
     /*
-     Now that we have tree(s) and mutator info, we can create variants:
+     Now that we have tree(s) and mutator info, we can create haplotypes:
      */
 
-    XPtr<VarSet> var_set = phylo_info.evolve_chroms(ref_genome_ptr,
+    XPtr<HapSet> hap_set = phylo_info.evolve_chroms(ref_genome_ptr,
                                                     n_threads, show_progress);
 
 
-    return var_set;
+    return hap_set;
 }
 
 
