@@ -484,16 +484,16 @@ add_deletion <- function(hap_set_ptr, hap_ind, chrom_ind, size_, new_pos_) {
     invisible(.Call(`_jackalope_add_deletion`, hap_set_ptr, hap_ind, chrom_ind, size_, new_pos_))
 }
 
-sub_TN93_cpp <- function(pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant) {
-    .Call(`_jackalope_sub_TN93_cpp`, pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant)
+sub_TN93_cpp <- function(mu, pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant) {
+    .Call(`_jackalope_sub_TN93_cpp`, mu, pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant)
 }
 
-sub_GTR_cpp <- function(pi_tcag, abcdef, gamma_shape, gamma_k, invariant) {
-    .Call(`_jackalope_sub_GTR_cpp`, pi_tcag, abcdef, gamma_shape, gamma_k, invariant)
+sub_GTR_cpp <- function(mu, pi_tcag, abcdef, gamma_shape, gamma_k, invariant) {
+    .Call(`_jackalope_sub_GTR_cpp`, mu, pi_tcag, abcdef, gamma_shape, gamma_k, invariant)
 }
 
-sub_UNREST_cpp <- function(Q, gamma_shape, gamma_k, invariant) {
-    .Call(`_jackalope_sub_UNREST_cpp`, Q, gamma_shape, gamma_k, invariant)
+sub_UNREST_cpp <- function(mu, Q, gamma_shape, gamma_k, invariant) {
+    .Call(`_jackalope_sub_UNREST_cpp`, mu, Q, gamma_shape, gamma_k, invariant)
 }
 
 using_openmp <- function() {

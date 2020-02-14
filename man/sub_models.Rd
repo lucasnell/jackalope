@@ -12,32 +12,59 @@
 \alias{sub_UNREST}
 \title{Construct necessary information for substitution models.}
 \usage{
-sub_JC69(lambda, gamma_shape = NULL, gamma_k = 5, invariant = 0)
+sub_JC69(lambda, mu = 1, gamma_shape = NULL, gamma_k = 5, invariant = 0)
 
-sub_K80(alpha, beta, gamma_shape = NULL, gamma_k = 5, invariant = 0)
+sub_K80(alpha, beta, mu = 1, gamma_shape = NULL, gamma_k = 5, invariant = 0)
 
-sub_F81(pi_tcag, gamma_shape = NULL, gamma_k = 5, invariant = 0)
+sub_F81(pi_tcag, mu = 1, gamma_shape = NULL, gamma_k = 5, invariant = 0)
 
-sub_HKY85(pi_tcag, alpha, beta, gamma_shape = NULL, gamma_k = 5, invariant = 0)
+sub_HKY85(
+  pi_tcag,
+  alpha,
+  beta,
+  mu = 1,
+  gamma_shape = NULL,
+  gamma_k = 5,
+  invariant = 0
+)
 
-sub_F84(pi_tcag, beta, kappa, gamma_shape = NULL, gamma_k = 5, invariant = 0)
+sub_F84(
+  pi_tcag,
+  beta,
+  kappa,
+  mu = 1,
+  gamma_shape = NULL,
+  gamma_k = 5,
+  invariant = 0
+)
 
 sub_TN93(
   pi_tcag,
   alpha_1,
   alpha_2,
   beta,
+  mu = 1,
   gamma_shape = NULL,
   gamma_k = 5,
   invariant = 0
 )
 
-sub_GTR(pi_tcag, abcdef, gamma_shape = NULL, gamma_k = 5, invariant = 0)
+sub_GTR(
+  pi_tcag,
+  abcdef,
+  mu = 1,
+  gamma_shape = NULL,
+  gamma_k = 5,
+  invariant = 0
+)
 
-sub_UNREST(Q, gamma_shape = NULL, gamma_k = 5, invariant = 0)
+sub_UNREST(Q, mu = 1, gamma_shape = NULL, gamma_k = 5, invariant = 0)
 }
 \arguments{
 \item{lambda}{Substitution rate for all possible substitutions.}
+
+\item{mu}{Total rate of substitutions. Defaults to \code{1}, which makes branch lengths
+in units of substitutions per site. Passing \code{NULL} results in no scaling.}
 
 \item{gamma_shape}{Numeric shape parameter for discrete Gamma distribution used for
 among-site variability. Values must be greater than zero.

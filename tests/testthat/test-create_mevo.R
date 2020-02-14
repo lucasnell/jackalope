@@ -45,6 +45,18 @@ ref <- with(pars, create_genome(n_chroms, chrom_len))
 # *  JC69 ----
 M <- sub_JC69(pars$lambda)
 
+
+test_that("proper output for JC69 model", {
+    Q <- matrix(pars$lambda, 4, 4)
+    diag(Q) <- 0
+    diag(Q) <- -1 * rowSums(Q)
+    Q <- Q / abs(sum(diag(Q) * rep(0.25, 4)))  # Scale to overall mutation rate of 1
+    expect_equal(M$Q()[[1]], Q)
+    expect_equal(M$pi_tcag(), rep(0.25, 4))
+})
+
+# Same but no scaling:
+M <- sub_JC69(pars$lambda, mu = NULL)
 test_that("proper output for JC69 model", {
     Q <- matrix(pars$lambda, 4, 4)
     diag(Q) <- 0
@@ -61,6 +73,7 @@ test_that("proper output for K80 model", {
     Q[2,1] <- Q[1,2] <- Q[4,3] <- Q[3,4] <- pars$alpha
     diag(Q) <- 0
     diag(Q) <- -1 * rowSums(Q)
+    Q <- Q / abs(sum(diag(Q) * rep(0.25, 4)))  # Scale to overall mutation rate of 1
     expect_equal(M$Q()[[1]], Q)
     expect_equal(M$pi_tcag(), rep(0.25, 4))
 })
@@ -73,6 +86,7 @@ test_that("proper output for F81 model", {
     Q <- matrix(rep(pars$pi_tcag, each = 4), 4, 4)
     diag(Q) <- 0
     diag(Q) <- -1 * rowSums(Q)
+    Q <- Q / abs(sum(diag(Q) * pars$pi_tcag))  # Scale to overall mutation rate of 1
     expect_equal(M$Q()[[1]], Q)
     expect_equal(M$pi_tcag(), pars$pi_tcag)
 })
@@ -88,6 +102,7 @@ test_that("proper output for HKY85 model", {
     for (i in 1:4) Q[,i] <- Q[,i] * pars$pi_tcag[i]
     diag(Q) <- 0
     diag(Q) <- -1 * rowSums(Q)
+    Q <- Q / abs(sum(diag(Q) * pars$pi_tcag))  # Scale to overall mutation rate of 1
     expect_equal(M$Q()[[1]], Q)
     expect_equal(M$pi_tcag(), pars$pi_tcag)
 })
@@ -104,6 +119,7 @@ test_that("proper output for TN93 model", {
     for (i in 1:4) Q[,i] <- Q[,i] * pars$pi_tcag[i]
     diag(Q) <- 0
     diag(Q) <- -1 * rowSums(Q)
+    Q <- Q / abs(sum(diag(Q) * pars$pi_tcag))  # Scale to overall mutation rate of 1
     expect_equal(M$Q()[[1]], Q)
     expect_equal(M$pi_tcag(), pars$pi_tcag)
 })
@@ -121,6 +137,7 @@ test_that("proper output for F84 model", {
     for (i in 1:4) Q[,i] <- Q[,i] * pars$pi_tcag[i]
     diag(Q) <- 0
     diag(Q) <- -1 * rowSums(Q)
+    Q <- Q / abs(sum(diag(Q) * pars$pi_tcag))  # Scale to overall mutation rate of 1
     expect_equal(M$Q()[[1]], Q)
     expect_equal(M$pi_tcag(), pars$pi_tcag)
 })
@@ -134,6 +151,7 @@ test_that("proper output for GTR model", {
     Q <- Q + t(Q)
     for (i in 1:4) Q[,i] <- Q[,i] * pars$pi_tcag[i]
     diag(Q) <- -1 * rowSums(Q)
+    Q <- Q / abs(sum(diag(Q) * pars$pi_tcag))  # Scale to overall mutation rate of 1
     expect_equal(M$Q()[[1]], Q)
     expect_equal(M$pi_tcag(), pars$pi_tcag)
 
@@ -156,6 +174,7 @@ test_that("proper output for UNREST model", {
     left_vec <- eig_vecs[,i]
     sumlv <- sum(left_vec)
     pi_tcag <- left_vec / sumlv
+    Q <- Q / abs(sum(diag(Q) * pi_tcag))  # Scale to overall mutation rate of 1
     expect_equal(M$Q()[[1]], Q)
     expect_equal(M$pi_tcag(), pi_tcag)
 })
@@ -171,20 +190,20 @@ test_that("proper errors for sub models", {
     # invariant = NULL, lambda = NULL, alpha = NULL,
     # kappa = NULL, abcdef = NULL, Q = NULL
 
-    expect_error(sub_JC69(lambda = "lambda"), "`lambda` must be a single number > 0")
+    expect_error(sub_JC69(lambda = "lambda"), "`lambda` must be a single number >= 0")
     expect_error(sub_K80(alpha = function(x) x, beta = pars$beta),
-                 "`alpha` must be a single number > 0")
+                 "`alpha` must be a single number >= 0")
     expect_error(sub_TN93(alpha_1 = "alpha_1", alpha_2 = pars$alpha_2, beta = pars$beta,
                           pi_tcag = pars$pi_tcag),
-                 "`alpha_1` must be a single number > 0")
+                 "`alpha_1` must be a single number >= 0")
     expect_error(sub_TN93(alpha_1 = pars$alpha_1, alpha_2 = -1, beta = pars$beta,
                           pi_tcag = pars$pi_tcag),
-                 "`alpha_2` must be a single number > 0")
+                 "`alpha_2` must be a single number >= 0")
     expect_error(sub_TN93(alpha_1 = pars$alpha_1, alpha_2 = pars$alpha_2, beta = "beta",
                           pi_tcag = pars$pi_tcag),
-                 "`beta` must be a single number > 0")
+                 "`beta` must be a single number >= 0")
     expect_error(sub_F84(beta = pars$beta, kappa = -1, pi_tcag = pars$pi_tcag),
-                 "`kappa` must be a single number > 0")
+                 "`kappa` must be a single number >= 0")
 
     err <- paste("`pi_tcag` must be a length-4 numeric vector where at least one",
                  "number is > 0 and all are >= 0")

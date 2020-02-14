@@ -211,13 +211,27 @@ void Pt_info(const arma::mat& Q,
 
 
 
+// Scale rate matrix so that total rate is `mu`
+void scale_Q(arma::mat& Q,
+             const std::vector<double>& pi_tcag,
+             const double& mu) {
+    if (mu > 0) {
+        arma::vec q(pi_tcag);
+        q %= Q.diag();
+        double mu_now = std::abs(arma::accu(q));
+        if (mu_now != 0) Q *= (mu / mu_now);
+    }
+    return;
+}
+
 
 
 
 
 
 //[[Rcpp::export]]
-List sub_TN93_cpp(std::vector<double> pi_tcag,
+List sub_TN93_cpp(const double& mu,
+                  std::vector<double> pi_tcag,
                   const double& alpha_1,
                   const double& alpha_2,
                   const double& beta,
@@ -241,6 +255,9 @@ List sub_TN93_cpp(std::vector<double> pi_tcag,
     arma::vec rowsums = arma::sum(Q, 1);
     rowsums *= -1;
     Q.diag() = rowsums;
+
+    // Scaling if desired:
+    scale_Q(Q, pi_tcag, mu);
 
     // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape <= 0)
     std::vector<double> gammas;
@@ -275,7 +292,8 @@ List sub_TN93_cpp(std::vector<double> pi_tcag,
 
 
 //[[Rcpp::export]]
-List sub_GTR_cpp(std::vector<double> pi_tcag,
+List sub_GTR_cpp(const double& mu,
+                 std::vector<double> pi_tcag,
                  const std::vector<double>& abcdef,
                  const double& gamma_shape,
                  const uint32& gamma_k,
@@ -302,6 +320,9 @@ List sub_GTR_cpp(std::vector<double> pi_tcag,
     arma::vec rowsums = arma::sum(Q, 1);
     rowsums *= -1;
     Q.diag() = rowsums;
+
+    // Scaling if desired:
+    scale_Q(Q, pi_tcag, mu);
 
     // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape <= 0)
     std::vector<double> gammas;
@@ -335,7 +356,8 @@ List sub_GTR_cpp(std::vector<double> pi_tcag,
 
 
 //[[Rcpp::export]]
-List sub_UNREST_cpp(arma::mat Q,
+List sub_UNREST_cpp(const double& mu,
+                    arma::mat Q,
                     const double& gamma_shape,
                     const uint32& gamma_k,
                     const double& invariant) {
@@ -377,6 +399,9 @@ List sub_UNREST_cpp(arma::mat Q,
     double sumlv = arma::accu(left_vec);
 
     for (uint64 i = 0; i < 4; i++) pi_tcag[i] = left_vec(i) / sumlv;
+
+    // Scaling if desired:
+    scale_Q(Q, pi_tcag, mu);
 
     // Now getting vector of Gammas (which is the vector { 1 } if gamma_shape <= 0)
     std::vector<double> gammas;
