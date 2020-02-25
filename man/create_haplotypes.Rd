@@ -52,9 +52,10 @@ Defaults to \code{NULL}.}
 the Doob–Gillespie algorithm, as used for the indel portion of the simulations.
 Smaller values result in a closer approximation.
 Larger values are less exact but faster.
-Values must be \verb{> 0} and \verb{< 1}.
-For more information, see Cao et al. (2006) and Wieder et al. (2011),
-listed below.
+Values must be \verb{>= 0} and \verb{< 1}.
+For more information on the approximation, see Cao et al. (2006) and
+Wieder et al. (2011), listed below.
+If \code{epsilon} is \code{0}, then it reverts to the exact Doob–Gillespie algorithm.
 Defaults to \code{0.03}.}
 
 \item{n_threads}{Number of threads to use for parallel processing.
