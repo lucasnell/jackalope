@@ -93,7 +93,7 @@ test_that("ref_genome class methods produce correct output", {
     expect_identical(ref$chrom_names(), c(nn[-3], nn[3]))
 
     ref$merge_chroms(nn[1:2])
-    expect_identical(ref$chrom(1), paste(chroms[1:2], collapse =))
+    expect_identical(ref$chrom(1), paste(chroms[1:2], collapse = ""))
 
     ref$merge_chroms(NULL)
     expect_identical(nchar(ref$chrom(1)), sum(nchar(chroms)))
