@@ -54,7 +54,8 @@ ref$rm_chroms("b")
 ## ------------------------------------------------
 
 ref <- create_genome(4, 10)
-ref$merge_chroms()
+ref$merge_chroms(ref$chrom_names()[1:2])
+ref$merge_chroms(NULL)
 
 
 ## ------------------------------------------------
@@ -379,7 +380,8 @@ This \code{R6} object, invisibly.
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{ref <- create_genome(4, 10)
-ref$merge_chroms()
+ref$merge_chroms(ref$chrom_names()[1:2])
+ref$merge_chroms(NULL)
 
 }
 \if{html}{\out{</div>}}

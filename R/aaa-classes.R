@@ -287,7 +287,8 @@ ref_genome <- R6Class(
         #'
         #' @examples
         #' ref <- create_genome(4, 10)
-        #' ref$merge_chroms()
+        #' ref$merge_chroms(ref$chrom_names()[1:2])
+        #' ref$merge_chroms(NULL)
         #'
         merge_chroms = function(chrom_names) {
             private$check_ptr()
