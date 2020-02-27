@@ -7,13 +7,24 @@
 
 using namespace Rcpp;
 
-// merge_chromosomes_cpp
-void merge_chromosomes_cpp(SEXP ref_genome_ptr);
-RcppExport SEXP _jackalope_merge_chromosomes_cpp(SEXP ref_genome_ptrSEXP) {
+// merge_all_chromosomes_cpp
+void merge_all_chromosomes_cpp(SEXP ref_genome_ptr);
+RcppExport SEXP _jackalope_merge_all_chromosomes_cpp(SEXP ref_genome_ptrSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
-    merge_chromosomes_cpp(ref_genome_ptr);
+    merge_all_chromosomes_cpp(ref_genome_ptr);
+    return R_NilValue;
+END_RCPP
+}
+// merge_chromosomes_cpp
+void merge_chromosomes_cpp(SEXP ref_genome_ptr, std::deque<uint64> chrom_inds);
+RcppExport SEXP _jackalope_merge_chromosomes_cpp(SEXP ref_genome_ptrSEXP, SEXP chrom_indsSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ref_genome_ptr(ref_genome_ptrSEXP);
+    Rcpp::traits::input_parameter< std::deque<uint64> >::type chrom_inds(chrom_indsSEXP);
+    merge_chromosomes_cpp(ref_genome_ptr, chrom_inds);
     return R_NilValue;
 END_RCPP
 }
@@ -803,7 +814,8 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_jackalope_merge_chromosomes_cpp", (DL_FUNC) &_jackalope_merge_chromosomes_cpp, 1},
+    {"_jackalope_merge_all_chromosomes_cpp", (DL_FUNC) &_jackalope_merge_all_chromosomes_cpp, 1},
+    {"_jackalope_merge_chromosomes_cpp", (DL_FUNC) &_jackalope_merge_chromosomes_cpp, 2},
     {"_jackalope_filter_chromosomes_cpp", (DL_FUNC) &_jackalope_filter_chromosomes_cpp, 3},
     {"_jackalope_replace_Ns_cpp", (DL_FUNC) &_jackalope_replace_Ns_cpp, 4},
     {"_jackalope_create_genome_cpp", (DL_FUNC) &_jackalope_create_genome_cpp, 5},

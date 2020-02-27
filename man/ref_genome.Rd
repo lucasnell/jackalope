@@ -357,11 +357,22 @@ ref$rm_chroms("b")
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-merge_chroms"></a>}}
 \subsection{Method \code{merge_chroms()}}{
-Merge all chromosomes into one after first shuffling their order.
+Merge chromosomes into one.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ref_genome$merge_chroms()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ref_genome$merge_chroms(chrom_names)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{chrom_names}}{Vector of the names of the chromosomes to merge into one.
+Duplicates are not allowed, and chromosomes are merged in the order
+they're provided.
+If this is \code{NULL}, then all chromosomes are merged after first
+shuffling their order.}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
 This \code{R6} object, invisibly.
 }

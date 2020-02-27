@@ -275,7 +275,13 @@ ref_genome <- R6Class(
 
 
         #' @description
-        #' Merge all chromosomes into one after first shuffling their order.
+        #' Merge chromosomes into one.
+        #'
+        #' @param chrom_names Vector of the names of the chromosomes to merge into one.
+        #'     Duplicates are not allowed, and chromosomes are merged in the order
+        #'     they're provided.
+        #'     If this is `NULL`, then all chromosomes are merged after first
+        #'     shuffling their order.
         #'
         #' @return This `R6` object, invisibly.
         #'
@@ -283,9 +289,31 @@ ref_genome <- R6Class(
         #' ref <- create_genome(4, 10)
         #' ref$merge_chroms()
         #'
-        merge_chroms = function() {
+        merge_chroms = function(chrom_names) {
             private$check_ptr()
-            merge_chromosomes_cpp(private$genome)
+            if (!is.null(chrom_names) && !is_type(chrom_names, "character")) {
+                err_msg("merge_chroms", "chrom_names", "NULL or a character vector")
+            }
+            if (is.null(chrom_names)) {
+                merge_all_chromosomes_cpp(private$genome)
+            } else {
+                if (length(chrom_names) < 2) {
+                    err_msg("rm_chroms", "chrom_names", "a vector of >1 names")
+                }
+                self_names <- self$chrom_names()
+                if (!all(chrom_names %in% self_names)) {
+                    err_msg("merge_chroms", "chrom_names",
+                            "a character vector of chromosome names",
+                            "present in the `ref_genome` object. One or more of the names",
+                            "provided weren't found")
+                }
+                if (anyDuplicated(chrom_names) != 0) {
+                    err_msg("rm_chroms", "chrom_names",
+                            "a vector of *non-duplicated* names")
+                }
+                chrom_inds <- match(chrom_names, self_names) - 1
+                merge_chromosomes_cpp(private$genome, chrom_inds)
+            }
             invisible(self)
         },
 
