@@ -34,6 +34,12 @@ fill_coal_mat_pos <- function(sites_mats, chrom_sizes) {
         if (all(pos < 1 & pos > 0)) {
             # Converting to integer positions (0-based):
             pos  <- as.integer(pos * chrom_sizes[i]);
+            sites_mats[[i]][,1] <- pos
+            # There might be some repeats now, so removing those:
+            if (anyDuplicated(pos) != 0) {
+                dups <- duplicated(pos)
+                sites_mats[[i]] <- sites_mats[[i]][!dups,]
+            }
         } else {
             all_ints <- all(pos %% 1 == 0)
             if (all_ints && all(pos < chrom_sizes[i] & pos >= 0)) {
@@ -51,8 +57,8 @@ fill_coal_mat_pos <- function(sites_mats, chrom_sizes) {
                      "It appears you need to re-run `haps_ssites` before attempting to ",
                      "run `create_haplotypes` again.")
             }
+            sites_mats[[i]][,1] <- pos
         }
-        sites_mats[[i]][,1] <- pos
 
     }
 
