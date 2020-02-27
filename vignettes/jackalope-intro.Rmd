@@ -96,8 +96,11 @@ sizes using a power-law relationship.
 To approximate the distributions they described, relative rates were derived from 
 a Lavalette distribution with $L = 60$ and $a = 1.60$ for insertions and
 $a = 1.51$ for deletions.
-Lastly, the $\theta$ parameter is the population-scaled mutation rate, which we
+The $\theta$ parameter is the population-scaled mutation rate, which we
 can get directly from `evo_rates` for *D. melanogaster*.
+Lastly, $N_0$ is the effective population size for *D. melanogaster*, which is
+used in a few instances below because `scrm` outputs branch lengths in units of 
+$4 N_0$ generations.
 
 
 ```{r examples-mevo-objects}
@@ -112,6 +115,9 @@ ins <- indels(rate = indel_rate, max_length = 60,a = 1.60)
 del <- indels(rate = indel_rate, max_length = 60, a = 1.51)
 
 theta <- evo_rates[evo_rates$species == "Drosophila melanogaster","theta_s"]
+
+# Originally in units of 1e6 individuals
+N0 <- evo_rates[evo_rates$species == "Drosophila melanogaster", "Ne"] * 1e6
 ```
 
 When generating any haplotypes below, these objects will be used inside
@@ -258,16 +264,11 @@ the `scrm` R package, which can be easily processed by `jackalope`.
 
 ```{r examples-divergence-scrm, eval = FALSE}
 library(scrm)
-
-# In units of 1e6 individuals
-N0 <- evo_rates[evo_rates$species == "Drosophila melanogaster", "Ne"] * 1e6
-
 # Function to run scrm for one chromosome and format output
 one_chrom <- function(.size) {
     ssites <- scrm(sprintf("10 1 -t %.4f -r 1 %i -I 2 5 5 100", theta * 4 * N0, .size))
     return(ssites$seg_sites[[1]])
 }
-
 ssites <- list(seg_sites = lapply(ref$sizes(), one_chrom))
 ```
 
@@ -338,11 +339,11 @@ might have an advantage over another.
 This section shows how `jackalope` can generate haplotypes from a phylogeny, then
 simulate sequencing data from those haplotypes to test phylogeny reconstruction methods.
 First, I simulated a random species tree of 10 species, then scaled it to have a 
-maximum tree depth of $10^7$ because we want branch lengths to be in generations:
+maximum tree depth of $4 N_0$ because we want branch lengths to be in generations:
 
 ```{r examples-phylogeny-tree}
 tree <- rcoal(10)
-tree$edge.length <- 1e7 * tree$edge.length / max(node.depth.edgelength(tree))
+tree$edge.length <- 4 * N0 * tree$edge.length / max(node.depth.edgelength(tree))
 ```
 
 
@@ -367,7 +368,7 @@ on an Illumina MiSeq v3, where `haplotype_barcodes` is a character string that s
 the barcodes for each haplotype.
 I also wrote the true phylogenetic tree to a NEWICK file.
 
-```{r examples-phylogeny-tree-illumina}
+```{r examples-phylogeny-tree-illumina, eval = FALSE}
 haplotype_barcodes <- c("CTAGCTTG", "TCGATCCA", "ATACCAAG", "GCGTTGGA",
                         "CTTCACGG", "TCCTGTAA", "CCTCGGTA", "TTCTAACG", 
                         "CGCTCGTG", "TATCTACA")
@@ -492,7 +493,7 @@ write_vcf(haps, out_prefix = "hap_gtrees",
 Next I generated data for 1 flow cell of $2 \times 250$bp sequencing
 on an Illumina MiSeq v3, with barcodes in the object `haplotype_barcodes`.
 
-```{r examples-phylogeny-gtrees-illumina}
+```{r examples-phylogeny-gtrees-illumina, eval = FALSE}
 # 2 of each barcode bc it's diploid
 haplotype_barcodes <- rep(c("TCGCCTTA", "CTAGTACG", "TTCTGCCT", "GCTCAGGA", "AGGAGTCC", 
                           "CATGCCTA", "GTAGAGAG", "CCTCTCTG", "AGCGTAGC", "CAGCCTCG", 
