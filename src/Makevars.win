@@ -21,6 +21,13 @@ PKG_CPPFLAGS = -I../inst/include/ $(RHTSLIB_CPPFLAGS)
 # For htslib:
 RHTSLIB_LIBS = $(shell echo 'Rhtslib::pkgconfig("PKG_LIBS")'|\
 	"${R_HOME}/bin/R" --vanilla --slave)
+
+
+## The following is for necessary external libraries for Rhtslib
+RHTSLIB_LIBS += -L${LOCAL_SOFT}/lib${R_ARCH}
+RHTSLIB_LIBS += -L$(LIB_CURL)/lib${R_ARCH}
+
+
 # For portable zlib:
 ZLIBIOC_CFLAGS = $(shell echo 'zlibbioc::pkgconfig("PKG_CFLAGS")'|\
 	"${R_HOME}/bin/R" --vanilla --slave)
