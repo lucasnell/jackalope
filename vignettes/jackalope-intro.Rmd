@@ -248,17 +248,13 @@ from the reference genome.
 Five of the haplotypes are from one population, five from another.
 The symmetrical migration rate is 100 individuals per generation.
 I used a recombination rate of 1 (the expected number of recombinations on the locus
-per $4 N_0$ generations).
+per $4 N_0$ generations) and specifying the recombination rate and chromosome size
+for `scrm` using the command `-r 1 C` for chromosome size `C`.
 I used the population-scaled mutation rate for *D. melanogaster*, scaled such 
 that the mutation rate ($\mu$) is in units of mutations per $4 N_0$ generations,
 where $N_0$ is the population size.
 For $N_0$, I'm using the effective population size for *D. melanogaster*,
 per `evo_rates`.
-Because "scrm assumes an infinite-sites model for both recombinations and mutations"
-(`scrm` documentation), I'm converting the decimals used to represent each segregating
-site's position to integers.
-Many of the sites don't map onto a unique position on the small chromosomes in `ref`,
-so duplicates are removed.
 The other code in the chunk below is to convert the output to look like that from
 the `scrm` R package, which can be easily processed by `jackalope`.
 
