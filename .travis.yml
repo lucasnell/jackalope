@@ -1,31 +1,34 @@
 # R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
 language: r
-sudo: false
 
 
 bioc_packages:
   - zlibbioc
   - Rhtslib
 
-r_binary_packages:
-  - Rcpp
-  - RcppArmadillo
-  - RcppProgress
-  - ape
-  - R6
-  - knitr
-  - testthat
 
 
 # NOTES:
 # Not doing devel on osx because CRAN doesn’t publish OSX binary packages for r-devel.
-# Using `osx_image: xcode9.2` to use macOS version 10.12
-# Caching packages in linux->oldrel causes problems
+# Including `r_binary_packages` in oldrel caused "number of columns of matrices must
+#     match" error
+
 
 
 matrix:
   include:
+  - r: devel
+    os: linux
+    cache: packages
+    r_binary_packages:
+      - Rcpp
+      - RcppArmadillo
+      - RcppProgress
+      - ape
+      - R6
+      - knitr
+      - testthat
   - r: release
     os: linux
     cache: packages
@@ -33,18 +36,29 @@ matrix:
       - covr
     after_success:
       - Rscript -e 'library(covr); codecov()'
-  - r: devel
-    os: linux
-    cache: packages
-  - r: oldrel
-    os: linux
+    r_binary_packages:
+      - Rcpp
+      - RcppArmadillo
+      - RcppProgress
+      - ape
+      - R6
+      - knitr
+      - testthat
   - r: release
     os: osx
-    osx_image: xcode8.3
     cache: packages
+    r_binary_packages:
+      - Rcpp
+      - RcppArmadillo
+      - RcppProgress
+      - ape
+      - R6
+      - knitr
+      - testthat
+  - r: oldrel
+    os: linux
   - r: oldrel
     os: osx
-    osx_image: xcode8.3
 
 
 # safe list
@@ -53,12 +67,17 @@ branches:
   - master
   - develop
 
-## To deal with some packages trying to use OpenMP on macOS:
+## To deal with some packages trying to use OpenMP on macOS,
+## and to deal with "File `inconsolata.sty' not found." error
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];
     then
-    mkdir -p ~/.R;
-    echo "SHLIB_OPENMP_CXXFLAGS = " >>~/.R/Makevars;
-    echo "SHLIB_OPENMP_CFLAGS = " >>~/.R/Makevars;
+      mkdir -p ~/.R;
+      echo "SHLIB_OPENMP_CXXFLAGS = " >>~/.R/Makevars;
+      echo "SHLIB_OPENMP_CFLAGS = " >>~/.R/Makevars;
+      brew cask install basictex
+      sudo tlmgr update --self
+      sudo tlmgr update --all
+      sudo tlmgr install titling framed inconsolata
+      sudo tlmgr install collection-fontsrecommended
     fi
-
