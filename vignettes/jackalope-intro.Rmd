@@ -23,13 +23,46 @@ This document provides brief examples of how `jackalope` can be used
 to generate sequencing data that can inform some common sampling decisions for HTS
 studies.
 
-For an example reference assembly, I simply simulated one of size 1 kb
-using the following code:
 
-```{r examples-create-assembly}
-ref <- create_genome(10, 1e2)
+
+## Generating reference genome
+
+Here, I'll show how to generate a reference genome based on an existing assembly
+or via simulated DNA sequences.
+
+To show how an existing assembly is read in `jackalope`, the code below
+processes the assembly for *Drosophila melanogaster*
+(version 6.27) downloaded from `flybase.org` [@Thurmond_2018].
+It reads the compressed FASTA file, filters out scaffolds by using a size threshold,
+removes the Y chromosome (we'll assume we only sampled females), and 
+merges the left and right arms of chromosomes 2 and 3.
+It lastly sets the names of chromosomes 2 and 3 to be `"2"` and `"3"`, respectively.
+
+```{r examples-read-assembly-for-show, eval = FALSE}
+ref <- read_fasta("dmel-6.27.fasta.gz", cut_names = TRUE)
+ref$filter_chroms(1e6, method = "size")
+ref$rm_chroms("Y")
+ref$merge_chroms(c("2L", "2R"))
+ref$merge_chroms(c("3L", "3R"))
+names <- ref$chrom_names()
+names[grepl("^2", names)] <- "2"
+names[grepl("^3", names)] <- "3"
+ref$set_names(names)
 ```
 
+
+For the rest of the document, I will use a simulated genome for simplicity 
+(and so that I don't have to store the *D. melanogaster* genome inside this package).
+Here is how I simulated a genome of size $\sim 1$ kb split among 4 chromosomes,
+with the same names as the chromosomes in the *D. melanogaster* genome:
+
+
+```{r examples-create-assembly}
+ref <- create_genome(n_chroms = 4,
+                     len_mean = 1e3 / 4,
+                     len_sd = 10)
+ref$set_names(c(2:4, "X"))
+```
 
 This resulted in the following `ref_genome` object:
 
@@ -38,32 +71,71 @@ print(ref)
 ```
 
 
-For molecular-evolution information, I used the TN93 model,
-an insertion rate of `2e-5` for lengths from 1 to 10,
-and
-a deletion rate of `1e-5` for lengths from 1 to 40.
-By default, the `indel` function creates rates that are proportional to
-`exp(-L)` for indel length `L` from 1 to the maximum length.
+For the examples below, we'll pretend this is our *D. melanogaster* genome.
+
+
+
+
+## Molecular evolution information
+
+To generate variant haplotypes based on our reference genome, we need molecular
+evolution information (unless passing a Variant Call Format, or VCF, file).
+For molecular-evolution information, I used the JC69 model for simplicity.
+Mutation rates were chosen from the `evo_rates` object present inside `jackalope`, which
+stores Table 1 from [Sung et al. (2016)](http://dx.doi.org/10.1534/g3.116.030890).
+The substitution and indel rates were the values from `evo_rates` specific
+to *D. melanogaster*.
+The `mu` parameter to `sub_JC69` function was set to `NULL` because the default behavior
+of all substitution-model functions in `jackalope` is to scale rate matrices such
+that branch lengths are in units of substitutions per site.
+In this case, I don't want to scale rate matrices because our branch lengths will
+be in generations.
+[Zhang and Gerstein (2003)](https://doi.org/10.1093/nar/gkg745) found a 1 to 2.90 ratio
+of insertions to deletions, and described relative rates of indels of various 
+sizes using a power-law relationship.
+To approximate the distributions they described, relative rates were derived from 
+a Lavalette distribution with $L = 60$ and $a = 1.60$ for insertions and
+$a = 1.51$ for deletions.
+The $\theta$ parameter is the population-scaled mutation rate, which we
+can get directly from `evo_rates` for *D. melanogaster*.
+Lastly, $N_0$ is the effective population size for *D. melanogaster*, which is
+used in a few instances below because `scrm` outputs branch lengths in units of 
+$4 N_0$ generations.
 
 
 ```{r examples-mevo-objects}
-sub <- sub_TN93(pi_tcag = c(0.1, 0.2, 0.3, 0.4),
-                alpha_1 = 0.0001, alpha_2 = 0.0002,
-                beta = 0.00015)
-ins <- indels(rate = 2e-5, max_length = 10)
-del <- indels(rate = 1e-5, max_length = 40)
+sub_rate <- evo_rates$subs[evo_rates$species == "Drosophila melanogaster"]
+indel_rate <- evo_rates$indels[evo_rates$species == "Drosophila melanogaster"]
+# Because both are in units of 10^-10 events per site per generation:
+sub_rate <- sub_rate * 1e-10
+indel_rate <- indel_rate * 1e-10
+
+sub <- sub_JC69(lambda = sub_rate, mu = NULL)
+ins <- indels(rate = indel_rate, max_length = 60,a = 1.60)
+del <- indels(rate = indel_rate, max_length = 60, a = 1.51)
+
+theta <- evo_rates[evo_rates$species == "Drosophila melanogaster","theta_s"]
+
+# Originally in units of 1e6 individuals
+N0 <- evo_rates[evo_rates$species == "Drosophila melanogaster", "Ne"] * 1e6
 ```
+
+When generating any haplotypes below, these objects will be used inside
+`create_haplotypes` to specify molecular evolution information.
+
 
 
 ## Assembling a genome
 
-The example here produces FASTQ files from the known reference assembly that could
+### Based on a reference
+
+The examples here produce FASTQ files from the known reference assembly that could
 test strategies for how to assemble a similar genome using HTS data.
 
 The first strategy is to use only PacBio sequencing.
 The PacBio Sequel system produces up to 500,000 reads per
 Single Molecule, Real-Time (SMRT) cell, so you could
-run the following for two cells:
+run the following for two cells (with the file `pacbio_R1.fq` as output):
 
 ```{r examples-reads-for-assembly-pacbio, eval = FALSE}
 pacbio(ref, out_prefix = "pacbio", n_reads = 2 * 500e3)
@@ -96,6 +168,74 @@ illumina(ref, out_prefix = "ill_mp", seq_sys = "MSv3",
 ```
 
 
+These data could then be used to compare genome assembly performance between
+the strategies above, or between programs within a given strategy.
+Extensions of these tests include adjusting sequencing depth, sequencing platform,
+and error rates.
+
+
+
+### Based on a diploid individual
+
+For diploid species, scientists won't be sampling a haploid reference, and 
+heterozygosity can be a real problem for the assembly process.
+So below I'll show you how to simulate a diploid individual and create reads
+based on that.
+I'll just show the hybrid assembly strategy, but the others simply differ 
+in the sequencing step as shown above.
+
+
+First, we'll simulate two haplotypes based on the $\theta$ (population-scaled mutation
+rate) and the other molecular evolution information for *D. melanogaster* we got 
+from the `evo_rates` object earlier.
+I'm also renaming the haplotypes.
+
+
+```{r examples-assembly-diploid-haplotypes}
+haps <- create_haplotypes(ref, haps_theta(theta = theta, n_haps = 2), 
+                          sub, ins, del)
+haps$set_names(c("A", "B"))
+```
+
+
+This results in the following `haplotypes` object:
+
+```{r examples-assembly-diploid-haplotypes-print, echo = FALSE}
+print(haps)
+```
+
+
+
+We generate 1 SMRT cell of PacBio sequencing and
+1 lane of $2 \times 100$bp Illumina sequencing on the HiSeq 2500 system as before,
+except using the new `haps` object instead of `ref`:
+
+```{r examples-reads-for-assembly-hybrid-diploid, eval = FALSE}
+pacbio(haps, out_prefix = "pacbio", n_reads = 500e3)
+illumina(haps, out_prefix = "illumina", n_reads = 500e6, paired = TRUE,
+         read_length = 100)
+```
+
+
+If we want to save the information for these haplotypes, we can output a VCF file
+or FASTA files (one per haplotype):
+
+```{r examples-reads-for-assembly-diploid-output, eval = FALSE}
+write_fasta(haps, "haps")
+write_vcf(haps, "haps", sample_matrix = cbind(1, 2))
+```
+
+
+This would result in the following files to be generated: 
+`haps__A.fa`, `haps__B.fa`, and `haps.vcf`.
+The `sample_matrix` argument to `write_vcf` states that the first two (i.e., all)
+haplotypes are from the first (and only) sample.
+These data could test different assembly strategies, similar to the above section,
+except that, for diploid organisms, it includes heterozygosity.
+Increasing the $\theta$ parameter will result in more heterozygosity, which is an
+obvious extension of these tests.
+
+
 
 
 ## Estimating divergence between populations
@@ -107,16 +247,29 @@ coalescent simulations that will generate segregating sites for 10 variant haplo
 from the reference genome.
 Five of the haplotypes are from one population, five from another.
 The symmetrical migration rate is 100 individuals per generation.
-I set the population-scaled mutation rate
-($\theta = 4 N_0 \mu$) to `10` for this example.
+I used a recombination rate of 1 (the expected number of recombinations on the locus
+per $4 N_0$ generations) and specifying the recombination rate and chromosome size
+for `scrm` using the command `-r 1 C` for chromosome size `C`.
+I used the population-scaled mutation rate for *D. melanogaster*, scaled such 
+that the mutation rate ($\mu$) is in units of mutations per $4 N_0$ generations,
+where $N_0$ is the population size.
+For $N_0$, I'm using the effective population size for *D. melanogaster*,
+per `evo_rates`.
+The other code in the chunk below is to convert the output to look like that from
+the `scrm` R package, which can be easily processed by `jackalope`.
 
 ```{r examples-divergence-scrm, eval = FALSE}
 library(scrm)
-ssites <- scrm(paste("10", ref$n_chroms(), "-t 10 -I 2 5 5 100"))
+# Function to run scrm for one chromosome and format output
+one_chrom <- function(.size) {
+    ssites <- scrm(sprintf("10 1 -t %.4f -r 1 %i -I 2 5 5 100", theta * 4 * N0, .size))
+    return(ssites$seg_sites[[1]])
+}
+ssites <- list(seg_sites = lapply(ref$sizes(), one_chrom))
 ```
 
-Using the previously created objects for molecular evolution information (`sub`,
-`ins`, and `del`), I create haplotypes from the reference genome:
+Using the previously created objects for molecular evolution information and
+the `haps_ssites` function, I create haplotypes from the reference genome:
 
 ```{r examples-divergence-create, eval = FALSE}
 haps <- create_haplotypes(ref, haps_ssites(ssites), sub, ins, del)
@@ -125,9 +278,9 @@ haps <- create_haplotypes(ref, haps_ssites(ssites), sub, ins, del)
 # For the purposes of the vignette, I'm just going to use `haps_theta` so I
 # don't have to (1) load scrm to build the vignette or (2) keep a relatively
 # large internal data file to store the scrm output
-# theta of 0.05 gives the same # mutations as using `ssites`
+# theta of 0.4 gives the same # mutations as using `ssites` (~ 2,500)
 set.seed(7809534)
-haps <- create_haplotypes(ref, haps_theta(theta = 0.05, n_haps = 10), sub, ins, del)
+haps <- create_haplotypes(ref, haps_theta(theta = 0.4, n_haps = 10), sub, ins, del)
 ```
 
 This results in the following set of haplotypes:
@@ -165,21 +318,34 @@ illumina(haps, out_prefix = "haps_illumina", n_reads = 500e6, paired = TRUE,
 ```
 
 
+The $F_{ST}$ calculated from the resulting VCF file could then be compared to output
+from various programs to inform which works best in a particular case.
+For uncertain population parameters (e.g., migration rates), output from
+multiple calls to `scrm` varying the parameter of interest could be input to
+the `jackalope` pipeline above to identify the conditions under which one program
+might have an advantage over another.
+
+
 
 ## Constructing a phylogeny
 
 ### From one phylogenetic tree
 
+
 This section shows how `jackalope` can generate haplotypes from a phylogeny, then
 simulate sequencing data from those haplotypes to test phylogeny reconstruction methods.
-First, I generated a random coalescent tree of 10 species using the  `ape` package.
+First, I simulated a random species tree of 10 species, then scaled it to have a 
+maximum tree depth of $4 N_0$ because we want branch lengths to be in generations:
 
 ```{r examples-phylogeny-tree}
 tree <- rcoal(10)
+tree$edge.length <- 4 * N0 * tree$edge.length / max(node.depth.edgelength(tree))
 ```
 
-Then I input that to the `create_haplotypes` function alongside the molecular evolution
-information.
+
+Function `haps_phylo` organizes and checks the `tree` object, and
+including it with the mutation-type information allowed me to create haplotypes based
+on this phylogeny:
 
 ```{r examples-phylogeny-tree-create-for-show}
 haps <- create_haplotypes(ref, haps_phylo(tree), sub, ins, del)
@@ -194,64 +360,110 @@ print(haps)
 
 
 Now I can generate data for 1 flow cell of $2 \times 250$bp sequencing
-on an Illumina MiSeq v3.
+on an Illumina MiSeq v3, where `haplotype_barcodes` is a character string that specifies
+the barcodes for each haplotype.
+I also wrote the true phylogenetic tree to a NEWICK file.
 
 ```{r examples-phylogeny-tree-illumina, eval = FALSE}
+haplotype_barcodes <- c("CTAGCTTG", "TCGATCCA", "ATACCAAG", "GCGTTGGA",
+                        "CTTCACGG", "TCCTGTAA", "CCTCGGTA", "TTCTAACG", 
+                        "CGCTCGTG", "TATCTACA")
 illumina(haps, out_prefix = "phylo_tree", seq_sys = "MSv3",
-         read_length = 250, n_reads = 50e6)
+         paired = FALSE, read_length = 250, n_reads = 50e6,
+         barcodes = haplotype_barcodes)
+ape::write.tree(tree, "true.tree")
 ```
+
+
+
+The true phylogenetic tree would then be compared to the final tree output from
+the program(s) the user chooses to test.
+
+
 
 
 
 ### From gene trees
 
+
 Similar to the section above, the ultimate goal here is to test phylogeny
 reconstruction methods.
 The difference in this section is that instead of using a single, straightforward
 phylogeny, I use multiple gene trees per chromosome.
-In the species used in these simulations, species 3 diverged from 1 and 2 at $t = 0.5$,
+In the species used in these simulations, species 3 diverged from 1 and 2 at $t = 1.0$,
 where $t$ indicates time into the past and is in units of $4 N_0$ generations.
-Species 1 and 2 diverged at $t = 0.25$.
+Species 1 and 2 diverged at $t = 0.5$.
 I assume a recombination rate of $1 / (4 N_0)$ recombination events per chromosome
 per generation.
-Because each chromosome is a different length and the length is required for including
-a recombination rate, I had to run `scrm` separately for each chromosome.
 There are 4 diploid individuals sampled per species.
+I used the following code to call `scrm` to simulate the gene trees
+and create the object `gtrees`.
+And like the section using segregating sites, we have to wrap `lapply` inside 
+`list(trees = ...)` to replicate the data structure from `scrm` for
+`jackalope` to use later.
 
 
 ```{r examples-phylogeny-gtrees-scrm, eval = FALSE}
 # Run scrm for one chromosome size:
-one_chrom <- function(size) {
+one_chrom <- function(.size) {
     sims <- scrm(
         paste("24 1",
               # Output gene trees:
               "-T",
               # Recombination:
-              "-r 1", size,
+              "-r 1", .size,
               # 3 species with no ongoing migration:
               "-I 3", paste(rep("8", 3), collapse = " "), "0",
               # Species 2 derived from 1 at time 1.0:
-              "-ej 0.5 2 1",  
+              "-ej 1.0 2 1",  
               # Species 3 derived from 2 at time 0.5:
-              "-ej 0.25 3 2"
+              "-ej 0.5 3 2"
         ))
-    return(sims$trees[[1]])
+    trees <- sims$trees[[1]]
+    # scrm output branch lenghts in units of 4*N0 generations, but we want just
+    # generations:
+    adjust_tree <- function(.p) {
+        # Read to phylo object and adjust branch lengths:
+        .tr <- read.tree(text = .p)
+        .tr$edge.length <- .tr$edge.length * 4 * N0
+        # "prefix" from `.p` showing how large the region this gene tree refers to is
+        prefix <- paste0(strsplit(.p, "\\]")[[1]][1], "]")
+        # Put back together into NEWICK text
+        return(paste0(prefix, write.tree(.tr)))
+    }
+    trees <- sapply(trees, adjust_tree)
+    names(trees) <- NULL
+    return(trees)
 }
 # For all chromosomes:
 gtrees <- list(trees = lapply(ref$sizes(), one_chrom))
 ```
 
+
+We can write the true gene trees using `write_gtrees` to an `ms`-style file:
+
+
+```{r examples-phylogeny-gtrees-write-true-gtrees, eval = FALSE}
+write_gtrees(haps_gtrees(gtrees), "gtrees")
+```
+
+
+The `create_haplotypes` function uses these gene trees to create variant haplotypes.
+As for the other haplotype-creation methods, function `haps_gtrees` checks and organizes
+information from the `gtrees` object.
+
+
 ```{r examples-phylogeny-gtrees-create-haplotypes, eval = FALSE}
 haps <- create_haplotypes(ref, haps_gtrees(gtrees),
-                        sub, ins, del)
+                          sub, ins, del)
 ```
 ```{r examples-phylogeny-gtrees-create-do, echo = FALSE}
 # For the purposes of the vignette, I'm just going to use `haps_theta` so I
 # don't have to (1) load scrm to build the vignette or (2) keep a relatively
 # large internal data file to store the scrm output
-# theta of 0.05 gives the same # mutations as using `ssites`
+# theta of 0.125 gives the same # mutations as using `gtrees` (~2,600)
 set.seed(7809534)
-haps <- create_haplotypes(ref, haps_theta(theta = 0.005, n_haps = 24), sub, ins, del)
+haps <- create_haplotypes(ref, haps_theta(theta = 0.125, n_haps = 24), sub, ins, del)
 ```
 
 
@@ -264,7 +476,7 @@ print(haps)
 
 To store mutation information by diploid sample, the `write_vcf` function writes
 the `haplotypes` object to a VCF file.
-It assigns haplotypes to diploid samples using a matrix for the
+It assigns every other haplotype to a new diploid sample using a matrix for the
 `sample_matrix` argument:
 
 ```{r examples-phylogeny-write-vcf, eval = FALSE}
@@ -273,13 +485,23 @@ write_vcf(haps, out_prefix = "hap_gtrees",
 ```
 
 
-Now I can generate data for 1 flow cell of $2 \times 250$bp sequencing
-on an Illumina MiSeq v3.
+
+Next I generated data for 1 flow cell of $2 \times 250$bp sequencing
+on an Illumina MiSeq v3, with barcodes in the object `haplotype_barcodes`.
 
 ```{r examples-phylogeny-gtrees-illumina, eval = FALSE}
-illumina(ref, out_prefix = "phylo_gtrees",
-         seq_sys = "MSv3",
-         paired = TRUE,
-         read_length = 250,
-         n_reads = 50e6)
+# 2 of each barcode bc it's diploid
+haplotype_barcodes <- rep(c("TCGCCTTA", "CTAGTACG", "TTCTGCCT", "GCTCAGGA", "AGGAGTCC", 
+                          "CATGCCTA", "GTAGAGAG", "CCTCTCTG", "AGCGTAGC", "CAGCCTCG", 
+                          "TGCCTCTT", "TCCTCTAC"), each = 2)
+illumina(haps, out_prefix = "phylo_gtrees", seq_sys = "MSv3",
+         read_length = 250, n_reads = 50e6, paired = TRUE, 
+         barcodes = haplotype_barcodes)
 ```
+
+
+Topologies of the gene trees would then be compared to final phylogenies output
+from software the user is interested in testing.
+Varying recombination rates or adding gene flow after separation of species would
+be natural extensions of these simulations.
+

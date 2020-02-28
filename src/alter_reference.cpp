@@ -7,7 +7,7 @@
 
 #include <RcppArmadillo.h>
 
-#include <algorithm>  // random_shuffle
+#include <algorithm>  // random_shuffle, sort
 #include <deque>
 #include <string>
 #include <vector>
@@ -38,22 +38,11 @@ using namespace Rcpp;
 // ======================================================================================
 
 
-
-//' Merge a reference genome into a single chromosome.
-//'
-//'
-//' @param ref_genome_ptr An external pointer (R class \code{externalptr}) to a
-//'     \code{RefGenome} class in C++ (the full class in C++ is
-//'     \code{Rcpp::XPtr<RefGenome>}).
-//'
-//' @return Nothing. Changes are made in place.
-//'
-//' @name merge_chromosomes
-//'
-//' @noRd
-//'
+/*
+ Merge all chromosomes from a reference genome into a single chromosome.
+*/
 //[[Rcpp::export]]
-void merge_chromosomes_cpp(SEXP ref_genome_ptr) {
+void merge_all_chromosomes_cpp(SEXP ref_genome_ptr) {
 
     XPtr<RefGenome> ref_genome(ref_genome_ptr);
     std::deque<RefChrom>& chroms(ref_genome->chromosomes);
@@ -80,6 +69,42 @@ void merge_chromosomes_cpp(SEXP ref_genome_ptr) {
     clear_memory<std::deque<RefChrom>>(chroms);
 
     ref_genome->merged = true;
+
+    return;
+}
+
+/*
+ Merge one or more reference chromosomes into a single chromosome.
+*/
+//[[Rcpp::export]]
+void merge_chromosomes_cpp(SEXP ref_genome_ptr,
+                           std::deque<uint64> chrom_inds) {
+
+    XPtr<RefGenome> ref_genome(ref_genome_ptr);
+    std::deque<RefChrom>& chroms(ref_genome->chromosomes);
+
+    // Merging the back chromosomes to the first one:
+    RefChrom& chrom(chroms[chrom_inds.front()]);
+    std::string& nts(chrom.nucleos);
+
+    for (uint64 i = 1; i < chrom_inds.size(); i++) {
+        RefChrom& chrom_i(chroms[chrom_inds[i]]);
+        chrom.name += "__";
+        chrom.name += chrom_i.name;
+        std::string& nts_i(chrom_i.nucleos);
+        nts += nts_i;
+        // clear memory in string
+        nts_i.clear();
+        clear_memory<std::string>(nts_i);
+    }
+    // Go back and remove RefChrom objects:
+    chrom_inds.pop_front(); // don't want to remove first one w all the sequence!
+    std::sort(chrom_inds.begin(), chrom_inds.end());
+    for (auto iter = chrom_inds.rbegin(); iter != chrom_inds.rend(); ++iter) {
+        chroms.erase(chroms.begin() + *iter);
+    }
+    // clear memory in deque
+    clear_memory<std::deque<RefChrom>>(chroms);
 
     return;
 }
@@ -144,8 +169,8 @@ void filter_chromosomes_cpp(SEXP ref_genome_ptr,
     if (min_chrom_size > 0) {
         if (chroms.back().size() >= min_chrom_size) return;
         if (chroms[i].size() < min_chrom_size) {
-            str_stop({"Desired minimum scaffold size is too large. None found. ",
-                     "The minimum size is ", std::to_string(chroms[i].size())});
+            str_stop({"Desired minimum chromosome size is too large. None found. ",
+                     "The largest chromosome is ", std::to_string(chroms[i].size())});
         }
         // after below, `iter` points to the first chromosome smaller than the minimum
         while (chroms[i].size() >= min_chrom_size) {

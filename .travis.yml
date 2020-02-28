@@ -1,31 +1,79 @@
 # R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
 language: r
-r:
-  - release
-  - devel
-sudo: false
-cache: packages
 
-os:
-  - linux
-  - osx
 
 bioc_packages:
   - zlibbioc
   - Rhtslib
 
-r_binary_packages:
-  - Rcpp
-  - RcppArmadillo
-  - RcppProgress
-  - ape
-  - R6
-  - knitr
-  - testthat
 
-r_packages:
-  - covr
+
+# NOTES:
+# Not doing devel on osx because CRAN doesn’t publish OSX binary packages for r-devel.
+# Including `r_binary_packages` in oldrel caused "number of columns of matrices must
+#     match" error
+
+
+
+matrix:
+  include:
+  - r: devel
+    os: linux
+    cache: packages
+    r_binary_packages:
+      - Rcpp
+      - RcppArmadillo
+      - RcppProgress
+      - ape
+      - R6
+      - knitr
+      - testthat
+  - r: release
+    os: linux
+    cache: packages
+    env:
+      - PKG_TARBALL=jackalope_1.1.0.tar.gz
+    r_packages:
+      - covr
+      - pkgdown
+    after_success:
+      - Rscript -e 'library(covr); codecov()'
+      - tar -C .. -xf $PKG_TARBALL
+      - rm -rf jackalope.Rcheck
+      - Rscript -e 'pkgdown::build_site()'
+    deploy:
+      - provider: pages
+        skip-cleanup: true
+        github-token: $GITHUB_TOKEN
+        keep-history: false
+        local-dir: docs
+        on:
+          branch: master
+    r_binary_packages:
+      - Rcpp
+      - RcppArmadillo
+      - RcppProgress
+      - ape
+      - R6
+      - knitr
+      - testthat
+  - r: release
+    os: osx
+    cache: packages
+    r_binary_packages:
+      - Rcpp
+      - RcppArmadillo
+      - RcppProgress
+      - ape
+      - R6
+      - knitr
+      - testthat
+  - r: oldrel
+    os: linux
+  - r: oldrel
+    os: osx
+
 
 # safe list
 branches:
@@ -33,20 +81,17 @@ branches:
   - master
   - develop
 
-## To deal with some packages trying to use OpenMP on macOS:
+## To deal with some packages trying to use OpenMP on macOS,
+## and to deal with "File `inconsolata.sty' not found." error
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];
     then
     mkdir -p ~/.R;
     echo "SHLIB_OPENMP_CXXFLAGS = " >>~/.R/Makevars;
     echo "SHLIB_OPENMP_CFLAGS = " >>~/.R/Makevars;
+    brew cask install basictex;
+    sudo tlmgr update --self;
+    sudo tlmgr update --all;
+    sudo tlmgr install titling framed inconsolata;
+    sudo tlmgr install collection-fontsrecommended;
     fi
-
-after_success:
-  - Rscript -e 'library(covr); codecov()'
-
-# Because CRAN doesn’t publish OSX binary packages for r-devel:
-matrix:
-  exclude:
-  - r: devel
-    os: osx

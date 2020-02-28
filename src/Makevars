@@ -10,12 +10,12 @@ CXX_STD = CXX11
 
 
 # Access to pgc RNG and htslib headers:
-RHTSLIB_CPPFLAGS=$(shell echo 'Rhtslib::pkgconfig("PKG_CPPFLAGS")'|\
+RHTSLIB_CPPFLAGS = $(shell echo 'Rhtslib::pkgconfig("PKG_CPPFLAGS")'|\
     "${R_HOME}/bin/R" --vanilla --slave)
-PKG_CPPFLAGS = -I../inst/include/ $(RHTSLIB_CPPFLAGS)
+PKG_CPPFLAGS = -D_FILE_OFFSET_BITS=64 -I../inst/include/ $(RHTSLIB_CPPFLAGS)
 
 # For htslib:
-RHTSLIB_LIBS=$(shell echo 'Rhtslib::pkgconfig("PKG_LIBS")'|\
+RHTSLIB_LIBS = $(shell echo 'Rhtslib::pkgconfig("PKG_LIBS")'|\
     "${R_HOME}/bin/R" --vanilla --slave)
 
 # Compression library and others

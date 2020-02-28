@@ -155,6 +155,31 @@ test_that("haplotype creation works with scrm coalescent object", {
 })
 
 
+# scrm checks - exact -----
+
+test_that("haplotype creation works with scrm coalescent object", {
+
+    .arg_list <- arg_list
+
+    arg_list <- c(list(epsilon = 0), arg_list)
+
+    skip_if_not_installed("scrm")
+    library(scrm)
+    coal_obj <- scrm("5 3 -r 3.1 100 -t 10 -T -L")
+
+    coal_obj_run_trees(coal_obj, "scrm")
+    coal_obj_run_sites(coal_obj, "scrm")
+    coal_obj_err_no_trees(coal_obj, "scrm")
+    coal_obj_err_no_sites(coal_obj, "scrm")
+    coal_obj_err_missing_tree_pos(coal_obj, "scrm")
+    coal_obj_err_miss_tree_tip(coal_obj, "scrm")
+    coal_obj_err_bad_site_pos(coal_obj, "scrm")
+
+    arg_list <- .arg_list
+
+})
+
+
 # coala checks -----
 
 test_that("haplotype creation works with coala coalescent object", {

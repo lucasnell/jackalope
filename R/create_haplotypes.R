@@ -34,6 +34,12 @@ fill_coal_mat_pos <- function(sites_mats, chrom_sizes) {
         if (all(pos < 1 & pos > 0)) {
             # Converting to integer positions (0-based):
             pos  <- as.integer(pos * chrom_sizes[i]);
+            sites_mats[[i]][,1] <- pos
+            # There might be some repeats now, so removing those:
+            if (anyDuplicated(pos) != 0) {
+                dups <- duplicated(pos)
+                sites_mats[[i]] <- sites_mats[[i]][!dups,]
+            }
         } else {
             all_ints <- all(pos %% 1 == 0)
             if (all_ints && all(pos < chrom_sizes[i] & pos >= 0)) {
@@ -51,8 +57,8 @@ fill_coal_mat_pos <- function(sites_mats, chrom_sizes) {
                      "It appears you need to re-run `haps_ssites` before attempting to ",
                      "run `create_haplotypes` again.")
             }
+            sites_mats[[i]][,1] <- pos
         }
-        sites_mats[[i]][,1] <- pos
 
     }
 
@@ -552,9 +558,10 @@ to_hap_set__haps_gtrees_info <- function(x, reference, sub, ins, del, epsilon,
 #'     the Doob–Gillespie algorithm, as used for the indel portion of the simulations.
 #'     Smaller values result in a closer approximation.
 #'     Larger values are less exact but faster.
-#'     Values must be `> 0` and `< 1`.
-#'     For more information, see Cao et al. (2006) and Wieder et al. (2011),
-#'     listed below.
+#'     Values must be `>= 0` and `< 1`.
+#'     For more information on the approximation, see Cao et al. (2006) and
+#'     Wieder et al. (2011), listed below.
+#'     If `epsilon` is `0`, then it reverts to the exact Doob–Gillespie algorithm.
 #'     Defaults to `0.03`.
 #' @param n_threads Number of threads to use for parallel processing.
 #'     This argument is ignored if OpenMP is not enabled.
@@ -655,8 +662,8 @@ create_haplotypes <- function(reference,
     if (!is.null(del) && !inherits(del, "indel_info")) {
         err_msg("create_haplotypes", "del", "NULL or a \"indel_info\" object")
     }
-    if (!single_number(epsilon) || epsilon <= 0 || epsilon >= 1) {
-        err_msg("create_haplotypes", "epsilon", "a single number > 0 and < 1")
+    if (!single_number(epsilon, 0) || epsilon >= 1) {
+        err_msg("create_haplotypes", "epsilon", "a single number >= 0 and < 1")
     }
     # If sub is NULL and it's not a vcf file method, convert sub to rate-0 matrix:
     if (is.null(sub) && !vcf) sub <- sub_JC69(0)

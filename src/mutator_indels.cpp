@@ -26,6 +26,94 @@ using namespace Rcpp;
 
 
 
+// Add just one indel
+inline void IndelMutator::one_indel__(const double& change,
+                                      std::string& insert_str,
+                                      const uint64& begin,
+                                      uint64& end,
+                                      std::deque<uint8>& rate_inds,
+                                      SubMutator& subs,
+                                      HapChrom& hap_chrom,
+                                      pcg64& eng) {
+
+    if (change > 0) {
+        uint64 size = static_cast<uint64>(change);
+        uint64 pos = static_cast<uint64>(runif_01(eng) * (end - begin) + begin);
+        insert_str.clear();
+        for (uint32 j = 0; j < size; j++) insert_str += insert.sample(eng);
+        hap_chrom.add_insertion(insert_str, pos);
+        subs.insertion_adjust(size, pos, begin, rate_inds, eng);
+        end += size;
+    } else {
+        uint64 size = std::min(static_cast<uint64>(std::abs(change)),
+                               end - begin);
+        uint64 pos = static_cast<uint64>(runif_01(eng) *
+            (end - begin - size + 1) + begin);
+        hap_chrom.add_deletion(size, pos);
+        subs.deletion_adjust(size, pos, begin, rate_inds);
+        end -= size;
+    }
+
+    return;
+
+}
+
+
+
+inline void IndelMutator::exact_sim(int& status,
+                                    double& b_len,
+                                    const uint64& begin,
+                                    uint64& end,
+                                    std::deque<uint8>& rate_inds,
+                                    SubMutator& subs,
+                                    HapChrom& hap_chrom,
+                                    pcg64& eng,
+                                    Progress& prog_bar) {
+
+
+    // For insertions:
+    std::string insert_str;
+    insert_str.reserve(rates.n_elem / 2);
+
+    uint32 iters = 0;
+
+    double rate = total_rate * (end - begin);
+
+    jump_distr.param(std::exponential_distribution<double>::param_type(rate));
+
+    b_len -= jump_distr(eng);
+
+    uint32 i; // index for which indel-event type
+
+
+#ifdef __JACKALOPE_DIAGNOSTICS
+    double csize;
+    arma::vec n_muts;
+#endif
+
+    while (b_len > 0) {
+
+        if (interrupt_check(iters, prog_bar)) {
+            status = -1;
+            return;
+        }
+
+        i = event_sampler.sample(eng);
+
+        one_indel__(changes(i), insert_str, begin, end, rate_inds, subs, hap_chrom, eng);
+
+        if (end == begin) return;
+
+        rate = total_rate * (end - begin);
+        jump_distr.param(std::exponential_distribution<double>::param_type(rate));
+        b_len -= jump_distr(eng);
+
+    }
+
+
+    return;
+}
+
 /*
  This calculates...
  - tau (the period of time over which to generate indels)
@@ -88,6 +176,13 @@ int IndelMutator::add_indels(double b_len,
 
     if ((rates.n_elem == 0) || (b_len == 0) || (end == begin)) return 0;
     if (prog_bar.is_aborted() || prog_bar.check_abort()) return -1;
+
+    // Doing exact simulation in this case
+    if (eps <= 0) {
+        int status = 0;
+        exact_sim(status, b_len, begin, end, rate_inds, subs, hap_chrom, eng, prog_bar);
+        return status;
+    }
 
     // Vector of indel-type indices, one item per indel "event"
     std::vector<uint32> events;
@@ -159,24 +254,9 @@ int IndelMutator::add_indels(double b_len,
             // Check for user interrupt every 1000 indels:
             if (interrupt_check(iters, prog_bar)) return -1;
 
-            if (change > 0) {
-                uint64 size = static_cast<uint64>(change);
-                uint64 pos = static_cast<uint64>(runif_01(eng) * (end - begin) + begin);
-                insert_str.clear();
-                for (uint32 j = 0; j < size; j++) insert_str += insert.sample(eng);
-                hap_chrom.add_insertion(insert_str, pos);
-                subs.insertion_adjust(size, pos, begin, rate_inds, eng);
-                end += size;
-            } else {
-                uint64 size = std::min(static_cast<uint64>(std::abs(change)),
-                                       end - begin);
-                uint64 pos = static_cast<uint64>(runif_01(eng) *
-                    (end - begin - size + 1) + begin);
-                hap_chrom.add_deletion(size, pos);
-                subs.deletion_adjust(size, pos, begin, rate_inds);
-                end -= size;
-                if (end == begin) return 0;
-            }
+            one_indel__(change, insert_str, begin, end, rate_inds, subs, hap_chrom, eng);
+
+            if (end == begin) return 0;
 
         }
 

@@ -1,9 +1,10 @@
 
-# jackalope 1.0.1
+# jackalope 1.1.0
 
 * Fixed bug when scaling tree using theta parameter.
 * Using "haplotypes" instead of "variants" throughout.
 * Updated `R6` class documentation for new `roxygen2` methods.
+* Provide method to merge >1 chromosomes, but not the whole genome
 
 
 # jackalope 1.0.0

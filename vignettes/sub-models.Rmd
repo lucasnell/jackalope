@@ -54,6 +54,9 @@ Functions in `jackalope` that employ each model take the form `sub_X` for model 
 (e.g., `sub_JC69` for JC69 model).
 
 
+*Note:* In all models, the matrices are scaled such that the overall mutation rate is `1`,
+but this behavior can be change using the `mu` parameter for each function.
+
 
 
 ## JC69
