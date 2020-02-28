@@ -1,19 +1,8 @@
 # R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
 language: r
-r:
-  - oldrel
-  - release
-  - devel
 sudo: false
 cache: packages
-
-os:
-  - linux
-  - osx
-
-# macOS 10.12 version
-osx_image: xcode9.2
 
 
 bioc_packages:
@@ -29,8 +18,31 @@ r_binary_packages:
   - knitr
   - testthat
 
-r_packages:
-  - covr
+
+# NOTES:
+# Not doing devel on osx because CRAN doesn’t publish OSX binary packages for r-devel.
+# Using `osx_image: xcode9.2` to use macOS version 10.12
+
+
+matrix:
+  include:
+  - r: release
+    os: linux
+    r_packages:
+      - covr
+    after_success:
+      - Rscript -e 'library(covr); codecov()'
+  - r: devel
+    os: linux
+  - r: oldrel
+    os: linux
+  - r: release
+    os: osx
+    osx_image: xcode9.2
+  - r: oldrel
+    os: osx
+    osx_image: xcode9.2
+
 
 # safe list
 branches:
@@ -47,11 +59,3 @@ before_install:
     echo "SHLIB_OPENMP_CFLAGS = " >>~/.R/Makevars;
     fi
 
-after_success:
-  - Rscript -e 'library(covr); codecov()'
-
-# Because CRAN doesn’t publish OSX binary packages for r-devel:
-matrix:
-  exclude:
-  - r: devel
-    os: osx

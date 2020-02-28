@@ -8,7 +8,19 @@ init:
         Import-Module '..\appveyor-tool.ps1'
 
 install:
-  ps: Bootstrap
+  ps: |
+        Bootstrap
+        Progress "Downloading external software"
+        md C:\Rextsoft
+        md C:\Rextsoft\Curl
+        Invoke-WebRequest http://www.stats.ox.ac.uk/pub/Rtools/goodies/multilib/local320.zip -OutFile "C:\Rextsoft\local320.zip"
+        Invoke-WebRequest http://www.stats.ox.ac.uk/pub/Rtools/goodies/multilib/curl-7.40.0.zip -OutFile "C:\Rextsoft\Curl\curl-7.40.0.zip"
+        7z x C:\Rextsoft\local320.zip -oC:\Rextsoft -r
+        7z x C:\Rextsoft\Curl\curl-7.40.0.zip -oC:\Rextsoft\Curl -r
+        Rscript -e "m <- readLines('E:/R/etc/i386/Makeconf'); m <- paste0(sub('^LOCAL_SOFT = d:/RCompile/r-compiling/local/local320$', 'LOCAL_SOFT = C:/Rextsoft', m), '\n', collapse='\n'); f <- file('E:/R/etc/i386/Makeconf', 'wb'); writeChar(m, f, eos = NULL); close(f)"
+        Rscript -e "m <- readLines('E:/R/etc/x64/Makeconf'); m <- paste0(sub('^LOCAL_SOFT = d:/RCompile/r-compiling/local/local320$', 'LOCAL_SOFT = C:/Rextsoft', m), '\n', collapse='\n'); f <- file('E:/R/etc/x64/Makeconf', 'wb'); writeChar(m, f, eos = NULL); close(f)"
+        Rscript -e "m <- readLines('E:/R/etc/i386/Makeconf'); if (any(grepl('^LIB_CURL', m))){ m[grepl('^LIB_CURL', m)] <- 'LIB_CURL = C:/Rextsoft/Curl' } else { m <- c(m, 'LIB_CURL = C:/Rextsoft/Curl') }; m <- paste0(m, '\n', collapse='\n'); f <- file('E:/R/etc/i386/Makeconf', 'wb'); writeChar(m, f, eos = NULL); close(f)"
+        Rscript -e "m <- readLines('E:/R/etc/x64/Makeconf'); if (any(grepl('^LIB_CURL', m))){ m[grepl('^LIB_CURL', m)] <- 'LIB_CURL = C:/Rextsoft/Curl' } else { m <- c(m, 'LIB_CURL = C:/Rextsoft/Curl') }; m <- paste0(m, '\n', collapse='\n'); f <- file('E:/R/etc/x64/Makeconf', 'wb'); writeChar(m, f, eos = NULL); close(f)"
 
 
 # Adapt as necessary starting from here
