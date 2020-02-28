@@ -32,10 +32,24 @@ matrix:
   - r: release
     os: linux
     cache: packages
+    env:
+      - PKG_TARBALL=jackalope_1.1.0.tar.gz
     r_packages:
       - covr
+      - pkgdown
     after_success:
       - Rscript -e 'library(covr); codecov()'
+      - tar -C .. -xf $PKG_TARBALL
+      - rm -rf jackalope.Rcheck
+      - Rscript -e 'pkgdown::build_site()'
+    deploy:
+      - provider: pages
+        skip-cleanup: true
+        github-token: $GITHUB_TOKEN
+        keep-history: false
+        local-dir: docs
+        on:
+          branch: master
     r_binary_packages:
       - Rcpp
       - RcppArmadillo
