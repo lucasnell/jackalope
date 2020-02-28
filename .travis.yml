@@ -2,7 +2,6 @@
 
 language: r
 sudo: false
-cache: packages
 
 
 bioc_packages:
@@ -22,26 +21,30 @@ r_binary_packages:
 # NOTES:
 # Not doing devel on osx because CRAN doesn’t publish OSX binary packages for r-devel.
 # Using `osx_image: xcode9.2` to use macOS version 10.12
+# Caching packages in linux->oldrel causes problems
 
 
 matrix:
   include:
   - r: release
     os: linux
+    cache: packages
     r_packages:
       - covr
     after_success:
       - Rscript -e 'library(covr); codecov()'
   - r: devel
     os: linux
+    cache: packages
   - r: oldrel
     os: linux
   - r: release
     os: osx
-    osx_image: xcode9.2
+    osx_image: xcode8.3
+    cache: packages
   - r: oldrel
     os: osx
-    osx_image: xcode9.2
+    osx_image: xcode8.3
 
 
 # safe list
