@@ -72,12 +72,12 @@ branches:
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];
     then
-      mkdir -p ~/.R;
-      echo "SHLIB_OPENMP_CXXFLAGS = " >>~/.R/Makevars;
-      echo "SHLIB_OPENMP_CFLAGS = " >>~/.R/Makevars;
-      brew cask install basictex
-      sudo tlmgr update --self
-      sudo tlmgr update --all
-      sudo tlmgr install titling framed inconsolata
-      sudo tlmgr install collection-fontsrecommended
+    mkdir -p ~/.R;
+    echo "SHLIB_OPENMP_CXXFLAGS = " >>~/.R/Makevars;
+    echo "SHLIB_OPENMP_CFLAGS = " >>~/.R/Makevars;
+    brew cask install basictex;
+    sudo tlmgr update --self;
+    sudo tlmgr update --all;
+    sudo tlmgr install titling framed inconsolata;
+    sudo tlmgr install collection-fontsrecommended;
     fi
