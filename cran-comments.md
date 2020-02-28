@@ -2,17 +2,20 @@
 
 This is a resubmission. In this version, I have done the following:
 
+- Updated Makevars.win so that it compiles correctly on Windows without needing Rtools 4.0
+- Updated Makevars so that it compiles correctly on macOS oldrel
 - Fixed a bug related to scaling phylogenetic trees in the `haps_theta` function
 - Changed documentation and code to use "haplotypes" instead of "variants" throughout
 - Updated `R6` class documentation for new `roxygen2` methods
+- New method to merge >1 chromosomes, but not the whole genome
 
 
 ## Test environments
 
 * macOS 10.15.2 (local), R 3.6.2
-* ubuntu 16.04 (on travis-ci), R-devel, R 3.6.2
-* macOS 10.3.6 (on travis-ci), R 3.6.2
-* Windows (win-builder), R-devel with Rtools40
+* ubuntu 16.04 (on travis-ci), R-devel, R 3.6.2, R 3.5.3
+* macOS 10.13.6 (on travis-ci), R 3.6.2, R 3.5.3
+* Windows (win-builder), R-devel, R 3.6.2, R 3.5.3
 * Rhub
     - Oracle Solaris 10, R-patched, 32-bit
     - Fedora Linux, R-devel, clang (with valgrind)
