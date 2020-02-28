@@ -32,9 +32,9 @@ or via simulated DNA sequences.
 
 To show how an existing assembly is read in `jackalope`, the code below
 processes the assembly for *Drosophila melanogaster*
-(version 6.27) downloaded from `flybase.org` [@Thurmond_2018].
+(version 6.27) downloaded from <https://flybase.org>.
 It reads the compressed FASTA file, filters out scaffolds by using a size threshold,
-removes the Y chromosome (we'll assume we only sampled females), and 
+removes the Y chromosome (to avoid having both an X and Y in the same haplotype), and 
 merges the left and right arms of chromosomes 2 and 3.
 It lastly sets the names of chromosomes 2 and 3 to be `"2"` and `"3"`, respectively.
 
@@ -217,8 +217,8 @@ illumina(haps, out_prefix = "illumina", n_reads = 500e6, paired = TRUE,
 ```
 
 
-If we want to save the information for these haplotypes, we can output a VCF file
-or FASTA files (one per haplotype):
+If we want to save the information for these haplotypes, we can output FASTA files 
+(one per haplotype) or a VCF file:
 
 ```{r examples-reads-for-assembly-diploid-output, eval = FALSE}
 write_fasta(haps, "haps")
@@ -226,7 +226,7 @@ write_vcf(haps, "haps", sample_matrix = cbind(1, 2))
 ```
 
 
-This would result in the following files to be generated: 
+This would result in the following files being generated: 
 `haps__A.fa`, `haps__B.fa`, and `haps.vcf`.
 The `sample_matrix` argument to `write_vcf` states that the first two (i.e., all)
 haplotypes are from the first (and only) sample.
@@ -248,7 +248,7 @@ from the reference genome.
 Five of the haplotypes are from one population, five from another.
 The symmetrical migration rate is 100 individuals per generation.
 I used a recombination rate of 1 (the expected number of recombinations on the locus
-per $4 N_0$ generations) and specifying the recombination rate and chromosome size
+per $4 N_0$ generations). I specify the recombination rate and chromosome size
 for `scrm` using the command `-r 1 C` for chromosome size `C`.
 I used the population-scaled mutation rate for *D. melanogaster*, scaled such 
 that the mutation rate ($\mu$) is in units of mutations per $4 N_0$ generations,
@@ -304,8 +304,8 @@ sequences are derived from are identified by barcodes.
 
 ```{r examples-divergence-illumina-pool, eval = FALSE}
 illumina(haps, out_prefix = "haps_illumina", n_reads = 500e6, paired = TRUE,
-         read_length = 100, barcodes = c(rep("AACCGCGG", 20), 
-                                         rep("GGTTATAA", 20)))
+         read_length = 100, barcodes = c(rep("AACCGCGG", 5), 
+                                         rep("GGTTATAA", 5)))
 ```
 
 
@@ -335,7 +335,7 @@ might have an advantage over another.
 This section shows how `jackalope` can generate haplotypes from a phylogeny, then
 simulate sequencing data from those haplotypes to test phylogeny reconstruction methods.
 First, I simulated a random species tree of 10 species, then scaled it to have a 
-maximum tree depth of $4 N_0$ because we want branch lengths to be in generations:
+maximum tree depth of $4 N_0$ generations:
 
 ```{r examples-phylogeny-tree}
 tree <- rcoal(10)
@@ -369,7 +369,7 @@ haplotype_barcodes <- c("CTAGCTTG", "TCGATCCA", "ATACCAAG", "GCGTTGGA",
                         "CTTCACGG", "TCCTGTAA", "CCTCGGTA", "TTCTAACG", 
                         "CGCTCGTG", "TATCTACA")
 illumina(haps, out_prefix = "phylo_tree", seq_sys = "MSv3",
-         paired = FALSE, read_length = 250, n_reads = 50e6,
+         paired = TRUE, read_length = 250, n_reads = 50e6,
          barcodes = haplotype_barcodes)
 ape::write.tree(tree, "true.tree")
 ```
@@ -390,9 +390,9 @@ Similar to the section above, the ultimate goal here is to test phylogeny
 reconstruction methods.
 The difference in this section is that instead of using a single, straightforward
 phylogeny, I use multiple gene trees per chromosome.
-In the species used in these simulations, species 3 diverged from 1 and 2 at $t = 1.0$,
+In the species used in these simulations, species 1 diverged from 2 and 3 at $t = 1.0$,
 where $t$ indicates time into the past and is in units of $4 N_0$ generations.
-Species 1 and 2 diverged at $t = 0.5$.
+Species 2 and 3 diverged at $t = 0.5$.
 I assume a recombination rate of $1 / (4 N_0)$ recombination events per chromosome
 per generation.
 There are 4 diploid individuals sampled per species.
@@ -413,14 +413,14 @@ one_chrom <- function(.size) {
               # Recombination:
               "-r 1", .size,
               # 3 species with no ongoing migration:
-              "-I 3", paste(rep("8", 3), collapse = " "), "0",
+              "-I 3 8 8 8 0",
               # Species 2 derived from 1 at time 1.0:
               "-ej 1.0 2 1",  
               # Species 3 derived from 2 at time 0.5:
               "-ej 0.5 3 2"
         ))
     trees <- sims$trees[[1]]
-    # scrm output branch lenghts in units of 4*N0 generations, but we want just
+    # scrm outputs branch lengths in units of 4*N0 generations, but we want just
     # generations:
     adjust_tree <- function(.p) {
         # Read to phylo object and adjust branch lengths:
@@ -492,8 +492,8 @@ on an Illumina MiSeq v3, with barcodes in the object `haplotype_barcodes`.
 ```{r examples-phylogeny-gtrees-illumina, eval = FALSE}
 # 2 of each barcode bc it's diploid
 haplotype_barcodes <- rep(c("TCGCCTTA", "CTAGTACG", "TTCTGCCT", "GCTCAGGA", "AGGAGTCC", 
-                          "CATGCCTA", "GTAGAGAG", "CCTCTCTG", "AGCGTAGC", "CAGCCTCG", 
-                          "TGCCTCTT", "TCCTCTAC"), each = 2)
+                            "CATGCCTA", "GTAGAGAG", "CCTCTCTG", "AGCGTAGC", "CAGCCTCG", 
+                            "TGCCTCTT", "TCCTCTAC"), each = 2)
 illumina(haps, out_prefix = "phylo_gtrees", seq_sys = "MSv3",
          read_length = 250, n_reads = 50e6, paired = TRUE, 
          barcodes = haplotype_barcodes)
