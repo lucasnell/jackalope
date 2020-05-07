@@ -121,7 +121,7 @@ trees_to_hap_set <- function(trees_info, reference, sub, ins, del, epsilon,
 #'
 process_phy <- function(phy, ordered_tip_labels) {
 
-    if (!ape::is.binary.tree(phy)) {
+    if (!ape::is.binary.phylo(phy)) {
         stop("\nAll phylogenetic trees must be binary. An option to remedy this might ",
              "be the function `ape::multi2di`.", call. = FALSE)
     }
