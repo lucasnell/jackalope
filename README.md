@@ -69,9 +69,13 @@ devtools::install_github("lucasnell/jackalope")
 ### Enabling OpenMP
 
 To use multithreading in `jackalope`, you’ll need to compile it from
-source using the proper flags. The first step is to add the following to
-the `.R/Makevars` (`.R/Makevars.win` on Windows) file inside the home
-directory:
+source using the proper flags. If you’ve enabled OpenMP properly,
+running `jackalope:::using_openmp()` in R should return `TRUE`.
+
+#### Windows and Linux
+
+The first step is to add the following to the `.R/Makevars`
+(`.R/Makevars.win` on Windows) file inside the home directory:
 
 ``` bash
 PKG_CXXFLAGS += $(SHLIB_OPENMP_CXXFLAGS)
@@ -79,8 +83,8 @@ PKG_CFLAGS += $(SHLIB_OPENMP_CFLAGS)
 PKG_LIBS += $(SHLIB_OPENMP_CFLAGS)
 ```
 
-On Linux and Windows, you should be able to get away with simply adding
-those lines and installing `jackalope` by running the following in R:
+Then, you should be able to install `jackalope` by running the following
+in R:
 
 ``` r
 install.packages("jackalope", type = "source")
@@ -88,16 +92,61 @@ install.packages("jackalope", type = "source")
 # devtools::install_github("lucasnell/jackalope")
 ```
 
-If you’ve enabled OpenMP properly, running `jackalope:::using_openmp()`
-in R should return `TRUE`.
+#### macOS, R version \>= 4.0.0
 
-On macOS, it takes a few more steps to get things working. First, make
-sure the content above is in your `~/.R/Makevars` file. Next, go to
-<https://cran.r-project.org/bin/macosx/tools> and download the newest
-versions of (1) the `clang` compiler (version 8 at the time of writing)
-and (2) GNU Fortran (version 6.1 at the time of writing). The downloads
-will have the `.pkg` extension. Next, install `clang` and `gfortran` by
-opening these `.pkg` files and following the directions.
+Follow the directions here to install R compiler tools:
+<https://thecoatlessprofessor.com/programming/cpp/r-compiler-tools-for-rcpp-on-macos/>.
+
+Check your version of `gcc` using `gcc --version` in the Terminal. Then,
+check the table at <http://mac.r-project.org/openmp/> to see which
+version of the runtime OpenMP downloads you need. For LLVM version
+9.0.1, you run the following in the Terminal:
+
+``` bash
+export version="9.0.1"
+
+curl -O https://mac.r-project.org/openmp/openmp-${version}-darwin17-Release.tar.gz
+sudo tar fvx openmp-${version}-darwin17-Release.tar.gz -C /
+```
+
+For the next step of actually installing `jackalope`, one option is to
+add the following to your `~/.R/Makevars` file:
+
+``` bash
+CPPFLAGS += -Xclang -fopenmp
+LDFLAGS += -lomp
+```
+
+… then installing `jackalope` by running `install.packages("jackalope",
+type = "source")` or `remotes::install_github("lucasnell/jackalope")`in
+R.
+
+This might not be desirable since it affects all package installations.
+An alternative method is to use the package `withr`:
+
+``` r
+withr::with_makevars(c(CPPFLAGS = "-Xclang -fopenmp", LDFLAGS = "-lomp"), 
+                     install.packages("jackalope", type = "source"),
+                     ## For development version:
+                     # remotes::install_github("lucasnell/jackalope"),
+                     assignment = "+=")
+```
+
+#### macOS, R version \>= 3.4\* and \< 4.0.0
+
+Add the following to the `.R/Makevars` file inside the home directory:
+
+``` bash
+PKG_CXXFLAGS += $(SHLIB_OPENMP_CXXFLAGS)
+PKG_CFLAGS += $(SHLIB_OPENMP_CFLAGS)
+PKG_LIBS += $(SHLIB_OPENMP_CFLAGS)
+```
+
+Next, go to <https://cran.r-project.org/bin/macosx/tools> and download
+the newest versions of (1) the `clang` compiler (version 8 at the time
+of writing) and (2) GNU Fortran (version 6.1 at the time of writing).
+The downloads will have the `.pkg` extension. Next, install `clang` and
+`gfortran` by opening these `.pkg` files and following the directions.
 
 After this, add the following to your `~/.R/Makevars` file (replacing
 `clang8` with your version of the clang compiler):
