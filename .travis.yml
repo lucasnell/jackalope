@@ -25,7 +25,6 @@ matrix:
       - Rcpp
       - RcppArmadillo
       - ape
-      - knitr
       - testthat
   - r: release
     os: linux
@@ -52,7 +51,6 @@ matrix:
       - Rcpp
       - RcppArmadillo
       - ape
-      - knitr
       - testthat
   - r: release
     os: osx
