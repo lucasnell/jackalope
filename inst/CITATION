@@ -3,16 +3,16 @@ citHeader("To cite jackalope in publications use:")
 citEntry(entry = "Article",
   title        = "{jackalope}: a swift, versatile phylogenomic and high-throughput sequencing simulator",
   author       = personList(as.person("Lucas A. Nell")),
-  journal      = "{bioRxiv}",
-  year         = "2019",
+  journal      = "{Molecular Ecology Resources}",
+  year         = "2020",
   volume       = "",
   number       = "",
-  pages        = "650747",
-  url          = "https://doi.org/10.1101/650747",
-  doi          = "10.1101/650747",
+  pages        = "",
+  url          = "https://doi.org/10.1111/1755-0998.13173",
+  doi          = "10.1111/1755-0998.13173",
   textVersion  =
-  paste("Nell, Lucas A (2019).",
+  paste("Nell, Lucas A (2020).",
         "jackalope: a swift, versatile phylogenomic and high-throughput sequencing simulator.",
-        "bioRxiv 650747.",
-        "doi: 10.1101/650747.")
+        "Molecular Ecology Resources.",
+        "doi: 10.1111/1755-0998.13173.")
 )
