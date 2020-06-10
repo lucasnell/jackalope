@@ -1,7 +1,7 @@
 Package: jackalope
 Type: Package
 Title: A Swift, Versatile Phylogenomic and High-Throughput Sequencing Simulator
-Version: 1.1.0.9000
+Version: 1.1.1
 Authors@R: person(c("Lucas", "A."), "Nell", email = "lucas@lucasnell.com", 
                     role = c("cph", "aut", "cre"),
                     comment = c(ORCID = "0000-0003-3209-0517"))

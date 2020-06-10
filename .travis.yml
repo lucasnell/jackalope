@@ -24,16 +24,14 @@ matrix:
     r_binary_packages:
       - Rcpp
       - RcppArmadillo
-      - RcppProgress
       - ape
-      - R6
       - knitr
       - testthat
   - r: release
     os: linux
     cache: packages
     env:
-      - PKG_TARBALL=jackalope_1.1.0.tar.gz
+      - PKG_TARBALL=jackalope_1.1.1.tar.gz
     r_packages:
       - covr
       - pkgdown
@@ -53,9 +51,7 @@ matrix:
     r_binary_packages:
       - Rcpp
       - RcppArmadillo
-      - RcppProgress
       - ape
-      - R6
       - knitr
       - testthat
   - r: release
