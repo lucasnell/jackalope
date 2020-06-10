@@ -21,11 +21,6 @@ matrix:
   - r: devel
     os: linux
     cache: packages
-    r_binary_packages:
-      - Rcpp
-      - RcppArmadillo
-      - ape
-      - testthat
   - r: release
     os: linux
     cache: packages
@@ -47,11 +42,6 @@ matrix:
         local-dir: docs
         on:
           branch: master
-    r_binary_packages:
-      - Rcpp
-      - RcppArmadillo
-      - ape
-      - testthat
   - r: release
     os: osx
     cache: packages
