@@ -63,7 +63,7 @@ install.packages("jackalope")
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("lucasnell/jackalope")
+remotes::install_github("lucasnell/jackalope")
 ```
 
 ### Enabling OpenMP
@@ -89,7 +89,7 @@ in R:
 ``` r
 install.packages("jackalope", type = "source")
 ## Or, for development version:
-# devtools::install_github("lucasnell/jackalope")
+# remotes::install_github("lucasnell/jackalope")
 ```
 
 #### macOS, R version \>= 4.0.0
@@ -118,7 +118,7 @@ LDFLAGS += -lomp
 ```
 
 … then installing `jackalope` by running `install.packages("jackalope",
-type = "source")` or `remotes::install_github("lucasnell/jackalope")`in
+type = "source")` or `remotes::install_github("lucasnell/jackalope")` in
 R.
 
 This might not be desirable since it affects all package installations.
