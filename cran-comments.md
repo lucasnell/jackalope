@@ -2,6 +2,7 @@
 
 This is a resubmission. In this version, I have done the following:
 
+- No errors on installation for R-devel on Windows
 - Updated `src/Makevars` to be compatible with using OpenMP on macOS with R >= 4.0.0
 - Updated CITATION
 - Replaced deprecated `ape::is.binary.tree` with `ape::is.binary.phylo`
