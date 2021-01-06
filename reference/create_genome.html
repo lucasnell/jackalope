@@ -89,7 +89,7 @@ Note that this function will never generate empty chromosomes." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -118,7 +118,7 @@ Note that this function will never generate empty chromosomes." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/lucasnell/jackalope/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -145,13 +145,13 @@ Note that this function will never generate empty chromosomes." />
 Note that this function will never generate empty chromosomes.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>create_genome</span>(
-  <span class='no'>n_chroms</span>,
-  <span class='no'>len_mean</span>,
-  <span class='kw'>len_sd</span> <span class='kw'>=</span> <span class='fl'>0</span>,
-  <span class='kw'>pi_tcag</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fl'>0.25</span>, <span class='fl'>4</span>),
-  <span class='kw'>n_threads</span> <span class='kw'>=</span> <span class='fl'>1</span>
-)</pre>
+    <pre class="usage"><span class='fu'>create_genome</span><span class='op'>(</span>
+  <span class='va'>n_chroms</span>,
+  <span class='va'>len_mean</span>,
+  len_sd <span class='op'>=</span> <span class='fl'>0</span>,
+  pi_tcag <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>0.25</span>, <span class='fl'>4</span><span class='op'>)</span>,
+  n_threads <span class='op'>=</span> <span class='fl'>1</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -183,11 +183,13 @@ ignored if OpenMP is not enabled. Defaults to <code>1</code>.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A <code>ref_genome</code> object.</p>
+    <p>A <code><a href='ref_genome.html'>ref_genome</a></code> object.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'>
-<span class='no'>genome</span> <span class='kw'>&lt;-</span> <span class='fu'>create_genome</span>(<span class='fl'>10</span>, <span class='fl'>100e3</span>, <span class='fl'>100</span>, <span class='kw'>pi_tcag</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.1</span>, <span class='fl'>0.2</span>, <span class='fl'>0.3</span>, <span class='fl'>0.4</span>))</div></pre>
+<span class='va'>genome</span> <span class='op'>&lt;-</span> <span class='fu'>create_genome</span><span class='op'>(</span><span class='fl'>10</span>, <span class='fl'>100e3</span>, <span class='fl'>100</span>, pi_tcag <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.1</span>, <span class='fl'>0.2</span>, <span class='fl'>0.3</span>, <span class='fl'>0.4</span><span class='op'>)</span><span class='op'>)</span>
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -203,7 +205,7 @@ ignored if OpenMP is not enabled. Defaults to <code>1</code>.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

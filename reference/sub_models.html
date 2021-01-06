@@ -88,7 +88,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -117,7 +117,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/lucasnell/jackalope/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -140,56 +140,56 @@
     </div>
 
     <div class="ref-description">
-    <p>For a more detailed explanation, see <code>vignette("sub-models")</code>.</p>
+    <p>For a more detailed explanation, see <code><a href='../articles/sub-models.html'>vignette("sub-models")</a></code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>sub_JC69</span>(<span class='no'>lambda</span>, <span class='kw'>mu</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>)
+    <pre class="usage"><span class='fu'>sub_JC69</span><span class='op'>(</span><span class='va'>lambda</span>, mu <span class='op'>=</span> <span class='fl'>1</span>, gamma_shape <span class='op'>=</span> <span class='cn'>NULL</span>, gamma_k <span class='op'>=</span> <span class='fl'>5</span>, invariant <span class='op'>=</span> <span class='fl'>0</span><span class='op'>)</span>
 
-<span class='fu'>sub_K80</span>(<span class='no'>alpha</span>, <span class='no'>beta</span>, <span class='kw'>mu</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>)
+<span class='fu'>sub_K80</span><span class='op'>(</span><span class='va'>alpha</span>, <span class='va'>beta</span>, mu <span class='op'>=</span> <span class='fl'>1</span>, gamma_shape <span class='op'>=</span> <span class='cn'>NULL</span>, gamma_k <span class='op'>=</span> <span class='fl'>5</span>, invariant <span class='op'>=</span> <span class='fl'>0</span><span class='op'>)</span>
 
-<span class='fu'>sub_F81</span>(<span class='no'>pi_tcag</span>, <span class='kw'>mu</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>)
+<span class='fu'>sub_F81</span><span class='op'>(</span><span class='va'>pi_tcag</span>, mu <span class='op'>=</span> <span class='fl'>1</span>, gamma_shape <span class='op'>=</span> <span class='cn'>NULL</span>, gamma_k <span class='op'>=</span> <span class='fl'>5</span>, invariant <span class='op'>=</span> <span class='fl'>0</span><span class='op'>)</span>
 
-<span class='fu'>sub_HKY85</span>(
-  <span class='no'>pi_tcag</span>,
-  <span class='no'>alpha</span>,
-  <span class='no'>beta</span>,
-  <span class='kw'>mu</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>,
-  <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>
-)
+<span class='fu'>sub_HKY85</span><span class='op'>(</span>
+  <span class='va'>pi_tcag</span>,
+  <span class='va'>alpha</span>,
+  <span class='va'>beta</span>,
+  mu <span class='op'>=</span> <span class='fl'>1</span>,
+  gamma_shape <span class='op'>=</span> <span class='cn'>NULL</span>,
+  gamma_k <span class='op'>=</span> <span class='fl'>5</span>,
+  invariant <span class='op'>=</span> <span class='fl'>0</span>
+<span class='op'>)</span>
 
-<span class='fu'>sub_F84</span>(
-  <span class='no'>pi_tcag</span>,
-  <span class='no'>beta</span>,
-  <span class='no'>kappa</span>,
-  <span class='kw'>mu</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>,
-  <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>
-)
+<span class='fu'>sub_F84</span><span class='op'>(</span>
+  <span class='va'>pi_tcag</span>,
+  <span class='va'>beta</span>,
+  <span class='va'>kappa</span>,
+  mu <span class='op'>=</span> <span class='fl'>1</span>,
+  gamma_shape <span class='op'>=</span> <span class='cn'>NULL</span>,
+  gamma_k <span class='op'>=</span> <span class='fl'>5</span>,
+  invariant <span class='op'>=</span> <span class='fl'>0</span>
+<span class='op'>)</span>
 
-<span class='fu'>sub_TN93</span>(
-  <span class='no'>pi_tcag</span>,
-  <span class='no'>alpha_1</span>,
-  <span class='no'>alpha_2</span>,
-  <span class='no'>beta</span>,
-  <span class='kw'>mu</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>,
-  <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>
-)
+<span class='fu'>sub_TN93</span><span class='op'>(</span>
+  <span class='va'>pi_tcag</span>,
+  <span class='va'>alpha_1</span>,
+  <span class='va'>alpha_2</span>,
+  <span class='va'>beta</span>,
+  mu <span class='op'>=</span> <span class='fl'>1</span>,
+  gamma_shape <span class='op'>=</span> <span class='cn'>NULL</span>,
+  gamma_k <span class='op'>=</span> <span class='fl'>5</span>,
+  invariant <span class='op'>=</span> <span class='fl'>0</span>
+<span class='op'>)</span>
 
-<span class='fu'>sub_GTR</span>(
-  <span class='no'>pi_tcag</span>,
-  <span class='no'>abcdef</span>,
-  <span class='kw'>mu</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>,
-  <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>
-)
+<span class='fu'>sub_GTR</span><span class='op'>(</span>
+  <span class='va'>pi_tcag</span>,
+  <span class='va'>abcdef</span>,
+  mu <span class='op'>=</span> <span class='fl'>1</span>,
+  gamma_shape <span class='op'>=</span> <span class='cn'>NULL</span>,
+  gamma_k <span class='op'>=</span> <span class='fl'>5</span>,
+  invariant <span class='op'>=</span> <span class='fl'>0</span>
+<span class='op'>)</span>
 
-<span class='fu'>sub_UNREST</span>(<span class='no'>Q</span>, <span class='kw'>mu</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0</span>)</pre>
+<span class='fu'>sub_UNREST</span><span class='op'>(</span><span class='va'>Q</span>, mu <span class='op'>=</span> <span class='fl'>1</span>, gamma_shape <span class='op'>=</span> <span class='cn'>NULL</span>, gamma_k <span class='op'>=</span> <span class='fl'>5</span>, invariant <span class='op'>=</span> <span class='fl'>0</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -253,7 +253,7 @@ they are forced to sum to 1.</p></td>
       <th>abcdef</th>
       <td><p>A vector of length 6 that contains the off-diagonal elements
 for the substitution rate matrix.
-See <code>vignette("sub-models")</code> for how the values are ordered in the matrix.</p></td>
+See <code><a href='../articles/sub-models.html'>vignette("sub-models")</a></code> for how the values are ordered in the matrix.</p></td>
     </tr>
     <tr>
       <th>Q</th>
@@ -270,7 +270,7 @@ Values on the diagonal are calculated inside the function so are ignored.</p></t
 the <code>create_haplotypes</code> function.
 It does not allow the user to directly manipulate the info inside, as that
 should be done using the <code>sub_models</code> functions.
-You can use the following methods from the class to view information:</p><dl'>
+You can use the following methods from the class to view information:</p><dl>
 <dt><code>Q()</code></dt><dd><p>View a list of substitution rate matrices,
 one for each Gamma category.</p></dd>
 <dt><code>pi_tcag()</code></dt><dd><p>View the equilibrium nucleotide frequencies.</p></dd>
@@ -304,26 +304,28 @@ This is empty for UNREST models.</p></dd>
 </ul>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code>create_haplotypes</code></p></div>
+    <div class='dont-index'><p><code><a href='create_haplotypes.html'>create_haplotypes</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># Same substitution rate for all types:</span>
-<span class='no'>obj_JC69</span> <span class='kw'>&lt;-</span> <span class='fu'>sub_JC69</span>(<span class='kw'>lambda</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)
+<span class='va'>obj_JC69</span> <span class='op'>&lt;-</span> <span class='fu'>sub_JC69</span><span class='op'>(</span>lambda <span class='op'>=</span> <span class='fl'>0.1</span><span class='op'>)</span>
 
 <span class='co'># Transitions 2x more likely than transversions:</span>
-<span class='no'>obj_K80</span> <span class='kw'>&lt;-</span> <span class='fu'>sub_K80</span>(<span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.2</span>, <span class='kw'>beta</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)
+<span class='va'>obj_K80</span> <span class='op'>&lt;-</span> <span class='fu'>sub_K80</span><span class='op'>(</span>alpha <span class='op'>=</span> <span class='fl'>0.2</span>, beta <span class='op'>=</span> <span class='fl'>0.1</span><span class='op'>)</span>
 
 <span class='co'># Incorporating equilibrium frequencies:</span>
-<span class='no'>obj_HKY85</span> <span class='kw'>&lt;-</span> <span class='fu'>sub_HKY85</span>(<span class='kw'>pi_tcag</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.1</span>, <span class='fl'>0.2</span>, <span class='fl'>0.3</span>, <span class='fl'>0.4</span>),
-                       <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.2</span>, <span class='kw'>beta</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)
+<span class='va'>obj_HKY85</span> <span class='op'>&lt;-</span> <span class='fu'>sub_HKY85</span><span class='op'>(</span>pi_tcag <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.1</span>, <span class='fl'>0.2</span>, <span class='fl'>0.3</span>, <span class='fl'>0.4</span><span class='op'>)</span>,
+                       alpha <span class='op'>=</span> <span class='fl'>0.2</span>, beta <span class='op'>=</span> <span class='fl'>0.1</span><span class='op'>)</span>
 
 <span class='co'># 10-category Gamma distribution for among-site variability:</span>
-<span class='no'>obj_K80</span> <span class='kw'>&lt;-</span> <span class='fu'>sub_K80</span>(<span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.2</span>, <span class='kw'>beta</span> <span class='kw'>=</span> <span class='fl'>0.1</span>,
-                   <span class='kw'>gamma_shape</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>gamma_k</span> <span class='kw'>=</span> <span class='fl'>10</span>)
+<span class='va'>obj_K80</span> <span class='op'>&lt;-</span> <span class='fu'>sub_K80</span><span class='op'>(</span>alpha <span class='op'>=</span> <span class='fl'>0.2</span>, beta <span class='op'>=</span> <span class='fl'>0.1</span>,
+                   gamma_shape <span class='op'>=</span> <span class='fl'>1</span>, gamma_k <span class='op'>=</span> <span class='fl'>10</span><span class='op'>)</span>
 
 <span class='co'># Invariant sites:</span>
-<span class='no'>obj_K80</span> <span class='kw'>&lt;-</span> <span class='fu'>sub_K80</span>(<span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.2</span>, <span class='kw'>beta</span> <span class='kw'>=</span> <span class='fl'>0.1</span>,
-                   <span class='kw'>invariant</span> <span class='kw'>=</span> <span class='fl'>0.25</span>)</div></pre>
+<span class='va'>obj_K80</span> <span class='op'>&lt;-</span> <span class='fu'>sub_K80</span><span class='op'>(</span>alpha <span class='op'>=</span> <span class='fl'>0.2</span>, beta <span class='op'>=</span> <span class='fl'>0.1</span>,
+                   invariant <span class='op'>=</span> <span class='fl'>0.25</span><span class='op'>)</span>
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -339,7 +341,7 @@ This is empty for UNREST models.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

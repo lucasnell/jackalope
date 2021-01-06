@@ -89,7 +89,7 @@ See haps_functions for the methods available." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -118,7 +118,7 @@ See haps_functions for the methods available." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/lucasnell/jackalope/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -142,19 +142,19 @@ See haps_functions for the methods available." />
 
     <div class="ref-description">
     <p>Uses one of multiple methods to create variant haplotypes from a reference genome.
-See <code>haps_functions</code> for the methods available.</p>
+See <code><a href='haps_functions.html'>haps_functions</a></code> for the methods available.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>create_haplotypes</span>(
-  <span class='no'>reference</span>,
-  <span class='no'>haps_info</span>,
-  <span class='kw'>sub</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>ins</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>del</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>epsilon</span> <span class='kw'>=</span> <span class='fl'>0.03</span>,
-  <span class='kw'>n_threads</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>show_progress</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>create_haplotypes</span><span class='op'>(</span>
+  <span class='va'>reference</span>,
+  <span class='va'>haps_info</span>,
+  sub <span class='op'>=</span> <span class='cn'>NULL</span>,
+  ins <span class='op'>=</span> <span class='cn'>NULL</span>,
+  del <span class='op'>=</span> <span class='cn'>NULL</span>,
+  epsilon <span class='op'>=</span> <span class='fl'>0.03</span>,
+  n_threads <span class='op'>=</span> <span class='fl'>1</span>,
+  show_progress <span class='op'>=</span> <span class='cn'>FALSE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -166,9 +166,9 @@ This argument is required.</p></td>
     </tr>
     <tr>
       <th>haps_info</th>
-      <td><p>Output from one of the <code>haps_functions</code>.
+      <td><p>Output from one of the <code><a href='haps_functions.html'>haps_functions</a></code>.
 These functions organize higher-level information for use here.
-See <code>haps_functions</code> for brief descriptions and links to each method.
+See <code><a href='haps_functions.html'>haps_functions</a></code> for brief descriptions and links to each method.
 If this argument is <code>NULL</code>, all arguments other than <code>reference</code> are ignored,
 and an empty <code>haplotypes</code> object with no haplotypes is returned.
 This is designed for use when you'd like to add mutations manually.
@@ -177,9 +177,9 @@ to add haplotypes manually.</p></td>
     </tr>
     <tr>
       <th>sub</th>
-      <td><p>Output from one of the <code>sub_models</code> functions that organizes
+      <td><p>Output from one of the <code><a href='sub_models.html'>sub_models</a></code> functions that organizes
 information for the substitution models.
-See <code>sub_models</code> for more information on these models and
+See <code><a href='sub_models.html'>sub_models</a></code> for more information on these models and
 their required parameters.
 This argument is ignored if you are using a VCF file to create haplotypes.
 Passing <code>NULL</code> to this argument results in no substitutions.
@@ -187,7 +187,7 @@ Defaults to <code>NULL</code>.</p></td>
     </tr>
     <tr>
       <th>ins</th>
-      <td><p>Output from the <code>indels</code> function that specifies rates
+      <td><p>Output from the <code><a href='indels.html'>indels</a></code> function that specifies rates
 of insertions by length.
 This argument is ignored if you are using a VCF file to create haplotypes.
 Passing <code>NULL</code> to this argument results in no insertions.
@@ -195,7 +195,7 @@ Defaults to <code>NULL</code>.</p></td>
     </tr>
     <tr>
       <th>del</th>
-      <td><p>Output from the <code>indels</code> function that specifies rates
+      <td><p>Output from the <code><a href='indels.html'>indels</a></code> function that specifies rates
 of deletions by length.
 This argument is ignored if you are using a VCF file to create haplotypes.
 Passing <code>NULL</code> to this argument results in no deletions.
@@ -230,7 +230,7 @@ Defaults to <code>FALSE</code>.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A <code>haplotypes</code> object.</p>
+    <p>A <code><a href='haplotypes.html'>haplotypes</a></code> object.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>Cao, Y., D. T. Gillespie, and L. R. Petzold. 2006. Efficient step size
@@ -246,9 +246,11 @@ simulation of intracellular calcium dynamics.
 <em>Journal of Biomedicine and Biotechnology</em> <strong>2011</strong>: 572492.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>r</span> <span class='kw'>&lt;-</span> <span class='fu'>create_genome</span>(<span class='fl'>10</span>, <span class='fl'>1000</span>)
-<span class='no'>v_phylo</span> <span class='kw'>&lt;-</span> <span class='fu'>create_haplotypes</span>(<span class='no'>r</span>, <span class='fu'>haps_phylo</span>(<span class='kw pkg'>ape</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/ape/man/rtree.html'>rcoal</a></span>(<span class='fl'>5</span>)), <span class='fu'>sub_JC69</span>(<span class='fl'>0.1</span>))
-<span class='no'>v_theta</span> <span class='kw'>&lt;-</span> <span class='fu'>create_haplotypes</span>(<span class='no'>r</span>, <span class='fu'>haps_theta</span>(<span class='fl'>0.001</span>, <span class='fl'>5</span>), <span class='fu'>sub_K80</span>(<span class='fl'>0.1</span>, <span class='fl'>0.2</span>))</div></pre>
+    <pre class="examples"><div class='input'><span class='va'>r</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span><span class='op'>(</span><span class='fl'>10</span>, <span class='fl'>1000</span><span class='op'>)</span>
+<span class='va'>v_phylo</span> <span class='op'>&lt;-</span> <span class='fu'>create_haplotypes</span><span class='op'>(</span><span class='va'>r</span>, <span class='fu'><a href='haps_phylo.html'>haps_phylo</a></span><span class='op'>(</span><span class='fu'>ape</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/ape/man/rtree.html'>rcoal</a></span><span class='op'>(</span><span class='fl'>5</span><span class='op'>)</span><span class='op'>)</span>, <span class='fu'><a href='sub_models.html'>sub_JC69</a></span><span class='op'>(</span><span class='fl'>0.1</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>v_theta</span> <span class='op'>&lt;-</span> <span class='fu'>create_haplotypes</span><span class='op'>(</span><span class='va'>r</span>, <span class='fu'><a href='haps_theta.html'>haps_theta</a></span><span class='op'>(</span><span class='fl'>0.001</span>, <span class='fl'>5</span><span class='op'>)</span>, <span class='fu'><a href='sub_models.html'>sub_K80</a></span><span class='op'>(</span><span class='fl'>0.1</span>, <span class='fl'>0.2</span><span class='op'>)</span><span class='op'>)</span>
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -264,7 +266,7 @@ simulation of intracellular calcium dynamics.
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

@@ -91,7 +91,7 @@ this function." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -120,7 +120,7 @@ this function." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/lucasnell/jackalope/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -149,33 +149,33 @@ I encourage you to cite the reference below in addition to <code>jackalope</code
 this function.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>illumina</span>(<span class='no'>obj</span>,
-         <span class='no'>out_prefix</span>,
-         <span class='no'>n_reads</span>,
-         <span class='no'>read_length</span>,
-         <span class='no'>paired</span>,
-         <span class='kw'>frag_mean</span> <span class='kw'>=</span> <span class='fl'>400</span>,
-         <span class='kw'>frag_sd</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-         <span class='kw'>matepair</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-         <span class='kw'>seq_sys</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-         <span class='kw'>profile1</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-         <span class='kw'>profile2</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-         <span class='kw'>ins_prob1</span> <span class='kw'>=</span> <span class='fl'>0.00009</span>,
-         <span class='kw'>del_prob1</span> <span class='kw'>=</span> <span class='fl'>0.00011</span>,
-         <span class='kw'>ins_prob2</span> <span class='kw'>=</span> <span class='fl'>0.00015</span>,
-         <span class='kw'>del_prob2</span> <span class='kw'>=</span> <span class='fl'>0.00023</span>,
-         <span class='kw'>frag_len_min</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-         <span class='kw'>frag_len_max</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-         <span class='kw'>haplotype_probs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-         <span class='kw'>barcodes</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-         <span class='kw'>prob_dup</span> <span class='kw'>=</span> <span class='fl'>0.02</span>,
-         <span class='kw'>sep_files</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-         <span class='kw'>compress</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-         <span class='kw'>comp_method</span> <span class='kw'>=</span> <span class='st'>"bgzip"</span>,
-         <span class='kw'>n_threads</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
-         <span class='kw'>read_pool_size</span> <span class='kw'>=</span> <span class='fl'>1000L</span>,
-         <span class='kw'>show_progress</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-         <span class='kw'>overwrite</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>illumina</span><span class='op'>(</span><span class='va'>obj</span>,
+         <span class='va'>out_prefix</span>,
+         <span class='va'>n_reads</span>,
+         <span class='va'>read_length</span>,
+         <span class='va'>paired</span>,
+         frag_mean <span class='op'>=</span> <span class='fl'>400</span>,
+         frag_sd <span class='op'>=</span> <span class='fl'>100</span>,
+         matepair <span class='op'>=</span> <span class='cn'>FALSE</span>,
+         seq_sys <span class='op'>=</span> <span class='cn'>NULL</span>,
+         profile1 <span class='op'>=</span> <span class='cn'>NULL</span>,
+         profile2 <span class='op'>=</span> <span class='cn'>NULL</span>,
+         ins_prob1 <span class='op'>=</span> <span class='fl'>0.00009</span>,
+         del_prob1 <span class='op'>=</span> <span class='fl'>0.00011</span>,
+         ins_prob2 <span class='op'>=</span> <span class='fl'>0.00015</span>,
+         del_prob2 <span class='op'>=</span> <span class='fl'>0.00023</span>,
+         frag_len_min <span class='op'>=</span> <span class='cn'>NULL</span>,
+         frag_len_max <span class='op'>=</span> <span class='cn'>NULL</span>,
+         haplotype_probs <span class='op'>=</span> <span class='cn'>NULL</span>,
+         barcodes <span class='op'>=</span> <span class='cn'>NULL</span>,
+         prob_dup <span class='op'>=</span> <span class='fl'>0.02</span>,
+         sep_files <span class='op'>=</span> <span class='cn'>FALSE</span>,
+         compress <span class='op'>=</span> <span class='cn'>FALSE</span>,
+         comp_method <span class='op'>=</span> <span class='st'>"bgzip"</span>,
+         n_threads <span class='op'>=</span> <span class='fl'>1L</span>,
+         read_pool_size <span class='op'>=</span> <span class='fl'>1000L</span>,
+         show_progress <span class='op'>=</span> <span class='cn'>FALSE</span>,
+         overwrite <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -408,11 +408,13 @@ sequencing read simulator. <em>Bioinformatics</em> <strong>28</strong>:593–594
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \donttest{</span>
-<span class='no'>rg</span> <span class='kw'>&lt;-</span> <span class='fu'>create_genome</span>(<span class='fl'>10</span>, <span class='fl'>100e3</span>, <span class='fl'>100</span>)
-<span class='no'>dir</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span>(<span class='fl'>TRUE</span>)
-<span class='fu'>illumina</span>(<span class='no'>rg</span>, <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>dir</span>, <span class='st'>"/illumina_reads"</span>), <span class='kw'>n_reads</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-         <span class='kw'>read_length</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>paired</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
-<span class='co'># }</span></div></pre>
+<span class='va'>rg</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span><span class='op'>(</span><span class='fl'>10</span>, <span class='fl'>100e3</span>, <span class='fl'>100</span><span class='op'>)</span>
+<span class='va'>dir</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span><span class='op'>(</span><span class='cn'>TRUE</span><span class='op'>)</span>
+<span class='fu'>illumina</span><span class='op'>(</span><span class='va'>rg</span>, <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='va'>dir</span>, <span class='st'>"/illumina_reads"</span><span class='op'>)</span>, n_reads <span class='op'>=</span> <span class='fl'>100</span>,
+         read_length <span class='op'>=</span> <span class='fl'>100</span>, paired <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
+<span class='co'># }</span>
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -428,7 +430,7 @@ sequencing read simulator. <em>Bioinformatics</em> <strong>28</strong>:593–594
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

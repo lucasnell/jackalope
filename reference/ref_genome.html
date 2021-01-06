@@ -89,7 +89,7 @@ information." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -118,7 +118,7 @@ information." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/lucasnell/jackalope/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -156,11 +156,11 @@ manipulate directly.
 All manipulations are done through this class's methods.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code>read_fasta</code> <code>create_genome</code></p></div>
+    <div class='dont-index'><p><code><a href='read_fasta.html'>read_fasta</a></code> <code><a href='create_genome.html'>create_genome</a></code></p></div>
     <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
 
     
-<h3>Public methods</h3>
+<h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Public methods</h3>
 
 <ul>
 <li><p><a href='#method-new'><code>ref_genome$new()</code></a></p></li>
@@ -181,69 +181,69 @@ All manipulations are done through this class's methods.</p>
 <li><p><a href='#method-replace_Ns'><code>ref_genome$replace_Ns()</code></a></p></li>
 </ul>
 <p><hr>
-<a id="method-new"></a></p><h3>Method <code>new()</code></h3>
+<a id="method-new"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>new()</code></h3>
 <p>Do NOT use this; only use <code>read_fasta</code> or <code>create_genome</code> to make a
-new <code>ref_genome</code>.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>new</span>(<span class='no'>genome_ptr</span>)</pre><p></div></p>
+new <code>ref_genome</code>.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>new</span><span class='op'>(</span><span class='va'>genome_ptr</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>genome_ptr</code></dt><dd><p>An <code>externalptr</code> object pointing to a C++ object that stores
 the information about the reference genome.</p></dd>
 
 </dl><p></div></p>
 <p><hr>
-<a id="method-print"></a></p><h3>Method <code><a href='https://rdrr.io/r/base/print.html'>print()</a></code></h3>
-<p>Print a <code>ref_genome</code> object.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>()</pre><p></div></p>
+<a id="method-print"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code><a href='https://rdrr.io/r/base/print.html'>print()</a></code></h3>
+<p>Print a <code>ref_genome</code> object.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>print</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
 <p><hr>
-<a id="method-ptr"></a></p><h3>Method <code>ptr()</code></h3>
-<p>View pointer to underlying C++ object (this is not useful to end users).</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>ptr</span>()</pre><p></div></p>
+<a id="method-ptr"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>ptr()</code></h3>
+<p>View pointer to underlying C++ object (this is not useful to end users).</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>ptr</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>An <code>externalptr</code> object.</p>
 <p><hr>
-<a id="method-n_chroms"></a></p><h3>Method <code>n_chroms()</code></h3>
-<p>View number of chromosomes.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>n_chroms</span>()</pre><p></div></p>
+<a id="method-n_chroms"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>n_chroms()</code></h3>
+<p>View number of chromosomes.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>n_chroms</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>Integer number of chromosomes.</p>
 <p><hr>
-<a id="method-sizes"></a></p><h3>Method <code>sizes()</code></h3>
-<p>View chromosome sizes.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>sizes</span>()</pre><p></div></p>
+<a id="method-sizes"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>sizes()</code></h3>
+<p>View chromosome sizes.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>sizes</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>Integer vector of chromosome sizes.</p>
 <p><hr>
-<a id="method-chrom_names"></a></p><h3>Method <code>chrom_names()</code></h3>
-<p>View chromosome names.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>chrom_names</span>()</pre><p></div></p>
+<a id="method-chrom_names"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>chrom_names()</code></h3>
+<p>View chromosome names.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>chrom_names</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>Character vector of chromosome names.</p>
 <p><hr>
-<a id="method-chrom"></a></p><h3>Method <code>chrom()</code></h3>
-<p>View one reference chromosome.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>chrom</span>(<span class='no'>chrom_ind</span>)</pre><p></div></p>
+<a id="method-chrom"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>chrom()</code></h3>
+<p>View one reference chromosome.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>chrom</span><span class='op'>(</span><span class='va'>chrom_ind</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>chrom_ind</code></dt><dd><p>Index for the focal chromosome.</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>A single string representing the chosen chromosome's DNA sequence.</p>
 <p><hr>
-<a id="method-gc_prop"></a></p><h3>Method <code>gc_prop()</code></h3>
-<p>View GC proportion for part of one reference chromosome.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>gc_prop</span>(<span class='no'>chrom_ind</span>, <span class='no'>start</span>, <span class='no'>end</span>)</pre><p></div></p>
+<a id="method-gc_prop"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>gc_prop()</code></h3>
+<p>View GC proportion for part of one reference chromosome.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>gc_prop</span><span class='op'>(</span><span class='va'>chrom_ind</span>, <span class='va'>start</span>, <span class='va'>end</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>chrom_ind</code></dt><dd><p>Index for the focal chromosome.</p></dd>
 
 <dt><code>start</code></dt><dd><p>Point on the chromosome at which to start the calculation
@@ -253,16 +253,16 @@ the information about the reference genome.</p></dd>
 (inclusive).</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>A double in the range <code>[0,1]</code> representing the proportion of DNA
 sequence that is either <code>G</code> or <code>C</code>.</p>
 <p><hr>
-<a id="method-nt_prop"></a></p><h3>Method <code>nt_prop()</code></h3>
-<p>View nucleotide content for part of one reference chromosome</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>nt_prop</span>(<span class='no'>nt</span>, <span class='no'>chrom_ind</span>, <span class='no'>start</span>, <span class='no'>end</span>)</pre><p></div></p>
+<a id="method-nt_prop"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>nt_prop()</code></h3>
+<p>View nucleotide content for part of one reference chromosome</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>nt_prop</span><span class='op'>(</span><span class='va'>nt</span>, <span class='va'>chrom_ind</span>, <span class='va'>start</span>, <span class='va'>end</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>nt</code></dt><dd><p>Which nucleotide to calculate the proportion that the DNA
 sequence is made of. Must be one of <code>T</code>, <code>C</code>, <code>A</code>, <code>G</code>, or <code>N</code>.</p></dd>
 
@@ -275,45 +275,49 @@ sequence is made of. Must be one of <code>T</code>, <code>C</code>, <code>A</cod
 (inclusive).</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>A double in the range <code>[0,1]</code> representing the proportion of DNA
 sequence that is <code>nt</code>.</p>
 <p><hr>
-<a id="method-set_names"></a></p><h3>Method <code>set_names()</code></h3>
-<p>Change chromosome names.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>set_names</span>(<span class='no'>new_names</span>)</pre><p></div></p>
+<a id="method-set_names"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>set_names()</code></h3>
+<p>Change chromosome names.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>set_names</span><span class='op'>(</span><span class='va'>new_names</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>new_names</code></dt><dd><p>Vector of new names to use. This must be the same length as
 the number of current names.</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>This <code>R6</code> object, invisibly.</p>
-<h3>Examples</h3>
-<p><div class="r example copy"></p><pre><span class='no'>ref</span> <span class='kw'>&amp;</span><span class='no'>lt</span>;- <span class='fu'>create_genome</span>(<span class='fl'>4</span>, <span class='fl'>10</span>)
-<span class='no'>ref</span>$<span class='fu'>set_names</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"a"</span>, <span class='st'>"b"</span>, <span class='st'>"c"</span>, <span class='st'>"d"</span>))</pre><p></div></p>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Examples</h4>
+<p><div class="r example copy"></p><pre><span class='va'>ref</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>10</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>set_names</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"a"</span>, <span class='st'>"b"</span>, <span class='st'>"c"</span>, <span class='st'>"d"</span><span class='op'>)</span><span class='op'>)</span>
+
+</pre><p></div></p>
 
 <p><hr>
-<a id="method-clean_names"></a></p><h3>Method <code>clean_names()</code></h3>
-<p>Clean chromosome names, converting <code>" :;=%,\\|/\"\'"</code> to <code>"_"</code>.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>clean_names</span>()</pre><p></div></p>
+<a id="method-clean_names"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>clean_names()</code></h3>
+<p>Clean chromosome names, converting <code>" :;=%,\\|/\"\'"</code> to <code>"_"</code>.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>clean_names</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>This <code>R6</code> object, invisibly.</p>
-<h3>Examples</h3>
-<p><div class="r example copy"></p><pre><span class='no'>ref</span> <span class='kw'>&amp;</span><span class='no'>lt</span>;- <span class='fu'>create_genome</span>(<span class='fl'>4</span>, <span class='fl'>10</span>)
-<span class='no'>ref</span>$<span class='fu'>set_names</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"a:"</span>, <span class='st'>"b|"</span>, <span class='st'>"c;"</span>, <span class='st'>"d'"</span>))
-<span class='no'>ref</span>$<span class='fu'>clean_names</span>()</pre><p></div></p>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Examples</h4>
+<p><div class="r example copy"></p><pre><span class='va'>ref</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>10</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>set_names</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"a:"</span>, <span class='st'>"b|"</span>, <span class='st'>"c;"</span>, <span class='st'>"d'"</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>clean_names</span><span class='op'>(</span><span class='op'>)</span>
+
+</pre><p></div></p>
 
 <p><hr>
-<a id="method-add_chroms"></a></p><h3>Method <code>add_chroms()</code></h3>
-<p>Add one or more chromosomes.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>add_chroms</span>(<span class='no'>new_chroms</span>, <span class='kw'>new_names</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre><p></div></p>
+<a id="method-add_chroms"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>add_chroms()</code></h3>
+<p>Add one or more chromosomes.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>add_chroms</span><span class='op'>(</span><span class='va'>new_chroms</span>, new_names <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>new_chroms</code></dt><dd><p>Character vector of DNA strings representing new chromosomes.</p></dd>
 
 <dt><code>new_names</code></dt><dd><p>Optional character vector of names for the new chromosomes.
@@ -321,36 +325,39 @@ It should be the same length as <code>new_chroms</code>.
 If <code>NULL</code>, new names will be automatically generated. Defaults to <code>NULL</code>.</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>This <code>R6</code> object, invisibly.</p>
-<h3>Examples</h3>
-<p><div class="r example copy"></p><pre><span class='no'>ref</span> <span class='kw'>&amp;</span><span class='no'>lt</span>;- <span class='fu'>create_genome</span>(<span class='fl'>4</span>, <span class='fl'>10</span>)
-<span class='no'>ref</span>$<span class='fu'>add_chroms</span>(<span class='st'>"TCAGTCAG"</span>)</pre><p></div></p>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Examples</h4>
+<p><div class="r example copy"></p><pre><span class='va'>ref</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>10</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>add_chroms</span><span class='op'>(</span><span class='st'>"TCAGTCAG"</span><span class='op'>)</span>
+</pre><p></div></p>
 
 <p><hr>
-<a id="method-rm_chroms"></a></p><h3>Method <code>rm_chroms()</code></h3>
-<p>Remove one or more chromosomes by name</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>rm_chroms</span>(<span class='no'>chrom_names</span>)</pre><p></div></p>
+<a id="method-rm_chroms"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>rm_chroms()</code></h3>
+<p>Remove one or more chromosomes by name</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>rm_chroms</span><span class='op'>(</span><span class='va'>chrom_names</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>chrom_names</code></dt><dd><p>Vector of the name(s) of the chromosome(s) to remove.</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>This <code>R6</code> object, invisibly.</p>
-<h3>Examples</h3>
-<p><div class="r example copy"></p><pre><span class='no'>ref</span> <span class='kw'>&amp;</span><span class='no'>lt</span>;- <span class='fu'>create_genome</span>(<span class='fl'>4</span>, <span class='fl'>10</span>)
-<span class='no'>ref</span>$<span class='fu'>set_names</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"a"</span>, <span class='st'>"b"</span>, <span class='st'>"c"</span>, <span class='st'>"d"</span>))
-<span class='no'>ref</span>$<span class='fu'>rm_chroms</span>(<span class='st'>"b"</span>)</pre><p></div></p>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Examples</h4>
+<p><div class="r example copy"></p><pre><span class='va'>ref</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>10</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>set_names</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"a"</span>, <span class='st'>"b"</span>, <span class='st'>"c"</span>, <span class='st'>"d"</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>rm_chroms</span><span class='op'>(</span><span class='st'>"b"</span><span class='op'>)</span>
+
+</pre><p></div></p>
 
 <p><hr>
-<a id="method-merge_chroms"></a></p><h3>Method <code>merge_chroms()</code></h3>
-<p>Merge chromosomes into one.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>merge_chroms</span>(<span class='no'>chrom_names</span>)</pre><p></div></p>
+<a id="method-merge_chroms"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>merge_chroms()</code></h3>
+<p>Merge chromosomes into one.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>merge_chroms</span><span class='op'>(</span><span class='va'>chrom_names</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>chrom_names</code></dt><dd><p>Vector of the names of the chromosomes to merge into one.
 Duplicates are not allowed, and chromosomes are merged in the order
 they're provided.
@@ -358,20 +365,22 @@ If this is <code>NULL</code>, then all chromosomes are merged after first
 shuffling their order.</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>This <code>R6</code> object, invisibly.</p>
-<h3>Examples</h3>
-<p><div class="r example copy"></p><pre><span class='no'>ref</span> <span class='kw'>&amp;</span><span class='no'>lt</span>;- <span class='fu'>create_genome</span>(<span class='fl'>4</span>, <span class='fl'>10</span>)
-<span class='no'>ref</span>$<span class='fu'>merge_chroms</span>(<span class='no'>ref</span>$<span class='fu'>chrom_names</span>()[<span class='fl'>1</span>:<span class='fl'>2</span>])
-<span class='no'>ref</span>$<span class='fu'>merge_chroms</span>(<span class='kw'>NULL</span>)</pre><p></div></p>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Examples</h4>
+<p><div class="r example copy"></p><pre><span class='va'>ref</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>10</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>merge_chroms</span><span class='op'>(</span><span class='va'>ref</span><span class='op'>$</span><span class='fu'>chrom_names</span><span class='op'>(</span><span class='op'>)</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>2</span><span class='op'>]</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>merge_chroms</span><span class='op'>(</span><span class='cn'>NULL</span><span class='op'>)</span>
+
+</pre><p></div></p>
 
 <p><hr>
-<a id="method-filter_chroms"></a></p><h3>Method <code>filter_chroms()</code></h3>
-<p>Filter chromosomes by size or for a proportion of total bases.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>filter_chroms</span>(<span class='no'>threshold</span>, <span class='no'>method</span>)</pre><p></div></p>
+<a id="method-filter_chroms"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>filter_chroms()</code></h3>
+<p>Filter chromosomes by size or for a proportion of total bases.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>filter_chroms</span><span class='op'>(</span><span class='va'>threshold</span>, <span class='va'>method</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>threshold</code></dt><dd><p>Number used as a threshold. If <code>method == "size"</code>,
 then this is the minimum length of a chromosome that will remain after
 filtering.
@@ -384,20 +393,22 @@ filtering.</p></dd>
 (<code>method = "size"</code>) or proportion of total bases (<code>method = "prop"</code>).</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>This <code>R6</code> object, invisibly.</p>
-<h3>Examples</h3>
-<p><div class="r example copy"></p><pre><span class='no'>ref</span> <span class='kw'>&amp;</span><span class='no'>lt</span>;- <span class='fu'>create_genome</span>(<span class='fl'>4</span>, <span class='fl'>100</span>, <span class='fl'>50</span>)
-<span class='no'>ref</span>$<span class='fu'>filter_chroms</span>(<span class='fl'>90</span>, <span class='st'>"size"</span>)
-<span class='no'>ref</span>$<span class='fu'>filter_chroms</span>(<span class='fl'>0.4</span>, <span class='st'>"prop"</span>)</pre><p></div></p>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Examples</h4>
+<p><div class="r example copy"></p><pre><span class='va'>ref</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>100</span>, <span class='fl'>50</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>filter_chroms</span><span class='op'>(</span><span class='fl'>90</span>, <span class='st'>"size"</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>filter_chroms</span><span class='op'>(</span><span class='fl'>0.4</span>, <span class='st'>"prop"</span><span class='op'>)</span>
+
+</pre><p></div></p>
 
 <p><hr>
-<a id="method-replace_Ns"></a></p><h3>Method <code>replace_Ns()</code></h3>
-<p>Replace <code>N</code>s in the reference genome.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>ref_genome</span>$<span class='fu'>replace_Ns</span>(<span class='no'>pi_tcag</span>, <span class='kw'>n_threads</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>show_progress</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre><p></div></p>
+<a id="method-replace_Ns"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>replace_Ns()</code></h3>
+<p>Replace <code>N</code>s in the reference genome.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>ref_genome</span><span class='op'>$</span><span class='fu'>replace_Ns</span><span class='op'>(</span><span class='va'>pi_tcag</span>, n_threads <span class='op'>=</span> <span class='fl'>1</span>, show_progress <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>pi_tcag</code></dt><dd><p>Numeric vector (length 4) indicating the sampling weights
 for <code>T</code>, <code>C</code>, <code>A</code>, and <code>G</code>, respectively, for generating new nucleotides
 with which to replace the <code>N</code>s.</p></dd>
@@ -409,7 +420,7 @@ Ignored if the package wasn't compiled with OpenMP. Defaults to <code>1</code>.<
 progress bar. Defaults to <code>FALSE</code>.</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>This <code>R6</code> object, invisibly.</p>
 
 
@@ -420,51 +431,53 @@ progress bar. Defaults to <code>FALSE</code>.</p></dd>
 <span class='co'>## Method `ref_genome$set_names`</span>
 <span class='co'>## ------------------------------------------------</span>
 
-<span class='no'>ref</span> <span class='kw'>&lt;-</span> <span class='fu'>create_genome</span>(<span class='fl'>4</span>, <span class='fl'>10</span>)
-<span class='no'>ref</span>$<span class='fu'>set_names</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"a"</span>, <span class='st'>"b"</span>, <span class='st'>"c"</span>, <span class='st'>"d"</span>))
+<span class='va'>ref</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>10</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>set_names</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"a"</span>, <span class='st'>"b"</span>, <span class='st'>"c"</span>, <span class='st'>"d"</span><span class='op'>)</span><span class='op'>)</span>
 
 
 <span class='co'>## ------------------------------------------------</span>
 <span class='co'>## Method `ref_genome$clean_names`</span>
 <span class='co'>## ------------------------------------------------</span>
 
-<span class='no'>ref</span> <span class='kw'>&lt;-</span> <span class='fu'>create_genome</span>(<span class='fl'>4</span>, <span class='fl'>10</span>)
-<span class='no'>ref</span>$<span class='fu'>set_names</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"a:"</span>, <span class='st'>"b|"</span>, <span class='st'>"c;"</span>, <span class='st'>"d'"</span>))
-<span class='no'>ref</span>$<span class='fu'>clean_names</span>()
+<span class='va'>ref</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>10</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>set_names</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"a:"</span>, <span class='st'>"b|"</span>, <span class='st'>"c;"</span>, <span class='st'>"d'"</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>clean_names</span><span class='op'>(</span><span class='op'>)</span>
 
 
 <span class='co'>## ------------------------------------------------</span>
 <span class='co'>## Method `ref_genome$add_chroms`</span>
 <span class='co'>## ------------------------------------------------</span>
 
-<span class='no'>ref</span> <span class='kw'>&lt;-</span> <span class='fu'>create_genome</span>(<span class='fl'>4</span>, <span class='fl'>10</span>)
-<span class='no'>ref</span>$<span class='fu'>add_chroms</span>(<span class='st'>"TCAGTCAG"</span>)
+<span class='va'>ref</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>10</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>add_chroms</span><span class='op'>(</span><span class='st'>"TCAGTCAG"</span><span class='op'>)</span>
 
 <span class='co'>## ------------------------------------------------</span>
 <span class='co'>## Method `ref_genome$rm_chroms`</span>
 <span class='co'>## ------------------------------------------------</span>
 
-<span class='no'>ref</span> <span class='kw'>&lt;-</span> <span class='fu'>create_genome</span>(<span class='fl'>4</span>, <span class='fl'>10</span>)
-<span class='no'>ref</span>$<span class='fu'>set_names</span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"a"</span>, <span class='st'>"b"</span>, <span class='st'>"c"</span>, <span class='st'>"d"</span>))
-<span class='no'>ref</span>$<span class='fu'>rm_chroms</span>(<span class='st'>"b"</span>)
+<span class='va'>ref</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>10</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>set_names</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"a"</span>, <span class='st'>"b"</span>, <span class='st'>"c"</span>, <span class='st'>"d"</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>rm_chroms</span><span class='op'>(</span><span class='st'>"b"</span><span class='op'>)</span>
 
 
 <span class='co'>## ------------------------------------------------</span>
 <span class='co'>## Method `ref_genome$merge_chroms`</span>
 <span class='co'>## ------------------------------------------------</span>
 
-<span class='no'>ref</span> <span class='kw'>&lt;-</span> <span class='fu'>create_genome</span>(<span class='fl'>4</span>, <span class='fl'>10</span>)
-<span class='no'>ref</span>$<span class='fu'>merge_chroms</span>(<span class='no'>ref</span>$<span class='fu'>chrom_names</span>()[<span class='fl'>1</span>:<span class='fl'>2</span>])
-<span class='no'>ref</span>$<span class='fu'>merge_chroms</span>(<span class='kw'>NULL</span>)
+<span class='va'>ref</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>10</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>merge_chroms</span><span class='op'>(</span><span class='va'>ref</span><span class='op'>$</span><span class='fu'>chrom_names</span><span class='op'>(</span><span class='op'>)</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>2</span><span class='op'>]</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>merge_chroms</span><span class='op'>(</span><span class='cn'>NULL</span><span class='op'>)</span>
 
 
 <span class='co'>## ------------------------------------------------</span>
 <span class='co'>## Method `ref_genome$filter_chroms`</span>
 <span class='co'>## ------------------------------------------------</span>
 
-<span class='no'>ref</span> <span class='kw'>&lt;-</span> <span class='fu'>create_genome</span>(<span class='fl'>4</span>, <span class='fl'>100</span>, <span class='fl'>50</span>)
-<span class='no'>ref</span>$<span class='fu'>filter_chroms</span>(<span class='fl'>90</span>, <span class='st'>"size"</span>)
-<span class='no'>ref</span>$<span class='fu'>filter_chroms</span>(<span class='fl'>0.4</span>, <span class='st'>"prop"</span>)</div></pre>
+<span class='va'>ref</span> <span class='op'>&lt;-</span> <span class='fu'><a href='create_genome.html'>create_genome</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>100</span>, <span class='fl'>50</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>filter_chroms</span><span class='op'>(</span><span class='fl'>90</span>, <span class='st'>"size"</span><span class='op'>)</span>
+<span class='va'>ref</span><span class='op'>$</span><span class='fu'>filter_chroms</span><span class='op'>(</span><span class='fl'>0.4</span>, <span class='st'>"prop"</span><span class='op'>)</span>
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -480,7 +493,7 @@ progress bar. Defaults to <code>FALSE</code>.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

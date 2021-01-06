@@ -89,7 +89,7 @@ variant haplotypes from a single reference genome." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -118,7 +118,7 @@ variant haplotypes from a single reference genome." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/lucasnell/jackalope/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -186,11 +186,11 @@ editing the reference genome.</p></li>
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code>create_haplotypes</code></p></div>
+    <div class='dont-index'><p><code><a href='create_haplotypes.html'>create_haplotypes</a></code></p></div>
     <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
 
     
-<h3>Public methods</h3>
+<h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Public methods</h3>
 
 <ul>
 <li><p><a href='#method-new'><code>haplotypes$new()</code></a></p></li>
@@ -213,12 +213,12 @@ editing the reference genome.</p></li>
 <li><p><a href='#method-add_del'><code>haplotypes$add_del()</code></a></p></li>
 </ul>
 <p><hr>
-<a id="method-new"></a></p><h3>Method <code>new()</code></h3>
-<p>Do NOT use this; only use <code>create_haplotypes</code> to make new <code>haplotypes</code>.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>new</span>(<span class='no'>genomes_ptr</span>, <span class='no'>reference_ptr</span>)</pre><p></div></p>
+<a id="method-new"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>new()</code></h3>
+<p>Do NOT use this; only use <code>create_haplotypes</code> to make new <code>haplotypes</code>.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>new</span><span class='op'>(</span><span class='va'>genomes_ptr</span>, <span class='va'>reference_ptr</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>genomes_ptr</code></dt><dd><p>An <code>externalptr</code> object pointing to a C++ object that
 stores the information about the haplotypes.</p></dd>
 
@@ -227,79 +227,79 @@ stores the information about the reference genome.</p></dd>
 
 </dl><p></div></p>
 <p><hr>
-<a id="method-print"></a></p><h3>Method <code><a href='https://rdrr.io/r/base/print.html'>print()</a></code></h3>
-<p>Print a <code>haplotypes</code> object.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>()</pre><p></div></p>
+<a id="method-print"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code><a href='https://rdrr.io/r/base/print.html'>print()</a></code></h3>
+<p>Print a <code>haplotypes</code> object.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>print</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
 <p><hr>
-<a id="method-ptr"></a></p><h3>Method <code>ptr()</code></h3>
-<p>View pointer to underlying C++ object (this is not useful to end users).</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>ptr</span>()</pre><p></div></p>
+<a id="method-ptr"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>ptr()</code></h3>
+<p>View pointer to underlying C++ object (this is not useful to end users).</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>ptr</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>An <code>externalptr</code> object.</p>
 <p><hr>
-<a id="method-n_chroms"></a></p><h3>Method <code>n_chroms()</code></h3>
-<p>View number of chromosomes.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>n_chroms</span>()</pre><p></div></p>
+<a id="method-n_chroms"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>n_chroms()</code></h3>
+<p>View number of chromosomes.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>n_chroms</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>Integer number of chromosomes.</p>
 <p><hr>
-<a id="method-n_haps"></a></p><h3>Method <code>n_haps()</code></h3>
-<p>View number of haplotypes.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>n_haps</span>()</pre><p></div></p>
+<a id="method-n_haps"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>n_haps()</code></h3>
+<p>View number of haplotypes.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>n_haps</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>Integer number of haplotypes.</p>
 <p><hr>
-<a id="method-sizes"></a></p><h3>Method <code>sizes()</code></h3>
-<p>View chromosome sizes for one haplotype.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>sizes</span>(<span class='no'>hap_ind</span>)</pre><p></div></p>
+<a id="method-sizes"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>sizes()</code></h3>
+<p>View chromosome sizes for one haplotype.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>sizes</span><span class='op'>(</span><span class='va'>hap_ind</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>hap_ind</code></dt><dd><p>Index for the focal haplotype.</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>Integer vector of chromosome sizes for focal haplotype.</p>
 <p><hr>
-<a id="method-chrom_names"></a></p><h3>Method <code>chrom_names()</code></h3>
-<p>View chromosome names.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>chrom_names</span>()</pre><p></div></p>
+<a id="method-chrom_names"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>chrom_names()</code></h3>
+<p>View chromosome names.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>chrom_names</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>Character vector of chromosome names.</p>
 <p><hr>
-<a id="method-hap_names"></a></p><h3>Method <code>hap_names()</code></h3>
-<p>View haplotype names.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>hap_names</span>()</pre><p></div></p>
+<a id="method-hap_names"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>hap_names()</code></h3>
+<p>View haplotype names.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>hap_names</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>Character vector of haplotype names.</p>
 <p><hr>
-<a id="method-chrom"></a></p><h3>Method <code>chrom()</code></h3>
-<p>View one haplotype chromosome.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>chrom</span>(<span class='no'>hap_ind</span>, <span class='no'>chrom_ind</span>)</pre><p></div></p>
+<a id="method-chrom"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>chrom()</code></h3>
+<p>View one haplotype chromosome.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>chrom</span><span class='op'>(</span><span class='va'>hap_ind</span>, <span class='va'>chrom_ind</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>hap_ind</code></dt><dd><p>Index for the focal haplotype.</p></dd>
 
 <dt><code>chrom_ind</code></dt><dd><p>Index for the focal chromosome.</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>A single string representing the chosen haplotype chromosome's DNA
 sequence.</p>
 <p><hr>
-<a id="method-gc_prop"></a></p><h3>Method <code>gc_prop()</code></h3>
-<p>View GC proportion for part of one haplotype chromosome.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>gc_prop</span>(<span class='no'>hap_ind</span>, <span class='no'>chrom_ind</span>, <span class='no'>start</span>, <span class='no'>end</span>)</pre><p></div></p>
+<a id="method-gc_prop"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>gc_prop()</code></h3>
+<p>View GC proportion for part of one haplotype chromosome.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>gc_prop</span><span class='op'>(</span><span class='va'>hap_ind</span>, <span class='va'>chrom_ind</span>, <span class='va'>start</span>, <span class='va'>end</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>hap_ind</code></dt><dd><p>Index for the focal haplotype.</p></dd>
 
 <dt><code>chrom_ind</code></dt><dd><p>Index for the focal chromosome.</p></dd>
@@ -311,16 +311,16 @@ sequence.</p>
 (inclusive).</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>A double in the range <code>[0,1]</code> representing the proportion of DNA
 sequence that is either <code>G</code> or <code>C</code>.</p>
 <p><hr>
-<a id="method-nt_prop"></a></p><h3>Method <code>nt_prop()</code></h3>
-<p>View nucleotide content for part of one haplotype chromosome</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>nt_prop</span>(<span class='no'>nt</span>, <span class='no'>hap_ind</span>, <span class='no'>chrom_ind</span>, <span class='no'>start</span>, <span class='no'>end</span>)</pre><p></div></p>
+<a id="method-nt_prop"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>nt_prop()</code></h3>
+<p>View nucleotide content for part of one haplotype chromosome</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>nt_prop</span><span class='op'>(</span><span class='va'>nt</span>, <span class='va'>hap_ind</span>, <span class='va'>chrom_ind</span>, <span class='va'>start</span>, <span class='va'>end</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>nt</code></dt><dd><p>Which nucleotide to calculate the proportion that the DNA
 sequence is made of. Must be one of <code>T</code>, <code>C</code>, <code>A</code>, <code>G</code>, or <code>N</code>.</p></dd>
 
@@ -335,41 +335,41 @@ sequence is made of. Must be one of <code>T</code>, <code>C</code>, <code>A</cod
 (inclusive).</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>A double in the range <code>[0,1]</code> representing the proportion of DNA
 sequence that is <code>nt</code>.</p>
 <p><hr>
-<a id="method-set_names"></a></p><h3>Method <code>set_names()</code></h3>
-<p>Change haplotype names.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>set_names</span>(<span class='no'>new_names</span>)</pre><p></div></p>
+<a id="method-set_names"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>set_names()</code></h3>
+<p>Change haplotype names.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>set_names</span><span class='op'>(</span><span class='va'>new_names</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>new_names</code></dt><dd><p>Vector of new names to use. This must be the same length as
 the number of current names.</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>This <code>R6</code> object, invisibly.</p>
 <p><hr>
-<a id="method-add_haps"></a></p><h3>Method <code>add_haps()</code></h3>
-<p>Add one or more blank, named haplotypes</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>add_haps</span>(<span class='no'>new_names</span>)</pre><p></div></p>
+<a id="method-add_haps"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>add_haps()</code></h3>
+<p>Add one or more blank, named haplotypes</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>add_haps</span><span class='op'>(</span><span class='va'>new_names</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>new_names</code></dt><dd><p>Vector of name(s) for the new haplotype(s).</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>This <code>R6</code> object, invisibly.</p>
 <p><hr>
-<a id="method-dup_haps"></a></p><h3>Method <code>dup_haps()</code></h3>
-<p>Duplicate one or more haplotypes by name.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>dup_haps</span>(<span class='no'>hap_names</span>, <span class='kw'>new_names</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre><p></div></p>
+<a id="method-dup_haps"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>dup_haps()</code></h3>
+<p>Duplicate one or more haplotypes by name.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>dup_haps</span><span class='op'>(</span><span class='va'>hap_names</span>, new_names <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>hap_names</code></dt><dd><p>Vector of existing haplotype name(s) that you want to
 duplicate.</p></dd>
 
@@ -377,27 +377,27 @@ duplicate.</p></dd>
 If <code>NULL</code>, their names are auto-generated. Defaults to <code>NULL</code>.</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>This <code>R6</code> object, invisibly.</p>
 <p><hr>
-<a id="method-rm_haps"></a></p><h3>Method <code>rm_haps()</code></h3>
-<p>Remove one or more haplotypes by name.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>rm_haps</span>(<span class='no'>hap_names</span>)</pre><p></div></p>
+<a id="method-rm_haps"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>rm_haps()</code></h3>
+<p>Remove one or more haplotypes by name.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>rm_haps</span><span class='op'>(</span><span class='va'>hap_names</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>hap_names</code></dt><dd><p>Vector of existing haplotype name(s) that you want to remove.</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>This <code>R6</code> object, invisibly.</p>
 <p><hr>
-<a id="method-add_sub"></a></p><h3>Method <code>add_sub()</code></h3>
-<p>Manually add a substitution.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>add_sub</span>(<span class='no'>hap_ind</span>, <span class='no'>chrom_ind</span>, <span class='no'>pos</span>, <span class='no'>nt</span>)</pre><p></div></p>
+<a id="method-add_sub"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>add_sub()</code></h3>
+<p>Manually add a substitution.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>add_sub</span><span class='op'>(</span><span class='va'>hap_ind</span>, <span class='va'>chrom_ind</span>, <span class='va'>pos</span>, <span class='va'>nt</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>hap_ind</code></dt><dd><p>Index for the focal haplotype.</p></dd>
 
 <dt><code>chrom_ind</code></dt><dd><p>Index for the focal chromosome.</p></dd>
@@ -408,15 +408,15 @@ If <code>NULL</code>, their names are auto-generated. Defaults to <code>NULL</co
 current one to.</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>This <code>R6</code> object, invisibly.</p>
 <p><hr>
-<a id="method-add_ins"></a></p><h3>Method <code>add_ins()</code></h3>
-<p>Manually add an insertion.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>add_ins</span>(<span class='no'>hap_ind</span>, <span class='no'>chrom_ind</span>, <span class='no'>pos</span>, <span class='no'>nts</span>)</pre><p></div></p>
+<a id="method-add_ins"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>add_ins()</code></h3>
+<p>Manually add an insertion.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>add_ins</span><span class='op'>(</span><span class='va'>hap_ind</span>, <span class='va'>chrom_ind</span>, <span class='va'>pos</span>, <span class='va'>nts</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>hap_ind</code></dt><dd><p>Index for the focal haplotype.</p></dd>
 
 <dt><code>chrom_ind</code></dt><dd><p>Index for the focal chromosome.</p></dd>
@@ -427,7 +427,7 @@ current one to.</p></dd>
 the designated position.</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>This <code>R6</code> object, invisibly.</p><pre>\item{`add_del(hap_ind, chrom_ind, pos, n_nts)`}{Manually add a deletion
     for a given haplotype (`hap_ind`), chromosome (`chrom_ind`), and position (`pos`).
     The designated number of nucleotides to delete (`n_nts`) will be deleted
@@ -437,12 +437,12 @@ the designated position.</p></dd>
 </pre>
 
 <p><hr>
-<a id="method-add_del"></a></p><h3>Method <code>add_del()</code></h3>
-<p>Manually add a deletion.</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>haplotypes</span>$<span class='fu'>add_del</span>(<span class='no'>hap_ind</span>, <span class='no'>chrom_ind</span>, <span class='no'>pos</span>, <span class='no'>n_nts</span>)</pre><p></div></p>
+<a id="method-add_del"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>add_del()</code></h3>
+<p>Manually add a deletion.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>haplotypes</span><span class='op'>$</span><span class='fu'>add_del</span><span class='op'>(</span><span class='va'>hap_ind</span>, <span class='va'>chrom_ind</span>, <span class='va'>pos</span>, <span class='va'>n_nts</span><span class='op'>)</span></pre><p></div></p>
 
-<h3>Arguments</h3>
-<p><div class="arguments"></p><dl'>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
 <dt><code>hap_ind</code></dt><dd><p>Index for the focal haplotype.</p></dd>
 
 <dt><code>chrom_ind</code></dt><dd><p>Index for the focal chromosome.</p></dd>
@@ -455,7 +455,7 @@ If <code>pos</code> is near the chromosome end and doesn't have <code>n_nts</cod
 to remove, it simply removes nucleotides from <code>pos</code> to the chromosome end.</p></dd>
 
 </dl><p></div></p>
-<h3>Returns</h3>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>This <code>R6</code> object, invisibly.</p>
 
 
@@ -475,7 +475,7 @@ to remove, it simply removes nucleotides from <code>pos</code> to the chromosome
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
