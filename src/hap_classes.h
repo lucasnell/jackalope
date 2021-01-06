@@ -582,7 +582,7 @@ public:
     // To return the minimum size of a given chromosome
     uint64 min_size(const uint64& i) const {
         uint64 ms = haplotypes[0][i].size();
-        for (const HapGenome vg : haplotypes) {
+        for (const HapGenome& vg : haplotypes) {
             if (vg[i].size() < ms) ms = vg[i].size();
         }
         return ms;
