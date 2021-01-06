@@ -2,18 +2,16 @@
 
 This is a resubmission. In this version, I have done the following:
 
-- No errors on installation for R-devel on Windows
-- Updated `src/Makevars` to be compatible with using OpenMP on macOS with R >= 4.0.0
+- Fixed 3 small bugs to remove some unnecessary copying and compilation warnings
 - Updated CITATION
-- Replaced deprecated `ape::is.binary.tree` with `ape::is.binary.phylo`
 
 
 ## Test environments
 
-* macOS 10.15.4 (local), R 4.0.1
-* ubuntu 16.04 (on travis-ci), R-devel, R 4.0.0, R 3.6.3
-* macOS 10.13.6 (on travis-ci), R 4.0.1, R 3.6.3
-* Windows (win-builder), R-devel, R 4.0.0, R 3.6.3
+* macOS 11.1 (local), R 4.0.3
+* ubuntu 20.04 (GitHub Actions), R-devel, R 4.0.3, R 3.6.3
+* macOS 10.15.7 (GitHub Actions), R-devel, R 4.0.3, R 3.6.3
+* Windows (win-builder), R-devel, R 4.0.3, R 3.6.3
 * Rhub
     - Oracle Solaris 10, R-patched, 32-bit
     - Fedora Linux, R-devel, clang (with valgrind)

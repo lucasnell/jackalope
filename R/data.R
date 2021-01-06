@@ -21,7 +21,7 @@
 #'   \item{`pi_s`}{Population mutation rate estimated using \eqn{\pi_s}{pi_s}.}
 #' }
 #'
-#' @source \url{http://dx.doi.org/10.1534/g3.116.030890}
+#' @source \doi{10.1534/g3.116.030890}
 #'
 #' @references
 #' Sung, W., M. S. Ackerman, M. M. Dillon, T. G. Platt, C. Fuqua, V. S. Cooper, and

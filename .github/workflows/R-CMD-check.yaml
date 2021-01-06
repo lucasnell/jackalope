@@ -22,7 +22,6 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: windows-latest, r: 'release'}
           - {os: macOS-latest, r: 'devel'}
           - {os: macOS-latest, r: 'release'}
           - {os: macOS-latest, r: 'oldrel'}
@@ -68,7 +67,7 @@ jobs:
             eval sudo $cmd
           done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "20.04"))')
 
-      - name: Install system dependencies
+      - name: Manually install libcurl on Linux
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install libcurl4-openssl-dev

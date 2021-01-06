@@ -4,7 +4,8 @@
 \name{evo_rates}
 \alias{evo_rates}
 \title{Table of evolutionary rates.}
-\format{A data frame with 15 rows and 8 variables:
+\format{
+A data frame with 15 rows and 8 variables:
 \describe{
 \item{\code{domain}}{Either \code{Bacteria} or \code{Eukarya} for what type of organism
 the species is.}
@@ -19,9 +20,10 @@ events per site per generation).}
 \item{\code{Ne}}{Effective population size (\eqn{\times 10^{6}}{* 10^6}).}
 \item{\code{theta_s}}{Population mutation rate estimated using \eqn{\theta_s}{theta_s}.}
 \item{\code{pi_s}}{Population mutation rate estimated using \eqn{\pi_s}{pi_s}.}
-}}
+}
+}
 \source{
-\url{http://dx.doi.org/10.1534/g3.116.030890}
+\doi{10.1534/g3.116.030890}
 }
 \usage{
 evo_rates
