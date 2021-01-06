@@ -3,7 +3,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.Rprofile$
-^\.travis\.yml$
 ^README.Rmd$
 ^under_constr
 ^_crash_test\.R$
@@ -15,3 +14,4 @@
 ^pkgdown$
 ^CRAN-RELEASE$
 ^README\.Rmd$
+^\.github$

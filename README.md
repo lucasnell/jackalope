@@ -4,8 +4,8 @@
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-[![Build
-Status](https://travis-ci.com/lucasnell/jackalope.svg?branch=master)](https://travis-ci.com/lucasnell/jackalope)
+[![R build
+status](https://github.com/lucasnell/jackalope/workflows/R-CMD-check/badge.svg)](https://github.com/lucasnell/jackalope/actions)
 [![codecov](https://codecov.io/gh/lucasnell/jackalope/branch/master/graph/badge.svg)](https://codecov.io/gh/lucasnell/jackalope)
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/jackalope)](https://cran.r-project.org/package=jackalope)
 
