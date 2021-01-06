@@ -426,7 +426,7 @@ inline void write_reads_one_filetype_(const T& read_filler_base,
     }
 
     return;
-};
+}
 
 
 

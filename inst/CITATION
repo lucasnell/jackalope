@@ -5,14 +5,14 @@ citEntry(entry = "Article",
   author       = personList(as.person("Lucas A. Nell")),
   journal      = "{Molecular Ecology Resources}",
   year         = "2020",
-  volume       = "",
-  number       = "",
-  pages        = "",
+  volume       = "20",
+  number       = "4",
+  pages        = "1132--1140",
   url          = "https://doi.org/10.1111/1755-0998.13173",
   doi          = "10.1111/1755-0998.13173",
   textVersion  =
   paste("Nell, Lucas A (2020).",
         "jackalope: a swift, versatile phylogenomic and high-throughput sequencing simulator.",
-        "Molecular Ecology Resources.",
+        "Molecular Ecology Resources 20(4): 1132-1140.",
         "doi: 10.1111/1755-0998.13173.")
 )
