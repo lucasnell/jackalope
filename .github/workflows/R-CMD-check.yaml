@@ -64,6 +64,14 @@ jobs:
             eval sudo $cmd
           done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "20.04"))')
 
+      - name: Manually install bioc packages on Linux
+        if: runner.os == 'Linux'
+        run: |
+          message(paste('****', Sys.time(), 'installing Bioc Packages ****'))
+          remotes::install_cran("BiocManager")
+          BiocManager::install(c("zlibbioc", "Rhtslib"))
+        shell: Rscript {0}
+
       - name: Install dependencies
         run: |
           remotes::install_deps(dependencies = TRUE)
