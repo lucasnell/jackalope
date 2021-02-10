@@ -2,8 +2,8 @@
 
 This is a resubmission. In this version, I have done the following:
 
-- Fixed 3 small bugs to remove some unnecessary copying and compilation warnings
-- Updated CITATION
+- Changed all `http://` to `https://`
+- Added trailing slashes to links in README
 
 
 ## Test environments

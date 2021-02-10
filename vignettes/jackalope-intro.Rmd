@@ -82,7 +82,7 @@ To generate variant haplotypes based on our reference genome, we need molecular
 evolution information (unless passing a Variant Call Format, or VCF, file).
 For molecular-evolution information, I used the JC69 model for simplicity.
 Mutation rates were chosen from the `evo_rates` object present inside `jackalope`, which
-stores Table 1 from [Sung et al. (2016)](http://dx.doi.org/10.1534/g3.116.030890).
+stores Table 1 from [Sung et al. (2016)](https://dx.doi.org/10.1534/g3.116.030890).
 The substitution and indel rates were the values from `evo_rates` specific
 to *D. melanogaster*.
 The `mu` parameter to `sub_JC69` function was set to `NULL` because the default behavior
