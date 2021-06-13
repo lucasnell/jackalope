@@ -803,7 +803,7 @@ List examine_mutations(SEXP hap_set_ptr, const uint64& hap_ind, const uint64& ch
 //'     Uses 0-based indexing!
 //'
 //' @noRd
-NULL_ENTRY
+
 
 //' @describeIn add_mutations Add a substitution.
 //'
