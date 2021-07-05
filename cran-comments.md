@@ -2,18 +2,17 @@
 
 This is a resubmission. In this version, I have done the following:
 
-- Changed all `http://` to `https://`
-- Added trailing slashes to links in README
+- Remove one NULL_ENTRY to support STRICT_R_HEADERS
 
 
 ## Test environments
 
-* macOS 11.1 (local), R 4.0.3
-* ubuntu 20.04 (GitHub Actions), R-devel, R 4.0.3, R 3.6.3
-* macOS 10.15.7 (GitHub Actions), R-devel, R 4.0.3, R 3.6.3
-* Windows (win-builder), R-devel, R 4.0.3, R 3.6.3
+* macOS 11.4 (local), R 4.1.0
+* ubuntu 20.04.2 (GitHub Actions), R-devel, R 4.1.0, R 4.0.5
+* macOS 10.15.7 (GitHub Actions), R-devel, R 4.1.0, R 4.0.5
+* Windows (win-builder), R-devel, R 4.1.0, R 4.0.5
 * Rhub
-    - Oracle Solaris 10, R-patched, 32-bit
+    - Oracle Solaris 10, R-release, 32-bit
     - Fedora Linux, R-devel, clang (with valgrind)
 
 

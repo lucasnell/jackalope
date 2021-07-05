@@ -1,4 +1,15 @@
 
+# jackalope 1.1.3
+* Remove one NULL_ENTRY to support STRICT_R_HEADERS
+
+
+# jackalope 1.1.2
+
+* Updated CITATION
+* Fixed some links in docs
+* Fixed unnecessary copying in `HapSet` class
+
+
 # jackalope 1.1.1
 
 * Updated `src/Makevars` to be compatible with using OpenMP on macOS with 
