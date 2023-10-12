@@ -2,11 +2,11 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 merge_all_chromosomes_cpp <- function(ref_genome_ptr) {
-    invisible(.Call('_jackalope_merge_all_chromosomes_cpp', PACKAGE = 'jackalope', ref_genome_ptr))
+    invisible(.Call(`_jackalope_merge_all_chromosomes_cpp`, ref_genome_ptr))
 }
 
 merge_chromosomes_cpp <- function(ref_genome_ptr, chrom_inds) {
-    invisible(.Call('_jackalope_merge_chromosomes_cpp', PACKAGE = 'jackalope', ref_genome_ptr, chrom_inds))
+    invisible(.Call(`_jackalope_merge_chromosomes_cpp`, ref_genome_ptr, chrom_inds))
 }
 
 #' Filter reference genome chromosomes by size or for a proportion of total nucleotides.
@@ -26,7 +26,7 @@ merge_chromosomes_cpp <- function(ref_genome_ptr, chrom_inds) {
 #'
 #'
 filter_chromosomes_cpp <- function(ref_genome_ptr, min_chrom_size = 0L, out_chrom_prop = 0) {
-    invisible(.Call('_jackalope_filter_chromosomes_cpp', PACKAGE = 'jackalope', ref_genome_ptr, min_chrom_size, out_chrom_prop))
+    invisible(.Call(`_jackalope_filter_chromosomes_cpp`, ref_genome_ptr, min_chrom_size, out_chrom_prop))
 }
 
 #' Replace Ns with randome nucleotides.
@@ -40,7 +40,7 @@ filter_chromosomes_cpp <- function(ref_genome_ptr, min_chrom_size = 0L, out_chro
 #'
 #'
 replace_Ns_cpp <- function(ref_genome_ptr, pi_tcag, n_threads, show_progress) {
-    invisible(.Call('_jackalope_replace_Ns_cpp', PACKAGE = 'jackalope', ref_genome_ptr, pi_tcag, n_threads, show_progress))
+    invisible(.Call(`_jackalope_replace_Ns_cpp`, ref_genome_ptr, pi_tcag, n_threads, show_progress))
 }
 
 #' Create `RefGenome` pointer based on nucleotide equilibrium frequencies.
@@ -66,7 +66,7 @@ replace_Ns_cpp <- function(ref_genome_ptr, pi_tcag, n_threads, show_progress) {
 #'
 #'
 create_genome_cpp <- function(n_chroms, len_mean, len_sd, pi_tcag, n_threads) {
-    .Call('_jackalope_create_genome_cpp', PACKAGE = 'jackalope', n_chroms, len_mean, len_sd, pi_tcag, n_threads)
+    .Call(`_jackalope_create_genome_cpp`, n_chroms, len_mean, len_sd, pi_tcag, n_threads)
 }
 
 #' Create random chromosomes as a character vector.
@@ -82,11 +82,11 @@ create_genome_cpp <- function(n_chroms, len_mean, len_sd, pi_tcag, n_threads) {
 #' @noRd
 #'
 rando_chroms <- function(n_chroms, len_mean, len_sd = 0, pi_tcag = numeric(0), n_threads = 1L) {
-    .Call('_jackalope_rando_chroms', PACKAGE = 'jackalope', n_chroms, len_mean, len_sd, pi_tcag, n_threads)
+    .Call(`_jackalope_rando_chroms`, n_chroms, len_mean, len_sd, pi_tcag, n_threads)
 }
 
 add_ssites_cpp <- function(ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress) {
-    .Call('_jackalope_add_ssites_cpp', PACKAGE = 'jackalope', ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress)
+    .Call(`_jackalope_add_ssites_cpp`, ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rates, deletion_rates, n_threads, show_progress)
 }
 
 #' Illumina chromosome for reference object.
@@ -95,7 +95,7 @@ add_ssites_cpp <- function(ref_genome_ptr, seg_sites, Q, pi_tcag, insertion_rate
 #' @noRd
 #'
 illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
-    invisible(.Call('_jackalope_illumina_ref_cpp', PACKAGE = 'jackalope', ref_genome_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
+    invisible(.Call(`_jackalope_illumina_ref_cpp`, ref_genome_ptr, paired, matepair, out_prefix, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
 }
 
 #' Illumina chromosome for reference object.
@@ -104,7 +104,7 @@ illumina_ref_cpp <- function(ref_genome_ptr, paired, matepair, out_prefix, compr
 #' @noRd
 #'
 illumina_hap_cpp <- function(hap_set_ptr, paired, matepair, out_prefix, sep_files, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, haplotype_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes) {
-    invisible(.Call('_jackalope_illumina_hap_cpp', PACKAGE = 'jackalope', hap_set_ptr, paired, matepair, out_prefix, sep_files, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, haplotype_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
+    invisible(.Call(`_jackalope_illumina_hap_cpp`, hap_set_ptr, paired, matepair, out_prefix, sep_files, compress, comp_method, n_reads, prob_dup, n_threads, show_progress, read_pool_size, haplotype_probs, frag_len_shape, frag_len_scale, frag_len_min, frag_len_max, qual_probs1, quals1, ins_prob1, del_prob1, qual_probs2, quals2, ins_prob2, del_prob2, barcodes))
 }
 
 #' PacBio chromosome for reference object.
@@ -113,7 +113,7 @@ illumina_hap_cpp <- function(hap_set_ptr, paired, matepair, out_prefix, sep_file
 #' @noRd
 #'
 pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
-    invisible(.Call('_jackalope_pacbio_ref_cpp', PACKAGE = 'jackalope', ref_genome_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
+    invisible(.Call(`_jackalope_pacbio_ref_cpp`, ref_genome_ptr, out_prefix, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
 }
 
 #' PacBio chromosome for reference object.
@@ -122,7 +122,7 @@ pacbio_ref_cpp <- function(ref_genome_ptr, out_prefix, compress, comp_method, n_
 #' @noRd
 #'
 pacbio_hap_cpp <- function(hap_set_ptr, out_prefix, sep_files, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, haplotype_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst) {
-    invisible(.Call('_jackalope_pacbio_hap_cpp', PACKAGE = 'jackalope', hap_set_ptr, out_prefix, sep_files, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, haplotype_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
+    invisible(.Call(`_jackalope_pacbio_hap_cpp`, hap_set_ptr, out_prefix, sep_files, compress, comp_method, n_reads, n_threads, show_progress, read_pool_size, haplotype_probs, prob_dup, scale, sigma, loc, min_read_len, read_probs, read_lens, max_passes, chi2_params_n, chi2_params_s, sqrt_params, norm_params, prob_thresh, prob_ins, prob_del, prob_subst))
 }
 
 #' Read a non-indexed fasta file to a \code{RefGenome} object.
@@ -138,7 +138,7 @@ pacbio_hap_cpp <- function(hap_set_ptr, out_prefix, sep_files, compress, comp_me
 #' @noRd
 #'
 read_fasta_noind <- function(fasta_files, cut_names, remove_soft_mask) {
-    .Call('_jackalope_read_fasta_noind', PACKAGE = 'jackalope', fasta_files, cut_names, remove_soft_mask)
+    .Call(`_jackalope_read_fasta_noind`, fasta_files, cut_names, remove_soft_mask)
 }
 
 #' Read an indexed fasta file to a \code{RefGenome} object.
@@ -157,7 +157,7 @@ read_fasta_noind <- function(fasta_files, cut_names, remove_soft_mask) {
 #'
 #'
 read_fasta_ind <- function(fasta_files, fai_files, remove_soft_mask) {
-    .Call('_jackalope_read_fasta_ind', PACKAGE = 'jackalope', fasta_files, fai_files, remove_soft_mask)
+    .Call(`_jackalope_read_fasta_ind`, fasta_files, fai_files, remove_soft_mask)
 }
 
 #' Write \code{RefGenome} to an uncompressed fasta file.
@@ -173,7 +173,7 @@ read_fasta_ind <- function(fasta_files, fai_files, remove_soft_mask) {
 #'
 #'
 write_ref_fasta <- function(out_prefix, ref_genome_ptr, text_width, compress, comp_method, show_progress) {
-    invisible(.Call('_jackalope_write_ref_fasta', PACKAGE = 'jackalope', out_prefix, ref_genome_ptr, text_width, compress, comp_method, show_progress))
+    invisible(.Call(`_jackalope_write_ref_fasta`, out_prefix, ref_genome_ptr, text_width, compress, comp_method, show_progress))
 }
 
 #' Write \code{HapSet} to an uncompressed fasta file.
@@ -189,7 +189,7 @@ write_ref_fasta <- function(out_prefix, ref_genome_ptr, text_width, compress, co
 #'
 #'
 write_haps_fasta <- function(out_prefix, hap_set_ptr, text_width, compress, comp_method, n_threads, show_progress) {
-    invisible(.Call('_jackalope_write_haps_fasta', PACKAGE = 'jackalope', out_prefix, hap_set_ptr, text_width, compress, comp_method, n_threads, show_progress))
+    invisible(.Call(`_jackalope_write_haps_fasta`, out_prefix, hap_set_ptr, text_width, compress, comp_method, n_threads, show_progress))
 }
 
 #' Read a ms output file with newick gene trees and return the gene tree strings.
@@ -201,7 +201,7 @@ write_haps_fasta <- function(out_prefix, hap_set_ptr, text_width, compress, comp
 #' @noRd
 #'
 read_ms_trees_ <- function(ms_file) {
-    .Call('_jackalope_read_ms_trees_', PACKAGE = 'jackalope', ms_file)
+    .Call(`_jackalope_read_ms_trees_`, ms_file)
 }
 
 #' Read a ms output file with segregating sites and return the matrices of site info.
@@ -213,11 +213,11 @@ read_ms_trees_ <- function(ms_file) {
 #' @noRd
 #'
 coal_file_sites <- function(ms_file) {
-    .Call('_jackalope_coal_file_sites', PACKAGE = 'jackalope', ms_file)
+    .Call(`_jackalope_coal_file_sites`, ms_file)
 }
 
 read_vcf_cpp <- function(reference_ptr, fn, print_names) {
-    .Call('_jackalope_read_vcf_cpp', PACKAGE = 'jackalope', reference_ptr, fn, print_names)
+    .Call(`_jackalope_read_vcf_cpp`, reference_ptr, fn, print_names)
 }
 
 #' Write `haplotypes` to VCF file.
@@ -226,7 +226,7 @@ read_vcf_cpp <- function(reference_ptr, fn, print_names) {
 #' @noRd
 #'
 write_vcf_cpp <- function(out_prefix, compress, hap_set_ptr, sample_matrix, show_progress) {
-    invisible(.Call('_jackalope_write_vcf_cpp', PACKAGE = 'jackalope', out_prefix, compress, hap_set_ptr, sample_matrix, show_progress))
+    invisible(.Call(`_jackalope_write_vcf_cpp`, out_prefix, compress, hap_set_ptr, sample_matrix, show_progress))
 }
 
 #' Evolve all chromosomes in a reference genome.
@@ -234,7 +234,7 @@ write_vcf_cpp <- function(out_prefix, compress, hap_set_ptr, sample_matrix, show
 #' @noRd
 #'
 evolve_across_trees <- function(ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, n_threads, show_progress) {
-    .Call('_jackalope_evolve_across_trees', PACKAGE = 'jackalope', ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, n_threads, show_progress)
+    .Call(`_jackalope_evolve_across_trees`, ref_genome_ptr, genome_phylo_info, Q, U, Ui, L, invariant, insertion_rates, deletion_rates, epsilon, pi_tcag, n_threads, show_progress)
 }
 
 #' Add mutations manually from R.
@@ -260,7 +260,7 @@ NULL
 #' @noRd
 #'
 print_ref_genome <- function(ref_genome_ptr) {
-    invisible(.Call('_jackalope_print_ref_genome', PACKAGE = 'jackalope', ref_genome_ptr))
+    invisible(.Call(`_jackalope_print_ref_genome`, ref_genome_ptr))
 }
 
 #' Function to print info on a HapSet.
@@ -270,7 +270,7 @@ print_ref_genome <- function(ref_genome_ptr) {
 #' @noRd
 #'
 print_hap_set <- function(hap_set_ptr) {
-    invisible(.Call('_jackalope_print_hap_set', PACKAGE = 'jackalope', hap_set_ptr))
+    invisible(.Call(`_jackalope_print_hap_set`, hap_set_ptr))
 }
 
 #' Make a RefGenome object from a set of chromosomes.
@@ -280,7 +280,7 @@ print_hap_set <- function(hap_set_ptr) {
 #' @noRd
 #'
 make_ref_genome <- function(chroms) {
-    .Call('_jackalope_make_ref_genome', PACKAGE = 'jackalope', chroms)
+    .Call(`_jackalope_make_ref_genome`, chroms)
 }
 
 #' Make a HapSet object from a RefGenome pointer and # haplotypes.
@@ -291,23 +291,23 @@ make_ref_genome <- function(chroms) {
 #' @noRd
 #'
 make_hap_set <- function(ref_genome_ptr, n_haps) {
-    .Call('_jackalope_make_hap_set', PACKAGE = 'jackalope', ref_genome_ptr, n_haps)
+    .Call(`_jackalope_make_hap_set`, ref_genome_ptr, n_haps)
 }
 
 view_ref_genome_nchroms <- function(ref_genome_ptr) {
-    .Call('_jackalope_view_ref_genome_nchroms', PACKAGE = 'jackalope', ref_genome_ptr)
+    .Call(`_jackalope_view_ref_genome_nchroms`, ref_genome_ptr)
 }
 
 view_hap_set_nchroms <- function(hap_set_ptr) {
-    .Call('_jackalope_view_hap_set_nchroms', PACKAGE = 'jackalope', hap_set_ptr)
+    .Call(`_jackalope_view_hap_set_nchroms`, hap_set_ptr)
 }
 
 view_hap_set_nhaps <- function(hap_set_ptr) {
-    .Call('_jackalope_view_hap_set_nhaps', PACKAGE = 'jackalope', hap_set_ptr)
+    .Call(`_jackalope_view_hap_set_nhaps`, hap_set_ptr)
 }
 
 view_ref_genome_chrom_sizes <- function(ref_genome_ptr) {
-    .Call('_jackalope_view_ref_genome_chrom_sizes', PACKAGE = 'jackalope', ref_genome_ptr)
+    .Call(`_jackalope_view_ref_genome_chrom_sizes`, ref_genome_ptr)
 }
 
 #' See all chromosome sizes in a HapGenome object within a HapSet.
@@ -315,11 +315,11 @@ view_ref_genome_chrom_sizes <- function(ref_genome_ptr) {
 #' @noRd
 #'
 view_hap_genome_chrom_sizes <- function(hap_set_ptr, hap_ind) {
-    .Call('_jackalope_view_hap_genome_chrom_sizes', PACKAGE = 'jackalope', hap_set_ptr, hap_ind)
+    .Call(`_jackalope_view_hap_genome_chrom_sizes`, hap_set_ptr, hap_ind)
 }
 
 view_ref_genome_chrom <- function(ref_genome_ptr, chrom_ind) {
-    .Call('_jackalope_view_ref_genome_chrom', PACKAGE = 'jackalope', ref_genome_ptr, chrom_ind)
+    .Call(`_jackalope_view_ref_genome_chrom`, ref_genome_ptr, chrom_ind)
 }
 
 #' Function to piece together the strings for one chromosome in a HapGenome.
@@ -327,11 +327,11 @@ view_ref_genome_chrom <- function(ref_genome_ptr, chrom_ind) {
 #' @noRd
 #'
 view_hap_genome_chrom <- function(hap_set_ptr, hap_ind, chrom_ind) {
-    .Call('_jackalope_view_hap_genome_chrom', PACKAGE = 'jackalope', hap_set_ptr, hap_ind, chrom_ind)
+    .Call(`_jackalope_view_hap_genome_chrom`, hap_set_ptr, hap_ind, chrom_ind)
 }
 
 view_ref_genome <- function(ref_genome_ptr) {
-    .Call('_jackalope_view_ref_genome', PACKAGE = 'jackalope', ref_genome_ptr)
+    .Call(`_jackalope_view_ref_genome`, ref_genome_ptr)
 }
 
 #' Function to piece together the strings for all chromosomes in a HapGenome.
@@ -339,11 +339,11 @@ view_ref_genome <- function(ref_genome_ptr) {
 #' @noRd
 #'
 view_hap_genome <- function(hap_set_ptr, hap_ind) {
-    .Call('_jackalope_view_hap_genome', PACKAGE = 'jackalope', hap_set_ptr, hap_ind)
+    .Call(`_jackalope_view_hap_genome`, hap_set_ptr, hap_ind)
 }
 
 view_ref_genome_chrom_names <- function(ref_genome_ptr) {
-    .Call('_jackalope_view_ref_genome_chrom_names', PACKAGE = 'jackalope', ref_genome_ptr)
+    .Call(`_jackalope_view_ref_genome_chrom_names`, ref_genome_ptr)
 }
 
 #' See all haplotype-genome names in a HapSet object.
@@ -351,7 +351,7 @@ view_ref_genome_chrom_names <- function(ref_genome_ptr) {
 #' @noRd
 #'
 view_hap_set_hap_names <- function(hap_set_ptr) {
-    .Call('_jackalope_view_hap_set_hap_names', PACKAGE = 'jackalope', hap_set_ptr)
+    .Call(`_jackalope_view_hap_set_hap_names`, hap_set_ptr)
 }
 
 #' See GC content in a RefGenome object.
@@ -359,7 +359,7 @@ view_hap_set_hap_names <- function(hap_set_ptr) {
 #' @noRd
 #'
 view_ref_genome_gc_content <- function(ref_genome_ptr, chrom_ind, start, end) {
-    .Call('_jackalope_view_ref_genome_gc_content', PACKAGE = 'jackalope', ref_genome_ptr, chrom_ind, start, end)
+    .Call(`_jackalope_view_ref_genome_gc_content`, ref_genome_ptr, chrom_ind, start, end)
 }
 
 #' See GC content in a HapSet object.
@@ -367,7 +367,7 @@ view_ref_genome_gc_content <- function(ref_genome_ptr, chrom_ind, start, end) {
 #' @noRd
 #'
 view_hap_set_gc_content <- function(hap_set_ptr, chrom_ind, hap_ind, start, end) {
-    .Call('_jackalope_view_hap_set_gc_content', PACKAGE = 'jackalope', hap_set_ptr, chrom_ind, hap_ind, start, end)
+    .Call(`_jackalope_view_hap_set_gc_content`, hap_set_ptr, chrom_ind, hap_ind, start, end)
 }
 
 #' See any nucleotide's content in a RefGenome object.
@@ -375,7 +375,7 @@ view_hap_set_gc_content <- function(hap_set_ptr, chrom_ind, hap_ind, start, end)
 #' @noRd
 #'
 view_ref_genome_nt_content <- function(ref_genome_ptr, nt, chrom_ind, start, end) {
-    .Call('_jackalope_view_ref_genome_nt_content', PACKAGE = 'jackalope', ref_genome_ptr, nt, chrom_ind, start, end)
+    .Call(`_jackalope_view_ref_genome_nt_content`, ref_genome_ptr, nt, chrom_ind, start, end)
 }
 
 #' See any nucleotide's content in a HapSet object.
@@ -383,39 +383,39 @@ view_ref_genome_nt_content <- function(ref_genome_ptr, nt, chrom_ind, start, end
 #' @noRd
 #'
 view_hap_set_nt_content <- function(hap_set_ptr, nt, chrom_ind, hap_ind, start, end) {
-    .Call('_jackalope_view_hap_set_nt_content', PACKAGE = 'jackalope', hap_set_ptr, nt, chrom_ind, hap_ind, start, end)
+    .Call(`_jackalope_view_hap_set_nt_content`, hap_set_ptr, nt, chrom_ind, hap_ind, start, end)
 }
 
 set_ref_genome_chrom_names <- function(ref_genome_ptr, chrom_inds, names) {
-    invisible(.Call('_jackalope_set_ref_genome_chrom_names', PACKAGE = 'jackalope', ref_genome_ptr, chrom_inds, names))
+    invisible(.Call(`_jackalope_set_ref_genome_chrom_names`, ref_genome_ptr, chrom_inds, names))
 }
 
 clean_ref_genome_chrom_names <- function(ref_genome_ptr) {
-    invisible(.Call('_jackalope_clean_ref_genome_chrom_names', PACKAGE = 'jackalope', ref_genome_ptr))
+    invisible(.Call(`_jackalope_clean_ref_genome_chrom_names`, ref_genome_ptr))
 }
 
 set_hap_set_hap_names <- function(hap_set_ptr, hap_inds, names) {
-    invisible(.Call('_jackalope_set_hap_set_hap_names', PACKAGE = 'jackalope', hap_set_ptr, hap_inds, names))
+    invisible(.Call(`_jackalope_set_hap_set_hap_names`, hap_set_ptr, hap_inds, names))
 }
 
 remove_ref_genome_chroms <- function(ref_genome_ptr, chrom_inds) {
-    invisible(.Call('_jackalope_remove_ref_genome_chroms', PACKAGE = 'jackalope', ref_genome_ptr, chrom_inds))
+    invisible(.Call(`_jackalope_remove_ref_genome_chroms`, ref_genome_ptr, chrom_inds))
 }
 
 remove_hap_set_haps <- function(hap_set_ptr, hap_inds) {
-    invisible(.Call('_jackalope_remove_hap_set_haps', PACKAGE = 'jackalope', hap_set_ptr, hap_inds))
+    invisible(.Call(`_jackalope_remove_hap_set_haps`, hap_set_ptr, hap_inds))
 }
 
 add_ref_genome_chroms <- function(ref_genome_ptr, new_chroms, new_names) {
-    invisible(.Call('_jackalope_add_ref_genome_chroms', PACKAGE = 'jackalope', ref_genome_ptr, new_chroms, new_names))
+    invisible(.Call(`_jackalope_add_ref_genome_chroms`, ref_genome_ptr, new_chroms, new_names))
 }
 
 add_hap_set_haps <- function(hap_set_ptr, new_names) {
-    invisible(.Call('_jackalope_add_hap_set_haps', PACKAGE = 'jackalope', hap_set_ptr, new_names))
+    invisible(.Call(`_jackalope_add_hap_set_haps`, hap_set_ptr, new_names))
 }
 
 dup_hap_set_haps <- function(hap_set_ptr, hap_inds, new_names) {
-    invisible(.Call('_jackalope_dup_hap_set_haps', PACKAGE = 'jackalope', hap_set_ptr, hap_inds, new_names))
+    invisible(.Call(`_jackalope_dup_hap_set_haps`, hap_set_ptr, hap_inds, new_names))
 }
 
 #' Turns a HapGenome's mutations into a list of data frames.
@@ -426,7 +426,7 @@ dup_hap_set_haps <- function(hap_set_ptr, hap_inds, new_names) {
 #' @noRd
 #'
 view_mutations <- function(hap_set_ptr, hap_ind) {
-    .Call('_jackalope_view_mutations', PACKAGE = 'jackalope', hap_set_ptr, hap_ind)
+    .Call(`_jackalope_view_mutations`, hap_set_ptr, hap_ind)
 }
 
 #' Turns a HapGenome's mutations into a list of data frames.
@@ -437,7 +437,7 @@ view_mutations <- function(hap_set_ptr, hap_ind) {
 #' @noRd
 #'
 examine_mutations <- function(hap_set_ptr, hap_ind, chrom_ind) {
-    .Call('_jackalope_examine_mutations', PACKAGE = 'jackalope', hap_set_ptr, hap_ind, chrom_ind)
+    .Call(`_jackalope_examine_mutations`, hap_set_ptr, hap_ind, chrom_ind)
 }
 
 #' @describeIn add_mutations Add a substitution.
@@ -448,7 +448,7 @@ examine_mutations <- function(hap_set_ptr, hap_ind, chrom_ind) {
 #' @noRd
 #'
 add_substitution <- function(hap_set_ptr, hap_ind, chrom_ind, nucleo_, new_pos_) {
-    invisible(.Call('_jackalope_add_substitution', PACKAGE = 'jackalope', hap_set_ptr, hap_ind, chrom_ind, nucleo_, new_pos_))
+    invisible(.Call(`_jackalope_add_substitution`, hap_set_ptr, hap_ind, chrom_ind, nucleo_, new_pos_))
 }
 
 #' @describeIn add_mutations Add an insertion.
@@ -460,7 +460,7 @@ add_substitution <- function(hap_set_ptr, hap_ind, chrom_ind, nucleo_, new_pos_)
 #' @noRd
 #'
 add_insertion <- function(hap_set_ptr, hap_ind, chrom_ind, nucleos_, new_pos_) {
-    invisible(.Call('_jackalope_add_insertion', PACKAGE = 'jackalope', hap_set_ptr, hap_ind, chrom_ind, nucleos_, new_pos_))
+    invisible(.Call(`_jackalope_add_insertion`, hap_set_ptr, hap_ind, chrom_ind, nucleos_, new_pos_))
 }
 
 #' @describeIn add_mutations Add a deletion.
@@ -472,22 +472,22 @@ add_insertion <- function(hap_set_ptr, hap_ind, chrom_ind, nucleos_, new_pos_) {
 #' @noRd
 #'
 add_deletion <- function(hap_set_ptr, hap_ind, chrom_ind, size_, new_pos_) {
-    invisible(.Call('_jackalope_add_deletion', PACKAGE = 'jackalope', hap_set_ptr, hap_ind, chrom_ind, size_, new_pos_))
+    invisible(.Call(`_jackalope_add_deletion`, hap_set_ptr, hap_ind, chrom_ind, size_, new_pos_))
 }
 
 sub_TN93_cpp <- function(mu, pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant) {
-    .Call('_jackalope_sub_TN93_cpp', PACKAGE = 'jackalope', mu, pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant)
+    .Call(`_jackalope_sub_TN93_cpp`, mu, pi_tcag, alpha_1, alpha_2, beta, gamma_shape, gamma_k, invariant)
 }
 
 sub_GTR_cpp <- function(mu, pi_tcag, abcdef, gamma_shape, gamma_k, invariant) {
-    .Call('_jackalope_sub_GTR_cpp', PACKAGE = 'jackalope', mu, pi_tcag, abcdef, gamma_shape, gamma_k, invariant)
+    .Call(`_jackalope_sub_GTR_cpp`, mu, pi_tcag, abcdef, gamma_shape, gamma_k, invariant)
 }
 
 sub_UNREST_cpp <- function(mu, Q, gamma_shape, gamma_k, invariant) {
-    .Call('_jackalope_sub_UNREST_cpp', PACKAGE = 'jackalope', mu, Q, gamma_shape, gamma_k, invariant)
+    .Call(`_jackalope_sub_UNREST_cpp`, mu, Q, gamma_shape, gamma_k, invariant)
 }
 
 using_openmp <- function() {
-    .Call('_jackalope_using_openmp', PACKAGE = 'jackalope')
+    .Call(`_jackalope_using_openmp`)
 }
 
