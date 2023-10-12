@@ -26,6 +26,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -38,23 +40,17 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">jackalope</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.4</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -74,7 +70,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/lucasnell/jackalope/">
+  <a href="https://github.com/lucasnell/jackalope/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -89,34 +85,44 @@
 
       
 
-      </header><script src="sub-models_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Models of nucleotide substitution</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/lucasnell/jackalope/blob/master/vignettes/sub-models.Rmd"><code>vignettes/sub-models.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/lucasnell/jackalope/blob/HEAD/vignettes/sub-models.Rmd" class="external-link"><code>vignettes/sub-models.Rmd</code></a></small>
       <div class="hidden name"><code>sub-models.Rmd</code></div>
 
     </div>
 
     
     
-<div id="introduction" class="section level2">
-<h2 class="hasAnchor">
-<a href="#introduction" class="anchor"></a>Introduction</h2>
-<p>This document outlines the models of substitution used in the package. The matrices below are substitution-rate matrices for each model. The rates within these matrices are ordered as follows:</p>
+<div class="section level2">
+<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h2>
+<p>This document outlines the models of substitution used in the
+package. The matrices below are substitution-rate matrices for each
+model. The rates within these matrices are ordered as follows:</p>
 <p><span class="math display">\[
 \begin{bmatrix}
-    \cdot           &amp; T\rightarrow C    &amp; T\rightarrow A    &amp; T\rightarrow G    \\
-    C\rightarrow T  &amp; \cdot             &amp; C\rightarrow A    &amp; C\rightarrow G    \\
-    A\rightarrow T  &amp; A\rightarrow C    &amp; \cdot             &amp; A\rightarrow G    \\
-    G\rightarrow T  &amp; G\rightarrow C    &amp; G\rightarrow A    &amp; \cdot
+    \cdot           &amp; T\rightarrow C    &amp; T\rightarrow
+A    &amp; T\rightarrow G    \\
+    C\rightarrow T  &amp; \cdot             &amp; C\rightarrow
+A    &amp; C\rightarrow G    \\
+    A\rightarrow T  &amp; A\rightarrow C    &amp;
+\cdot             &amp; A\rightarrow G    \\
+    G\rightarrow T  &amp; G\rightarrow C    &amp; G\rightarrow
+A    &amp; \cdot
 \end{bmatrix}
 \]</span></p>
-<p>(For example, <span class="math inline">\(C \rightarrow T\)</span> indicates that the cell in that location refers to the rate from <span class="math inline">\(C\)</span> to <span class="math inline">\(T\)</span>.) Diagonals are determined based on all rows having to sum to zero (Yang 2006).</p>
-<p>Under each rate matrix are listed the parameters in the function required for that model.</p>
-<p>Below is a key of the parameters required in the functions for the models below, in order of their appearance:</p>
+<p>(For example, <span class="math inline">\(C \rightarrow T\)</span>
+indicates that the cell in that location refers to the rate from <span class="math inline">\(C\)</span> to <span class="math inline">\(T\)</span>.) Diagonals are determined based on all
+rows having to sum to zero (Yang 2006).</p>
+<p>Under each rate matrix are listed the parameters in the function
+required for that model.</p>
+<p>Below is a key of the parameters required in the functions for the
+models below, in order of their appearance:</p>
 <ul>
 <li>
 <code>lambda</code>: <span class="math inline">\(\lambda\)</span>
@@ -142,17 +148,22 @@
 <code>abcdef</code> vector of <span class="math inline">\(a\)</span>, <span class="math inline">\(b\)</span>, <span class="math inline">\(c\)</span>, <span class="math inline">\(d\)</span>, <span class="math inline">\(e\)</span>, then <span class="math inline">\(f\)</span>
 </li>
 <li>
-<code>Q</code>: matrix of all parameters, where diagonals are ignored</li>
+<code>Q</code>: matrix of all parameters, where diagonals are
+ignored</li>
 </ul>
-<p>Functions in <code>jackalope</code> that employ each model take the form <code>sub_X</code> for model <code>X</code> (e.g., <code>sub_JC69</code> for JC69 model).</p>
-<p><em>Note:</em> In all models, the matrices are scaled such that the overall mutation rate is <code>1</code>, but this behavior can be change using the <code>mu</code> parameter for each function.</p>
+<p>Functions in <code>jackalope</code> that employ each model take the
+form <code>sub_X</code> for model <code>X</code> (e.g.,
+<code>sub_JC69</code> for JC69 model).</p>
+<p><em>Note:</em> In all models, the matrices are scaled such that the
+overall mutation rate is <code>1</code>, but this behavior can be change
+using the <code>mu</code> parameter for each function.</p>
 </div>
-<div id="jc69" class="section level2">
-<h2 class="hasAnchor">
-<a href="#jc69" class="anchor"></a>JC69</h2>
+<div class="section level2">
+<h2 id="jc69">JC69<a class="anchor" aria-label="anchor" href="#jc69"></a>
+</h2>
 <p>The JC69 model (Jukes and Cantor 1969) uses a single rate, <span class="math inline">\(\lambda\)</span>.</p>
 <p><span class="math display">\[
-\mathbf{Q} = 
+\mathbf{Q} =
 \begin{bmatrix}
 \cdot   &amp; \lambda   &amp; \lambda   &amp; \lambda \\
 \lambda &amp; \cdot     &amp; \lambda   &amp; \lambda \\
@@ -165,12 +176,13 @@
 <li><code>lambda</code></li>
 </ul>
 </div>
-<div id="k80" class="section level2">
-<h2 class="hasAnchor">
-<a href="#k80" class="anchor"></a>K80</h2>
-<p>The K80 model (Kimura 1980) uses separate rates for transitions (<span class="math inline">\(\alpha\)</span>) and transversions (<span class="math inline">\(\beta\)</span>).</p>
+<div class="section level2">
+<h2 id="k80">K80<a class="anchor" aria-label="anchor" href="#k80"></a>
+</h2>
+<p>The K80 model (Kimura 1980) uses separate rates for transitions
+(<span class="math inline">\(\alpha\)</span>) and transversions (<span class="math inline">\(\beta\)</span>).</p>
 <p><span class="math display">\[
-\mathbf{Q} = 
+\mathbf{Q} =
 \begin{bmatrix}
 \cdot   &amp; \alpha    &amp; \beta     &amp; \beta     \\
 \alpha  &amp; \cdot     &amp; \beta     &amp; \beta     \\
@@ -184,12 +196,13 @@
 <li><code>beta</code></li>
 </ul>
 </div>
-<div id="f81" class="section level2">
-<h2 class="hasAnchor">
-<a href="#f81" class="anchor"></a>F81</h2>
-<p>The F81 model (Felsenstein 1981) incorporates different equilibrium frequency distributions for each nucleotide (<span class="math inline">\(\pi_X\)</span> for nucleotide <span class="math inline">\(X\)</span>).</p>
+<div class="section level2">
+<h2 id="f81">F81<a class="anchor" aria-label="anchor" href="#f81"></a>
+</h2>
+<p>The F81 model (Felsenstein 1981) incorporates different equilibrium
+frequency distributions for each nucleotide (<span class="math inline">\(\pi_X\)</span> for nucleotide <span class="math inline">\(X\)</span>).</p>
 <p><span class="math display">\[
-\mathbf{Q} = 
+\mathbf{Q} =
 \begin{bmatrix}
 \cdot   &amp; \pi_C &amp; \pi_A &amp; \pi_G \\
 \pi_T   &amp; \cdot &amp; \pi_A &amp; \pi_G \\
@@ -202,16 +215,21 @@
 <li><code>pi_tcag</code></li>
 </ul>
 </div>
-<div id="hky85" class="section level2">
-<h2 class="hasAnchor">
-<a href="#hky85" class="anchor"></a>HKY85</h2>
-<p>The HKY85 model (Hasegawa et al. 1984, 1985) combines different equilibrium frequency distributions with unequal transition and transversion rates.</p>
+<div class="section level2">
+<h2 id="hky85">HKY85<a class="anchor" aria-label="anchor" href="#hky85"></a>
+</h2>
+<p>The HKY85 model (Hasegawa et al. 1984, 1985) combines different
+equilibrium frequency distributions with unequal transition and
+transversion rates.</p>
 <p><span class="math display">\[
-\mathbf{Q} = 
+\mathbf{Q} =
 \begin{bmatrix}
-\cdot           &amp; \alpha \pi_C  &amp; \beta \pi_A   &amp; \beta \pi_G   \\
-\alpha \pi_T    &amp; \cdot         &amp; \beta \pi_A   &amp; \beta \pi_G   \\
-\beta \pi_T     &amp; \beta \pi_C   &amp; \cdot         &amp; \alpha \pi_G  \\
+\cdot           &amp; \alpha \pi_C  &amp; \beta \pi_A   &amp; \beta
+\pi_G   \\
+\alpha \pi_T    &amp; \cdot         &amp; \beta \pi_A   &amp; \beta
+\pi_G   \\
+\beta \pi_T     &amp; \beta \pi_C   &amp; \cdot         &amp; \alpha
+\pi_G  \\
 \beta \pi_T     &amp; \beta \pi_C   &amp; \alpha \pi_A  &amp; \cdot
 \end{bmatrix}
 \]</span></p>
@@ -222,17 +240,24 @@
 <li><code>pi_tcag</code></li>
 </ul>
 </div>
-<div id="tn93" class="section level2">
-<h2 class="hasAnchor">
-<a href="#tn93" class="anchor"></a>TN93</h2>
-<p>The TN93 model (Tamura and Nei 1993) adds to the HKY85 model by distinguishing between the two types of transitions: between pyrimidines (<span class="math inline">\(\alpha_1\)</span>) and between purines (<span class="math inline">\(\alpha_2\)</span>).</p>
+<div class="section level2">
+<h2 id="tn93">TN93<a class="anchor" aria-label="anchor" href="#tn93"></a>
+</h2>
+<p>The TN93 model (Tamura and Nei 1993) adds to the HKY85 model by
+distinguishing between the two types of transitions: between pyrimidines
+(<span class="math inline">\(\alpha_1\)</span>) and between purines
+(<span class="math inline">\(\alpha_2\)</span>).</p>
 <p><span class="math display">\[
-\mathbf{Q} = 
+\mathbf{Q} =
 \begin{bmatrix}
-\cdot           &amp; \alpha_1 \pi_C    &amp; \beta \pi_A       &amp; \beta \pi_G \\
-\alpha_1 \pi_T  &amp; \cdot             &amp; \beta \pi_A       &amp; \beta \pi_G \\
-\beta \pi_T     &amp; \beta \pi_C       &amp; \cdot             &amp; \alpha_2 \pi_G \\
-\beta \pi_T     &amp; \beta \pi_C       &amp; \alpha_2 \pi_A    &amp; \cdot
+\cdot           &amp; \alpha_1 \pi_C    &amp; \beta \pi_A       &amp;
+\beta \pi_G \\
+\alpha_1 \pi_T  &amp; \cdot             &amp; \beta \pi_A       &amp;
+\beta \pi_G \\
+\beta \pi_T     &amp; \beta \pi_C       &amp; \cdot             &amp;
+\alpha_2 \pi_G \\
+\beta \pi_T     &amp; \beta \pi_C       &amp; \alpha_2 \pi_A    &amp;
+\cdot
 \end{bmatrix}
 \]</span></p>
 <p><strong>Parameters:</strong></p>
@@ -243,20 +268,32 @@
 <li><code>pi_tcag</code></li>
 </ul>
 </div>
-<div id="f84" class="section level2">
-<h2 class="hasAnchor">
-<a href="#f84" class="anchor"></a>F84</h2>
-<p>The F84 model (Kishino and Hasegawa 1989) is a special case of TN93, where <span class="math inline">\(\alpha_1 = (1 + \kappa/\pi_Y) \beta\)</span> and <span class="math inline">\(\alpha_2 = (1 + \kappa/\pi_R) \beta\)</span> (<span class="math inline">\(\pi_Y = \pi_T + \pi_C\)</span> and <span class="math inline">\(\pi_R = \pi_A + \pi_G\)</span>).</p>
+<div class="section level2">
+<h2 id="f84">F84<a class="anchor" aria-label="anchor" href="#f84"></a>
+</h2>
+<p>The F84 model (Kishino and Hasegawa 1989) is a special case of TN93,
+where <span class="math inline">\(\alpha_1 = (1 + \kappa/\pi_Y)
+\beta\)</span> and <span class="math inline">\(\alpha_2 = (1 +
+\kappa/\pi_R) \beta\)</span> (<span class="math inline">\(\pi_Y = \pi_T
++ \pi_C\)</span> and <span class="math inline">\(\pi_R = \pi_A +
+\pi_G\)</span>).</p>
 <p><span class="math display">\[
-\mathbf{Q} = 
+\mathbf{Q} =
 \begin{bmatrix}
-\cdot                               &amp; (1 + \kappa/\pi_Y) \beta \pi_C    &amp;
-    \beta \pi_A                     &amp; \beta \pi_G                       \\
-(1 + \kappa/\pi_Y) \beta \pi_T      &amp; \cdot                             &amp;
-    \beta \pi_A                     &amp; \beta \pi_G                       \\
-\beta \pi_T                         &amp; \beta \pi_C                       &amp;
-    \cdot                           &amp; (1 + \kappa/\pi_R) \beta \pi_G    \\
-\beta \pi_T                         &amp; \beta \pi_C                       &amp;
+\cdot                               &amp; (1 + \kappa/\pi_Y) \beta
+\pi_C    &amp;
+    \beta \pi_A                     &amp; \beta
+\pi_G                       \\
+(1 + \kappa/\pi_Y) \beta \pi_T      &amp;
+\cdot                             &amp;
+    \beta \pi_A                     &amp; \beta
+\pi_G                       \\
+\beta \pi_T                         &amp; \beta
+\pi_C                       &amp;
+    \cdot                           &amp; (1 + \kappa/\pi_R) \beta
+\pi_G    \\
+\beta \pi_T                         &amp; \beta
+\pi_C                       &amp;
     (1 + \kappa/\pi_R) \beta \pi_A  &amp; \cdot
 \end{bmatrix}
 \]</span></p>
@@ -267,12 +304,14 @@
 <li><code>pi_tcag</code></li>
 </ul>
 </div>
-<div id="gtr" class="section level2">
-<h2 class="hasAnchor">
-<a href="#gtr" class="anchor"></a>GTR</h2>
-<p>The GTR model (Tavaré 1986) is the least restrictive model that is still time-reversible (i.e., the rates <span class="math inline">\(r_{x \rightarrow y} = r_{y \rightarrow x}\)</span>).</p>
+<div class="section level2">
+<h2 id="gtr">GTR<a class="anchor" aria-label="anchor" href="#gtr"></a>
+</h2>
+<p>The GTR model (Tavaré 1986) is the least restrictive model that is
+still time-reversible (i.e., the rates <span class="math inline">\(r_{x
+\rightarrow y} = r_{y \rightarrow x}\)</span>).</p>
 <p><span class="math display">\[
-\mathbf{Q} = 
+\mathbf{Q} =
 \begin{bmatrix}
 \cdot   &amp; a \pi_C   &amp; b \pi_A   &amp; c \pi_G \\
 a \pi_T &amp; \cdot     &amp; d \pi_A   &amp; e \pi_G \\
@@ -286,12 +325,12 @@ c \pi_T &amp; e \pi_C   &amp; f \pi_A   &amp; \cdot
 <li><code>abcdef</code></li>
 </ul>
 </div>
-<div id="unrest" class="section level2">
-<h2 class="hasAnchor">
-<a href="#unrest" class="anchor"></a>UNREST</h2>
+<div class="section level2">
+<h2 id="unrest">UNREST<a class="anchor" aria-label="anchor" href="#unrest"></a>
+</h2>
 <p>The UNREST model (Yang 1994) is entirely unrestrained.</p>
 <p><span class="math display">\[
-\mathbf{Q} = 
+\mathbf{Q} =
 \begin{bmatrix}
 \cdot   &amp; q_{TC}    &amp; q_{TA}    &amp; q_{TG}  \\
 q_{CT}  &amp; \cdot     &amp; q_{CA}    &amp; q_{CG}  \\
@@ -304,19 +343,39 @@ q_{GT}  &amp; q_{GC}    &amp; q_{GA}    &amp; \cdot
 <li><code>Q</code></li>
 </ul>
 </div>
-<div id="references" class="section level2">
-<h2 class="hasAnchor">
-<a href="#references" class="anchor"></a>References</h2>
-<p>Felsenstein, J. 1981. Evolutionary trees from DNA sequences: A maximum likelihood approach. Journal of Molecular Evolution 17:368–376.</p>
-<p>Hasegawa, M., H. Kishino, and T. Yano. 1985. Dating of the human-ape splitting by a molecular clock of mitochondrial DNA. Journal of Molecular Evolution 22:160–174.</p>
-<p>Hasegawa, M., T. Yano, and H. Kishino. 1984. A new molecular clock of mitochondrial DNA and the evolution of hominoids. Proceedings of the Japan Academy, Series B 60:95–98.</p>
-<p>Jukes, T. H., and C. R. Cantor. 1969. Evolution of protein molecules. Pages 21–131 in H. N. Munro, editor. Mammalian protein metabolism. Academic Press, New York.</p>
-<p>Kimura, M. 1980. A simple method for estimating evolutionary rates of base substitutions through comparative studies of nucleotide sequences. Journal of Molecular Evolution 16:111–120.</p>
-<p>Kishino, H., and M. Hasegawa. 1989. Evaluation of the maximum likelihood estimate of the evolutionary tree topologies from DNA sequence data, and the branching order in hominoidea. Journal of Molecular Evolution 29:170-179.</p>
-<p>Tamura, K., and M. Nei. 1993. Estimation of the number of nucleotide substitutions in the control region of mitochondrial dna in humans and chimpanzees. Molecular Biology and Evolution 10:512–526.</p>
-<p>Tavaré, S. 1986. Some probabilistic and statistical problems in the analysis of DNA sequences. Lectures on Mathematics in the Life Sciences 17:57–86.</p>
-<p>Yang, Z. B. 1994. Estimating the pattern of nucleotide substitution. Journal of Molecular Evolution 39:105–111.</p>
-<p>Yang, Z. 2006. <em>Computational molecular evolution</em>. (P. H. Harvey and R. M. May, Eds.). Oxford University Press, New York, NY, USA.</p>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<p>Felsenstein, J. 1981. Evolutionary trees from DNA sequences: A
+maximum likelihood approach. Journal of Molecular Evolution
+17:368–376.</p>
+<p>Hasegawa, M., H. Kishino, and T. Yano. 1985. Dating of the human-ape
+splitting by a molecular clock of mitochondrial DNA. Journal of
+Molecular Evolution 22:160–174.</p>
+<p>Hasegawa, M., T. Yano, and H. Kishino. 1984. A new molecular clock of
+mitochondrial DNA and the evolution of hominoids. Proceedings of the
+Japan Academy, Series B 60:95–98.</p>
+<p>Jukes, T. H., and C. R. Cantor. 1969. Evolution of protein molecules.
+Pages 21–131 in H. N. Munro, editor. Mammalian protein metabolism.
+Academic Press, New York.</p>
+<p>Kimura, M. 1980. A simple method for estimating evolutionary rates of
+base substitutions through comparative studies of nucleotide sequences.
+Journal of Molecular Evolution 16:111–120.</p>
+<p>Kishino, H., and M. Hasegawa. 1989. Evaluation of the maximum
+likelihood estimate of the evolutionary tree topologies from DNA
+sequence data, and the branching order in hominoidea. Journal of
+Molecular Evolution 29:170-179.</p>
+<p>Tamura, K., and M. Nei. 1993. Estimation of the number of nucleotide
+substitutions in the control region of mitochondrial dna in humans and
+chimpanzees. Molecular Biology and Evolution 10:512–526.</p>
+<p>Tavaré, S. 1986. Some probabilistic and statistical problems in the
+analysis of DNA sequences. Lectures on Mathematics in the Life Sciences
+17:57–86.</p>
+<p>Yang, Z. B. 1994. Estimating the pattern of nucleotide substitution.
+Journal of Molecular Evolution 39:105–111.</p>
+<p>Yang, Z. 2006. <em>Computational molecular evolution</em>. (P. H.
+Harvey and R. M. May, Eds.). Oxford University Press, New York, NY,
+USA.</p>
 </div>
   </div>
 
@@ -331,11 +390,13 @@ q_{GT}  &amp; q_{GC}    &amp; q_{GA}    &amp; \cdot
 
 
       <footer><div class="copyright">
-  <p>Developed by Lucas A. Nell.</p>
+  <p></p>
+<p>Developed by Lucas A. Nell.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>
@@ -343,6 +404,8 @@ q_{GT}  &amp; q_{GC}    &amp; q_{GA}    &amp; \cdot
 
   
 
+
+  
 
   </body>
 </html>
