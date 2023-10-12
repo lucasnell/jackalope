@@ -10,8 +10,9 @@ This is a resubmission. In this version, I have done the following:
 ## Test environments
 
 * macOS 13.4.1 (local), R 4.3.1
-* ubuntu 20.04.2 (GitHub Actions), R-devel, R 4.3.1, R 4.2.3
-* macOS 10.15.7 (GitHub Actions), R-devel, R 4.3.1, R 4.2.3
+* macOS 12.7 (GitHub Actions), R 4.3.1
+* ubuntu 22.04.3 (GitHub Actions), R-devel, R 4.3.1, R 4.2.3
+* Microsoft Windows Server 2022 10.0.20348 (GitHub Actions), R 4.3.1
 * Windows (win-builder), R-devel, R 4.3.1, R 4.2.3
 * Rhub
     - Fedora Linux, R-devel, clang (with valgrind)
