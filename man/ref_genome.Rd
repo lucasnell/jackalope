@@ -73,27 +73,27 @@ ref$filter_chroms(0.4, "prop")
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{ref_genome$new()}}
-\item \href{#method-print}{\code{ref_genome$print()}}
-\item \href{#method-ptr}{\code{ref_genome$ptr()}}
-\item \href{#method-n_chroms}{\code{ref_genome$n_chroms()}}
-\item \href{#method-sizes}{\code{ref_genome$sizes()}}
-\item \href{#method-chrom_names}{\code{ref_genome$chrom_names()}}
-\item \href{#method-chrom}{\code{ref_genome$chrom()}}
-\item \href{#method-gc_prop}{\code{ref_genome$gc_prop()}}
-\item \href{#method-nt_prop}{\code{ref_genome$nt_prop()}}
-\item \href{#method-set_names}{\code{ref_genome$set_names()}}
-\item \href{#method-clean_names}{\code{ref_genome$clean_names()}}
-\item \href{#method-add_chroms}{\code{ref_genome$add_chroms()}}
-\item \href{#method-rm_chroms}{\code{ref_genome$rm_chroms()}}
-\item \href{#method-merge_chroms}{\code{ref_genome$merge_chroms()}}
-\item \href{#method-filter_chroms}{\code{ref_genome$filter_chroms()}}
-\item \href{#method-replace_Ns}{\code{ref_genome$replace_Ns()}}
+\item \href{#method-ref_genome-new}{\code{ref_genome$new()}}
+\item \href{#method-ref_genome-print}{\code{ref_genome$print()}}
+\item \href{#method-ref_genome-ptr}{\code{ref_genome$ptr()}}
+\item \href{#method-ref_genome-n_chroms}{\code{ref_genome$n_chroms()}}
+\item \href{#method-ref_genome-sizes}{\code{ref_genome$sizes()}}
+\item \href{#method-ref_genome-chrom_names}{\code{ref_genome$chrom_names()}}
+\item \href{#method-ref_genome-chrom}{\code{ref_genome$chrom()}}
+\item \href{#method-ref_genome-gc_prop}{\code{ref_genome$gc_prop()}}
+\item \href{#method-ref_genome-nt_prop}{\code{ref_genome$nt_prop()}}
+\item \href{#method-ref_genome-set_names}{\code{ref_genome$set_names()}}
+\item \href{#method-ref_genome-clean_names}{\code{ref_genome$clean_names()}}
+\item \href{#method-ref_genome-add_chroms}{\code{ref_genome$add_chroms()}}
+\item \href{#method-ref_genome-rm_chroms}{\code{ref_genome$rm_chroms()}}
+\item \href{#method-ref_genome-merge_chroms}{\code{ref_genome$merge_chroms()}}
+\item \href{#method-ref_genome-filter_chroms}{\code{ref_genome$filter_chroms()}}
+\item \href{#method-ref_genome-replace_Ns}{\code{ref_genome$replace_Ns()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-ref_genome-new"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-new}{}}}
 \subsection{Method \code{new()}}{
 Do NOT use this; only use \code{read_fasta} or \code{create_genome} to make a
 new \code{ref_genome}.
@@ -111,8 +111,8 @@ the information about the reference genome.}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-ref_genome-print"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-print}{}}}
 \subsection{Method \code{print()}}{
 Print a \code{ref_genome} object.
 \subsection{Usage}{
@@ -121,8 +121,8 @@ Print a \code{ref_genome} object.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-ptr"></a>}}
-\if{latex}{\out{\hypertarget{method-ptr}{}}}
+\if{html}{\out{<a id="method-ref_genome-ptr"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-ptr}{}}}
 \subsection{Method \code{ptr()}}{
 View pointer to underlying C++ object (this is not useful to end users).
 \subsection{Usage}{
@@ -134,8 +134,8 @@ An \code{externalptr} object.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-n_chroms"></a>}}
-\if{latex}{\out{\hypertarget{method-n_chroms}{}}}
+\if{html}{\out{<a id="method-ref_genome-n_chroms"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-n_chroms}{}}}
 \subsection{Method \code{n_chroms()}}{
 View number of chromosomes.
 \subsection{Usage}{
@@ -147,8 +147,8 @@ Integer number of chromosomes.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-sizes"></a>}}
-\if{latex}{\out{\hypertarget{method-sizes}{}}}
+\if{html}{\out{<a id="method-ref_genome-sizes"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-sizes}{}}}
 \subsection{Method \code{sizes()}}{
 View chromosome sizes.
 \subsection{Usage}{
@@ -160,8 +160,8 @@ Integer vector of chromosome sizes.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-chrom_names"></a>}}
-\if{latex}{\out{\hypertarget{method-chrom_names}{}}}
+\if{html}{\out{<a id="method-ref_genome-chrom_names"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-chrom_names}{}}}
 \subsection{Method \code{chrom_names()}}{
 View chromosome names.
 \subsection{Usage}{
@@ -173,8 +173,8 @@ Character vector of chromosome names.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-chrom"></a>}}
-\if{latex}{\out{\hypertarget{method-chrom}{}}}
+\if{html}{\out{<a id="method-ref_genome-chrom"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-chrom}{}}}
 \subsection{Method \code{chrom()}}{
 View one reference chromosome.
 \subsection{Usage}{
@@ -193,8 +193,8 @@ A single string representing the chosen chromosome's DNA sequence.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-gc_prop"></a>}}
-\if{latex}{\out{\hypertarget{method-gc_prop}{}}}
+\if{html}{\out{<a id="method-ref_genome-gc_prop"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-gc_prop}{}}}
 \subsection{Method \code{gc_prop()}}{
 View GC proportion for part of one reference chromosome.
 \subsection{Usage}{
@@ -220,8 +220,8 @@ sequence that is either \code{G} or \code{C}.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-nt_prop"></a>}}
-\if{latex}{\out{\hypertarget{method-nt_prop}{}}}
+\if{html}{\out{<a id="method-ref_genome-nt_prop"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-nt_prop}{}}}
 \subsection{Method \code{nt_prop()}}{
 View nucleotide content for part of one reference chromosome
 \subsection{Usage}{
@@ -250,8 +250,8 @@ sequence that is \code{nt}.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-set_names"></a>}}
-\if{latex}{\out{\hypertarget{method-set_names}{}}}
+\if{html}{\out{<a id="method-ref_genome-set_names"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-set_names}{}}}
 \subsection{Method \code{set_names()}}{
 Change chromosome names.
 \subsection{Usage}{
@@ -281,8 +281,8 @@ ref$set_names(c("a", "b", "c", "d"))
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clean_names"></a>}}
-\if{latex}{\out{\hypertarget{method-clean_names}{}}}
+\if{html}{\out{<a id="method-ref_genome-clean_names"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-clean_names}{}}}
 \subsection{Method \code{clean_names()}}{
 Clean chromosome names, converting \verb{" :;=\%,\\\\|/\\"\\'"} to \code{"_"}.
 \subsection{Usage}{
@@ -305,8 +305,8 @@ ref$clean_names()
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-add_chroms"></a>}}
-\if{latex}{\out{\hypertarget{method-add_chroms}{}}}
+\if{html}{\out{<a id="method-ref_genome-add_chroms"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-add_chroms}{}}}
 \subsection{Method \code{add_chroms()}}{
 Add one or more chromosomes.
 \subsection{Usage}{
@@ -338,8 +338,8 @@ ref$add_chroms("TCAGTCAG")
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-rm_chroms"></a>}}
-\if{latex}{\out{\hypertarget{method-rm_chroms}{}}}
+\if{html}{\out{<a id="method-ref_genome-rm_chroms"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-rm_chroms}{}}}
 \subsection{Method \code{rm_chroms()}}{
 Remove one or more chromosomes by name
 \subsection{Usage}{
@@ -369,8 +369,8 @@ ref$rm_chroms("b")
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-merge_chroms"></a>}}
-\if{latex}{\out{\hypertarget{method-merge_chroms}{}}}
+\if{html}{\out{<a id="method-ref_genome-merge_chroms"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-merge_chroms}{}}}
 \subsection{Method \code{merge_chroms()}}{
 Merge chromosomes into one.
 \subsection{Usage}{
@@ -404,8 +404,8 @@ ref$merge_chroms(NULL)
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-filter_chroms"></a>}}
-\if{latex}{\out{\hypertarget{method-filter_chroms}{}}}
+\if{html}{\out{<a id="method-ref_genome-filter_chroms"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-filter_chroms}{}}}
 \subsection{Method \code{filter_chroms()}}{
 Filter chromosomes by size or for a proportion of total bases.
 \subsection{Usage}{
@@ -444,8 +444,8 @@ ref$filter_chroms(0.4, "prop")
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-replace_Ns"></a>}}
-\if{latex}{\out{\hypertarget{method-replace_Ns}{}}}
+\if{html}{\out{<a id="method-ref_genome-replace_Ns"></a>}}
+\if{latex}{\out{\hypertarget{method-ref_genome-replace_Ns}{}}}
 \subsection{Method \code{replace_Ns()}}{
 Replace \code{N}s in the reference genome.
 \subsection{Usage}{

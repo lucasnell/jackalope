@@ -21,7 +21,7 @@ set.seed(1) # for keeping the printing of `reference` below the same
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![R build status](https://github.com/lucasnell/jackalope/workflows/R-CMD-check/badge.svg)](https://github.com/lucasnell/jackalope/actions)
-[![codecov](https://codecov.io/gh/lucasnell/jackalope/branch/master/graph/badge.svg)](https://codecov.io/gh/lucasnell/jackalope)
+[![codecov](https://codecov.io/gh/lucasnell/jackalope/branch/master/graph/badge.svg)](https://app.codecov.io/gh/lucasnell/jackalope)
 [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/jackalope)](https://cran.r-project.org/package=jackalope)
 
 

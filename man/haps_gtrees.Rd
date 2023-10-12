@@ -55,6 +55,6 @@ add the \code{-T} option.
 }
 \section{Functions}{
 \itemize{
-\item \code{write_gtrees}: Write gene trees to ms-style output file.
-}}
+\item \code{write_gtrees()}: Write gene trees to ms-style output file.
 
+}}

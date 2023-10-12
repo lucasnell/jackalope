@@ -50,29 +50,29 @@ editing the reference genome.
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{haplotypes$new()}}
-\item \href{#method-print}{\code{haplotypes$print()}}
-\item \href{#method-ptr}{\code{haplotypes$ptr()}}
-\item \href{#method-n_chroms}{\code{haplotypes$n_chroms()}}
-\item \href{#method-n_haps}{\code{haplotypes$n_haps()}}
-\item \href{#method-sizes}{\code{haplotypes$sizes()}}
-\item \href{#method-chrom_names}{\code{haplotypes$chrom_names()}}
-\item \href{#method-hap_names}{\code{haplotypes$hap_names()}}
-\item \href{#method-chrom}{\code{haplotypes$chrom()}}
-\item \href{#method-gc_prop}{\code{haplotypes$gc_prop()}}
-\item \href{#method-nt_prop}{\code{haplotypes$nt_prop()}}
-\item \href{#method-set_names}{\code{haplotypes$set_names()}}
-\item \href{#method-add_haps}{\code{haplotypes$add_haps()}}
-\item \href{#method-dup_haps}{\code{haplotypes$dup_haps()}}
-\item \href{#method-rm_haps}{\code{haplotypes$rm_haps()}}
-\item \href{#method-add_sub}{\code{haplotypes$add_sub()}}
-\item \href{#method-add_ins}{\code{haplotypes$add_ins()}}
-\item \href{#method-add_del}{\code{haplotypes$add_del()}}
+\item \href{#method-haplotypes-new}{\code{haplotypes$new()}}
+\item \href{#method-haplotypes-print}{\code{haplotypes$print()}}
+\item \href{#method-haplotypes-ptr}{\code{haplotypes$ptr()}}
+\item \href{#method-haplotypes-n_chroms}{\code{haplotypes$n_chroms()}}
+\item \href{#method-haplotypes-n_haps}{\code{haplotypes$n_haps()}}
+\item \href{#method-haplotypes-sizes}{\code{haplotypes$sizes()}}
+\item \href{#method-haplotypes-chrom_names}{\code{haplotypes$chrom_names()}}
+\item \href{#method-haplotypes-hap_names}{\code{haplotypes$hap_names()}}
+\item \href{#method-haplotypes-chrom}{\code{haplotypes$chrom()}}
+\item \href{#method-haplotypes-gc_prop}{\code{haplotypes$gc_prop()}}
+\item \href{#method-haplotypes-nt_prop}{\code{haplotypes$nt_prop()}}
+\item \href{#method-haplotypes-set_names}{\code{haplotypes$set_names()}}
+\item \href{#method-haplotypes-add_haps}{\code{haplotypes$add_haps()}}
+\item \href{#method-haplotypes-dup_haps}{\code{haplotypes$dup_haps()}}
+\item \href{#method-haplotypes-rm_haps}{\code{haplotypes$rm_haps()}}
+\item \href{#method-haplotypes-add_sub}{\code{haplotypes$add_sub()}}
+\item \href{#method-haplotypes-add_ins}{\code{haplotypes$add_ins()}}
+\item \href{#method-haplotypes-add_del}{\code{haplotypes$add_del()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-haplotypes-new"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-new}{}}}
 \subsection{Method \code{new()}}{
 Do NOT use this; only use \code{create_haplotypes} to make new \code{haplotypes}.
 \subsection{Usage}{
@@ -92,8 +92,8 @@ stores the information about the reference genome.}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-haplotypes-print"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-print}{}}}
 \subsection{Method \code{print()}}{
 Print a \code{haplotypes} object.
 \subsection{Usage}{
@@ -102,8 +102,8 @@ Print a \code{haplotypes} object.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-ptr"></a>}}
-\if{latex}{\out{\hypertarget{method-ptr}{}}}
+\if{html}{\out{<a id="method-haplotypes-ptr"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-ptr}{}}}
 \subsection{Method \code{ptr()}}{
 View pointer to underlying C++ object (this is not useful to end users).
 \subsection{Usage}{
@@ -115,8 +115,8 @@ An \code{externalptr} object.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-n_chroms"></a>}}
-\if{latex}{\out{\hypertarget{method-n_chroms}{}}}
+\if{html}{\out{<a id="method-haplotypes-n_chroms"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-n_chroms}{}}}
 \subsection{Method \code{n_chroms()}}{
 View number of chromosomes.
 \subsection{Usage}{
@@ -128,8 +128,8 @@ Integer number of chromosomes.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-n_haps"></a>}}
-\if{latex}{\out{\hypertarget{method-n_haps}{}}}
+\if{html}{\out{<a id="method-haplotypes-n_haps"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-n_haps}{}}}
 \subsection{Method \code{n_haps()}}{
 View number of haplotypes.
 \subsection{Usage}{
@@ -141,8 +141,8 @@ Integer number of haplotypes.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-sizes"></a>}}
-\if{latex}{\out{\hypertarget{method-sizes}{}}}
+\if{html}{\out{<a id="method-haplotypes-sizes"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-sizes}{}}}
 \subsection{Method \code{sizes()}}{
 View chromosome sizes for one haplotype.
 \subsection{Usage}{
@@ -161,8 +161,8 @@ Integer vector of chromosome sizes for focal haplotype.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-chrom_names"></a>}}
-\if{latex}{\out{\hypertarget{method-chrom_names}{}}}
+\if{html}{\out{<a id="method-haplotypes-chrom_names"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-chrom_names}{}}}
 \subsection{Method \code{chrom_names()}}{
 View chromosome names.
 \subsection{Usage}{
@@ -174,8 +174,8 @@ Character vector of chromosome names.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-hap_names"></a>}}
-\if{latex}{\out{\hypertarget{method-hap_names}{}}}
+\if{html}{\out{<a id="method-haplotypes-hap_names"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-hap_names}{}}}
 \subsection{Method \code{hap_names()}}{
 View haplotype names.
 \subsection{Usage}{
@@ -187,8 +187,8 @@ Character vector of haplotype names.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-chrom"></a>}}
-\if{latex}{\out{\hypertarget{method-chrom}{}}}
+\if{html}{\out{<a id="method-haplotypes-chrom"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-chrom}{}}}
 \subsection{Method \code{chrom()}}{
 View one haplotype chromosome.
 \subsection{Usage}{
@@ -210,8 +210,8 @@ sequence.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-gc_prop"></a>}}
-\if{latex}{\out{\hypertarget{method-gc_prop}{}}}
+\if{html}{\out{<a id="method-haplotypes-gc_prop"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-gc_prop}{}}}
 \subsection{Method \code{gc_prop()}}{
 View GC proportion for part of one haplotype chromosome.
 \subsection{Usage}{
@@ -239,8 +239,8 @@ sequence that is either \code{G} or \code{C}.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-nt_prop"></a>}}
-\if{latex}{\out{\hypertarget{method-nt_prop}{}}}
+\if{html}{\out{<a id="method-haplotypes-nt_prop"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-nt_prop}{}}}
 \subsection{Method \code{nt_prop()}}{
 View nucleotide content for part of one haplotype chromosome
 \subsection{Usage}{
@@ -271,8 +271,8 @@ sequence that is \code{nt}.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-set_names"></a>}}
-\if{latex}{\out{\hypertarget{method-set_names}{}}}
+\if{html}{\out{<a id="method-haplotypes-set_names"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-set_names}{}}}
 \subsection{Method \code{set_names()}}{
 Change haplotype names.
 \subsection{Usage}{
@@ -292,8 +292,8 @@ This \code{R6} object, invisibly.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-add_haps"></a>}}
-\if{latex}{\out{\hypertarget{method-add_haps}{}}}
+\if{html}{\out{<a id="method-haplotypes-add_haps"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-add_haps}{}}}
 \subsection{Method \code{add_haps()}}{
 Add one or more blank, named haplotypes
 \subsection{Usage}{
@@ -312,8 +312,8 @@ This \code{R6} object, invisibly.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-dup_haps"></a>}}
-\if{latex}{\out{\hypertarget{method-dup_haps}{}}}
+\if{html}{\out{<a id="method-haplotypes-dup_haps"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-dup_haps}{}}}
 \subsection{Method \code{dup_haps()}}{
 Duplicate one or more haplotypes by name.
 \subsection{Usage}{
@@ -336,8 +336,8 @@ This \code{R6} object, invisibly.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-rm_haps"></a>}}
-\if{latex}{\out{\hypertarget{method-rm_haps}{}}}
+\if{html}{\out{<a id="method-haplotypes-rm_haps"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-rm_haps}{}}}
 \subsection{Method \code{rm_haps()}}{
 Remove one or more haplotypes by name.
 \subsection{Usage}{
@@ -356,8 +356,8 @@ This \code{R6} object, invisibly.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-add_sub"></a>}}
-\if{latex}{\out{\hypertarget{method-add_sub}{}}}
+\if{html}{\out{<a id="method-haplotypes-add_sub"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-add_sub}{}}}
 \subsection{Method \code{add_sub()}}{
 Manually add a substitution.
 \subsection{Usage}{
@@ -383,8 +383,8 @@ This \code{R6} object, invisibly.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-add_ins"></a>}}
-\if{latex}{\out{\hypertarget{method-add_ins}{}}}
+\if{html}{\out{<a id="method-haplotypes-add_ins"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-add_ins}{}}}
 \subsection{Method \code{add_ins()}}{
 Manually add an insertion.
 \subsection{Usage}{
@@ -406,18 +406,20 @@ the designated position.}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-This \code{R6} object, invisibly.\preformatted{\\item\{`add_del(hap_ind, chrom_ind, pos, n_nts)`\}\{Manually add a deletion
+This \code{R6} object, invisibly.
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{\\item\{`add_del(hap_ind, chrom_ind, pos, n_nts)`\}\{Manually add a deletion
     for a given haplotype (`hap_ind`), chromosome (`chrom_ind`), and position (`pos`).
     The designated number of nucleotides to delete (`n_nts`) will be deleted
     starting at `pos`, unless `pos` is near the chromosome end and doesn't have
     `n_nts` nucleotides to remove; it simply stops at the chromosome end in
     this case.\}
-}
+}\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-add_del"></a>}}
-\if{latex}{\out{\hypertarget{method-add_del}{}}}
+\if{html}{\out{<a id="method-haplotypes-add_del"></a>}}
+\if{latex}{\out{\hypertarget{method-haplotypes-add_del}{}}}
 \subsection{Method \code{add_del()}}{
 Manually add a deletion.
 \subsection{Usage}{

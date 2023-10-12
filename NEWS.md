@@ -1,4 +1,9 @@
 
+# jackalope 1.1.4
+* Added required jackalope-package man file
+* Updated all docs with roxygen2 v7.2.3
+
+
 # jackalope 1.1.3
 * Remove one NULL_ENTRY to support STRICT_R_HEADERS
 

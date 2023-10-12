@@ -2,17 +2,18 @@
 
 This is a resubmission. In this version, I have done the following:
 
-- Remove one NULL_ENTRY to support STRICT_R_HEADERS
+- Added required jackalope-package man file
+- Updated all docs with roxygen2 v7.2.3
+- In CITATION, now using bibentry and for authors, using `c()` on person objects
 
 
 ## Test environments
 
-* macOS 11.4 (local), R 4.1.0
-* ubuntu 20.04.2 (GitHub Actions), R-devel, R 4.1.0, R 4.0.5
-* macOS 10.15.7 (GitHub Actions), R-devel, R 4.1.0, R 4.0.5
-* Windows (win-builder), R-devel, R 4.1.0, R 4.0.5
+* macOS 13.4.1 (local), R 4.3.1
+* ubuntu 20.04.2 (GitHub Actions), R-devel, R 4.3.1, R 4.2.3
+* macOS 10.15.7 (GitHub Actions), R-devel, R 4.3.1, R 4.2.3
+* Windows (win-builder), R-devel, R 4.3.1, R 4.2.3
 * Rhub
-    - Oracle Solaris 10, R-release, 32-bit
     - Fedora Linux, R-devel, clang (with valgrind)
 
 
@@ -26,13 +27,10 @@ There were no ERRORs or WARNINGs.
 There were 2 NOTEs:
 
 ```
-installed size is 21.3Mb
-  sub-directories of 1Mb or more:
-    art_profiles   1.5Mb
-    libs          19.1Mb
+Specified C++11: please drop specification unless essential
 ```
 
-The package makes extensive use of compiled code to improve performance.
+The package makes extensive use of C++11 code throughout.
 
 
 ```

@@ -132,23 +132,23 @@ For a more detailed explanation, see \code{vignette("sub-models")}.
 }
 \section{Functions}{
 \itemize{
-\item \code{sub_JC69}: JC69 model.
+\item \code{sub_JC69()}: JC69 model.
 
-\item \code{sub_K80}: K80 model.
+\item \code{sub_K80()}: K80 model.
 
-\item \code{sub_F81}: F81 model.
+\item \code{sub_F81()}: F81 model.
 
-\item \code{sub_HKY85}: HKY85 model.
+\item \code{sub_HKY85()}: HKY85 model.
 
-\item \code{sub_F84}: F84 model.
+\item \code{sub_F84()}: F84 model.
 
-\item \code{sub_TN93}: TN93 model.
+\item \code{sub_TN93()}: TN93 model.
 
-\item \code{sub_GTR}: GTR model.
+\item \code{sub_GTR()}: GTR model.
 
-\item \code{sub_UNREST}: UNREST model.
+\item \code{sub_UNREST()}: UNREST model.
+
 }}
-
 \examples{
 # Same substitution rate for all types:
 obj_JC69 <- sub_JC69(lambda = 0.1)
