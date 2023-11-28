@@ -145,6 +145,9 @@ test_that("haplotype creation works with scrm coalescent object", {
 
     coal_obj_run_trees(coal_obj, "scrm")
     coal_obj_run_sites(coal_obj, "scrm")
+
+    skip_if(jackalope:::using_openmp())  # Rcpp::stop blows up when using OpenMP
+
     coal_obj_err_no_trees(coal_obj, "scrm")
     coal_obj_err_no_sites(coal_obj, "scrm")
     coal_obj_err_missing_tree_pos(coal_obj, "scrm")
@@ -169,6 +172,10 @@ test_that("haplotype creation works with scrm coalescent object", {
 
     coal_obj_run_trees(coal_obj, "scrm")
     coal_obj_run_sites(coal_obj, "scrm")
+
+    if (jackalope:::using_openmp()) arg_list <- .arg_list
+    skip_if(jackalope:::using_openmp())  # Rcpp::stop blows up when using OpenMP
+
     coal_obj_err_no_trees(coal_obj, "scrm")
     coal_obj_err_no_sites(coal_obj, "scrm")
     coal_obj_err_missing_tree_pos(coal_obj, "scrm")
@@ -195,6 +202,9 @@ test_that("haplotype creation works with coala coalescent object", {
 
     coal_obj_run_trees(coal_obj, "coala")
     coal_obj_run_sites(coal_obj, "coala")
+
+    skip_if(jackalope:::using_openmp())  # Rcpp::stop blows up when using OpenMP
+
     coal_obj_err_no_trees(coal_obj, "coala")
     coal_obj_err_no_sites(coal_obj, "coala")
     coal_obj_err_missing_tree_pos(coal_obj, "coala")
@@ -236,6 +246,8 @@ test_that("haplotype creation works with ms-style file output", {
         haps <- do.call(create_haplotypes, arg_list_)
         haps$n_haps()
     }, 5, info = "works with seg. sites - ms-file")
+
+    skip_if(jackalope:::using_openmp())  # Rcpp::stop blows up when using OpenMP
 
     expect_error(
         haps_gtrees(fn = .p("ms_out_err1")),

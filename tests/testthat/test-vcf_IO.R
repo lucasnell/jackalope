@@ -447,6 +447,8 @@ test_that("reading haplotype info from VCF produces proper output when chromosom
 
 test_that("out-of-order VCF file returns error", {
 
+    skip_if(jackalope:::using_openmp())  # Rcpp::stop blows up when using OpenMP
+
     write_vcf(haps, out_prefix = sprintf("%s/%s", dir, "test"), overwrite = TRUE)
 
     vcf_fn <- sprintf("%s/%s.vcf", dir, "test")
