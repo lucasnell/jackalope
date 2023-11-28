@@ -32,7 +32,7 @@ or via simulated DNA sequences.
 
 To show how an existing assembly is read in `jackalope`, the code below
 processes the assembly for *Drosophila melanogaster*
-(version 6.27) downloaded from <https://flybase.org>.
+(version 6.27) downloaded from `https://flybase.org`.
 It reads the compressed FASTA file, filters out scaffolds by using a size threshold,
 removes the Y chromosome (to avoid having both an X and Y in the same haplotype), and 
 merges the left and right arms of chromosomes 2 and 3.

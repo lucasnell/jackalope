@@ -15,3 +15,4 @@
 ^CRAN-RELEASE$
 ^README\.Rmd$
 ^\.github$
+^CRAN-SUBMISSION$

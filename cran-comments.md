@@ -3,8 +3,12 @@
 This is a resubmission. In this version, I have done the following:
 
 - Added required jackalope-package man file
+- Updated maintainer email address
 - Updated all docs with roxygen2 v7.2.3
 - In CITATION, now using bibentry and for authors, using `c()` on person objects
+- Changed flybase.org url from a link to just text because it didn't pass
+  urlchecker
+- Removed requirement for C++11
 
 
 ## Test environments
@@ -28,10 +32,17 @@ There were no ERRORs or WARNINGs.
 There were 2 NOTEs:
 
 ```
-Specified C++11: please drop specification unless essential
+Maintainer: ‘Lucas A. Nell <lucnell@gmail.com>’
+
+New maintainer:
+  Lucas A. Nell <lucnell@gmail.com>
+Old maintainer(s):
+  Lucas A. Nell <lucas@lucasnell.com>
 ```
 
-The package makes extensive use of C++11 code throughout.
+I have changed my email. I sent a confirmation from the old address
+to `CRAN-submissions@R-project.org`.
+
 
 
 ```

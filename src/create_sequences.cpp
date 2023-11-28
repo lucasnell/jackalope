@@ -160,7 +160,6 @@ OuterClass create_chromosomes_(const uint64& n_chroms,
 //'
 //' @noRd
 //'
-//' @examples
 //'
 //'
 //[[Rcpp::export]]

@@ -62,7 +62,6 @@ replace_Ns_cpp <- function(ref_genome_ptr, pi_tcag, n_threads, show_progress) {
 #'
 #' @noRd
 #'
-#' @examples
 #'
 #'
 create_genome_cpp <- function(n_chroms, len_mean, len_sd, pi_tcag, n_threads) {

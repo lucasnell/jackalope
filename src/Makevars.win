@@ -1,5 +1,4 @@
-# C++11 syntax used throughout
-CXX_STD = CXX11
+
 
 ## Add these to your global Makevars.win if you want to build with OpenMP
 ## The global Makevars.win is located inside the home directory at `.R/Makevars.win`
