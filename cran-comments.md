@@ -2,13 +2,9 @@
 
 This is a resubmission. In this version, I have done the following:
 
-- Added required jackalope-package man file
-- Updated maintainer email address
-- Updated all docs with roxygen2 v7.2.3
-- In CITATION, now using bibentry and for authors, using `c()` on person objects
-- Changed flybase.org url from a link to just text because it didn't pass
-  urlchecker
-- Removed requirement for C++11
+- Fixed Rprintf errors inside src/ref_classes.h
+- Skip tests that cause Rcpp::stop to be used when using OpenMP
+
 
 
 ## Test environments
