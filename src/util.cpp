@@ -11,9 +11,10 @@ using namespace Rcpp;
 
 //[[Rcpp::export]]
 bool using_openmp() {
-    bool out = false;
 #ifdef _OPENMP
-    out = true;
+    bool out = true;
+#else
+    bool out = false;
 #endif
     return out;
 }

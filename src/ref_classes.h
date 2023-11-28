@@ -241,10 +241,12 @@ struct RefGenome {
                 Rprintf("%-*s", chrom_print_len, chrom_i.c_str());
             }
             // Print width
-            if (rs.size() > 999999999) {
-                Rprintf(" %9.2E", rs.size());
+            if (rs.size() > 999999999U) {
+                double rs_size = static_cast<double>(rs.size());
+                Rprintf(" %9.2E", rs_size);
             } else {
-                Rprintf(" %9i", rs.size());
+                int rs_size = static_cast<int>(rs.size());
+                Rprintf(" %9i", rs_size);
             }
             Rcout << std::endl;
         }
