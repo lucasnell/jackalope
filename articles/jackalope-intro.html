@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">jackalope</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.5</span>
       </span>
     </div>
 
@@ -108,12 +108,13 @@ sampling decisions for HTS studies.</p>
 existing assembly or via simulated DNA sequences.</p>
 <p>To show how an existing assembly is read in <code>jackalope</code>,
 the code below processes the assembly for <em>Drosophila
-melanogaster</em> (version 6.27) downloaded from <a href="https://flybase.org" class="external-link uri">https://flybase.org</a>. It reads
-the compressed FASTA file, filters out scaffolds by using a size
-threshold, removes the Y chromosome (to avoid having both an X and Y in
-the same haplotype), and merges the left and right arms of chromosomes 2
-and 3. It lastly sets the names of chromosomes 2 and 3 to be
-<code>"2"</code> and <code>"3"</code>, respectively.</p>
+melanogaster</em> (version 6.27) downloaded from
+<code>https://flybase.org</code>. It reads the compressed FASTA file,
+filters out scaffolds by using a size threshold, removes the Y
+chromosome (to avoid having both an X and Y in the same haplotype), and
+merges the left and right arms of chromosomes 2 and 3. It lastly sets
+the names of chromosomes 2 and 3 to be <code>"2"</code> and
+<code>"3"</code>, respectively.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_fasta.html">read_fasta</a></span><span class="op">(</span><span class="st">"dmel-6.27.fasta.gz"</span>, cut_names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">ref</span><span class="op">$</span><span class="fu">filter_chroms</span><span class="op">(</span><span class="fl">1e6</span>, method <span class="op">=</span> <span class="st">"size"</span><span class="op">)</span></span>
