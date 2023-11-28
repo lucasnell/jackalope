@@ -753,19 +753,6 @@ void write_vcf_cpp(std::string out_prefix,
 
     expand_path(out_prefix);
 
-    if (any(sample_matrix < 1).is_true()) {
-        str_stop({"\nIn the input matrix specifying which samples each ",
-                 "haplotype belongs to, there are values < 1."});
-    }
-    if (any(sample_matrix > hap_set->size()).is_true()) {
-        str_stop({"\nIn the input matrix specifying which samples each ",
-                 "haplotype belongs to, there are values > the number of haplotypes."});
-    }
-    if (any(is_na(sample_matrix)).is_true()) {
-        str_stop({"\nIn the input matrix specifying which samples each ",
-                 "haplotype belongs to, there are missing values."});
-    }
-
 
     // Start the `WriterVCF` object
     WriterVCF writer(*hap_set, 0, sample_matrix);

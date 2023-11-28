@@ -222,9 +222,23 @@ write_vcf <- function(haps,
     }
     # Check for duplicates in `sample_matrix`:
     if (any(duplicated(as.numeric(sample_matrix)))) {
-        stop("\nThe `sample_matrix` argument to the `write_vcf` function contained ",
-             "duplicates.", call. = FALSE)
+        stop("\nThe `sample_matrix` argument to the `write_vcf` function ",
+             "contained duplicates.", call. = FALSE)
     }
+    if (any(sample_matrix < 1)) {
+        stop("\nIn the input matrix specifying which samples each ",
+             "haplotype belongs to, there are values < 1.", call. = FALSE)
+    }
+    if (any(sample_matrix > haps$n_haps())) {
+        stop("\nIn the input matrix specifying which samples each haplotype ",
+             "belongs to, there are values > the number of haplotypes.",
+            call. = FALSE)
+    }
+    if (any(is.na(sample_matrix))) {
+        stop("\nIn the input matrix specifying which samples each ",
+             "haplotype belongs to, there are missing values.", call. = FALSE)
+    }
+
     if (!is_type(show_progress, "logical", 1)) {
         err_msg("write_fasta", "show_progress", "a single logical")
     }
