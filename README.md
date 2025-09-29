@@ -91,7 +91,7 @@ install.packages("jackalope", type = "source")
 #### macOS, R version \>= 4.0.0
 
 Follow the directions here to install R compiler tools:
-<https://thecoatlessprofessor.com/programming/cpp/r-compiler-tools-for-rcpp-on-macos/>.
+<https://blog.thecoatlessprofessor.com/programming/cpp/r-compiler-tools-for-rcpp-on-macos/index.html>.
 
 Check your version of `gcc` using `gcc --version` in the Terminal. Then,
 check the table at <https://mac.r-project.org/openmp/> to see which
@@ -162,7 +162,7 @@ Now you should be able to install `jackalope` by running
 `install.packages("jackalope", type = "source")` in R.
 
 For more information, please see
-<https://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x/>.
+<https://blog.thecoatlessprofessor.com/programming/openmp-in-r-on-os-x/index.html>.
 
 ## Usage
 
