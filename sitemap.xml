@@ -1,87 +1,31 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>/404.html</loc>
-  </url>
-  <url>
-    <loc>/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>/articles/jackalope-intro.html</loc>
-  </url>
-  <url>
-    <loc>/articles/sub-models.html</loc>
-  </url>
-  <url>
-    <loc>/authors.html</loc>
-  </url>
-  <url>
-    <loc>/index.html</loc>
-  </url>
-  <url>
-    <loc>/news/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/create_genome.html</loc>
-  </url>
-  <url>
-    <loc>/reference/create_haplotypes.html</loc>
-  </url>
-  <url>
-    <loc>/reference/evo_rates.html</loc>
-  </url>
-  <url>
-    <loc>/reference/haplotypes.html</loc>
-  </url>
-  <url>
-    <loc>/reference/haps_functions.html</loc>
-  </url>
-  <url>
-    <loc>/reference/haps_gtrees.html</loc>
-  </url>
-  <url>
-    <loc>/reference/haps_phylo.html</loc>
-  </url>
-  <url>
-    <loc>/reference/haps_ssites.html</loc>
-  </url>
-  <url>
-    <loc>/reference/haps_theta.html</loc>
-  </url>
-  <url>
-    <loc>/reference/haps_vcf.html</loc>
-  </url>
-  <url>
-    <loc>/reference/illumina.html</loc>
-  </url>
-  <url>
-    <loc>/reference/indels.html</loc>
-  </url>
-  <url>
-    <loc>/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/jackalope-package.html</loc>
-  </url>
-  <url>
-    <loc>/reference/pacbio.html</loc>
-  </url>
-  <url>
-    <loc>/reference/read_fasta.html</loc>
-  </url>
-  <url>
-    <loc>/reference/ref_genome.html</loc>
-  </url>
-  <url>
-    <loc>/reference/sub_models.html</loc>
-  </url>
-  <url>
-    <loc>/reference/write_fasta.html</loc>
-  </url>
-  <url>
-    <loc>/reference/write_vcf.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/404.html</loc></url>
+<url><loc>/LICENSE-text.html</loc></url>
+<url><loc>/articles/index.html</loc></url>
+<url><loc>/articles/jackalope-intro.html</loc></url>
+<url><loc>/articles/sub-models.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/news/index.html</loc></url>
+<url><loc>/reference/create_genome.html</loc></url>
+<url><loc>/reference/create_haplotypes.html</loc></url>
+<url><loc>/reference/evo_rates.html</loc></url>
+<url><loc>/reference/haplotypes.html</loc></url>
+<url><loc>/reference/haps_functions.html</loc></url>
+<url><loc>/reference/haps_gtrees.html</loc></url>
+<url><loc>/reference/haps_phylo.html</loc></url>
+<url><loc>/reference/haps_ssites.html</loc></url>
+<url><loc>/reference/haps_theta.html</loc></url>
+<url><loc>/reference/haps_vcf.html</loc></url>
+<url><loc>/reference/illumina.html</loc></url>
+<url><loc>/reference/indels.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/jackalope-package.html</loc></url>
+<url><loc>/reference/pacbio.html</loc></url>
+<url><loc>/reference/read_fasta.html</loc></url>
+<url><loc>/reference/ref_genome.html</loc></url>
+<url><loc>/reference/sub_models.html</loc></url>
+<url><loc>/reference/write_fasta.html</loc></url>
+<url><loc>/reference/write_vcf.html</loc></url>
 </urlset>
+

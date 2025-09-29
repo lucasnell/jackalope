@@ -6,35 +6,18 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>A Swift, Versatile Phylogenomic and High-Throughput Sequencing Simulator • jackalope</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
-<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="apple-touch-icon-120x120.png">
-<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="apple-touch-icon-76x76.png">
-<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="apple-touch-icon-60x60.png">
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
+<!-- favicons --><link rel="icon" type="image/png" sizes="48x48" href="favicon-48x48.png">
+<link rel="icon" type="”image/svg+xml”" href="favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" sizes="any" href="favicon.ico">
+<link rel="manifest" href="site.webmanifest">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="bootstrap-toc.css">
 <script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
 <script src="pkgdown.js"></script><meta property="og:title" content="A Swift, Versatile Phylogenomic and High-Throughput Sequencing Simulator">
-<meta property="og:description" content="Simply and efficiently
-    simulates (i) variants from reference genomes and (ii) reads from both Illumina 
-    &lt;https://www.illumina.com/&gt;
-    and Pacific Biosciences (PacBio) &lt;https://www.pacb.com/&gt; platforms. 
-    It can either read reference genomes from FASTA files or simulate new ones.
-    Genomic variants can be simulated using summary statistics, phylogenies, 
-    Variant Call Format (VCF) files, and coalescent simulations—the latter of which
-    can include selection, recombination, and demographic fluctuations.
-    jackalope can simulate single, paired-end, or mate-pair Illumina reads, 
-    as well as PacBio reads.
-    These simulations include sequencing errors, mapping qualities, multiplexing,
-    and optical/polymerase chain reaction (PCR) duplicates.
-    Simulating Illumina sequencing is based on ART
-    by Huang et al. (2012) &lt;doi:10.1093/bioinformatics/btr708&gt;.
-    PacBio sequencing simulation is based on 
-    SimLoRD  by Stöcker et al. (2016) &lt;doi:10.1093/bioinformatics/btw286&gt;.
-    All outputs can be written to standard file formats.">
+<meta property="og:description" content="Simply and efficiently simulates (i) variants from reference genomes and (ii) reads from both Illumina &lt;https://www.illumina.com/&gt; and Pacific Biosciences (PacBio) &lt;https://www.pacb.com/&gt; platforms. It can either read reference genomes from FASTA files or simulate new ones. Genomic variants can be simulated using summary statistics, phylogenies, Variant Call Format (VCF) files, and coalescent simulations—the latter of which can include selection, recombination, and demographic fluctuations. jackalope can simulate single, paired-end, or mate-pair Illumina reads, as well as PacBio reads. These simulations include sequencing errors, mapping qualities, multiplexing, and optical/polymerase chain reaction (PCR) duplicates. Simulating Illumina sequencing is based on ART by Huang et al. (2012) &lt;doi:10.1093/bioinformatics/btr708&gt;. PacBio sequencing simulation is based on SimLoRD by Stöcker et al. (2016) &lt;doi:10.1093/bioinformatics/btw286&gt;. All outputs can be written to standard file formats.">
 <meta property="og:image" content="/logo.png">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -42,7 +25,7 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -56,7 +39,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">jackalope</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.6</span>
       </span>
     </div>
 
@@ -68,7 +51,7 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
@@ -88,7 +71,7 @@
 <li>
   <a href="https://github.com/lucasnell/jackalope/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul>
@@ -99,7 +82,7 @@
 </div>
 <!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="contents col-md-9">
@@ -120,13 +103,13 @@
 <div class="section level3">
 <h3 id="dependencies">Dependencies<a class="anchor" aria-label="anchor" href="#dependencies"></a>
 </h3>
-<p>Before installing <code>jackalope</code>, you should update the packages <code>Rhtslib</code> and <code>zlibbioc</code>. Since both of these are on Bioconductor, you should update <code>BiocManager</code>, too.</p>
+<p>Before installing <code>jackalope</code>, you should update the package <code>Rhtslib</code>. Since this is on Bioconductor, you should update <code>BiocManager</code>, too.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">||</span></span>
 <span>    <span class="st">"BiocManager"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/row.names.html" class="external-link">row.names</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/update.packages.html" class="external-link">old.packages</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Rhtslib"</span>, <span class="st">"zlibbioc"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="st">"Rhtslib"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="stable-version">Stable version<a class="anchor" aria-label="anchor" href="#stable-version"></a>
@@ -150,9 +133,9 @@
 <h4 id="windows-and-linux">Windows and Linux<a class="anchor" aria-label="anchor" href="#windows-and-linux"></a>
 </h4>
 <p>The first step is to add the following to the <code>.R/Makevars</code> (<code>.R/Makevars.win</code> on Windows) file inside the home directory:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">PKG_CXXFLAGS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CXXFLAGS</span><span class="va">)</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">PKG_CFLAGS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CFLAGS</span><span class="va">)</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ex">PKG_LIBS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CFLAGS</span><span class="va">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">PKG_CXXFLAGS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CXXFLAGS</span><span class="va">)</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="ex">PKG_CFLAGS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CFLAGS</span><span class="va">)</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="ex">PKG_LIBS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CFLAGS</span><span class="va">)</span></span></code></pre></div>
 <p>Then, you should be able to install <code>jackalope</code> by running the following in R:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"jackalope"</span>, type <span class="op">=</span> <span class="st">"source"</span><span class="op">)</span></span>
@@ -164,13 +147,13 @@
 </h4>
 <p>Follow the directions here to install R compiler tools: <a href="https://thecoatlessprofessor.com/programming/cpp/r-compiler-tools-for-rcpp-on-macos/" class="external-link uri">https://thecoatlessprofessor.com/programming/cpp/r-compiler-tools-for-rcpp-on-macos/</a>.</p>
 <p>Check your version of <code>gcc</code> using <code>gcc --version</code> in the Terminal. Then, check the table at <a href="https://mac.r-project.org/openmp/" class="external-link uri">https://mac.r-project.org/openmp/</a> to see which version of the runtime OpenMP downloads you need. For LLVM version 9.0.1, you run the following in the Terminal:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">version</span><span class="op">=</span><span class="st">"9.0.1"</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-O</span> https://mac.r-project.org/openmp/openmp-<span class="va">${version}</span>-darwin17-Release.tar.gz</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tar fvx openmp-<span class="va">${version}</span>-darwin17-Release.tar.gz <span class="at">-C</span> /</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="bu">export</span> <span class="va">version</span><span class="op">=</span><span class="st">"9.0.1"</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-O</span> https://mac.r-project.org/openmp/openmp-<span class="va">${version}</span>-darwin17-Release.tar.gz</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="fu">sudo</span> tar fvx openmp-<span class="va">${version}</span>-darwin17-Release.tar.gz <span class="at">-C</span> /</span></code></pre></div>
 <p>For the next step of actually installing <code>jackalope</code>, one option is to add the following to your <code>~/.R/Makevars</code> file:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">CPPFLAGS</span> += <span class="at">-Xclang</span> <span class="at">-fopenmp</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">LDFLAGS</span> += <span class="at">-lomp</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">CPPFLAGS</span> += <span class="at">-Xclang</span> <span class="at">-fopenmp</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="ex">LDFLAGS</span> += <span class="at">-lomp</span></span></code></pre></div>
 <p>… then installing <code>jackalope</code> by running <code>install.packages("jackalope", type = "source")</code> or <code>remotes::install_github("lucasnell/jackalope")</code> in R.</p>
 <p>This might not be desirable since it affects all package installations. An alternative method is to use the package <code>withr</code>:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
@@ -184,19 +167,19 @@
 <h4 id="macos-r-version--34-and--400">macOS, R version &gt;= 3.4* and &lt; 4.0.0<a class="anchor" aria-label="anchor" href="#macos-r-version--34-and--400"></a>
 </h4>
 <p>Add the following to the <code>.R/Makevars</code> file inside the home directory:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">PKG_CXXFLAGS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CXXFLAGS</span><span class="va">)</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">PKG_CFLAGS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CFLAGS</span><span class="va">)</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="ex">PKG_LIBS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CFLAGS</span><span class="va">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="ex">PKG_CXXFLAGS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CXXFLAGS</span><span class="va">)</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="ex">PKG_CFLAGS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CFLAGS</span><span class="va">)</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="ex">PKG_LIBS</span> += <span class="va">$(</span><span class="ex">SHLIB_OPENMP_CFLAGS</span><span class="va">)</span></span></code></pre></div>
 <p>Next, go to <a href="https://cran.r-project.org/bin/macosx/tools/" class="external-link uri">https://cran.r-project.org/bin/macosx/tools/</a> and download the newest versions of (1) the <code>clang</code> compiler (version 8 at the time of writing) and (2) GNU Fortran (version 6.1 at the time of writing). The downloads will have the <code>.pkg</code> extension. Next, install <code>clang</code> and <code>gfortran</code> by opening these <code>.pkg</code> files and following the directions.</p>
 <p>After this, add the following to your <code>~/.R/Makevars</code> file (replacing <code>clang8</code> with your version of the clang compiler):</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="va">CLANG8</span><span class="op">=</span>/usr/local/clang8/bin/clang</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="va">CC</span><span class="op">=</span><span class="va">$(</span><span class="ex">CLANG8</span><span class="va">)</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="va">CXX</span><span class="op">=</span><span class="va">$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="va">CXX11</span><span class="op">=</span><span class="va">$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="va">CXX14</span><span class="op">=</span><span class="va">$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="va">CXX17</span><span class="op">=</span><span class="va">$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="va">CXX1X</span><span class="op">=</span><span class="va">$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="va">LDFLAGS</span><span class="op">=</span>-L/usr/local/clang8/lib</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="va">CLANG8</span><span class="op">=</span>/usr/local/clang8/bin/clang</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="va">CC</span><span class="op">=</span><span class="va">$(</span><span class="ex">CLANG8</span><span class="va">)</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="va">CXX</span><span class="op">=</span><span class="va">$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="va">CXX11</span><span class="op">=</span><span class="va">$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="va">CXX14</span><span class="op">=</span><span class="va">$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="va">CXX17</span><span class="op">=</span><span class="va">$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="va">CXX1X</span><span class="op">=</span><span class="va">$(</span><span class="ex">CLANG8</span><span class="va">)</span>++</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="va">LDFLAGS</span><span class="op">=</span>-L/usr/local/clang8/lib</span></code></pre></div>
 <p>Now you should be able to install <code>jackalope</code> by running <code>install.packages("jackalope", type = "source")</code> in R.</p>
 <p>For more information, please see <a href="https://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x/" class="external-link uri">https://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x/</a>.</p>
 </div>
@@ -272,7 +255,7 @@
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Lucas A. Nell <br><small class="roles"> Copyright holder, author, maintainer </small> <a href="https://orcid.org/0000-0003-3209-0517" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
+<li>Lucas A. Nell <br><small class="roles"> Copyright holder, author, maintainer </small> <a href="https://orcid.org/0000-0003-3209-0517" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
 </ul>
 </div>
 
@@ -297,16 +280,16 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
       </footer>
 </div>
 
-  
 
 
-  
+
+
 
   </body>
 </html>

@@ -6,27 +6,24 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Models of nucleotide substitution • jackalope</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
-<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
-<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
-<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
-<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
+<!-- favicons --><link rel="icon" type="image/png" sizes="48x48" href="../favicon-48x48.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Models of nucleotide substitution">
-<meta property="og:description" content="jackalope">
-<meta property="og:image" content="/logo.png">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -40,7 +37,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">jackalope</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.6</span>
       </span>
     </div>
 
@@ -52,7 +49,7 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
@@ -72,7 +69,7 @@
 <li>
   <a href="https://github.com/lucasnell/jackalope/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul>
@@ -83,7 +80,7 @@
 </div>
 <!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
@@ -91,7 +88,7 @@
       <h1 data-toc-skip>Models of nucleotide substitution</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/lucasnell/jackalope/blob/HEAD/vignettes/sub-models.Rmd" class="external-link"><code>vignettes/sub-models.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/lucasnell/jackalope/blob/master/vignettes/sub-models.Rmd" class="external-link"><code>vignettes/sub-models.Rmd</code></a></small>
       <div class="hidden name"><code>sub-models.Rmd</code></div>
 
     </div>
@@ -104,48 +101,66 @@
 <p>This document outlines the models of substitution used in the
 package. The matrices below are substitution-rate matrices for each
 model. The rates within these matrices are ordered as follows:</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>T</mi><mo>→</mo><mi>C</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>T</mi><mo>→</mo><mi>A</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>T</mi><mo>→</mo><mi>G</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>C</mi><mo>→</mo><mi>T</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>C</mi><mo>→</mo><mi>A</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>C</mi><mo>→</mo><mi>G</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>A</mi><mo>→</mo><mi>T</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>A</mi><mo>→</mo><mi>C</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>A</mi><mo>→</mo><mi>G</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>G</mi><mo>→</mo><mi>T</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>G</mi><mo>→</mo><mi>C</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>G</mi><mo>→</mo><mi>A</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">
 \begin{bmatrix}
-    \cdot           &amp; T\rightarrow C    &amp; T\rightarrow
-A    &amp; T\rightarrow G    \\
-    C\rightarrow T  &amp; \cdot             &amp; C\rightarrow
-A    &amp; C\rightarrow G    \\
-    A\rightarrow T  &amp; A\rightarrow C    &amp;
-\cdot             &amp; A\rightarrow G    \\
-    G\rightarrow T  &amp; G\rightarrow C    &amp; G\rightarrow
-A    &amp; \cdot
+    \cdot           &amp; T\rightarrow C    &amp; T\rightarrow A    &amp; T\rightarrow G    \\
+    C\rightarrow T  &amp; \cdot             &amp; C\rightarrow A    &amp; C\rightarrow G    \\
+    A\rightarrow T  &amp; A\rightarrow C    &amp; \cdot             &amp; A\rightarrow G    \\
+    G\rightarrow T  &amp; G\rightarrow C    &amp; G\rightarrow A    &amp; \cdot
 \end{bmatrix}
-\]</span></p>
-<p>(For example, <span class="math inline">\(C \rightarrow T\)</span>
-indicates that the cell in that location refers to the rate from <span class="math inline">\(C\)</span> to <span class="math inline">\(T\)</span>.) Diagonals are determined based on all
-rows having to sum to zero (Yang 2006).</p>
+</annotation></semantics></math></p>
+<p>(For example,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi><mo>→</mo><mi>T</mi></mrow><annotation encoding="application/x-tex">C \rightarrow T</annotation></semantics></math>
+indicates that the cell in that location refers to the rate from
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>C</mi><annotation encoding="application/x-tex">C</annotation></semantics></math>
+to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>T</mi><annotation encoding="application/x-tex">T</annotation></semantics></math>.)
+Diagonals are determined based on all rows having to sum to zero (Yang
+2006).</p>
 <p>Under each rate matrix are listed the parameters in the function
 required for that model.</p>
 <p>Below is a key of the parameters required in the functions for the
 models below, in order of their appearance:</p>
 <ul>
 <li>
-<code>lambda</code>: <span class="math inline">\(\lambda\)</span>
+<code>lambda</code>:
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">\lambda</annotation></semantics></math>
 </li>
 <li>
-<code>alpha</code> <span class="math inline">\(\alpha\)</span>
+<code>alpha</code>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math>
 </li>
 <li>
-<code>beta</code> <span class="math inline">\(\beta\)</span>
+<code>beta</code>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>
 </li>
 <li>
-<code>pi_tcag</code> vector of <span class="math inline">\(\pi_T\)</span>, <span class="math inline">\(\pi_C\)</span>, <span class="math inline">\(\pi_A\)</span>, then <span class="math inline">\(\pi_G\)</span>
+<code>pi_tcag</code> vector of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>π</mi><mi>T</mi></msub><annotation encoding="application/x-tex">\pi_T</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>π</mi><mi>C</mi></msub><annotation encoding="application/x-tex">\pi_C</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>π</mi><mi>A</mi></msub><annotation encoding="application/x-tex">\pi_A</annotation></semantics></math>,
+then
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>π</mi><mi>G</mi></msub><annotation encoding="application/x-tex">\pi_G</annotation></semantics></math>
 </li>
 <li>
-<code>alpha_1</code> <span class="math inline">\(\alpha_1\)</span>
+<code>alpha_1</code>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>α</mi><mn>1</mn></msub><annotation encoding="application/x-tex">\alpha_1</annotation></semantics></math>
 </li>
 <li>
-<code>alpha_2</code> <span class="math inline">\(\alpha_2\)</span>
+<code>alpha_2</code>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>α</mi><mn>2</mn></msub><annotation encoding="application/x-tex">\alpha_2</annotation></semantics></math>
 </li>
 <li>
 <code>kappa</code> transition / transversion rate ratio</li>
 <li>
-<code>abcdef</code> vector of <span class="math inline">\(a\)</span>, <span class="math inline">\(b\)</span>, <span class="math inline">\(c\)</span>, <span class="math inline">\(d\)</span>, <span class="math inline">\(e\)</span>, then <span class="math inline">\(f\)</span>
+<code>abcdef</code> vector of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>a</mi><annotation encoding="application/x-tex">a</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>b</mi><annotation encoding="application/x-tex">b</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>c</mi><annotation encoding="application/x-tex">c</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>d</mi><annotation encoding="application/x-tex">d</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>e</mi><annotation encoding="application/x-tex">e</annotation></semantics></math>,
+then
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>f</mi><annotation encoding="application/x-tex">f</annotation></semantics></math>
 </li>
 <li>
 <code>Q</code>: matrix of all parameters, where diagonals are
@@ -161,16 +176,17 @@ using the <code>mu</code> parameter for each function.</p>
 <div class="section level2">
 <h2 id="jc69">JC69<a class="anchor" aria-label="anchor" href="#jc69"></a>
 </h2>
-<p>The JC69 model (Jukes and Cantor 1969) uses a single rate, <span class="math inline">\(\lambda\)</span>.</p>
-<p><span class="math display">\[
-\mathbf{Q} =
+<p>The JC69 model (Jukes and Cantor 1969) uses a single rate,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">\lambda</annotation></semantics></math>.</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐐</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>λ</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>λ</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>λ</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>λ</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>λ</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>λ</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>λ</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>λ</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>λ</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>λ</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>λ</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>λ</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
+\mathbf{Q} = 
 \begin{bmatrix}
 \cdot   &amp; \lambda   &amp; \lambda   &amp; \lambda \\
 \lambda &amp; \cdot     &amp; \lambda   &amp; \lambda \\
 \lambda &amp; \lambda   &amp; \cdot     &amp; \lambda \\
 \lambda &amp; \lambda   &amp; \lambda   &amp; \cdot
 \end{bmatrix}
-\]</span></p>
+</annotation></semantics></math></p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>lambda</code></li>
@@ -180,16 +196,18 @@ using the <code>mu</code> parameter for each function.</p>
 <h2 id="k80">K80<a class="anchor" aria-label="anchor" href="#k80"></a>
 </h2>
 <p>The K80 model (Kimura 1980) uses separate rates for transitions
-(<span class="math inline">\(\alpha\)</span>) and transversions (<span class="math inline">\(\beta\)</span>).</p>
-<p><span class="math display">\[
-\mathbf{Q} =
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math>)
+and transversions
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>).</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐐</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>α</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>α</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>β</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>α</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>β</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>α</mi></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
+\mathbf{Q} = 
 \begin{bmatrix}
 \cdot   &amp; \alpha    &amp; \beta     &amp; \beta     \\
 \alpha  &amp; \cdot     &amp; \beta     &amp; \beta     \\
 \beta   &amp; \beta     &amp; \cdot     &amp; \alpha    \\
 \beta   &amp; \beta     &amp; \alpha    &amp; \cdot
 \end{bmatrix}
-\]</span></p>
+</annotation></semantics></math></p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>alpha</code></li>
@@ -200,16 +218,19 @@ using the <code>mu</code> parameter for each function.</p>
 <h2 id="f81">F81<a class="anchor" aria-label="anchor" href="#f81"></a>
 </h2>
 <p>The F81 model (Felsenstein 1981) incorporates different equilibrium
-frequency distributions for each nucleotide (<span class="math inline">\(\pi_X\)</span> for nucleotide <span class="math inline">\(X\)</span>).</p>
-<p><span class="math display">\[
-\mathbf{Q} =
+frequency distributions for each nucleotide
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>π</mi><mi>X</mi></msub><annotation encoding="application/x-tex">\pi_X</annotation></semantics></math>
+for nucleotide
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math>).</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐐</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
+\mathbf{Q} = 
 \begin{bmatrix}
 \cdot   &amp; \pi_C &amp; \pi_A &amp; \pi_G \\
 \pi_T   &amp; \cdot &amp; \pi_A &amp; \pi_G \\
 \pi_T   &amp; \pi_C &amp; \cdot &amp; \pi_G \\
 \pi_T   &amp; \pi_C &amp; \pi_A &amp; \cdot
 \end{bmatrix}
-\]</span></p>
+</annotation></semantics></math></p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>pi_tcag</code></li>
@@ -221,18 +242,15 @@ frequency distributions for each nucleotide (<span class="math inline">\(\pi_X\)
 <p>The HKY85 model (Hasegawa et al. 1984, 1985) combines different
 equilibrium frequency distributions with unequal transition and
 transversion rates.</p>
-<p><span class="math display">\[
-\mathbf{Q} =
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐐</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>α</mi><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>α</mi><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>α</mi><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>α</mi><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
+\mathbf{Q} = 
 \begin{bmatrix}
-\cdot           &amp; \alpha \pi_C  &amp; \beta \pi_A   &amp; \beta
-\pi_G   \\
-\alpha \pi_T    &amp; \cdot         &amp; \beta \pi_A   &amp; \beta
-\pi_G   \\
-\beta \pi_T     &amp; \beta \pi_C   &amp; \cdot         &amp; \alpha
-\pi_G  \\
+\cdot           &amp; \alpha \pi_C  &amp; \beta \pi_A   &amp; \beta \pi_G   \\
+\alpha \pi_T    &amp; \cdot         &amp; \beta \pi_A   &amp; \beta \pi_G   \\
+\beta \pi_T     &amp; \beta \pi_C   &amp; \cdot         &amp; \alpha \pi_G  \\
 \beta \pi_T     &amp; \beta \pi_C   &amp; \alpha \pi_A  &amp; \cdot
 \end{bmatrix}
-\]</span></p>
+</annotation></semantics></math></p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>alpha</code></li>
@@ -245,21 +263,18 @@ transversion rates.</p>
 </h2>
 <p>The TN93 model (Tamura and Nei 1993) adds to the HKY85 model by
 distinguishing between the two types of transitions: between pyrimidines
-(<span class="math inline">\(\alpha_1\)</span>) and between purines
-(<span class="math inline">\(\alpha_2\)</span>).</p>
-<p><span class="math display">\[
-\mathbf{Q} =
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>α</mi><mn>1</mn></msub><annotation encoding="application/x-tex">\alpha_1</annotation></semantics></math>)
+and between purines
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>α</mi><mn>2</mn></msub><annotation encoding="application/x-tex">\alpha_2</annotation></semantics></math>).</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐐</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>α</mi><mn>1</mn></msub><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>α</mi><mn>1</mn></msub><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>α</mi><mn>2</mn></msub><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>α</mi><mn>2</mn></msub><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
+\mathbf{Q} = 
 \begin{bmatrix}
-\cdot           &amp; \alpha_1 \pi_C    &amp; \beta \pi_A       &amp;
-\beta \pi_G \\
-\alpha_1 \pi_T  &amp; \cdot             &amp; \beta \pi_A       &amp;
-\beta \pi_G \\
-\beta \pi_T     &amp; \beta \pi_C       &amp; \cdot             &amp;
-\alpha_2 \pi_G \\
-\beta \pi_T     &amp; \beta \pi_C       &amp; \alpha_2 \pi_A    &amp;
-\cdot
+\cdot           &amp; \alpha_1 \pi_C    &amp; \beta \pi_A       &amp; \beta \pi_G \\
+\alpha_1 \pi_T  &amp; \cdot             &amp; \beta \pi_A       &amp; \beta \pi_G \\
+\beta \pi_T     &amp; \beta \pi_C       &amp; \cdot             &amp; \alpha_2 \pi_G \\
+\beta \pi_T     &amp; \beta \pi_C       &amp; \alpha_2 \pi_A    &amp; \cdot
 \end{bmatrix}
-\]</span></p>
+</annotation></semantics></math></p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>alpha_1</code></li>
@@ -272,31 +287,26 @@ distinguishing between the two types of transitions: between pyrimidines
 <h2 id="f84">F84<a class="anchor" aria-label="anchor" href="#f84"></a>
 </h2>
 <p>The F84 model (Kishino and Hasegawa 1989) is a special case of TN93,
-where <span class="math inline">\(\alpha_1 = (1 + \kappa/\pi_Y)
-\beta\)</span> and <span class="math inline">\(\alpha_2 = (1 +
-\kappa/\pi_R) \beta\)</span> (<span class="math inline">\(\pi_Y = \pi_T
-+ \pi_C\)</span> and <span class="math inline">\(\pi_R = \pi_A +
-\pi_G\)</span>).</p>
-<p><span class="math display">\[
-\mathbf{Q} =
+where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>α</mi><mn>1</mn></msub><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>+</mo><mi>κ</mi><mi>/</mi><msub><mi>π</mi><mi>Y</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\alpha_1 = (1 + \kappa/\pi_Y) \beta</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>α</mi><mn>2</mn></msub><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>+</mo><mi>κ</mi><mi>/</mi><msub><mi>π</mi><mi>R</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\alpha_2 = (1 + \kappa/\pi_R) \beta</annotation></semantics></math>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>π</mi><mi>Y</mi></msub><mo>=</mo><msub><mi>π</mi><mi>T</mi></msub><mo>+</mo><msub><mi>π</mi><mi>C</mi></msub></mrow><annotation encoding="application/x-tex">\pi_Y = \pi_T + \pi_C</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>π</mi><mi>R</mi></msub><mo>=</mo><msub><mi>π</mi><mi>A</mi></msub><mo>+</mo><msub><mi>π</mi><mi>G</mi></msub></mrow><annotation encoding="application/x-tex">\pi_R = \pi_A + \pi_G</annotation></semantics></math>).</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐐</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>+</mo><mi>κ</mi><mi>/</mi><msub><mi>π</mi><mi>Y</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mi>β</mi><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>+</mo><mi>κ</mi><mi>/</mi><msub><mi>π</mi><mi>Y</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mi>β</mi><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>+</mo><mi>κ</mi><mi>/</mi><msub><mi>π</mi><mi>R</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mi>β</mi><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>β</mi><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>+</mo><mi>κ</mi><mi>/</mi><msub><mi>π</mi><mi>R</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mi>β</mi><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
+\mathbf{Q} = 
 \begin{bmatrix}
-\cdot                               &amp; (1 + \kappa/\pi_Y) \beta
-\pi_C    &amp;
-    \beta \pi_A                     &amp; \beta
-\pi_G                       \\
-(1 + \kappa/\pi_Y) \beta \pi_T      &amp;
-\cdot                             &amp;
-    \beta \pi_A                     &amp; \beta
-\pi_G                       \\
-\beta \pi_T                         &amp; \beta
-\pi_C                       &amp;
-    \cdot                           &amp; (1 + \kappa/\pi_R) \beta
-\pi_G    \\
-\beta \pi_T                         &amp; \beta
-\pi_C                       &amp;
+\cdot                               &amp; (1 + \kappa/\pi_Y) \beta \pi_C    &amp;
+    \beta \pi_A                     &amp; \beta \pi_G                       \\
+(1 + \kappa/\pi_Y) \beta \pi_T      &amp; \cdot                             &amp;
+    \beta \pi_A                     &amp; \beta \pi_G                       \\
+\beta \pi_T                         &amp; \beta \pi_C                       &amp;
+    \cdot                           &amp; (1 + \kappa/\pi_R) \beta \pi_G    \\
+\beta \pi_T                         &amp; \beta \pi_C                       &amp;
     (1 + \kappa/\pi_R) \beta \pi_A  &amp; \cdot
 \end{bmatrix}
-\]</span></p>
+</annotation></semantics></math></p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>beta</code></li>
@@ -308,17 +318,17 @@ where <span class="math inline">\(\alpha_1 = (1 + \kappa/\pi_Y)
 <h2 id="gtr">GTR<a class="anchor" aria-label="anchor" href="#gtr"></a>
 </h2>
 <p>The GTR model (Tavaré 1986) is the least restrictive model that is
-still time-reversible (i.e., the rates <span class="math inline">\(r_{x
-\rightarrow y} = r_{y \rightarrow x}\)</span>).</p>
-<p><span class="math display">\[
-\mathbf{Q} =
+still time-reversible (i.e., the rates
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>r</mi><mrow><mi>x</mi><mo>→</mo><mi>y</mi></mrow></msub><mo>=</mo><msub><mi>r</mi><mrow><mi>y</mi><mo>→</mo><mi>x</mi></mrow></msub></mrow><annotation encoding="application/x-tex">r_{x \rightarrow y} = r_{y \rightarrow x}</annotation></semantics></math>).</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐐</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>a</mi><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>b</mi><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>c</mi><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>a</mi><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>d</mi><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>e</mi><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>b</mi><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>d</mi><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><mi>f</mi><msub><mi>π</mi><mi>G</mi></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>c</mi><msub><mi>π</mi><mi>T</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>e</mi><msub><mi>π</mi><mi>C</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mi>f</mi><msub><mi>π</mi><mi>A</mi></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
+\mathbf{Q} = 
 \begin{bmatrix}
 \cdot   &amp; a \pi_C   &amp; b \pi_A   &amp; c \pi_G \\
 a \pi_T &amp; \cdot     &amp; d \pi_A   &amp; e \pi_G \\
 b \pi_T &amp; d \pi_C   &amp; \cdot     &amp; f \pi_G \\
 c \pi_T &amp; e \pi_C   &amp; f \pi_A   &amp; \cdot
 \end{bmatrix}
-\]</span></p>
+</annotation></semantics></math></p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>pi_tcag</code></li>
@@ -329,15 +339,15 @@ c \pi_T &amp; e \pi_C   &amp; f \pi_A   &amp; \cdot
 <h2 id="unrest">UNREST<a class="anchor" aria-label="anchor" href="#unrest"></a>
 </h2>
 <p>The UNREST model (Yang 1994) is entirely unrestrained.</p>
-<p><span class="math display">\[
-\mathbf{Q} =
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐐</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>q</mi><mrow><mi>T</mi><mi>C</mi></mrow></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>q</mi><mrow><mi>T</mi><mi>A</mi></mrow></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>q</mi><mrow><mi>T</mi><mi>G</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>q</mi><mrow><mi>C</mi><mi>T</mi></mrow></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>q</mi><mrow><mi>C</mi><mi>A</mi></mrow></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>q</mi><mrow><mi>C</mi><mi>G</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>q</mi><mrow><mi>A</mi><mi>T</mi></mrow></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>q</mi><mrow><mi>A</mi><mi>C</mi></mrow></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>q</mi><mrow><mi>A</mi><mi>G</mi></mrow></msub></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><msub><mi>q</mi><mrow><mi>G</mi><mi>T</mi></mrow></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>q</mi><mrow><mi>G</mi><mi>C</mi></mrow></msub></mtd><mtd columnalign="center" style="text-align: center"><msub><mi>q</mi><mrow><mi>G</mi><mi>A</mi></mrow></msub></mtd><mtd columnalign="center" style="text-align: center"><mo>⋅</mo></mtd></mtr></mtable><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
+\mathbf{Q} = 
 \begin{bmatrix}
 \cdot   &amp; q_{TC}    &amp; q_{TA}    &amp; q_{TG}  \\
 q_{CT}  &amp; \cdot     &amp; q_{CA}    &amp; q_{CG}  \\
 q_{AT}  &amp; q_{AC}    &amp; \cdot     &amp; q_{AG}  \\
 q_{GT}  &amp; q_{GC}    &amp; q_{GA}    &amp; \cdot
 \end{bmatrix}
-\]</span></p>
+</annotation></semantics></math></p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>Q</code></li>
@@ -381,9 +391,7 @@ USA.</p>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
-    </nav>
-</div>
+      </div>
 
 </div>
 
@@ -396,16 +404,16 @@ USA.</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
       </footer>
 </div>
 
-  
 
 
-  
+
+
 
   </body>
 </html>
