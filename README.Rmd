@@ -56,15 +56,15 @@ and optical/PCR duplicates. All outputs can be written to standard file formats.
 
 ### Dependencies
 
-Before installing `jackalope`, you should update the packages `Rhtslib` and `zlibbioc`.
-Since both of these are on Bioconductor, you should update `BiocManager`, too.
+Before installing `jackalope`, you should update the package `Rhtslib`.
+Since this is on Bioconductor, you should update `BiocManager`, too.
 
 ```{r install-dependencies-bioc}
 if (!requireNamespace("BiocManager", quietly = TRUE) ||
     "BiocManager" %in% row.names(old.packages())) {
   install.packages("BiocManager")
 }
-BiocManager::install(c("Rhtslib", "zlibbioc"))
+BiocManager::install("Rhtslib")
 ```
 
 

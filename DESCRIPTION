@@ -30,14 +30,12 @@ biocViews:
 Imports:
     ape,
     R6,
-    Rcpp (>= 0.12.11),
-    zlibbioc
+    Rcpp (>= 0.12.11)
 LinkingTo:
     Rcpp,
     RcppArmadillo,
     RcppProgress,
-    Rhtslib,
-    zlibbioc
+    Rhtslib
 SystemRequirements: GNU make
 RoxygenNote: 7.2.3
 Roxygen: list(markdown = TRUE)

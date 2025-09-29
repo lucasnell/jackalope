@@ -27,17 +27,9 @@ RHTSLIB_LIBS += -L${LOCAL_SOFT}/lib${R_ARCH}
 RHTSLIB_LIBS += -L$(LIB_CURL)/lib${R_ARCH}
 
 
-# For portable zlib:
-ZLIBIOC_CFLAGS = $(shell echo 'zlibbioc::pkgconfig("PKG_CFLAGS")'|\
-	"${R_HOME}/bin/R" --vanilla --slave)
-ZLIBIOC_LIBS = $(shell echo 'zlibbioc::pkgconfig("PKG_LIBS_shared")' |\
-	"${R_HOME}/bin/R" --vanilla --slave)
-
-
 # Compression library and others
-PKG_LIBS = -lws2_32 $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(RHTSLIB_LIBS) $(ZLIBIOC_LIBS)
-# zlib
-ZLIB_CFLAGS += $(ZLIBIOC_CFLAGS)
+PKG_LIBS = -lws2_32 $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(RHTSLIB_LIBS)
+
 
 %.o: %.c
 	$(CC) $(ZLIB_CFLAGS) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $< -o $@
