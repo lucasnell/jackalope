@@ -1,3 +1,6 @@
+# jackalope 1.1.6
+* Removed zlibbioc requirement
+
 
 # jackalope 1.1.4
 * Added required jackalope-package man file
